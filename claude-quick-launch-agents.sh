@@ -50,13 +50,16 @@ detect_cpu_capabilities() {
     if [ -n "$microcode" ]; then
         info "Microcode revision: $microcode"
         
-        # Check if microcode is too early
+        # Check if microcode is newer than BIOS-inbuilt (cloaking detection)
         local microcode_hex="${microcode#0x}"
         local microcode_dec=$((16#${microcode_hex}))
         
-        if [ "$microcode_dec" -le 28 ]; then  # 0x1c = 28
-            warn "Early microcode detected - AVX512 will be disabled"
+        # If microcode is > 0x20 (32), AVX-512 is likely disabled/cloaked
+        if [ "$microcode_dec" -gt 32 ]; then
+            warn "Newer microcode detected ($microcode) - AVX512 likely cloaked/disabled"
             export DISABLE_AVX512=true
+        elif [ "$microcode_dec" -le 20 ]; then
+            info "Early BIOS microcode detected - AVX512 should be available"
         fi
     fi
     
