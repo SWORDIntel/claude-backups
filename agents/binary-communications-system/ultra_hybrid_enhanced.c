@@ -277,10 +277,15 @@ static void detect_system_capabilities() {
 
 // Auto-select best memory copy based on capabilities
 static inline void* memcpy_auto(void* dst, const void* src, size_t size) {
+    // Check alignment for SIMD operations
+    uintptr_t dst_addr = (uintptr_t)dst;
+    uintptr_t src_addr = (uintptr_t)src;
+    
     int cpu = sched_getcpu();
     
-    // Check if P-core with AVX-512
-    if (g_system_caps.has_avx512f && cpu < g_system_caps.num_p_cores) {
+    // Check if P-core with AVX-512 and properly aligned (64-byte for AVX-512)
+    if (g_system_caps.has_avx512f && cpu < g_system_caps.num_p_cores &&
+        (dst_addr % 64 == 0) && (src_addr % 64 == 0)) {
         // AVX-512 path
         __m512i* d = (__m512i*)dst;
         const __m512i* s = (const __m512i*)src;
@@ -306,8 +311,9 @@ static inline void* memcpy_auto(void* dst, const void* src, size_t size) {
         }
         _mm_sfence();
         
-    } else if (g_system_caps.has_avx2) {
-        // AVX2 path for E-cores
+    } else if (g_system_caps.has_avx2 && 
+               (dst_addr % 32 == 0) && (src_addr % 32 == 0)) {
+        // AVX2 path for E-cores (requires 32-byte alignment)
         __m256i* d = (__m256i*)dst;
         const __m256i* s = (const __m256i*)src;
         size_t chunks = size / 32;
