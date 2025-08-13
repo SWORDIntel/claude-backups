@@ -6,6 +6,7 @@
 **Repository**: https://github.com/SWORDIntel/claude-backups  
 **Purpose**: Hardware-aware multi-agent orchestration system optimized for Intel Meteor Lake architecture  
 **Status**: PRODUCTION  
+**Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)  
 
 ## System Architecture
 
@@ -84,22 +85,50 @@ system:
 ## Directory Structure
 
 ```
-claude-portable/
-├── agents/                 # v7.0 agent definitions
-│   ├── *.md               # 28 production agents
-│   ├── Template.md        # v7.0 template
-│   └── oldagents/         # Legacy backup
-├── docs/                  # Documentation
-│   ├── AGENT_FRAMEWORK_V7.md
-│   ├── AGENT_QUICK_REFERENCE_V7.md
-│   └── MIGRATION_GUIDE_V7.md
-├── src/                   # Source code
-│   ├── c/                # C implementations
-│   ├── python/           # Python modules
-│   └── rust/             # Rust components
-├── config/               # Configuration files
-├── monitoring/           # Monitoring setup
-└── CLAUDE.md            # This file
+/home/ubuntu/Documents/Claude/
+├── Installation Scripts
+│   ├── claude-portable-launch.sh        # Portable installer (NEW)
+│   ├── claude-quick-launch-agents.sh    # Smart quick launcher
+│   └── claude-livecd-unified-with-agents.sh # Main installer
+│
+├── claude-portable/        # Created by portable installer
+│   ├── node/              # Local Node.js installation
+│   ├── claude-code/       # Claude Code npm package
+│   ├── agents/            # Agent definitions
+│   ├── bin/               # Wrapper scripts
+│   └── launch-claude.sh   # Launch script
+│
+└── agents/                 # v7.0 agent definitions
+    ├── *.md               # 28 production agents
+    ├── Template.md        # v7.0 template
+    ├── oldagents/         # Legacy backup
+    ├── docs/              # Documentation
+    ├── src/               # Source code
+    │   ├── c/            # C implementations
+    │   ├── python/       # Python modules
+    │   └── rust/         # Rust components
+    ├── config/           # Configuration files
+    └── monitoring/       # Monitoring setup
+```
+
+## Installation Methods
+
+### Method 1: Portable Installation (Recommended for LiveCD)
+```bash
+./claude-portable-launch.sh
+# Creates self-contained installation in ./claude-portable/
+```
+
+### Method 2: Quick System Installation
+```bash
+./claude-quick-launch-agents.sh
+# Smart installer with CPU detection
+```
+
+### Method 3: Direct Installation
+```bash
+./claude-livecd-unified-with-agents.sh --auto-mode
+# Main installer with full control
 ```
 
 ## Important Commands
@@ -244,6 +273,14 @@ export METEOR_LAKE_OPTIMIZATION=true
 - Verify Task tool parameters
 
 ## Recent Updates
+
+### v6.0.0-portable (2025-08-13)
+- Added portable installer (`claude-portable-launch.sh`)
+- Fixed AVX-512 cloaking detection (microcode >0x20)
+- Updated to Claude Code v1.0.77
+- Fixed npm package name (@anthropic-ai/claude-code)
+- Added _GNU_SOURCE for CPU affinity functions
+- Three installation methods for different use cases
 
 ### v7.0 Framework (Current)
 - Complete redesign with hardware awareness

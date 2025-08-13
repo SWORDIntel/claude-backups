@@ -2,19 +2,21 @@ CLAUDE CODE LIVECD INSTALLER PACKAGE MANIFEST
 ==============================================
 
 Package: claude-code-livecd-installer-package
-Version: 5.0.0-code
+Version: 6.0.0-portable
 Date: 2025-08-13
-Size: ~150KB (package), ~60MB (after installation with agents)
+Claude Code: v1.0.77 (@anthropic-ai/claude-code)
+Size: ~150KB (package), ~300MB (portable), ~60MB (system install)
 
 CONTENTS:
 ---------
 
-## Main Files
-/claude-livecd-unified-with-agents.sh    # Full installer with options
-/claude-quick-launch-agents.sh           # One-command automatic installer
+## Main Installer Files
+/claude-portable-launch.sh              # NEW: Portable installer (everything in one dir)
+/claude-livecd-unified-with-agents.sh   # Full installer with options
+/claude-quick-launch-agents.sh          # Smart launcher with CPU detection
 /run-claude.sh                          # Claude runner script
 /CLAUDE.md                              # Project context and instructions
-/README.md                              # Quick start guide
+/README.md                              # Quick start guide  
 /VERSION                                # Version information
 /MANIFEST.txt                           # This file
 

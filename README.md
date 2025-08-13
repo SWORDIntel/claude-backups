@@ -1,25 +1,41 @@
 # Claude Code LiveCD Unified Installer
 
-**One-command installation of Claude Code with Agents for LiveCD environments**
+**Complete Claude Code installation suite with three powerful installers for LiveCD environments**
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Choose Your Method
 
+### Method 1: Portable Installation (Best for LiveCD)
 ```bash
-# Install everything with one command
+# Everything in one self-contained directory - no system dependencies
+./claude-portable-launch.sh
+```
+
+### Method 2: Quick System Installation
+```bash
+# Smart installer with CPU optimization detection
 ./claude-quick-launch-agents.sh
 ```
 
-That's it! Claude Code will be installed with agents, statusline, and auto-permission bypass.
+### Method 3: Direct Installation
+```bash
+# Main installer with full control
+./claude-livecd-unified-with-agents.sh --auto-mode
+```
+
+All methods install Claude Code v1.0.77 with agents, statusline, and auto-permission bypass.
 
 ## ✨ Features
 
-- ✅ **Claude Code** - Not CLI, the full Code experience
+- ✅ **Claude Code v1.0.77** - Official @anthropic-ai/claude-code package
+- ✅ **Three Installation Methods** - Portable, Quick, or Direct
 - ✅ **Zero Dependencies** - Auto-installs npm, node, nano, and more
+- ✅ **Portable Mode** - Everything in one directory (~300MB)
 - ✅ **LiveCD Optimized** - Works on non-persistent systems  
 - ✅ **Auto Permission Bypass** - No prompts for LiveCD usage
 - ✅ **28 Production Agents** - Full v7.0 agent system with local detection
 - ✅ **God-tier Statusline** - For Neovim, Vim, Nano, and Shell
 - ✅ **Nano Default Editor** - User-friendly with syntax highlighting
+- ✅ **AVX-512 Cloaking Detection** - Detects when microcode disables AVX-512
 - ✅ **Intel Core Ultra Optimized** - AVX512/AVX2 SIMD acceleration
 - ✅ **P-Core/E-Core Aware** - Optimized for Intel hybrid CPUs
 - ✅ **First Launch Helper** - Guided setup with /config and /terminal-setup
@@ -63,18 +79,33 @@ That's it! Claude Code will be installed with agents, statusline, and auto-permi
 
 ## 🛠️ Installation Options
 
-### Option 1: Quick Install (Recommended)
+### Option 1: Portable Installation (Recommended for LiveCD)
+```bash
+chmod +x claude-portable-launch.sh
+./claude-portable-launch.sh
+```
+- ✅ Everything in `claude-portable/` directory
+- ✅ No sudo required
+- ✅ Includes local Node.js
+- ✅ ~300MB total size
+- ✅ Can be copied to USB/other systems
+
+### Option 2: Quick System Install
 ```bash
 chmod +x claude-quick-launch-agents.sh
 ./claude-quick-launch-agents.sh
 ```
+- ✅ Smart CPU detection
+- ✅ Auto-finds and runs main installer
+- ✅ Fixes Dell repo warnings
+- ✅ Uses system directories
 
-### Option 2: Manual Installation
+### Option 3: Direct Installation
 ```bash
 chmod +x claude-livecd-unified-with-agents.sh
 
-# Standard installation with prompts
-./claude-livecd-unified-with-agents.sh
+# Auto mode (no prompts)
+./claude-livecd-unified-with-agents.sh --auto-mode
 
 # Skip agents (Claude Code only)
 ./claude-livecd-unified-with-agents.sh --skip-agents
@@ -110,21 +141,30 @@ claude                  # Start Claude Code
 
 ```
 /home/ubuntu/Documents/Claude/
+├── claude-portable-launch.sh             # Portable installer (NEW)
 ├── claude-livecd-unified-with-agents.sh  # Main installer
 ├── claude-quick-launch-agents.sh         # Quick launcher
 ├── agents/                               # 28 production agents
 ├── scripts/
 │   ├── statusline.lua                   # Neovim statusline
 │   └── statusline.md                    # Documentation
-└── CLAUDE.md                            # Project context
+├── CLAUDE.md                            # Project context
+└── claude-portable/                     # Created by portable installer
+    ├── node/                            # Local Node.js
+    ├── claude-code/                     # Claude Code installation
+    ├── agents/                          # Copied agents
+    ├── bin/                             # Wrapper scripts
+    └── launch-claude.sh                 # Launch script
 ```
 
 ## ⚡ Performance Notes
 
 ### CPU Optimizations
-- **AVX-512**: Supported on P-cores with microcode ≤0x1c
-- **AVX2**: Fallback for microcode 0x20+
+- **AVX-512**: Detected via runtime test (not just cpuinfo)
+- **Microcode Detection**: Versions >0x20 indicate AVX-512 is cloaked/disabled
+- **AVX2**: Automatic fallback when AVX-512 unavailable
 - **P-Core Affinity**: Automatically detected for Intel hybrid CPUs
+- **Compilation**: Uses detected features for optimal performance
 
 ### LiveCD Optimizations
 - Uses home directory (avoids `/tmp` noexec)
@@ -169,8 +209,9 @@ This installer includes hardcoded credentials for LiveCD convenience. For produc
 
 ## 🏷️ Version
 
-**Current Version**: 5.0.0-code  
+**Current Version**: 6.0.0-portable  
 **Release Date**: 2025-08-13  
+**Claude Code Version**: 1.0.77  
 **Platform**: Intel Core Ultra 7 155H (Meteor Lake)
 
 ## 📝 License
