@@ -1,0 +1,15 @@
+5.0.0-code
+Release Date: 2025-08-13
+Platform: Intel Core Ultra 7 155H (Meteor Lake)
+Microcode: 0x20 (AVX-512 disabled, AVX2 enabled)
+Ubuntu: 24.04+ LiveCD
+
+Changes in 5.0.0:
+- Changed from Claude CLI to Claude Code
+- Added npm/node auto-installation
+- Added God-tier statusline for all editors
+- Nano as default editor with syntax highlighting
+- First-launch helper with /config and /terminal-setup
+- Local agents folder detection
+- Enhanced shell prompt with project info
+- 28 production agents with v7.0 framework

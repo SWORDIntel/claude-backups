@@ -1,0 +1,111 @@
+[0;32m[INSTALL][0m [12:50:33] Checking prerequisites...
+[0;32m[SUCCESS][0m [12:50:33] All basic prerequisites found
+[0;36m[INFO][0m [12:50:33] npm version: 9.2.0
+[0;36m[INFO][0m [12:50:34] Detecting CPU features and capabilities...
+[0;36m[INFO][0m [12:50:34] Microcode revision: 0x24
+[0;36m[INFO][0m [12:50:34] AVX2 support detected
+[0;36m[INFO][0m [12:50:34] SSE4.2 support detected
+[0;36m[INFO][0m [12:50:34] Intel CPU detected
+[0;36m[INFO][0m [12:50:34] Intel hybrid architecture detected
+[0;32m[SUCCESS][0m [12:50:34] CPU optimization flags: -mavx2 -msse4.2 -mtune=intel
+[0;32m[SUCCESS][0m [12:50:34] Prerequisites check complete
+[0;32m[INSTALL][0m [12:50:34] Installing GitHub CLI...
+[0;32m[SUCCESS][0m [12:50:36] GitHub CLI installed successfully
+[0;32m[INSTALL][0m [12:50:36] Setting up GitHub authentication...
+[0;32m[SUCCESS][0m [12:50:36] GitHub authentication successful
+[0;32m[INSTALL][0m [12:50:36] Installing Claude agents...
+[0;35m[PROGRESS][0m [12:50:36] Local agents not found, cloning from repository...
+[0;36m[INFO][0m [12:50:38] Found agents directory in repository
+[0;32m[SUCCESS][0m [12:50:38] Agents copied to /root/.local/share/claude/agents from repository
+[0;32m[INSTALL][0m [12:50:38] Compiling agents communication protocol and binary dependencies...
+[0;36m[INFO][0m [12:50:38] Using CPU optimizations:  -mavx2 -msse4.2 -mtune=intel
+[0;36m[INFO][0m [12:50:38] Building with AVX2 support
+[0;36m[INFO][0m [12:50:38] Hybrid CPU detected - optimizing for P-cores
+[0;36m[INFO][0m [12:50:38] Compiling individual C source files...
+[0;35m[PROGRESS][0m [12:50:38] Compiling: binary-communications-system/ultra_hybrid_enhanced.c
+binary-communications-system/ultra_hybrid_enhanced.c: In function ‘detect_system_capabilities’:
+binary-communications-system/ultra_hybrid_enhanced.c:197:5: error: implicit declaration of function ‘sched_getaffinity’; did you mean ‘SYS_sched_getaffinity’? [-Wimplicit-function-declaration]
+  197 |     sched_getaffinity(0, sizeof(cpu_set_t), &original_affinity);
+      |     ^~~~~~~~~~~~~~~~~
+      |     SYS_sched_getaffinity
+binary-communications-system/ultra_hybrid_enhanced.c:201:9: error: implicit declaration of function ‘CPU_ZERO’; did you mean ‘FP_ZERO’? [-Wimplicit-function-declaration]
+  201 |         CPU_ZERO(&mask);
+      |         ^~~~~~~~
+      |         FP_ZERO
+binary-communications-system/ultra_hybrid_enhanced.c:202:9: error: implicit declaration of function ‘CPU_SET’ [-Wimplicit-function-declaration]
+  202 |         CPU_SET(i, &mask);
+      |         ^~~~~~~
+binary-communications-system/ultra_hybrid_enhanced.c:204:13: error: implicit declaration of function ‘sched_setaffinity’; did you mean ‘SYS_sched_setaffinity’? [-Wimplicit-function-declaration]
+  204 |         if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) == 0) {
+      |             ^~~~~~~~~~~~~~~~~
+      |             SYS_sched_setaffinity
+binary-communications-system/ultra_hybrid_enhanced.c: In function ‘memcpy_auto’:
+binary-communications-system/ultra_hybrid_enhanced.c:280:15: error: implicit declaration of function ‘sched_getcpu’; did you mean ‘SYS_getcpu’? [-Wimplicit-function-declaration]
+  280 |     int cpu = sched_getcpu();
+      |               ^~~~~~~~~~~~
+      |               SYS_getcpu
+binary-communications-system/ultra_hybrid_enhanced.c: In function ‘enhanced_worker_thread’:
+binary-communications-system/ultra_hybrid_enhanced.c:862:5: error: implicit declaration of function ‘pthread_setname_np’; did you mean ‘pthread_setcanceltype’? [-Wimplicit-function-declaration]
+  862 |     pthread_setname_np(pthread_self(), thread_name);
+      |     ^~~~~~~~~~~~~~~~~~
+      |     pthread_setcanceltype
+[0;36m[INFO][0m [12:50:39] Checking for shared library sources...
+[0;36m[INFO][0m [12:50:39] Found 10 Python files, setting up...
+[0;36m[INFO][0m [12:50:39] Compiled Python: realtime_asr.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: self_improvement.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: main.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: accelerator_manager.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: voice_identity.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: ENHANCED_AGENT_INTEGRATION.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: prometheus_exporters.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: capacity_planning.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: conversation_integration_example.py
+[0;36m[INFO][0m [12:50:39] Compiled Python: conversation_bridge_wrapper.py
+[0;36m[INFO][0m [12:50:39] Compilation Summary:
+[0;36m[INFO][0m [12:50:39]   • Successful compilations: 0
+[0;36m[INFO][0m [12:50:39]   • Failed compilations: 1
+[0;36m[INFO][0m [12:50:39]   • Optimization: Generic x86-64
+[0;32m[SUCCESS][0m [12:50:39] Found 190 executable binaries:
+[0;36m[INFO][0m [12:50:39]   - realtime_asr.py
+[0;36m[INFO][0m [12:50:39]   - self_improvement.py
+[0;36m[INFO][0m [12:50:39]   - requirements.txt
+[0;36m[INFO][0m [12:50:39]   - main.py
+[0;36m[INFO][0m [12:50:39]   - accelerator_manager.py
+[0;36m[INFO][0m [12:50:39]   - voice_identity.py
+[0;36m[INFO][0m [12:50:39]   - README.md
+[0;36m[INFO][0m [12:50:39]   - mod.rs
+[0;36m[INFO][0m [12:50:39]   - main.rs
+[0;36m[INFO][0m [12:50:39]   - mod.rs
+[0;36m[INFO][0m [12:50:39]   ... and 180 more
+[0;32m[INSTALL][0m [12:50:39] Setting up agent configurations...
+[0;36m[INFO][0m [12:50:39] Linked agents to /root/.config/claude/agents
+[0;36m[INFO][0m [12:50:39] Linked agents to /root/.claude/agents
+[0;36m[INFO][0m [12:50:39] Linked agents to /root/.local/share/claude-code/agents
+[0;32m[SUCCESS][0m [12:50:39] Found 98 agent configuration files
+[0;32m[SUCCESS][0m [12:50:39] Agents installation completed
+[0;32m[INSTALL][0m [12:50:39] Installing Claude Code...
+[0;36m[INFO][0m [12:50:39] Claude Code already installed at /root/.local/bin/claude
+[0;32m[INSTALL][0m [12:50:39] Creating Claude wrappers...
+[0;32m[SUCCESS][0m [12:50:39] Claude wrappers created:
+[0;36m[INFO][0m [12:50:39]   • claude        - WITH auto permission bypass (default)
+[0;36m[INFO][0m [12:50:39]   • claude-normal - WITHOUT permission bypass
+[0;32m[INSTALL][0m [12:50:39] Finalizing installation...
+[0;32m[INSTALL][0m [12:50:39] Installing God-tier statusline configuration...
+[0;36m[INFO][0m [12:50:39] Found statusline files at alternative location
+[0;36m[INFO][0m [12:50:39] Installing statusline for Neovim...
+[0;32m[SUCCESS][0m [12:50:39] Statusline copied to Neovim config
+[0;32m[SUCCESS][0m [12:50:39] Created Neovim init.lua with statusline
+[0;36m[INFO][0m [12:50:39] Installing configuration for nano (preferred editor)...
+[0;32m[SUCCESS][0m [12:50:39] Created nano configuration with enhanced settings
+[0;36m[INFO][0m [12:50:39] Nano is configured as the default editor for LiveCD
+[0;36m[INFO][0m [12:50:39] Installing shell prompt integration...
+[0;32m[SUCCESS][0m [12:50:39] Added enhanced prompt to shell
+[0;36m[INFO][0m [12:50:39] Creating tmux configuration with statusline...
+[0;32m[SUCCESS][0m [12:50:39] Created tmux configuration
+[0;36m[INFO][0m [12:50:39] Installing optional statusline dependencies...
+[0;36m[INFO][0m [12:50:42] Optimizing git for statusline performance...
+[0;36m[INFO][0m [12:50:42] Statusline documentation copied to ~/.local/share/claude/docs/
+[0;32m[SUCCESS][0m [12:50:42] Statusline installation completed
+[0;32m[SUCCESS][0m [12:50:42] Installation finalized
+[0;32m[INSTALL][0m [12:50:42] Ensuring all project files are owned by root...
+[0;32m[SUCCESS][0m [12:50:43] File permissions updated

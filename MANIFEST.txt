@@ -1,0 +1,122 @@
+CLAUDE CODE LIVECD INSTALLER PACKAGE MANIFEST
+==============================================
+
+Package: claude-code-livecd-installer-package
+Version: 5.0.0-code
+Date: 2025-08-13
+Size: ~150KB (package), ~60MB (after installation with agents)
+
+CONTENTS:
+---------
+
+## Main Files
+/claude-livecd-unified-with-agents.sh    # Full installer with options
+/claude-quick-launch-agents.sh           # One-command automatic installer
+/run-claude.sh                          # Claude runner script
+/CLAUDE.md                              # Project context and instructions
+/README.md                              # Quick start guide
+/VERSION                                # Version information
+/MANIFEST.txt                           # This file
+
+## Scripts
+/scripts/
+  ├── statusline.lua                    # God-tier statusline for Neovim
+  ├── statusline.md                     # Statusline documentation
+  ├── fix-repos.sh                      # Repository fix script
+  ├── install.sh                        # Installation helper
+  └── repos.sh                          # Repository management
+
+## Agents (28 production agents)
+/agents/
+  ├── *.md                              # Agent configuration files
+  ├── Template.md                       # Agent template v7.0
+  ├── admin/                           # Admin tools and TUI
+  ├── binary-communications-system/     # High-performance IPC
+  ├── config/                          # Configuration files
+  ├── docs/                            # Documentation
+  ├── src/                             # Source code (C/Python/Rust)
+  ├── monitoring/                      # Monitoring and metrics
+  └── oldagents/                       # Legacy agent backups
+
+## Documentation
+/docs/
+  ├── AGENT_FRAMEWORK_V7.md            # Agent framework documentation
+  ├── AGENT_QUICK_REFERENCE_V7.md      # Quick reference guide
+  └── COMPLETE_SETUP_DOCUMENTATION.md  # Comprehensive documentation
+
+/deprecated/                            # Old scripts (reference only)
+  ├── claude-agents-installer.sh
+  ├── claude-agents-installer-noroot.sh
+  ├── claude-agents-livecd.sh
+  ├── claude-agents-tpm.sh
+  ├── claude-deployment-tui.sh
+  ├── claude-installer.sh
+  ├── claude-livecd-unified.sh
+  ├── claude-quick-launch.sh
+  ├── docker-installer.sh
+  ├── setup-agents.sh
+  └── (documentation files)
+
+SYSTEM REQUIREMENTS:
+--------------------
+- OS: Ubuntu 24.04+ LiveCD
+- CPU: x86_64 (optimized for Intel Core Ultra)
+- RAM: 2GB minimum
+- Network: Internet connection required
+- Disk: 100MB free space
+
+FEATURES:
+---------
+✓ Claude Code (not CLI) installation
+✓ Zero external dependencies - auto-installs npm/node
+✓ LiveCD optimized (non-persistent)
+✓ Auto permission bypass for Claude Code
+✓ 28 production agents with local detection
+✓ God-tier statusline (Neovim/Vim/Nano/Shell)
+✓ Nano as default editor with syntax highlighting
+✓ AVX512/AVX2 SIMD acceleration
+✓ P-core/E-core aware for Intel hybrid CPUs
+✓ First-launch helper with /config and /terminal-setup
+✓ Local agents folder detection (same directory)
+
+INSTALLATION:
+-------------
+1. Make scripts executable:
+   chmod +x claude-quick-launch-agents.sh
+   chmod +x claude-livecd-unified-with-agents.sh
+
+2. Quick install (recommended):
+   ./claude-quick-launch-agents.sh
+
+3. Or manual install with options:
+   ./claude-livecd-unified-with-agents.sh
+
+WHAT GETS INSTALLED:
+--------------------
+- Claude Code → ~/.local/bin/claude
+- Claude Agents → ~/.local/share/claude/agents/
+- GitHub CLI → ~/.local/bin/gh
+- Nano editor with enhanced config
+- Statusline for Neovim/Vim/Nano/Shell
+- Three commands:
+  * claude (with auto permission bypass)
+  * claude-normal (standard mode)
+  * claude-first-launch (guided setup)
+
+KNOWN ISSUES:
+-------------
+- AVX-512 disabled by microcode 0x20
+- /tmp has noexec on LiveCD
+- Repository key warnings (can ignore)
+
+SUPPORT:
+--------
+GitHub: SWORDIntel/claude-backups
+Token: Embedded for LiveCD convenience
+
+SECURITY NOTE:
+--------------
+This package includes hardcoded credentials for LiveCD convenience.
+For production use, replace with your own tokens.
+
+END OF MANIFEST
