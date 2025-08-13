@@ -820,10 +820,20 @@ compile_agents_protocol() {
             
             # Add include paths relative to the source file location
             local src_dir=$(dirname "$src_file")
-            local extra_includes="-I$src_dir -I$(pwd)"
+            local extra_includes="-I$src_dir -I$(pwd) -Isrc/c -Iagents/src/c"
+            
+            # Check if this file needs compatibility layer
+            local extra_sources=""
+            if [[ "$basename" == "ultra_hybrid_enhanced" ]]; then
+                if [ -f "agents/src/c/compatibility_layer.c" ]; then
+                    extra_sources="agents/src/c/compatibility_layer.c"
+                elif [ -f "src/c/compatibility_layer.c" ]; then
+                    extra_sources="src/c/compatibility_layer.c"
+                fi
+            fi
             
             # Try with full optimizations first
-            if gcc $CFLAGS $extra_includes "$src_file" -o "$output_file" $LDFLAGS 2>&1 | tee -a "$LOG_FILE"; then
+            if gcc $CFLAGS $extra_includes "$src_file" $extra_sources -o "$output_file" $LDFLAGS 2>&1 | tee -a "$LOG_FILE"; then
                 success "Compiled: $basename"
                 compile_success=$((compile_success + 1))
                 chmod +x "$output_file"
@@ -833,13 +843,13 @@ compile_agents_protocol() {
                     warn "AVX512 compilation failed, trying AVX2..."
                     local FALLBACK_FLAGS=$(echo "$CFLAGS" | sed 's/-mavx512[^ ]*//g' | sed 's/USE_AVX512/USE_AVX2/g')
                     
-                    if gcc $FALLBACK_FLAGS $extra_includes "$src_file" -o "$output_file" $LDFLAGS 2>/dev/null; then
+                    if gcc $FALLBACK_FLAGS $extra_includes "$src_file" $extra_sources -o "$output_file" $LDFLAGS 2>/dev/null; then
                         warn "Compiled with AVX2 fallback: $basename"
                         compile_success=$((compile_success + 1))
                         chmod +x "$output_file"
                     else
                         # Try with minimal optimization
-                        if gcc -O1 -pthread $extra_includes "$src_file" -o "$output_file" -lm 2>/dev/null; then
+                        if gcc -O1 -pthread $extra_includes "$src_file" $extra_sources -o "$output_file" -lm 2>/dev/null; then
                             warn "Compiled with minimal optimization: $basename"
                             compile_success=$((compile_success + 1))
                             chmod +x "$output_file"
@@ -850,7 +860,7 @@ compile_agents_protocol() {
                     fi
                 else
                     # Try with reduced optimization if failed
-                    if gcc -O1 -pthread $extra_includes "$src_file" -o "$output_file" -lm 2>/dev/null; then
+                    if gcc -O1 -pthread $extra_includes "$src_file" $extra_sources -o "$output_file" -lm 2>/dev/null; then
                         warn "Compiled with reduced optimization: $basename"
                         compile_success=$((compile_success + 1))
                         chmod +x "$output_file"
