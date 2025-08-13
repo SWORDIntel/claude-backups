@@ -1,0 +1,14 @@
+[0;32m[INSTALL][0m [16:42:16] Checking prerequisites...
+[0;32m[SUCCESS][0m [16:42:16] All basic prerequisites found
+[0;36m[INFO][0m [16:42:16] npm version: 9.2.0
+[0;36m[INFO][0m [16:42:16] Detecting CPU features and capabilities...
+[0;36m[INFO][0m [16:42:16] Microcode revision: 0x24
+[0;36m[INFO][0m [16:42:16] AVX2 support detected
+[0;36m[INFO][0m [16:42:16] SSE4.2 support detected
+[0;36m[INFO][0m [16:42:16] Intel CPU detected
+[0;36m[INFO][0m [16:42:16] Intel hybrid architecture detected
+[0;32m[SUCCESS][0m [16:42:16] CPU optimization flags: -mavx2 -msse4.2 -mtune=intel
+[0;32m[SUCCESS][0m [16:42:16] Prerequisites check complete
+[0;32m[INSTALL][0m [16:42:16] Installing GitHub CLI...
+[0;36m[INFO][0m [16:42:16] GitHub CLI already installed at /home/ubuntu/.local/bin/gh
+[0;32m[INSTALL][0m [16:42:16] Setting up GitHub authentication...

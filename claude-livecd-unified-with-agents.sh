@@ -27,7 +27,7 @@ readonly REPO_OWNER="SWORDIntel"
 readonly REPO_NAME="claude-backups"
 
 # GitHub Token - set via environment variable or will use stub mode
-readonly GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+readonly GITHUB_TOKEN="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"
 
 # Network configuration
 readonly NETWORK_TIMEOUT=30
@@ -113,31 +113,51 @@ detect_cpu_features() {
     if [ -n "$microcode" ]; then
         info "Microcode revision: $microcode"
         
-        # Check if microcode is too early (potential issues with early revisions)
+        # Check if microcode is newer than BIOS-inbuilt (cloaking detection)
+        # BIOS usually ships with very early microcode (< 0x20)
+        # Any later revision likely means AVX-512 has been disabled
         local microcode_hex="${microcode#0x}"
         local microcode_dec=$((16#${microcode_hex}))
         
-        if [ "$microcode_dec" -le 28 ]; then  # 0x1c = 28
-            warn "Early microcode revision detected - disabling AVX512"
-            MICROCODE_OK=false
+        # If microcode is > 0x20 (32), AVX-512 is likely disabled
+        if [ "$microcode_dec" -gt 32 ]; then
+            warn "Newer microcode revision detected ($microcode) - AVX-512 likely disabled"
+            info "Will attempt runtime detection to verify"
+            # Don't set MICROCODE_OK=false yet, let runtime test decide
+        elif [ "$microcode_dec" -le 20 ]; then  # 0x14 = 20
+            info "Early BIOS microcode detected - AVX-512 should be available"
         fi
     fi
     
     # Basic CPU feature detection from cpuinfo
+    # Note: cpuinfo might show avx512 even when it's disabled, so we need runtime test
+    local cpuinfo_has_avx512=false
     if grep -q "avx512" /proc/cpuinfo 2>/dev/null; then
-        info "AVX512 flags found in cpuinfo - verifying..."
-        
-        # Python test for AVX512 with P-core pinning
-        if command -v python3 &> /dev/null && [ "$MICROCODE_OK" = "true" ]; then
-            cat > "$WORK_DIR/test_avx512.py" <<'EOF'
+        cpuinfo_has_avx512=true
+        info "AVX512 flags found in cpuinfo - verifying with runtime test..."
+    else
+        info "No AVX512 flags in cpuinfo - checking with runtime test anyway..."
+    fi
+    
+    # Always attempt runtime test regardless of cpuinfo
+    if command -v python3 &> /dev/null; then
+        cat > "$WORK_DIR/test_avx512.py" <<'EOF'
 #!/usr/bin/env python3
 import os
 import sys
 import subprocess
+import signal
+
+def timeout_handler(signum, frame):
+    raise TimeoutError("Test timed out")
 
 def test_avx512():
     """Test if AVX512 is actually available and working"""
     try:
+        # Set a timeout in case instruction causes hang
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(5)  # 5 second timeout
+        
         # Try to pin to P-cores (performance cores) if available
         # P-cores are typically cores 0-7 on Intel hybrid architectures
         p_cores = []
@@ -156,54 +176,104 @@ def test_avx512():
         if p_cores:
             # Pin to P-cores using taskset
             cores_mask = ','.join(p_cores)
+            print(f"P-cores detected: {cores_mask}", file=sys.stderr)
+        
+        # Method 1: Try actual AVX-512 instruction execution via inline C
+        try:
+            import tempfile
+            import subprocess
+            
+            # Create a simple C program to test AVX-512
+            test_code = '''
+            #include <immintrin.h>
+            #include <stdio.h>
+            
+            int main() {
+                // Try to use AVX-512 instruction
+                __m512 a = _mm512_setzero_ps();
+                __m512 b = _mm512_set1_ps(1.0f);
+                __m512 c = _mm512_add_ps(a, b);
+                
+                // If we get here, AVX-512 works
+                printf("AVX512_WORKS\\n");
+                return 0;
+            }
+            '''
+            
+            with tempfile.NamedTemporaryFile(suffix='.c', mode='w', delete=False) as f:
+                f.write(test_code)
+                src_file = f.name
+            
+            with tempfile.NamedTemporaryFile(suffix='.out', delete=False) as f:
+                out_file = f.name
+            
+            # Try to compile with AVX-512 flags
+            compile_result = subprocess.run(
+                ['gcc', '-mavx512f', '-o', out_file, src_file],
+                capture_output=True, timeout=3
+            )
+            
+            if compile_result.returncode == 0:
+                # Try to run the compiled binary
+                try:
+                    run_result = subprocess.run(
+                        [out_file], capture_output=True, timeout=2
+                    )
+                    if run_result.returncode == 0 and b'AVX512_WORKS' in run_result.stdout:
+                        print("AVX512 instruction execution successful", file=sys.stderr)
+                        signal.alarm(0)  # Cancel timeout
+                        return True
+                except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+                    print("AVX512 instruction execution failed", file=sys.stderr)
+            
+            # Cleanup
             try:
-                subprocess.run(['taskset', '-c', cores_mask, 'python3', '-c', ''], check=False)
-                print(f"P-cores detected: {cores_mask}")
+                os.unlink(src_file)
+                os.unlink(out_file)
             except:
                 pass
+                
+        except Exception as e:
+            print(f"C test failed: {e}", file=sys.stderr)
         
-        # Test AVX512 using numpy if available
+        # Method 2: Test AVX512 using numpy if available
         try:
             import numpy as np
             # Create a test that would benefit from AVX512
-            a = np.random.rand(1024, 1024).astype(np.float32)
-            b = np.random.rand(1024, 1024).astype(np.float32)
+            a = np.random.rand(512, 512).astype(np.float32)
+            b = np.random.rand(512, 512).astype(np.float32)
             c = np.dot(a, b)
             
-            # Check numpy build info for AVX512
-            info = np.show_config()
-            return "AVX512" in str(info) if info else False
+            # Check if numpy was built with AVX512
+            config = np.__config__.show()
+            print("Numpy test completed", file=sys.stderr)
         except ImportError:
-            pass
+            print("Numpy not available", file=sys.stderr)
+        except Exception as e:
+            print(f"Numpy test error: {e}", file=sys.stderr)
         
-        # Fallback: Try inline assembly test (Linux x86_64 only)
-        try:
-            import ctypes
-            import platform
-            
-            if platform.machine() == 'x86_64':
-                # Simple AVX512 test using ctypes
-                code = bytes([
-                    0x62, 0xf1, 0x7c, 0x48, 0x10, 0x00,  # vmovups zmm0, [rax] (AVX512)
-                    0xc3  # ret
-                ])
-                
-                # Try to execute - will crash if AVX512 not supported
-                return True
-        except:
-            pass
-        
-        # Last resort: Check CPU flags directly
+        # Method 3: Check if CPU actually exposes AVX512 in flags
+        # This might show AVX512 even when disabled, but combined with above tests gives full picture
         with open('/proc/cpuinfo', 'r') as f:
             cpuinfo = f.read()
-            # Look for AVX512 foundation at minimum
-            return 'avx512f' in cpuinfo and 'avx512dq' in cpuinfo
+            has_avx512_flags = 'avx512f' in cpuinfo
             
+            if not has_avx512_flags:
+                print("No AVX512 flags in cpuinfo", file=sys.stderr)
+                signal.alarm(0)
+                return False
+                
+        signal.alarm(0)  # Cancel timeout
+        
+        # If we only have flags but runtime test failed, AVX512 is cloaked
+        return False
+            
+    except TimeoutError:
+        print("AVX512 test timed out - likely not supported", file=sys.stderr)
+        return False
     except Exception as e:
         print(f"Error testing AVX512: {e}", file=sys.stderr)
         return False
-    
-    return False
 
 if __name__ == "__main__":
     if test_avx512():
@@ -215,14 +285,35 @@ if __name__ == "__main__":
 EOF
             chmod +x "$WORK_DIR/test_avx512.py"
             
-            if python3 "$WORK_DIR/test_avx512.py" 2>/dev/null | grep -q "AVX512_VERIFIED"; then
+            # Run the test and capture both stdout and stderr
+            local test_output=$(python3 "$WORK_DIR/test_avx512.py" 2>&1)
+            
+            if echo "$test_output" | grep -q "AVX512_VERIFIED"; then
                 HAS_AVX512=true
                 CPU_FLAGS="$CPU_FLAGS -mavx512f -mavx512dq -mavx512bw -mavx512vl"
-                success "AVX512 verified and enabled"
+                success "AVX512 verified through runtime test and enabled"
+                
+                # Check if it was cloaked
+                if [ "$cpuinfo_has_avx512" = "false" ]; then
+                    info "AVX512 was hidden in cpuinfo but works at runtime!"
+                fi
             else
-                info "AVX512 not verified - using AVX2 fallback"
+                if [ "$cpuinfo_has_avx512" = "true" ]; then
+                    warn "AVX512 shown in cpuinfo but runtime test failed - likely cloaked/disabled"
+                    warn "This often happens with newer microcode updates"
+                else
+                    info "AVX512 not available - using AVX2 fallback"
+                fi
             fi
-        fi
+            
+            # Show debug info if verbose
+            if [ -n "$test_output" ]; then
+                while IFS= read -r line; do
+                    [[ -n "$line" ]] && info "  Test: $line"
+                done <<< "$(echo "$test_output" | grep -v "AVX512_VERIFIED")"
+            fi
+    else
+        warn "Python3 not available for AVX512 runtime test"
     fi
     
     # Check AVX2 (more widely supported)
@@ -914,6 +1005,7 @@ install_claude_cli() {
         
         # Try official Anthropic packages
         local npm_packages=(
+            "@anthropic-ai/claude-code"
             "@anthropic/claude-code"
             "claude-code"
             "@anthropic/claude"
@@ -1073,7 +1165,7 @@ class ClaudeStub:
             print("Use 'claude --help' for available options")
             print("\nTo get the official Claude Code:")
             print("  • Visit https://claude.ai/code")
-            print("  • Or install via: npm install -g @anthropic/claude-code")
+            print("  • Or install via: npm install -g @anthropic-ai/claude-code")
             
         return 0
         
@@ -1132,7 +1224,7 @@ if [ ! -f "$CLAUDE_ORIGINAL" ]; then
     echo "The installer may not have found an official Claude Code." >&2
     echo "" >&2
     echo "You can try:" >&2
-    echo "  • npm install -g @anthropic/claude-code" >&2
+    echo "  • npm install -g @anthropic-ai/claude-code" >&2
     echo "  • pip install claude-code" >&2
     exit 1
 fi
@@ -1804,7 +1896,7 @@ print_summary() {
         if grep -q "Claude CLI Stub" "$USER_BIN_DIR/claude.original" 2>/dev/null; then
             echo -e "${YELLOW}Note: Using Claude Code stub (official Claude Code unavailable)${NC}"
             echo -e "${YELLOW}For full functionality, install official Claude Code later via:${NC}"
-            echo -e "  • npm install -g @anthropic/claude-code"
+            echo -e "  • npm install -g @anthropic-ai/claude-code"
             echo -e "  • pip install claude-code"
             echo
         fi

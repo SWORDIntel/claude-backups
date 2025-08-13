@@ -17,7 +17,7 @@
  * Version: 4.0 Production
  */
 
-// _GNU_SOURCE defined by compiler
+#define _GNU_SOURCE  // Required for CPU affinity functions (sched_setaffinity, etc.)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
