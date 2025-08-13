@@ -3,7 +3,7 @@
 # CLAUDE UNIFIED INSTALLER WITH AGENTS - LiveCD Optimized
 # Complete installer with Claude Code, Agents, and Comms Protocol
 # Self-contained for non-persistent environments
-# Version 4.2.0 - Enhanced with AVX512 detection and P-core optimization
+# Version 4.3.0 - Local installation by default (no sudo required)
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -13,7 +13,7 @@ set -euo pipefail
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Version and metadata
-readonly SCRIPT_VERSION="4.2.0-avx512"
+readonly SCRIPT_VERSION="4.3.0-local"
 readonly SCRIPT_NAME="Claude Code LiveCD Unified Installer with Agents"
 
 # Directories and paths
@@ -21,6 +21,10 @@ readonly WORK_DIR="$HOME/Documents/Claude/.tmp-install-$$"
 readonly USER_BIN_DIR="$HOME/.local/bin"
 readonly AGENTS_DIR="$HOME/.local/share/claude/agents"
 readonly LOG_FILE="/home/ubuntu/Documents/Claude/install-$(date +%Y%m%d-%H%M%S).log"
+
+# Local installation directories (for self-contained install)
+readonly LOCAL_NODE_DIR="$HOME/.local/node"
+readonly LOCAL_NPM_PREFIX="$HOME/.local/npm-global"
 
 # Repository configuration
 readonly REPO_OWNER="SWORDIntel"
@@ -39,6 +43,7 @@ AUTO_LAUNCH="${AUTO_LAUNCH:-false}"
 FORCE="${FORCE:-false}"
 DRY_RUN="${DRY_RUN:-false}"
 SKIP_AGENTS="${SKIP_AGENTS:-false}"
+LOCAL_INSTALL="${LOCAL_INSTALL:-true}"  # Default to local installation
 
 # Colors (suppress in auto mode)
 if [ "$AUTO_MODE" = "false" ]; then
@@ -424,7 +429,15 @@ check_prerequisites() {
     # Special check for npm/nodejs
     local need_npm=false
     if ! command -v npm &> /dev/null; then
-        warn "npm not found - will attempt to install"
+        if [ "$LOCAL_INSTALL" = "true" ]; then
+            info "npm not found - will install locally (no sudo needed)"
+        else
+            warn "npm not found - will attempt system installation"
+        fi
+        need_npm=true
+    elif [ "$LOCAL_INSTALL" = "true" ]; then
+        # Even if system npm exists, we'll use local installation for consistency
+        info "Local installation mode - will use local Node.js/npm"
         need_npm=true
     fi
     
@@ -441,18 +454,40 @@ check_prerequisites() {
             
             # For npm/node - try to install locally without sudo
             if [ "$need_npm" = "true" ]; then
-                info "Attempting local Node.js installation..."
-                
-                # Try to install node locally using nvm
-                if [ ! -d "$HOME/.nvm" ]; then
-                    info "Installing NVM (Node Version Manager) locally..."
-                    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash 2>/dev/null || {
-                        warn "Could not install NVM"
-                    }
+                if [ "$LOCAL_INSTALL" = "true" ]; then
+                    info "Installing Node.js locally (--local mode)..."
+                    # Download and install Node.js to LOCAL_NODE_DIR
+                    local node_version="v20.11.0"
+                    local node_arch="linux-x64"
+                    local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-${node_arch}.tar.gz"
                     
-                    # Source nvm
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    mkdir -p "$LOCAL_NODE_DIR"
+                    if wget -q "$node_url" -O "$WORK_DIR/node.tar.gz" || curl -fsSL "$node_url" -o "$WORK_DIR/node.tar.gz"; then
+                        tar -xzf "$WORK_DIR/node.tar.gz" -C "$WORK_DIR"
+                        cp -r "$WORK_DIR/node-${node_version}-${node_arch}"/* "$LOCAL_NODE_DIR/"
+                        chmod +x "$LOCAL_NODE_DIR/bin/node"
+                        chmod +x "$LOCAL_NODE_DIR/bin/npm"
+                        chmod +x "$LOCAL_NODE_DIR/bin/npx"
+                        
+                        export PATH="$LOCAL_NODE_DIR/bin:$PATH"
+                        success "Node.js installed locally to $LOCAL_NODE_DIR"
+                        need_npm=false
+                    else
+                        warn "Failed to download Node.js"
+                    fi
+                else
+                    info "Attempting local Node.js installation..."
+                    
+                    # Try to install node locally using nvm
+                    if [ ! -d "$HOME/.nvm" ]; then
+                        info "Installing NVM (Node Version Manager) locally..."
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash 2>/dev/null || {
+                            warn "Could not install NVM"
+                        }
+                        
+                        # Source nvm
+                        export NVM_DIR="$HOME/.nvm"
+                        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
                     
                     # Install latest LTS node
                     if command -v nvm &> /dev/null; then
@@ -465,18 +500,24 @@ check_prerequisites() {
                     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
                 fi
                 
-                # Fallback: Download node binary directly
-                if ! command -v npm &> /dev/null; then
-                    info "Downloading Node.js binary package..."
-                    local node_version="v20.11.0"
-                    local node_arch="linux-x64"
-                    local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-${node_arch}.tar.gz"
-                    
-                    if wget -q "$node_url" -O "$WORK_DIR/node.tar.gz"; then
-                        tar -xzf "$WORK_DIR/node.tar.gz" -C "$WORK_DIR"
-                        # Add to PATH
-                        export PATH="$WORK_DIR/node-${node_version}-${node_arch}/bin:$PATH"
-                        success "Node.js installed locally"
+                    # Fallback: Download node binary directly
+                    if ! command -v npm &> /dev/null; then
+                        info "Downloading Node.js binary package..."
+                        local node_version="v20.11.0"
+                        local node_arch="linux-x64"
+                        local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-${node_arch}.tar.gz"
+                        
+                        if wget -q "$node_url" -O "$WORK_DIR/node.tar.gz"; then
+                            tar -xzf "$WORK_DIR/node.tar.gz" -C "$WORK_DIR"
+                            
+                            # Install to local directory for persistence
+                            mkdir -p "$LOCAL_NODE_DIR"
+                            cp -r "$WORK_DIR/node-${node_version}-${node_arch}"/* "$LOCAL_NODE_DIR/"
+                            
+                            # Add to PATH
+                            export PATH="$LOCAL_NODE_DIR/bin:$PATH"
+                            success "Node.js installed locally to $LOCAL_NODE_DIR"
+                        fi
                     fi
                 fi
             fi
@@ -1009,9 +1050,22 @@ install_claude_cli() {
     
     cd "$WORK_DIR"
     
+    # Check if we should use local Node.js installation
+    if [ -d "$LOCAL_NODE_DIR" ] && [ -f "$LOCAL_NODE_DIR/bin/node" ]; then
+        info "Using local Node.js installation"
+        export PATH="$LOCAL_NODE_DIR/bin:$PATH"
+    fi
+    
     # Method 1: Try NPM installation (most reliable if npm exists)
     if command -v npm &> /dev/null; then
         info "Attempting NPM installation of Claude Code..."
+        
+        # Set up local npm prefix for non-global installation
+        mkdir -p "$LOCAL_NPM_PREFIX"
+        export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
+        export PATH="$LOCAL_NPM_PREFIX/bin:$PATH"
+        
+        info "Using local npm prefix: $LOCAL_NPM_PREFIX"
         
         # Try official Anthropic packages
         local npm_packages=(
@@ -1025,7 +1079,8 @@ install_claude_cli() {
         local npm_success=false
         for package in "${npm_packages[@]}"; do
             info "Trying npm package: $package"
-            if npm install -g "$package" 2>/dev/null; then
+            # Install to local prefix (no sudo needed)
+            if npm install -g "$package" 2>&1 | tee -a "$LOG_FILE"; then
                 npm_success=true
                 break
             fi
@@ -1033,10 +1088,23 @@ install_claude_cli() {
         
         if [ "$npm_success" = true ]; then
             # Find where npm installed it
-            local npm_claude=$(which claude 2>/dev/null)
+            local npm_claude="$LOCAL_NPM_PREFIX/bin/claude"
+            if [ ! -f "$npm_claude" ]; then
+                npm_claude=$(which claude 2>/dev/null)
+            fi
+            
             if [ -n "$npm_claude" ] && [ -f "$npm_claude" ]; then
-                cp "$npm_claude" "$USER_BIN_DIR/claude.original"
-                success "Claude Code installed via NPM"
+                # Create wrapper that sets up environment
+                mkdir -p "$USER_BIN_DIR"
+                cat > "$USER_BIN_DIR/claude.original" <<WRAPPER_EOF
+#!/bin/bash
+# Claude Code wrapper with local environment
+export PATH="$LOCAL_NODE_DIR/bin:\$PATH"
+export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
+exec "$npm_claude" "\$@"
+WRAPPER_EOF
+                chmod +x "$USER_BIN_DIR/claude.original"
+                success "Claude Code installed via NPM to $LOCAL_NPM_PREFIX"
                 return 0
             fi
         fi
@@ -1847,6 +1915,14 @@ print_summary() {
     echo
     echo -e "${CYAN}Claude has been installed with:${NC}"
     echo
+    
+    if [ "$LOCAL_INSTALL" = "true" ]; then
+        echo -e "  ${BOLD}Installation Mode:${NC} ${GREEN}Local (no sudo required)${NC}"
+        echo -e "    • Node.js: ${CYAN}$LOCAL_NODE_DIR${NC}"
+        echo -e "    • NPM packages: ${CYAN}$LOCAL_NPM_PREFIX${NC}"
+        echo
+    fi
+    
     echo -e "  ${BOLD}Commands:${NC}"
     echo -e "    • ${BOLD}claude${NC}              - WITH permission bypass (LiveCD default)"
     echo -e "    • ${BOLD}claude-normal${NC}       - WITHOUT permission bypass"
@@ -1970,6 +2046,14 @@ while [[ $# -gt 0 ]]; do
             SKIP_AGENTS=true
             shift
             ;;
+        --local)
+            LOCAL_INSTALL=true
+            shift
+            ;;
+        --system|--global)
+            LOCAL_INSTALL=false
+            shift
+            ;;
         --help|-h)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
@@ -1978,6 +2062,8 @@ while [[ $# -gt 0 ]]; do
             echo "  --force        Force installation even if Claude exists"
             echo "  --dry-run      Test run without making changes"
             echo "  --skip-agents  Skip agents installation (Claude Code only)"
+            echo "  --local        Install Node.js and Claude Code locally (default)"
+            echo "  --system       Use system-wide installation (requires sudo)"
             echo "  --help         Show this help message"
             echo
             echo "This installer includes:"

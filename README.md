@@ -16,10 +16,13 @@
 ./claude-quick-launch-agents.sh
 ```
 
-### Method 3: Direct Installation
+### Method 3: Direct Installation  
 ```bash
-# Main installer with full control
+# Main installer - now defaults to local (no sudo needed)
 ./claude-livecd-unified-with-agents.sh --auto-mode
+
+# For system-wide installation use --system flag
+./claude-livecd-unified-with-agents.sh --system --auto-mode
 ```
 
 All methods install Claude Code v1.0.77 with agents, statusline, and auto-permission bypass.
@@ -29,6 +32,7 @@ All methods install Claude Code v1.0.77 with agents, statusline, and auto-permis
 - ✅ **Claude Code v1.0.77** - Official @anthropic-ai/claude-code package
 - ✅ **Three Installation Methods** - Portable, Quick, or Direct
 - ✅ **Zero Dependencies** - Auto-installs npm, node, nano, and more
+- ✅ **Local by Default** - v4.3.0 installs locally without sudo
 - ✅ **Portable Mode** - Everything in one directory (~300MB)
 - ✅ **LiveCD Optimized** - Works on non-persistent systems  
 - ✅ **Auto Permission Bypass** - No prompts for LiveCD usage
