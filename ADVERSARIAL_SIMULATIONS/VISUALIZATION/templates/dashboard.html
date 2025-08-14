@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attack Simulation Dashboard</title>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .metric {
+            background: #3a3a3a;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #888;
+        }
+        #network-graph {
+            height: 600px;
+        }
+        #metrics-chart, #heatmap, #timeline {
+            height: 400px;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-normal { background: #00ff00; }
+        .status-scanning { background: #ffff00; }
+        .status-compromised { background: #ff0000; }
+        .status-defended { background: #0000ff; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Real-Time Attack Simulation Dashboard</h1>
+    
+    <div class="metrics">
+        <div class="metric">
+            <div class="metric-value" id="fps">0</div>
+            <div class="metric-label">FPS</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value" id="cpu">0%</div>
+            <div class="metric-label">CPU Usage</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value" id="memory">0%</div>
+            <div class="metric-label">Memory</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value" id="flows">0</div>
+            <div class="metric-label">Active Flows</div>
+        </div>
+    </div>
+    
+    <div class="dashboard">
+        <div>
+            <div class="panel">
+                <h2>Network Topology</h2>
+                <div id="network-graph"></div>
+                <div class="controls">
+                    <button onclick="simulateAttack()">Simulate Attack</button>
+                    <button onclick="resetNetwork()">Reset Network</button>
+                    <button onclick="toggleAutoAttack()">Auto Attack: OFF</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>Attack Timeline</h2>
+                <div id="timeline"></div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="panel">
+                <h2>Attack Metrics</h2>
+                <div id="metrics-chart"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>Attack Heatmap</h2>
+                <div id="heatmap"></div>
+            </div>
+            
+            <div class="panel">
+                <h2>Live Feed</h2>
+                <div id="live-feed" style="height: 200px; overflow-y: auto;">
+                    <!-- Attack events will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        let autoAttack = false;
+        let autoAttackInterval = null;
+        
+        socket.on('connect', function() {
+            console.log('Connected to visualization server');
+            updateGraphs();
+        });
+        
+        socket.on('metrics_update', function(data) {
+            document.getElementById('fps').innerText = data.fps || 0;
+            document.getElementById('cpu').innerText = (data.cpu_usage || 0).toFixed(1) + '%';
+            document.getElementById('memory').innerText = (data.memory_usage || 0).toFixed(1) + '%';
+            document.getElementById('flows').innerText = data.active_flows || 0;
+        });
+        
+        socket.on('node_update', function(data) {
+            addToFeed(`Node ${data.node_id} status: ${data.status}`);
+            updateGraphs();
+        });
+        
+        socket.on('attack_flow', function(data) {
+            const status = data.success ? '✓ Success' : '✗ Failed';
+            addToFeed(`Attack: ${data.source} → ${data.target} [${data.attack_type}] ${status}`);
+        });
+        
+        function addToFeed(message) {
+            const feed = document.getElementById('live-feed');
+            const entry = document.createElement('div');
+            entry.style.padding = '5px';
+            entry.style.borderBottom = '1px solid #444';
+            entry.innerHTML = `<small>${new Date().toLocaleTimeString()}</small> ${message}`;
+            feed.insertBefore(entry, feed.firstChild);
+            
+            // Keep only last 20 entries
+            while (feed.children.length > 20) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+        
+        function updateGraphs() {
+            // Update network graph
+            fetch('/api/network')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.data) {
+                        Plotly.newPlot('network-graph', data.data, data.layout);
+                    }
+                });
+            
+            // Update metrics
+            fetch('/api/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.data) {
+                        Plotly.newPlot('metrics-chart', data.data, data.layout);
+                    }
+                });
+            
+            // Update heatmap
+            fetch('/api/heatmap')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.data) {
+                        Plotly.newPlot('heatmap', data.data, data.layout);
+                    }
+                });
+            
+            // Update timeline
+            fetch('/api/timeline')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.data) {
+                        Plotly.newPlot('timeline', data.data, data.layout);
+                    }
+                });
+        }
+        
+        function simulateAttack() {
+            const nodes = ['internet_0', 'dmz_0', 'internal_0', 'critical_0', 'database_0'];
+            const source = nodes[Math.floor(Math.random() * nodes.length)];
+            const target = nodes[Math.floor(Math.random() * nodes.length)];
+            
+            socket.emit('simulate_attack', {
+                source: source,
+                target: target
+            });
+        }
+        
+        function resetNetwork() {
+            location.reload();
+        }
+        
+        function toggleAutoAttack() {
+            autoAttack = !autoAttack;
+            const button = event.target;
+            
+            if (autoAttack) {
+                button.innerText = 'Auto Attack: ON';
+                button.style.background = '#ff4444';
+                autoAttackInterval = setInterval(simulateAttack, 2000);
+            } else {
+                button.innerText = 'Auto Attack: OFF';
+                button.style.background = '#4CAF50';
+                clearInterval(autoAttackInterval);
+            }
+        }
+        
+        // Update graphs every 5 seconds
+        setInterval(updateGraphs, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+gcc -O3 -march=native -mtune=native -Wall -Wextra -pthread -D_GNU_SOURCE -o simulation_c_bridge simulation_c_bridge.c -lpthread -lm
+simulation_c_bridge.c:6:9: warning: "_GNU_SOURCE" redefined
+    6 | #define _GNU_SOURCE
+      |         ^~~~~~~~~~~
+<command-line>: note: this is the location of the previous definition
+simulation_c_bridge.c: In function ‘process_scenario_request’:
+simulation_c_bridge.c:141:23: warning: comparison of integer expressions of different signedness: ‘int’ and ‘atomic_uint_fast32_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  141 |     for (int i = 0; i < bridge->agent_count; i++) {
+      |                       ^
+simulation_c_bridge.c: In function ‘process_security_alert’:
+simulation_c_bridge.c:175:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘atomic_uint_fast32_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  175 |         for (int i = 0; i < bridge->agent_count; i++) {
+      |                           ^
+simulation_c_bridge.c: In function ‘message_processor’:
+simulation_c_bridge.c:221:31: warning: comparison of integer expressions of different signedness: ‘int’ and ‘atomic_uint_fast32_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  221 |             for (int i = 0; i < bridge->agent_count; i++) {
+      |                               ^
+simulation_c_bridge.c: In function ‘heartbeat_monitor’:
+simulation_c_bridge.c:277:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘atomic_uint_fast32_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  277 |         for (int i = 0; i < bridge->agent_count; i++) {
+      |                           ^

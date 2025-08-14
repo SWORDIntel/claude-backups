@@ -27,6 +27,10 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "how to build",
+          "pastedContents": {}
+        },
+        {
           "display": "Deploy OPTIMIZER then DEBUG then DEBUG again across codebase",
           "pastedContents": {}
         },

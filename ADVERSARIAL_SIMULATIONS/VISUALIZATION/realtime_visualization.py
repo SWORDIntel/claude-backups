@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Any, Tuple
 import numpy as np
 import networkx as nx
 from dataclasses import dataclass
-import websockets
+# import websockets  # Optional, not used in current implementation
 import threading
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, emit

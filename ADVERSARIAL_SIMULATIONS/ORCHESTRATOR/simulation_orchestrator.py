@@ -60,7 +60,6 @@ class SimulationComplexity(Enum):
 @dataclass
 class AttackScenario:
     """Individual attack scenario configuration"""
-    __slots__ = []
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     description: str = ""
@@ -79,7 +78,6 @@ class AttackScenario:
 @dataclass
 class SimulationState:
     """Current state of running simulation"""
-    __slots__ = []
     scenario_id: str
     phase: AttackPhase
     start_time: datetime
@@ -98,7 +96,6 @@ class SimulationOrchestrator:
     Main orchestrator for automated attack simulations
     """
     
-    __slots__ = []
     def __init__(self, config_path: Optional[str] = None):
         self.config = self._load_config(config_path)
         self.scenarios: Dict[str, AttackScenario] = {}
@@ -634,7 +631,6 @@ class SimulationOrchestrator:
 class MetricsCollector:
     """Collect and analyze simulation metrics"""
     
-    __slots__ = []
     def __init__(self):
         self.metrics = defaultdict(list)
         self.current_metrics = {}
@@ -681,7 +677,6 @@ class MetricsCollector:
 class ThreatIntelligence:
     """Threat intelligence integration"""
     
-    __slots__ = []
     def __init__(self):
         self.threat_feeds = []
         self.iocs = []
