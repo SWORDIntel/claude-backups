@@ -1,22 +1,17 @@
 [
   {
-    "content": "Remove old log files and temporary build artifacts",
+    "content": "Find and remove .md backup files and obsolete documentation",
     "status": "completed",
     "id": "1"
   },
   {
-    "content": "Clean up unused analysis and report files",
+    "content": "Clean up root directory files",
     "status": "completed",
     "id": "2"
   },
   {
-    "content": "Remove duplicate or obsolete scripts",
-    "status": "completed",
+    "content": "Commit and push cleanup to GitHub",
+    "status": "in_progress",
     "id": "3"
-  },
-  {
-    "content": "Clean up development artifacts and cache files",
-    "status": "completed",
-    "id": "4"
   }
 ]
