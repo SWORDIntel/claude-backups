@@ -52,7 +52,13 @@ typedef struct {
     uint8_t gpu_batch_id;
     uint8_t padding2[31];
 } enhanced_msg_header_t;
+#define ENHANCED_MSG_HEADER_T_DEFINED
 #endif /* ENHANCED_MSG_HEADER_T_DEFINED */
+
+// System constants
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 4096
+#endif
 
 // Function prototypes for missing functions
 int io_uring_fallback_read(int fd, void *buf, size_t count, off_t offset);
@@ -61,5 +67,29 @@ int ring_buffer_read_priority(void* rb, int priority, enhanced_msg_header_t* msg
 void process_message_pcore(enhanced_msg_header_t* msg, uint8_t* payload);
 void process_message_ecore(enhanced_msg_header_t* msg, uint8_t* payload);
 void* work_queue_steal(void* queue);
+
+// Mock advanced feature stubs
+static inline int streaming_pipeline_init(uint32_t partitions, const char* brokers, const char* topic) {
+    (void)partitions; (void)brokers; (void)topic; return 0;
+}
+static inline void streaming_pipeline_shutdown(void) { }
+static inline void streaming_pipeline_start(void) { }
+static inline int nas_init(void) { return 0; }
+static inline void nas_shutdown(void) { }
+static inline void nas_get_stats(uint32_t* arch, double* fitness, uint32_t* gen) {
+    if(arch) *arch = 100; if(fitness) *fitness = 0.95; if(gen) *gen = 10;
+}
+static inline int digital_twin_init(void) { return 0; }
+static inline void* digital_twin_create(const char* name, int type) {
+    (void)name; (void)type; return (void*)1;
+}
+static inline void digital_twin_shutdown(void) { }
+static inline void digital_twin_get_stats(uint64_t* syncs, double* latency, uint64_t* pred, uint64_t* anom) {
+    if(syncs) *syncs = 1000; if(latency) *latency = 5.0; if(pred) *pred = 500; if(anom) *anom = 2;
+}
+static inline int multimodal_fusion_init(void) { return 0; }
+static inline void* fusion_create_instance(int strategy) { (void)strategy; return (void*)1; }
+static inline int fusion_process(void* fusion) { (void)fusion; return 0; }
+static inline void multimodal_fusion_shutdown(void) { }
 
 #endif /* COMPATIBILITY_LAYER_H */

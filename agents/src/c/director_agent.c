@@ -15,7 +15,6 @@
  * Version: 1.0 Production
  */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1057,6 +1056,313 @@ int start_plan_execution(uint32_t plan_id) {
 }
 
 // ============================================================================
+// STRATEGIC DECISION ENGINE
+// ============================================================================
+
+typedef struct {
+    char scenario_name[128];
+    float complexity_score;      // 0.0 - 1.0
+    float risk_score;           // 0.0 - 1.0  
+    float urgency_score;        // 0.0 - 1.0
+    uint32_t resource_requirements;
+    uint32_t estimated_duration_ms;
+    bool requires_coordination;
+} decision_scenario_t;
+
+static int evaluate_strategic_decision(const char* context, decision_scenario_t* scenario) {
+    if (!context || !scenario) {
+        return -EINVAL;
+    }
+    
+    printf("Director: Evaluating strategic decision for context '%s'\n", context);
+    
+    // Initialize scenario
+    strncpy(scenario->scenario_name, context, sizeof(scenario->scenario_name) - 1);
+    scenario->scenario_name[sizeof(scenario->scenario_name) - 1] = '\0';
+    
+    // Analyze context keywords to determine scenario complexity
+    scenario->complexity_score = 0.3f; // Base complexity
+    scenario->risk_score = 0.2f;       // Base risk
+    scenario->urgency_score = 0.5f;    // Base urgency
+    scenario->resource_requirements = 1;
+    scenario->estimated_duration_ms = 60000; // 1 minute default
+    scenario->requires_coordination = false;
+    
+    // Context-based decision logic
+    if (strstr(context, "emergency") || strstr(context, "critical") || strstr(context, "urgent")) {
+        scenario->urgency_score = 0.9f + (float)(rand() % 10) / 100.0f;
+        scenario->risk_score = 0.6f + (float)(rand() % 40) / 100.0f;
+        scenario->resource_requirements = 3 + (rand() % 3);
+        scenario->estimated_duration_ms = 30000 + (rand() % 120000); // 30s - 2.5min
+        scenario->requires_coordination = true;
+    } else if (strstr(context, "build") || strstr(context, "compile") || strstr(context, "deploy")) {
+        scenario->complexity_score = 0.6f + (float)(rand() % 30) / 100.0f;
+        scenario->risk_score = 0.3f + (float)(rand() % 40) / 100.0f;
+        scenario->resource_requirements = 2 + (rand() % 4);
+        scenario->estimated_duration_ms = 120000 + (rand() % 480000); // 2-10min
+        scenario->requires_coordination = (scenario->complexity_score > 0.7f);
+    } else if (strstr(context, "test") || strstr(context, "validate") || strstr(context, "verify")) {
+        scenario->complexity_score = 0.4f + (float)(rand() % 40) / 100.0f;
+        scenario->risk_score = 0.2f + (float)(rand() % 30) / 100.0f;
+        scenario->resource_requirements = 1 + (rand() % 3);
+        scenario->estimated_duration_ms = 60000 + (rand() % 300000); // 1-6min
+        scenario->requires_coordination = (scenario->resource_requirements > 2);
+    } else if (strstr(context, "security") || strstr(context, "scan") || strstr(context, "audit")) {
+        scenario->complexity_score = 0.7f + (float)(rand() % 30) / 100.0f;
+        scenario->risk_score = 0.5f + (float)(rand() % 50) / 100.0f;
+        scenario->urgency_score = 0.8f + (float)(rand() % 20) / 100.0f;
+        scenario->resource_requirements = 2 + (rand() % 4);
+        scenario->estimated_duration_ms = 180000 + (rand() % 600000); // 3-13min
+        scenario->requires_coordination = true;
+    } else if (strstr(context, "analyze") || strstr(context, "review") || strstr(context, "inspect")) {
+        scenario->complexity_score = 0.5f + (float)(rand() % 40) / 100.0f;
+        scenario->risk_score = 0.1f + (float)(rand() % 30) / 100.0f;
+        scenario->resource_requirements = 1 + (rand() % 2);
+        scenario->estimated_duration_ms = 90000 + (rand() % 240000); // 1.5-5.5min
+        scenario->requires_coordination = false;
+    }
+    
+    printf("Director: Decision analysis - Complexity: %.2f, Risk: %.2f, Urgency: %.2f, Resources: %u\n",
+           scenario->complexity_score, scenario->risk_score, scenario->urgency_score, 
+           scenario->resource_requirements);
+    
+    return 0;
+}
+
+static uint32_t create_strategic_execution_plan(const decision_scenario_t* scenario) {
+    if (!scenario) {
+        return 0;
+    }
+    
+    // Determine plan priority based on scenario analysis
+    task_priority_t priority = TASK_PRIORITY_NORMAL;
+    if (scenario->urgency_score > 0.8f) {
+        priority = TASK_PRIORITY_EMERGENCY;
+    } else if (scenario->urgency_score > 0.6f || scenario->risk_score > 0.7f) {
+        priority = TASK_PRIORITY_CRITICAL;
+    } else if (scenario->complexity_score > 0.7f) {
+        priority = TASK_PRIORITY_HIGH;
+    }
+    
+    char plan_desc[1024];
+    snprintf(plan_desc, sizeof(plan_desc), 
+            "Strategic execution plan for %s (Complexity: %.2f, Risk: %.2f, Urgency: %.2f)",
+            scenario->scenario_name, scenario->complexity_score, 
+            scenario->risk_score, scenario->urgency_score);
+    
+    uint32_t plan_id = create_execution_plan(scenario->scenario_name, plan_desc, priority);
+    if (plan_id == 0) {
+        printf("Director: Failed to create strategic plan\n");
+        return 0;
+    }
+    
+    // Add steps based on scenario requirements
+    if (scenario->requires_coordination) {
+        add_execution_step(plan_id, "Coordinate Resources",
+                          "Allocate and coordinate required resources across agents",
+                          AGENT_TYPE_PROJECT_ORCHESTRATOR, "coordination",
+                          "coordinate", "type=resources sync=true",
+                          30000, TASK_PRIORITY_HIGH);
+    }
+    
+    if (scenario->complexity_score > 0.6f) {
+        add_execution_step(plan_id, "Architecture Review",
+                          "Review system architecture and design patterns",
+                          AGENT_TYPE_ARCHITECT, "system_analysis",
+                          "analyze_architecture", "depth=full patterns=true",
+                          scenario->estimated_duration_ms / 3, priority);
+    }
+    
+    if (scenario->risk_score > 0.5f) {
+        add_execution_step(plan_id, "Risk Assessment",
+                          "Assess and mitigate potential risks",
+                          AGENT_TYPE_SECURITY, "risk_analysis",
+                          "assess_risks", "scope=comprehensive mitigation=true",
+                          scenario->estimated_duration_ms / 4, TASK_PRIORITY_CRITICAL);
+    }
+    
+    // Add main execution step
+    add_execution_step(plan_id, "Main Execution",
+                      "Execute primary task objective",
+                      AGENT_TYPE_PROJECT_ORCHESTRATOR, "execution",
+                      "execute", "target=main comprehensive=true",
+                      scenario->estimated_duration_ms, priority);
+    
+    if (scenario->complexity_score > 0.7f || scenario->risk_score > 0.6f) {
+        add_execution_step(plan_id, "Validation & Verification",
+                          "Validate results and verify success criteria",
+                          AGENT_TYPE_TESTBED, "validation",
+                          "validate", "criteria=success deep_check=true",
+                          scenario->estimated_duration_ms / 5, TASK_PRIORITY_HIGH);
+    }
+    
+    printf("Director: Created strategic plan %u with scenario-based steps\n", plan_id);
+    return plan_id;
+}
+
+static void* strategic_decision_engine_thread(void* arg) {
+    (void)arg;
+    
+    pthread_setname_np(pthread_self(), "strategic_engine");
+    
+    while (g_director && g_director->running) {
+        // Monitor for strategic decision opportunities
+        sleep(5); // Check every 5 seconds
+        
+        // Analyze current system state
+        uint32_t active_plans = atomic_load(&g_director->stats.active_plans);
+        uint64_t completed_plans = atomic_load(&g_director->stats.plans_completed);
+        uint64_t failed_plans = atomic_load(&g_director->stats.plans_failed);
+        
+        // Calculate success rate and system health
+        float success_rate = (completed_plans + failed_plans > 0) ? 
+                           (float)completed_plans / (completed_plans + failed_plans) : 1.0f;
+        
+        // Make strategic decisions based on system health
+        if (success_rate < 0.8f && failed_plans > 5) {
+            printf("Director: Low success rate (%.1f%%) detected, initiating strategic response\n", 
+                   success_rate * 100.0f);
+            
+            decision_scenario_t scenario;
+            if (evaluate_strategic_decision("system_health_recovery", &scenario) == 0) {
+                uint32_t recovery_plan = create_strategic_execution_plan(&scenario);
+                if (recovery_plan > 0) {
+                    start_plan_execution(recovery_plan);
+                }
+            }
+        }
+        
+        if (active_plans > g_director->max_concurrent_plans * 0.9f) {
+            printf("Director: High system load detected, optimizing resource allocation\n");
+            
+            decision_scenario_t scenario;
+            if (evaluate_strategic_decision("resource_optimization", &scenario) == 0) {
+                uint32_t optimization_plan = create_strategic_execution_plan(&scenario);
+                if (optimization_plan > 0) {
+                    start_plan_execution(optimization_plan);
+                }
+            }
+        }
+        
+        // Emergency mode detection and response
+        if (!g_director->emergency_mode) {
+            uint64_t emergency_count = atomic_load(&g_director->stats.emergency_responses);
+            if (emergency_count > 0 && success_rate < 0.5f) {
+                printf("Director: Entering emergency mode due to system instability\n");
+                g_director->emergency_mode = true;
+                
+                decision_scenario_t scenario;
+                if (evaluate_strategic_decision("emergency_response", &scenario) == 0) {
+                    scenario.urgency_score = 1.0f;
+                    scenario.requires_coordination = true;
+                    uint32_t emergency_plan = create_strategic_execution_plan(&scenario);
+                    if (emergency_plan > 0) {
+                        start_plan_execution(emergency_plan);
+                    }
+                }
+            }
+        } else {
+            // Exit emergency mode when system stabilizes
+            if (success_rate > 0.9f && active_plans < g_director->max_concurrent_plans * 0.5f) {
+                printf("Director: Exiting emergency mode - system stabilized\n");
+                g_director->emergency_mode = false;
+            }
+        }
+    }
+    
+    return NULL;
+}
+
+// ============================================================================
+// MULTI-PHASE PLANNING ENGINE
+// ============================================================================
+
+typedef enum {
+    PHASE_ANALYSIS = 1,
+    PHASE_PLANNING = 2,
+    PHASE_PREPARATION = 3,
+    PHASE_EXECUTION = 4,
+    PHASE_VALIDATION = 5,
+    PHASE_COMPLETION = 6
+} execution_phase_t;
+
+typedef struct {
+    execution_phase_t phase;
+    char phase_name[64];
+    uint32_t estimated_duration_ms;
+    float success_probability;
+    bool phase_completed;
+    uint64_t phase_start_time;
+    uint64_t phase_end_time;
+} plan_phase_t;
+
+static int create_multi_phase_plan(const char* objective, const char* requirements) {
+    if (!objective) {
+        return 0;
+    }
+    
+    printf("Director: Creating multi-phase plan for objective '%s'\n", objective);
+    
+    char plan_name[128];
+    snprintf(plan_name, sizeof(plan_name), "Multi-Phase: %s", objective);
+    
+    uint32_t plan_id = create_execution_plan(plan_name, requirements, TASK_PRIORITY_HIGH);
+    if (plan_id == 0) {
+        return 0;
+    }
+    
+    // Phase 1: Analysis
+    uint32_t analysis_step = add_execution_step(plan_id, "Phase 1: Analysis",
+                                               "Comprehensive system and requirement analysis",
+                                               AGENT_TYPE_ARCHITECT, "system_analysis",
+                                               "analyze_comprehensive", requirements,
+                                               90000, TASK_PRIORITY_HIGH);
+    
+    // Phase 2: Planning
+    uint32_t planning_step = add_execution_step(plan_id, "Phase 2: Planning",
+                                               "Strategic planning and resource allocation",
+                                               AGENT_TYPE_PROJECT_ORCHESTRATOR, "strategic_planning",
+                                               "create_detailed_plan", "based_on=analysis",
+                                               60000, TASK_PRIORITY_HIGH);
+    add_step_dependency(plan_id, planning_step, analysis_step);
+    
+    // Phase 3: Preparation
+    uint32_t prep_step = add_execution_step(plan_id, "Phase 3: Preparation",
+                                           "Environment setup and resource preparation",
+                                           AGENT_TYPE_INFRASTRUCTURE, "environment_prep",
+                                           "prepare_environment", "comprehensive=true",
+                                           120000, TASK_PRIORITY_HIGH);
+    add_step_dependency(plan_id, prep_step, planning_step);
+    
+    // Phase 4: Execution
+    uint32_t exec_step = add_execution_step(plan_id, "Phase 4: Execution",
+                                           "Primary objective execution",
+                                           AGENT_TYPE_PROJECT_ORCHESTRATOR, "execution",
+                                           "execute_primary_objective", objective,
+                                           300000, TASK_PRIORITY_CRITICAL);
+    add_step_dependency(plan_id, exec_step, prep_step);
+    
+    // Phase 5: Validation
+    uint32_t validation_step = add_execution_step(plan_id, "Phase 5: Validation",
+                                                 "Results validation and quality assurance",
+                                                 AGENT_TYPE_TESTBED, "comprehensive_validation",
+                                                 "validate_results", "criteria=success quality=high",
+                                                 120000, TASK_PRIORITY_HIGH);
+    add_step_dependency(plan_id, validation_step, exec_step);
+    
+    // Phase 6: Completion
+    uint32_t completion_step = add_execution_step(plan_id, "Phase 6: Completion",
+                                                 "Finalization and documentation",
+                                                 AGENT_TYPE_DOCGEN, "documentation",
+                                                 "generate_completion_docs", "comprehensive=true",
+                                                 60000, TASK_PRIORITY_NORMAL);
+    add_step_dependency(plan_id, completion_step, validation_step);
+    
+    printf("Director: Created multi-phase plan %u with 6 sequential phases\n", plan_id);
+    return plan_id;
+}
+
+// ============================================================================
 // DIRECTOR CONTROL FUNCTIONS
 // ============================================================================
 
@@ -1073,8 +1379,61 @@ int start_director_threads() {
         return ret;
     }
     
-    printf("Director: Started execution threads\n");
+    // Start strategic decision engine thread
+    ret = pthread_create(&g_director->resource_monitor_thread, NULL,
+                        strategic_decision_engine_thread, NULL);
+    if (ret != 0) {
+        printf("Director: Failed to start strategic decision engine: %s\n", strerror(ret));
+        return ret;
+    }
+    
+    printf("Director: Started execution threads with strategic decision engine\n");
     return 0;
+}
+
+// ============================================================================
+// PUBLIC API FOR STRATEGIC DECISIONS
+// ============================================================================
+
+uint32_t director_make_strategic_decision(const char* context, const char* requirements) {
+    if (!g_director || !context) {
+        return 0;
+    }
+    
+    decision_scenario_t scenario;
+    if (evaluate_strategic_decision(context, &scenario) != 0) {
+        return 0;
+    }
+    
+    // Choose between single-phase or multi-phase execution
+    if (scenario.complexity_score > 0.7f || scenario.requires_coordination) {
+        return create_multi_phase_plan(context, requirements);
+    } else {
+        return create_strategic_execution_plan(&scenario);
+    }
+}
+
+int director_evaluate_system_health() {
+    if (!g_director) {
+        return -1;
+    }
+    
+    uint64_t total_plans = atomic_load(&g_director->stats.plans_completed) + 
+                          atomic_load(&g_director->stats.plans_failed);
+    
+    if (total_plans == 0) {
+        return 100; // Perfect health with no history
+    }
+    
+    float success_rate = (float)atomic_load(&g_director->stats.plans_completed) / total_plans;
+    uint32_t active_load = atomic_load(&g_director->stats.active_plans);
+    float load_factor = (float)active_load / g_director->max_concurrent_plans;
+    
+    // Calculate health score (0-100)
+    float health_score = (success_rate * 0.7f) + ((1.0f - load_factor) * 0.3f);
+    health_score *= 100.0f;
+    
+    return (int)fmaxf(0.0f, fminf(100.0f, health_score));
 }
 
 // ============================================================================

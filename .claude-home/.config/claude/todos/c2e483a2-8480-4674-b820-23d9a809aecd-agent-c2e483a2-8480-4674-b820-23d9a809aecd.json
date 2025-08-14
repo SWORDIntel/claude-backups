@@ -1,17 +1,27 @@
 [
   {
-    "content": "Save/update CLAUDE.md with latest findings",
+    "content": "Update Director to invoke PLANNER for strategic planning",
     "status": "completed",
     "id": "1"
   },
   {
-    "content": "Commit changes to git",
+    "content": "Update ProjectOrchestrator to coordinate with new agents",
     "status": "completed",
     "id": "2"
   },
   {
-    "content": "Push to GitHub repository",
+    "content": "Update Architect to work with NPU for AI acceleration",
     "status": "completed",
     "id": "3"
+  },
+  {
+    "content": "Update Security to coordinate with GNU for system security",
+    "status": "completed",
+    "id": "4"
+  },
+  {
+    "content": "Update other coordination patterns",
+    "status": "completed",
+    "id": "5"
   }
 ]

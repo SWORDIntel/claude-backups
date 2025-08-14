@@ -64,6 +64,15 @@
 #define CHAOS_IPC_BUFFER_SIZE 8192
 #define CHAOS_PYTHON_PATH "/usr/bin/python3"
 
+// RBAC constants
+#define MAX_USERS 1024
+#define MAX_SESSIONS 512
+#define MAX_AGENT_PERMISSIONS 31
+#define JWT_SECRET_KEY_SIZE 256
+#define SESSION_TOKEN_SIZE 64
+#define USERNAME_MAX_SIZE 64
+#define ROLE_NAME_MAX_SIZE 32
+
 // Vulnerability severity levels
 typedef enum {
     VULN_SEVERITY_CRITICAL = 0,
@@ -125,6 +134,49 @@ typedef enum {
     EVENT_CHAOS_FINDING_CRITICAL = 11,
     EVENT_CHAOS_REMEDIATION_READY = 12
 } security_event_type_t;
+
+// RBAC role hierarchy
+typedef enum {
+    RBAC_ROLE_GUEST = 0,        // Read-only access to basic info
+    RBAC_ROLE_USER = 1,         // Standard user operations
+    RBAC_ROLE_OPERATOR = 2,     // System operations, monitoring
+    RBAC_ROLE_ADMIN = 3         // Full administrative access
+} rbac_role_t;
+
+// Agent permissions
+typedef enum {
+    PERM_AGENT_DIRECTOR = 0,
+    PERM_AGENT_PROJECT_ORCHESTRATOR = 1,
+    PERM_AGENT_ARCHITECT = 2,
+    PERM_AGENT_CONSTRUCTOR = 3,
+    PERM_AGENT_PATCHER = 4,
+    PERM_AGENT_DEBUGGER = 5,
+    PERM_AGENT_TESTBED = 6,
+    PERM_AGENT_LINTER = 7,
+    PERM_AGENT_OPTIMIZER = 8,
+    PERM_AGENT_SECURITY = 9,
+    PERM_AGENT_BASTION = 10,
+    PERM_AGENT_SECURITY_CHAOS = 11,
+    PERM_AGENT_OVERSIGHT = 12,
+    PERM_AGENT_INFRASTRUCTURE = 13,
+    PERM_AGENT_DEPLOYER = 14,
+    PERM_AGENT_MONITOR = 15,
+    PERM_AGENT_PACKAGER = 16,
+    PERM_AGENT_API_DESIGNER = 17,
+    PERM_AGENT_DATABASE = 18,
+    PERM_AGENT_WEB = 19,
+    PERM_AGENT_MOBILE = 20,
+    PERM_AGENT_PYGUI = 21,
+    PERM_AGENT_TUI = 22,
+    PERM_AGENT_DATA_SCIENCE = 23,
+    PERM_AGENT_MLOPS = 24,
+    PERM_AGENT_DOCGEN = 25,
+    PERM_AGENT_RESEARCHER = 26,
+    PERM_AGENT_C_INTERNAL = 27,
+    PERM_AGENT_PYTHON_INTERNAL = 28,
+    PERM_SYSTEM_CONFIG = 29,
+    PERM_SYSTEM_SHUTDOWN = 30
+} agent_permission_t;
 
 // Incident states
 typedef enum {
@@ -382,6 +434,68 @@ typedef struct {
     
 } security_event_t;
 
+// RBAC User record
+typedef struct {
+    uint32_t user_id;
+    char username[USERNAME_MAX_SIZE];
+    char password_hash[64];           // SHA-256 hash
+    rbac_role_t role;
+    bool active;
+    bool locked;
+    uint32_t failed_login_attempts;
+    uint64_t last_login_ns;
+    uint64_t created_time_ns;
+    uint64_t last_activity_ns;
+    uint32_t permission_mask;         // Bitfield for agent permissions
+} rbac_user_t;
+
+// RBAC Session
+typedef struct {
+    char session_token[SESSION_TOKEN_SIZE];
+    uint32_t user_id;
+    rbac_role_t role;
+    uint32_t permission_mask;
+    uint64_t created_time_ns;
+    uint64_t last_access_ns;
+    uint64_t expires_ns;
+    bool active;
+    char client_ip[46];               // IPv6 compatible
+    char user_agent[256];
+} rbac_session_t;
+
+// Permission matrix for all roles
+typedef struct {
+    rbac_role_t role;
+    uint32_t permission_mask;         // Bitfield representing allowed permissions
+    char description[128];
+} role_permission_matrix_t;
+
+// JWT token structure
+typedef struct {
+    char header[256];
+    char payload[512];
+    char signature[256];
+    uint64_t issued_at;
+    uint64_t expires_at;
+    uint32_t user_id;
+    rbac_role_t role;
+    uint32_t permission_mask;
+} jwt_token_t;
+
+// RBAC audit log entry
+typedef struct {
+    uint32_t audit_id;
+    uint32_t user_id;
+    char username[USERNAME_MAX_SIZE];
+    char action[128];
+    char resource[256];
+    bool success;
+    char failure_reason[512];
+    uint64_t timestamp_ns;
+    char client_ip[46];
+    agent_permission_t requested_permission;
+} rbac_audit_entry_t;
+
 // Main Security Agent service
 typedef struct __attribute__((aligned(PAGE_SIZE))) {
     // Identity
@@ -437,10 +551,76 @@ typedef struct __attribute__((aligned(PAGE_SIZE))) {
     uint32_t max_concurrent_scans;
     bool real_time_monitoring;
     
+    // RBAC components
+    rbac_user_t users[MAX_USERS];
+    uint32_t user_count;
+    pthread_rwlock_t users_lock;
+    
+    rbac_session_t sessions[MAX_SESSIONS];
+    uint32_t session_count;
+    pthread_rwlock_t sessions_lock;
+    
+    role_permission_matrix_t role_matrix[4];  // 4 roles
+    char jwt_secret_key[JWT_SECRET_KEY_SIZE];
+    
+    rbac_audit_entry_t audit_log[8192];
+    uint32_t audit_head;
+    uint32_t audit_tail;
+    uint32_t audit_count;
+    pthread_rwlock_t audit_lock;
+    
 } security_service_t;
 
 // Global security instance
 static security_service_t* g_security = NULL;
+
+// ============================================================================
+// FUNCTION DECLARATIONS
+// ============================================================================
+
+// Core security functions
+int security_service_init();
+void security_service_cleanup();
+int start_security_threads();
+void print_security_statistics();
+
+// Vulnerability management
+uint32_t report_vulnerability(const char* title, const char* description,
+                             vulnerability_severity_t severity, const char* file_path,
+                             uint32_t line_number, const char* cve_id);
+int run_vulnerability_scan(const char* target_path, security_scan_type_t scan_type);
+
+// Threat management
+uint32_t report_threat(const char* threat_name, const char* description,
+                      threat_level_t level, const char* category);
+
+// Incident management
+uint32_t create_security_incident(const char* title, const char* description,
+                                 vulnerability_severity_t severity, bool confirmed);
+
+// Security event logging
+void log_security_event(security_event_type_t type, const char* source, const char* target,
+                        const char* description, vulnerability_severity_t severity, float risk_score);
+
+// RBAC system functions
+int rbac_init();
+int create_user(const char* username, const char* password, rbac_role_t role);
+int authenticate_user(const char* username, const char* password, const char* client_ip,
+                      const char* user_agent, char* session_token_out, size_t token_size);
+int create_session(uint32_t user_id, rbac_role_t role, uint32_t permission_mask,
+                   const char* client_ip, const char* user_agent,
+                   char* session_token_out, size_t token_size);
+int check_permission(const char* session_token, agent_permission_t permission,
+                     const char* resource, const char* client_ip);
+int revoke_session(const char* session_token);
+void cleanup_expired_sessions();
+int update_user_role(uint32_t user_id, rbac_role_t new_role);
+void rbac_audit_log(uint32_t user_id, const char* username, const char* action,
+                   const char* resource, bool success, const char* failure_reason,
+                   const char* client_ip, agent_permission_t permission);
+const char* get_permission_name(agent_permission_t permission);
+const char* get_role_name(rbac_role_t role);
+void print_rbac_statistics();
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -542,6 +722,9 @@ int security_service_init() {
     pthread_rwlock_init(&g_security->compliance_lock, NULL);
     pthread_rwlock_init(&g_security->incidents_lock, NULL);
     pthread_rwlock_init(&g_security->events_lock, NULL);
+    pthread_rwlock_init(&g_security->users_lock, NULL);
+    pthread_rwlock_init(&g_security->sessions_lock, NULL);
+    pthread_rwlock_init(&g_security->audit_lock, NULL);
     
     // Initialize counters
     g_security->vulnerability_count = 0;
@@ -575,6 +758,14 @@ int security_service_init() {
     g_security->metrics.mean_time_to_respond_hours = 0.0f;
     g_security->metrics.security_posture_score = 85.0f;  // Start with good baseline
     g_security->metrics.compliance_percentage = 90.0f;
+    
+    // Initialize RBAC system
+    if (rbac_init() != 0) {
+        printf("Failed to initialize RBAC system\n");
+        numa_free(g_security, sizeof(security_service_t));
+        g_security = NULL;
+        return -EINVAL;
+    }
     
     g_security->initialized = true;
     
@@ -610,11 +801,696 @@ void security_service_cleanup() {
     pthread_rwlock_destroy(&g_security->compliance_lock);
     pthread_rwlock_destroy(&g_security->incidents_lock);
     pthread_rwlock_destroy(&g_security->events_lock);
+    pthread_rwlock_destroy(&g_security->users_lock);
+    pthread_rwlock_destroy(&g_security->sessions_lock);
+    pthread_rwlock_destroy(&g_security->audit_lock);
     
     numa_free(g_security, sizeof(security_service_t));
     g_security = NULL;
     
     printf("Security Service: Cleaned up\n");
+}
+
+// ============================================================================
+// RBAC SYSTEM IMPLEMENTATION
+// ============================================================================
+
+static uint32_t generate_user_id() {
+    static _Atomic uint32_t id_counter = 1;
+    return atomic_fetch_add(&id_counter, 1);
+}
+
+static uint32_t generate_audit_id() {
+    static _Atomic uint32_t id_counter = 1;
+    return atomic_fetch_add(&id_counter, 1);
+}
+
+static void generate_session_token(char* token, size_t token_size) {
+    const char charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (size_t i = 0; i < token_size - 1; i++) {
+        token[i] = charset[rand() % (sizeof(charset) - 1)];
+    }
+    token[token_size - 1] = '\0';
+}
+
+static void sha256_hash(const char* input, char* output) {
+    // Simplified hash function for demo - use proper SHA-256 in production
+    uint32_t hash = 5381;
+    const unsigned char* str = (const unsigned char*)input;
+    int c;
+    
+    while ((c = *str++)) {
+        hash = ((hash << 5) + hash) + c;
+    }
+    
+    snprintf(output, 64, "%08x%08x%08x%08x%08x%08x%08x%08x", 
+             hash, hash ^ 0x12345678, hash ^ 0x87654321, hash ^ 0xABCDEF00,
+             hash ^ 0x11111111, hash ^ 0x22222222, hash ^ 0x33333333, hash ^ 0x44444444);
+}
+
+int rbac_init() {
+    if (!g_security) {
+        return -EINVAL;
+    }
+    
+    // Initialize counters
+    g_security->user_count = 0;
+    g_security->session_count = 0;
+    g_security->audit_head = 0;
+    g_security->audit_tail = 0;
+    g_security->audit_count = 0;
+    
+    // Initialize permission matrix for each role
+    // GUEST role - very limited access
+    g_security->role_matrix[RBAC_ROLE_GUEST].role = RBAC_ROLE_GUEST;
+    g_security->role_matrix[RBAC_ROLE_GUEST].permission_mask = 
+        (1U << PERM_AGENT_MONITOR) |           // Can view monitoring data
+        (1U << PERM_AGENT_RESEARCHER);         // Can access research tools
+    strcpy(g_security->role_matrix[RBAC_ROLE_GUEST].description, 
+           "Guest - Read-only access to monitoring and research");
+    
+    // USER role - standard development access
+    g_security->role_matrix[RBAC_ROLE_USER].role = RBAC_ROLE_USER;
+    g_security->role_matrix[RBAC_ROLE_USER].permission_mask = 
+        (1U << PERM_AGENT_ARCHITECT) |         // System design
+        (1U << PERM_AGENT_CONSTRUCTOR) |       // Project initialization
+        (1U << PERM_AGENT_PATCHER) |           // Code fixes
+        (1U << PERM_AGENT_DEBUGGER) |          // Debugging
+        (1U << PERM_AGENT_TESTBED) |           // Testing
+        (1U << PERM_AGENT_LINTER) |            // Code review
+        (1U << PERM_AGENT_OPTIMIZER) |         // Performance optimization
+        (1U << PERM_AGENT_MONITOR) |           // Monitoring
+        (1U << PERM_AGENT_API_DESIGNER) |      // API design
+        (1U << PERM_AGENT_DATABASE) |          // Database operations
+        (1U << PERM_AGENT_WEB) |               // Web development
+        (1U << PERM_AGENT_MOBILE) |            // Mobile development
+        (1U << PERM_AGENT_PYGUI) |             // Python GUI
+        (1U << PERM_AGENT_TUI) |               // Terminal UI
+        (1U << PERM_AGENT_DATA_SCIENCE) |      // Data science
+        (1U << PERM_AGENT_MLOPS) |             // ML operations
+        (1U << PERM_AGENT_DOCGEN) |            // Documentation
+        (1U << PERM_AGENT_RESEARCHER) |        // Research
+        (1U << PERM_AGENT_C_INTERNAL) |        // C development
+        (1U << PERM_AGENT_PYTHON_INTERNAL);    // Python development
+    strcpy(g_security->role_matrix[RBAC_ROLE_USER].description,
+           "User - Standard development and analysis access");
+    
+    // OPERATOR role - system operations
+    g_security->role_matrix[RBAC_ROLE_OPERATOR].role = RBAC_ROLE_OPERATOR;
+    g_security->role_matrix[RBAC_ROLE_OPERATOR].permission_mask = 
+        g_security->role_matrix[RBAC_ROLE_USER].permission_mask |  // All user permissions
+        (1U << PERM_AGENT_PROJECT_ORCHESTRATOR) |  // Project coordination
+        (1U << PERM_AGENT_SECURITY) |              // Security operations
+        (1U << PERM_AGENT_BASTION) |               // Defense systems
+        (1U << PERM_AGENT_OVERSIGHT) |             // Quality assurance
+        (1U << PERM_AGENT_INFRASTRUCTURE) |        // Infrastructure setup
+        (1U << PERM_AGENT_DEPLOYER) |              // Deployment
+        (1U << PERM_AGENT_PACKAGER) |              // Package management
+        (1U << PERM_SYSTEM_CONFIG);                // System configuration
+    strcpy(g_security->role_matrix[RBAC_ROLE_OPERATOR].description,
+           "Operator - System operations and security management");
+    
+    // ADMIN role - full access
+    g_security->role_matrix[RBAC_ROLE_ADMIN].role = RBAC_ROLE_ADMIN;
+    g_security->role_matrix[RBAC_ROLE_ADMIN].permission_mask = 0xFFFFFFFF;  // All permissions
+    strcpy(g_security->role_matrix[RBAC_ROLE_ADMIN].description,
+           "Admin - Full system access including critical operations");
+    
+    // Generate JWT secret key
+    generate_session_token(g_security->jwt_secret_key, JWT_SECRET_KEY_SIZE);
+    
+    // Create default admin user
+    create_user("admin", "admin123", RBAC_ROLE_ADMIN);
+    
+    printf("RBAC: Initialized with 4 roles and permission matrix for 31 agents\n");
+    return 0;
+}
+
+int create_user(const char* username, const char* password, rbac_role_t role) {
+    if (!g_security || !username || !password) {
+        return -EINVAL;
+    }
+    
+    if (strlen(username) >= USERNAME_MAX_SIZE) {
+        return -EINVAL;
+    }
+    
+    pthread_rwlock_wrlock(&g_security->users_lock);
+    
+    if (g_security->user_count >= MAX_USERS) {
+        pthread_rwlock_unlock(&g_security->users_lock);
+        return -ENOSPC;
+    }
+    
+    // Check if username already exists
+    for (uint32_t i = 0; i < g_security->user_count; i++) {
+        if (strcmp(g_security->users[i].username, username) == 0) {
+            pthread_rwlock_unlock(&g_security->users_lock);
+            return -EEXIST;
+        }
+    }
+    
+    // Find free slot
+    rbac_user_t* user = &g_security->users[g_security->user_count];
+    
+    // Initialize user
+    user->user_id = generate_user_id();
+    strncpy(user->username, username, sizeof(user->username) - 1);
+    user->username[sizeof(user->username) - 1] = '\0';
+    
+    // Hash password
+    sha256_hash(password, user->password_hash);
+    
+    user->role = role;
+    user->active = true;
+    user->locked = false;
+    user->failed_login_attempts = 0;
+    user->created_time_ns = get_timestamp_ns();
+    user->last_login_ns = 0;
+    user->last_activity_ns = user->created_time_ns;
+    
+    // Set permission mask based on role
+    if (role < 4) {
+        user->permission_mask = g_security->role_matrix[role].permission_mask;
+    } else {
+        user->permission_mask = 0;  // Invalid role
+    }
+    
+    g_security->user_count++;
+    uint32_t user_id = user->user_id;
+    
+    pthread_rwlock_unlock(&g_security->users_lock);
+    
+    rbac_audit_log(user_id, username, "CREATE_USER", username, true, NULL, "", PERM_SYSTEM_CONFIG);
+    
+    printf("RBAC: Created user '%s' with role %d (ID: %u)\n", username, role, user_id);
+    return user_id;
+}
+
+int authenticate_user(const char* username, const char* password, const char* client_ip,
+                      const char* user_agent, char* session_token_out, size_t token_size) {
+    if (!g_security || !username || !password || !session_token_out) {
+        return -EINVAL;
+    }
+    
+    pthread_rwlock_rdlock(&g_security->users_lock);
+    
+    rbac_user_t* user = NULL;
+    uint32_t user_index = 0;
+    
+    // Find user
+    for (uint32_t i = 0; i < g_security->user_count; i++) {
+        if (strcmp(g_security->users[i].username, username) == 0) {
+            user = &g_security->users[i];
+            user_index = i;
+            break;
+        }
+    }
+    
+    if (!user) {
+        pthread_rwlock_unlock(&g_security->users_lock);
+        rbac_audit_log(0, username, "LOGIN", "authentication", false, 
+                      "User not found", client_ip ? client_ip : "", PERM_SYSTEM_CONFIG);
+        return -ENOENT;
+    }
+    
+    if (!user->active || user->locked) {
+        pthread_rwlock_unlock(&g_security->users_lock);
+        rbac_audit_log(user->user_id, username, "LOGIN", "authentication", false,
+                      user->locked ? "Account locked" : "Account inactive",
+                      client_ip ? client_ip : "", PERM_SYSTEM_CONFIG);
+        return -EACCES;
+    }
+    
+    // Check password
+    char password_hash[64];
+    sha256_hash(password, password_hash);
+    
+    if (strcmp(user->password_hash, password_hash) != 0) {
+        // Increment failed login attempts
+        user->failed_login_attempts++;
+        
+        if (user->failed_login_attempts >= 5) {
+            user->locked = true;
+            printf("RBAC: Account '%s' locked due to too many failed attempts\n", username);
+        }
+        
+        pthread_rwlock_unlock(&g_security->users_lock);
+        
+        rbac_audit_log(user->user_id, username, "LOGIN", "authentication", false,
+                      "Invalid password", client_ip ? client_ip : "", PERM_SYSTEM_CONFIG);
+        return -EACCES;
+    }
+    
+    // Successful authentication - create session
+    user->failed_login_attempts = 0;
+    user->last_login_ns = get_timestamp_ns();
+    user->last_activity_ns = user->last_login_ns;
+    
+    uint32_t user_id = user->user_id;
+    rbac_role_t role = user->role;
+    uint32_t permission_mask = user->permission_mask;
+    
+    pthread_rwlock_unlock(&g_security->users_lock);
+    
+    // Create session
+    int session_result = create_session(user_id, role, permission_mask, client_ip, user_agent,
+                                       session_token_out, token_size);
+    
+    if (session_result == 0) {
+        rbac_audit_log(user_id, username, "LOGIN", "authentication", true, NULL,
+                      client_ip ? client_ip : "", PERM_SYSTEM_CONFIG);
+        printf("RBAC: User '%s' authenticated successfully (Role: %d)\n", username, role);
+    }
+    
+    return session_result;
+}
+
+int create_session(uint32_t user_id, rbac_role_t role, uint32_t permission_mask,
+                   const char* client_ip, const char* user_agent,
+                   char* session_token_out, size_t token_size) {
+    if (!g_security || !session_token_out || token_size < SESSION_TOKEN_SIZE) {
+        return -EINVAL;
+    }
+    
+    pthread_rwlock_wrlock(&g_security->sessions_lock);
+    
+    if (g_security->session_count >= MAX_SESSIONS) {
+        // Find and remove expired sessions
+        cleanup_expired_sessions();
+        
+        if (g_security->session_count >= MAX_SESSIONS) {
+            pthread_rwlock_unlock(&g_security->sessions_lock);
+            return -ENOSPC;
+        }
+    }
+    
+    // Find free slot
+    rbac_session_t* session = &g_security->sessions[g_security->session_count];
+    
+    // Generate session token
+    generate_session_token(session->session_token, SESSION_TOKEN_SIZE);
+    
+    // Initialize session
+    session->user_id = user_id;
+    session->role = role;
+    session->permission_mask = permission_mask;
+    session->created_time_ns = get_timestamp_ns();
+    session->last_access_ns = session->created_time_ns;
+    session->expires_ns = session->created_time_ns + (8ULL * 3600 * 1000000000ULL); // 8 hours
+    session->active = true;
+    
+    if (client_ip) {
+        strncpy(session->client_ip, client_ip, sizeof(session->client_ip) - 1);
+        session->client_ip[sizeof(session->client_ip) - 1] = '\0';
+    }
+    
+    if (user_agent) {
+        strncpy(session->user_agent, user_agent, sizeof(session->user_agent) - 1);
+        session->user_agent[sizeof(session->user_agent) - 1] = '\0';
+    }
+    
+    // Copy token to output
+    strncpy(session_token_out, session->session_token, token_size - 1);
+    session_token_out[token_size - 1] = '\0';
+    
+    g_security->session_count++;
+    
+    pthread_rwlock_unlock(&g_security->sessions_lock);
+    
+    printf("RBAC: Created session for user %u (expires in 8 hours)\n", user_id);
+    return 0;
+}
+
+int check_permission(const char* session_token, agent_permission_t permission,
+                     const char* resource, const char* client_ip) {
+    if (!g_security || !session_token) {
+        return -EINVAL;
+    }
+    
+    pthread_rwlock_rdlock(&g_security->sessions_lock);
+    
+    rbac_session_t* session = NULL;
+    
+    // Find session
+    for (uint32_t i = 0; i < g_security->session_count; i++) {
+        if (strcmp(g_security->sessions[i].session_token, session_token) == 0) {
+            session = &g_security->sessions[i];
+            break;
+        }
+    }
+    
+    if (!session || !session->active) {
+        pthread_rwlock_unlock(&g_security->sessions_lock);
+        rbac_audit_log(0, "unknown", "ACCESS_DENIED", resource ? resource : "",
+                      false, "Invalid session", client_ip ? client_ip : "", permission);
+        return -EACCES;
+    }
+    
+    // Check if session is expired
+    uint64_t current_time = get_timestamp_ns();
+    if (current_time > session->expires_ns) {
+        session->active = false;
+        pthread_rwlock_unlock(&g_security->sessions_lock);
+        rbac_audit_log(session->user_id, "expired", "ACCESS_DENIED", resource ? resource : "",
+                      false, "Session expired", client_ip ? client_ip : "", permission);
+        return -ETIME;
+    }
+    
+    // Check permission
+    bool has_permission = (session->permission_mask & (1U << permission)) != 0;
+    
+    if (has_permission) {
+        // Update last access time
+        session->last_access_ns = current_time;
+        
+        uint32_t user_id = session->user_id;
+        pthread_rwlock_unlock(&g_security->sessions_lock);
+        
+        // Get username for audit log
+        pthread_rwlock_rdlock(&g_security->users_lock);
+        char username[USERNAME_MAX_SIZE] = "unknown";
+        for (uint32_t i = 0; i < g_security->user_count; i++) {
+            if (g_security->users[i].user_id == user_id) {
+                strncpy(username, g_security->users[i].username, sizeof(username) - 1);
+                username[sizeof(username) - 1] = '\0';
+                break;
+            }
+        }
+        pthread_rwlock_unlock(&g_security->users_lock);
+        
+        rbac_audit_log(user_id, username, "ACCESS_GRANTED", resource ? resource : "",
+                      true, NULL, client_ip ? client_ip : "", permission);
+        return 0;
+    } else {
+        uint32_t user_id = session->user_id;
+        pthread_rwlock_unlock(&g_security->sessions_lock);
+        
+        // Get username for audit log
+        pthread_rwlock_rdlock(&g_security->users_lock);
+        char username[USERNAME_MAX_SIZE] = "unknown";
+        for (uint32_t i = 0; i < g_security->user_count; i++) {
+            if (g_security->users[i].user_id == user_id) {
+                strncpy(username, g_security->users[i].username, sizeof(username) - 1);
+                username[sizeof(username) - 1] = '\0';
+                break;
+            }
+        }
+        pthread_rwlock_unlock(&g_security->users_lock);
+        
+        rbac_audit_log(user_id, username, "ACCESS_DENIED", resource ? resource : "",
+                      false, "Insufficient permissions", client_ip ? client_ip : "", permission);
+        return -EPERM;
+    }
+}
+
+int revoke_session(const char* session_token) {
+    if (!g_security || !session_token) {
+        return -EINVAL;
+    }
+    
+    pthread_rwlock_wrlock(&g_security->sessions_lock);
+    
+    for (uint32_t i = 0; i < g_security->session_count; i++) {
+        if (strcmp(g_security->sessions[i].session_token, session_token) == 0) {
+            g_security->sessions[i].active = false;
+            uint32_t user_id = g_security->sessions[i].user_id;
+            pthread_rwlock_unlock(&g_security->sessions_lock);
+            
+            rbac_audit_log(user_id, "system", "LOGOUT", "session_revoked", true, NULL, "", PERM_SYSTEM_CONFIG);
+            printf("RBAC: Revoked session for user %u\n", user_id);
+            return 0;
+        }
+    }
+    
+    pthread_rwlock_unlock(&g_security->sessions_lock);
+    return -ENOENT;
+}
+
+void cleanup_expired_sessions() {
+    if (!g_security) {
+        return;
+    }
+    
+    uint64_t current_time = get_timestamp_ns();
+    uint32_t removed_count = 0;
+    
+    // Mark expired sessions as inactive
+    for (uint32_t i = 0; i < g_security->session_count; i++) {
+        if (g_security->sessions[i].active && current_time > g_security->sessions[i].expires_ns) {
+            g_security->sessions[i].active = false;
+            removed_count++;
+        }
+    }
+    
+    if (removed_count > 0) {
+        printf("RBAC: Cleaned up %u expired sessions\n", removed_count);
+    }
+}
+
+int update_user_role(uint32_t user_id, rbac_role_t new_role) {
+    if (!g_security) {
+        return -EINVAL;
+    }
+    
+    if (new_role >= 4) {  // Invalid role
+        return -EINVAL;
+    }
+    
+    pthread_rwlock_wrlock(&g_security->users_lock);
+    
+    rbac_user_t* user = NULL;
+    for (uint32_t i = 0; i < g_security->user_count; i++) {
+        if (g_security->users[i].user_id == user_id) {
+            user = &g_security->users[i];
+            break;
+        }
+    }
+    
+    if (!user) {
+        pthread_rwlock_unlock(&g_security->users_lock);
+        return -ENOENT;
+    }
+    
+    rbac_role_t old_role = user->role;
+    user->role = new_role;
+    user->permission_mask = g_security->role_matrix[new_role].permission_mask;
+    user->last_activity_ns = get_timestamp_ns();
+    
+    char username[USERNAME_MAX_SIZE];
+    strncpy(username, user->username, sizeof(username) - 1);
+    username[sizeof(username) - 1] = '\0';
+    
+    pthread_rwlock_unlock(&g_security->users_lock);
+    
+    // Update all active sessions for this user
+    pthread_rwlock_wrlock(&g_security->sessions_lock);
+    
+    for (uint32_t i = 0; i < g_security->session_count; i++) {
+        if (g_security->sessions[i].user_id == user_id && g_security->sessions[i].active) {
+            g_security->sessions[i].role = new_role;
+            g_security->sessions[i].permission_mask = g_security->role_matrix[new_role].permission_mask;
+        }
+    }
+    
+    pthread_rwlock_unlock(&g_security->sessions_lock);
+    
+    char audit_msg[256];
+    snprintf(audit_msg, sizeof(audit_msg), "Role changed from %d to %d", old_role, new_role);
+    
+    rbac_audit_log(user_id, username, "ROLE_UPDATE", username, true, NULL, "", PERM_SYSTEM_CONFIG);
+    
+    printf("RBAC: Updated user %u ('%s') role from %d to %d\n", user_id, username, old_role, new_role);
+    return 0;
+}
+
+void rbac_audit_log(uint32_t user_id, const char* username, const char* action,
+                   const char* resource, bool success, const char* failure_reason,
+                   const char* client_ip, agent_permission_t permission) {
+    if (!g_security) {
+        return;
+    }
+    
+    pthread_rwlock_wrlock(&g_security->audit_lock);
+    
+    // Find next slot (circular buffer)
+    uint32_t next_index = (g_security->audit_tail + 1) % 8192;
+    
+    if (next_index == g_security->audit_head && g_security->audit_count == 8192) {
+        // Buffer full, advance head
+        g_security->audit_head = (g_security->audit_head + 1) % 8192;
+    } else if (g_security->audit_count < 8192) {
+        g_security->audit_count++;
+    }
+    
+    // Add new audit entry
+    rbac_audit_entry_t* entry = &g_security->audit_log[g_security->audit_tail];
+    
+    entry->audit_id = generate_audit_id();
+    entry->user_id = user_id;
+    entry->success = success;
+    entry->timestamp_ns = get_timestamp_ns();
+    entry->requested_permission = permission;
+    
+    if (username) {
+        strncpy(entry->username, username, sizeof(entry->username) - 1);
+        entry->username[sizeof(entry->username) - 1] = '\0';
+    } else {
+        strcpy(entry->username, "unknown");
+    }
+    
+    if (action) {
+        strncpy(entry->action, action, sizeof(entry->action) - 1);
+        entry->action[sizeof(entry->action) - 1] = '\0';
+    }
+    
+    if (resource) {
+        strncpy(entry->resource, resource, sizeof(entry->resource) - 1);
+        entry->resource[sizeof(entry->resource) - 1] = '\0';
+    }
+    
+    if (failure_reason) {
+        strncpy(entry->failure_reason, failure_reason, sizeof(entry->failure_reason) - 1);
+        entry->failure_reason[sizeof(entry->failure_reason) - 1] = '\0';
+    } else {
+        entry->failure_reason[0] = '\0';
+    }
+    
+    if (client_ip) {
+        strncpy(entry->client_ip, client_ip, sizeof(entry->client_ip) - 1);
+        entry->client_ip[sizeof(entry->client_ip) - 1] = '\0';
+    } else {
+        entry->client_ip[0] = '\0';
+    }
+    
+    g_security->audit_tail = next_index;
+    
+    pthread_rwlock_unlock(&g_security->audit_lock);
+}
+
+// Helper function to get agent permission name
+const char* get_permission_name(agent_permission_t permission) {
+    static const char* permission_names[] = {
+        "DIRECTOR", "PROJECT_ORCHESTRATOR", "ARCHITECT", "CONSTRUCTOR",
+        "PATCHER", "DEBUGGER", "TESTBED", "LINTER", "OPTIMIZER",
+        "SECURITY", "BASTION", "SECURITY_CHAOS", "OVERSIGHT",
+        "INFRASTRUCTURE", "DEPLOYER", "MONITOR", "PACKAGER",
+        "API_DESIGNER", "DATABASE", "WEB", "MOBILE", "PYGUI", "TUI",
+        "DATA_SCIENCE", "MLOPS", "DOCGEN", "RESEARCHER",
+        "C_INTERNAL", "PYTHON_INTERNAL", "SYSTEM_CONFIG", "SYSTEM_SHUTDOWN"
+    };
+    
+    if (permission < sizeof(permission_names) / sizeof(permission_names[0])) {
+        return permission_names[permission];
+    }
+    return "UNKNOWN";
+}
+
+// Helper function to get role name
+const char* get_role_name(rbac_role_t role) {
+    static const char* role_names[] = {"GUEST", "USER", "OPERATOR", "ADMIN"};
+    if (role < 4) {
+        return role_names[role];
+    }
+    return "UNKNOWN";
+}
+
+void print_rbac_statistics() {
+    if (!g_security) {
+        printf("Security service not initialized\n");
+        return;
+    }
+    
+    printf("\n=== RBAC System Statistics ===\n");
+    
+    // User statistics
+    pthread_rwlock_rdlock(&g_security->users_lock);
+    
+    uint32_t active_users = 0;
+    uint32_t locked_users = 0;
+    uint32_t role_counts[4] = {0};
+    
+    for (uint32_t i = 0; i < g_security->user_count; i++) {
+        if (g_security->users[i].active) {
+            active_users++;
+            if (g_security->users[i].role < 4) {
+                role_counts[g_security->users[i].role]++;
+            }
+        }
+        if (g_security->users[i].locked) {
+            locked_users++;
+        }
+    }
+    
+    printf("Total users: %u\n", g_security->user_count);
+    printf("Active users: %u\n", active_users);
+    printf("Locked users: %u\n", locked_users);
+    
+    printf("\nUsers by role:\n");
+    for (int i = 0; i < 4; i++) {
+        printf("  %s: %u\n", get_role_name((rbac_role_t)i), role_counts[i]);
+    }
+    
+    pthread_rwlock_unlock(&g_security->users_lock);
+    
+    // Session statistics
+    pthread_rwlock_rdlock(&g_security->sessions_lock);
+    
+    uint32_t active_sessions = 0;
+    uint64_t current_time = get_timestamp_ns();
+    
+    for (uint32_t i = 0; i < g_security->session_count; i++) {
+        if (g_security->sessions[i].active && current_time <= g_security->sessions[i].expires_ns) {
+            active_sessions++;
+        }
+    }
+    
+    printf("\nSession statistics:\n");
+    printf("Total sessions: %u\n", g_security->session_count);
+    printf("Active sessions: %u\n", active_sessions);
+    
+    pthread_rwlock_unlock(&g_security->sessions_lock);
+    
+    // Permission matrix
+    printf("\nRole Permission Matrix:\n");
+    printf("%-12s %-40s %-12s\n", "Role", "Description", "Permissions");
+    printf("%-12s %-40s %-12s\n", "------------", "----------------------------------------", "------------");
+    
+    for (int i = 0; i < 4; i++) {
+        uint32_t perm_count = __builtin_popcount(g_security->role_matrix[i].permission_mask);
+        printf("%-12s %-40s %-12u\n", 
+               get_role_name((rbac_role_t)i),
+               g_security->role_matrix[i].description,
+               perm_count);
+    }
+    
+    // Recent audit entries
+    printf("\nRecent audit log entries:\n");
+    printf("%-8s %-16s %-16s %-20s %-8s %-20s\n", 
+           "ID", "Username", "Action", "Resource", "Success", "Permission");
+    printf("%-8s %-16s %-16s %-20s %-8s %-20s\n", 
+           "--------", "----------------", "----------------", "--------------------", 
+           "--------", "--------------------");
+    
+    pthread_rwlock_rdlock(&g_security->audit_lock);
+    
+    uint32_t entries_to_show = g_security->audit_count < 10 ? g_security->audit_count : 10;
+    uint32_t start_index = g_security->audit_count > 10 ? 
+                          (g_security->audit_tail + 8192 - 10) % 8192 : 
+                          g_security->audit_head;
+    
+    for (uint32_t i = 0; i < entries_to_show; i++) {
+        uint32_t index = (start_index + i) % 8192;
+        rbac_audit_entry_t* entry = &g_security->audit_log[index];
+        
+        printf("%-8u %-16s %-16s %-20s %-8s %-20s\n",
+               entry->audit_id, entry->username, entry->action, entry->resource,
+               entry->success ? "Yes" : "No", get_permission_name(entry->requested_permission));
+    }
+    
+    pthread_rwlock_unlock(&g_security->audit_lock);
+    
+    printf("\n");
 }
 
 // ============================================================================
@@ -1271,6 +2147,105 @@ int main() {
             print_security_statistics();
         }
     }
+    
+    // Test RBAC system
+    printf("\nTesting RBAC system...\n");
+    
+    // Create test users
+    create_user("developer", "dev123", RBAC_ROLE_USER);
+    create_user("operator", "op123", RBAC_ROLE_OPERATOR);
+    create_user("guest_user", "guest123", RBAC_ROLE_GUEST);
+    
+    // Test authentication and sessions
+    char session_token[SESSION_TOKEN_SIZE];
+    
+    printf("\nTesting authentication...\n");
+    if (authenticate_user("developer", "dev123", "192.168.1.100", "TestClient/1.0", 
+                         session_token, SESSION_TOKEN_SIZE) == 0) {
+        printf("Developer authentication successful\n");
+        
+        // Test permissions
+        printf("Testing permissions for developer:\n");
+        
+        // Should have access to architect
+        if (check_permission(session_token, PERM_AGENT_ARCHITECT, "test_resource", "192.168.1.100") == 0) {
+            printf("  - ARCHITECT access: GRANTED\n");
+        } else {
+            printf("  - ARCHITECT access: DENIED\n");
+        }
+        
+        // Should NOT have access to director
+        if (check_permission(session_token, PERM_AGENT_DIRECTOR, "test_resource", "192.168.1.100") == 0) {
+            printf("  - DIRECTOR access: GRANTED\n");
+        } else {
+            printf("  - DIRECTOR access: DENIED (correct)\n");
+        }
+        
+        // Should NOT have access to system shutdown
+        if (check_permission(session_token, PERM_SYSTEM_SHUTDOWN, "test_resource", "192.168.1.100") == 0) {
+            printf("  - SYSTEM_SHUTDOWN access: GRANTED\n");
+        } else {
+            printf("  - SYSTEM_SHUTDOWN access: DENIED (correct)\n");
+        }
+    }
+    
+    // Test operator permissions
+    char op_session_token[SESSION_TOKEN_SIZE];
+    if (authenticate_user("operator", "op123", "192.168.1.101", "TestClient/1.0", 
+                         op_session_token, SESSION_TOKEN_SIZE) == 0) {
+        printf("\nTesting operator permissions:\n");
+        
+        // Should have access to security
+        if (check_permission(op_session_token, PERM_AGENT_SECURITY, "security_ops", "192.168.1.101") == 0) {
+            printf("  - SECURITY access: GRANTED\n");
+        } else {
+            printf("  - SECURITY access: DENIED\n");
+        }
+        
+        // Should have access to infrastructure
+        if (check_permission(op_session_token, PERM_AGENT_INFRASTRUCTURE, "infra_ops", "192.168.1.101") == 0) {
+            printf("  - INFRASTRUCTURE access: GRANTED\n");
+        } else {
+            printf("  - INFRASTRUCTURE access: DENIED\n");
+        }
+        
+        // Should NOT have access to system shutdown (admin only)
+        if (check_permission(op_session_token, PERM_SYSTEM_SHUTDOWN, "shutdown_ops", "192.168.1.101") == 0) {
+            printf("  - SYSTEM_SHUTDOWN access: GRANTED\n");
+        } else {
+            printf("  - SYSTEM_SHUTDOWN access: DENIED (correct)\n");
+        }
+    }
+    
+    // Test admin permissions
+    char admin_session_token[SESSION_TOKEN_SIZE];
+    if (authenticate_user("admin", "admin123", "192.168.1.1", "TestClient/1.0", 
+                         admin_session_token, SESSION_TOKEN_SIZE) == 0) {
+        printf("\nTesting admin permissions:\n");
+        
+        // Should have access to everything
+        if (check_permission(admin_session_token, PERM_SYSTEM_SHUTDOWN, "shutdown_ops", "192.168.1.1") == 0) {
+            printf("  - SYSTEM_SHUTDOWN access: GRANTED\n");
+        } else {
+            printf("  - SYSTEM_SHUTDOWN access: DENIED\n");
+        }
+        
+        if (check_permission(admin_session_token, PERM_AGENT_DIRECTOR, "director_ops", "192.168.1.1") == 0) {
+            printf("  - DIRECTOR access: GRANTED\n");
+        } else {
+            printf("  - DIRECTOR access: DENIED\n");
+        }
+    }
+    
+    // Test role updates
+    printf("\nTesting role updates...\n");
+    uint32_t dev_user_id = 2; // Should be the developer user
+    if (update_user_role(dev_user_id, RBAC_ROLE_OPERATOR) == 0) {
+        printf("Successfully updated developer to operator role\n");
+    }
+    
+    // Print RBAC statistics
+    print_rbac_statistics();
     
     // Final statistics
     print_security_statistics();

@@ -7,7 +7,13 @@
     "memory-command": 1,
     "theme-command": 1,
     "status-line": 1,
-    "prompt-queue": 1
+    "prompt-queue": 1,
+    "enter-to-steer-in-relatime": 1,
+    "todo-list": 1,
+    "# for memory": 1,
+    "install-github-app": 1,
+    "drag-and-drop-images": 1,
+    "double-esc": 1
   },
   "firstStartTime": "2025-08-14T09:31:59.438Z",
   "userID": "bf25675a84e7107c23a73edb52587b7cbd0dcd49ab110cbb4d9b2255f0f46632",
@@ -15,6 +21,30 @@
     "/home/ubuntu/Documents/Claude": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "When do limits for opus reset",
+          "pastedContents": {}
+        },
+        {
+          "display": "use PLANNER",
+          "pastedContents": {}
+        },
+        {
+          "display": "Any other agents that could be intergrated with each other and.or the messaging protocol also how does the voice aspect come into effect",
+          "pastedContents": {}
+        },
+        {
+          "display": "Updated the director and orchestrator etc with the new agents eg the planner",
+          "pastedContents": {}
+        },
+        {
+          "display": "Have you updated all existing agents",
+          "pastedContents": {}
+        },
+        {
+          "display": "sort out the agents dir moving anything not used into deprecated/ and neatly organise the source code with a WHERE I AM file describing each,then prepare to bring it online and intergrate it with every agent and do so automatically in future",
+          "pastedContents": {}
+        },
         {
           "display": "Use all agents in parallel invoke director first to solve it",
           "pastedContents": {}

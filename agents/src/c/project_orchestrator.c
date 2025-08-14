@@ -898,8 +898,317 @@ int add_task_dependency(uint32_t workflow_id, uint32_t task_id, uint32_t depende
 }
 
 // ============================================================================
-// WORKFLOW EXECUTION ENGINE
+// DAG-BASED WORKFLOW EXECUTION ENGINE
 // ============================================================================
+
+// DAG node structure
+typedef struct dag_node {
+    uint32_t task_id;
+    uint32_t level;              // Topological level (0 = no dependencies)
+    uint32_t in_degree;          // Number of incoming edges
+    uint32_t out_degree;         // Number of outgoing edges
+    struct dag_node* incoming[MAX_TASK_DEPENDENCIES];
+    struct dag_node* outgoing[MAX_TASK_DEPENDENCIES];
+    bool visited;
+    bool in_critical_path;
+    float earliest_start_time;
+    float latest_start_time;
+    float slack_time;
+} dag_node_t;
+
+// DAG execution context
+typedef struct {
+    dag_node_t nodes[MAX_WORKFLOW_TASKS];
+    uint32_t node_count;
+    uint32_t max_level;
+    uint32_t critical_path_length;
+    float total_estimated_time;
+    bool is_acyclic;
+} workflow_dag_t;
+
+static int build_workflow_dag(workflow_context_t* workflow, workflow_dag_t* dag) {
+    if (!workflow || !dag) {
+        return -EINVAL;
+    }
+    
+    printf("Orchestrator: Building DAG for workflow '%s' with %u tasks\n", 
+           workflow->name, workflow->task_count);
+    
+    memset(dag, 0, sizeof(workflow_dag_t));
+    dag->node_count = workflow->task_count;
+    dag->is_acyclic = true;
+    
+    // Initialize DAG nodes
+    for (uint32_t i = 0; i < workflow->task_count; i++) {
+        dag_node_t* node = &dag->nodes[i];
+        node->task_id = workflow->tasks[i].task_id;
+        node->level = 0;
+        node->in_degree = workflow->tasks[i].dependency_count;
+        node->out_degree = workflow->tasks[i].dependent_count;
+        node->visited = false;
+        node->in_critical_path = false;
+        node->earliest_start_time = 0.0f;
+        node->latest_start_time = 0.0f;
+        node->slack_time = 0.0f;
+    }
+    
+    // Build dependency edges
+    for (uint32_t i = 0; i < workflow->task_count; i++) {
+        workflow_task_t* task = &workflow->tasks[i];
+        dag_node_t* node = &dag->nodes[i];
+        
+        uint32_t incoming_idx = 0, outgoing_idx = 0;
+        
+        // Set incoming edges (dependencies)
+        for (uint32_t j = 0; j < task->dependency_count; j++) {
+            uint32_t dep_task_id = task->dependencies[j];
+            
+            // Find the dependency node
+            for (uint32_t k = 0; k < dag->node_count; k++) {
+                if (dag->nodes[k].task_id == dep_task_id) {
+                    node->incoming[incoming_idx++] = &dag->nodes[k];
+                    break;
+                }
+            }
+        }
+        
+        // Set outgoing edges (dependents)
+        for (uint32_t j = 0; j < task->dependent_count; j++) {
+            uint32_t dep_task_id = task->dependents[j];
+            
+            // Find the dependent node
+            for (uint32_t k = 0; k < dag->node_count; k++) {
+                if (dag->nodes[k].task_id == dep_task_id) {
+                    node->outgoing[outgoing_idx++] = &dag->nodes[k];
+                    break;
+                }
+            }
+        }
+    }
+    
+    printf("Orchestrator: DAG built with %u nodes\n", dag->node_count);
+    return 0;
+}
+
+static int detect_cycles_dfs(dag_node_t* node, int* color, workflow_dag_t* dag) {
+    color[node - dag->nodes] = 1; // Gray (visiting)
+    
+    for (uint32_t i = 0; i < node->out_degree; i++) {
+        dag_node_t* neighbor = node->outgoing[i];
+        int neighbor_idx = neighbor - dag->nodes;
+        
+        if (color[neighbor_idx] == 1) {
+            // Back edge found - cycle detected
+            return -1;
+        }
+        if (color[neighbor_idx] == 0 && detect_cycles_dfs(neighbor, color, dag) == -1) {
+            return -1;
+        }
+    }
+    
+    color[node - dag->nodes] = 2; // Black (visited)
+    return 0;
+}
+
+static int validate_dag_acyclic(workflow_dag_t* dag) {
+    if (!dag) {
+        return -EINVAL;
+    }
+    
+    // Color array: 0=white, 1=gray, 2=black
+    int* color = calloc(dag->node_count, sizeof(int));
+    if (!color) {
+        return -ENOMEM;
+    }
+    
+    // DFS cycle detection
+    for (uint32_t i = 0; i < dag->node_count; i++) {
+        if (color[i] == 0) {
+            if (detect_cycles_dfs(&dag->nodes[i], color, dag) == -1) {
+                dag->is_acyclic = false;
+                free(color);
+                printf("Orchestrator: ERROR - Cycle detected in workflow DAG\n");
+                return -1;
+            }
+        }
+    }
+    
+    free(color);
+    dag->is_acyclic = true;
+    printf("Orchestrator: DAG validated as acyclic\n");
+    return 0;
+}
+
+static int calculate_topological_levels(workflow_dag_t* dag) {
+    if (!dag || !dag->is_acyclic) {
+        return -EINVAL;
+    }
+    
+    // Kahn's algorithm for topological sorting with level calculation
+    uint32_t* in_degree = malloc(dag->node_count * sizeof(uint32_t));
+    if (!in_degree) {
+        return -ENOMEM;
+    }
+    
+    // Initialize in-degrees
+    for (uint32_t i = 0; i < dag->node_count; i++) {
+        in_degree[i] = dag->nodes[i].in_degree;
+        dag->nodes[i].level = 0;
+    }
+    
+    // Queue for nodes with no incoming edges
+    uint32_t* queue = malloc(dag->node_count * sizeof(uint32_t));
+    uint32_t queue_start = 0, queue_end = 0;
+    
+    // Find initial nodes (no dependencies)
+    for (uint32_t i = 0; i < dag->node_count; i++) {
+        if (in_degree[i] == 0) {
+            queue[queue_end++] = i;
+            dag->nodes[i].level = 0;
+        }
+    }
+    
+    dag->max_level = 0;
+    
+    // Process nodes level by level
+    while (queue_start < queue_end) {
+        uint32_t node_idx = queue[queue_start++];
+        dag_node_t* node = &dag->nodes[node_idx];
+        
+        // Update levels of dependent nodes
+        for (uint32_t i = 0; i < node->out_degree; i++) {
+            dag_node_t* dependent = node->outgoing[i];
+            uint32_t dep_idx = dependent - dag->nodes;
+            
+            in_degree[dep_idx]--;
+            
+            // Update level (max of all dependency levels + 1)
+            if (dependent->level <= node->level) {
+                dependent->level = node->level + 1;
+                dag->max_level = (dependent->level > dag->max_level) ? 
+                                dependent->level : dag->max_level;
+            }
+            
+            if (in_degree[dep_idx] == 0) {
+                queue[queue_end++] = dep_idx;
+            }
+        }
+    }
+    
+    free(in_degree);
+    free(queue);
+    
+    printf("Orchestrator: Calculated topological levels (max level: %u)\n", dag->max_level);
+    return 0;
+}
+
+static int calculate_critical_path(workflow_context_t* workflow, workflow_dag_t* dag) {
+    if (!workflow || !dag || !dag->is_acyclic) {
+        return -EINVAL;
+    }
+    
+    // Forward pass - calculate earliest start times
+    for (uint32_t level = 0; level <= dag->max_level; level++) {
+        for (uint32_t i = 0; i < dag->node_count; i++) {
+            dag_node_t* node = &dag->nodes[i];
+            
+            if (node->level == level) {
+                float max_finish_time = 0.0f;
+                
+                // Find maximum finish time of all dependencies
+                for (uint32_t j = 0; j < node->in_degree; j++) {
+                    dag_node_t* dep_node = node->incoming[j];
+                    
+                    // Get task duration
+                    float task_duration = 60000.0f; // Default 1 minute
+                    for (uint32_t k = 0; k < workflow->task_count; k++) {
+                        if (workflow->tasks[k].task_id == dep_node->task_id) {
+                            task_duration = (float)workflow->tasks[k].timeout_ms;
+                            break;
+                        }
+                    }
+                    
+                    float finish_time = dep_node->earliest_start_time + task_duration;
+                    max_finish_time = (finish_time > max_finish_time) ? finish_time : max_finish_time;
+                }
+                
+                node->earliest_start_time = max_finish_time;
+            }
+        }
+    }
+    
+    // Find total project duration
+    float max_project_duration = 0.0f;
+    for (uint32_t i = 0; i < dag->node_count; i++) {
+        dag_node_t* node = &dag->nodes[i];
+        
+        if (node->out_degree == 0) { // End node
+            float task_duration = 60000.0f;
+            for (uint32_t j = 0; j < workflow->task_count; j++) {
+                if (workflow->tasks[j].task_id == node->task_id) {
+                    task_duration = (float)workflow->tasks[j].timeout_ms;
+                    break;
+                }
+            }
+            
+            float finish_time = node->earliest_start_time + task_duration;
+            max_project_duration = (finish_time > max_project_duration) ? 
+                                  finish_time : max_project_duration;
+        }
+    }
+    
+    dag->total_estimated_time = max_project_duration;
+    
+    // Backward pass - calculate latest start times and slack
+    for (uint32_t i = 0; i < dag->node_count; i++) {
+        dag_node_t* node = &dag->nodes[i];
+        
+        if (node->out_degree == 0) {
+            node->latest_start_time = node->earliest_start_time;
+        } else {
+            node->latest_start_time = max_project_duration;
+            
+            for (uint32_t j = 0; j < node->out_degree; j++) {
+                dag_node_t* dep_node = node->outgoing[j];
+                float start_time = dep_node->latest_start_time;
+                
+                // Get current node's task duration
+                float task_duration = 60000.0f;
+                for (uint32_t k = 0; k < workflow->task_count; k++) {
+                    if (workflow->tasks[k].task_id == node->task_id) {
+                        task_duration = (float)workflow->tasks[k].timeout_ms;
+                        break;
+                    }
+                }
+                
+                float required_start = start_time - task_duration;
+                node->latest_start_time = (required_start < node->latest_start_time) ? 
+                                         required_start : node->latest_start_time;
+            }
+        }
+        
+        // Calculate slack time
+        node->slack_time = node->latest_start_time - node->earliest_start_time;
+        
+        // Mark critical path nodes (zero slack)
+        node->in_critical_path = (node->slack_time < 1000.0f); // Less than 1 second slack
+    }
+    
+    // Count critical path nodes
+    uint32_t critical_nodes = 0;
+    for (uint32_t i = 0; i < dag->node_count; i++) {
+        if (dag->nodes[i].in_critical_path) {
+            critical_nodes++;
+        }
+    }
+    
+    dag->critical_path_length = critical_nodes;
+    
+    printf("Orchestrator: Critical path calculated - %u nodes, %.1fs total duration\n", 
+           critical_nodes, dag->total_estimated_time / 1000.0f);
+    
+    return 0;
+}
 
 static bool are_task_dependencies_satisfied(const workflow_context_t* workflow, 
                                            const workflow_task_t* task) {
@@ -921,6 +1230,76 @@ static bool are_task_dependencies_satisfied(const workflow_context_t* workflow,
     }
     
     return true;
+}
+
+static workflow_task_t* select_next_task_dag_priority(workflow_context_t* workflow, 
+                                                     workflow_dag_t* dag) {
+    if (!workflow || !dag) {
+        return NULL;
+    }
+    
+    workflow_task_t* best_task = NULL;
+    float best_priority_score = -1.0f;
+    
+    for (uint32_t i = 0; i < workflow->task_count; i++) {
+        workflow_task_t* task = &workflow->tasks[i];
+        
+        if (task->state != TASK_STATE_PENDING) {
+            continue;
+        }
+        
+        if (!are_task_dependencies_satisfied(workflow, task)) {
+            continue;
+        }
+        
+        // Find corresponding DAG node
+        dag_node_t* dag_node = NULL;
+        for (uint32_t j = 0; j < dag->node_count; j++) {
+            if (dag->nodes[j].task_id == task->task_id) {
+                dag_node = &dag->nodes[j];
+                break;
+            }
+        }
+        
+        if (!dag_node) {
+            continue;
+        }
+        
+        // Calculate priority score based on:
+        // 1. Critical path membership (highest priority)
+        // 2. Low slack time (earlier scheduling needed)
+        // 3. Task priority level
+        // 4. Topological level (earlier dependencies)
+        
+        float priority_score = 0.0f;
+        
+        if (dag_node->in_critical_path) {
+            priority_score += 100.0f; // Critical path gets highest priority
+        }
+        
+        // Inverse slack time (lower slack = higher priority)
+        priority_score += (10000.0f - dag_node->slack_time) / 100.0f;
+        
+        // Task priority
+        switch (task->priority) {
+            case PRIORITY_EMERGENCY: priority_score += 50.0f; break;
+            case PRIORITY_CRITICAL: priority_score += 40.0f; break;
+            case PRIORITY_HIGH: priority_score += 30.0f; break;
+            case PRIORITY_NORMAL: priority_score += 20.0f; break;
+            case PRIORITY_LOW: priority_score += 10.0f; break;
+            case PRIORITY_BACKGROUND: priority_score += 5.0f; break;
+        }
+        
+        // Prefer earlier levels (foundational tasks)
+        priority_score += (10.0f - (float)dag_node->level);
+        
+        if (priority_score > best_priority_score) {
+            best_priority_score = priority_score;
+            best_task = task;
+        }
+    }
+    
+    return best_task;
 }
 
 static int execute_task(workflow_task_t* task) {
@@ -1028,6 +1407,13 @@ static void* workflow_executor_thread(void* arg) {
     snprintf(thread_name, sizeof(thread_name), "wf_exec_%d", executor->thread_id);
     pthread_setname_np(pthread_self(), thread_name);
     
+    // Local DAG cache for workflows
+    workflow_dag_t* workflow_dags = calloc(MAX_WORKFLOWS, sizeof(workflow_dag_t));
+    if (!workflow_dags) {
+        printf("Orchestrator: Failed to allocate DAG cache for executor %d\n", executor->thread_id);
+        return NULL;
+    }
+    
     while (executor->running && g_orchestrator->running) {
         bool found_work = false;
         
@@ -1043,91 +1429,177 @@ static void* workflow_executor_thread(void* arg) {
             
             pthread_mutex_lock(&workflow->lock);
             
-            // Find ready tasks
-            for (uint32_t j = 0; j < workflow->task_count; j++) {
-                workflow_task_t* task = &workflow->tasks[j];
+            // Build/update DAG for this workflow if needed
+            workflow_dag_t* dag = &workflow_dags[i];
+            if (dag->node_count == 0 || dag->node_count != workflow->task_count) {
+                printf("Orchestrator: Building DAG for workflow '%s'\n", workflow->name);
                 
-                if (task->state == TASK_STATE_PENDING &&
-                    are_task_dependencies_satisfied(workflow, task)) {
+                if (build_workflow_dag(workflow, dag) == 0 &&
+                    validate_dag_acyclic(dag) == 0 &&
+                    calculate_topological_levels(dag) == 0 &&
+                    calculate_critical_path(workflow, dag) == 0) {
                     
-                    // Check parallel execution limits
-                    if (workflow->strategy == STRATEGY_PARALLEL_LIMITED &&
-                        workflow->tasks_running >= workflow->max_parallel_tasks) {
-                        continue;
+                    printf("Orchestrator: DAG analysis complete - Critical path: %u tasks, Est. time: %.1fs\n",
+                           dag->critical_path_length, dag->total_estimated_time / 1000.0f);
+                } else {
+                    printf("Orchestrator: Failed to build DAG, falling back to simple scheduling\n");
+                    dag->node_count = 0; // Mark as invalid
+                }
+            }
+            
+            // Select next task using DAG-based priority scheduling
+            workflow_task_t* selected_task = NULL;
+            
+            if (dag->node_count > 0 && dag->is_acyclic) {
+                // Use advanced DAG-based scheduling
+                selected_task = select_next_task_dag_priority(workflow, dag);
+            } else {
+                // Fall back to simple dependency-based scheduling
+                for (uint32_t j = 0; j < workflow->task_count; j++) {
+                    workflow_task_t* task = &workflow->tasks[j];
+                    
+                    if (task->state == TASK_STATE_PENDING &&
+                        are_task_dependencies_satisfied(workflow, task)) {
+                        selected_task = task;
+                        break;
                     }
-                    
-                    if (workflow->strategy == STRATEGY_SEQUENTIAL &&
-                        workflow->tasks_running > 0) {
-                        continue;
-                    }
-                    
-                    // Assign task
-                    task->state = TASK_STATE_QUEUED;
-                    task->assigned_agent_id = executor->thread_id;
-                    workflow->tasks_pending--;
-                    workflow->tasks_running++;
-                    found_work = true;
-                    
-                    atomic_fetch_add(&g_orchestrator->stats.active_tasks, 1);
-                    
-                    // Execute task
-                    int result = execute_task(task);
-                    
-                    // Update workflow state
-                    workflow->tasks_running--;
-                    if (result == 0) {
-                        workflow->tasks_completed++;
-                    } else {
-                        workflow->tasks_failed++;
-                        
-                        // Retry logic
-                        uint32_t retry_count = atomic_load(&task->metrics.retry_count);
-                        if (retry_count < task->max_retries) {
-                            atomic_fetch_add(&task->metrics.retry_count, 1);
-                            atomic_fetch_add(&g_orchestrator->stats.tasks_retried, 1);
-                            task->state = TASK_STATE_PENDING;
-                            workflow->tasks_failed--;
-                            workflow->tasks_pending++;
-                            printf("Orchestrator: Retrying task '%s' (attempt %u/%u)\n",
-                                   task->name, retry_count + 2, task->max_retries + 1);
+                }
+            }
+            
+            if (selected_task) {
+                // Check parallel execution limits
+                if (workflow->strategy == STRATEGY_PARALLEL_LIMITED &&
+                    workflow->tasks_running >= workflow->max_parallel_tasks) {
+                    selected_task = NULL;
+                }
+                
+                if (workflow->strategy == STRATEGY_SEQUENTIAL &&
+                    workflow->tasks_running > 0) {
+                    selected_task = NULL;
+                }
+            }
+            
+            if (selected_task) {
+                // Assign and execute task
+                selected_task->state = TASK_STATE_QUEUED;
+                selected_task->assigned_agent_id = executor->thread_id;
+                workflow->tasks_pending--;
+                workflow->tasks_running++;
+                found_work = true;
+                
+                atomic_fetch_add(&g_orchestrator->stats.active_tasks, 1);
+                
+                // Find corresponding DAG node for metrics
+                dag_node_t* dag_node = NULL;
+                if (dag->node_count > 0) {
+                    for (uint32_t k = 0; k < dag->node_count; k++) {
+                        if (dag->nodes[k].task_id == selected_task->task_id) {
+                            dag_node = &dag->nodes[k];
+                            break;
                         }
                     }
+                }
+                
+                if (dag_node && dag_node->in_critical_path) {
+                    printf("Orchestrator: Executing CRITICAL PATH task '%s' (Level %u, Slack: %.1fs)\n",
+                           selected_task->name, dag_node->level, dag_node->slack_time / 1000.0f);
+                } else {
+                    printf("Orchestrator: Executing task '%s'\n", selected_task->name);
+                }
+                
+                // Execute task
+                uint64_t task_start_time = get_timestamp_ns();
+                int result = execute_task(selected_task);
+                uint64_t task_execution_time = get_timestamp_ns() - task_start_time;
+                
+                // Update workflow state
+                workflow->tasks_running--;
+                if (result == 0) {
+                    workflow->tasks_completed++;
                     
-                    atomic_fetch_sub(&g_orchestrator->stats.active_tasks, 1);
+                    // Update DAG timing if available
+                    if (dag_node) {
+                        float actual_duration = task_execution_time / 1000000.0f; // Convert to ms
+                        printf("Orchestrator: Task completed in %.1fms (estimated: %ums)\n",
+                               actual_duration, selected_task->timeout_ms);
+                    }
+                } else {
+                    workflow->tasks_failed++;
                     
-                    // Update workflow progress
-                    workflow->progress_percentage = calculate_workflow_progress(workflow);
+                    // Retry logic
+                    uint32_t retry_count = atomic_load(&selected_task->metrics.retry_count);
+                    if (retry_count < selected_task->max_retries) {
+                        atomic_fetch_add(&selected_task->metrics.retry_count, 1);
+                        atomic_fetch_add(&g_orchestrator->stats.tasks_retried, 1);
+                        selected_task->state = TASK_STATE_PENDING;
+                        workflow->tasks_failed--;
+                        workflow->tasks_pending++;
+                        printf("Orchestrator: Retrying task '%s' (attempt %u/%u)\n",
+                               selected_task->name, retry_count + 2, selected_task->max_retries + 1);
+                    } else if (dag_node && dag_node->in_critical_path) {
+                        printf("Orchestrator: WARNING - Critical path task '%s' failed permanently\n",
+                               selected_task->name);
+                    }
+                }
+                
+                atomic_fetch_sub(&g_orchestrator->stats.active_tasks, 1);
+                
+                // Update workflow progress
+                workflow->progress_percentage = calculate_workflow_progress(workflow);
+                
+                // Update estimated completion time based on DAG
+                if (dag->node_count > 0 && dag->total_estimated_time > 0) {
+                    float remaining_work = (float)(workflow->task_count - workflow->tasks_completed) / workflow->task_count;
+                    workflow->estimated_completion_ms = (uint32_t)(dag->total_estimated_time * remaining_work);
+                }
+                
+                // Check if workflow is complete
+                if (workflow->tasks_completed + workflow->tasks_failed >= workflow->task_count) {
+                    bool has_failed_tasks = false;
+                    uint32_t failed_critical_tasks = 0;
                     
-                    // Check if workflow is complete
-                    if (workflow->tasks_completed + workflow->tasks_failed >= workflow->task_count) {
-                        bool has_failed_tasks = false;
-                        for (uint32_t k = 0; k < workflow->task_count; k++) {
-                            if (workflow->tasks[k].state == TASK_STATE_FAILED) {
-                                has_failed_tasks = true;
-                                break;
+                    for (uint32_t k = 0; k < workflow->task_count; k++) {
+                        if (workflow->tasks[k].state == TASK_STATE_FAILED) {
+                            has_failed_tasks = true;
+                            
+                            // Check if failed task was on critical path
+                            if (dag->node_count > 0) {
+                                for (uint32_t l = 0; l < dag->node_count; l++) {
+                                    if (dag->nodes[l].task_id == workflow->tasks[k].task_id &&
+                                        dag->nodes[l].in_critical_path) {
+                                        failed_critical_tasks++;
+                                        break;
+                                    }
+                                }
                             }
                         }
-                        
-                        if (has_failed_tasks) {
-                            workflow->state = WORKFLOW_STATE_FAILED;
-                            atomic_fetch_add(&g_orchestrator->stats.workflows_failed, 1);
-                        } else {
-                            workflow->state = WORKFLOW_STATE_COMPLETED;
-                            atomic_fetch_add(&g_orchestrator->stats.workflows_completed, 1);
-                        }
-                        
-                        workflow->end_time_ns = get_timestamp_ns();
-                        atomic_fetch_sub(&g_orchestrator->stats.active_workflows, 1);
-                        
-                        pthread_cond_broadcast(&workflow->state_changed);
-                        
-                        printf("Orchestrator: Workflow '%s' %s (%.1f%% complete)\n",
-                               workflow->name,
-                               workflow->state == WORKFLOW_STATE_COMPLETED ? "COMPLETED" : "FAILED",
-                               workflow->progress_percentage);
                     }
                     
-                    break;  // Process one task at a time per workflow
+                    if (has_failed_tasks) {
+                        workflow->state = WORKFLOW_STATE_FAILED;
+                        atomic_fetch_add(&g_orchestrator->stats.workflows_failed, 1);
+                        
+                        if (failed_critical_tasks > 0) {
+                            printf("Orchestrator: Workflow '%s' FAILED - %u critical path tasks failed\n",
+                                   workflow->name, failed_critical_tasks);
+                        }
+                    } else {
+                        workflow->state = WORKFLOW_STATE_COMPLETED;
+                        atomic_fetch_add(&g_orchestrator->stats.workflows_completed, 1);
+                    }
+                    
+                    workflow->end_time_ns = get_timestamp_ns();
+                    float actual_duration = (workflow->end_time_ns - workflow->start_time_ns) / 1000000000.0f;
+                    float estimated_duration = dag->total_estimated_time / 1000.0f;
+                    
+                    atomic_fetch_sub(&g_orchestrator->stats.active_workflows, 1);
+                    
+                    pthread_cond_broadcast(&workflow->state_changed);
+                    
+                    printf("Orchestrator: Workflow '%s' %s (%.1f%% complete, %.1fs actual vs %.1fs estimated)\n",
+                           workflow->name,
+                           workflow->state == WORKFLOW_STATE_COMPLETED ? "COMPLETED" : "FAILED",
+                           workflow->progress_percentage, actual_duration, estimated_duration);
                 }
             }
             
@@ -1142,9 +1614,11 @@ static void* workflow_executor_thread(void* arg) {
             usleep(50000);  // Sleep 50ms if no work found
         } else {
             atomic_fetch_add(&executor->tasks_processed, 1);
+            atomic_fetch_add(&executor->processing_time_ns, get_timestamp_ns() - (executor->processing_time_ns / 1000000ULL));
         }
     }
     
+    free(workflow_dags);
     return NULL;
 }
 
