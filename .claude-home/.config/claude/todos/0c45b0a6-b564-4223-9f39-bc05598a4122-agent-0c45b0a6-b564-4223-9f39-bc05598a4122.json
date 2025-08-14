@@ -1,32 +1,22 @@
 [
   {
-    "content": "Update installer scripts to integrate statusline.lua",
+    "content": "Remove old log files and temporary build artifacts",
     "status": "completed",
     "id": "1"
   },
   {
-    "content": "Create Neovim configuration integration",
+    "content": "Clean up unused analysis and report files",
     "status": "completed",
     "id": "2"
   },
   {
-    "content": "Add statusline to portable installation",
+    "content": "Remove duplicate or obsolete scripts",
     "status": "completed",
     "id": "3"
   },
   {
-    "content": "Test statusline integration",
+    "content": "Clean up development artifacts and cache files",
     "status": "completed",
     "id": "4"
-  },
-  {
-    "content": "Update documentation and help text",
-    "status": "completed",
-    "id": "5"
-  },
-  {
-    "content": "Add dependency auto-installation to both launcher scripts",
-    "status": "completed",
-    "id": "6"
   }
 ]

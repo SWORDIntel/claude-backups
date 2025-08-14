@@ -1,1 +1,0 @@
-DEPRECATION: Loading egg at /usr/local/lib/python3.12/dist-packages/me_cleaner-1.2-py3.12.egg is deprecated. pip 24.3 will enforce this behaviour change. A possible replacement is to use pip for package installation. Discussion can be found at https://github.com/pypa/pip/issues/12330

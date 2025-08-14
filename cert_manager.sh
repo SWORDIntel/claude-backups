@@ -1,1 +1,0 @@
-/home/ubuntu/Documents/Claude/CERTIFICATE_MANAGEMENT/cert_manager.sh
