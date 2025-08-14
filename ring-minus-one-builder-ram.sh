@@ -18,7 +18,7 @@ NC='\033[0m'
 WORK_DIR="/dev/shm/ring-minus-one-build"
 OUTPUT_DIR="$(pwd)"
 ISO_NAME="ring-minus-one-ram-$(date +%Y%m%d).iso"
-TMPFS_SIZE="16G"  # Increased for KDE desktop
+TMPFS_SIZE="18G"  # Increased for KDE desktop + kernel toolchain
 MIN_RAM_GB=8
 MIN_DISK_GB=2
 
@@ -160,6 +160,25 @@ apt-get install -y --no-install-recommends \
     firefox \
     sddm \
     breeze-gtk-theme
+
+# Kernel build toolchain
+apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    make \
+    flex \
+    bison \
+    libelf-dev \
+    libssl-dev \
+    bc \
+    kmod \
+    cpio \
+    rsync \
+    dwarves \
+    pahole \
+    zstd \
+    libncurses-dev \
+    linux-headers-generic
 
 # Install virtio drivers for IOMMU-less operation
 apt-get install -y --no-install-recommends \
