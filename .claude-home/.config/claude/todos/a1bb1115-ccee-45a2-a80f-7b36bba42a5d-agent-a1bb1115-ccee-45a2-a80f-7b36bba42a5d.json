@@ -1,27 +1,27 @@
 [
   {
-    "content": "Create automated simulation orchestrator",
+    "content": "Create certificate management folder structure",
     "status": "completed",
-    "id": "create-orchestrator"
+    "id": "create-cert-folders"
   },
   {
-    "content": "Build real-time visualization system",
+    "content": "Move certificate analysis files",
     "status": "completed",
-    "id": "build-visualization"
+    "id": "move-cert-files"
   },
   {
-    "content": "Add additional critical scenarios",
+    "content": "Move certificate-related code",
     "status": "completed",
-    "id": "add-scenarios"
+    "id": "move-cert-code"
   },
   {
-    "content": "Create integration bridges between systems",
+    "content": "Update references and paths",
     "status": "completed",
-    "id": "create-bridges"
+    "id": "update-refs"
   },
   {
-    "content": "Implement performance optimization tools",
+    "content": "Create certificate management scripts",
     "status": "completed",
-    "id": "optimize-performance"
+    "id": "create-cert-scripts"
   }
 ]

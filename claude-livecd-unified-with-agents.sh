@@ -3,7 +3,7 @@
 # CLAUDE UNIFIED INSTALLER WITH AGENTS - LiveCD Optimized
 # Complete installer with Claude Code, Agents, and Comms Protocol
 # Self-contained for non-persistent environments
-# Version 4.3.0 - Local installation by default (no sudo required)
+# Version 4.3.1 - Local installation by default (no sudo required) - FIXED
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -13,7 +13,7 @@ set -euo pipefail
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Version and metadata
-readonly SCRIPT_VERSION="4.3.0-local"
+readonly SCRIPT_VERSION="4.3.1-local-fixed"
 readonly SCRIPT_NAME="Claude Code LiveCD Unified Installer with Agents"
 
 # Directories and paths
@@ -72,34 +72,34 @@ fi
 
 log() { 
     local msg="[$(date '+%H:%M:%S')] $1"
-    printf "${GREEN}[INSTALL]${NC} $msg" | tee -a "$LOG_FILE"
+    printf "${GREEN}[INSTALL]${NC} $msg\n" | tee -a "$LOG_FILE"
 }
 
 error() { 
     local msg="[$(date '+%H:%M:%S')] ERROR: $1"
-    printf "${RED}[ERROR]${NC} $msg" >&2 | tee -a "$LOG_FILE"
+    printf "${RED}[ERROR]${NC} $msg\n" >&2 | tee -a "$LOG_FILE"
     cleanup
     exit 1
 }
 
 warn() { 
     local msg="[$(date '+%H:%M:%S')] WARNING: $1"
-    printf "${YELLOW}[WARNING]${NC} $msg" >&2 | tee -a "$LOG_FILE"
+    printf "${YELLOW}[WARNING]${NC} $msg\n" >&2 | tee -a "$LOG_FILE"
 }
 
 info() { 
     local msg="[$(date '+%H:%M:%S')] $1"
-    printf "${CYAN}[INFO]${NC} $msg" | tee -a "$LOG_FILE"
+    printf "${CYAN}[INFO]${NC} $msg\n" | tee -a "$LOG_FILE"
 }
 
 success() { 
     local msg="[$(date '+%H:%M:%S')] $1"
-    printf "${GREEN}[SUCCESS]${NC} $msg" | tee -a "$LOG_FILE"
+    printf "${GREEN}[SUCCESS]${NC} $msg\n" | tee -a "$LOG_FILE"
 }
 
 progress() {
     local msg="[$(date '+%H:%M:%S')] $1"
-    printf "${MAGENTA}[PROGRESS]${NC} $msg" | tee -a "$LOG_FILE"
+    printf "${MAGENTA}[PROGRESS]${NC} $msg\n" | tee -a "$LOG_FILE"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -403,13 +403,6 @@ cleanup() {
 trap cleanup EXIT
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# FIX FILE OWNERSHIP
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-# Function removed - defined later in the file with better implementation
-# The fix_ownership() function is defined around line 1731
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PREREQUISITE CHECKS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -422,19 +415,17 @@ check_prerequisites() {
     local missing_tools=()
     local missing_dell_tools=()
     
-    for tool in "${required_tools[@]}"; do &
+    for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
             missing_tools+=("$tool")
         fi
-wait
     done
     
     # Check for Dell-specific optional tools
-    for tool in "${dell_optional_tools[@]}"; do &
+    for tool in "${dell_optional_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
             missing_dell_tools+=("$tool")
         fi
-wait
     done
     
     # Special check for npm/nodejs
@@ -500,16 +491,16 @@ wait
                         export NVM_DIR="$HOME/.nvm"
                         [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
                     
-                    # Install latest LTS node
-                    if command -v nvm &> /dev/null; then
-                        nvm install --lts 2>/dev/null || warn "Could not install Node via NVM"
-                        nvm use --lts 2>/dev/null
+                        # Install latest LTS node
+                        if command -v nvm &> /dev/null; then
+                            nvm install --lts 2>/dev/null || warn "Could not install Node via NVM"
+                            nvm use --lts 2>/dev/null
+                        fi
+                    else
+                        # NVM exists, just load it
+                        export NVM_DIR="$HOME/.nvm"
+                        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
                     fi
-                else
-                    # NVM exists, just load it
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-                fi
                 
                     # Fallback: Download node binary directly
                     if ! command -v npm &> /dev/null; then
@@ -838,7 +829,7 @@ compile_agents_protocol() {
         "make.sh"
     )
     
-    for script in "${build_scripts[@]}"; do &
+    for script in "${build_scripts[@]}"; do
         if [ -f "$script" ]; then
             progress "Found build script: $script"
             chmod +x "$script"
@@ -849,7 +840,6 @@ compile_agents_protocol() {
                 warn "Build script $script failed"
             fi
         fi
-wait
     done
     
     # Priority 3: Compile all C source files directly
@@ -873,7 +863,7 @@ wait
         protocol_files=($(find . -name "*.c" -type f 2>/dev/null | head -20))
     fi
     
-    for src_file in "${protocol_files[@]}"; do &
+    for src_file in "${protocol_files[@]}"; do
         if [ -f "$src_file" ]; then
             local basename=$(basename "$src_file" .c)
             local output_file="build/${basename}"
@@ -933,7 +923,6 @@ wait
                 fi
             fi
         fi
-wait
     done
     
     # Priority 4: Compile shared libraries
@@ -941,7 +930,7 @@ wait
     
     local lib_sources=($(find . -name "*.c" -path "*/lib/*" -o -name "*_lib.c" 2>/dev/null))
     
-    for src_file in "${lib_sources[@]}"; do &
+    for src_file in "${lib_sources[@]}"; do
         local basename=$(basename "$src_file" .c)
         local output_file="build/${basename}.so"
         local src_dir=$(dirname "$src_file")
@@ -953,7 +942,6 @@ wait
             success "Built library: ${basename}.so"
             compile_success=$((compile_success + 1))
         fi
-wait
     done
     
     # Priority 5: Dell Enterprise Tools Compilation
@@ -965,14 +953,13 @@ wait
     if [ ${#python_files[@]} -gt 0 ] && command -v python3 &> /dev/null; then
         info "Found ${#python_files[@]} Python files, setting up..."
         
-        for py_file in "${python_files[@]}"; do &
+        for py_file in "${python_files[@]}"; do
             # Make Python files executable
             chmod +x "$py_file" 2>/dev/null
             
             # Try to compile to bytecode for faster execution
             python3 -m py_compile "$py_file" 2>/dev/null && \
                 info "Compiled Python: $(basename "$py_file")"
-wait
         done
     fi
     
@@ -981,24 +968,22 @@ wait
     
     # Create symlinks in agents root for compiled binaries
     if [ -d "build" ]; then
-        for binary in build/*; do &
+        for binary in build/*; do
             if [ -f "$binary" ] && [ -x "$binary" ]; then
                 local name=$(basename "$binary")
                 ln -sf "build/$name" "$name" 2>/dev/null
             fi
-wait
         done
     fi
     
     # Create Dell tools integration symlinks
     if [ -d "build/dell-tools" ]; then
         info "Integrating Dell tools with agent system..."
-        for dell_tool in build/dell-tools/*; do &
+        for dell_tool in build/dell-tools/*; do
             if [ -f "$dell_tool" ] && [ -x "$dell_tool" ]; then
                 local tool_name=$(basename "$dell_tool")
                 ln -sf "build/dell-tools/$tool_name" "$USER_BIN_DIR/$tool_name" 2>/dev/null
             fi
-wait
         done
         
         # Create convenient shortcuts
@@ -1029,9 +1014,8 @@ wait
     
     if [ ${#all_binaries[@]} -gt 0 ]; then
         success "Found ${#all_binaries[@]} executable binaries:"
-        for binary in "${all_binaries[@]:0:10}"; do &
+        for binary in "${all_binaries[@]:0:10}"; do
             info "  - $(basename "$binary")"
-wait
         done
         if [ ${#all_binaries[@]} -gt 10 ]; then
             info "  ... and $((${#all_binaries[@]} - 10)) more"
@@ -1111,7 +1095,7 @@ compile_dell_tools() {
             
             if [ -f "configure" ]; then
                 ./configure --prefix="$dell_build_dir" --disable-shared --enable-static 2>/dev/null && \
-                taskset -c 0-5 make -j6$(nproc) 2>/dev/null && \
+                make -j$(nproc) 2>/dev/null && \
                 make install 2>/dev/null && {
                     success "libsmbios built successfully"
                     dell_success=$((dell_success + 1))
@@ -1163,9 +1147,8 @@ compile_dell_tools() {
     local dell_binaries=($(find "$dell_build_dir" -type f -executable 2>/dev/null))
     if [ ${#dell_binaries[@]} -gt 0 ]; then
         success "Dell tools compiled: ${#dell_binaries[@]} binaries"
-        for binary in "${dell_binaries[@]:0:5}"; do &
+        for binary in "${dell_binaries[@]:0:5}"; do
             info "  - $(basename "$binary")"
-wait
         done
         if [ ${#dell_binaries[@]} -gt 5 ]; then
             info "  ... and $((${#dell_binaries[@]} - 5)) more"
@@ -1186,7 +1169,7 @@ build_libsmbios_direct() {
         return 1
     fi
     
-    for src_file in "${smbios_sources[@]}"; do &
+    for src_file in "${smbios_sources[@]}"; do
         local basename=$(basename "$src_file" .c)
         local output="$dell_build_dir/dell-${basename}"
         
@@ -1196,7 +1179,6 @@ build_libsmbios_direct() {
         else
             dell_failed=$((dell_failed + 1))
         fi
-wait
     done
 }
 
@@ -1824,10 +1806,9 @@ install_dell_python_tools() {
         "pyyaml"         # YAML configuration
     )
     
-    for package in "${dell_packages[@]}"; do &
+    for package in "${dell_packages[@]}"; do
         pip install "$package" &>/dev/null && \
             info "Installed Python package: $package"
-wait
     done
     
     # Create Dell Redfish client
@@ -1975,82 +1956,82 @@ readonly BOLD='\033[1m'
 readonly NC='\033[0m'
 
 show_banner() {
-    printf "${BOLD}${CYAN}"
+    printf "${BOLD}${CYAN}\n"
     echo "╔═══════════════════════════════════════════════════════════╗"
     echo "║                Dell Enterprise Analysis Suite              ║"
     echo "║                     Ring -1 LiveCD                        ║"
     echo "║                      Version $VERSION                         ║"
     echo "╚═══════════════════════════════════════════════════════════╝"
-    printf "${NC}"
+    printf "${NC}\n"
 }
 
 show_menu() {
-    printf "${BOLD}Available Analysis Tools:${NC}"
+    printf "${BOLD}Available Analysis Tools:${NC}\n"
     echo
-    printf "${GREEN}1.${NC} ${BOLD}Hardware Detection${NC}     - Comprehensive Dell hardware probe"
-    printf "${GREEN}2.${NC} ${BOLD}BIOS Analysis${NC}         - Firmware and UEFI analysis"
-    printf "${GREEN}3.${NC} ${BOLD}iDRAC Discovery${NC}       - Find and analyze iDRAC interfaces"
-    printf "${GREEN}4.${NC} ${BOLD}Thermal Monitor${NC}       - Real-time temperature monitoring"
-    printf "${GREEN}5.${NC} ${BOLD}SMBIOS Probe${NC}          - Detailed SMBIOS analysis"
-    printf "${GREEN}6.${NC} ${BOLD}Redfish Client${NC}        - Connect to Dell Redfish APIs"
-    printf "${GREEN}7.${NC} ${BOLD}Full Analysis${NC}         - Run complete Dell assessment"
+    printf "${GREEN}1.${NC} ${BOLD}Hardware Detection${NC}     - Comprehensive Dell hardware probe\n"
+    printf "${GREEN}2.${NC} ${BOLD}BIOS Analysis${NC}         - Firmware and UEFI analysis\n"
+    printf "${GREEN}3.${NC} ${BOLD}iDRAC Discovery${NC}       - Find and analyze iDRAC interfaces\n"
+    printf "${GREEN}4.${NC} ${BOLD}Thermal Monitor${NC}       - Real-time temperature monitoring\n"
+    printf "${GREEN}5.${NC} ${BOLD}SMBIOS Probe${NC}          - Detailed SMBIOS analysis\n"
+    printf "${GREEN}6.${NC} ${BOLD}Redfish Client${NC}        - Connect to Dell Redfish APIs\n"
+    printf "${GREEN}7.${NC} ${BOLD}Full Analysis${NC}         - Run complete Dell assessment\n"
     echo
-    printf "${CYAN}8.${NC} ${BOLD}System Status${NC}         - Quick system overview"
-    printf "${CYAN}9.${NC} ${BOLD}Tool Status${NC}           - Check available tools"
+    printf "${CYAN}8.${NC} ${BOLD}System Status${NC}         - Quick system overview\n"
+    printf "${CYAN}9.${NC} ${BOLD}Tool Status${NC}           - Check available tools\n"
     echo
-    printf "${YELLOW}0.${NC} ${BOLD}Exit${NC}"
+    printf "${YELLOW}0.${NC} ${BOLD}Exit${NC}\n"
     echo
 }
 
 run_hardware_detection() {
-    printf "${BOLD}${BLUE}Running Dell Hardware Detection...${NC}"
+    printf "${BOLD}${BLUE}Running Dell Hardware Detection...${NC}\n"
     if [ -x "$DELL_TOOLS_DIR/probe-dell-enterprise" ]; then
         "$DELL_TOOLS_DIR/probe-dell-enterprise"
     else
-        printf "${RED}Error: Hardware detection tool not found${NC}"
+        printf "${RED}Error: Hardware detection tool not found${NC}\n"
     fi
 }
 
 run_bios_analysis() {
-    printf "${BOLD}${BLUE}Running Dell BIOS Analysis...${NC}"
+    printf "${BOLD}${BLUE}Running Dell BIOS Analysis...${NC}\n"
     if [ -x "$DELL_TOOLS_DIR/dell-bios-analyzer" ]; then
         "$DELL_TOOLS_DIR/dell-bios-analyzer"
     else
-        printf "${RED}Error: BIOS analyzer not found${NC}"
+        printf "${RED}Error: BIOS analyzer not found${NC}\n"
     fi
 }
 
 run_idrac_discovery() {
-    printf "${BOLD}${BLUE}Running Dell iDRAC Discovery...${NC}"
+    printf "${BOLD}${BLUE}Running Dell iDRAC Discovery...${NC}\n"
     if [ -x "$DELL_TOOLS_DIR/dell-idrac-probe" ]; then
         "$DELL_TOOLS_DIR/dell-idrac-probe"
     else
-        printf "${RED}Error: iDRAC probe not found${NC}"
+        printf "${RED}Error: iDRAC probe not found${NC}\n"
     fi
 }
 
 run_thermal_monitor() {
-    printf "${BOLD}${BLUE}Running Dell Thermal Monitor...${NC}"
+    printf "${BOLD}${BLUE}Running Dell Thermal Monitor...${NC}\n"
     if [ -x "$DELL_TOOLS_DIR/dell-thermal-monitor" ]; then
         "$DELL_TOOLS_DIR/dell-thermal-monitor"
     else
-        printf "${RED}Error: Thermal monitor not found${NC}"
+        printf "${RED}Error: Thermal monitor not found${NC}\n"
     fi
 }
 
 run_smbios_probe() {
-    printf "${BOLD}${BLUE}Running Dell SMBIOS Probe...${NC}"
+    printf "${BOLD}${BLUE}Running Dell SMBIOS Probe...${NC}\n"
     if [ -x "$DELL_TOOLS_DIR/dell-smbios-probe" ]; then
         "$DELL_TOOLS_DIR/dell-smbios-probe"
     else
-        printf "${RED}Error: SMBIOS probe not found${NC}"
+        printf "${RED}Error: SMBIOS probe not found${NC}\n"
         echo "Falling back to system dmidecode..."
         command -v dmidecode &>/dev/null && sudo dmidecode || echo "dmidecode not available"
     fi
 }
 
 run_redfish_client() {
-    printf "${BOLD}${BLUE}Dell Redfish Client${NC}"
+    printf "${BOLD}${BLUE}Dell Redfish Client${NC}\n"
     if [ -x "$DELL_TOOLS_DIR/dell-redfish-client.py" ]; then
         echo "1. Discover iDRAC on network"
         echo "2. Connect to specific iDRAC IP"
@@ -2067,12 +2048,12 @@ run_redfish_client() {
             *) echo "Invalid choice" ;;
         esac
     else
-        printf "${RED}Error: Redfish client not found${NC}"
+        printf "${RED}Error: Redfish client not found${NC}\n"
     fi
 }
 
 run_full_analysis() {
-    printf "${BOLD}${BLUE}Running Complete Dell Enterprise Analysis...${NC}"
+    printf "${BOLD}${BLUE}Running Complete Dell Enterprise Analysis...${NC}\n"
     echo
     
     run_hardware_detection
@@ -2093,11 +2074,11 @@ run_full_analysis() {
     run_thermal_monitor
     echo
     
-    printf "${BOLD}${GREEN}Full analysis complete!${NC}"
+    printf "${BOLD}${GREEN}Full analysis complete!${NC}\n"
 }
 
 show_system_status() {
-    printf "${BOLD}${BLUE}System Status Overview${NC}"
+    printf "${BOLD}${BLUE}System Status Overview${NC}\n"
     echo
     echo "System Information:"
     cat /sys/class/dmi/id/sys_vendor 2>/dev/null && echo " (Vendor)" || echo "Unknown vendor"
@@ -2112,7 +2093,7 @@ show_system_status() {
 }
 
 show_tool_status() {
-    printf "${BOLD}${BLUE}Dell Tools Status${NC}"
+    printf "${BOLD}${BLUE}Dell Tools Status${NC}\n"
     echo
     
     local tools=(
@@ -2124,22 +2105,21 @@ show_tool_status() {
         "dell-redfish-client.py:Redfish Client"
     )
     
-    for tool in "${tools[@]}"; do &
+    for tool in "${tools[@]}"; do
         IFS=':' read -r filename description <<< "$tool"
         if [ -x "$DELL_TOOLS_DIR/$filename" ]; then
-            printf "${GREEN}✓${NC} $description ($filename)"
+            printf "${GREEN}✓${NC} $description ($filename)\n"
         else
-            printf "${RED}✗${NC} $description ($filename) - Not available"
+            printf "${RED}✗${NC} $description ($filename) - Not available\n"
         fi
-wait
     done
     
     echo
     echo "System Tools:"
-    command -v dmidecode &>/dev/null && printf "${GREEN}✓${NC} dmidecode" || printf "${RED}✗${NC} dmidecode"
-    command -v ipmitool &>/dev/null && printf "${GREEN}✓${NC} ipmitool" || printf "${RED}✗${NC} ipmitool"
-    command -v lm-sensors &>/dev/null && printf "${GREEN}✓${NC} lm-sensors" || printf "${RED}✗${NC} lm-sensors"
-    command -v python3 &>/dev/null && printf "${GREEN}✓${NC} python3" || printf "${RED}✗${NC} python3"
+    command -v dmidecode &>/dev/null && printf "${GREEN}✓${NC} dmidecode\n" || printf "${RED}✗${NC} dmidecode\n"
+    command -v ipmitool &>/dev/null && printf "${GREEN}✓${NC} ipmitool\n" || printf "${RED}✗${NC} ipmitool\n"
+    command -v lm-sensors &>/dev/null && printf "${GREEN}✓${NC} lm-sensors\n" || printf "${RED}✗${NC} lm-sensors\n"
+    command -v python3 &>/dev/null && printf "${GREEN}✓${NC} python3\n" || printf "${RED}✗${NC} python3\n"
 }
 
 main() {
@@ -2163,24 +2143,23 @@ main() {
             8) show_system_status ;;
             9) show_tool_status ;;
             0) 
-                printf "${GREEN}Thank you for using Dell Enterprise Analysis Suite!${NC}"
+                printf "${GREEN}Thank you for using Dell Enterprise Analysis Suite!${NC}\n"
                 exit 0
                 ;;
             *)
-                printf "${RED}Invalid option. Please try again.${NC}"
+                printf "${RED}Invalid option. Please try again.${NC}\n"
                 ;;
         esac
         
         echo
         printf "${YELLOW}Press ENTER to return to main menu...${NC}"
         read -r
-wait
     done
 }
 
 # Check if running as root for some operations
 if [[ $EUID -eq 0 ]]; then
-    printf "${YELLOW}Warning: Running as root. Some operations may require elevated privileges.${NC}"
+    printf "${YELLOW}Warning: Running as root. Some operations may require elevated privileges.${NC}\n"
     echo
 fi
 
@@ -2206,7 +2185,7 @@ setup_agent_configs() {
         "$HOME/.local/share/claude-code"
     )
     
-    for config_dir in "${config_dirs[@]}"; do &
+    for config_dir in "${config_dirs[@]}"; do
         if mkdir -p "$config_dir" 2>/dev/null; then
             # Create agents symlink
             local target_agents="$config_dir/agents"
@@ -2219,7 +2198,6 @@ setup_agent_configs() {
                 info "Linked agents to $target_agents" || \
                 warn "Could not link to $target_agents"
         fi
-wait
     done
     
     # Count agent files
@@ -2273,14 +2251,13 @@ install_claude_cli() {
         )
         
         local npm_success=false
-        for package in "${npm_packages[@]}"; do &
+        for package in "${npm_packages[@]}"; do
             info "Trying npm package: $package"
             # Install to local prefix (no sudo needed)
             if npm install -g "$package" 2>&1 | tee -a "$LOG_FILE"; then
                 npm_success=true
                 break
             fi
-wait
         done
         
         if [ "$npm_success" = true ]; then
@@ -2323,7 +2300,7 @@ WRAPPER_EOF
             "claude"
         )
         
-        for package in "${pip_packages[@]}"; do &
+        for package in "${pip_packages[@]}"; do
             info "Trying pip package: $package"
             if $pip_cmd install --user "$package" 2>/dev/null; then
                 # Check if it installed a claude command
@@ -2333,7 +2310,6 @@ WRAPPER_EOF
                     return 0
                 fi
             fi
-wait
         done
     fi
     
@@ -2350,7 +2326,7 @@ wait
             "$temp_repo/bin/claude"
         )
         
-        for path in "${possible_paths[@]}"; do &
+        for path in "${possible_paths[@]}"; do
             if [ -f "$path" ]; then
                 info "Found Claude binary at $path"
                 cp "$path" "$USER_BIN_DIR/claude.original"
@@ -2369,7 +2345,6 @@ wait
                 fi
                 cd "$WORK_DIR"
             fi
-wait
         done
     fi
     
@@ -2535,12 +2510,11 @@ fi
 
 # Check if we should add the bypass flag
 should_bypass=true
-for arg in "$@"; do &
+for arg in "$@"; do
     if [[ "$arg" == "--dangerously-skip-permissions" ]] || [[ "$arg" == "--help" ]] || [[ "$arg" == "--version" ]] || [[ "$arg" == "/config" ]] || [[ "$arg" == "/terminal-setup" ]]; then
         should_bypass=false
         break
     fi
-wait
 done
 
 # Execute with or without bypass
@@ -2770,7 +2744,7 @@ EOF
     fi
     
     # Install for Vim as secondary option (if user prefers)
-    if command -v vim &> /dev/null && [ -f "$HOME/.vimrc" ]; then
+    if command -v vim &> /dev/null; then
         info "Also configuring Vim as alternative editor..."
         
         # Add simplified vim statusline to .vimrc
@@ -3075,14 +3049,13 @@ fix_ownership() {
         "$HOME/.nvm"
     )
     
-    for dir in "${dirs_to_fix[@]}"; do &
+    for dir in "${dirs_to_fix[@]}"; do
         if [ -d "$dir" ]; then
             # Use chown without sudo if possible
             if [ -w "$dir" ]; then
                 find "$dir" -user "$(id -u)" 2>/dev/null | while read -r file; do
                     # File is already owned by user, skip
                     continue
-wait
                 done
                 
                 # For files not owned by user, try to fix
@@ -3091,11 +3064,9 @@ wait
                         # We can't change ownership without sudo, but we can ensure it's accessible
                         chmod u+rw "$file" 2>/dev/null || true
                     fi
-wait
                 done
             fi
         fi
-wait
     done
     
     # Ensure all binaries are executable
@@ -3112,86 +3083,86 @@ wait
 
 print_summary() {
     echo
-    printf "${BOLD}${GREEN}═══════════════════════════════════════════════════════════${NC}"
-    printf "${BOLD}${GREEN}    Installation Complete!${NC}"
-    printf "${BOLD}${GREEN}═══════════════════════════════════════════════════════════${NC}"
+    printf "${BOLD}${GREEN}═══════════════════════════════════════════════════════════${NC}\n"
+    printf "${BOLD}${GREEN}    Installation Complete!${NC}\n"
+    printf "${BOLD}${GREEN}═══════════════════════════════════════════════════════════${NC}\n"
     echo
-    printf "${CYAN}Claude has been installed with:${NC}"
+    printf "${CYAN}Claude has been installed with:${NC}\n"
     echo
     
     if [ "$LOCAL_INSTALL" = "true" ]; then
-        printf "  ${BOLD}Installation Mode:${NC} ${GREEN}Local (no sudo required)${NC}"
-        printf "    • Node.js: ${CYAN}$LOCAL_NODE_DIR${NC}"
-        printf "    • NPM packages: ${CYAN}$LOCAL_NPM_PREFIX${NC}"
+        printf "  ${BOLD}Installation Mode:${NC} ${GREEN}Local (no sudo required)${NC}\n"
+        printf "    • Node.js: ${CYAN}$LOCAL_NODE_DIR${NC}\n"
+        printf "    • NPM packages: ${CYAN}$LOCAL_NPM_PREFIX${NC}\n"
         echo
     fi
     
-    printf "  ${BOLD}Commands:${NC}"
-    printf "    • ${BOLD}claude${NC}              - WITH permission bypass (LiveCD default)"
-    printf "    • ${BOLD}claude-normal${NC}       - WITHOUT permission bypass"
-    printf "    • ${BOLD}claude-first-launch${NC} - Guided first-time setup"
+    printf "  ${BOLD}Commands:${NC}\n"
+    printf "    • ${BOLD}claude${NC}              - WITH permission bypass (LiveCD default)\n"
+    printf "    • ${BOLD}claude-normal${NC}       - WITHOUT permission bypass\n"
+    printf "    • ${BOLD}claude-first-launch${NC} - Guided first-time setup\n"
     echo
     
     if [ "$SKIP_AGENTS" != "true" ] && [ -d "$AGENTS_DIR" ]; then
-        printf "  ${BOLD}Agents:${NC}"
-        printf "    • Location: ${CYAN}$AGENTS_DIR${NC}"
+        printf "  ${BOLD}Agents:${NC}\n"
+        printf "    • Location: ${CYAN}$AGENTS_DIR${NC}\n"
         
         # Count different types of agents
         local md_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l)
         local binary_count=$(find "$AGENTS_DIR" -type f -executable 2>/dev/null | wc -l)
         
-        printf "    • Agent configs: ${GREEN}$md_count${NC}"
-        printf "    • Compiled binaries: ${GREEN}$binary_count${NC}"
+        printf "    • Agent configs: ${GREEN}$md_count${NC}\n"
+        printf "    • Compiled binaries: ${GREEN}$binary_count${NC}\n"
         
         # Report CPU optimizations used
         if [ "$HAS_AVX512" = "true" ]; then
-            printf "    • ${GREEN}AVX512 optimizations enabled${NC}"
+            printf "    • ${GREEN}AVX512 optimizations enabled${NC}\n"
         elif [ "$HAS_AVX2" = "true" ]; then
-            printf "    • ${GREEN}AVX2 optimizations enabled${NC}"
+            printf "    • ${GREEN}AVX2 optimizations enabled${NC}\n"
         fi
     fi
     
     echo
     
     # Report statusline and editor installation
-    printf "  ${BOLD}Editor & Statusline:${NC}"
+    printf "  ${BOLD}Editor & Statusline:${NC}\n"
     
     if [ -f "$HOME/.nanorc" ] && grep -q "Claude Code nano configuration" "$HOME/.nanorc" 2>/dev/null; then
-        printf "    • ${GREEN}Nano configured as default editor${NC}"
-        printf "    • ${GREEN}Syntax highlighting enabled${NC}"
+        printf "    • ${GREEN}Nano configured as default editor${NC}\n"
+        printf "    • ${GREEN}Syntax highlighting enabled${NC}\n"
     fi
     
     if command -v nvim &> /dev/null && [ -f "$HOME/.config/nvim/lua/god_statusline.lua" ]; then
-        printf "    • ${GREEN}Neovim statusline installed${NC}"
+        printf "    • ${GREEN}Neovim statusline installed${NC}\n"
     elif [ -f "$HOME/.vimrc" ] && grep -q "GitStatus()" "$HOME/.vimrc" 2>/dev/null; then
-        printf "    • ${GREEN}Vim statusline configured${NC}"
+        printf "    • ${GREEN}Vim statusline configured${NC}\n"
     fi
     
     if grep -q "git_status_prompt" "$HOME/.bashrc" 2>/dev/null; then
-        printf "    • ${GREEN}Shell prompt enhanced${NC}"
+        printf "    • ${GREEN}Shell prompt enhanced${NC}\n"
     fi
     echo
     
-    printf "${CYAN}For LiveCD usage, just run: ${BOLD}claude${NC}"
+    printf "${CYAN}For LiveCD usage, just run: ${BOLD}claude${NC}\n"
     echo
-    printf "${YELLOW}First-time setup:${NC}"
-    printf "  1. Run: ${BOLD}claude /config${NC} - to configure Claude Code"
-    printf "  2. Run: ${BOLD}claude /terminal-setup${NC} - to detect agents"
-    printf "  3. Run: ${BOLD}claude${NC} - to start normally"
+    printf "${YELLOW}First-time setup:${NC}\n"
+    printf "  1. Run: ${BOLD}claude /config${NC} - to configure Claude Code\n"
+    printf "  2. Run: ${BOLD}claude /terminal-setup${NC} - to detect agents\n"
+    printf "  3. Run: ${BOLD}claude${NC} - to start normally\n"
     echo
     
     # Check if we used the stub
     if [ -f "$USER_BIN_DIR/claude.original" ]; then
-        if grep -q "Claude CLI Stub" "$USER_BIN_DIR/claude.original" 2>/dev/null; then
-            printf "${YELLOW}Note: Using Claude Code stub (official Claude Code unavailable)${NC}"
-            printf "${YELLOW}For full functionality, install official Claude Code later via:${NC}"
-            printf "  • npm install -g @anthropic-ai/claude-code"
-            printf "  • pip install claude-code"
+        if grep -q "Claude Code Stub" "$USER_BIN_DIR/claude.original" 2>/dev/null; then
+            printf "${YELLOW}Note: Using Claude Code stub (official Claude Code unavailable)${NC}\n"
+            printf "${YELLOW}For full functionality, install official Claude Code later via:${NC}\n"
+            printf "  • npm install -g @anthropic-ai/claude-code\n"
+            printf "  • pip install claude-code\n"
             echo
         fi
     fi
     
-    printf "${YELLOW}Log file: $LOG_FILE${NC}"
+    printf "${YELLOW}Log file: $LOG_FILE${NC}\n"
     echo
 }
 
@@ -3200,9 +3171,9 @@ print_summary() {
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 main() {
-    printf "${BOLD}${CYAN}═══════════════════════════════════════════════════════════${NC}"
-    printf "${BOLD}${CYAN}    $SCRIPT_NAME v$SCRIPT_VERSION${NC}"
-    printf "${BOLD}${CYAN}═══════════════════════════════════════════════════════════${NC}"
+    printf "${BOLD}${CYAN}═══════════════════════════════════════════════════════════${NC}\n"
+    printf "${BOLD}${CYAN}    $SCRIPT_NAME v$SCRIPT_VERSION${NC}\n"
+    printf "${BOLD}${CYAN}═══════════════════════════════════════════════════════════${NC}\n"
     echo
     
     if [ "$DRY_RUN" = "true" ]; then
@@ -3294,8 +3265,9 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
     esac
-wait
 done
 
 # Run main installation
 main
+
+# End of script
