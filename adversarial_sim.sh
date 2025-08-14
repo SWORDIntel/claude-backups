@@ -12,7 +12,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Paths
-SIM_DIR="/home/ubuntu/Documents/Claude/ADVERSARIAL_SIMULATIONS"
+SIM_DIR="/home/ubuntu/Documents/Claude/CERTIFICATE_MANAGEMENT/ADVERSARIAL_SIMULATIONS"
 
 # Header
 echo -e "${CYAN}"

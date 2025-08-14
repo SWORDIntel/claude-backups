@@ -1,27 +1,27 @@
 [
   {
-    "content": "Create certificate management folder structure",
+    "content": "Move ADVERSARIAL_SIMULATIONS into CERTIFICATE_MANAGEMENT",
     "status": "completed",
-    "id": "create-cert-folders"
+    "id": "move-adversarial"
   },
   {
-    "content": "Move certificate analysis files",
+    "content": "Update all paths and references",
     "status": "completed",
-    "id": "move-cert-files"
+    "id": "update-paths"
   },
   {
-    "content": "Move certificate-related code",
+    "content": "Update launch scripts",
     "status": "completed",
-    "id": "move-cert-code"
+    "id": "update-scripts"
   },
   {
-    "content": "Update references and paths",
+    "content": "Create unified security management interface",
     "status": "completed",
-    "id": "update-refs"
+    "id": "create-interface"
   },
   {
-    "content": "Create certificate management scripts",
+    "content": "Clean up Claude root directory",
     "status": "completed",
-    "id": "create-cert-scripts"
+    "id": "clean-root"
   }
 ]
