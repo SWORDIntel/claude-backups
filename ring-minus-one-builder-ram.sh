@@ -18,7 +18,7 @@ NC='\033[0m'
 WORK_DIR="/dev/shm/ring-minus-one-build"
 OUTPUT_DIR="$(pwd)"
 ISO_NAME="ring-minus-one-ram-$(date +%Y%m%d).iso"
-TMPFS_SIZE="12G"
+TMPFS_SIZE="16G"  # Increased for KDE desktop
 MIN_RAM_GB=8
 MIN_DISK_GB=2
 
@@ -147,7 +147,19 @@ apt-get install -y --no-install-recommends \
     vim-tiny \
     net-tools \
     iproute2 \
-    iptables
+    iptables \
+    xorg \
+    xinit
+
+# Install KDE Plasma desktop (minimal)
+apt-get install -y --no-install-recommends \
+    kde-plasma-desktop \
+    plasma-nm \
+    konsole \
+    dolphin \
+    firefox \
+    sddm \
+    breeze-gtk-theme
 
 # Install virtio drivers for IOMMU-less operation
 apt-get install -y --no-install-recommends \
@@ -272,6 +284,22 @@ WantedBy=multi-user.target
 EOF
 
 systemctl enable ring-minus-one.service
+
+# Enable SDDM display manager for KDE
+systemctl enable sddm.service
+
+# Configure autologin for live session
+mkdir -p /etc/sddm.conf.d
+cat > /etc/sddm.conf.d/autologin.conf << EOF
+[Autologin]
+User=ubuntu
+Session=plasma
+EOF
+
+# Create live user
+useradd -m -s /bin/bash -G sudo,libvirt,kvm ubuntu
+echo "ubuntu:ubuntu" | chpasswd
+echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Clean package cache to save space
 apt-get clean
@@ -434,7 +462,7 @@ create_boot_config() {
 DEFAULT ring-minus-one
 LABEL ring-minus-one
   KERNEL /boot/vmlinuz
-  APPEND initrd=/boot/initrd.img boot=live toram quiet splash
+  APPEND initrd=/boot/initrd.img boot=live toram quiet splash systemd.unit=graphical.target
   
 LABEL ring-minus-one-debug
   KERNEL /boot/vmlinuz
@@ -536,12 +564,14 @@ main() {
     echo -e "${GREEN}====================================${NC}"
     echo -e "${GREEN}ISO: $OUTPUT_DIR/$ISO_NAME${NC}"
     echo -e "${YELLOW}Features:${NC}"
+    echo -e "  • KDE Plasma desktop environment"
     echo -e "  • Built entirely in RAM (tmpfs)"
     echo -e "  • IOMMU fallback with virtio devices"
     echo -e "  • Software emulation when no VT-x/AMD-V"
     echo -e "  • Bridge networking for VMs"
     echo -e "  • Hidden CPU feature detection"
     echo -e "  • Ring -1 hypervisor tools"
+    echo -e "  • Auto-login as 'ubuntu' user"
     echo ""
     echo -e "${YELLOW}To test:${NC}"
     echo -e "  qemu-system-x86_64 -cdrom $ISO_NAME -m 4096 -enable-kvm"
