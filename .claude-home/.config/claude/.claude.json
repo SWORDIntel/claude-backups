@@ -1,13 +1,13 @@
 {
-  "numStartups": 2,
+  "numStartups": 6,
   "installMethod": "unknown",
   "autoUpdates": true,
   "tipsHistory": {
-    "new-user-warmup": 1,
+    "new-user-warmup": 5,
     "memory-command": 1,
     "theme-command": 1,
     "status-line": 1,
-    "prompt-queue": 1,
+    "prompt-queue": 6,
     "enter-to-steer-in-relatime": 1,
     "todo-list": 1,
     "# for memory": 1,
@@ -16,7 +16,8 @@
     "double-esc": 1,
     "ide-upsell-external-terminal": 1,
     "continue": 1,
-    "shift-tab": 1
+    "shift-tab": 1,
+    "custom-agents": 6
   },
   "promptQueueUseCount": 1,
   "firstStartTime": "2025-08-14T09:31:59.438Z",
@@ -25,6 +26,90 @@
     "/home/ubuntu/Documents/Claude": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "git push and continue",
+          "pastedContents": {}
+        },
+        {
+          "display": "git push",
+          "pastedContents": {}
+        },
+        {
+          "display": "ANy further improvements we could make",
+          "pastedContents": {}
+        },
+        {
+          "display": "in parallel",
+          "pastedContents": {}
+        },
+        {
+          "display": "OPTIMIZER and DEBUG agnets on all of it",
+          "pastedContents": {}
+        },
+        {
+          "display": "continue",
+          "pastedContents": {}
+        },
+        {
+          "display": "Also add adverserial simulation fully expaned upon everything in extreme depth and organisee verything into folders",
+          "pastedContents": {}
+        },
+        {
+          "display": "Expand as much as possible on beijing and other CA based attacks for simulation purposes",
+          "pastedContents": {}
+        },
+        {
+          "display": "Now cross-correlate and string them together and continue to expand upon this creating adverssrial scenarios in which these could be used",
+          "pastedContents": {}
+        },
+        {
+          "display": "Once planned out implement it and finally deploy optimizer then debug agents in parallel",
+          "pastedContents": {}
+        },
+        {
+          "display": "also expand upon russia and all others",
+          "pastedContents": {}
+        },
+        {
+          "display": "See we are looking not only to compile buto to intelligently analyze the source vs improved systems and improve the source,i would suggest ML planner use that on how we could incorporate this",
+          "pastedContents": {}
+        },
+        {
+          "display": "then do the same for the rest focusing on NATO last",
+          "pastedContents": {}
+        },
+        {
+          "display": "Extend significantly on the china certs and uses in cyberwarfare wargames",
+          "pastedContents": {}
+        },
+        {
+          "display": "Now extend the document with possible adverserial simulation for NATO and ways NATO could use them for benefit",
+          "pastedContents": {}
+        },
+        {
+          "display": "in  a .md ",
+          "pastedContents": {}
+        },
+        {
+          "display": "Detail in depth all the certs their use cases and unusual characteristics incl posible vectors for use",
+          "pastedContents": {}
+        },
+        {
+          "display": "Go into/home/ubuntu/Documents/livecd-gen check claude.md realize we need source code hardware kits for everything n lspci but there is a lack of space so set it up for when the ISO is built the source code for everything is downloaded so it can be analayzed and intergrated into the millitary subsystems like cct hsas been,add the script s to control the download onto the desktop post noot with probing/smbios / milspec discovery stuff use PLNANNER to plan this out then execute in parallee",
+          "pastedContents": {}
+        },
+        {
+          "display": "Analyze them",
+          "pastedContents": {}
+        },
+        {
+          "display": "deploy RESEARCH agent",
+          "pastedContents": {}
+        },
+        {
+          "display": "analyze certs.txt see if any are useful as other than verification",
+          "pastedContents": {}
+        },
         {
           "display": "document all this clean up dirs of temporary files or deprecated stuff then git push",
           "pastedContents": {}
@@ -227,7 +312,7 @@
   "s1mAccessCache": {
     "2cfbac83-d660-4b03-84ba-5429a8e65662": {
       "hasAccess": false,
-      "timestamp": 1755171303157
+      "timestamp": 1755175273282
     }
   },
   "isQualifiedForDataSharing": false
