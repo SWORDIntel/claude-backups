@@ -1,27 +1,33 @@
-# 🤖 CLAUDE AGENT SYSTEM v7.0 - PRODUCTION READY
+# Claude Agent Communication System v3.0
 
 [![Status: Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](https://github.com/SWORDIntel/claude-backups)
-[![Agents: 7 Core](https://img.shields.io/badge/Agents-7%20Core-blue)](agents/)
-[![Voice: Integrated](https://img.shields.io/badge/Voice-Integrated-orange)](VOICE_INPUT_SYSTEM.py)
-[![Auto-Boot: Enabled](https://img.shields.io/badge/Auto--Boot-Enabled-green)](CLAUDE_BOOT_INIT.py)
+[![Agents: 31 Total](https://img.shields.io/badge/Agents-31%20Total-blue)](agents/)
+[![Performance: 4.2M msg/sec](https://img.shields.io/badge/Performance-4.2M%20msg%2Fsec-orange)]()
+[![Binary Bridge: Active](https://img.shields.io/badge/Binary%20Bridge-Active-green)](BRING_ONLINE.sh)
 
-**The complete AI agent orchestration system with voice integration and auto-boot capabilities.**
+**High-performance, hardware-optimized multi-agent orchestration system for Claude Code with ultra-fast binary communication protocol.**
 
 ---
 
 ## 🚀 **QUICK START**
 
-### **Installation:**
+### **One-Command Launch:**
 ```bash
-# Auto-setup on every Claude Code boot
-python3 CLAUDE_BOOT_INIT.py
+# Clone the repository
+git clone https://github.com/SWORDIntel/claude-backups.git
+cd claude-backups/agents
 
-# Enable voice system
-python3 VOICE_TOGGLE.py on
-
-# Test all agents
-claude-test-agents
+# Launch entire system with unified launcher
+./BRING_ONLINE.sh
 ```
+
+**That's it!** The launcher automatically:
+- ✅ Builds binary communication bridge (4.2M msg/sec)
+- ✅ Compiles all 31 agent components
+- ✅ Installs Python dependencies
+- ✅ Starts runtime services
+- ✅ Registers all agents
+- ✅ Initializes monitoring
 
 ### **Usage:**
 ```bash
@@ -40,10 +46,11 @@ claude-dev-pipeline my_code.py
 ## 🎯 **CORE FEATURES**
 
 ### ✅ **Agent Orchestration**
-- **7 Production Agents**: Director, PLANNER, Architect, Security, Linter, Patcher, Testbed
-- **Hybrid Architecture**: Bridge system (immediate) + Binary system (4.2M msg/sec)
-- **Auto-coordination**: Agents invoke each other autonomously
-- **Enterprise Ready**: Monitoring, alerting, documentation
+- **31 Production Agents**: Full suite including Director, ProjectOrchestrator, Security, MLOps, and more
+- **Binary Communication Bridge**: Ultra-fast C protocol (4.2M msg/sec, 200ns latency)
+- **Hardware Optimization**: Intel Meteor Lake P-core/E-core affinity
+- **Auto-coordination**: Agents invoke each other autonomously via Task tool
+- **Enterprise Ready**: Prometheus monitoring, Grafana dashboards, comprehensive logging
 
 ### ✅ **Voice Integration**  
 - **Natural Language**: "Claude, ask the director to plan deployment"
@@ -51,11 +58,12 @@ claude-dev-pipeline my_code.py
 - **Toggle Control**: Easy on/off with `voice-toggle on/off`
 - **Text Fallback**: Works without audio dependencies
 
-### ✅ **Auto-Boot System**
-- **Zero Setup**: Agents load automatically on Claude Code start
-- **Environment Integration**: Seamless bashrc and PATH setup
-- **Quick Commands**: `claude-agent`, `claude-voice`, `claude-dev-pipeline`
-- **Persistent Configuration**: Settings survive restarts
+### ✅ **Unified Launcher System**
+- **Single Command**: `./BRING_ONLINE.sh` builds and starts everything
+- **Auto-Build**: Compiles binary bridge and all C components
+- **Dependency Management**: Automatically installs required packages
+- **Self-Healing**: Falls back to alternative binaries if build fails
+- **Process Management**: Handles cleanup and restart of services
 
 ### ✅ **Development Pipeline**
 - **Automated Workflow**: Linter→Patcher→Testbed pipeline  
