@@ -48,7 +48,7 @@ class AgentSimulationBridge:
     Bridge between agent system and simulation framework
     """
     
-    def __init__(self, agent_port: int = 4242, sim_port: int = 5555):
+    def __init__(self, agent_port: int = 4243, sim_port: int = 5556):
         self.agent_port = agent_port
         self.sim_port = sim_port
         

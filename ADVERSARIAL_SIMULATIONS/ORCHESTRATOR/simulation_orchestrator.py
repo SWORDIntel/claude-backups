@@ -710,30 +710,11 @@ if __name__ == "__main__":
         # Initialize orchestrator
         orchestrator = SimulationOrchestrator()
         
-        # Load scenarios
-        await orchestrator.load_scenario('scenarios/beijing_smart_city.yaml')
-        await orchestrator.load_scenario('scenarios/yuan_storm.yaml')
+        logger.info("Simulation Orchestrator started")
+        logger.info("Waiting for scenarios...")
         
-        # Start orchestrator
+        # Start orchestrator service
         await orchestrator.start_orchestrator()
-        
-        # Run campaign
-        campaign = {
-            'name': 'Operation Total Control',
-            'scenarios': ['beijing_smart_city', 'yuan_storm'],
-            'dependencies': {
-                'yuan_storm': ['beijing_smart_city']
-            }
-        }
-        
-        results = await orchestrator.run_campaign(campaign)
-        
-        # Generate report
-        for scenario_id, result in results.items():
-            print(f"Scenario {scenario_id}: {'Success' if result['success'] else 'Failed'}")
-        
-        # Stop orchestrator
-        await orchestrator.stop_orchestrator()
     
     # Run the orchestrator
     asyncio.run(main())

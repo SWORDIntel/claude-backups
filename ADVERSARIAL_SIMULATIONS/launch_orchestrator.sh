@@ -116,7 +116,7 @@ check_system() {
     fi
     
     # Check network ports
-    for port in 4242 5000 5555 5556; do
+    for port in 4242 4243 5000 5555 5556; do
         if netstat -tuln 2>/dev/null | grep -q ":$port "; then
             print_warning "Port $port already in use"
         else
