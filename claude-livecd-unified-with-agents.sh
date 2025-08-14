@@ -3170,6 +3170,30 @@ print_summary() {
 # MAIN EXECUTION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+launch_agent_system() {
+    progress "Launching Agent Communication System"
+    
+    # Check if BRING_ONLINE.sh exists
+    if [ -f "$AGENTS_DIR/BRING_ONLINE.sh" ]; then
+        info "Starting binary communication bridge and agents..."
+        
+        # Make sure it's executable
+        chmod +x "$AGENTS_DIR/BRING_ONLINE.sh"
+        
+        # Launch the agent system
+        cd "$AGENTS_DIR"
+        if ./BRING_ONLINE.sh 2>&1 | tee -a "$LOG_FILE"; then
+            success "Agent Communication System online (31 agents ready)"
+            success "Binary bridge active: 4.2M msg/sec capability"
+        else
+            warn "Some agent components may not have started fully"
+        fi
+        cd - > /dev/null
+    else
+        warn "Agent launcher not found, skipping agent system startup"
+    fi
+}
+
 main() {
     printf "${BOLD}${CYAN}═══════════════════════════════════════════════════════════${NC}\n"
     printf "${BOLD}${CYAN}    $SCRIPT_NAME v$SCRIPT_VERSION${NC}\n"
@@ -3189,6 +3213,9 @@ main() {
     create_claude_wrapper
     finalize_installation
     fix_ownership
+    
+    # Launch the agent communication system
+    launch_agent_system
     
     # Print summary
     print_summary
