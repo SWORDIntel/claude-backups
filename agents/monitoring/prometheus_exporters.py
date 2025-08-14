@@ -42,6 +42,7 @@ AGENT_TYPES = [
 @dataclass
 class AgentMetrics:
     """Metrics container for individual agents"""
+    __slots__ = []
     name: str
     status: str
     message_count: int
@@ -55,6 +56,7 @@ class AgentMetrics:
 class PrometheusAgentExporter:
     """Main Prometheus metrics exporter for agent system"""
     
+    __slots__ = []
     def __init__(self, port: int = 8000):
         self.port = port
         self.registry = CollectorRegistry()
@@ -527,6 +529,7 @@ class PrometheusAgentExporter:
 class OpenTelemetryIntegration:
     """OpenTelemetry tracing integration for the agent system"""
     
+    __slots__ = []
     def __init__(self):
         self.tracer = None
         self._setup_tracing()

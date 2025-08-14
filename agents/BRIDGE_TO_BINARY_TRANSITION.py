@@ -22,6 +22,7 @@ from claude_agent_bridge import task_agent_invoke, bridge
 class TransitionManager:
     """Manages transition from bridge to binary system"""
     
+    __slots__ = []
     def __init__(self):
         self.bridge_active = True
         self.binary_ready = False

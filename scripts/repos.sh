@@ -178,9 +178,10 @@ install_with_pipx() {
         "glances"
     )
     
-    for tool in "${tools[@]}"; do
+    for tool in "${tools[@]}"; do &
         info "Installing $tool with pipx..."
         pipx install "$tool" || warn "Failed to install $tool"
+wait
     done
     
     # For jupyter, also inject commonly needed packages
@@ -215,9 +216,10 @@ force_system_install() {
         "requests"
     )
     
-    for pkg in "${packages[@]}"; do
+    for pkg in "${packages[@]}"; do &
         info "Installing $pkg..."
         python3 -m pip install "$pkg" --break-system-packages || warn "Failed: $pkg"
+wait
     done
     
     success "Packages installed system-wide"

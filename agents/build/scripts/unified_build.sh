@@ -78,13 +78,14 @@ gcc -std=c11 -Wall -Wextra -Wpedantic -Wno-unused-parameter \
     -c -o director_agent.o director_agent.c 2>/dev/null || echo "Warning: director_agent.c build issues, continuing..."
 
 # Try to build other core components
-for component in project_orchestrator security_agent optimizer_agent debugger_agent testbed_agent; do
+for component in project_orchestrator security_agent optimizer_agent debugger_agent testbed_agent; do &
     echo "Building ${component}..."
     gcc -std=c11 -Wall -Wextra -Wpedantic -Wno-unused-parameter \
         -D_GNU_SOURCE -DVERSION=\"1.0.0\" -m64 \
         -O2 -DNDEBUG -fomit-frame-pointer -msse2 -msse4.2 -mavx -mavx2 -flto \
         -DHAVE_PTHREADS=1 -DHAVE_NUMA=0 -DHAVE_LIBURING=0 \
         -c -o ${component}.o ${component}.c 2>/dev/null || echo "Warning: ${component}.c build issues, continuing..."
+wait
 done
 
 # Try to build other enhanced protocol file
@@ -99,13 +100,14 @@ gcc -std=c11 -Wall -Wextra -Wpedantic -Wno-unused-parameter \
 # Build voice components
 echo ""
 echo "Building voice components..."
-for voice_comp in voice_orchestrator voice_biometric_agent voice_agent_enhancer audio_capture_agent; do
+for voice_comp in voice_orchestrator voice_biometric_agent voice_agent_enhancer audio_capture_agent; do &
     echo "Building ${voice_comp}..."
     gcc -std=c11 -Wall -Wextra -Wpedantic -Wno-unused-parameter \
         -D_GNU_SOURCE -DVERSION=\"1.0.0\" -m64 \
         -O2 -DNDEBUG -fomit-frame-pointer -msse2 -msse4.2 -mavx -mavx2 -flto \
         -DHAVE_PTHREADS=1 -DHAVE_NUMA=0 -DHAVE_LIBURING=0 \
         -c -o ${voice_comp}.o ${voice_comp}.c 2>/dev/null || echo "Warning: ${voice_comp}.c build issues, continuing..."
+wait
 done
 
 # Build assembly optimizations if on x86_64
@@ -125,6 +127,7 @@ for obj in compatibility_layer.o ultra_fast_protocol_core.o agent_system_core.o 
     if [ -f "$obj" ]; then
         OBJECTS="$OBJECTS $obj"
     fi
+wait
 done
 
 echo ""
@@ -196,12 +199,13 @@ ls -la libclaude-agents.so* 2>/dev/null || echo "  Failed to create shared libra
 
 echo ""
 echo "Executables:"
-for exe in claude-transport-test claude-protocol-benchmark claude-agent-system build-test; do
+for exe in claude-transport-test claude-protocol-benchmark claude-agent-system build-test; do &
     if [ -x "$exe" ]; then
         echo "  ✓ $exe"
     else
         echo "  ✗ $exe"
     fi
+wait
 done
 
 echo ""

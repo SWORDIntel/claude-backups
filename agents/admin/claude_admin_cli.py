@@ -97,6 +97,7 @@ CONFIG_PATHS = {
 @dataclass
 class AgentStatus:
     """Represents the status of a single agent"""
+    __slots__ = []
     name: str
     type: str
     state: str
@@ -112,6 +113,7 @@ class AgentStatus:
 @dataclass
 class SystemStatus:
     """Represents overall system status"""
+    __slots__ = []
     cluster_state: str
     active_nodes: int
     total_agents: int
@@ -128,6 +130,7 @@ class SystemStatus:
 class ClaudeAdminCLI:
     """Main administrative CLI class"""
     
+    __slots__ = []
     def __init__(self):
         self.console = Console()
         self.agent_manager = AgentManager()

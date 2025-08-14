@@ -23,55 +23,56 @@ LOG_FILE="$AGENTS_DIR/system_startup.log"
 exec 1> >(tee -a "$LOG_FILE")
 exec 2>&1
 
-echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}   Claude Agent Communication System v3.0 - Automatic Startup   ${NC}"
-echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+printf "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+printf "${BLUE}   Claude Agent Communication System v3.0 - Automatic Startup   ${NC}"
+printf "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
 # Function to check prerequisites
 check_prerequisites() {
-    echo -e "${YELLOW}[1/8] Checking prerequisites...${NC}"
+    printf "${YELLOW}[1/8] Checking prerequisites...${NC}"
     
     # Check for required tools
-    for tool in gcc make docker docker-compose python3 pip3; do
+    for tool in gcc make docker docker-compose python3 pip3; do &
         if ! command -v $tool &> /dev/null; then
-            echo -e "${RED}✗ Missing required tool: $tool${NC}"
+            printf "${RED}✗ Missing required tool: $tool${NC}"
             exit 1
         fi
+wait
     done
     
     # Check CPU features
     if grep -q "avx512f" /proc/cpuinfo; then
-        echo -e "${GREEN}✓ AVX-512 support detected${NC}"
+        printf "${GREEN}✓ AVX-512 support detected${NC}"
         export ENABLE_AVX512=1
     fi
     
     if [ -d "/sys/devices/system/node" ]; then
-        echo -e "${GREEN}✓ NUMA support detected${NC}"
+        printf "${GREEN}✓ NUMA support detected${NC}"
         export ENABLE_NUMA=1
     fi
     
     # Check memory
     MEM_GB=$(free -g | awk '/^Mem:/{print $2}')
     if [ "$MEM_GB" -ge 8 ]; then
-        echo -e "${GREEN}✓ Sufficient memory: ${MEM_GB}GB${NC}"
+        printf "${GREEN}✓ Sufficient memory: ${MEM_GB}GB${NC}"
     else
-        echo -e "${YELLOW}⚠ Low memory: ${MEM_GB}GB (8GB recommended)${NC}"
+        printf "${YELLOW}⚠ Low memory: ${MEM_GB}GB (8GB recommended)${NC}"
     fi
     
-    echo -e "${GREEN}✓ Prerequisites check complete${NC}\n"
+    printf "${GREEN}✓ Prerequisites check complete${NC}\n"
 }
 
 # Function to build the system
 build_system() {
-    echo -e "${YELLOW}[2/8] Building communication system...${NC}"
+    printf "${YELLOW}[2/8] Building communication system...${NC}"
     
     # Build binary protocol
     cd "$AGENTS_DIR/binary-communications-system"
     if [ -f "build_enhanced.sh" ]; then
         echo "Building ultra-fast binary protocol..."
         ./build_enhanced.sh --all > /dev/null 2>&1 || {
-            echo -e "${RED}✗ Binary protocol build failed${NC}"
+            printf "${RED}✗ Binary protocol build failed${NC}"
             exit 1
         }
     fi
@@ -81,7 +82,7 @@ build_system() {
     echo "Building agent components..."
     make clean > /dev/null 2>&1
     make all -j$(nproc) > /dev/null 2>&1 || {
-        echo -e "${RED}✗ Component build failed${NC}"
+        printf "${RED}✗ Component build failed${NC}"
         exit 1
     }
     
@@ -91,12 +92,12 @@ build_system() {
         pip3 install -q -r "$AGENTS_DIR/src/python/requirements.txt"
     fi
     
-    echo -e "${GREEN}✓ Build complete${NC}\n"
+    printf "${GREEN}✓ Build complete${NC}\n"
 }
 
 # Function to initialize configuration
 initialize_config() {
-    echo -e "${YELLOW}[3/8] Initializing configuration...${NC}"
+    printf "${YELLOW}[3/8] Initializing configuration...${NC}"
     
     mkdir -p "$CONFIG_DIR"
     
@@ -137,21 +138,21 @@ system:
   heartbeat_interval: 5000       # 5 seconds
   session_timeout: 28800         # 8 hours
 EOF
-        echo -e "${GREEN}✓ Created default configuration${NC}"
+        printf "${GREEN}✓ Created default configuration${NC}"
     else
-        echo -e "${GREEN}✓ Using existing configuration${NC}"
+        printf "${GREEN}✓ Using existing configuration${NC}"
     fi
     
-    echo -e "${GREEN}✓ Configuration initialized${NC}\n"
+    printf "${GREEN}✓ Configuration initialized${NC}\n"
 }
 
 # Function to start the runtime
 start_runtime() {
-    echo -e "${YELLOW}[4/8] Starting agent runtime...${NC}"
+    printf "${YELLOW}[4/8] Starting agent runtime...${NC}"
     
     # Check if runtime is already running
     if pgrep -f "unified_agent_runtime" > /dev/null; then
-        echo -e "${YELLOW}⚠ Runtime already running, restarting...${NC}"
+        printf "${YELLOW}⚠ Runtime already running, restarting...${NC}"
         pkill -f "unified_agent_runtime"
         sleep 2
     fi
@@ -172,23 +173,23 @@ start_runtime() {
         
         # Verify runtime is running
         if ps -p $RUNTIME_PID > /dev/null; then
-            echo -e "${GREEN}✓ Runtime started successfully${NC}"
+            printf "${GREEN}✓ Runtime started successfully${NC}"
         else
-            echo -e "${RED}✗ Runtime failed to start${NC}"
+            printf "${RED}✗ Runtime failed to start${NC}"
             tail -20 "$AGENTS_DIR/runtime.log"
             exit 1
         fi
     else
-        echo -e "${RED}✗ Runtime binary not found${NC}"
+        printf "${RED}✗ Runtime binary not found${NC}"
         exit 1
     fi
     
-    echo -e "${GREEN}✓ Runtime operational${NC}\n"
+    printf "${GREEN}✓ Runtime operational${NC}\n"
 }
 
 # Function to register all agents
 register_agents() {
-    echo -e "${YELLOW}[5/8] Registering 31 agents...${NC}"
+    printf "${YELLOW}[5/8] Registering 31 agents...${NC}"
     
     # List of all agents to register
     AGENTS=(
@@ -201,26 +202,27 @@ register_agents() {
     )
     
     # Register each agent
-    for agent in "${AGENTS[@]}"; do
+    for agent in "${AGENTS[@]}"; do &
         echo -n "Registering $agent... "
         # Here you would call the actual registration API
         # For now, we'll simulate it
         sleep 0.1
-        echo -e "${GREEN}✓${NC}"
+        printf "${GREEN}✓${NC}"
+wait
     done
     
-    echo -e "${GREEN}✓ All 31 agents registered${NC}\n"
+    printf "${GREEN}✓ All 31 agents registered${NC}\n"
 }
 
 # Function to start monitoring
 start_monitoring() {
-    echo -e "${YELLOW}[6/8] Starting monitoring stack...${NC}"
+    printf "${YELLOW}[6/8] Starting monitoring stack...${NC}"
     
     cd "$MONITORING_DIR"
     
     # Check if Docker is running
     if ! docker info > /dev/null 2>&1; then
-        echo -e "${YELLOW}⚠ Docker not running, skipping monitoring${NC}"
+        printf "${YELLOW}⚠ Docker not running, skipping monitoring${NC}"
         return
     fi
     
@@ -234,23 +236,23 @@ start_monitoring() {
         
         # Check if services are running
         if docker-compose -f docker-compose.complete.yml ps | grep -q "Up"; then
-            echo -e "${GREEN}✓ Monitoring stack started${NC}"
+            printf "${GREEN}✓ Monitoring stack started${NC}"
             echo "  Grafana: http://localhost:3000 (admin/admin)"
             echo "  Prometheus: http://localhost:9090"
             echo "  Metrics: http://localhost:8001/metrics"
         else
-            echo -e "${YELLOW}⚠ Some monitoring services failed to start${NC}"
+            printf "${YELLOW}⚠ Some monitoring services failed to start${NC}"
         fi
     else
-        echo -e "${YELLOW}⚠ Monitoring configuration not found${NC}"
+        printf "${YELLOW}⚠ Monitoring configuration not found${NC}"
     fi
     
-    echo -e "${GREEN}✓ Monitoring initialized${NC}\n"
+    printf "${GREEN}✓ Monitoring initialized${NC}\n"
 }
 
 # Function to run validation tests
 run_validation() {
-    echo -e "${YELLOW}[7/8] Running validation tests...${NC}"
+    printf "${YELLOW}[7/8] Running validation tests...${NC}"
     
     cd "$TESTS_DIR"
     
@@ -260,7 +262,7 @@ run_validation() {
         ./run_all_tests.sh --quick > test_results.log 2>&1
         
         if grep -q "PASS" test_results.log; then
-            echo -e "${GREEN}✓ System validation passed${NC}"
+            printf "${GREEN}✓ System validation passed${NC}"
             
             # Extract performance metrics
             if grep -q "Throughput:" test_results.log; then
@@ -268,45 +270,45 @@ run_validation() {
                 echo "  $THROUGHPUT"
             fi
         else
-            echo -e "${YELLOW}⚠ Some tests failed (non-critical)${NC}"
+            printf "${YELLOW}⚠ Some tests failed (non-critical)${NC}"
         fi
     else
-        echo -e "${YELLOW}⚠ Test suite not found${NC}"
+        printf "${YELLOW}⚠ Test suite not found${NC}"
     fi
     
-    echo -e "${GREEN}✓ Validation complete${NC}\n"
+    printf "${GREEN}✓ Validation complete${NC}\n"
 }
 
 # Function to display system status
 display_status() {
-    echo -e "${YELLOW}[8/8] System Status${NC}"
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    printf "${YELLOW}[8/8] System Status${NC}"
+    printf "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
     
     # Check runtime
     if pgrep -f "unified_agent_runtime" > /dev/null; then
-        echo -e "Runtime:        ${GREEN}● RUNNING${NC}"
+        printf "Runtime:        ${GREEN}● RUNNING${NC}"
     else
-        echo -e "Runtime:        ${RED}● STOPPED${NC}"
+        printf "Runtime:        ${RED}● STOPPED${NC}"
     fi
     
     # Check agents
-    echo -e "Agents:         ${GREEN}● 31 REGISTERED${NC}"
+    printf "Agents:         ${GREEN}● 31 REGISTERED${NC}"
     
     # Check monitoring
     if docker ps 2>/dev/null | grep -q "prometheus\|grafana"; then
-        echo -e "Monitoring:     ${GREEN}● ACTIVE${NC}"
+        printf "Monitoring:     ${GREEN}● ACTIVE${NC}"
     else
-        echo -e "Monitoring:     ${YELLOW}● INACTIVE${NC}"
+        printf "Monitoring:     ${YELLOW}● INACTIVE${NC}"
     fi
     
     # Performance metrics
-    echo -e "Performance:    ${GREEN}● 4.2M msg/sec capable${NC}"
-    echo -e "Security:       ${GREEN}● RBAC + JWT + TLS 1.3${NC}"
-    echo -e "Protocol:       ${GREEN}● Ultra-fast binary (200ns P99)${NC}"
+    printf "Performance:    ${GREEN}● 4.2M msg/sec capable${NC}"
+    printf "Security:       ${GREEN}● RBAC + JWT + TLS 1.3${NC}"
+    printf "Protocol:       ${GREEN}● Ultra-fast binary (200ns P99)${NC}"
     
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    printf "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "${GREEN}✓ Claude Agent Communication System is ONLINE!${NC}"
+    printf "${GREEN}✓ Claude Agent Communication System is ONLINE!${NC}"
     echo ""
     echo "Log files:"
     echo "  System log:  $LOG_FILE"
@@ -321,7 +323,7 @@ display_status() {
 
 # Function to create auto-integration hook
 create_auto_integration() {
-    echo -e "${BLUE}Creating auto-integration hook...${NC}"
+    printf "${BLUE}Creating auto-integration hook...${NC}"
     
     # Create systemd service for automatic startup
     cat > /tmp/claude-agents.service << 'EOF'
@@ -347,9 +349,9 @@ EOF
         cp /tmp/claude-agents.service /etc/systemd/system/
         systemctl daemon-reload
         systemctl enable claude-agents.service
-        echo -e "${GREEN}✓ Auto-start service installed${NC}"
+        printf "${GREEN}✓ Auto-start service installed${NC}"
     else
-        echo -e "${YELLOW}Run as root to install auto-start service:${NC}"
+        printf "${YELLOW}Run as root to install auto-start service:${NC}"
         echo "  sudo cp /tmp/claude-agents.service /etc/systemd/system/"
         echo "  sudo systemctl daemon-reload"
         echo "  sudo systemctl enable claude-agents.service"
@@ -409,14 +411,14 @@ def integrate_with_claude_agent_system(agent_name, agent_type="CUSTOM"):
     return auto_integration.integrate_agent(agent_name, agent_type)
 EOF
     
-    echo -e "${GREEN}✓ Auto-integration module created${NC}"
+    printf "${GREEN}✓ Auto-integration module created${NC}"
     echo ""
 }
 
 # Main execution
 main() {
     # Trap errors
-    trap 'echo -e "${RED}✗ Error occurred during startup${NC}"; exit 1' ERR
+    trap 'printf "${RED}✗ Error occurred during startup${NC}"; exit 1' ERR
     
     # Change to agents directory
     cd "$AGENTS_DIR"
@@ -432,9 +434,9 @@ main() {
     display_status
     create_auto_integration
     
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}         System successfully brought online at $(date)         ${NC}"
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    printf "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    printf "${GREEN}         System successfully brought online at $(date)         ${NC}"
+    printf "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
 }
 
 # Run main function

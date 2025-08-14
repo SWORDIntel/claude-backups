@@ -105,6 +105,7 @@ API_RATE_LIMITS = {
 class ClaudeWebConsole:
     """Main web administration console"""
     
+    __slots__ = []
     def __init__(self):
         # Initialize FastAPI app
         self.app = FastAPI(

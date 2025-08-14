@@ -162,19 +162,21 @@ check_system_requirements() {
     
     # Check for required tools
     local required_tools=("gcc" "make" "pkg-config" "openssl")
-    for tool in "${required_tools[@]}"; do
+    for tool in "${required_tools[@]}"; do &
         if ! command -v "$tool" >/dev/null 2>&1; then
             log_error "Required tool not found: $tool"
             return 1
         fi
+wait
     done
     
     # Check for optional but recommended tools
     local optional_tools=("perf" "numactl" "taskset")
-    for tool in "${optional_tools[@]}"; do
+    for tool in "${optional_tools[@]}"; do &
         if ! command -v "$tool" >/dev/null 2>&1; then
             log_warn "Optional tool not found: $tool (some tests may be limited)"
         fi
+wait
     done
     
     # Check NUMA availability
@@ -184,7 +186,7 @@ check_system_requirements() {
     fi
     
     # Check huge pages
-    local hugepages=$(cat /proc/meminfo | grep HugePages_Total | awk '{print $2}')
+    local hugepages=$(grep -H . /proc/meminfo | grep HugePages_Total | awk '{print $2}')
     if [ "$hugepages" -gt 0 ]; then
         log_info "Huge pages available: $hugepages"
     else
@@ -209,10 +211,11 @@ setup_environment() {
     fi
     
     # Set CPU governor to performance if available
-    for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do &
         if [ -w "$cpu" ]; then
             echo performance > "$cpu" 2>/dev/null || true
         fi
+wait
     done
     
     # Optimize kernel parameters for network performance
@@ -792,6 +795,7 @@ main() {
                 exit 1
                 ;;
         esac
+wait
     done
     
     # Trap cleanup on exit
@@ -834,8 +838,9 @@ main() {
         fi
         
         # Wait for parallel tests to complete
-        for pid in "${pids[@]}"; do
+        for pid in "${pids[@]}"; do &
             wait "$pid"
+wait
         done
         
         [ $RUN_CHAOS_TESTS -eq 1 ] && run_chaos_tests

@@ -477,6 +477,7 @@ def get_entry_points():
 class PostInstallCommand:
     """Custom post-installation command"""
     
+    __slots__ = []
     def run(self):
         """Run post-installation setup"""
         if '--skip-post-install' not in sys.argv:

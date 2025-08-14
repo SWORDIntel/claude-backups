@@ -21,6 +21,7 @@ sys.path.append('/home/ubuntu/Documents/Claude/agents')
 class VoiceInputSystem:
     """Complete voice input system for agent interaction"""
     
+    __slots__ = []
     def __init__(self):
         self.is_listening = False
         self.audio_queue = queue.Queue()
@@ -117,6 +118,7 @@ sys.path.append('/home/ubuntu/Documents/Claude/agents')
 class BasicVoiceInterface:
     """Basic voice interface using text input"""
     
+    __slots__ = []
     def __init__(self):
         self.agent_keywords = {
             "director": ["plan", "strategy", "coordinate", "manage", "direct"],

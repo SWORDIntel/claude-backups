@@ -1,0 +1,744 @@
+#!/usr/bin/env python3
+"""
+🎯 AUTOMATED SIMULATION ORCHESTRATOR
+Advanced attack chain execution and coordination system
+"""
+
+import asyncio
+import json
+import time
+import threading
+import multiprocessing
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Tuple
+from enum import Enum
+from dataclasses import dataclass, field
+import networkx as nx
+import numpy as np
+from collections import defaultdict
+import yaml
+import logging
+import hashlib
+import uuid
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('SimulationOrchestrator')
+
+
+class AttackPhase(Enum):
+    """Attack lifecycle phases"""
+    __slots__ = []
+    RECONNAISSANCE = "reconnaissance"
+    INITIAL_ACCESS = "initial_access"
+    EXECUTION = "execution"
+    PERSISTENCE = "persistence"
+    PRIVILEGE_ESCALATION = "privilege_escalation"
+    DEFENSE_EVASION = "defense_evasion"
+    CREDENTIAL_ACCESS = "credential_access"
+    DISCOVERY = "discovery"
+    LATERAL_MOVEMENT = "lateral_movement"
+    COLLECTION = "collection"
+    COMMAND_CONTROL = "command_control"
+    EXFILTRATION = "exfiltration"
+    IMPACT = "impact"
+
+
+class SimulationComplexity(Enum):
+    """Simulation complexity levels"""
+    __slots__ = []
+    BASIC = 1
+    INTERMEDIATE = 2
+    ADVANCED = 3
+    EXPERT = 4
+    NATION_STATE = 5
+
+
+@dataclass
+class AttackScenario:
+    """Individual attack scenario configuration"""
+    __slots__ = []
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    name: str = ""
+    description: str = ""
+    complexity: SimulationComplexity = SimulationComplexity.BASIC
+    phases: List[AttackPhase] = field(default_factory=list)
+    target_certificates: List[str] = field(default_factory=list)
+    duration_hours: int = 24
+    actors: List[str] = field(default_factory=list)
+    objectives: List[str] = field(default_factory=list)
+    success_criteria: Dict[str, Any] = field(default_factory=dict)
+    dependencies: List[str] = field(default_factory=list)
+    priority: int = 1
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class SimulationState:
+    """Current state of running simulation"""
+    __slots__ = []
+    scenario_id: str
+    phase: AttackPhase
+    start_time: datetime
+    current_time: datetime
+    progress_percentage: float
+    active_threads: List[str]
+    compromised_systems: List[str]
+    detected_activities: List[str]
+    success_metrics: Dict[str, float]
+    failure_points: List[str]
+    logs: List[Dict[str, Any]]
+
+
+class SimulationOrchestrator:
+    """
+    Main orchestrator for automated attack simulations
+    """
+    
+    __slots__ = []
+    def __init__(self, config_path: Optional[str] = None):
+        self.config = self._load_config(config_path)
+        self.scenarios: Dict[str, AttackScenario] = {}
+        self.active_simulations: Dict[str, SimulationState] = {}
+        self.execution_graph = nx.DiGraph()
+        self.event_queue = asyncio.Queue()
+        self.metrics_collector = MetricsCollector()
+        self.threat_intelligence = ThreatIntelligence()
+        self.is_running = False
+        self.executor_pool = multiprocessing.Pool(processes=self.config.get('max_workers', 10))
+        
+    def _load_config(self, config_path: Optional[str]) -> Dict:
+        """Load orchestrator configuration"""
+        default_config = {
+            'max_concurrent_simulations': 5,
+            'max_workers': 10,
+            'checkpoint_interval': 300,  # 5 minutes
+            'metrics_interval': 60,  # 1 minute
+            'auto_escalation': True,
+            'adaptive_tactics': True,
+            'real_time_visualization': True,
+            'threat_intel_integration': True
+        }
+        
+        if config_path:
+            with open(config_path, 'r') as f:
+                custom_config = yaml.safe_load(f)
+                default_config.update(custom_config)
+                
+        return default_config
+    
+    async def load_scenario(self, scenario_path: str) -> AttackScenario:
+        """Load attack scenario from file"""
+        with open(scenario_path, 'r') as f:
+            scenario_data = yaml.safe_load(f)
+        
+        scenario = AttackScenario(
+            name=scenario_data['name'],
+            description=scenario_data['description'],
+            complexity=SimulationComplexity[scenario_data['complexity'].upper()],
+            phases=[AttackPhase[p.upper()] for p in scenario_data['phases']],
+            target_certificates=scenario_data.get('target_certificates', []),
+            duration_hours=scenario_data.get('duration_hours', 24),
+            actors=scenario_data.get('actors', []),
+            objectives=scenario_data.get('objectives', []),
+            success_criteria=scenario_data.get('success_criteria', {}),
+            dependencies=scenario_data.get('dependencies', []),
+            priority=scenario_data.get('priority', 1),
+            metadata=scenario_data.get('metadata', {})
+        )
+        
+        self.scenarios[scenario.id] = scenario
+        self._build_execution_graph(scenario)
+        
+        logger.info(f"Loaded scenario: {scenario.name} (ID: {scenario.id})")
+        return scenario
+    
+    def _build_execution_graph(self, scenario: AttackScenario):
+        """Build directed graph of attack execution flow"""
+        # Add nodes for each phase
+        for phase in scenario.phases:
+            self.execution_graph.add_node(
+                f"{scenario.id}_{phase.value}",
+                scenario_id=scenario.id,
+                phase=phase,
+                status='pending'
+            )
+        
+        # Add edges based on phase dependencies
+        phase_order = [
+            AttackPhase.RECONNAISSANCE,
+            AttackPhase.INITIAL_ACCESS,
+            AttackPhase.EXECUTION,
+            AttackPhase.PERSISTENCE,
+            AttackPhase.PRIVILEGE_ESCALATION,
+            AttackPhase.DEFENSE_EVASION,
+            AttackPhase.CREDENTIAL_ACCESS,
+            AttackPhase.DISCOVERY,
+            AttackPhase.LATERAL_MOVEMENT,
+            AttackPhase.COLLECTION,
+            AttackPhase.COMMAND_CONTROL,
+            AttackPhase.EXFILTRATION,
+            AttackPhase.IMPACT
+        ]
+        
+        # Create edges based on phase order
+        for i, phase in enumerate(scenario.phases[:-1]):
+            current_node = f"{scenario.id}_{phase.value}"
+            next_node = f"{scenario.id}_{scenario.phases[i+1].value}"
+            self.execution_graph.add_edge(current_node, next_node)
+    
+    async def execute_scenario(self, scenario_id: str) -> SimulationState:
+        """Execute a loaded scenario"""
+        if scenario_id not in self.scenarios:
+            raise ValueError(f"Scenario {scenario_id} not found")
+        
+        scenario = self.scenarios[scenario_id]
+        
+        # Initialize simulation state
+        state = SimulationState(
+            scenario_id=scenario_id,
+            phase=scenario.phases[0],
+            start_time=datetime.now(),
+            current_time=datetime.now(),
+            progress_percentage=0.0,
+            active_threads=[],
+            compromised_systems=[],
+            detected_activities=[],
+            success_metrics={},
+            failure_points=[],
+            logs=[]
+        )
+        
+        self.active_simulations[scenario_id] = state
+        
+        # Execute phases in order
+        for i, phase in enumerate(scenario.phases):
+            state.phase = phase
+            state.progress_percentage = (i / len(scenario.phases)) * 100
+            
+            logger.info(f"Executing phase: {phase.value} for scenario {scenario.name}")
+            
+            # Execute phase-specific actions
+            await self._execute_phase(scenario, phase, state)
+            
+            # Check for detection/defensive response
+            if self.config['adaptive_tactics']:
+                await self._adapt_tactics(state)
+            
+            # Update metrics
+            self.metrics_collector.update(state)
+            
+            # Check success criteria
+            if self._check_phase_success(scenario, phase, state):
+                logger.info(f"Phase {phase.value} completed successfully")
+            else:
+                logger.warning(f"Phase {phase.value} failed")
+                state.failure_points.append(phase.value)
+                
+                if scenario.metadata.get('stop_on_failure', False):
+                    break
+        
+        state.current_time = datetime.now()
+        state.progress_percentage = 100.0
+        
+        return state
+    
+    async def _execute_phase(self, scenario: AttackScenario, 
+                            phase: AttackPhase, state: SimulationState):
+        """Execute specific attack phase"""
+        
+        phase_executors = {
+            AttackPhase.RECONNAISSANCE: self._execute_reconnaissance,
+            AttackPhase.INITIAL_ACCESS: self._execute_initial_access,
+            AttackPhase.EXECUTION: self._execute_execution,
+            AttackPhase.PERSISTENCE: self._execute_persistence,
+            AttackPhase.PRIVILEGE_ESCALATION: self._execute_privilege_escalation,
+            AttackPhase.DEFENSE_EVASION: self._execute_defense_evasion,
+            AttackPhase.CREDENTIAL_ACCESS: self._execute_credential_access,
+            AttackPhase.DISCOVERY: self._execute_discovery,
+            AttackPhase.LATERAL_MOVEMENT: self._execute_lateral_movement,
+            AttackPhase.COLLECTION: self._execute_collection,
+            AttackPhase.COMMAND_CONTROL: self._execute_command_control,
+            AttackPhase.EXFILTRATION: self._execute_exfiltration,
+            AttackPhase.IMPACT: self._execute_impact
+        }
+        
+        executor = phase_executors.get(phase)
+        if executor:
+            await executor(scenario, state)
+        else:
+            logger.warning(f"No executor found for phase {phase.value}")
+    
+    async def _execute_reconnaissance(self, scenario: AttackScenario, 
+                                     state: SimulationState):
+        """Execute reconnaissance phase"""
+        logger.info("Starting reconnaissance phase")
+        
+        # Certificate discovery
+        discovered_certs = await self._discover_certificates(
+            scenario.target_certificates
+        )
+        
+        # Network scanning
+        network_map = await self._scan_network(scenario.metadata.get('target_network'))
+        
+        # OSINT gathering
+        osint_data = await self._gather_osint(scenario.actors)
+        
+        state.logs.append({
+            'phase': 'reconnaissance',
+            'timestamp': datetime.now().isoformat(),
+            'discovered_certificates': len(discovered_certs),
+            'network_nodes': len(network_map),
+            'osint_records': len(osint_data)
+        })
+        
+        state.metadata = {
+            'discovered_certs': discovered_certs,
+            'network_map': network_map,
+            'osint_data': osint_data
+        }
+    
+    async def _execute_initial_access(self, scenario: AttackScenario,
+                                     state: SimulationState):
+        """Execute initial access phase"""
+        logger.info("Starting initial access phase")
+        
+        # Attempt certificate-based access
+        for cert in scenario.target_certificates:
+            success = await self._attempt_certificate_access(cert)
+            if success:
+                state.compromised_systems.append(cert)
+                logger.info(f"Successfully compromised: {cert}")
+                break
+        
+        # Fallback to other methods if needed
+        if not state.compromised_systems:
+            # Try phishing
+            phishing_success = await self._execute_phishing(scenario.actors)
+            if phishing_success:
+                state.compromised_systems.append('phishing_victim')
+    
+    async def _execute_lateral_movement(self, scenario: AttackScenario,
+                                       state: SimulationState):
+        """Execute lateral movement phase"""
+        logger.info("Starting lateral movement phase")
+        
+        # Use compromised certificates for lateral movement
+        for system in state.compromised_systems[:]:  # Copy list to iterate
+            adjacent_systems = await self._find_adjacent_systems(system)
+            
+            for target in adjacent_systems:
+                if await self._attempt_lateral_access(system, target):
+                    state.compromised_systems.append(target)
+                    logger.info(f"Lateral movement: {system} -> {target}")
+    
+    async def _execute_impact(self, scenario: AttackScenario,
+                            state: SimulationState):
+        """Execute impact phase"""
+        logger.info("Starting impact phase")
+        
+        impact_actions = scenario.metadata.get('impact_actions', [])
+        
+        for action in impact_actions:
+            if action == 'data_destruction':
+                await self._simulate_data_destruction(state.compromised_systems)
+            elif action == 'ransomware':
+                await self._simulate_ransomware(state.compromised_systems)
+            elif action == 'service_disruption':
+                await self._simulate_service_disruption(state.compromised_systems)
+            elif action == 'data_exfiltration':
+                await self._simulate_data_exfiltration(state.compromised_systems)
+    
+    async def _adapt_tactics(self, state: SimulationState):
+        """Adapt attack tactics based on detection"""
+        if state.detected_activities:
+            logger.info(f"Detection triggered, adapting tactics")
+            
+            # Change communication channels
+            await self._rotate_c2_channels()
+            
+            # Modify attack patterns
+            await self._modify_attack_patterns()
+            
+            # Implement additional evasion
+            await self._enhance_evasion_techniques()
+    
+    def _check_phase_success(self, scenario: AttackScenario,
+                            phase: AttackPhase, state: SimulationState) -> bool:
+        """Check if phase objectives were met"""
+        criteria = scenario.success_criteria.get(phase.value, {})
+        
+        for criterion, threshold in criteria.items():
+            if criterion == 'systems_compromised':
+                if len(state.compromised_systems) < threshold:
+                    return False
+            elif criterion == 'time_limit':
+                elapsed = (datetime.now() - state.start_time).total_seconds()
+                if elapsed > threshold:
+                    return False
+            elif criterion == 'detection_rate':
+                detection_rate = len(state.detected_activities) / max(len(state.logs), 1)
+                if detection_rate > threshold:
+                    return False
+        
+        return True
+    
+    async def run_campaign(self, campaign_config: Dict):
+        """Run coordinated multi-scenario campaign"""
+        logger.info(f"Starting campaign: {campaign_config['name']}")
+        
+        campaign_scenarios = campaign_config['scenarios']
+        dependencies = campaign_config.get('dependencies', {})
+        
+        # Build campaign execution graph
+        campaign_graph = nx.DiGraph()
+        for scenario_id in campaign_scenarios:
+            campaign_graph.add_node(scenario_id)
+        
+        for scenario_id, deps in dependencies.items():
+            for dep in deps:
+                campaign_graph.add_edge(dep, scenario_id)
+        
+        # Execute scenarios in topological order
+        execution_order = list(nx.topological_sort(campaign_graph))
+        
+        results = {}
+        for scenario_id in execution_order:
+            # Check if dependencies succeeded
+            deps_met = all(
+                results.get(dep, {}).get('success', False)
+                for dep in dependencies.get(scenario_id, [])
+            )
+            
+            if deps_met:
+                state = await self.execute_scenario(scenario_id)
+                results[scenario_id] = {
+                    'success': len(state.failure_points) == 0,
+                    'state': state
+                }
+            else:
+                logger.warning(f"Skipping {scenario_id} due to failed dependencies")
+                results[scenario_id] = {'success': False, 'state': None}
+        
+        return results
+    
+    async def start_orchestrator(self):
+        """Start the orchestrator service"""
+        self.is_running = True
+        logger.info("Orchestrator started")
+        
+        # Start background tasks
+        asyncio.create_task(self._metrics_reporter())
+        asyncio.create_task(self._checkpoint_manager())
+        asyncio.create_task(self._event_processor())
+        
+        # Main orchestrator loop
+        while self.is_running:
+            await asyncio.sleep(1)
+            
+            # Process any pending scenarios
+            await self._process_queue()
+            
+            # Update active simulations
+            for sim_id, state in self.active_simulations.items():
+                await self._update_simulation(sim_id, state)
+    
+    async def stop_orchestrator(self):
+        """Stop the orchestrator service"""
+        self.is_running = False
+        self.executor_pool.close()
+        self.executor_pool.join()
+        logger.info("Orchestrator stopped")
+    
+    # Helper methods for phase execution
+    async def _discover_certificates(self, targets: List[str]) -> List[Dict]:
+        """Discover certificates for targets"""
+        discovered = []
+        for target in targets:
+            # Simulate certificate discovery
+            cert_info = {
+                'domain': target,
+                'issuer': f'CA for {target}',
+                'validity': '2024-2026',
+                'vulnerabilities': ['no_pinning', 'weak_validation']
+            }
+            discovered.append(cert_info)
+        return discovered
+    
+    async def _scan_network(self, network: Optional[str]) -> Dict:
+        """Scan network for targets"""
+        if not network:
+            network = '192.168.1.0/24'
+        
+        # Simulate network scan
+        return {
+            'network': network,
+            'hosts': 254,
+            'services': {
+                'https': 45,
+                'ssh': 23,
+                'rdp': 12
+            }
+        }
+    
+    async def _gather_osint(self, actors: List[str]) -> List[Dict]:
+        """Gather OSINT on target actors"""
+        osint_data = [{
+                'actor': actor,
+                'emails': [f'{actor}@example.com'],
+                'social_media': ['twitter', 'linkedin'],
+                'leaked_credentials': False
+            } for actor in actors]
+        return osint_data
+    
+    async def _attempt_certificate_access(self, cert: str) -> bool:
+        """Attempt to use certificate for access"""
+        # Simulate success probability based on cert
+        success_probability = 0.7 if 'weak' in cert.lower() else 0.3
+        return np.random.random() < success_probability
+    
+    async def _execute_phishing(self, targets: List[str]) -> bool:
+        """Execute phishing campaign"""
+        # Simulate phishing success
+        return np.random.random() < 0.4
+    
+    async def _find_adjacent_systems(self, system: str) -> List[str]:
+        """Find systems adjacent to compromised one"""
+        # Simulate finding adjacent systems
+        return (f"{system}_adjacent_{i}" for i in range(np.random.randint(1, 5)))
+    
+    async def _attempt_lateral_access(self, source: str, target: str) -> bool:
+        """Attempt lateral movement from source to target"""
+        # Simulate lateral movement success
+        return np.random.random() < 0.6
+    
+    async def _simulate_data_destruction(self, systems: List[str]):
+        """Simulate data destruction impact"""
+        for system in systems:
+            logger.info(f"Simulating data destruction on {system}")
+    
+    async def _simulate_ransomware(self, systems: List[str]):
+        """Simulate ransomware impact"""
+        for system in systems:
+            logger.info(f"Simulating ransomware on {system}")
+    
+    async def _simulate_service_disruption(self, systems: List[str]):
+        """Simulate service disruption"""
+        for system in systems:
+            logger.info(f"Simulating service disruption on {system}")
+    
+    async def _simulate_data_exfiltration(self, systems: List[str]):
+        """Simulate data exfiltration"""
+        total_data = 0
+        for system in systems:
+            data_size = np.random.randint(100, 10000)  # MB
+            total_data += data_size
+            logger.info(f"Simulating exfiltration of {data_size}MB from {system}")
+        return total_data
+    
+    async def _rotate_c2_channels(self):
+        """Rotate command and control channels"""
+        logger.info("Rotating C2 channels for evasion")
+    
+    async def _modify_attack_patterns(self):
+        """Modify attack patterns to avoid detection"""
+        logger.info("Modifying attack patterns")
+    
+    async def _enhance_evasion_techniques(self):
+        """Enhance evasion techniques"""
+        logger.info("Enhancing evasion techniques")
+    
+    async def _metrics_reporter(self):
+        """Background task to report metrics"""
+        while self.is_running:
+            await asyncio.sleep(self.config['metrics_interval'])
+            metrics = self.metrics_collector.get_current_metrics()
+            logger.info(f"Metrics: {metrics}")
+    
+    async def _checkpoint_manager(self):
+        """Background task to save checkpoints"""
+        while self.is_running:
+            await asyncio.sleep(self.config['checkpoint_interval'])
+            await self._save_checkpoint()
+    
+    async def _event_processor(self):
+        """Process events from queue"""
+        while self.is_running:
+            try:
+                event = await asyncio.wait_for(
+                    self.event_queue.get(),
+                    timeout=1.0
+                )
+                await self._handle_event(event)
+            except asyncio.TimeoutError:
+                continue
+    
+    async def _process_queue(self):
+        """Process pending scenario queue"""
+        pass  # Implement queue processing
+    
+    async def _update_simulation(self, sim_id: str, state: SimulationState):
+        """Update running simulation state"""
+        pass  # Implement state updates
+    
+    async def _save_checkpoint(self):
+        """Save current state checkpoint"""
+        checkpoint = {
+            'timestamp': datetime.now().isoformat(),
+            'active_simulations': {
+                sim_id: {
+                    'scenario_id': state.scenario_id,
+                    'phase': state.phase.value,
+                    'progress': state.progress_percentage,
+                    'compromised_systems': state.compromised_systems
+                }
+                for sim_id, state in self.active_simulations.items()
+            }
+        }
+        
+        checkpoint_file = f"checkpoint_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(checkpoint_file, 'w') as f:
+            json.dump(checkpoint, f, indent=2)
+        
+        logger.info(f"Saved checkpoint: {checkpoint_file}")
+    
+    async def _handle_event(self, event: Dict):
+        """Handle orchestrator events"""
+        event_type = event.get('type')
+        
+        if event_type == 'scenario_complete':
+            await self._handle_scenario_complete(event)
+        elif event_type == 'detection_alert':
+            await self._handle_detection_alert(event)
+        elif event_type == 'resource_constraint':
+            await self._handle_resource_constraint(event)
+    
+    async def _handle_scenario_complete(self, event: Dict):
+        """Handle scenario completion event"""
+        scenario_id = event['scenario_id']
+        logger.info(f"Scenario {scenario_id} completed")
+        
+    async def _handle_detection_alert(self, event: Dict):
+        """Handle detection alert event"""
+        logger.warning(f"Detection alert: {event}")
+        
+    async def _handle_resource_constraint(self, event: Dict):
+        """Handle resource constraint event"""
+        logger.warning(f"Resource constraint: {event}")
+
+
+class MetricsCollector:
+    """Collect and analyze simulation metrics"""
+    
+    __slots__ = []
+    def __init__(self):
+        self.metrics = defaultdict(list)
+        self.current_metrics = {}
+    
+    def update(self, state: SimulationState):
+        """Update metrics from simulation state"""
+        timestamp = datetime.now()
+        
+        self.metrics['progress'].append({
+            'timestamp': timestamp,
+            'scenario_id': state.scenario_id,
+            'progress': state.progress_percentage
+        })
+        
+        self.metrics['compromised_systems'].append({
+            'timestamp': timestamp,
+            'count': len(state.compromised_systems)
+        })
+        
+        self.metrics['detections'].append({
+            'timestamp': timestamp,
+            'count': len(state.detected_activities)
+        })
+        
+        self.current_metrics = {
+            'active_scenarios': 1,
+            'total_compromised': len(state.compromised_systems),
+            'detection_rate': len(state.detected_activities) / max(len(state.logs), 1),
+            'phase': state.phase.value
+        }
+    
+    def get_current_metrics(self) -> Dict:
+        """Get current metrics snapshot"""
+        return self.current_metrics
+    
+    def generate_report(self) -> Dict:
+        """Generate metrics report"""
+        return {
+            'summary': self.current_metrics,
+            'time_series': dict(self.metrics)
+        }
+
+
+class ThreatIntelligence:
+    """Threat intelligence integration"""
+    
+    __slots__ = []
+    def __init__(self):
+        self.threat_feeds = []
+        self.iocs = []
+        self.ttps = []
+    
+    async def update_threat_intel(self):
+        """Update threat intelligence from feeds"""
+        # Implement threat intel updates
+        pass
+    
+    def get_relevant_ttps(self, scenario: AttackScenario) -> List[Dict]:
+        """Get TTPs relevant to scenario"""
+        # Implement TTP matching
+        return []
+    
+    def generate_iocs(self, state: SimulationState) -> List[Dict]:
+        """Generate IOCs from simulation"""
+        iocs = [{
+                'type': 'domain',
+                'value': system,
+                'confidence': 'high',
+                'source': 'simulation'
+            } for system in state.compromised_systems]
+        
+        return iocs
+
+
+# Main execution
+if __name__ == "__main__":
+    async def main():
+        # Initialize orchestrator
+        orchestrator = SimulationOrchestrator()
+        
+        # Load scenarios
+        await orchestrator.load_scenario('scenarios/beijing_smart_city.yaml')
+        await orchestrator.load_scenario('scenarios/yuan_storm.yaml')
+        
+        # Start orchestrator
+        await orchestrator.start_orchestrator()
+        
+        # Run campaign
+        campaign = {
+            'name': 'Operation Total Control',
+            'scenarios': ['beijing_smart_city', 'yuan_storm'],
+            'dependencies': {
+                'yuan_storm': ['beijing_smart_city']
+            }
+        }
+        
+        results = await orchestrator.run_campaign(campaign)
+        
+        # Generate report
+        for scenario_id, result in results.items():
+            print(f"Scenario {scenario_id}: {'Success' if result['success'] else 'Failed'}")
+        
+        # Stop orchestrator
+        await orchestrator.stop_orchestrator()
+    
+    # Run the orchestrator
+    asyncio.run(main())

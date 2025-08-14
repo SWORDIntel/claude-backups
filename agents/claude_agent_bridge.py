@@ -24,6 +24,7 @@ from DEVELOPMENT_CLUSTER_DIRECT import (DevelopmentCluster,
 class ClaudeAgentBridge:
     """Bridge that makes our agents work with Claude Code Task tool"""
     
+    __slots__ = []
     def __init__(self):
         self.active_agents = {}
         self.development_cluster = DevelopmentCluster()
@@ -81,6 +82,7 @@ class ClaudeAgentBridge:
 class DirectorAgent:
     """Strategic executive orchestrator - Direct implementation"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Execute Director agent functionality"""
         
@@ -230,6 +232,7 @@ class DirectorAgent:
 class DevClusterLinterAgent:
     """Development Cluster Linter wrapper"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         file_path = kwargs.get('file_path', '/tmp/temp_code_analysis.py')
         
@@ -250,6 +253,7 @@ class DevClusterLinterAgent:
 class DevClusterPatcherAgent:
     """Development Cluster Patcher wrapper"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         file_path = kwargs.get('file_path', '/tmp/temp_code_patch.py')
         
@@ -274,6 +278,7 @@ class DevClusterPatcherAgent:
 class DevClusterTestbedAgent:
     """Development Cluster Testbed wrapper"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         project_path = kwargs.get('project_path', '/home/ubuntu/Documents/Claude')
         
@@ -289,6 +294,7 @@ class DevClusterTestbedAgent:
 class ProjectOrchestratorAgent:
     """Tactical coordination nexus - Direct implementation"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Execute ProjectOrchestrator functionality"""
         
@@ -367,6 +373,7 @@ class ProjectOrchestratorAgent:
 class ArchitectAgent:
     """System design and technical architecture - Direct implementation"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Execute Architect functionality"""
         
@@ -451,6 +458,7 @@ class ArchitectAgent:
 class SecurityAgent:
     """Comprehensive security analysis - Direct implementation"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Execute Security functionality"""
         
@@ -512,6 +520,7 @@ class SecurityAgent:
 class PlannerAgent:
     """Strategic planning specialist - Direct implementation"""
     
+    __slots__ = []
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Execute PLANNER functionality"""
         

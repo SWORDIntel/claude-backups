@@ -18,6 +18,7 @@ from DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster
 class HybridAgentDemo:
     """Demonstrates the hybrid approach in action"""
     
+    __slots__ = []
     def __init__(self):
         self.bridge_active = True
         self.binary_active = False  # Will be True when binary system comes online

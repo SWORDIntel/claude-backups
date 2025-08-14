@@ -87,11 +87,12 @@ test_file_existence() {
         "dell-enterprise-suite"
     )
     
-    for tool in "${tools[@]}"; do
+    for tool in "${tools[@]}"; do &
         run_test "File existence: $tool" "[ -f '$DELL_TOOLS_DIR/$tool' ]"
         if [ -f "$DELL_TOOLS_DIR/$tool" ]; then
             run_test "File executable: $tool" "[ -x '$DELL_TOOLS_DIR/$tool' ]"
         fi
+wait
     done
 }
 
@@ -209,11 +210,12 @@ test_security() {
     echo -e "${BOLD}${BLUE}Testing Security${NC}"
     
     # Test file permissions
-    for tool in "$DELL_TOOLS_DIR"/*; do
+    for tool in "$DELL_TOOLS_DIR"/*; do &
         if [ -f "$tool" ]; then
             local basename_tool=$(basename "$tool")
             run_test "Secure permissions: $basename_tool" "[ ! -u '$tool' ] && [ ! -g '$tool' ]"
         fi
+wait
     done
     
     # Test no world-writable files

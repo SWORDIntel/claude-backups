@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CapacityMetrics:
     """Container for capacity planning metrics"""
+    __slots__ = []
     timestamp: datetime
     message_throughput: float
     cpu_utilization: float
@@ -38,6 +39,7 @@ class CapacityMetrics:
 @dataclass
 class CapacityForecast:
     """Capacity planning forecast"""
+    __slots__ = []
     metric_name: str
     current_value: float
     predicted_value: float
@@ -49,6 +51,7 @@ class CapacityForecast:
 @dataclass
 class ScalingRecommendation:
     """Scaling recommendation for the system"""
+    __slots__ = []
     component: str
     action: str  # scale_up, scale_down, maintain
     target_capacity: int
@@ -60,6 +63,7 @@ class ScalingRecommendation:
 class CapacityPlanner:
     """Main capacity planning and analysis engine"""
     
+    __slots__ = []
     def __init__(self, prometheus_url: str = "http://localhost:9090"):
         self.prometheus_url = prometheus_url
         self.historical_data = []

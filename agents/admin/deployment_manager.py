@@ -91,6 +91,7 @@ AUTO_SCALE_THRESHOLDS = {
 @dataclass
 class DeploymentConfig:
     """Deployment configuration"""
+    __slots__ = []
     environment: str
     cluster_name: str
     namespace: str
@@ -104,6 +105,7 @@ class DeploymentConfig:
 @dataclass
 class DeploymentStep:
     """Single deployment step"""
+    __slots__ = []
     name: str
     description: str
     action: str
@@ -116,6 +118,7 @@ class DeploymentStep:
 @dataclass
 class DeploymentPlan:
     """Complete deployment plan"""
+    __slots__ = []
     name: str
     version: str
     environment: str
@@ -127,6 +130,7 @@ class DeploymentPlan:
 @dataclass
 class ScalingEvent:
     """Scaling operation event"""
+    __slots__ = []
     timestamp: datetime
     agent_type: str
     action: str  # scale_up, scale_down
@@ -144,6 +148,7 @@ class ScalingEvent:
 class KubernetesDeploymentManager:
     """Manages Kubernetes-based deployments"""
     
+    __slots__ = []
     def __init__(self):
         self.k8s_client = None
         self.apps_v1 = None
@@ -957,6 +962,7 @@ class KubernetesDeploymentManager:
 class DockerDeploymentManager:
     """Manages Docker-based deployments for development/single-node"""
     
+    __slots__ = []
     def __init__(self):
         try:
             self.docker_client = docker.from_env()
@@ -1038,6 +1044,7 @@ class DockerDeploymentManager:
 class DeploymentManager:
     """Main deployment manager - orchestrates Kubernetes and Docker deployments"""
     
+    __slots__ = []
     def __init__(self):
         self.k8s_manager = KubernetesDeploymentManager()
         self.docker_manager = DockerDeploymentManager()

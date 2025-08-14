@@ -97,10 +97,11 @@ check_dependencies() {
     
     log "Checking system dependencies..."
     
-    for dep in "${deps[@]}"; do
+    for dep in "${deps[@]}"; do &
         if ! command -v "$dep" >/dev/null 2>&1; then
             missing_deps+=("$dep")
         fi
+wait
     done
     
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
@@ -218,10 +219,11 @@ tune_cpu_performance() {
     
     if [[ $EUID -eq 0 ]]; then
         # Set CPU governor to performance
-        for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+        for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do &
             if [[ -f $cpu ]]; then
                 echo "performance" > "$cpu" 2>/dev/null || true
             fi
+wait
         done
         
         # Disable CPU power saving features for maximum performance
@@ -335,6 +337,7 @@ setup_certificates() {
         if [[ ! -f "$cert_dir/node-${node_id}.crt" ]]; then
             generate_node_certificate "$cert_dir" "$node_id" "$node_ip"
         fi
+wait
     done
     
     log_success "All certificates generated in $cert_dir"
@@ -486,7 +489,7 @@ run_system_tests() {
     make -f Makefile.distributed test -j"$CPU_COUNT"
     
     # Run unit tests
-    for test_exe in test_*; do
+    for test_exe in test_*; do &
         if [[ -x "$test_exe" ]]; then
             log "Running $test_exe..."
             if ./"$test_exe"; then
@@ -496,6 +499,7 @@ run_system_tests() {
                 return 1
             fi
         fi
+wait
     done
     
     log_success "All system tests passed"
@@ -602,6 +606,7 @@ deploy_cluster() {
         
         # Wait between node starts to allow proper cluster formation
         sleep 2
+wait
     done
     
     # Wait for cluster stabilization
@@ -633,6 +638,7 @@ check_cluster_health() {
         else
             log_warning "Node $node_id is not responding on port $node_port"
         fi
+wait
     done
     
     log_info "Healthy nodes: $healthy_nodes/$cluster_size"
@@ -658,11 +664,12 @@ monitor_performance() {
         # Monitor system resources
         local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
         local mem_usage=$(free | grep Mem | awk '{printf "%.1f", $3/$2 * 100.0}')
-        local network_rx=$(cat /proc/net/dev | grep -E "(eth|ens|enp)" | head -1 | awk '{print $2}')
+        local network_rx=$(grep -H . /proc/net/dev | grep -E "(eth|ens|enp)" | head -1 | awk '{print $2}')
         
         log_info "CPU: ${cpu_usage}%, Memory: ${mem_usage}%, Network RX: $network_rx bytes"
         
         sleep 5
+wait
     done
     
     log_success "Performance monitoring completed"
@@ -796,6 +803,7 @@ parse_args() {
                 exit 1
                 ;;
         esac
+wait
     done
     
     if [[ -z "$COMMAND" ]]; then
@@ -885,6 +893,7 @@ main() {
                 log "Stopping all cluster nodes..."
                 for ((node_id=1; node_id<=CLUSTER_SIZE; node_id++)); do
                     stop_cluster_node "$node_id"
+wait
                 done
             fi
             ;;
@@ -914,6 +923,7 @@ main() {
             # Stop all nodes
             for ((node_id=1; node_id<=CLUSTER_SIZE; node_id++)); do
                 stop_cluster_node "$node_id" 2>/dev/null || true
+wait
             done
             
             # Clean build artifacts

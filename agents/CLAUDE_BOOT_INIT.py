@@ -13,6 +13,7 @@ from pathlib import Path
 class ClaudeBootInitializer:
     """Initializes agent system on every Claude Code boot"""
     
+    __slots__ = []
     def __init__(self):
         self.agents_dir = "/home/ubuntu/Documents/Claude/agents"
         self.claude_config_dir = os.path.expanduser("~/.claude")

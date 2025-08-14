@@ -53,6 +53,7 @@ import struct
 @dataclass
 class OperationResult:
     """Standard result structure for all operations"""
+    __slots__ = []
     success: bool
     error: Optional[str] = None
     data: Any = None
@@ -62,6 +63,7 @@ class OperationResult:
 @dataclass
 class AgentInstance:
     """Represents a running agent instance"""
+    __slots__ = []
     name: str
     type: str
     pid: int
@@ -78,6 +80,7 @@ class AgentInstance:
 @dataclass
 class SystemMetrics:
     """System-wide performance metrics"""
+    __slots__ = []
     timestamp: datetime
     throughput: int
     latency_p50_ns: int
@@ -94,6 +97,7 @@ class SystemMetrics:
 @dataclass
 class ConfigurationItem:
     """Configuration item with metadata"""
+    __slots__ = []
     key: str
     value: Any
     type: str
@@ -110,6 +114,7 @@ class ConfigurationItem:
 class AgentManager:
     """Manages agent lifecycle operations"""
     
+    __slots__ = []
     def __init__(self):
         self.agents = {}  # agent_name -> AgentInstance
         self.config_dir = "/etc/claude-agents"
@@ -454,6 +459,7 @@ class AgentManager:
 class SystemMonitor:
     """Comprehensive system monitoring and metrics collection"""
     
+    __slots__ = []
     def __init__(self):
         self.prometheus_url = os.getenv('PROMETHEUS_URL', 'http://localhost:9090')
         self.metrics_cache = {}
@@ -643,6 +649,7 @@ class SystemMonitor:
 class ConfigManager:
     """Configuration management with hot-reload capabilities"""
     
+    __slots__ = []
     def __init__(self):
         self.config_dir = "/etc/claude-agents"
         self.configs = {}
@@ -824,6 +831,7 @@ class ConfigManager:
 class UserManager:
     """User authentication and authorization management"""
     
+    __slots__ = []
     def __init__(self):
         self.db_path = "/var/lib/claude-agents/users.db"
         self.secret_key = self._get_or_create_secret_key()
@@ -1052,18 +1060,22 @@ class UserManager:
 
 class DeploymentManager:
     """Handles deployment and scaling operations"""
+    __slots__ = []
     pass
 
 class BackupManager:
     """Handles backup and restore operations"""
+    __slots__ = []
     pass
 
 class DiagnosticTools:
     """System diagnostics and troubleshooting"""
+    __slots__ = []
     pass
 
 class PerformanceOptimizer:
     """Performance analysis and optimization"""
+    __slots__ = []
     pass
 
 # ============================================================================

@@ -15,20 +15,20 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Logging
-log() { echo -e "${GREEN}[FIX]${NC} $1"; }
-error() { echo -e "${RED}[ERROR]${NC} $1" >&2; exit 1; }
-warn() { echo -e "${YELLOW}[WARNING]${NC} $1" >&2; }
-info() { echo -e "${CYAN}[INFO]${NC} $1"; }
-success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+log() { printf "${GREEN}[FIX]${NC} $1"; }
+error() { printf "${RED}[ERROR]${NC} $1" >&2; exit 1; }
+warn() { printf "${YELLOW}[WARNING]${NC} $1" >&2; }
+info() { printf "${CYAN}[INFO]${NC} $1"; }
+success() { printf "${GREEN}[SUCCESS]${NC} $1"; }
 
 # Check root
 if [ "$EUID" -ne 0 ]; then
     error "This script must be run as root"
 fi
 
-echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
-echo -e "${RED}     SYSTEM RECOVERY AND REPOSITORY FIX${NC}"
-echo -e "${RED}═══════════════════════════════════════════════════════════${NC}"
+printf "${RED}═══════════════════════════════════════════════════════════${NC}"
+printf "${RED}     SYSTEM RECOVERY AND REPOSITORY FIX${NC}"
+printf "${RED}═══════════════════════════════════════════════════════════${NC}"
 echo
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -175,7 +175,7 @@ success "Package lists updated"
 log "Step 6: Checking for and restoring removed packages..."
 
 # Check recent removals
-echo -e "${YELLOW}Recently removed packages (if any):${NC}"
+printf "${YELLOW}Recently removed packages (if any):${NC}"
 grep " Remove:" /var/log/apt/history.log 2>/dev/null | tail -5 || echo "  No recent removals found in log"
 echo
 
@@ -248,8 +248,9 @@ ESSENTIAL_PACKAGES="
     linux-headers-generic
 "
 
-for pkg in $ESSENTIAL_PACKAGES; do
+for pkg in $ESSENTIAL_PACKAGES; do &
     dpkg -l | grep -q "^ii.*$pkg" || apt-get install -y "$pkg" 2>/dev/null || true
+wait
 done
 
 # Fix any broken packages
@@ -328,9 +329,9 @@ fi
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 echo
-echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}     SYSTEM RECOVERY COMPLETE${NC}"
-echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+printf "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+printf "${GREEN}     SYSTEM RECOVERY COMPLETE${NC}"
+printf "${GREEN}═══════════════════════════════════════════════════════════${NC}"
 echo
 echo "What was fixed:"
 echo "  ✓ Removed problematic APT configurations"
@@ -347,7 +348,7 @@ echo "  • Desktop: $HAS_DESKTOP"
 echo "  • Server: $IS_SERVER"
 echo "  • Backup: $BACKUP_DIR"
 echo
-echo -e "${YELLOW}IMPORTANT NEXT STEPS:${NC}"
+printf "${YELLOW}IMPORTANT NEXT STEPS:${NC}"
 echo "1. Check if your applications are working"
 echo "2. If something is missing, install it with:"
 echo "   sudo apt-get install package-name"

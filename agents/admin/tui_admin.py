@@ -127,6 +127,7 @@ KEYBINDINGS = {
 class TerminalDetector:
     """Detect terminal capabilities and optimize rendering"""
     
+    __slots__ = []
     @staticmethod
     def detect_capabilities():
         """Detect terminal capabilities"""
@@ -172,6 +173,7 @@ class TerminalDetector:
 class ColorManager:
     """Manage terminal colors and themes"""
     
+    __slots__ = []
     def __init__(self, capabilities):
         self.caps = capabilities
         self.colors = {}
@@ -238,6 +240,7 @@ class ColorManager:
 class TUIComponent:
     """Base class for TUI components"""
     
+    __slots__ = []
     def __init__(self, name, x, y, width, height):
         self.name = name
         self.x = x
@@ -265,6 +268,7 @@ class TUIComponent:
 class SystemOverviewComponent(TUIComponent):
     """System overview dashboard component"""
     
+    __slots__ = []
     def __init__(self, x, y, width, height, color_mgr):
         super().__init__("System Overview", x, y, width, height)
         self.color_mgr = color_mgr
@@ -355,6 +359,7 @@ class SystemOverviewComponent(TUIComponent):
 class AgentListComponent(TUIComponent):
     """Agent status list component"""
     
+    __slots__ = []
     def __init__(self, x, y, width, height, color_mgr):
         super().__init__("Agent Status", x, y, width, height)
         self.color_mgr = color_mgr
@@ -482,6 +487,7 @@ class AgentListComponent(TUIComponent):
 class PerformanceGraphComponent(TUIComponent):
     """Performance metrics graph component"""
     
+    __slots__ = []
     def __init__(self, x, y, width, height, color_mgr):
         super().__init__("Performance Metrics", x, y, width, height)
         self.color_mgr = color_mgr
@@ -575,6 +581,7 @@ class PerformanceGraphComponent(TUIComponent):
 class ClaudeTUIAdmin:
     """Main TUI administration interface"""
     
+    __slots__ = []
     def __init__(self):
         # Initialize terminal capabilities
         self.term_caps = TerminalDetector.detect_capabilities()
@@ -896,14 +903,12 @@ class ClaudeTUIAdmin:
     
     def _update_agent_data(self, agents):
         """Update agent data in components"""
-        agent_data = []
-        for agent in agents:
-            agent_data.append({
+        agent_data = [{
                 'name': agent.name,
                 'type': agent.type,
                 'state': agent.state,
                 'pid': agent.pid,
-                'cpu_percent': agent.resource_usage.get('cpu', 0.0),
+                'cpu_percent': agent.resource_usage.get('cpu', 0.0 for agent in agents],
                 'memory_mb': agent.resource_usage.get('memory', 0.0),
                 'health_score': agent.health_score,
                 'uptime': str(datetime.now() - agent.startup_time),

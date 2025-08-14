@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class AgentStatus(Enum):
     """Agent execution status"""
+    __slots__ = []
     IDLE = "idle"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -31,6 +32,7 @@ class AgentStatus(Enum):
 
 class Priority(Enum):
     """Message priority levels"""
+    __slots__ = []
     CRITICAL = 1
     HIGH = 3
     MEDIUM = 5
@@ -41,6 +43,7 @@ class Priority(Enum):
 @dataclass
 class AgentMessage:
     """Standard message format for inter-agent communication"""
+    __slots__ = []
     message_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = field(default_factory=datetime.now)
     source_agent: str = ""
@@ -57,6 +60,7 @@ class AgentMessage:
 @dataclass
 class AgentCapability:
     """Define agent capabilities and requirements"""
+    __slots__ = []
     name: str
     description: str
     input_schema: Dict[str, Any]
@@ -69,6 +73,7 @@ class AgentCapability:
 class AgentRegistry:
     """Central registry of all available agents"""
     
+    __slots__ = []
     def __init__(self):
         self.agents = {}
         self.capabilities = defaultdict(list)
@@ -259,6 +264,7 @@ class AgentRegistry:
 class AgentOrchestrator:
     """Main orchestration engine for agent coordination"""
     
+    __slots__ = []
     def __init__(self):
         self.registry = AgentRegistry()
         self.message_queue = asyncio.Queue()
@@ -467,6 +473,7 @@ class AgentOrchestrator:
 class AgentCommunicationBridge:
     """Bridge for enabling direct agent-to-agent communication"""
     
+    __slots__ = []
     def __init__(self, orchestrator: AgentOrchestrator):
         self.orchestrator = orchestrator
         self.callbacks = {}

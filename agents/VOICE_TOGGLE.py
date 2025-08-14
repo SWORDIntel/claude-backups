@@ -13,6 +13,7 @@ from pathlib import Path
 class VoiceToggle:
     """Simple voice system toggle controller"""
     
+    __slots__ = []
     def __init__(self):
         self.agents_dir = "/home/ubuntu/Documents/Claude/agents"
         self.config_file = os.path.join(self.agents_dir, "voice_config.json")
