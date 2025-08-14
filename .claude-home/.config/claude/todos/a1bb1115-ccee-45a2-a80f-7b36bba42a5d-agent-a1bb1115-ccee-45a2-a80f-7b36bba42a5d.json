@@ -1,27 +1,37 @@
 [
   {
-    "content": "Move ADVERSARIAL_SIMULATIONS into CERTIFICATE_MANAGEMENT",
+    "content": "Analyze remaining 38 problematic scripts (27 PARTIAL + 11 ERROR)",
     "status": "completed",
-    "id": "move-adversarial"
+    "id": "analyze-remaining"
   },
   {
-    "content": "Update all paths and references",
-    "status": "completed",
-    "id": "update-paths"
+    "content": "Deploy DEBUGGER agent on ERROR scripts",
+    "status": "in_progress",
+    "id": "debug-errors"
   },
   {
-    "content": "Update launch scripts",
-    "status": "completed",
-    "id": "update-scripts"
+    "content": "Deploy PATCHER agent on PARTIAL scripts",
+    "status": "in_progress",
+    "id": "patch-partial"
   },
   {
-    "content": "Create unified security management interface",
-    "status": "completed",
-    "id": "create-interface"
+    "content": "Deploy LINTER agent for final validation",
+    "status": "in_progress",
+    "id": "lint-validation"
   },
   {
-    "content": "Clean up Claude root directory",
-    "status": "completed",
-    "id": "clean-root"
+    "content": "Deploy TESTBED agent for functionality verification",
+    "status": "in_progress",
+    "id": "test-verification"
+  },
+  {
+    "content": "Deploy OPTIMIZER agent for performance improvements",
+    "status": "in_progress",
+    "id": "optimize-performance"
+  },
+  {
+    "content": "Achieve 100% pass rate",
+    "status": "pending",
+    "id": "complete-success"
   }
 ]

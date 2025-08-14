@@ -1,17 +1,32 @@
 [
   {
-    "content": "Clean up temporary files and logs",
+    "content": "Update installer scripts to integrate statusline.lua",
     "status": "completed",
     "id": "1"
   },
   {
-    "content": "Add .gitignore for temp files",
+    "content": "Create Neovim configuration integration",
     "status": "completed",
     "id": "2"
   },
   {
-    "content": "Commit and push to GitHub",
-    "status": "in_progress",
+    "content": "Add statusline to portable installation",
+    "status": "completed",
     "id": "3"
+  },
+  {
+    "content": "Test statusline integration",
+    "status": "completed",
+    "id": "4"
+  },
+  {
+    "content": "Update documentation and help text",
+    "status": "completed",
+    "id": "5"
+  },
+  {
+    "content": "Add dependency auto-installation to both launcher scripts",
+    "status": "completed",
+    "id": "6"
   }
 ]

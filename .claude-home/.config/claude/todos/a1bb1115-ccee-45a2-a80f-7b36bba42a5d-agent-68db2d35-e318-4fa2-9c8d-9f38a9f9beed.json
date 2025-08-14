@@ -1,0 +1,42 @@
+[
+  {
+    "content": "Create automated test framework for 230 scripts",
+    "status": "completed",
+    "id": "test_001"
+  },
+  {
+    "content": "Test critical build scripts (OSBuilders/, src/build/)",
+    "status": "completed",
+    "id": "test_002"
+  },
+  {
+    "content": "Verify plugin functionality (plugins/*.sh)",
+    "status": "completed",
+    "id": "test_003"
+  },
+  {
+    "content": "Test tool integration (src/tools/*.sh)",
+    "status": "completed",
+    "id": "test_004"
+  },
+  {
+    "content": "Validate UI components (ui/tui/*.sh)",
+    "status": "completed",
+    "id": "test_005"
+  },
+  {
+    "content": "Run smoke tests on core functionality",
+    "status": "completed",
+    "id": "test_006"
+  },
+  {
+    "content": "Check for runtime errors and edge cases",
+    "status": "completed",
+    "id": "test_007"
+  },
+  {
+    "content": "Generate comprehensive test coverage report",
+    "status": "completed",
+    "id": "test_008"
+  }
+]

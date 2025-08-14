@@ -1,0 +1,42 @@
+[
+  {
+    "content": "Scan all shell scripts (.sh files) in livecd-gen to identify those missing shebangs and other issues",
+    "status": "completed",
+    "id": "scan_scripts"
+  },
+  {
+    "content": "Analyze scripts for undefined variables, quoting issues, and minor logic problems",
+    "status": "completed",
+    "id": "analyze_script_issues"
+  },
+  {
+    "content": "Add missing #!/bin/bash shebangs to scripts that need them",
+    "status": "completed",
+    "id": "patch_missing_shebangs"
+  },
+  {
+    "content": "Fix undefined variable references with proper defaults and error handling",
+    "status": "completed",
+    "id": "fix_undefined_variables"
+  },
+  {
+    "content": "Fix shell quoting and escaping issues for better security and reliability",
+    "status": "completed",
+    "id": "improve_quoting"
+  },
+  {
+    "content": "Improve minor logic issues in loops, conditionals, and error handling",
+    "status": "completed",
+    "id": "fix_logic_issues"
+  },
+  {
+    "content": "Validate that all changes preserve original functionality",
+    "status": "completed",
+    "id": "validate_changes"
+  },
+  {
+    "content": "Generate comprehensive report of all patches applied and improvement metrics",
+    "status": "completed",
+    "id": "generate_report"
+  }
+]
