@@ -1,12 +1,17 @@
 [
   {
-    "content": "List all available agents in the system",
-    "status": "in_progress",
+    "content": "Clean up temporary files and logs",
+    "status": "completed",
     "id": "1"
   },
   {
-    "content": "Check agent status and readiness",
-    "status": "pending",
+    "content": "Add .gitignore for temp files",
+    "status": "completed",
     "id": "2"
+  },
+  {
+    "content": "Commit and push to GitHub",
+    "status": "in_progress",
+    "id": "3"
   }
 ]
