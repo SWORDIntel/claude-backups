@@ -115,7 +115,8 @@ class LinterAgent:
                         issues.append({
                             "line": message.get("line", 0),
                             "column": message.get("column", 0),
-                            "severity": message.get("severity", 1) == 2 and "error" or "warning",
+                            "severity": message.get("severity",
+                                1) == 2 and "error" or "warning",
                             "message": message.get("message", ""),
                             "rule": message.get("ruleId", ""),
                             "tool": "eslint"
@@ -317,7 +318,9 @@ class PatcherAgent:
             lines.insert(line_num, "")
             return {"applied": True, "fix_type": "spacing", "issue": issue}
         
-        return {"applied": False, "reason": "No automatic fix available", "issue": issue}
+        return {"applied": False,
+            "reason": "No automatic fix available",
+            "issue": issue}
     
     def _break_long_line(self, line: str) -> str:
         """Intelligently break a long line"""
@@ -516,10 +519,21 @@ class DevelopmentCluster:
         source_files = []
         for root, dirs, files in os.walk(project_path):
             # Skip common directories
-            dirs[:] = [d for d in dirs if d not in ['.git', 'node_modules', '__pycache__', '.pytest_cache']]
+            dirs[:] = [d for d in dirs if d not in ['.git',
+                'node_modules',
+                '__pycache__',
+                '.pytest_cache']]
             
             for file in files:
-                if file.endswith(('.py', '.js', '.ts', '.tsx', '.jsx', '.c', '.cpp', '.h', '.hpp')):
+                if file.endswith(('.py',
+                    '.js',
+                    '.ts',
+                    '.tsx',
+                    '.jsx',
+                    '.c',
+                    '.cpp',
+                    '.h',
+                    '.hpp')):
                     source_files.append(os.path.join(root, file))
         
         print(f"📁 Found {len(source_files)} source files")

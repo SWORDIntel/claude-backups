@@ -16,10 +16,10 @@ from typing import Dict, Any, Optional
 
 # Import our direct implementations
 sys.path.append('/home/ubuntu/Documents/Claude/agents')
-from DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster,
+from DEVELOPMENT_CLUSTER_DIRECT import (DevelopmentCluster,
     LinterAgent,
     PatcherAgent,
-    TestbedAgent
+    TestbedAgent)
 
 class ClaudeAgentBridge:
     """Bridge that makes our agents work with Claude Code Task tool"""
