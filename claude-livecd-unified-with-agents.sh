@@ -2597,10 +2597,10 @@ install_statusline() {
             local init_lua="$HOME/.config/nvim/init.lua"
             if [ ! -f "$init_lua" ]; then
                 cat > "$init_lua" <<'EOF'
--- Claude Code God-tier statusline
+-- Claude Code God-tier statusline with comprehensive project monitoring
 require('god_statusline').setup()
 
--- Basic Neovim settings for LiveCD
+-- Basic Neovim settings optimized for Claude development
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.expandtab = true
@@ -2610,6 +2610,37 @@ vim.opt.smartindent = true
 vim.opt.wrap = false
 vim.opt.termguicolors = true
 vim.opt.laststatus = 2
+vim.opt.showcmd = true
+vim.opt.showmode = true
+vim.opt.ruler = true
+vim.opt.cursorline = true
+vim.opt.signcolumn = "yes"
+vim.opt.updatetime = 300
+vim.opt.timeoutlen = 500
+
+-- Enhanced search settings
+vim.opt.hlsearch = true
+vim.opt.incsearch = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+
+-- Better completion
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
+
+-- Git and development optimizations
+vim.opt.autoread = true
+vim.opt.backup = false
+vim.opt.writebackup = false
+vim.opt.swapfile = false
+
+-- Performance optimizations
+vim.opt.lazyredraw = true
+vim.opt.redrawtime = 10000
+vim.opt.synmaxcol = 240
+
+-- Enable statusline debug mode for development
+-- Uncomment the line below to enable performance monitoring
+-- vim.g.statusline_debug = true
 EOF
                 success "Created Neovim init.lua with statusline"
             else
@@ -2847,18 +2878,35 @@ EOF
         success "Created tmux configuration"
     fi
     
-    # Install optional dependencies
+    # Install comprehensive statusline dependencies
     info "Installing optional statusline dependencies..."
     
-    # Try to install with npm if available
+    # Try to install with npm if available for enhanced CI/CD monitoring
     if command -v npm &> /dev/null; then
         npm install -g jq 2>/dev/null || warn "Could not install jq via npm"
+        # Install additional npm packages for comprehensive statusline features
+        npm install -g @npmcli/arborist eslint 2>/dev/null || warn "Could not install npm analysis tools"
     fi
     
-    # Try to install system packages
+    # Try to install system packages for full statusline functionality
     if command -v apt-get &> /dev/null && [ "$AUTO_MODE" = "true" ]; then
-        sudo apt-get install -y jq fd-find ripgrep 2>/dev/null || {
+        sudo apt-get update -qq 2>/dev/null
+        sudo apt-get install -y jq fd-find ripgrep bc curl wget git-extras 2>/dev/null || {
             warn "Some optional packages could not be installed"
+        }
+        
+        # Install additional tools for comprehensive project monitoring
+        sudo apt-get install -y python3-pip golang-go rustc 2>/dev/null || {
+            info "Some language-specific tools could not be installed (normal for minimal systems)"
+        }
+    fi
+    
+    # Install Python packages for security scanning if pip is available
+    if command -v pip3 &> /dev/null || command -v pip &> /dev/null; then
+        pip3 install --user pip-audit safety bandit 2>/dev/null || {
+            pip install --user pip-audit safety bandit 2>/dev/null || {
+                info "Python security tools could not be installed (optional)"
+            }
         }
     fi
     

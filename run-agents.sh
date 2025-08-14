@@ -29,6 +29,31 @@ fi
 # Make sure BRING_ONLINE.sh is executable
 chmod +x "$AGENTS_DIR/BRING_ONLINE.sh"
 
+# Check and install statusline dependencies if needed
+echo -e "${GREEN}➜ Checking statusline dependencies...${NC}"
+missing_deps=()
+
+# Check for essential statusline tools
+for tool in jq git wc grep awk bc curl; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        missing_deps+=("$tool")
+    fi
+done
+
+# Install missing dependencies if any
+if [ ${#missing_deps[@]} -gt 0 ]; then
+    echo -e "${YELLOW}⚠ Installing missing dependencies: ${missing_deps[*]}${NC}"
+    if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update -qq >/dev/null 2>&1
+        sudo apt-get install -y "${missing_deps[@]}" >/dev/null 2>&1
+        echo -e "${GREEN}✓ Dependencies installed${NC}"
+    else
+        echo -e "${YELLOW}⚠ Could not install dependencies automatically${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ All statusline dependencies available${NC}"
+fi
+
 echo -e "${GREEN}➜ Launching Agent Communication System...${NC}"
 echo ""
 

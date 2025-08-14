@@ -31,16 +31,23 @@ local perf_monitor = {
   total_update_time = 0
 }
 
--- Execute shell command with timeout and error handling
+-- Execute shell command with LiveCD-compatible error handling
 local function exec_cmd(cmd, timeout)
   timeout = timeout or 1000
   local start_time = vim.loop.hrtime()
   
-  local handle = io.popen(cmd .. " 2>/dev/null")
+  -- Add extra safety for LiveCD environment
+  local safe_cmd = cmd .. " 2>/dev/null || echo ''"
+  local handle = io.popen(safe_cmd)
   if not handle then return "" end
   
   local result = handle:read("*a") or ""
-  handle:close()
+  local success = handle:close()
+  
+  -- Handle cases where commands might not exist in minimal LiveCD
+  if not success or result == "" then
+    result = ""
+  end
   
   perf_monitor.git_cmd_time = (vim.loop.hrtime() - start_time) / 1000000
   return result:gsub("%s+$", "")
@@ -83,8 +90,9 @@ local function get_git_status()
   git_cache.ahead = tonumber(tracking:match("ahead (%d+)")) or 0
   git_cache.behind = tonumber(tracking:match("behind (%d+)")) or 0
   
-  -- Check stash
-  git_cache.stashed = tonumber(exec_cmd("git stash list | wc -l")) or 0
+  -- Check stash (with error handling for LiveCD)
+  local stash_output = exec_cmd("git stash list 2>/dev/null | wc -l 2>/dev/null")
+  git_cache.stashed = tonumber(stash_output) or 0
   
   -- Build status string
   local status_parts = {}
@@ -169,12 +177,14 @@ local function get_lint_status()
   for _, config in ipairs(lint_configs) do
     local files = exec_cmd("ls " .. config)
     if files ~= "" then
-      -- Quick lint check if possible
+      -- Quick lint check if possible (LiveCD safe)
       local errors = 0
-      if config:match("eslint") then
-        errors = tonumber(exec_cmd("npx eslint . --format json | jq '.[] | .errorCount' | paste -sd+ | bc")) or 0
-      elseif config:match("py") then
-        errors = tonumber(exec_cmd("flake8 --statistics 2>/dev/null | tail -1 | awk '{print $1}'")) or 0
+      if config:match("eslint") and exec_cmd("which npx") ~= "" and exec_cmd("which jq") ~= "" then
+        local lint_result = exec_cmd("npx eslint . --format json 2>/dev/null | jq -r '.[] | .errorCount' 2>/dev/null | paste -sd+ 2>/dev/null | bc 2>/dev/null")
+        errors = tonumber(lint_result) or 0
+      elseif config:match("py") and exec_cmd("which flake8") ~= "" then
+        local flake_result = exec_cmd("flake8 --statistics 2>/dev/null | tail -1 | awk '{print $1}' 2>/dev/null")
+        errors = tonumber(flake_result) or 0
       end
       health_indicators.lint_errors = errors
       return errors
@@ -201,9 +211,19 @@ local function get_security_status()
     end
   end
   
-  -- Quick npm/pip audit if available
-  local npm_issues = tonumber(exec_cmd("npm audit --json 2>/dev/null | jq '.metadata.vulnerabilities.total' 2>/dev/null")) or 0
-  local pip_issues = tonumber(exec_cmd("pip-audit --format=json 2>/dev/null | jq '.vulnerabilities | length' 2>/dev/null")) or 0
+  -- Quick npm/pip audit if available (LiveCD safe)
+  local npm_issues = 0
+  local pip_issues = 0
+  
+  if exec_cmd("which npm") ~= "" and exec_cmd("which jq") ~= "" then
+    local npm_result = exec_cmd("npm audit --json 2>/dev/null | jq -r '.metadata.vulnerabilities.total // 0' 2>/dev/null")
+    npm_issues = tonumber(npm_result) or 0
+  end
+  
+  if exec_cmd("which pip-audit") ~= "" and exec_cmd("which jq") ~= "" then
+    local pip_result = exec_cmd("pip-audit --format=json 2>/dev/null | jq -r '.vulnerabilities | length // 0' 2>/dev/null")
+    pip_issues = tonumber(pip_result) or 0
+  end
   
   local total_issues = npm_issues + pip_issues
   health_indicators.security_issues = total_issues
@@ -230,18 +250,18 @@ end
 local function get_performance_indicators()
   local indicators = {}
   
-  -- Build time indicator
+  -- Build time indicator (LiveCD safe)
   if vim.fn.filereadable("build.log") == 1 then
-    local build_time = exec_cmd("tail -1 build.log | grep -o '[0-9]\\+\\.[0-9]\\+s'")
+    local build_time = exec_cmd("tail -1 build.log 2>/dev/null | grep -o '[0-9]\\+\\.[0-9]\\+s' 2>/dev/null")
     if build_time ~= "" then
       table.insert(indicators, "⚡" .. build_time)
     end
   end
   
-  -- Bundle size indicator
-  if vim.fn.isdirectory("dist") == 1 then
-    local size = exec_cmd("du -sh dist 2>/dev/null | cut -f1")
-    if size ~= "" then
+  -- Bundle size indicator (LiveCD safe)
+  if vim.fn.isdirectory("dist") == 1 and exec_cmd("which du") ~= "" then
+    local size = exec_cmd("du -sh dist 2>/dev/null | cut -f1 2>/dev/null")
+    if size ~= "" and size ~= "0" then
       table.insert(indicators, "📦" .. size)
     end
   end
@@ -353,8 +373,30 @@ function M.update_all()
   get_security_status()
 end
 
+-- Check and install missing dependencies automatically
+local function check_and_install_deps()
+  local missing_deps = {}
+  
+  -- Check for essential tools
+  local essential_tools = {"jq", "git", "wc", "grep", "awk"}
+  for _, tool in ipairs(essential_tools) do
+    if exec_cmd("which " .. tool) == "" then
+      table.insert(missing_deps, tool)
+    end
+  end
+  
+  -- If we have missing deps, try to install them
+  if #missing_deps > 0 and exec_cmd("which apt-get") ~= "" then
+    local install_cmd = "sudo apt-get update -qq && sudo apt-get install -y " .. table.concat(missing_deps, " ") .. " 2>/dev/null &"
+    vim.fn.system(install_cmd)
+  end
+end
+
 -- Setup autocommands for automatic updates
 function M.setup()
+  -- Install missing dependencies automatically
+  check_and_install_deps()
+  
   vim.api.nvim_create_augroup("StatuslineProjectCheck", { clear = true })
   
   -- Update on file write, buffer enter, and git operations
