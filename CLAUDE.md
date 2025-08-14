@@ -274,6 +274,32 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ## Recent Updates
 
+### v7.1.0 Ring -1 LiveCD (2024-08-14)
+- **Ring -1 LiveCD Builder**: Complete ISO build system for intelligence-grade hardware
+- **Deep Kernel Monitoring**: Integrated Ring -3 monitoring directly into kernel builds
+- **Desktop Documentation**: Comprehensive guides on ISO desktop
+- **OSBuilders Integration**: Incomplete OS builders ready for perfecting
+- **Dell Telemetry Blocking**: Complete blocking suite for Dell phone-home
+- Fixed initrd generation with multiple fallback methods
+- Added "build from lowest ring" approach for maximum hardware access
+
+#### Key Components Added:
+- `build-ram-ring-minus-one.sh` - Main ISO builder (20GB tmpfs)
+- `ring-minus-orchestrator.sh` - Build orchestrator from Ring -7 up
+- `kernel-monitor-integration.sh` - Kernel build with deep monitoring
+- `create-desktop-docs.sh` - Desktop documentation generator
+- `add-osbuilders-to-desktop.sh` - OSBuilders folder integration
+- `add-dell-blocking-to-desktop.sh` - Dell telemetry blocking suite
+- `deep-monitor-suite.sh` - Comprehensive monitoring tools
+- `ring-minus-three.sh` - Ring -3 to -7 access tools
+
+#### Target Hardware Identified:
+- Dell Latitude 5450 "Covert Edition"
+- Intel ME in HAP mode (0x94000245)
+- ControlVault Broadcom 58200 (triple-signature)
+- 57-second boot delay (20s smart card timeout)
+- Likely intelligence/military configuration
+
 ### v6.0.0-portable (2025-08-13)
 - Added portable installer (`claude-portable-launch.sh`)
 - Fixed AVX-512 cloaking detection (microcode >0x20)
