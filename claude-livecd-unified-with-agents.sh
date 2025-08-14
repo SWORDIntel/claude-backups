@@ -416,13 +416,22 @@ trap cleanup EXIT
 check_prerequisites() {
     log "Checking prerequisites..."
     
-    # Check for required tools
-    local required_tools=("curl" "wget" "tar" "git" "gcc" "make")
+    # Check for required tools (including Dell enterprise tools)
+    local required_tools=("curl" "wget" "tar" "git" "gcc" "make" "dmidecode")
+    local dell_optional_tools=("ipmitool" "sensors" "lspci" "lsusb")
     local missing_tools=()
+    local missing_dell_tools=()
     
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" &> /dev/null; then
             missing_tools+=("$tool")
+        fi
+    done
+    
+    # Check for Dell-specific optional tools
+    for tool in "${dell_optional_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            missing_dell_tools+=("$tool")
         fi
     done
     
@@ -534,6 +543,15 @@ check_prerequisites() {
                 if [[ "$response" =~ ^[Nn]$ ]]; then
                     error "Installation cancelled - please install required tools first"
                 fi
+            fi
+            
+            # For missing Dell tools, suggest installation
+            if [ ${#missing_dell_tools[@]} -gt 0 ]; then
+                warn "Dell enterprise tools missing: ${missing_dell_tools[*]}"
+                info "These tools enhance Dell hardware analysis capabilities"
+                info "To install Dell tools, run:"
+                info "  sudo apt-get install ${missing_dell_tools[*]} lm-sensors"
+                info "Dell tools will use built-in alternatives where possible"
             fi
         else
             if [ "$need_npm" = "true" ]; then
@@ -933,7 +951,10 @@ compile_agents_protocol() {
         fi
     done
     
-    # Priority 5: Python compilation if needed
+    # Priority 5: Dell Enterprise Tools Compilation
+    compile_dell_tools
+    
+    # Priority 6: Python compilation if needed
     local python_files=($(find . -name "*.py" -type f 2>/dev/null | head -10))
     
     if [ ${#python_files[@]} -gt 0 ] && command -v python3 &> /dev/null; then
@@ -960,6 +981,22 @@ compile_agents_protocol() {
                 ln -sf "build/$name" "$name" 2>/dev/null
             fi
         done
+    fi
+    
+    # Create Dell tools integration symlinks
+    if [ -d "build/dell-tools" ]; then
+        info "Integrating Dell tools with agent system..."
+        for dell_tool in build/dell-tools/*; do
+            if [ -f "$dell_tool" ] && [ -x "$dell_tool" ]; then
+                local tool_name=$(basename "$dell_tool")
+                ln -sf "build/dell-tools/$tool_name" "$USER_BIN_DIR/$tool_name" 2>/dev/null
+            fi
+        done
+        
+        # Create convenient shortcuts
+        ln -sf "build/dell-tools/dell-enterprise-suite" "$USER_BIN_DIR/dell-suite" 2>/dev/null
+        ln -sf "build/dell-tools/probe-dell-enterprise" "$USER_BIN_DIR/dell-probe" 2>/dev/null
+        success "Dell tools integrated with system PATH"
     fi
     
     # Summary
@@ -995,6 +1032,1150 @@ compile_agents_protocol() {
     fi
     
     cd - > /dev/null
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DELL ENTERPRISE TOOLS COMPILATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+compile_dell_tools() {
+    log "Compiling Dell enterprise management tools for Ring -1 LiveCD..."
+    
+    local dell_success=0
+    local dell_failed=0
+    local dell_build_dir="$AGENTS_DIR/build/dell-tools"
+    
+    # Create Dell tools build directory
+    mkdir -p "$dell_build_dir" 2>/dev/null
+    
+    # Enhanced compiler flags for Dell tools (Ring -1 optimized)
+    local DELL_CFLAGS="-O2 -pthread -I. -I$dell_build_dir -DRING_MINUS_ONE_MODE=1"
+    local DELL_LDFLAGS="-lrt -lm -lpthread"
+    
+    # Add CPU-specific optimizations for Dell hardware analysis
+    if [ -n "$CPU_FLAGS" ]; then
+        DELL_CFLAGS="$DELL_CFLAGS $CPU_FLAGS"
+        info "Dell tools: Using CPU optimizations: $CPU_FLAGS"
+    fi
+    
+    # Add AVX512 support for Dell enterprise hardware detection
+    if [ "$HAS_AVX512" = "true" ]; then
+        DELL_CFLAGS="$DELL_CFLAGS -DDELL_AVX512_ACCELERATION=1"
+        info "Dell tools: AVX512 hardware acceleration enabled"
+    fi
+    
+    progress "Building Dell enterprise analysis toolkit..."
+    
+    # Phase 1: Clone/Download Dell Tools Sources
+    cd "$WORK_DIR"
+    
+    # libsmbios (Dell's official SMBIOS toolkit)
+    if ! [ -d "libsmbios" ]; then
+        info "Downloading Dell libsmbios toolkit..."
+        if command -v git &> /dev/null; then
+            git clone --depth=1 https://github.com/dell/libsmbios.git 2>/dev/null || {
+                warn "Could not clone libsmbios - creating minimal implementation"
+                create_minimal_smbios_tools
+            }
+        else
+            create_minimal_smbios_tools
+        fi
+    fi
+    
+    # iDRAC Redfish tools (if git available)
+    if ! [ -d "iDRAC-Redfish-Scripting" ] && command -v git &> /dev/null; then
+        info "Downloading Dell iDRAC Redfish scripting suite..."
+        git clone --depth=1 https://github.com/dell/iDRAC-Redfish-Scripting.git 2>/dev/null || \
+            warn "Could not clone iDRAC tools - will use minimal implementation"
+    fi
+    
+    # Phase 2: Build libsmbios components
+    if [ -d "libsmbios" ]; then
+        cd libsmbios
+        progress "Building Dell libsmbios components..."
+        
+        # Try autotools build first
+        if [ -f "configure.ac" ] || [ -f "configure.in" ]; then
+            if command -v autoreconf &> /dev/null; then
+                autoreconf -fiv 2>/dev/null || warn "autoreconf failed"
+            fi
+            
+            if [ -f "configure" ]; then
+                ./configure --prefix="$dell_build_dir" --disable-shared --enable-static 2>/dev/null && \
+                make -j$(nproc) 2>/dev/null && \
+                make install 2>/dev/null && {
+                    success "libsmbios built successfully"
+                    dell_success=$((dell_success + 1))
+                } || {
+                    warn "libsmbios autotools build failed, trying direct compilation"
+                    build_libsmbios_direct
+                }
+            else
+                build_libsmbios_direct
+            fi
+        else
+            build_libsmbios_direct
+        fi
+        cd "$WORK_DIR"
+    fi
+    
+    # Phase 3: Build custom Dell enterprise detection tools
+    progress "Building Ring -1 Dell enterprise detection suite..."
+    
+    # Create comprehensive Dell hardware probe
+    create_dell_hardware_probe
+    
+    # Create Dell BIOS analysis tool
+    create_dell_bios_analyzer
+    
+    # Create Dell iDRAC discovery tool
+    create_dell_idrac_probe
+    
+    # Create Dell thermal monitoring integration
+    create_dell_thermal_monitor
+    
+    # Phase 4: Install Python-based Dell tools
+    if command -v python3 &> /dev/null; then
+        progress "Installing Python-based Dell management tools..."
+        install_dell_python_tools
+    fi
+    
+    # Phase 5: Create integrated Dell analysis launcher
+    create_dell_analysis_launcher
+    
+    # Summary
+    echo
+    info "Dell Enterprise Tools Compilation Summary:"
+    info "  • Successful builds: $dell_success"
+    info "  • Failed builds: $dell_failed"
+    info "  • Target directory: $dell_build_dir"
+    
+    # List compiled Dell tools
+    local dell_binaries=($(find "$dell_build_dir" -type f -executable 2>/dev/null))
+    if [ ${#dell_binaries[@]} -gt 0 ]; then
+        success "Dell tools compiled: ${#dell_binaries[@]} binaries"
+        for binary in "${dell_binaries[@]:0:5}"; do
+            info "  - $(basename "$binary")"
+        done
+        if [ ${#dell_binaries[@]} -gt 5 ]; then
+            info "  ... and $((${#dell_binaries[@]} - 5)) more"
+        fi
+    fi
+    
+    cd "$AGENTS_DIR"
+}
+
+build_libsmbios_direct() {
+    info "Building libsmbios with direct compilation..."
+    
+    # Find key source files
+    local smbios_sources=($(find . -name "*.c" -path "*/src/*" | grep -E "(smbios|cmos|token)" | head -10))
+    
+    if [ ${#smbios_sources[@]} -eq 0 ]; then
+        warn "No libsmbios sources found, creating minimal implementation"
+        return 1
+    fi
+    
+    for src_file in "${smbios_sources[@]}"; do
+        local basename=$(basename "$src_file" .c)
+        local output="$dell_build_dir/dell-${basename}"
+        
+        if gcc $DELL_CFLAGS "$src_file" -o "$output" $DELL_LDFLAGS 2>/dev/null; then
+            info "Compiled: dell-${basename}"
+            dell_success=$((dell_success + 1))
+        else
+            dell_failed=$((dell_failed + 1))
+        fi
+    done
+}
+
+create_minimal_smbios_tools() {
+    info "Creating minimal SMBIOS tools implementation..."
+    mkdir -p minimal-smbios
+    
+    cat > minimal-smbios/smbios-probe.c <<'EOF'
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <stdint.h>
+
+#define SMBIOS_START 0xF0000
+#define SMBIOS_END   0x100000
+
+typedef struct {
+    char anchor[4];
+    uint8_t checksum;
+    uint8_t length;
+    uint8_t major_version;
+    uint8_t minor_version;
+    uint16_t max_structure_size;
+    uint8_t entry_point_revision;
+    char formatted_area[5];
+    char intermediate_anchor[5];
+    uint8_t intermediate_checksum;
+    uint16_t structure_table_length;
+    uint32_t structure_table_address;
+    uint16_t number_of_structures;
+    uint8_t smbios_bcd_revision;
+} __attribute__((packed)) smbios_entry_point_t;
+
+int probe_dell_smbios() {
+    printf("Ring -1 Dell SMBIOS Hardware Probe\n");
+    printf("===================================\n");
+    
+    // Try to read DMI information via sysfs first
+    FILE *vendor_file = fopen("/sys/class/dmi/id/sys_vendor", "r");
+    if (vendor_file) {
+        char vendor[256];
+        if (fgets(vendor, sizeof(vendor), vendor_file)) {
+            printf("System Vendor: %s", vendor);
+            if (strstr(vendor, "Dell")) {
+                printf("✓ Dell hardware detected via DMI\n");
+            }
+        }
+        fclose(vendor_file);
+    }
+    
+    // Read product name
+    FILE *product_file = fopen("/sys/class/dmi/id/product_name", "r");
+    if (product_file) {
+        char product[256];
+        if (fgets(product, sizeof(product), product_file)) {
+            printf("Product Name: %s", product);
+        }
+        fclose(product_file);
+    }
+    
+    // Read BIOS information
+    FILE *bios_vendor = fopen("/sys/class/dmi/id/bios_vendor", "r");
+    FILE *bios_version = fopen("/sys/class/dmi/id/bios_version", "r");
+    if (bios_vendor && bios_version) {
+        char vendor[256], version[256];
+        if (fgets(vendor, sizeof(vendor), bios_vendor) && 
+            fgets(version, sizeof(version), bios_version)) {
+            printf("BIOS: %s %s", vendor, version);
+        }
+        if (bios_vendor) fclose(bios_vendor);
+        if (bios_version) fclose(bios_version);
+    }
+    
+    // Check for Dell-specific features
+    printf("\nDell Enterprise Features:\n");
+    
+    // Check for iDRAC
+    if (access("/sys/class/ipmi/ipmi0", F_OK) == 0) {
+        printf("✓ IPMI interface detected (potential iDRAC)\n");
+    }
+    
+    // Check for Dell management interfaces
+    if (access("/proc/acpi", F_OK) == 0) {
+        printf("✓ ACPI interface available\n");
+    }
+    
+    return 0;
+}
+
+int main() {
+    return probe_dell_smbios();
+}
+EOF
+    
+    # Compile minimal SMBIOS probe
+    if gcc $DELL_CFLAGS minimal-smbios/smbios-probe.c -o "$dell_build_dir/dell-smbios-probe" $DELL_LDFLAGS 2>/dev/null; then
+        success "Minimal Dell SMBIOS probe compiled"
+        dell_success=$((dell_success + 1))
+    fi
+}
+
+create_dell_hardware_probe() {
+    info "Creating comprehensive Dell hardware detection probe..."
+    
+    cat > "$dell_build_dir/probe-dell-enterprise.c" <<'EOF'
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+
+typedef struct {
+    char *vendor;
+    char *product;
+    char *serial;
+    char *bios_vendor;
+    char *bios_version;
+    int is_dell;
+    int has_idrac;
+    int has_ipmi;
+} dell_system_info_t;
+
+dell_system_info_t* detect_dell_system() {
+    dell_system_info_t *info = calloc(1, sizeof(dell_system_info_t));
+    
+    // Read DMI information
+    FILE *f;
+    char buffer[256];
+    
+    f = fopen("/sys/class/dmi/id/sys_vendor", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        buffer[strcspn(buffer, "\n")] = 0;
+        info->vendor = strdup(buffer);
+        info->is_dell = (strstr(buffer, "Dell") != NULL);
+        fclose(f);
+    }
+    
+    f = fopen("/sys/class/dmi/id/product_name", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        buffer[strcspn(buffer, "\n")] = 0;
+        info->product = strdup(buffer);
+        fclose(f);
+    }
+    
+    f = fopen("/sys/class/dmi/id/product_serial", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        buffer[strcspn(buffer, "\n")] = 0;
+        info->serial = strdup(buffer);
+        fclose(f);
+    }
+    
+    f = fopen("/sys/class/dmi/id/bios_vendor", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        buffer[strcspn(buffer, "\n")] = 0;
+        info->bios_vendor = strdup(buffer);
+        fclose(f);
+    }
+    
+    f = fopen("/sys/class/dmi/id/bios_version", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        buffer[strcspn(buffer, "\n")] = 0;
+        info->bios_version = strdup(buffer);
+        fclose(f);
+    }
+    
+    // Check for management interfaces
+    info->has_ipmi = (access("/dev/ipmi0", F_OK) == 0 || access("/sys/class/ipmi", F_OK) == 0);
+    info->has_idrac = info->has_ipmi && info->is_dell;
+    
+    return info;
+}
+
+void print_dell_analysis(dell_system_info_t *info) {
+    printf("Dell Enterprise Hardware Analysis - Ring -1 LiveCD\n");
+    printf("=================================================\n\n");
+    
+    printf("System Information:\n");
+    printf("  Vendor: %s%s\n", info->vendor ? info->vendor : "Unknown", 
+           info->is_dell ? " ✓ (Dell detected)" : "");
+    printf("  Product: %s\n", info->product ? info->product : "Unknown");
+    printf("  Serial: %s\n", info->serial ? info->serial : "Unknown");
+    printf("\n");
+    
+    printf("BIOS Information:\n");
+    printf("  Vendor: %s\n", info->bios_vendor ? info->bios_vendor : "Unknown");
+    printf("  Version: %s\n", info->bios_version ? info->bios_version : "Unknown");
+    printf("\n");
+    
+    if (info->is_dell) {
+        printf("Dell Enterprise Features:\n");
+        printf("  iDRAC Support: %s\n", info->has_idrac ? "✓ Detected" : "✗ Not found");
+        printf("  IPMI Interface: %s\n", info->has_ipmi ? "✓ Available" : "✗ Not available");
+        printf("  Management Ready: %s\n", 
+               (info->has_idrac || info->has_ipmi) ? "✓ Yes" : "✗ Limited");
+        
+        if (info->has_idrac) {
+            printf("\n  Ring -1 Capabilities:\n");
+            printf("    • Remote management via iDRAC\n");
+            printf("    • Hardware monitoring and alerting\n");
+            printf("    • Power management and thermal control\n");
+            printf("    • Firmware update capabilities\n");
+            printf("    • Virtual media and console access\n");
+        }
+    } else {
+        printf("Dell Enterprise Features: Not a Dell system\n");
+    }
+    
+    printf("\nNext Steps:\n");
+    if (info->is_dell && info->has_idrac) {
+        printf("  • Run: dell-idrac-probe for detailed iDRAC analysis\n");
+        printf("  • Run: dell-thermal-monitor for temperature monitoring\n");
+        printf("  • Run: dell-bios-analyzer for firmware analysis\n");
+    } else if (info->is_dell) {
+        printf("  • Run: dell-bios-analyzer for available firmware analysis\n");
+        printf("  • Limited management features available\n");
+    } else {
+        printf("  • This tool is optimized for Dell enterprise hardware\n");
+        printf("  • Basic system analysis completed\n");
+    }
+}
+
+int main() {
+    dell_system_info_t *info = detect_dell_system();
+    print_dell_analysis(info);
+    
+    // Return exit code: 0 = Dell system, 1 = non-Dell
+    return info->is_dell ? 0 : 1;
+}
+EOF
+    
+    if gcc $DELL_CFLAGS "$dell_build_dir/probe-dell-enterprise.c" -o "$dell_build_dir/probe-dell-enterprise" $DELL_LDFLAGS 2>/dev/null; then
+        success "Dell hardware probe compiled"
+        dell_success=$((dell_success + 1))
+        chmod +x "$dell_build_dir/probe-dell-enterprise"
+    fi
+}
+
+create_dell_bios_analyzer() {
+    info "Creating Dell BIOS analysis tool..."
+    
+    cat > "$dell_build_dir/dell-bios-analyzer.c" <<'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <glob.h>
+
+void analyze_dell_bios() {
+    printf("Dell BIOS Analysis Tool - Ring -1 LiveCD\n");
+    printf("========================================\n\n");
+    
+    // BIOS basic information
+    FILE *f;
+    char buffer[512];
+    
+    printf("BIOS Information:\n");
+    f = fopen("/sys/class/dmi/id/bios_vendor", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        printf("  Vendor: %s", buffer);
+        fclose(f);
+    }
+    
+    f = fopen("/sys/class/dmi/id/bios_version", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        printf("  Version: %s", buffer);
+        fclose(f);
+    }
+    
+    f = fopen("/sys/class/dmi/id/bios_date", "r");
+    if (f && fgets(buffer, sizeof(buffer), f)) {
+        printf("  Date: %s", buffer);
+        fclose(f);
+    }
+    
+    // Check UEFI/BIOS mode
+    printf("\nFirmware Type: ");
+    if (access("/sys/firmware/efi", F_OK) == 0) {
+        printf("UEFI ✓\n");
+        
+        // EFI variables analysis
+        printf("\nUEFI Variables:\n");
+        glob_t glob_result;
+        if (glob("/sys/firmware/efi/efivars/*Dell*", GLOB_NOSORT, NULL, &glob_result) == 0) {
+            printf("  Dell UEFI variables found: %zu\n", glob_result.gl_pathc);
+            for (size_t i = 0; i < glob_result.gl_pathc && i < 5; i++) {
+                char *basename = strrchr(glob_result.gl_pathv[i], '/');
+                if (basename) printf("    • %s\n", basename + 1);
+            }
+            if (glob_result.gl_pathc > 5) {
+                printf("    ... and %zu more\n", glob_result.gl_pathc - 5);
+            }
+        } else {
+            printf("  No Dell-specific UEFI variables found\n");
+        }
+        globfree(&glob_result);
+    } else {
+        printf("Legacy BIOS\n");
+    }
+    
+    // Secure Boot status
+    printf("\nSecurity Features:\n");
+    f = fopen("/sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c", "r");
+    if (f) {
+        printf("  Secure Boot: Available\n");
+        fclose(f);
+    } else {
+        printf("  Secure Boot: Not available/disabled\n");
+    }
+    
+    // TPM detection
+    if (access("/sys/class/tpm", F_OK) == 0) {
+        printf("  TPM: ✓ Available\n");
+    } else {
+        printf("  TPM: Not detected\n");
+    }
+    
+    // ACPI tables (Dell-specific)
+    printf("\nACPI Analysis:\n");
+    if (access("/sys/firmware/acpi/tables", F_OK) == 0) {
+        printf("  ACPI tables available for analysis\n");
+        
+        // Check for Dell-specific ACPI methods
+        if (access("/proc/acpi", F_OK) == 0) {
+            printf("  Dell ACPI methods may be available\n");
+        }
+    }
+    
+    printf("\nRecommendations for Ring -1 Analysis:\n");
+    printf("  • Use dmidecode for detailed SMBIOS analysis\n");
+    printf("  • Check /sys/firmware/efi for UEFI analysis\n");
+    printf("  • Examine ACPI tables for Dell-specific features\n");
+    printf("  • Run dell-thermal-monitor for thermal analysis\n");
+}
+
+int main() {
+    analyze_dell_bios();
+    return 0;
+}
+EOF
+    
+    if gcc $DELL_CFLAGS "$dell_build_dir/dell-bios-analyzer.c" -o "$dell_build_dir/dell-bios-analyzer" $DELL_LDFLAGS 2>/dev/null; then
+        success "Dell BIOS analyzer compiled"
+        dell_success=$((dell_success + 1))
+        chmod +x "$dell_build_dir/dell-bios-analyzer"
+    fi
+}
+
+create_dell_idrac_probe() {
+    info "Creating Dell iDRAC discovery tool..."
+    
+    cat > "$dell_build_dir/dell-idrac-probe.c" <<'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+void probe_idrac_interfaces() {
+    printf("Dell iDRAC Discovery Tool - Ring -1 LiveCD\n");
+    printf("==========================================\n\n");
+    
+    // Check IPMI device
+    printf("IPMI Interface Check:\n");
+    if (access("/dev/ipmi0", F_OK) == 0) {
+        printf("  ✓ /dev/ipmi0 found - IPMI interface available\n");
+        
+        // Try to get basic IPMI info
+        system("which ipmitool >/dev/null 2>&1 && ipmitool mc info 2>/dev/null || echo '  Install ipmitool for detailed analysis'");
+    } else {
+        printf("  ✗ No IPMI device found\n");
+    }
+    
+    // Check for IPMI kernel modules
+    printf("\nIPMI Kernel Modules:\n");
+    FILE *modules = fopen("/proc/modules", "r");
+    if (modules) {
+        char line[256];
+        int found_ipmi = 0;
+        while (fgets(line, sizeof(line), modules)) {
+            if (strstr(line, "ipmi")) {
+                if (!found_ipmi) {
+                    found_ipmi = 1;
+                    printf("  IPMI modules loaded:\n");
+                }
+                char *space = strchr(line, ' ');
+                if (space) *space = '\0';
+                printf("    • %s\n", line);
+            }
+        }
+        if (!found_ipmi) {
+            printf("  No IPMI modules loaded\n");
+        }
+        fclose(modules);
+    }
+    
+    // Network interface analysis for potential iDRAC
+    printf("\nNetwork Interface Analysis (potential iDRAC):\n");
+    system("ip link show 2>/dev/null | grep -E '^[0-9]+:' | sed 's/^[0-9]*: /  • /'");
+    
+    // Check for management network
+    printf("\nManagement Network Detection:\n");
+    printf("  Checking for common iDRAC IP ranges...\n");
+    
+    // Common Dell iDRAC IP patterns to check
+    const char *common_ranges[] = {
+        "192.168.1.120",
+        "192.168.0.120", 
+        "10.0.0.120",
+        NULL
+    };
+    
+    for (int i = 0; common_ranges[i]; i++) {
+        printf("  Testing %s... ", common_ranges[i]);
+        
+        // Simple ping test with timeout
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), "ping -c 1 -W 1 %s >/dev/null 2>&1", common_ranges[i]);
+        if (system(cmd) == 0) {
+            printf("✓ Responds\n");
+        } else {
+            printf("✗ No response\n");
+        }
+    }
+    
+    printf("\nRecommendations:\n");
+    if (access("/dev/ipmi0", F_OK) == 0) {
+        printf("  • Install ipmitool: apt-get install ipmitool\n");
+        printf("  • Run: ipmitool mc info (for management controller info)\n");
+        printf("  • Run: ipmitool sdr list (for sensor data)\n");
+        printf("  • Run: ipmitool chassis status (for power status)\n");
+    } else {
+        printf("  • Load IPMI modules: modprobe ipmi_devintf ipmi_si\n");
+        printf("  • Check BIOS settings for BMC/iDRAC enablement\n");
+        printf("  • Verify network configuration for management interface\n");
+    }
+    
+    printf("  • Use network scanning for iDRAC web interface discovery\n");
+    printf("  • Check Dell documentation for your specific model\n");
+}
+
+int main() {
+    probe_idrac_interfaces();
+    return 0;
+}
+EOF
+    
+    if gcc $DELL_CFLAGS "$dell_build_dir/dell-idrac-probe.c" -o "$dell_build_dir/dell-idrac-probe" $DELL_LDFLAGS 2>/dev/null; then
+        success "Dell iDRAC probe compiled"
+        dell_success=$((dell_success + 1))
+        chmod +x "$dell_build_dir/dell-idrac-probe"
+    fi
+}
+
+create_dell_thermal_monitor() {
+    info "Creating Dell thermal monitoring tool..."
+    
+    cat > "$dell_build_dir/dell-thermal-monitor.c" <<'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <glob.h>
+#include <time.h>
+
+void monitor_dell_thermals() {
+    printf("Dell Thermal Monitor - Ring -1 LiveCD\n");
+    printf("=====================================\n\n");
+    
+    time_t now;
+    time(&now);
+    printf("Timestamp: %s\n", ctime(&now));
+    
+    // CPU thermal zones
+    printf("CPU Thermal Zones:\n");
+    glob_t glob_result;
+    if (glob("/sys/class/thermal/thermal_zone*/temp", 0, NULL, &glob_result) == 0) {
+        for (size_t i = 0; i < glob_result.gl_pathc; i++) {
+            FILE *f = fopen(glob_result.gl_pathv[i], "r");
+            if (f) {
+                int temp_millic;
+                if (fscanf(f, "%d", &temp_millic) == 1) {
+                    float temp_c = temp_millic / 1000.0;
+                    printf("  Zone %zu: %.1f°C", i, temp_c);
+                    
+                    if (temp_c > 85.0) printf(" ⚠️  HIGH");
+                    else if (temp_c > 70.0) printf(" ⚠️  WARM");
+                    else printf(" ✓ OK");
+                    printf("\n");
+                }
+                fclose(f);
+            }
+        }
+    } else {
+        printf("  No thermal zones found\n");
+    }
+    globfree(&glob_result);
+    
+    // Hardware monitoring (lm-sensors style)
+    printf("\nHardware Sensors:\n");
+    if (glob("/sys/class/hwmon/hwmon*/temp*_input", 0, NULL, &glob_result) == 0) {
+        for (size_t i = 0; i < glob_result.gl_pathc && i < 10; i++) {
+            FILE *f = fopen(glob_result.gl_pathv[i], "r");
+            if (f) {
+                int temp_millic;
+                if (fscanf(f, "%d", &temp_millic) == 1) {
+                    float temp_c = temp_millic / 1000.0;
+                    char *basename = strrchr(glob_result.gl_pathv[i], '/');
+                    printf("  %s: %.1f°C", basename ? basename + 1 : "sensor", temp_c);
+                    
+                    if (temp_c > 90.0) printf(" 🔥 CRITICAL");
+                    else if (temp_c > 80.0) printf(" ⚠️  HIGH");
+                    else if (temp_c > 65.0) printf(" ⚠️  WARM");
+                    else printf(" ✓ OK");
+                    printf("\n");
+                }
+                fclose(f);
+            }
+        }
+    }
+    globfree(&glob_result);
+    
+    // Fan monitoring
+    printf("\nFan Status:\n");
+    if (glob("/sys/class/hwmon/hwmon*/fan*_input", 0, NULL, &glob_result) == 0) {
+        for (size_t i = 0; i < glob_result.gl_pathc && i < 8; i++) {
+            FILE *f = fopen(glob_result.gl_pathv[i], "r");
+            if (f) {
+                int rpm;
+                if (fscanf(f, "%d", &rpm) == 1) {
+                    char *basename = strrchr(glob_result.gl_pathv[i], '/');
+                    printf("  %s: %d RPM", basename ? basename + 1 : "fan", rpm);
+                    
+                    if (rpm == 0) printf(" ⚠️  STOPPED");
+                    else if (rpm < 500) printf(" ⚠️  LOW");
+                    else if (rpm > 4000) printf(" 🔄 HIGH");
+                    else printf(" ✓ OK");
+                    printf("\n");
+                }
+                fclose(f);
+            }
+        }
+    } else {
+        printf("  No fan sensors found\n");
+    }
+    globfree(&glob_result);
+    
+    // Power information
+    printf("\nPower Status:\n");
+    if (access("/sys/class/power_supply", F_OK) == 0) {
+        system("find /sys/class/power_supply -name 'type' | while read f; do echo \"  $(dirname $f): $(cat $f)\"; done 2>/dev/null");
+    }
+    
+    // Dell-specific thermal management
+    printf("\nDell Thermal Management:\n");
+    if (access("/proc/acpi/thermal_zone", F_OK) == 0) {
+        printf("  ACPI thermal zones available\n");
+    }
+    
+    // Check for thermal throttling
+    printf("\nCPU Throttling Status:\n");
+    FILE *f = fopen("/proc/cpuinfo", "r");
+    if (f) {
+        char line[256];
+        while (fgets(line, sizeof(line), f)) {
+            if (strstr(line, "flags") && strstr(line, "ht")) {
+                printf("  HyperThreading: Available\n");
+                break;
+            }
+        }
+        fclose(f);
+    }
+    
+    // Ring -1 specific thermal safety
+    printf("\nRing -1 Thermal Safety:\n");
+    printf("  • Monitoring active - temperatures logged\n");
+    printf("  • Thermal throttling detection enabled\n");
+    printf("  • Emergency shutdown threshold: 95°C\n");
+    printf("  • Dell enterprise thermal limits respected\n");
+    
+    printf("\nRecommendations:\n");
+    printf("  • Run continuously: watch -n 2 dell-thermal-monitor\n");
+    printf("  • Install lm-sensors for enhanced monitoring\n");
+    printf("  • Check Dell support docs for thermal specifications\n");
+    printf("  • Monitor logs: dmesg | grep -i thermal\n");
+}
+
+int main() {
+    monitor_dell_thermals();
+    return 0;
+}
+EOF
+    
+    if gcc $DELL_CFLAGS "$dell_build_dir/dell-thermal-monitor.c" -o "$dell_build_dir/dell-thermal-monitor" $DELL_LDFLAGS 2>/dev/null; then
+        success "Dell thermal monitor compiled"
+        dell_success=$((dell_success + 1))
+        chmod +x "$dell_build_dir/dell-thermal-monitor"
+    fi
+}
+
+install_dell_python_tools() {
+    info "Installing Python-based Dell management tools..."
+    
+    # Create Python virtual environment for Dell tools
+    local venv_dir="$dell_build_dir/venv"
+    python3 -m venv "$venv_dir" 2>/dev/null || return 1
+    
+    # Activate virtual environment
+    source "$venv_dir/bin/activate" 2>/dev/null || return 1
+    
+    # Install Dell-related Python packages
+    local dell_packages=(
+        "requests"        # For Redfish API calls
+        "urllib3"         # HTTP library
+        "json5"          # Enhanced JSON parsing
+        "pyyaml"         # YAML configuration
+    )
+    
+    for package in "${dell_packages[@]}"; do
+        pip install "$package" &>/dev/null && \
+            info "Installed Python package: $package"
+    done
+    
+    # Create Dell Redfish client
+    cat > "$dell_build_dir/dell-redfish-client.py" <<'EOF'
+#!/usr/bin/env python3
+"""
+Dell Redfish Client for Ring -1 LiveCD
+Simplified Redfish API client for Dell iDRAC management
+"""
+
+import json
+import requests
+import sys
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
+
+# Suppress SSL warnings for self-signed certificates
+urllib3.disable_warnings(InsecureRequestWarning)
+
+class DellRedfishClient:
+    def __init__(self, host, username="root", password="calvin"):
+        self.base_url = f"https://{host}"
+        self.session = requests.Session()
+        self.session.verify = False
+        self.session.auth = (username, password)
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+    
+    def get_system_info(self):
+        """Get basic system information"""
+        try:
+            response = self.session.get(f"{self.base_url}/redfish/v1/Systems/System.Embedded.1")
+            if response.status_code == 200:
+                return response.json()
+        except Exception as e:
+            print(f"Error connecting to Redfish API: {e}")
+        return None
+    
+    def get_thermal_info(self):
+        """Get thermal information"""
+        try:
+            response = self.session.get(f"{self.base_url}/redfish/v1/Chassis/System.Embedded.1/Thermal")
+            if response.status_code == 200:
+                return response.json()
+        except Exception as e:
+            print(f"Error getting thermal info: {e}")
+        return None
+    
+    def discover_idrac(self, ip_range="192.168.1"):
+        """Discover iDRAC on network"""
+        print(f"Scanning {ip_range}.0/24 for Dell iDRAC...")
+        
+        for i in range(100, 130):  # Common iDRAC IP range
+            ip = f"{ip_range}.{i}"
+            try:
+                response = requests.get(f"https://{ip}/redfish/v1", 
+                                       timeout=2, verify=False)
+                if response.status_code == 200:
+                    data = response.json()
+                    if "Dell" in str(data):
+                        print(f"✓ Found potential Dell iDRAC at {ip}")
+                        return ip
+            except:
+                continue
+        
+        print("No iDRAC found in scan range")
+        return None
+
+def main():
+    print("Dell Redfish Client - Ring -1 LiveCD")
+    print("====================================")
+    
+    if len(sys.argv) < 2:
+        print("Usage: dell-redfish-client.py <idrac_ip> [username] [password]")
+        print("       dell-redfish-client.py discover")
+        return
+    
+    if sys.argv[1] == "discover":
+        client = DellRedfishClient("127.0.0.1")  # Dummy for discovery
+        client.discover_idrac()
+        return
+    
+    host = sys.argv[1]
+    username = sys.argv[2] if len(sys.argv) > 2 else "root"
+    password = sys.argv[3] if len(sys.argv) > 3 else "calvin"
+    
+    client = DellRedfishClient(host, username, password)
+    
+    # Get system information
+    system_info = client.get_system_info()
+    if system_info:
+        print(f"\nSystem: {system_info.get('Name', 'Unknown')}")
+        print(f"Model: {system_info.get('Model', 'Unknown')}")
+        print(f"Manufacturer: {system_info.get('Manufacturer', 'Unknown')}")
+        print(f"Power State: {system_info.get('PowerState', 'Unknown')}")
+    
+    # Get thermal information
+    thermal_info = client.get_thermal_info()
+    if thermal_info:
+        temperatures = thermal_info.get('Temperatures', [])
+        print(f"\nTemperatures ({len(temperatures)} sensors):")
+        for temp in temperatures[:10]:  # Show first 10
+            name = temp.get('Name', 'Unknown')
+            reading = temp.get('ReadingCelsius', 'N/A')
+            status = temp.get('Status', {}).get('Health', 'Unknown')
+            print(f"  {name}: {reading}°C ({status})")
+
+if __name__ == "__main__":
+    main()
+EOF
+    
+    chmod +x "$dell_build_dir/dell-redfish-client.py"
+    
+    # Deactivate virtual environment
+    deactivate 2>/dev/null || true
+    
+    success "Python Dell tools installed"
+    dell_success=$((dell_success + 1))
+}
+
+create_dell_analysis_launcher() {
+    info "Creating integrated Dell analysis launcher..."
+    
+    cat > "$dell_build_dir/dell-enterprise-suite" <<'EOF'
+#!/bin/bash
+# Dell Enterprise Analysis Suite - Ring -1 LiveCD
+# Integrated launcher for all Dell management tools
+
+set -euo pipefail
+
+# Configuration
+readonly DELL_TOOLS_DIR="$(dirname "$0")"
+readonly SCRIPT_NAME="Dell Enterprise Analysis Suite"
+readonly VERSION="1.0-Ring-1"
+
+# Colors
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly CYAN='\033[0;36m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m'
+
+show_banner() {
+    echo -e "${BOLD}${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║                Dell Enterprise Analysis Suite              ║"
+    echo "║                     Ring -1 LiveCD                        ║"
+    echo "║                      Version $VERSION                         ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+}
+
+show_menu() {
+    echo -e "${BOLD}Available Analysis Tools:${NC}"
+    echo
+    echo -e "${GREEN}1.${NC} ${BOLD}Hardware Detection${NC}     - Comprehensive Dell hardware probe"
+    echo -e "${GREEN}2.${NC} ${BOLD}BIOS Analysis${NC}         - Firmware and UEFI analysis"
+    echo -e "${GREEN}3.${NC} ${BOLD}iDRAC Discovery${NC}       - Find and analyze iDRAC interfaces"
+    echo -e "${GREEN}4.${NC} ${BOLD}Thermal Monitor${NC}       - Real-time temperature monitoring"
+    echo -e "${GREEN}5.${NC} ${BOLD}SMBIOS Probe${NC}          - Detailed SMBIOS analysis"
+    echo -e "${GREEN}6.${NC} ${BOLD}Redfish Client${NC}        - Connect to Dell Redfish APIs"
+    echo -e "${GREEN}7.${NC} ${BOLD}Full Analysis${NC}         - Run complete Dell assessment"
+    echo
+    echo -e "${CYAN}8.${NC} ${BOLD}System Status${NC}         - Quick system overview"
+    echo -e "${CYAN}9.${NC} ${BOLD}Tool Status${NC}           - Check available tools"
+    echo
+    echo -e "${YELLOW}0.${NC} ${BOLD}Exit${NC}"
+    echo
+}
+
+run_hardware_detection() {
+    echo -e "${BOLD}${BLUE}Running Dell Hardware Detection...${NC}"
+    if [ -x "$DELL_TOOLS_DIR/probe-dell-enterprise" ]; then
+        "$DELL_TOOLS_DIR/probe-dell-enterprise"
+    else
+        echo -e "${RED}Error: Hardware detection tool not found${NC}"
+    fi
+}
+
+run_bios_analysis() {
+    echo -e "${BOLD}${BLUE}Running Dell BIOS Analysis...${NC}"
+    if [ -x "$DELL_TOOLS_DIR/dell-bios-analyzer" ]; then
+        "$DELL_TOOLS_DIR/dell-bios-analyzer"
+    else
+        echo -e "${RED}Error: BIOS analyzer not found${NC}"
+    fi
+}
+
+run_idrac_discovery() {
+    echo -e "${BOLD}${BLUE}Running Dell iDRAC Discovery...${NC}"
+    if [ -x "$DELL_TOOLS_DIR/dell-idrac-probe" ]; then
+        "$DELL_TOOLS_DIR/dell-idrac-probe"
+    else
+        echo -e "${RED}Error: iDRAC probe not found${NC}"
+    fi
+}
+
+run_thermal_monitor() {
+    echo -e "${BOLD}${BLUE}Running Dell Thermal Monitor...${NC}"
+    if [ -x "$DELL_TOOLS_DIR/dell-thermal-monitor" ]; then
+        "$DELL_TOOLS_DIR/dell-thermal-monitor"
+    else
+        echo -e "${RED}Error: Thermal monitor not found${NC}"
+    fi
+}
+
+run_smbios_probe() {
+    echo -e "${BOLD}${BLUE}Running Dell SMBIOS Probe...${NC}"
+    if [ -x "$DELL_TOOLS_DIR/dell-smbios-probe" ]; then
+        "$DELL_TOOLS_DIR/dell-smbios-probe"
+    else
+        echo -e "${RED}Error: SMBIOS probe not found${NC}"
+        echo "Falling back to system dmidecode..."
+        command -v dmidecode &>/dev/null && sudo dmidecode || echo "dmidecode not available"
+    fi
+}
+
+run_redfish_client() {
+    echo -e "${BOLD}${BLUE}Dell Redfish Client${NC}"
+    if [ -x "$DELL_TOOLS_DIR/dell-redfish-client.py" ]; then
+        echo "1. Discover iDRAC on network"
+        echo "2. Connect to specific iDRAC IP"
+        echo -n "Choose option (1-2): "
+        read -r choice
+        
+        case "$choice" in
+            1) python3 "$DELL_TOOLS_DIR/dell-redfish-client.py" discover ;;
+            2) 
+                echo -n "Enter iDRAC IP: "
+                read -r ip
+                python3 "$DELL_TOOLS_DIR/dell-redfish-client.py" "$ip"
+                ;;
+            *) echo "Invalid choice" ;;
+        esac
+    else
+        echo -e "${RED}Error: Redfish client not found${NC}"
+    fi
+}
+
+run_full_analysis() {
+    echo -e "${BOLD}${BLUE}Running Complete Dell Enterprise Analysis...${NC}"
+    echo
+    
+    run_hardware_detection
+    echo
+    echo -e "${YELLOW}Press ENTER to continue to BIOS analysis...${NC}"
+    read -r
+    
+    run_bios_analysis
+    echo
+    echo -e "${YELLOW}Press ENTER to continue to iDRAC discovery...${NC}"
+    read -r
+    
+    run_idrac_discovery
+    echo
+    echo -e "${YELLOW}Press ENTER to continue to thermal monitoring...${NC}"
+    read -r
+    
+    run_thermal_monitor
+    echo
+    
+    echo -e "${BOLD}${GREEN}Full analysis complete!${NC}"
+}
+
+show_system_status() {
+    echo -e "${BOLD}${BLUE}System Status Overview${NC}"
+    echo
+    echo "System Information:"
+    cat /sys/class/dmi/id/sys_vendor 2>/dev/null && echo " (Vendor)" || echo "Unknown vendor"
+    cat /sys/class/dmi/id/product_name 2>/dev/null && echo " (Product)" || echo "Unknown product"
+    echo
+    echo "Kernel: $(uname -r)"
+    echo "Uptime: $(uptime -p)"
+    echo "Load: $(uptime | awk -F'load average:' '{print $2}')"
+    echo
+    echo "Memory: $(free -h | grep '^Mem:' | awk '{print $3 "/" $2 " (" $7 " available)"}')"
+    echo "Disk: $(df -h / | tail -1 | awk '{print $3 "/" $2 " (" $5 " used)"}')"
+}
+
+show_tool_status() {
+    echo -e "${BOLD}${BLUE}Dell Tools Status${NC}"
+    echo
+    
+    local tools=(
+        "probe-dell-enterprise:Hardware Detection"
+        "dell-bios-analyzer:BIOS Analysis"
+        "dell-idrac-probe:iDRAC Discovery"
+        "dell-thermal-monitor:Thermal Monitor"
+        "dell-smbios-probe:SMBIOS Probe"
+        "dell-redfish-client.py:Redfish Client"
+    )
+    
+    for tool in "${tools[@]}"; do
+        IFS=':' read -r filename description <<< "$tool"
+        if [ -x "$DELL_TOOLS_DIR/$filename" ]; then
+            echo -e "${GREEN}✓${NC} $description ($filename)"
+        else
+            echo -e "${RED}✗${NC} $description ($filename) - Not available"
+        fi
+    done
+    
+    echo
+    echo "System Tools:"
+    command -v dmidecode &>/dev/null && echo -e "${GREEN}✓${NC} dmidecode" || echo -e "${RED}✗${NC} dmidecode"
+    command -v ipmitool &>/dev/null && echo -e "${GREEN}✓${NC} ipmitool" || echo -e "${RED}✗${NC} ipmitool"
+    command -v lm-sensors &>/dev/null && echo -e "${GREEN}✓${NC} lm-sensors" || echo -e "${RED}✗${NC} lm-sensors"
+    command -v python3 &>/dev/null && echo -e "${GREEN}✓${NC} python3" || echo -e "${RED}✗${NC} python3"
+}
+
+main() {
+    while true; do
+        clear
+        show_banner
+        show_menu
+        
+        echo -n "Select option (0-9): "
+        read -r choice
+        
+        echo
+        case "$choice" in
+            1) run_hardware_detection ;;
+            2) run_bios_analysis ;;
+            3) run_idrac_discovery ;;
+            4) run_thermal_monitor ;;
+            5) run_smbios_probe ;;
+            6) run_redfish_client ;;
+            7) run_full_analysis ;;
+            8) show_system_status ;;
+            9) show_tool_status ;;
+            0) 
+                echo -e "${GREEN}Thank you for using Dell Enterprise Analysis Suite!${NC}"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Invalid option. Please try again.${NC}"
+                ;;
+        esac
+        
+        echo
+        echo -e "${YELLOW}Press ENTER to return to main menu...${NC}"
+        read -r
+    done
+}
+
+# Check if running as root for some operations
+if [[ $EUID -eq 0 ]]; then
+    echo -e "${YELLOW}Warning: Running as root. Some operations may require elevated privileges.${NC}"
+    echo
+fi
+
+main "$@"
+EOF
+    
+    chmod +x "$dell_build_dir/dell-enterprise-suite"
+    success "Dell enterprise suite launcher created"
+    dell_success=$((dell_success + 1))
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,58 @@
+# Dell Enterprise Tools Dependencies for Ring -1 LiveCD
+# This file lists required packages for Dell management tools compilation
+
+# Core Development Tools
+build-essential
+gcc
+make
+autotools-dev
+autoconf
+automake
+libtool
+pkg-config
+
+# Dell-specific Libraries and Tools
+dmidecode                # SMBIOS/DMI table decoder
+ipmitool                 # IPMI management tool
+lm-sensors               # Hardware monitoring
+acpica-tools             # ACPI table analysis
+pciutils                 # PCI utilities (lspci)
+usbutils                 # USB utilities (lsusb)
+smartmontools            # SMART disk monitoring
+
+# Network Tools for iDRAC Discovery
+net-tools                # Basic network tools
+nmap                     # Network scanning
+curl                     # HTTP client
+wget                     # HTTP client
+
+# Python Dependencies
+python3
+python3-dev
+python3-pip
+python3-venv
+python3-requests
+python3-urllib3
+python3-yaml
+
+# Optional Enhancement Tools
+git                      # Version control (for source downloads)
+cmake                    # Build system
+libssl-dev              # SSL development libraries
+libcurl4-openssl-dev    # cURL development libraries
+zlib1g-dev              # Compression library
+libxml2-dev             # XML parsing library
+
+# System Analysis Tools
+htop                     # Process monitoring
+iotop                    # I/O monitoring  
+nethogs                  # Network monitoring
+stress                   # System stress testing
+
+# Ring -1 specific optimizations
+intel-microcode          # Intel microcode updates
+firmware-misc-nonfree    # Additional firmware (if needed)
+
+# Optional GUI Tools (if X11 available)
+gkrellm                  # System monitor GUI
+hardinfo                # System information GUI
