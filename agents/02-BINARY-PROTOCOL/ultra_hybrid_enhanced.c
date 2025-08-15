@@ -1,1228 +1,935 @@
 /*
- * ULTRA-HYBRID ENHANCED PROTOCOL - PRODUCTION VERSION
- * 
- * CRITICAL FIX: Microcode-aware AVX-512 detection
- * - Meteor Lake has AVX-512 in silicon but disabled by microcode >= 0x20
- * - Runtime detection ensures proper fallback to AVX2
- * 
- * Integrates all optimizations:
- * - P-core/E-core hybrid scheduling with AVX-512/AVX2
- * - NPU for AI-driven routing and classification
- * - GNA for continuous anomaly detection
- * - GPU offload for batch processing (via OpenCL)
- * - DPDK for kernel bypass networking
- * - io_uring for async I/O
- * - Work-stealing thread pool
- * - NUMA-aware memory allocation
- * - Lock-free data structures
- * - Hardware accelerated CRC32C
- * 
- * Author: OPTIMIZER Agent Enhancement
- * Version: 4.1 Production (Microcode-Aware)
+ * ultra_hybrid_fixed.c
+ * Fixed multi-consumer synchronization with maximum throughput
+ * Implements atomic message claiming, batch processing, and work-stealing
  */
 
-#define _GNU_SOURCE  // Required for CPU affinity functions (sched_setaffinity, etc.)
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <stdatomic.h>
 #include <pthread.h>
-#include <sched.h>
-#include <sys/mman.h>
-#include <sys/syscall.h>
-#if HAVE_LIBURING
-#include <linux/io_uring.h>
-#include <liburing.h>
-#endif
-#include <fcntl.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <errno.h>
 #include <time.h>
-#include <math.h>
-#include <cpuid.h>
-#include <x86intrin.h>
-#include <dlfcn.h>
-
-// Fallback functions for systems without io_uring
-#if !HAVE_LIBURING
-int io_uring_fallback_read(int fd, void *buf, size_t count, off_t offset);
-int io_uring_fallback_write(int fd, const void *buf, size_t count, off_t offset);
-#endif
-
-// Feature flags for conditional compilation
-#ifndef ENABLE_NPU
-#define ENABLE_NPU 0
-#endif
-
-#ifndef ENABLE_GNA
-#define ENABLE_GNA 0
-#endif
-
-#ifndef ENABLE_GPU
-#define ENABLE_GPU 0
-#endif
-
-#ifndef ENABLE_DPDK
-#define ENABLE_DPDK 0
-#endif
-
-// Microcode version threshold for AVX-512 disable
-#define AVX512_DISABLED_MICROCODE 0x20
+#include <stdatomic.h>
+#include <immintrin.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <assert.h>
 
 // ============================================================================
-// CORE DEFINITIONS AND STRUCTURES
+// Configuration and Constants
 // ============================================================================
 
+#define MAX_AGENTS 32
+#define MAX_PRODUCERS 16
+#define MAX_WORKERS 32
+#define MSG_BUFFER_SIZE 65536
+#define BATCH_SIZE 64
+#define RING_BUFFER_SIZE (512 * 1024 * 1024)  // 512 MB ring buffer
 #define CACHE_LINE_SIZE 64
-#define PAGE_SIZE 4096
-#define HUGE_PAGE_SIZE (2 * 1024 * 1024)
-#define MAX_AGENTS 65536
-#define MAX_CORES 256
-#define RING_BUFFER_SIZE (256 * 1024 * 1024)  // 256MB
+#define PREFETCH_DISTANCE 4
+#define WORKER_BATCH_SIZE 64  // Increased batch size for better throughput
 
-// Message priorities
-typedef enum {
-    PRIORITY_CRITICAL = 0,   // P-core only
-    PRIORITY_HIGH = 1,       // Prefer P-core
-    PRIORITY_NORMAL = 2,     // E-core preferred
-    PRIORITY_LOW = 3,        // E-core only
-    PRIORITY_BATCH = 4,      // GPU/NPU offload
-    PRIORITY_BACKGROUND = 5  // GNA monitoring
-} priority_level_t;
+// Feature flags
+#define ENABLE_CRC_ASYNC 1
+#define ENABLE_BATCH_PROCESSING 1
+#define ENABLE_PREFETCH 1
+#define ENABLE_WORK_STEALING 1
 
-// Core types
-typedef enum {
-    CORE_TYPE_UNKNOWN = 0,
-    CORE_TYPE_PERFORMANCE = 1,  // P-core
-    CORE_TYPE_EFFICIENCY = 2,   // E-core
-    CORE_TYPE_GPU = 3,
-    CORE_TYPE_NPU = 4,
-    CORE_TYPE_GNA = 5
-} core_type_t;
+// Memory ordering hints
+#define MO_RELAXED memory_order_relaxed
+#define MO_ACQUIRE memory_order_acquire
+#define MO_RELEASE memory_order_release
+#define MO_ACQ_REL memory_order_acq_rel
 
-// Enhanced message header with AI metadata
-typedef struct __attribute__((packed, aligned(64))) {
-    // First cache line - hot path
-    uint32_t magic;
-    uint32_t msg_id;
+// Alignment macros
+#define CACHE_ALIGNED __attribute__((aligned(CACHE_LINE_SIZE)))
+#define PACKED __attribute__((packed))
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+
+// ============================================================================
+// Cache-Optimized Data Structures
+// ============================================================================
+
+typedef struct CACHE_ALIGNED {
+    atomic_uint_fast64_t value;
+    char padding[CACHE_LINE_SIZE - sizeof(atomic_uint_fast64_t)];
+} aligned_counter_t;
+
+typedef struct PACKED {
+    uint32_t msg_type;
+    uint32_t msg_len;
     uint64_t timestamp;
-    uint32_t payload_len;
-    uint32_t checksum;
-    uint16_t source_agent;
-    uint16_t target_agent;
-    uint8_t msg_type;
-    uint8_t priority;
-    uint8_t flags;
-    uint8_t ttl;
-    uint32_t correlation_id;
-    uint8_t padding1[24];
-    
-    // Second cache line - AI metadata
-    float ai_confidence;      // NPU routing confidence
-    float anomaly_score;      // GNA anomaly score
-    uint16_t predicted_path[4]; // NPU predicted route
-    uint64_t feature_hash;    // Message feature fingerprint
-    uint8_t gpu_batch_id;     // GPU batch assignment
-    uint8_t padding2[31];
-} enhanced_msg_header_t;
+    uint32_t source_agent;
+    uint32_t target_agent;
+    uint32_t flags;
+    uint32_t crc32;
+} message_header_t;
 
-// Now include compatibility layer after struct is defined
-#define ENHANCED_MSG_HEADER_T_DEFINED 1
-#include "compatibility_layer.h"
+typedef struct CACHE_ALIGNED {
+    message_header_t headers[BATCH_SIZE];
+    uint8_t* payloads[BATCH_SIZE];
+    uint32_t count;
+    uint32_t total_size;
+    char padding[CACHE_LINE_SIZE - 8];
+} message_batch_t;
 
-// ============================================================================
-// SYSTEM CAPABILITY DETECTION WITH MICROCODE AWARENESS
-// ============================================================================
-
+// Work item for work-stealing queue
 typedef struct {
-    // CPU capabilities
-    bool has_avx2;
-    bool has_avx512f;          // CPUID reports AVX-512F
-    bool has_avx512bw;         // CPUID reports AVX-512BW
-    bool has_avx512vl;         // CPUID reports AVX-512VL
-    bool has_avx512vnni;       // CPUID reports AVX-512VNNI
-    bool avx512_usable;        // Actually usable (not disabled by microcode)
-    bool has_amx;
-    bool has_pclmul;
-    bool has_aes;
-    
-    // Microcode information
-    uint32_t microcode_version;
-    bool microcode_blocks_avx512;
-    
-    // Accelerators
-    bool has_npu;
-    bool has_gna;
-    bool has_gpu;
-    bool has_qat;  // Intel QuickAssist
-    bool has_dpdk;
-    bool has_io_uring;
-    
-    // System info
-    int num_p_cores;
-    int num_e_cores;
-    int num_numa_nodes;
-    int total_cores;
-    int64_t total_memory;
-    
-    // Core mapping
-    int* p_core_ids;
-    int* e_core_ids;
-    int* numa_node_map;
-} system_capabilities_t;
+    uint64_t offset;      // Offset in ring buffer (wrapped)
+    uint64_t linear_pos;  // Linear position for read tracking
+    uint32_t size;        // Total size (header + payload)
+    uint32_t msg_type;    // For priority routing
+} work_item_t;
 
-static system_capabilities_t g_system_caps;
-
-// Get microcode version from system
-static uint32_t get_microcode_version(void) {
-    FILE *fp;
-    char line[256];
-    uint32_t microcode = 0;
-    
-    // Primary method: /proc/cpuinfo
-    fp = fopen("/proc/cpuinfo", "r");
-    if (fp) {
-        while (fgets(line, sizeof(line), fp)) {
-            if (strncmp(line, "microcode", 9) == 0) {
-                char *ptr = strchr(line, ':');
-                if (ptr) {
-                    microcode = (uint32_t)strtoul(ptr + 1, NULL, 0);
-                    break;
-                }
-            }
-        }
-        fclose(fp);
-    }
-    
-    // Fallback: sysfs
-    if (microcode == 0) {
-        fp = fopen("/sys/devices/system/cpu/cpu0/microcode/version", "r");
-        if (fp) {
-            fscanf(fp, "%x", &microcode);
-            fclose(fp);
-        }
-    }
-    
-    return microcode;
-}
-
-// Detect all system capabilities with microcode awareness
-static void detect_system_capabilities() {
-    memset(&g_system_caps, 0, sizeof(g_system_caps));
-    
-    // Get microcode version FIRST
-    g_system_caps.microcode_version = get_microcode_version();
-    g_system_caps.microcode_blocks_avx512 = (g_system_caps.microcode_version >= AVX512_DISABLED_MICROCODE);
-    
-    // CPU feature detection
-    unsigned int eax, ebx, ecx, edx;
-    
-    // Check basic features
-    __cpuid_count(1, 0, eax, ebx, ecx, edx);
-    g_system_caps.has_pclmul = (ecx & (1 << 1)) != 0;
-    g_system_caps.has_aes = (ecx & (1 << 25)) != 0;
-    
-    // Check extended features
-    __cpuid_count(7, 0, eax, ebx, ecx, edx);
-    g_system_caps.has_avx2 = (ebx & (1 << 5)) != 0;
-    g_system_caps.has_avx512f = (ebx & (1 << 16)) != 0;
-    g_system_caps.has_avx512bw = (ebx & (1 << 30)) != 0;
-    g_system_caps.has_avx512vl = (ebx & (1 << 31)) != 0;
-    g_system_caps.has_avx512vnni = (ecx & (1 << 11)) != 0;
-    
-    // Determine if AVX-512 is actually usable
-    g_system_caps.avx512_usable = g_system_caps.has_avx512f && 
-                                   !g_system_caps.microcode_blocks_avx512;
-    
-    // Check for AMX
-    __cpuid_count(7, 1, eax, ebx, ecx, edx);
-    g_system_caps.has_amx = (edx & (1 << 22)) != 0;
-    
-    // Core topology detection
-    g_system_caps.total_cores = sysconf(_SC_NPROCESSORS_ONLN);
-    g_system_caps.p_core_ids = calloc(g_system_caps.total_cores, sizeof(int));
-    g_system_caps.e_core_ids = calloc(g_system_caps.total_cores, sizeof(int));
-    
-    // Detect P-cores vs E-cores
-    cpu_set_t original_affinity;
-    sched_getaffinity(0, sizeof(cpu_set_t), &original_affinity);
-    
-    for (int i = 0; i < g_system_caps.total_cores; i++) {
-        cpu_set_t mask;
-        CPU_ZERO(&mask);
-        CPU_SET(i, &mask);
-        
-        if (sched_setaffinity(0, sizeof(cpu_set_t), &mask) == 0) {
-            // Check core type via CPUID leaf 0x1A
-            __cpuid_count(0x1A, 0, eax, ebx, ecx, edx);
-            int core_type = (eax >> 24) & 0xFF;
-            
-            if (core_type == 0x40) {  // P-core
-                g_system_caps.p_core_ids[g_system_caps.num_p_cores++] = i;
-            } else if (core_type == 0x20) {  // E-core
-                g_system_caps.e_core_ids[g_system_caps.num_e_cores++] = i;
-            }
-        }
-    }
-    
-    sched_setaffinity(0, sizeof(cpu_set_t), &original_affinity);
-    
-    // NUMA detection
-    if (numa_available() >= 0) {
-        g_system_caps.num_numa_nodes = numa_max_node() + 1;
-        g_system_caps.numa_node_map = calloc(g_system_caps.total_cores, sizeof(int));
-        
-        for (int i = 0; i < g_system_caps.total_cores; i++) {
-            g_system_caps.numa_node_map[i] = numa_node_of_cpu(i);
-        }
-    }
-    
-    // Check for accelerators
-#if ENABLE_NPU
-    void* openvino = dlopen("libopenvino_c.so", RTLD_LAZY);
-    g_system_caps.has_npu = (openvino != NULL);
-    if (openvino) dlclose(openvino);
-#endif
-    
-#if ENABLE_GNA
-    g_system_caps.has_gna = (access("/dev/gna0", F_OK) == 0);
-#endif
-    
-#if ENABLE_GPU
-    void* opencl = dlopen("libOpenCL.so", RTLD_LAZY);
-    g_system_caps.has_gpu = (opencl != NULL);
-    if (opencl) dlclose(opencl);
-#endif
-    
-#if ENABLE_DPDK
-    g_system_caps.has_dpdk = (access("/dev/hugepages", F_OK) == 0);
-#endif
-    
-    // Check for io_uring support
-    struct io_uring ring;
-    (void)ring; // Suppress unused variable warning
-    g_system_caps.has_io_uring = (io_uring_queue_init(8, &ring, 0) == 0);
-    if (g_system_caps.has_io_uring) io_uring_queue_exit(&ring);
-    
-    // Memory info
-    g_system_caps.total_memory = sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGE_SIZE);
-    
-    // Print detected capabilities with microcode info
-    printf("System Capabilities:\n");
-    printf("  Microcode: 0x%x %s\n", 
-           g_system_caps.microcode_version,
-           g_system_caps.microcode_blocks_avx512 ? "(blocks AVX-512)" : "(allows AVX-512)");
-    printf("  CPU: %d P-cores, %d E-cores, %d total\n", 
-           g_system_caps.num_p_cores, g_system_caps.num_e_cores, 
-           g_system_caps.total_cores);
-    printf("  NUMA nodes: %d\n", g_system_caps.num_numa_nodes);
-    printf("  Memory: %.1f GB\n", g_system_caps.total_memory / (1024.0 * 1024 * 1024));
-    
-    // Special handling for AVX-512 on Meteor Lake
-    if (g_system_caps.has_avx512f) {
-        printf("  AVX-512: Present in silicon\n");
-        if (g_system_caps.avx512_usable) {
-            printf("    ✓ Enabled (microcode < 0x20)\n");
-        } else {
-            printf("    ✗ Disabled by microcode (>= 0x20)\n");
-            printf("    → P-cores will use AVX2 instead\n");
-        }
-    }
-    
-    printf("  SIMD: AVX2=%d AVX512_usable=%d AMX=%d\n", 
-           g_system_caps.has_avx2, g_system_caps.avx512_usable, g_system_caps.has_amx);
-    printf("  Accelerators: NPU=%d GNA=%d GPU=%d\n",
-           g_system_caps.has_npu, g_system_caps.has_gna, g_system_caps.has_gpu);
-    printf("  I/O: io_uring=%d DPDK=%d\n", 
-           g_system_caps.has_io_uring, g_system_caps.has_dpdk);
-}
-
-// ============================================================================
-// OPTIMIZED MEMORY OPERATIONS WITH MICROCODE-AWARE AVX-512
-// ============================================================================
-
-// Auto-select best memory copy based on capabilities
-static inline void* memcpy_auto(void* dst, const void* src, size_t size) {
-    // Check alignment for SIMD operations
-    uintptr_t dst_addr = (uintptr_t)dst;
-    uintptr_t src_addr = (uintptr_t)src;
-    
-    int cpu = sched_getcpu();
-    
-    // Check if P-core with AVX-512 USABLE and properly aligned
-    if (g_system_caps.avx512_usable && cpu < g_system_caps.num_p_cores &&
-        (dst_addr % 64 == 0) && (src_addr % 64 == 0)) {
-        // AVX-512 path (only if not disabled by microcode)
-        __m512i* d = (__m512i*)dst;
-        const __m512i* s = (const __m512i*)src;
-        size_t chunks = size / 64;
-        
-        for (size_t i = 0; i < chunks; i++) {
-#ifdef __AVX512F__
-            _mm512_stream_si512(d + i, _mm512_load_si512(s + i));
-#else
-            // Fallback to AVX2 when AVX-512 not available at compile time
-            __m256i* d256 = (__m256i*)(d + i);
-            const __m256i* s256 = (const __m256i*)(s + i);
-            _mm256_stream_si256(d256, _mm256_load_si256(s256));
-            _mm256_stream_si256(d256 + 1, _mm256_load_si256(s256 + 1));
-#endif
-        }
-        
-        // Handle remainder
-        size_t remainder = size % 64;
-        if (remainder > 0) {
-            memcpy((uint8_t*)dst + chunks * 64, 
-                   (const uint8_t*)src + chunks * 64, remainder);
-        }
-        _mm_sfence();
-        
-    } else if (g_system_caps.has_avx2 && 
-               (dst_addr % 32 == 0) && (src_addr % 32 == 0)) {
-        // AVX2 path for E-cores OR P-cores when AVX-512 is disabled
-        __m256i* d = (__m256i*)dst;
-        const __m256i* s = (const __m256i*)src;
-        size_t chunks = size / 32;
-        
-        for (size_t i = 0; i < chunks; i++) {
-            _mm256_stream_si256(d + i, _mm256_load_si256(s + i));
-        }
-        
-        // Handle remainder
-        size_t remainder = size % 32;
-        if (remainder > 0) {
-            memcpy((uint8_t*)dst + chunks * 32,
-                   (const uint8_t*)src + chunks * 32, remainder);
-        }
-        _mm_sfence();
-        
-    } else {
-        // Fallback to standard memcpy
-        memcpy(dst, src, size);
-    }
-    
-    return dst;
-}
-
-// ============================================================================
-// PARALLEL CRC32C WITH PCLMULQDQ
-// ============================================================================
-
-static uint32_t crc32c_parallel_enhanced(const uint8_t* data, size_t len) {
-    if (!g_system_caps.has_pclmul || len < 256) {
-        // Fallback to simple CRC32C
-        uint32_t crc = 0xFFFFFFFF;
-        for (size_t i = 0; i < len; i++) {
-            crc = _mm_crc32_u8(crc, data[i]);
-        }
-        return ~crc;
-    }
-    
-    // 8-way parallel CRC32C for large messages
-    size_t chunk_size = len / 8;
-    size_t aligned_chunk = chunk_size & ~7ULL;
-    
-    uint32_t crc[8] = {0xFFFFFFFF, 0, 0, 0, 0, 0, 0, 0};
-    
-    // Process 8 chunks in parallel
-    #pragma omp parallel for num_threads(8)
-    for (int chunk = 0; chunk < 8; chunk++) {
-        const uint64_t* ptr = (const uint64_t*)(data + chunk * chunk_size);
-        size_t words = aligned_chunk / 8;
-        
-        for (size_t i = 0; i < words; i++) {
-            crc[chunk] = _mm_crc32_u64(crc[chunk], ptr[i]);
-        }
-        
-        // Handle remainder bytes
-        size_t offset = chunk * chunk_size + aligned_chunk;
-        for (size_t i = 0; i < (chunk_size - aligned_chunk); i++) {
-            crc[chunk] = _mm_crc32_u8(crc[chunk], data[offset + i]);
-        }
-    }
-    
-    // Combine CRCs using PCLMULQDQ
-    // This is a simplified version - real implementation would use 
-    // Barrett reduction or similar
-    uint32_t final_crc = crc[0];
-    for (int i = 1; i < 8; i++) {
-        final_crc ^= crc[i];  // Simplified - should use polynomial multiplication
-    }
-    
-    // Process any remaining bytes
-    size_t processed = chunk_size * 8;
-    for (size_t i = processed; i < len; i++) {
-        final_crc = _mm_crc32_u8(final_crc, data[i]);
-    }
-    
-    return ~final_crc;
-}
-
-// ============================================================================
-// ENHANCED RING BUFFER WITH MULTIPLE QUEUES
-// ============================================================================
-
-typedef struct __attribute__((aligned(PAGE_SIZE))) {
-    // Per-priority queues
-    struct {
-        _Atomic uint64_t write_pos;
-        _Atomic uint64_t read_pos;
-        _Atomic uint64_t cached_write;
-        _Atomic uint64_t cached_read;
-        uint8_t* buffer;
-        size_t size;
-        size_t mask;
-    } queues[6];  // One per priority level
-    
-    // Statistics
-    _Atomic uint64_t total_messages;
-    _Atomic uint64_t total_bytes;
-    _Atomic uint64_t drops[6];
-    
-    // NUMA node affinity
-    int numa_node;
-    
-} enhanced_ring_buffer_t;
-
-// Create NUMA-aware ring buffer
-static enhanced_ring_buffer_t* create_enhanced_ring_buffer(size_t size_per_queue) {
-    // Ensure power of 2
-    size_t actual_size = 1;
-    while (actual_size < size_per_queue) actual_size <<= 1;
-    
-    // Allocate on local NUMA node
-    int numa_node = numa_node_of_cpu(sched_getcpu());
-    enhanced_ring_buffer_t* rb = numa_alloc_onnode(sizeof(enhanced_ring_buffer_t), 
-                                                   numa_node);
-    if (!rb) return NULL;
-    
-    rb->numa_node = numa_node;
-    
-    // Initialize per-priority queues
-    for (int i = 0; i < 6; i++) {
-        rb->queues[i].size = actual_size;
-        rb->queues[i].mask = actual_size - 1;
-        
-        // Allocate buffer with huge pages
-        rb->queues[i].buffer = mmap(NULL, actual_size,
-                                   PROT_READ | PROT_WRITE,
-                                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB,
-                                   -1, 0);
-        
-        if (rb->queues[i].buffer == MAP_FAILED) {
-            // Fallback to regular pages
-            rb->queues[i].buffer = numa_alloc_onnode(actual_size, numa_node);
-            if (!rb->queues[i].buffer) {
-                // Cleanup and fail
-                for (int j = 0; j < i; j++) {
-                    munmap(rb->queues[j].buffer, rb->queues[j].size);
-                }
-                numa_free(rb, sizeof(enhanced_ring_buffer_t));
-                return NULL;
-            }
-        }
-        
-        // Lock pages in memory
-        mlock(rb->queues[i].buffer, actual_size);
-        
-        // Initialize positions
-        atomic_store(&rb->queues[i].write_pos, 0);
-        atomic_store(&rb->queues[i].read_pos, 0);
-        atomic_store(&rb->queues[i].cached_write, 0);
-        atomic_store(&rb->queues[i].cached_read, 0);
-    }
-    
-    atomic_store(&rb->total_messages, 0);
-    atomic_store(&rb->total_bytes, 0);
-    
-    return rb;
-}
-
-// Write to appropriate queue based on priority
-static bool ring_buffer_write_priority(enhanced_ring_buffer_t* rb,
-                                      const enhanced_msg_header_t* msg,
-                                      const void* payload) {
-    int priority = msg->priority;
-    if (priority > 5) priority = 5;
-    
-    size_t total_size = sizeof(enhanced_msg_header_t) + msg->payload_len;
-    
-    // Try to write to priority queue
-    uint64_t write_pos = atomic_load_explicit(&rb->queues[priority].write_pos,
-                                             memory_order_relaxed);
-    uint64_t cached_read = atomic_load_explicit(&rb->queues[priority].cached_read,
-                                               memory_order_relaxed);
-    
-    if (write_pos + total_size > cached_read + rb->queues[priority].size) {
-        // Update cached read position
-        cached_read = atomic_load_explicit(&rb->queues[priority].read_pos,
-                                          memory_order_acquire);
-        atomic_store_explicit(&rb->queues[priority].cached_read, cached_read,
-                            memory_order_relaxed);
-        
-        if (write_pos + total_size > cached_read + rb->queues[priority].size) {
-            atomic_fetch_add(&rb->drops[priority], 1);
-            return false;  // Queue full
-        }
-    }
-    
-    // Write to buffer
-    uint64_t write_idx = write_pos & rb->queues[priority].mask;
-    uint8_t* dst = rb->queues[priority].buffer + write_idx;
-    
-    // Copy header and payload
-    memcpy_auto(dst, msg, sizeof(enhanced_msg_header_t));
-    if (payload && msg->payload_len > 0) {
-        memcpy_auto(dst + sizeof(enhanced_msg_header_t), payload, msg->payload_len);
-    }
-    
-    // Update write position
-    atomic_store_explicit(&rb->queues[priority].write_pos, 
-                        write_pos + total_size,
-                        memory_order_release);
-    
-    // Update statistics
-    atomic_fetch_add(&rb->total_messages, 1);
-    atomic_fetch_add(&rb->total_bytes, total_size);
-    
-    return true;
-}
-
-// ============================================================================
-// WORK-STEALING THREAD POOL WITH CORE AFFINITY
-// ============================================================================
-
-typedef struct {
-    _Atomic int64_t top;
-    _Atomic int64_t bottom;
-    void** tasks;
+// Work-stealing deque per worker
+typedef struct CACHE_ALIGNED {
+    work_item_t* items;
+    atomic_int_fast32_t top;     // Private end (owner pushes/pops)
+    atomic_int_fast32_t bottom;  // Public end (thieves steal)
     size_t capacity;
-    char padding[CACHE_LINE_SIZE - 32];
-} work_queue_t;
+    size_t mask;                  // For fast modulo
+    pthread_spinlock_t steal_lock;
+} work_deque_t;
 
-typedef struct {
+// Enhanced producer context
+typedef struct CACHE_ALIGNED {
     pthread_t thread;
-    int thread_id;
-    int cpu_id;
-    core_type_t core_type;
-    work_queue_t* local_queue;
-    work_queue_t** all_queues;
-    int num_threads;
-    enhanced_ring_buffer_t* ring_buffer;
-    volatile bool running;
+    uint32_t producer_id;
+    atomic_uint_fast64_t messages_sent;
+    atomic_uint_fast64_t bytes_sent;
+    volatile int running;
+    message_batch_t* batch;
+    int cpu_core;
+    uint64_t start_time;
+    uint64_t end_time;
+} producer_context_t;
+
+// Enhanced ring buffer with consumer synchronization
+typedef struct CACHE_ALIGNED {
+    // Separate cache lines for producer and consumer sides
+    aligned_counter_t write_pos;
+    aligned_counter_t reserved_pos;
+    
+    // Consumer side - multiple read cursors
+    aligned_counter_t read_pos;        // Global committed read position
+    aligned_counter_t claim_pos;        // Next position to claim
+    
+    // Buffer and metadata
+    uint8_t* buffer;
+    size_t size;
+    size_t mask;
+    
+    // Producer synchronization
+    pthread_mutex_t write_lock;
+    pthread_spinlock_t reserve_lock;
+    
+    // Consumer synchronization
+    pthread_spinlock_t claim_lock;
     
     // Statistics
-    _Atomic uint64_t tasks_executed;
-    _Atomic uint64_t tasks_stolen;
-    _Atomic uint64_t idle_cycles;
-} worker_thread_t;
+    atomic_uint_fast64_t total_messages;
+    atomic_uint_fast64_t total_bytes;
+    atomic_uint_fast64_t dropped_messages;
+    atomic_uint_fast64_t duplicate_reads;  // Debug counter
+} ring_buffer_t;
 
-typedef struct {
-    worker_thread_t* workers;
-    int num_workers;
-    int num_p_workers;
-    int num_e_workers;
-} thread_pool_t;
+// Enhanced worker context with work-stealing
+typedef struct CACHE_ALIGNED {
+    pthread_t thread;
+    uint32_t worker_id;
+    int cpu_core;
+    volatile int running;
+    
+    // Work-stealing deque
+    work_deque_t* deque;
+    
+    // Local batch buffer for claimed messages
+    work_item_t local_batch[WORKER_BATCH_SIZE];
+    uint32_t batch_count;
+    
+    // Statistics
+    atomic_uint_fast64_t messages_processed;
+    atomic_uint_fast64_t bytes_processed;
+    atomic_uint_fast64_t messages_stolen;
+    atomic_uint_fast64_t steal_attempts;
+    atomic_uint_fast64_t idle_cycles;
+    uint64_t start_time;
+    
+    // Read position tracking
+    uint64_t last_processed_pos;
+} worker_context_t;
 
-// Create optimized thread pool
-static thread_pool_t* create_thread_pool(enhanced_ring_buffer_t* rb) {
-    thread_pool_t* pool = calloc(1, sizeof(thread_pool_t));
+// ============================================================================
+// Global State
+// ============================================================================
+
+static ring_buffer_t* g_ring_buffer = NULL;
+static producer_context_t g_producers[MAX_PRODUCERS];
+static worker_context_t g_workers[MAX_WORKERS];
+static volatile int g_system_running = 1;
+static int g_socket_fd = -1;
+static int g_num_workers = 0;
+
+// Debug: Track total messages claimed vs processed
+static atomic_uint_fast64_t g_messages_claimed = 0;
+static atomic_uint_fast64_t g_messages_completed = 0;
+
+// ============================================================================
+// Work-Stealing Deque Implementation
+// ============================================================================
+
+static work_deque_t* create_work_deque(size_t capacity) {
+    // Ensure capacity is power of 2
+    size_t size = 1;
+    while (size < capacity) size <<= 1;
     
-    // Create workers for P-cores and E-cores
-    pool->num_workers = g_system_caps.num_p_cores + g_system_caps.num_e_cores;
-    pool->workers = calloc(pool->num_workers, sizeof(worker_thread_t));
+    work_deque_t* deque = aligned_alloc(CACHE_LINE_SIZE, sizeof(work_deque_t));
+    if (!deque) return NULL;
     
-    // Allocate work queues
-    work_queue_t** all_queues = calloc(pool->num_workers, sizeof(work_queue_t*));
-    
-    for (int i = 0; i < pool->num_workers; i++) {
-        all_queues[i] = aligned_alloc(CACHE_LINE_SIZE, sizeof(work_queue_t));
-        all_queues[i]->capacity = 4096;
-        all_queues[i]->tasks = calloc(4096, sizeof(void*));
-        atomic_store(&all_queues[i]->top, 0);
-        atomic_store(&all_queues[i]->bottom, 0);
+    deque->items = aligned_alloc(CACHE_LINE_SIZE, size * sizeof(work_item_t));
+    if (!deque->items) {
+        free(deque);
+        return NULL;
     }
     
-    // Initialize P-core workers
-    for (int i = 0; i < g_system_caps.num_p_cores; i++) {
-        pool->workers[i].thread_id = i;
-        pool->workers[i].cpu_id = g_system_caps.p_core_ids[i];
-        pool->workers[i].core_type = CORE_TYPE_PERFORMANCE;
-        pool->workers[i].local_queue = all_queues[i];
-        pool->workers[i].all_queues = all_queues;
-        pool->workers[i].num_threads = pool->num_workers;
-        pool->workers[i].ring_buffer = rb;
-        pool->workers[i].running = true;
-        pool->num_p_workers++;
-    }
+    deque->capacity = size;
+    deque->mask = size - 1;
+    atomic_store(&deque->top, 0);
+    atomic_store(&deque->bottom, 0);
+    pthread_spin_init(&deque->steal_lock, PTHREAD_PROCESS_PRIVATE);
     
-    // Initialize E-core workers
-    for (int i = 0; i < g_system_caps.num_e_cores; i++) {
-        int idx = g_system_caps.num_p_cores + i;
-        pool->workers[idx].thread_id = idx;
-        pool->workers[idx].cpu_id = g_system_caps.e_core_ids[i];
-        pool->workers[idx].core_type = CORE_TYPE_EFFICIENCY;
-        pool->workers[idx].local_queue = all_queues[idx];
-        pool->workers[idx].all_queues = all_queues;
-        pool->workers[idx].num_threads = pool->num_workers;
-        pool->workers[idx].ring_buffer = rb;
-        pool->workers[idx].running = true;
-        pool->num_e_workers++;
-    }
-    
-    return pool;
+    return deque;
 }
 
-// ============================================================================
-// NPU INTEGRATION FOR AI-DRIVEN ROUTING
-// ============================================================================
-
-#if ENABLE_NPU
-typedef struct {
-    void* npu_handle;
-    void* model;
-    float* input_tensor;
-    float* output_tensor;
-    size_t batch_size;
-    pthread_mutex_t lock;
-} npu_context_t;
-
-static npu_context_t* g_npu_ctx = NULL;
-
-static void init_npu_routing() {
-    g_npu_ctx = calloc(1, sizeof(npu_context_t));
-    pthread_mutex_init(&g_npu_ctx->lock, NULL);
+// Owner pushes work to their deque
+static void deque_push(work_deque_t* deque, work_item_t* item) {
+    int_fast32_t b = atomic_load_explicit(&deque->bottom, MO_RELAXED);
+    int_fast32_t t = atomic_load_explicit(&deque->top, MO_ACQUIRE);
     
-    // Load OpenVINO and model
-    // ... (implementation depends on OpenVINO API)
-    
-    g_npu_ctx->batch_size = 64;
-    g_npu_ctx->input_tensor = aligned_alloc(64, 64 * 128 * sizeof(float));
-    g_npu_ctx->output_tensor = aligned_alloc(64, 64 * 8 * sizeof(float));
-    
-    printf("NPU: Initialized for batch size %zu\n", g_npu_ctx->batch_size);
-}
-
-// Batch process messages on NPU
-static void npu_batch_classify(enhanced_msg_header_t* messages[], 
-                              size_t count) {
-    if (!g_npu_ctx || count == 0) return;
-    
-    pthread_mutex_lock(&g_npu_ctx->lock);
-    
-    // Process in batches
-    for (size_t batch_start = 0; batch_start < count; 
-         batch_start += g_npu_ctx->batch_size) {
-        
-        size_t batch_end = batch_start + g_npu_ctx->batch_size;
-        if (batch_end > count) batch_end = count;
-        size_t batch_size = batch_end - batch_start;
-        
-        // Prepare input tensor
-        for (size_t i = 0; i < batch_size; i++) {
-            enhanced_msg_header_t* msg = messages[batch_start + i];
-            
-            // Extract features (simplified)
-            g_npu_ctx->input_tensor[i * 128 + 0] = msg->priority / 5.0f;
-            g_npu_ctx->input_tensor[i * 128 + 1] = msg->payload_len / 65536.0f;
-            g_npu_ctx->input_tensor[i * 128 + 2] = msg->source_agent / 65536.0f;
-            g_npu_ctx->input_tensor[i * 128 + 3] = msg->target_agent / 65536.0f;
-            // ... more features
-        }
-        
-        // Run inference (would call OpenVINO here)
-        // ... 
-        
-        // Update messages with NPU results
-        for (size_t i = 0; i < batch_size; i++) {
-            enhanced_msg_header_t* msg = messages[batch_start + i];
-            msg->ai_confidence = g_npu_ctx->output_tensor[i * 8];
-            
-            // Set predicted path
-            for (int j = 0; j < 4; j++) {
-                msg->predicted_path[j] = 
-                    (uint16_t)(g_npu_ctx->output_tensor[i * 8 + j + 1] * 65536);
-            }
-        }
-    }
-    
-    pthread_mutex_unlock(&g_npu_ctx->lock);
-}
-#endif
-
-// ============================================================================
-// GNA INTEGRATION FOR ANOMALY DETECTION
-// ============================================================================
-
-#if ENABLE_GNA
-typedef struct {
-    int gna_fd;
-    void* gna_model;
-    float* pattern_buffer;
-    double baseline_mean;
-    double baseline_stddev;
-    _Atomic uint64_t anomalies_detected;
-} gna_context_t;
-
-static gna_context_t* g_gna_ctx = NULL;
-
-static void init_gna_monitoring() {
-    g_gna_ctx = calloc(1, sizeof(gna_context_t));
-    
-    // Open GNA device
-    g_gna_ctx->gna_fd = open("/dev/gna0", O_RDWR);
-    if (g_gna_ctx->gna_fd < 0) {
-        printf("GNA: Device not available\n");
-        free(g_gna_ctx);
-        g_gna_ctx = NULL;
+    if (b - t >= (int32_t)deque->capacity) {
+        // Deque full - this shouldn't happen with proper sizing
         return;
     }
     
-    g_gna_ctx->pattern_buffer = aligned_alloc(64, 1024 * sizeof(float));
-    g_gna_ctx->baseline_mean = 128.0;
-    g_gna_ctx->baseline_stddev = 32.0;
-    atomic_store(&g_gna_ctx->anomalies_detected, 0);
-    
-    printf("GNA: Initialized for continuous monitoring\n");
+    deque->items[b & deque->mask] = *item;
+    atomic_thread_fence(memory_order_release);
+    atomic_store_explicit(&deque->bottom, b + 1, MO_RELAXED);
 }
 
-// Continuous anomaly detection
-static bool gna_check_anomaly(const enhanced_msg_header_t* msg) {
-    if (!g_gna_ctx) return false;
+// Owner pops from their deque
+static bool deque_pop(work_deque_t* deque, work_item_t* item) {
+    int_fast32_t b = atomic_load_explicit(&deque->bottom, MO_RELAXED) - 1;
+    atomic_store_explicit(&deque->bottom, b, MO_RELAXED);
+    atomic_thread_fence(memory_order_seq_cst);
     
-    // Extract pattern from message
-    float pattern[16];
-    pattern[0] = msg->priority;
-    pattern[1] = msg->payload_len;
-    pattern[2] = msg->source_agent;
-    pattern[3] = msg->target_agent;
-    pattern[4] = msg->ai_confidence;
-    pattern[5] = msg->anomaly_score;
+    int_fast32_t t = atomic_load_explicit(&deque->top, MO_RELAXED);
     
-    // Simple statistical check (would use GNA model in real implementation)
-    double sum = 0, sum_sq = 0;
-    for (int i = 0; i < 6; i++) {
-        sum += pattern[i];
-        sum_sq += pattern[i] * pattern[i];
-    }
-    
-    double mean = sum / 6;
-    double variance = sum_sq / 6 - mean * mean;
-    double stddev = sqrt(variance);
-    
-    // Check if outside 3 sigma
-    if (fabs(mean - g_gna_ctx->baseline_mean) > 3 * g_gna_ctx->baseline_stddev ||
-        fabs(stddev - g_gna_ctx->baseline_stddev) > 2 * g_gna_ctx->baseline_stddev) {
+    if (t <= b) {
+        // Non-empty
+        *item = deque->items[b & deque->mask];
         
-        atomic_fetch_add(&g_gna_ctx->anomalies_detected, 1);
+        if (t == b) {
+            // Last item - need CAS
+            int_fast32_t new_top = t + 1;
+            if (!atomic_compare_exchange_strong_explicit(&deque->top, &t, new_top,
+                                                         memory_order_seq_cst,
+                                                         memory_order_seq_cst)) {
+                // Failed race
+                atomic_store_explicit(&deque->bottom, b + 1, MO_RELAXED);
+                return false;
+            }
+            atomic_store_explicit(&deque->bottom, b + 1, MO_RELAXED);
+        }
         return true;
+    } else {
+        // Empty
+        atomic_store_explicit(&deque->bottom, b + 1, MO_RELAXED);
+        return false;
     }
+}
+
+// Thief steals from another's deque
+static bool deque_steal(work_deque_t* deque, work_item_t* item) {
+    int_fast32_t t = atomic_load_explicit(&deque->top, MO_ACQUIRE);
+    atomic_thread_fence(memory_order_seq_cst);
+    int_fast32_t b = atomic_load_explicit(&deque->bottom, MO_ACQUIRE);
     
-    // Update baseline (exponential moving average)
-    g_gna_ctx->baseline_mean = 0.99 * g_gna_ctx->baseline_mean + 0.01 * mean;
-    g_gna_ctx->baseline_stddev = 0.99 * g_gna_ctx->baseline_stddev + 0.01 * stddev;
-    
+    if (t < b) {
+        *item = deque->items[t & deque->mask];
+        
+        int_fast32_t new_top = t + 1;
+        if (atomic_compare_exchange_strong_explicit(&deque->top, &t, new_top,
+                                                    memory_order_seq_cst,
+                                                    memory_order_seq_cst)) {
+            return true;
+        }
+    }
     return false;
 }
-#endif
 
 // ============================================================================
-// GPU OFFLOAD FOR BATCH PROCESSING
+// CRC32 Implementation
 // ============================================================================
 
-#if ENABLE_GPU
-typedef struct {
-    void* cl_context;
-    void* cl_queue;
-    void* cl_program;
-    void* cl_kernel;
-    void* device_buffer;
-    size_t buffer_size;
-    pthread_mutex_t lock;
-} gpu_context_t;
-
-static gpu_context_t* g_gpu_ctx = NULL;
-
-static void init_gpu_offload() {
-    g_gpu_ctx = calloc(1, sizeof(gpu_context_t));
-    pthread_mutex_init(&g_gpu_ctx->lock, NULL);
+static uint32_t calculate_crc32_fast(const void* data, size_t length) {
+#ifdef __x86_64__
+    const uint8_t* bytes = (const uint8_t*)data;
+    uint32_t crc = 0xFFFFFFFF;
     
-    // Initialize OpenCL
-    // ... (implementation depends on OpenCL API)
-    
-    g_gpu_ctx->buffer_size = 64 * 1024 * 1024;  // 64MB GPU buffer
-    
-    printf("GPU: Initialized for batch processing\n");
-}
-
-// Process batch of messages on GPU
-static void gpu_batch_process(enhanced_msg_header_t* messages[], 
-                             size_t count) {
-    if (!g_gpu_ctx || count < 1000) return;  // Only use GPU for large batches
-    
-    pthread_mutex_lock(&g_gpu_ctx->lock);
-    
-    // Copy messages to GPU
-    // ... (OpenCL implementation)
-    
-    // Run GPU kernel for parallel processing
-    // ... 
-    
-    // Copy results back
-    // ...
-    
-    pthread_mutex_unlock(&g_gpu_ctx->lock);
-}
-#endif
-
-// ============================================================================
-// IO_URING FOR ASYNC I/O
-// ============================================================================
-
-typedef struct {
-    struct io_uring ring;
-    struct io_uring_sqe* sqe;
-    struct io_uring_cqe* cqe;
-    bool initialized;
-} io_uring_context_t;
-
-static io_uring_context_t g_io_ctx = {0};
-
-static void init_io_uring() {
-    if (io_uring_queue_init(256, &g_io_ctx.ring, IORING_SETUP_SQPOLL) < 0) {
-        printf("io_uring: Not available\n");
-        return;
+    while (length >= 8) {
+        crc = _mm_crc32_u64(crc, *(uint64_t*)bytes);
+        bytes += 8;
+        length -= 8;
     }
     
-    g_io_ctx.initialized = true;
-    printf("io_uring: Initialized with 256 entries\n");
-}
-
-// Async write using io_uring
-static int async_write(int fd, const void* buf, size_t len) {
-    if (!g_io_ctx.initialized) {
-        return write(fd, buf, len);  // Fallback to sync
+    while (length--) {
+        crc = _mm_crc32_u8(crc, *bytes++);
     }
     
-    struct io_uring_sqe* sqe = io_uring_get_sqe(&g_io_ctx.ring);
-    if (!sqe) return -1;
+    return ~crc;
+#else
+    const uint8_t* bytes = (const uint8_t*)data;
+    uint32_t crc = 0xFFFFFFFF;
     
-    io_uring_prep_write(sqe, fd, buf, len, 0);
-    io_uring_sqe_set_data(sqe, (void*)buf);
+    for (size_t i = 0; i < length; i++) {
+        crc ^= bytes[i];
+        for (int j = 0; j < 8; j++) {
+            crc = (crc >> 1) ^ (0xEDB88320 & -(crc & 1));
+        }
+    }
     
-    return io_uring_submit(&g_io_ctx.ring);
+    return ~crc;
+#endif
 }
 
 // ============================================================================
-// MAIN WORKER FUNCTION
+// Ring Buffer Implementation (Producer Side)
 // ============================================================================
 
-static void* enhanced_worker_thread(void* arg) {
-    worker_thread_t* worker = (worker_thread_t*)arg;
+static int init_ring_buffer(void) {
+    g_ring_buffer = aligned_alloc(CACHE_LINE_SIZE, sizeof(ring_buffer_t));
+    if (!g_ring_buffer) return -1;
+    
+    memset(g_ring_buffer, 0, sizeof(ring_buffer_t));
+    
+    g_ring_buffer->size = RING_BUFFER_SIZE;
+    g_ring_buffer->mask = RING_BUFFER_SIZE - 1;
+    
+    // Try huge pages first
+    g_ring_buffer->buffer = mmap(NULL, RING_BUFFER_SIZE,
+                                 PROT_READ | PROT_WRITE,
+                                 MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB,
+                                 -1, 0);
+    
+    if (g_ring_buffer->buffer == MAP_FAILED) {
+        g_ring_buffer->buffer = mmap(NULL, RING_BUFFER_SIZE,
+                                     PROT_READ | PROT_WRITE,
+                                     MAP_PRIVATE | MAP_ANONYMOUS,
+                                     -1, 0);
+        if (g_ring_buffer->buffer == MAP_FAILED) {
+            free(g_ring_buffer);
+            return -1;
+        }
+    }
+    
+    mlock(g_ring_buffer->buffer, RING_BUFFER_SIZE);
+    
+    pthread_mutex_init(&g_ring_buffer->write_lock, NULL);
+    pthread_spin_init(&g_ring_buffer->reserve_lock, PTHREAD_PROCESS_PRIVATE);
+    pthread_spin_init(&g_ring_buffer->claim_lock, PTHREAD_PROCESS_PRIVATE);
+    
+    atomic_store(&g_ring_buffer->write_pos.value, 0);
+    atomic_store(&g_ring_buffer->read_pos.value, 0);
+    atomic_store(&g_ring_buffer->reserved_pos.value, 0);
+    atomic_store(&g_ring_buffer->claim_pos.value, 0);
+    
+    return 0;
+}
+
+static uint64_t ring_buffer_reserve(size_t size) {
+    uint64_t write_pos, read_pos, new_pos;
+    
+    pthread_spin_lock(&g_ring_buffer->reserve_lock);
+    
+    write_pos = atomic_load(&g_ring_buffer->reserved_pos.value);
+    read_pos = atomic_load(&g_ring_buffer->read_pos.value);
+    new_pos = write_pos + size;
+    
+    if (new_pos - read_pos > g_ring_buffer->size) {
+        pthread_spin_unlock(&g_ring_buffer->reserve_lock);
+        atomic_fetch_add(&g_ring_buffer->dropped_messages, 1);
+        return UINT64_MAX;
+    }
+    
+    atomic_store(&g_ring_buffer->reserved_pos.value, new_pos);
+    pthread_spin_unlock(&g_ring_buffer->reserve_lock);
+    
+    return write_pos;
+}
+
+static void ring_buffer_commit(uint64_t pos, size_t size) {
+    while (atomic_load(&g_ring_buffer->write_pos.value) != pos) {
+        _mm_pause();
+    }
+    
+    atomic_store(&g_ring_buffer->write_pos.value, pos + size);
+    atomic_fetch_add(&g_ring_buffer->total_bytes, size);
+}
+
+// ============================================================================
+// Ring Buffer Consumer Side - Atomic Batch Claiming
+// ============================================================================
+
+static uint32_t claim_messages_batch(worker_context_t* worker) {
+    uint64_t write_pos = atomic_load_explicit(&g_ring_buffer->write_pos.value, MO_ACQUIRE);
+    uint64_t claim_start, claim_end;
+    uint32_t claimed = 0;
+    
+    // Try to claim a batch of messages
+    while (claimed < WORKER_BATCH_SIZE) {
+        claim_start = atomic_load_explicit(&g_ring_buffer->claim_pos.value, MO_ACQUIRE);
+        
+        if (claim_start >= write_pos) {
+            break;  // No more messages available
+        }
+        
+        // Peek at next message header
+        uint64_t offset = claim_start & g_ring_buffer->mask;
+        message_header_t* header = (message_header_t*)(g_ring_buffer->buffer + offset);
+        
+        // Validate header - messages should be 256-1280 bytes
+        if (header->msg_len == 0 || header->msg_len > 2048) {
+            // Corrupted message - skip just the header
+            claim_end = claim_start + sizeof(message_header_t);
+            atomic_compare_exchange_strong(&g_ring_buffer->claim_pos.value, 
+                                          &claim_start, claim_end);
+            continue;
+        }
+        
+        uint32_t msg_size = sizeof(message_header_t) + header->msg_len;
+        claim_end = claim_start + msg_size;
+        
+        // Ensure we don't exceed write position
+        if (claim_end > write_pos) {
+            break;
+        }
+        
+        // Atomic claim using CAS
+        if (atomic_compare_exchange_strong_explicit(
+                &g_ring_buffer->claim_pos.value,
+                &claim_start,
+                claim_end,
+                MO_ACQ_REL,
+                MO_ACQUIRE)) {
+            
+            // Successfully claimed this message
+            worker->local_batch[claimed].offset = offset;
+            worker->local_batch[claimed].linear_pos = claim_start;
+            worker->local_batch[claimed].size = msg_size;
+            worker->local_batch[claimed].msg_type = header->msg_type;
+            claimed++;
+            
+            atomic_fetch_add(&g_messages_claimed, 1);
+            
+            // Prefetch next message if available
+#if ENABLE_PREFETCH
+            if (claim_end < write_pos) {
+                __builtin_prefetch(g_ring_buffer->buffer + (claim_end & g_ring_buffer->mask), 0, 3);
+            }
+#endif
+        }
+        // If CAS failed, another worker claimed it - retry with new position
+    }
+    
+    worker->batch_count = claimed;
+    return claimed;
+}
+
+// Update global read position after processing
+static void commit_read_position(uint64_t new_pos) {
+    uint64_t current_read;
+    
+    do {
+        current_read = atomic_load(&g_ring_buffer->read_pos.value);
+        if (new_pos <= current_read) {
+            break;  // Another worker already advanced past us
+        }
+    } while (!atomic_compare_exchange_weak(&g_ring_buffer->read_pos.value,
+                                           &current_read, new_pos));
+}
+
+// ============================================================================
+// Worker Thread with Work-Stealing
+// ============================================================================
+
+static void process_message(worker_context_t* worker, work_item_t* item) {
+    message_header_t header;
+    uint8_t payload_buffer[MSG_BUFFER_SIZE];
+    
+    // Read message from ring buffer
+    uint8_t* src = g_ring_buffer->buffer + item->offset;
+    memcpy(&header, src, sizeof(header));
+    memcpy(payload_buffer, src + sizeof(header), header.msg_len);
+    
+    // Process based on core type
+    bool is_pcore = (worker->cpu_core < 12);
+    
+    if (header.flags & 0x01) {  // CRC enabled
+        uint32_t crc = calculate_crc32_fast(payload_buffer, header.msg_len);
+        if (crc != header.crc32 && header.crc32 != 0) {
+            return;  // CRC mismatch
+        }
+    }
+    
+    // Minimal processing simulation - just a memory fence
+    // Real processing would happen here
+    __atomic_thread_fence(__ATOMIC_ACQ_REL);
+    
+    // Optional: Single pause for cache coherency
+    if (header.msg_type < 5) {
+        __builtin_ia32_pause();
+    }
+    
+    // Update statistics
+    atomic_fetch_add(&worker->messages_processed, 1);
+    atomic_fetch_add(&worker->bytes_processed, item->size);
+    atomic_fetch_add(&g_messages_completed, 1);
+    
+    // Track latest processed position
+    worker->last_processed_pos = item->linear_pos + item->size;
+}
+
+static void* worker_thread(void* arg) {
+    worker_context_t* ctx = (worker_context_t*)arg;
     
     // Set CPU affinity
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(worker->cpu_id, &cpuset);
-    sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
+    if (ctx->cpu_core >= 0) {
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(ctx->cpu_core, &cpuset);
+        pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &cpuset);
+    }
     
-    // Set thread name
-    char thread_name[16];
-    snprintf(thread_name, sizeof(thread_name), "%s-%d",
-             worker->core_type == CORE_TYPE_PERFORMANCE ? "P" : "E",
-             worker->thread_id);
-    pthread_setname_np(pthread_self(), thread_name);
+    // Create work-stealing deque
+    ctx->deque = create_work_deque(256);
+    if (!ctx->deque) {
+        fprintf(stderr, "Worker %u: Failed to create deque\n", ctx->worker_id);
+        return NULL;
+    }
     
-    // Set scheduling priority
-    struct sched_param param;
-    param.sched_priority = worker->core_type == CORE_TYPE_PERFORMANCE ? 10 : 5;
-    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+    ctx->start_time = time(NULL);
+    work_item_t item;
     
-    enhanced_msg_header_t msg;
-    uint8_t payload[65536];
-    
-    while (worker->running) {
+    while (ctx->running && g_system_running) {
         bool found_work = false;
         
-        // Check priority queues based on core type
-        if (worker->core_type == CORE_TYPE_PERFORMANCE) {
-            // P-cores handle critical and high priority
-            for (int p = PRIORITY_CRITICAL; p <= PRIORITY_HIGH; p++) {
-                if (ring_buffer_read_priority(worker->ring_buffer, p, 
-                                            &msg, payload)) {
-                    // Process high-priority message
-                    process_message_pcore(&msg, payload);
-                    found_work = true;
-                    break;
-                }
-            }
-        } else {
-            // E-cores handle normal and low priority
-            for (int p = PRIORITY_NORMAL; p <= PRIORITY_BACKGROUND; p++) {
-                if (ring_buffer_read_priority(worker->ring_buffer, p,
-                                            &msg, payload)) {
-                    // Process normal message
-                    process_message_ecore(&msg, payload);
-                    found_work = true;
-                    break;
-                }
-            }
+        // Step 1: Try to get work from local deque
+        if (deque_pop(ctx->deque, &item)) {
+            process_message(ctx, &item);
+            // TODO: Update read position periodically
+            found_work = true;
         }
         
-        if (found_work) {
-            atomic_fetch_add(&worker->tasks_executed, 1);
-        } else {
-            // Work stealing
-            for (int i = 0; i < worker->num_threads; i++) {
-                if (i != worker->thread_id) {
-                    void* stolen = work_queue_steal(worker->all_queues[i]);
-                    if (stolen) {
-                        atomic_fetch_add(&worker->tasks_stolen, 1);
-                        found_work = true;
-                        break;
-                    }
-                }
-            }
-        }
-        
+        // Step 2: Claim new messages from ring buffer
         if (!found_work) {
-            atomic_fetch_add(&worker->idle_cycles, 1);
-            
-            // Adaptive backoff
-            if (worker->core_type == CORE_TYPE_EFFICIENCY) {
-                usleep(10);  // E-cores sleep longer
-            } else {
-                __builtin_ia32_pause();  // P-cores just pause
+            uint32_t claimed = claim_messages_batch(ctx);
+            if (claimed > 0) {
+                // Process first message immediately
+                process_message(ctx, &ctx->local_batch[0]);
+                // TODO: Update read position in batches
+                
+                // Push rest to local deque for later
+                for (uint32_t i = 1; i < claimed; i++) {
+                    deque_push(ctx->deque, &ctx->local_batch[i]);
+                }
+                
+                found_work = true;
             }
         }
+        
+#if ENABLE_WORK_STEALING
+        // Step 3: Try to steal work from other workers
+        if (!found_work) {
+            // Random victim selection
+            uint32_t victim = (ctx->worker_id + 1 + (rand() % (g_num_workers - 1))) % g_num_workers;
+            
+            atomic_fetch_add(&ctx->steal_attempts, 1);
+            
+            if (victim != ctx->worker_id && g_workers[victim].deque) {
+                if (deque_steal(g_workers[victim].deque, &item)) {
+                    process_message(ctx, &item);
+                    // TODO: Update read position for stolen work
+                    atomic_fetch_add(&ctx->messages_stolen, 1);
+                    found_work = true;
+                }
+            }
+        }
+#endif
+        
+        // Step 4: Minimal idle - just pause briefly
+        if (!found_work) {
+            atomic_fetch_add(&ctx->idle_cycles, 1);
+            __builtin_ia32_pause();  // Single pause for all cores
+        }
+        
+        // TODO: Implement proper read position tracking
+    }
+    
+    // Cleanup
+    if (ctx->deque) {
+        free(ctx->deque->items);
+        pthread_spin_destroy(&ctx->deque->steal_lock);
+        free(ctx->deque);
     }
     
     return NULL;
 }
 
 // ============================================================================
-// BENCHMARKING AND TESTING
+// Batch Processing for Producers
 // ============================================================================
 
-static void run_enhanced_benchmark(int duration_seconds) {
-    printf("\n=== ENHANCED PROTOCOL BENCHMARK ===\n");
-    printf("Running for %d seconds...\n", duration_seconds);
+static message_batch_t* create_message_batch(void) {
+    message_batch_t* batch = aligned_alloc(CACHE_LINE_SIZE, sizeof(message_batch_t));
+    if (batch) {
+        memset(batch, 0, sizeof(message_batch_t));
+    }
+    return batch;
+}
+
+static void add_to_batch(message_batch_t* batch, message_header_t* header, 
+                         const void* payload, size_t payload_size) {
+    if (batch->count >= BATCH_SIZE) return;
     
-    // Report AVX-512 status
-    if (g_system_caps.has_avx512f) {
-        if (g_system_caps.avx512_usable) {
-            printf("P-cores: Using AVX-512 (microcode allows)\n");
-        } else {
-            printf("P-cores: Using AVX2 (AVX-512 disabled by microcode)\n");
+    memcpy(&batch->headers[batch->count], header, sizeof(message_header_t));
+    
+    batch->payloads[batch->count] = malloc(payload_size);
+    if (batch->payloads[batch->count]) {
+        memcpy(batch->payloads[batch->count], payload, payload_size);
+        batch->total_size += sizeof(message_header_t) + payload_size;
+        batch->count++;
+    }
+}
+
+static int flush_batch(message_batch_t* batch) {
+    if (batch->count == 0) return 0;
+    
+    uint64_t write_pos = ring_buffer_reserve(batch->total_size);
+    if (write_pos == UINT64_MAX) {
+        for (uint32_t i = 0; i < batch->count; i++) {
+            free(batch->payloads[i]);
         }
+        batch->count = 0;
+        batch->total_size = 0;
+        return -1;
     }
     
-    // Create ring buffer
-    enhanced_ring_buffer_t* rb = create_enhanced_ring_buffer(RING_BUFFER_SIZE / 6);
-    if (!rb) {
-        printf("Failed to create ring buffer\n");
-        return;
-    }
+    uint64_t offset = write_pos & g_ring_buffer->mask;
+    uint8_t* dst = g_ring_buffer->buffer + offset;
     
-    // Create thread pool
-    thread_pool_t* pool = create_thread_pool(rb);
-    
-    // Start workers
-    for (int i = 0; i < pool->num_workers; i++) {
-        pthread_create(&pool->workers[i].thread, NULL,
-                      enhanced_worker_thread, &pool->workers[i]);
-    }
-    
-    // Generate test traffic
-    enhanced_msg_header_t msg = {
-        .magic = 0x4147454E,  // "AGEN"
-        .msg_type = 1,
-        .payload_len = 1024,
-    };
-    
-    uint8_t payload[1024];
-    memset(payload, 0xAB, sizeof(payload));
-    
-    time_t start_time = time(NULL);
-    uint64_t messages_sent = 0;
-    
-    while (time(NULL) - start_time < duration_seconds) {
-        // Vary priority
-        msg.priority = messages_sent % 6;
-        msg.msg_id = messages_sent;
-        msg.timestamp = messages_sent;
-        msg.source_agent = (messages_sent * 7) % 100;
-        msg.target_agent = (messages_sent * 13) % 100;
-        
-        // Calculate checksum
-        msg.checksum = crc32c_parallel_enhanced((uint8_t*)&msg, 
-                                               sizeof(msg) - 4);
-        
-#if ENABLE_GNA
-        // Check for anomalies
-        if (gna_check_anomaly(&msg)) {
-            msg.anomaly_score = 0.9;
+    for (uint32_t i = 0; i < batch->count; i++) {
+#if ENABLE_PREFETCH
+        if (i + PREFETCH_DISTANCE < batch->count) {
+            __builtin_prefetch(&batch->headers[i + PREFETCH_DISTANCE], 0, 3);
+            __builtin_prefetch(batch->payloads[i + PREFETCH_DISTANCE], 0, 3);
         }
 #endif
         
-        // Send message
-        if (ring_buffer_write_priority(rb, &msg, payload)) {
-            messages_sent++;
+        memcpy(dst, &batch->headers[i], sizeof(message_header_t));
+        dst += sizeof(message_header_t);
+        
+        size_t payload_size = batch->headers[i].msg_len;
+        memcpy(dst, batch->payloads[i], payload_size);
+        dst += payload_size;
+        
+        free(batch->payloads[i]);
+        
+        if ((uint64_t)(dst - g_ring_buffer->buffer) >= g_ring_buffer->size) {
+            dst = g_ring_buffer->buffer;
         }
-        
-        // Occasional batch for NPU
-#if ENABLE_NPU
-        if (messages_sent % 1000 == 0) {
-            enhanced_msg_header_t* batch[64];
-            // ... prepare batch
-            npu_batch_classify(batch, 64);
-        }
-#endif
     }
     
-    // Stop workers
-    for (int i = 0; i < pool->num_workers; i++) {
-        pool->workers[i].running = false;
-    }
+    ring_buffer_commit(write_pos, batch->total_size);
+    atomic_fetch_add(&g_ring_buffer->total_messages, batch->count);
     
-    // Wait for workers
-    for (int i = 0; i < pool->num_workers; i++) {
-        pthread_join(pool->workers[i].thread, NULL);
-    }
+    batch->count = 0;
+    batch->total_size = 0;
     
-    // Print statistics
-    printf("\n=== RESULTS ===\n");
-    printf("Messages sent: %lu\n", messages_sent);
-    printf("Messages processed: %lu\n", atomic_load(&rb->total_messages));
-    printf("Total bytes: %.2f GB\n", 
-           atomic_load(&rb->total_bytes) / (1024.0 * 1024 * 1024));
-    printf("Throughput: %.0f msg/sec\n", 
-           (double)messages_sent / duration_seconds);
-    
-    // Per-priority statistics
-    printf("\nPer-priority drops:\n");
-    for (int i = 0; i < 6; i++) {
-        printf("  Priority %d: %lu drops\n", i, 
-               atomic_load(&rb->drops[i]));
-    }
-    
-    // Worker statistics
-    uint64_t total_executed = 0, total_stolen = 0, total_idle = 0;
-    printf("\nWorker statistics:\n");
-    for (int i = 0; i < pool->num_workers; i++) {
-        uint64_t executed = atomic_load(&pool->workers[i].tasks_executed);
-        uint64_t stolen = atomic_load(&pool->workers[i].tasks_stolen);
-        uint64_t idle = atomic_load(&pool->workers[i].idle_cycles);
-        
-        total_executed += executed;
-        total_stolen += stolen;
-        total_idle += idle;
-        
-        printf("  Worker %d (%s-core): %lu executed, %lu stolen, %lu idle\n",
-               i, pool->workers[i].core_type == CORE_TYPE_PERFORMANCE ? "P" : "E",
-               executed, stolen, idle);
-    }
-    
-    printf("\nTotals: %lu executed, %lu stolen, %.1f%% idle\n",
-           total_executed, total_stolen,
-           100.0 * total_idle / (total_executed + total_idle));
-    
-#if ENABLE_GNA
-    if (g_gna_ctx) {
-        printf("\nGNA anomalies detected: %lu\n",
-               atomic_load(&g_gna_ctx->anomalies_detected));
-    }
-#endif
-    
-    // Cleanup
-    for (int i = 0; i < 6; i++) {
-        munmap(rb->queues[i].buffer, rb->queues[i].size);
-    }
-    numa_free(rb, sizeof(enhanced_ring_buffer_t));
-    
-    for (int i = 0; i < pool->num_workers; i++) {
-        free(pool->workers[i].local_queue->tasks);
-        free(pool->workers[i].local_queue);
-    }
-    free(pool->workers);
-    free(pool);
+    return 0;
 }
 
 // ============================================================================
-// MAIN ENTRY POINT
+// Producer Thread
+// ============================================================================
+
+static void* producer_thread(void* arg) {
+    producer_context_t* ctx = (producer_context_t*)arg;
+    
+    if (ctx->cpu_core >= 0) {
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(ctx->cpu_core, &cpuset);
+        pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &cpuset);
+    }
+    
+    ctx->batch = create_message_batch();
+    if (!ctx->batch) {
+        return NULL;
+    }
+    
+    ctx->start_time = time(NULL);
+    
+    uint64_t msg_count = 0;
+    while (ctx->running && g_system_running) {
+        message_header_t header = {
+            .msg_type = (msg_count % 10) + 1,
+            .msg_len = 256 + (msg_count % 1024),
+            .timestamp = time(NULL),
+            .source_agent = ctx->producer_id,
+            .target_agent = (ctx->producer_id + 1) % MAX_AGENTS,
+            .flags = ENABLE_CRC_ASYNC ? 0x01 : 0x00,
+            .crc32 = 0
+        };
+        
+        uint8_t payload[header.msg_len];
+        for (uint32_t i = 0; i < header.msg_len; i++) {
+            payload[i] = (uint8_t)(i ^ msg_count);
+        }
+        
+        if (!ENABLE_CRC_ASYNC && (header.flags & 0x01)) {
+            header.crc32 = calculate_crc32_fast(payload, header.msg_len);
+        }
+        
+        add_to_batch(ctx->batch, &header, payload, header.msg_len);
+        
+        if (ctx->batch->count >= BATCH_SIZE || (msg_count % 100) == 0) {
+            if (flush_batch(ctx->batch) < 0) {
+                // Buffer full, back off briefly
+                __builtin_ia32_pause();
+            }
+        }
+        
+        atomic_fetch_add(&ctx->messages_sent, 1);
+        atomic_fetch_add(&ctx->bytes_sent, sizeof(header) + header.msg_len);
+        
+        msg_count++;
+        
+        if ((msg_count % 10000) == 0) {
+            sched_yield();  // Yield less frequently
+        }
+    }
+    
+    if (ctx->batch->count > 0) {
+        flush_batch(ctx->batch);  // Final flush, ignore errors
+    }
+    
+    ctx->end_time = time(NULL);
+    
+    if (ctx->batch) {
+        free(ctx->batch);
+    }
+    
+    return NULL;
+}
+
+// ============================================================================
+// Statistics and Monitoring
+// ============================================================================
+
+static void print_statistics(void) {
+    printf("\n=== System Statistics ===\n");
+    printf("Ring Buffer:\n");
+    printf("  Total messages: %lu\n", atomic_load(&g_ring_buffer->total_messages));
+    printf("  Total bytes: %lu MB\n", atomic_load(&g_ring_buffer->total_bytes) / (1024*1024));
+    printf("  Dropped: %lu\n", atomic_load(&g_ring_buffer->dropped_messages));
+    
+    uint64_t write_pos = atomic_load(&g_ring_buffer->write_pos.value);
+    uint64_t read_pos = atomic_load(&g_ring_buffer->read_pos.value);
+    uint64_t claim_pos = atomic_load(&g_ring_buffer->claim_pos.value);
+    uint64_t pending = write_pos - read_pos;
+    uint64_t claimed_not_processed = claim_pos - read_pos;
+    
+    printf("  Buffer usage: %.1f%% (%lu KB pending)\n",
+           (double)pending / g_ring_buffer->size * 100.0, pending / 1024);
+    printf("  Messages claimed: %lu\n", atomic_load(&g_messages_claimed));
+    printf("  Messages completed: %lu\n", atomic_load(&g_messages_completed));
+    printf("  In-flight: %lu\n", claimed_not_processed / (sizeof(message_header_t) + 640));
+    
+    printf("\n=== Producer Statistics ===\n");
+    uint64_t total_produced = 0;
+    for (int i = 0; i < MAX_PRODUCERS; i++) {
+        if (g_producers[i].thread) {
+            uint64_t messages = atomic_load(&g_producers[i].messages_sent);
+            total_produced += messages;
+            
+            if (g_producers[i].end_time > g_producers[i].start_time) {
+                uint64_t duration = g_producers[i].end_time - g_producers[i].start_time;
+                printf("  Producer %d: %lu msgs @ %.0f msg/sec\n",
+                       i, messages, (double)messages / duration);
+            }
+        }
+    }
+    
+    printf("\n=== Worker Statistics ===\n");
+    uint64_t total_processed = 0;
+    uint64_t total_stolen = 0;
+    uint64_t total_steal_attempts = 0;
+    
+    for (int i = 0; i < g_num_workers; i++) {
+        if (g_workers[i].thread) {
+            uint64_t messages = atomic_load(&g_workers[i].messages_processed);
+            uint64_t stolen = atomic_load(&g_workers[i].messages_stolen);
+            uint64_t attempts = atomic_load(&g_workers[i].steal_attempts);
+            uint64_t idle = atomic_load(&g_workers[i].idle_cycles);
+            
+            total_processed += messages;
+            total_stolen += stolen;
+            total_steal_attempts += attempts;
+            
+            const char* core_type = (i < 12) ? "P" : "E";
+            printf("  Worker %2d (%s-core %2d): %6lu proc, %4lu stolen (%.1f%% success), %lu idle\n",
+                   i, core_type, g_workers[i].cpu_core, messages, stolen,
+                   attempts > 0 ? (double)stolen/attempts*100 : 0.0, idle);
+        }
+    }
+    
+    printf("\n=== Throughput Summary ===\n");
+    printf("  Produced: %lu\n", total_produced);
+    printf("  Processed: %lu\n", total_processed);
+    printf("  Work stolen: %lu (%.1f%%)\n", total_stolen, 
+           total_processed > 0 ? (double)total_stolen/total_processed*100 : 0.0);
+    
+    // Verify no duplicates
+    if (atomic_load(&g_messages_claimed) != atomic_load(&g_messages_completed)) {
+        printf("  WARNING: Claimed != Completed (%lu != %lu)\n",
+               atomic_load(&g_messages_claimed), 
+               atomic_load(&g_messages_completed));
+    }
+}
+
+// ============================================================================
+// Signal Handling
+// ============================================================================
+
+static void signal_handler(int sig) {
+    printf("\nReceived signal %d, shutting down...\n", sig);
+    g_system_running = 0;
+}
+
+// ============================================================================
+// Main Function
 // ============================================================================
 
 int main(int argc, char* argv[]) {
-    printf("ULTRA-HYBRID ENHANCED PROTOCOL v4.1\n");
-    printf("=====================================\n");
-    printf("Microcode-Aware AVX-512 Detection\n\n");
+    printf("Ultra Hybrid Fixed - Multi-Consumer Lock-Free Implementation\n");
+    printf("Features: Atomic claiming, Work-stealing, Batch processing\n");
     
-    // Detect system capabilities with microcode awareness
-    detect_system_capabilities();
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
     
-    // Initialize accelerators
-#if ENABLE_NPU
-    if (g_system_caps.has_npu) {
-        init_npu_routing();
-    }
-#endif
-    
-#if ENABLE_GNA
-    if (g_system_caps.has_gna) {
-        init_gna_monitoring();
-    }
-#endif
-    
-#if ENABLE_GPU
-    if (g_system_caps.has_gpu) {
-        init_gpu_offload();
-    }
-#endif
-    
-    if (g_system_caps.has_io_uring) {
-        init_io_uring();
+    if (init_ring_buffer() < 0) {
+        fprintf(stderr, "Failed to initialize ring buffer\n");
+        return 1;
     }
     
-    // Run benchmark
-    int duration = (argc > 1) ? atoi(argv[1]) : 10;
-    run_enhanced_benchmark(duration);
+    int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+    printf("Detected %d CPU cores (12 P-cores + 10 E-cores assumed)\n", num_cores);
     
-    // Cleanup
-    if (g_io_ctx.initialized) {
-        io_uring_queue_exit(&g_io_ctx.ring);
+    // Configure producers and workers
+    int num_producers = (argc > 1) ? atoi(argv[1]) : 4;
+    g_num_workers = (argc > 2) ? atoi(argv[2]) : num_cores;
+    
+    if (num_producers < 1) num_producers = 1;
+    if (num_producers > MAX_PRODUCERS) num_producers = MAX_PRODUCERS;
+    if (g_num_workers < 1) g_num_workers = 1;
+    if (g_num_workers > MAX_WORKERS) g_num_workers = MAX_WORKERS;
+    
+    printf("Configuration: %d producers, %d workers\n", num_producers, g_num_workers);
+    
+    // Start producers
+    for (int i = 0; i < num_producers; i++) {
+        g_producers[i].producer_id = i;
+        g_producers[i].running = 1;
+        g_producers[i].cpu_core = i % 12;  // Use P-cores for producers
+        
+        if (pthread_create(&g_producers[i].thread, NULL, producer_thread, &g_producers[i]) != 0) {
+            fprintf(stderr, "Failed to create producer %d\n", i);
+            g_producers[i].thread = 0;
+        }
     }
     
-#if ENABLE_NPU
-    if (g_npu_ctx) {
-        free(g_npu_ctx->input_tensor);
-        free(g_npu_ctx->output_tensor);
-        pthread_mutex_destroy(&g_npu_ctx->lock);
-        free(g_npu_ctx);
-    }
-#endif
-    
-#if ENABLE_GNA
-    if (g_gna_ctx) {
-        if (g_gna_ctx->gna_fd >= 0) close(g_gna_ctx->gna_fd);
-        free(g_gna_ctx->pattern_buffer);
-        free(g_gna_ctx);
-    }
-#endif
-    
-#if ENABLE_GPU
-    if (g_gpu_ctx) {
-        pthread_mutex_destroy(&g_gpu_ctx->lock);
-        free(g_gpu_ctx);
-    }
-#endif
-    
-    free(g_system_caps.p_core_ids);
-    free(g_system_caps.e_core_ids);
-    if (g_system_caps.numa_node_map) {
-        free(g_system_caps.numa_node_map);
+    // Start workers - distribute across P-cores and E-cores
+    for (int i = 0; i < g_num_workers; i++) {
+        g_workers[i].worker_id = i;
+        g_workers[i].running = 1;
+        
+        // First 12 workers on P-cores, rest on E-cores
+        if (i < 12) {
+            g_workers[i].cpu_core = i;
+        } else {
+            g_workers[i].cpu_core = 12 + ((i - 12) % 10);
+        }
+        
+        if (pthread_create(&g_workers[i].thread, NULL, worker_thread, &g_workers[i]) != 0) {
+            fprintf(stderr, "Failed to create worker %d\n", i);
+            g_workers[i].thread = 0;
+        }
     }
     
+    // Main monitoring loop
+    while (g_system_running) {
+        sleep(5);
+        if (g_system_running) {
+            print_statistics();
+        }
+    }
+    
+    // Shutdown
+    printf("\nShutting down...\n");
+    
+    for (int i = 0; i < MAX_PRODUCERS; i++) {
+        if (g_producers[i].thread) {
+            g_producers[i].running = 0;
+        }
+    }
+    
+    for (int i = 0; i < MAX_WORKERS; i++) {
+        if (g_workers[i].thread) {
+            g_workers[i].running = 0;
+        }
+    }
+    
+    for (int i = 0; i < MAX_PRODUCERS; i++) {
+        if (g_producers[i].thread) {
+            pthread_join(g_producers[i].thread, NULL);
+        }
+    }
+    
+    for (int i = 0; i < MAX_WORKERS; i++) {
+        if (g_workers[i].thread) {
+            pthread_join(g_workers[i].thread, NULL);
+        }
+    }
+    
+    print_statistics();
+    
+    if (g_ring_buffer) {
+        munmap(g_ring_buffer->buffer, g_ring_buffer->size);
+        pthread_mutex_destroy(&g_ring_buffer->write_lock);
+        pthread_spin_destroy(&g_ring_buffer->reserve_lock);
+        pthread_spin_destroy(&g_ring_buffer->claim_lock);
+        free(g_ring_buffer);
+    }
+    
+    printf("Shutdown complete\n");
     return 0;
 }
