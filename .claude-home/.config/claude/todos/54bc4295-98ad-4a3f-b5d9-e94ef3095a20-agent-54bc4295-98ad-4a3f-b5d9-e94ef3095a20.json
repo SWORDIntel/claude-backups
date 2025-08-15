@@ -1,0 +1,37 @@
+[
+  {
+    "content": "Debug core_system.sh module",
+    "status": "in_progress",
+    "id": "debug-core-system"
+  },
+  {
+    "content": "Debug hardware_security.sh module",
+    "status": "pending",
+    "id": "debug-hardware-security"
+  },
+  {
+    "content": "Debug desktop_tools.sh module",
+    "status": "pending",
+    "id": "debug-desktop-tools"
+  },
+  {
+    "content": "Debug network_deployment.sh module",
+    "status": "pending",
+    "id": "debug-network-deployment"
+  },
+  {
+    "content": "Debug development_env.sh module",
+    "status": "pending",
+    "id": "debug-development-env"
+  },
+  {
+    "content": "Debug monitoring_recovery.sh module",
+    "status": "pending",
+    "id": "debug-monitoring-recovery"
+  },
+  {
+    "content": "Compile comprehensive debug report",
+    "status": "pending",
+    "id": "compile-debug-report"
+  }
+]

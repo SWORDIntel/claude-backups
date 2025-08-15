@@ -1,0 +1,52 @@
+[
+  {
+    "content": "Fix OSBuilders/ZFSOS.sh line 496: syntax error near token '('",
+    "status": "completed",
+    "id": "fix-zfsos-line-496"
+  },
+  {
+    "content": "Fix add-dell-blocking-to-desktop.sh line 177: syntax error near token ')'",
+    "status": "completed",
+    "id": "fix-dell-blocking-line-177"
+  },
+  {
+    "content": "Fix final-build-check.sh line 189: unexpected EOF while looking for matching '\"'",
+    "status": "completed",
+    "id": "fix-final-build-check-line-189"
+  },
+  {
+    "content": "Fix add-firefox-with-session.sh line 195: syntax error near token '2'",
+    "status": "completed",
+    "id": "fix-firefox-session-line-195"
+  },
+  {
+    "content": "Fix templates/plugin-template.sh line 557: syntax error near token 'fi'",
+    "status": "completed",
+    "id": "fix-plugin-template-line-557"
+  },
+  {
+    "content": "Fix src/tools/check-and-install-deps.sh line 184: syntax error near token '}'",
+    "status": "completed",
+    "id": "fix-check-install-deps-line-184"
+  },
+  {
+    "content": "Fix plugins/memory-forensics-suite.sh line 486: syntax error near token 'else'",
+    "status": "completed",
+    "id": "fix-memory-forensics-line-486"
+  },
+  {
+    "content": "Fix lib/plugin-interface.sh line 12: syntax error near token 'in'",
+    "status": "completed",
+    "id": "fix-plugin-interface-line-12"
+  },
+  {
+    "content": "Validate all fixes with bash -n syntax checking",
+    "status": "completed",
+    "id": "validate-fixes"
+  },
+  {
+    "content": "Count and report exact number of scripts fixed",
+    "status": "completed",
+    "id": "count-fixed-scripts"
+  }
+]

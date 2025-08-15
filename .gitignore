@@ -1,0 +1,38 @@
+# Portable installation directory
+claude-portable/
+
+# Installation logs
+install-*.log
+launcher-*.log
+
+# Node modules (if installed locally)
+node_modules/
+
+# Claude Code binaries
+claude-code
+
+# Temporary files
+*.tmp
+*.swp
+*~
+.DS_Store
+
+# Build outputs
+*.o
+*.so
+*.a
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Backup files
+*.bak
+*.backup
