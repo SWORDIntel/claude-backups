@@ -1,0 +1,15 @@
+[Unit]
+Description=Claude Agent Communication System
+After=network.target
+
+[Service]
+Type=forking
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Documents/Claude/agents
+ExecStart=/home/ubuntu/Documents/Claude/agents/BRING_ONLINE.sh
+ExecStop=/bin/bash -c 'rm -f /home/ubuntu/Documents/Claude/agents/.online && pkill -f ultra_hybrid_enhanced'
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

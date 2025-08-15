@@ -1,0 +1,17 @@
+[
+  {
+    "content": "Create /plugins/nvme-optimization.sh with Intel Meteor Lake specific optimizations",
+    "status": "completed",
+    "id": "1"
+  },
+  {
+    "content": "Create /hardware-profiles/nvme-optimized.profile for NVMe hardware configuration",
+    "status": "completed",
+    "id": "2"
+  },
+  {
+    "content": "Create /config/nvme-optimization.conf with optimization parameters",
+    "status": "completed",
+    "id": "3"
+  }
+]

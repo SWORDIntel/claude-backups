@@ -1,0 +1,37 @@
+[
+  {
+    "content": "Deploy Debugger agent on core_system.sh",
+    "status": "in_progress",
+    "id": "debug-core-system"
+  },
+  {
+    "content": "Deploy Debugger agent on hardware_security.sh",
+    "status": "in_progress",
+    "id": "debug-hardware-security"
+  },
+  {
+    "content": "Deploy Debugger agent on desktop_tools.sh",
+    "status": "in_progress",
+    "id": "debug-desktop-tools"
+  },
+  {
+    "content": "Deploy Debugger agent on network_deployment.sh",
+    "status": "in_progress",
+    "id": "debug-network-deployment"
+  },
+  {
+    "content": "Deploy Debugger agent on development_env.sh",
+    "status": "in_progress",
+    "id": "debug-development-env"
+  },
+  {
+    "content": "Deploy Debugger agent on monitoring_recovery.sh",
+    "status": "in_progress",
+    "id": "debug-monitoring-recovery"
+  },
+  {
+    "content": "Compile debug findings report",
+    "status": "pending",
+    "id": "compile-debug-report"
+  }
+]

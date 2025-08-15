@@ -314,36 +314,39 @@ register_agents() {
 start_monitoring() {
     printf "${YELLOW}[6/8] Starting monitoring stack...${NC}"
     
-    cd "$MONITORING_DIR"
+    # Check if monitoring directory exists
+    if [ ! -d "$MONITORING_DIR" ]; then
+        printf "${YELLOW}⚠ Monitoring directory not found, skipping${NC}\n"
+        return 0
+    fi
+    
+    cd "$MONITORING_DIR" 2>/dev/null || {
+        printf "${YELLOW}⚠ Cannot access monitoring directory${NC}\n"
+        return 0
+    }
     
     # Check if Docker is running
+    if ! command -v docker &> /dev/null; then
+        printf "${YELLOW}⚠ Docker not installed, skipping monitoring${NC}\n"
+        return 0
+    fi
+    
     if ! docker info > /dev/null 2>&1; then
-        printf "${YELLOW}⚠ Docker not running, skipping monitoring${NC}"
-        return
+        printf "${YELLOW}⚠ Docker not running, skipping monitoring${NC}\n"
+        return 0
     fi
     
     # Start monitoring stack if compose file exists
     if [ -f "docker-compose.complete.yml" ]; then
         echo "Starting Prometheus, Grafana, and alerting..."
-        docker-compose -f docker-compose.complete.yml up -d > /dev/null 2>&1
-        
-        # Wait for services to start
-        sleep 5
-        
-        # Check if services are running
-        if docker-compose -f docker-compose.complete.yml ps | grep -q "Up"; then
-            printf "${GREEN}✓ Monitoring stack started${NC}"
-            echo "  Grafana: http://localhost:3000 (admin/admin)"
-            echo "  Prometheus: http://localhost:9090"
-            echo "  Metrics: http://localhost:8001/metrics"
-        else
-            printf "${YELLOW}⚠ Some monitoring services failed to start${NC}"
-        fi
+        timeout 5 docker-compose -f docker-compose.complete.yml up -d > /dev/null 2>&1 &
+        wait $! 2>/dev/null || true
+        printf "${GREEN}✓ Monitoring initialization attempted${NC}\n"
     else
-        printf "${YELLOW}⚠ Monitoring configuration not found${NC}"
+        printf "${YELLOW}⚠ Monitoring configuration not found${NC}\n"
     fi
     
-    printf "${GREEN}✓ Monitoring initialized${NC}\n"
+    return 0
 }
 
 # Function to run validation tests
@@ -535,12 +538,28 @@ main() {
     printf "${GREEN}         System successfully brought online at $(date)         ${NC}"
     printf "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
     
-    # Keep the system online - create a marker file
+    # Keep the system online - create a marker file and background keeper
     touch "$AGENTS_DIR/.online"
+    
+    # Start a background process to keep agents alive
+    (
+        while [ -f "$AGENTS_DIR/.online" ]; do
+            sleep 60
+            # Check if processes are still running, restart if needed
+            if ! pgrep -f "ultra_hybrid_enhanced" > /dev/null 2>&1; then
+                if [ -f "$BUILD_DIR/ultra_hybrid_enhanced" ]; then
+                    nohup "$BUILD_DIR/ultra_hybrid_enhanced" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
+                fi
+            fi
+        done
+    ) &
+    KEEPER_PID=$!
+    echo $KEEPER_PID > "$AGENTS_DIR/.keeper.pid"
+    
     echo ""
     echo "Agent system is now ONLINE and running in background."
     echo "To check status: ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)'"
-    echo "To stop: pkill -f ultra_hybrid_enhanced"
+    echo "To stop: rm $AGENTS_DIR/.online && pkill -f ultra_hybrid_enhanced"
 }
 
 # Run main function
