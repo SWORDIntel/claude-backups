@@ -415,9 +415,9 @@ display_status() {
     echo "  Runtime log: $AGENTS_DIR/runtime.log"
     echo ""
     echo "Next steps:"
-    echo "  1. Access Grafana dashboard at http://localhost:3000"
-    echo "  2. Send test messages using the Python client"
-    echo "  3. Monitor agent health in real-time"
+    echo "  1. Check status with: ./STATUS.sh"
+    echo "  2. View logs: tail -f binary_bridge.log"
+    echo "  3. Test agents: python3 test_agent_communication.py"
     echo ""
 }
 

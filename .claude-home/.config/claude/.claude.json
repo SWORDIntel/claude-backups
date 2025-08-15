@@ -27,6 +27,10 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "http://localhost:3000\n doesnt owork and ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)\n does nothing fix the system",
+          "pastedContents": {}
+        },
+        {
           "display": "Creating auto-integration hook..../BRING_ONLINE.sh: line 429: /tmp/claude-agents.service: Permission denied\n didnt update the bring online script or anything to use the new location",
           "pastedContents": {}
         },
@@ -450,10 +454,6 @@
         },
         {
           "display": "Expand as much as possible on beijing and other CA based attacks for simulation purposes",
-          "pastedContents": {}
-        },
-        {
-          "display": "Now cross-correlate and string them together and continue to expand upon this creating adverssrial scenarios in which these could be used",
           "pastedContents": {}
         }
       ],

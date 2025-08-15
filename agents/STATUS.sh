@@ -20,8 +20,8 @@ echo -e "${BLUE}═════════════════════�
 
 # Check binary protocol
 echo -e "\n${YELLOW}[Binary Protocol]${NC}"
-if pgrep -f "ultra_hybrid_enhanced" > /dev/null 2>&1; then
-    PID=$(pgrep -f "ultra_hybrid_enhanced")
+if pgrep -f "ultra_hybrid" > /dev/null 2>&1; then
+    PID=$(pgrep -f "ultra_hybrid")
     CPU=$(ps aux | grep "$PID" | grep -v grep | awk '{print $3}')
     MEM=$(ps aux | grep "$PID" | grep -v grep | awk '{print $6}')
     echo -e "  Status: ${GREEN}● RUNNING${NC} (PID: $PID)"
