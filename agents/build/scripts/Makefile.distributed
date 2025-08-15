@@ -1,0 +1,543 @@
+# Makefile for Distributed Claude Agent Communication System
+# 
+# Production-grade distributed networking and consensus system
+# Optimized for Intel hybrid architecture (P-cores + E-cores)
+# Target performance: 4.2M+ messages/second with p99 latency < 250μs
+#
+# Author: Agent Communication System
+# Version: 1.0 Distributed
+
+# ============================================================================
+# COMPILER AND BUILD CONFIGURATION
+# ============================================================================
+
+CC = gcc
+CXX = g++
+
+# Detect CPU architecture for optimal flags
+ARCH := $(shell uname -m)
+CPU_COUNT := $(shell nproc)
+
+# Base compiler flags for maximum performance
+BASE_CFLAGS = -std=gnu17 -D_GNU_SOURCE -fPIC
+BASE_CXXFLAGS = -std=gnu++20 -D_GNU_SOURCE -fPIC
+
+# Intel-specific optimizations for hybrid architecture
+INTEL_FLAGS = -march=native -mtune=native
+INTEL_FLAGS += -mavx2 -mavx512f -mavx512bw -mavx512cd -mavx512dq -mavx512vl
+INTEL_FLAGS += -msse4.2 -mpclmul -maes -mrdrnd -mrdseed
+INTEL_FLAGS += -mfma -mbmi -mbmi2 -madx -mpku
+
+# Optimization flags
+OPT_FLAGS = -O3 -flto -ffast-math -funroll-loops -fprefetch-loop-arrays
+OPT_FLAGS += -ftree-vectorize -ftree-slp-vectorize -fvect-cost-model=dynamic
+OPT_FLAGS += -falign-functions=32 -falign-loops=32
+OPT_FLAGS += -fno-semantic-interposition -fno-plt
+
+# Profile-guided optimization (run make pgo to enable)
+ifdef USE_PGO
+    OPT_FLAGS += -fprofile-use -fprofile-correction
+    LDFLAGS += -fprofile-use
+else
+    ifdef GEN_PGO
+        OPT_FLAGS += -fprofile-generate
+        LDFLAGS += -fprofile-generate
+    endif
+endif
+
+# Memory optimization
+MEM_FLAGS = -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -fno-builtin-calloc
+
+# Security flags
+SECURITY_FLAGS = -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fcf-protection=full
+SECURITY_FLAGS += -fstack-clash-protection -Wl,-z,relro,-z,now,-z,noexecstack
+
+# Warning flags
+WARN_FLAGS = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
+WARN_FLAGS += -Wformat=2 -Wformat-security -Wnull-dereference
+WARN_FLAGS += -Wimplicit-fallthrough -Wduplicated-cond -Wduplicated-branches
+
+# Debug flags (conditional)
+ifdef DEBUG
+    DEBUG_FLAGS = -g3 -ggdb -DDEBUG -fno-omit-frame-pointer
+    DEBUG_FLAGS += -fsanitize=address,undefined -fno-sanitize-recover=all
+    OPT_FLAGS = -O1  # Reduce optimization for debugging
+else
+    DEBUG_FLAGS = -DNDEBUG -fomit-frame-pointer
+endif
+
+# Combine all flags
+CFLAGS = $(BASE_CFLAGS) $(INTEL_FLAGS) $(OPT_FLAGS) $(MEM_FLAGS) $(SECURITY_FLAGS) $(WARN_FLAGS) $(DEBUG_FLAGS)
+CXXFLAGS = $(BASE_CXXFLAGS) $(INTEL_FLAGS) $(OPT_FLAGS) $(MEM_FLAGS) $(SECURITY_FLAGS) $(WARN_FLAGS) $(DEBUG_FLAGS)
+
+# Linker flags
+LDFLAGS = -Wl,--as-needed -Wl,--gc-sections -Wl,-O1 -Wl,--sort-common
+LDFLAGS += -Wl,--hash-style=gnu -Wl,--build-id=sha1
+
+# ============================================================================
+# LIBRARY DEPENDENCIES
+# ============================================================================
+
+# Core system libraries
+LIBS = -lpthread -lrt -lm -ldl
+
+# NUMA support
+LIBS += -lnuma
+
+# OpenSSL for TLS security
+LIBS += -lssl -lcrypto
+
+# Optional: Intel Performance Libraries
+ifdef USE_INTEL_LIBS
+    LIBS += -L$(INTEL_ROOT)/lib -ltbb -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
+    CFLAGS += -I$(INTEL_ROOT)/include
+endif
+
+# Optional: DPDK for high-performance networking
+ifdef USE_DPDK
+    PKG_CONFIG_PATH := $(DPDK_ROOT)/lib/pkgconfig
+    LIBS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs libdpdk)
+    CFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags libdpdk)
+    CFLAGS += -DUSE_DPDK
+endif
+
+# Optional: RDMA/InfiniBand support
+ifdef USE_RDMA
+    LIBS += -libverbs -lrdmacm
+    CFLAGS += -DUSE_RDMA
+endif
+
+# ============================================================================
+# SOURCE FILES AND TARGETS
+# ============================================================================
+
+# Core source files
+CORE_SOURCES = \
+    ultra_hybrid_optimized.c \
+    message_router.c \
+    agent_discovery.c \
+    compatibility_layer.c \
+    unified_agent_runtime.c
+
+# Distributed system source files
+DISTRIBUTED_SOURCES = \
+    distributed_network.c \
+    distributed_load_balancer.c \
+    distributed_service_discovery.c
+
+# All source files
+SOURCES = $(CORE_SOURCES) $(DISTRIBUTED_SOURCES)
+
+# Object files
+OBJECTS = $(SOURCES:.c=.o)
+
+# Header files
+HEADERS = \
+    agent_system.h \
+    ultra_fast_protocol.h \
+    compatibility_layer.h \
+    distributed_network.h
+
+# Target executables
+TARGETS = \
+    distributed_agent_system \
+    distributed_network_test \
+    load_balancer_test \
+    service_discovery_test \
+    raft_consensus_test \
+    performance_benchmark
+
+# Static library
+STATIC_LIB = libdistributed_agents.a
+
+# Shared library  
+SHARED_LIB = libdistributed_agents.so
+
+# Test executables
+TEST_TARGETS = \
+    test_raft_consensus \
+    test_load_balancing \
+    test_service_discovery \
+    test_network_partition \
+    test_tls_security \
+    test_high_throughput
+
+# ============================================================================
+# BUILD RULES
+# ============================================================================
+
+.PHONY: all clean install test benchmark profile pgo help distributed
+
+all: $(TARGETS) $(STATIC_LIB) $(SHARED_LIB)
+
+# Main distributed system executable
+distributed_agent_system: $(OBJECTS) main_distributed.o
+	@echo "Building distributed agent system..."
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+	@echo "✓ Distributed agent system built successfully"
+
+# Static library
+$(STATIC_LIB): $(OBJECTS)
+	@echo "Creating static library..."
+	ar rcs $@ $^
+	@echo "✓ Static library created: $@"
+
+# Shared library
+$(SHARED_LIB): $(OBJECTS)
+	@echo "Creating shared library..."
+	$(CC) -shared $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+	@echo "✓ Shared library created: $@"
+
+# Object file compilation with dependency tracking
+%.o: %.c $(HEADERS)
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+# Include dependency files
+-include $(OBJECTS:.o=.d)
+
+# ============================================================================
+# TEST TARGETS
+# ============================================================================
+
+test_raft_consensus: test_raft_consensus.o $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+test_load_balancing: test_load_balancing.o $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+test_service_discovery: test_service_discovery.o $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+test_network_partition: test_network_partition.o $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+test_tls_security: test_tls_security.o $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+test_high_throughput: test_high_throughput.o $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+# Test suite
+test: $(TEST_TARGETS)
+	@echo "Running distributed system test suite..."
+	@for test in $(TEST_TARGETS); do \
+		echo "Running $$test..."; \
+		./$$test || exit 1; \
+	done
+	@echo "✓ All tests passed"
+
+# ============================================================================
+# BENCHMARK AND PROFILING TARGETS
+# ============================================================================
+
+# Performance benchmark
+performance_benchmark: benchmark_distributed.o $(STATIC_LIB)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+benchmark: performance_benchmark
+	@echo "Running distributed system performance benchmark..."
+	@echo "Target: 4.2M+ messages/second, p99 latency < 250μs"
+	./performance_benchmark --threads $(CPU_COUNT) --duration 60
+	@echo "✓ Benchmark completed"
+
+# Profile-guided optimization
+pgo-generate:
+	@echo "Building with PGO generation..."
+	$(MAKE) clean
+	$(MAKE) all GEN_PGO=1
+
+pgo-run: pgo-generate performance_benchmark
+	@echo "Running PGO training workload..."
+	./performance_benchmark --threads $(CPU_COUNT) --duration 30 --pgo-training
+	./test_raft_consensus --pgo-training
+	./test_load_balancing --pgo-training
+
+pgo-use: pgo-run
+	@echo "Building with PGO optimization..."
+	$(MAKE) clean
+	$(MAKE) all USE_PGO=1
+	@echo "✓ PGO optimization completed"
+
+pgo: pgo-use
+
+# Memory profiling with Valgrind
+memcheck: distributed_agent_system
+	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all \
+		--track-origins=yes --log-file=memcheck.log \
+		./distributed_agent_system --config test_config.json
+
+# CPU profiling with perf
+profile: distributed_agent_system
+	perf record -g -F 1000 ./distributed_agent_system --config test_config.json --duration 30
+	perf report --stdio > profile_report.txt
+	@echo "✓ Profile report generated: profile_report.txt"
+
+# ============================================================================
+# OPTIMIZATION TARGETS
+# ============================================================================
+
+# Intel VTune profiling (if available)
+vtune: distributed_agent_system
+	@if command -v vtune >/dev/null 2>&1; then \
+		echo "Running Intel VTune analysis..."; \
+		vtune -collect threading -result-dir vtune_results \
+			./distributed_agent_system --config test_config.json --duration 30; \
+		vtune -report summary -result-dir vtune_results; \
+	else \
+		echo "Intel VTune not available, skipping..."; \
+	fi
+
+# Cache analysis
+cache-analysis: distributed_agent_system
+	perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses,\
+		LLC-loads,LLC-load-misses,branch-loads,branch-load-misses \
+		./distributed_agent_system --config test_config.json --duration 30
+
+# NUMA analysis
+numa-analysis: distributed_agent_system
+	numastat -c ./distributed_agent_system --config test_config.json --duration 30
+
+# ============================================================================
+# INSTALLATION AND DEPLOYMENT
+# ============================================================================
+
+PREFIX ?= /usr/local
+BINDIR = $(PREFIX)/bin
+LIBDIR = $(PREFIX)/lib
+INCLUDEDIR = $(PREFIX)/include
+CONFIGDIR = /etc/distributed-agents
+
+install: all
+	@echo "Installing distributed agent system..."
+	install -d $(DESTDIR)$(BINDIR)
+	install -d $(DESTDIR)$(LIBDIR)
+	install -d $(DESTDIR)$(INCLUDEDIR)
+	install -d $(DESTDIR)$(CONFIGDIR)
+	
+	install -m 755 distributed_agent_system $(DESTDIR)$(BINDIR)/
+	install -m 644 $(STATIC_LIB) $(DESTDIR)$(LIBDIR)/
+	install -m 755 $(SHARED_LIB) $(DESTDIR)$(LIBDIR)/
+	install -m 644 $(HEADERS) $(DESTDIR)$(INCLUDEDIR)/
+	
+	# Install configuration templates
+	install -m 644 config/cluster_config.json $(DESTDIR)$(CONFIGDIR)/
+	install -m 644 config/node_config.json $(DESTDIR)$(CONFIGDIR)/
+	
+	# Create systemd service file
+	install -d $(DESTDIR)/etc/systemd/system
+	install -m 644 scripts/distributed-agents.service $(DESTDIR)/etc/systemd/system/
+	
+	ldconfig
+	@echo "✓ Installation completed"
+
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/distributed_agent_system
+	rm -f $(DESTDIR)$(LIBDIR)/$(STATIC_LIB)
+	rm -f $(DESTDIR)$(LIBDIR)/$(SHARED_LIB)
+	rm -f $(DESTDIR)$(INCLUDEDIR)/{agent_system.h,ultra_fast_protocol.h,distributed_network.h}
+	rm -rf $(DESTDIR)$(CONFIGDIR)
+	rm -f $(DESTDIR)/etc/systemd/system/distributed-agents.service
+	ldconfig
+
+# ============================================================================
+# PACKAGE BUILDING
+# ============================================================================
+
+VERSION := 1.0.0
+PACKAGE_NAME := distributed-claude-agents
+
+# Create distribution package
+dist: clean
+	@echo "Creating distribution package..."
+	mkdir -p $(PACKAGE_NAME)-$(VERSION)
+	cp -r *.c *.h Makefile.distributed config/ scripts/ docs/ $(PACKAGE_NAME)-$(VERSION)/
+	tar -czf $(PACKAGE_NAME)-$(VERSION).tar.gz $(PACKAGE_NAME)-$(VERSION)
+	rm -rf $(PACKAGE_NAME)-$(VERSION)
+	@echo "✓ Package created: $(PACKAGE_NAME)-$(VERSION).tar.gz"
+
+# Build RPM package (CentOS/RHEL/Fedora)
+rpm: dist
+	rpmbuild -ta $(PACKAGE_NAME)-$(VERSION).tar.gz
+
+# Build DEB package (Ubuntu/Debian)  
+deb: all
+	mkdir -p debian-build/DEBIAN
+	mkdir -p debian-build$(BINDIR)
+	mkdir -p debian-build$(LIBDIR)
+	mkdir -p debian-build$(INCLUDEDIR)
+	
+	cp distributed_agent_system debian-build$(BINDIR)/
+	cp $(STATIC_LIB) $(SHARED_LIB) debian-build$(LIBDIR)/
+	cp $(HEADERS) debian-build$(INCLUDEDIR)/
+	
+	echo "Package: $(PACKAGE_NAME)" > debian-build/DEBIAN/control
+	echo "Version: $(VERSION)" >> debian-build/DEBIAN/control
+	echo "Architecture: amd64" >> debian-build/DEBIAN/control
+	echo "Maintainer: Agent Communication System <agents@example.com>" >> debian-build/DEBIAN/control
+	echo "Description: Distributed Claude Agent Communication System" >> debian-build/DEBIAN/control
+	
+	dpkg-deb --build debian-build $(PACKAGE_NAME)-$(VERSION).deb
+	rm -rf debian-build
+
+# ============================================================================
+# DOCUMENTATION AND ANALYSIS
+# ============================================================================
+
+# Generate documentation
+docs:
+	@echo "Generating documentation..."
+	doxygen Doxyfile 2>/dev/null || echo "Doxygen not available"
+	@echo "✓ Documentation generated in docs/"
+
+# Static analysis with various tools
+static-analysis: $(SOURCES)
+	@echo "Running static analysis..."
+	
+	# Clang static analyzer
+	@if command -v clang >/dev/null 2>&1; then \
+		echo "Running Clang static analyzer..."; \
+		clang --analyze $(CFLAGS) $(SOURCES) 2>static_analysis.log; \
+	fi
+	
+	# Cppcheck
+	@if command -v cppcheck >/dev/null 2>&1; then \
+		echo "Running Cppcheck..."; \
+		cppcheck --enable=all --force --xml $(SOURCES) 2>cppcheck.xml; \
+	fi
+	
+	# PC-lint Plus (if available)
+	@if command -v pclp64 >/dev/null 2>&1; then \
+		echo "Running PC-lint Plus..."; \
+		pclp64 $(SOURCES) > pclint.log 2>&1 || true; \
+	fi
+	
+	@echo "✓ Static analysis completed"
+
+# Code coverage analysis
+coverage: CFLAGS += --coverage
+coverage: LDFLAGS += --coverage
+coverage: clean all test
+	@echo "Generating coverage report..."
+	gcov $(SOURCES)
+	@if command -v lcov >/dev/null 2>&1; then \
+		lcov --capture --directory . --output-file coverage.info; \
+		genhtml coverage.info --output-directory coverage_html; \
+		echo "✓ Coverage report generated in coverage_html/"; \
+	else \
+		echo "✓ Coverage data generated (gcov files)"; \
+	fi
+
+# ============================================================================
+# DEVELOPMENT AND DEBUGGING TARGETS
+# ============================================================================
+
+# Development build with all debugging features
+debug: CFLAGS += -DDEBUG -g3 -O0 -fsanitize=address,undefined
+debug: LDFLAGS += -fsanitize=address,undefined
+debug: clean all
+
+# Thread sanitizer build
+tsan: CFLAGS += -fsanitize=thread -g
+tsan: LDFLAGS += -fsanitize=thread
+tsan: clean all
+
+# Memory sanitizer build (Clang only)
+msan: CC = clang
+msan: CFLAGS += -fsanitize=memory -g
+msan: LDFLAGS += -fsanitize=memory
+msan: clean all
+
+# Undefined behavior sanitizer
+ubsan: CFLAGS += -fsanitize=undefined -g
+ubsan: LDFLAGS += -fsanitize=undefined
+ubsan: clean all
+
+# ============================================================================
+# UTILITY TARGETS
+# ============================================================================
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -f $(OBJECTS) $(TARGETS) $(TEST_TARGETS) $(STATIC_LIB) $(SHARED_LIB)
+	rm -f *.d *.gcno *.gcda *.gcov
+	rm -f core.* vgcore.*
+	rm -rf coverage_html/
+	rm -f *.log *.xml *.info
+	rm -f perf.data*
+	rm -rf vtune_results/
+	@echo "✓ Clean completed"
+
+# Display system information
+sysinfo:
+	@echo "=== System Information ==="
+	@echo "Architecture: $(ARCH)"
+	@echo "CPU Count: $(CPU_COUNT)"
+	@echo "Compiler: $(CC) $(shell $(CC) --version | head -1)"
+	@echo "Kernel: $(shell uname -r)"
+	@echo "Memory: $(shell free -h | grep Mem: | awk '{print $$2}')"
+	@echo "NUMA Nodes: $(shell numactl --hardware | grep available | cut -d' ' -f2)"
+	@echo ""
+
+# Display build configuration
+config:
+	@echo "=== Build Configuration ==="
+	@echo "CFLAGS: $(CFLAGS)"
+	@echo "LDFLAGS: $(LDFLAGS)"
+	@echo "LIBS: $(LIBS)"
+	@echo "Sources: $(SOURCES)"
+	@echo "Targets: $(TARGETS)"
+	@echo ""
+
+# Help target
+help:
+	@echo "Distributed Claude Agent Communication System - Makefile"
+	@echo ""
+	@echo "Production Targets:"
+	@echo "  all                 Build all targets (default)"
+	@echo "  distributed_agent_system  Build main distributed system"
+	@echo "  install            Install system binaries and libraries"
+	@echo "  uninstall          Remove installed files"
+	@echo ""
+	@echo "Testing and Validation:"
+	@echo "  test               Run complete test suite"
+	@echo "  benchmark          Run performance benchmarks"
+	@echo "  memcheck           Run memory leak detection"
+	@echo "  static-analysis    Run static code analysis"
+	@echo "  coverage           Generate code coverage report"
+	@echo ""
+	@echo "Optimization:"
+	@echo "  pgo                Profile-guided optimization build"
+	@echo "  profile            CPU profiling with perf"
+	@echo "  vtune              Intel VTune analysis"
+	@echo "  cache-analysis     Cache performance analysis"
+	@echo "  numa-analysis      NUMA performance analysis"
+	@echo ""
+	@echo "Development:"
+	@echo "  debug              Debug build with sanitizers"
+	@echo "  tsan               Thread sanitizer build"
+	@echo "  msan               Memory sanitizer build"
+	@echo "  ubsan              Undefined behavior sanitizer build"
+	@echo ""
+	@echo "Packaging:"
+	@echo "  dist               Create distribution package"
+	@echo "  rpm                Build RPM package"
+	@echo "  deb                Build DEB package"
+	@echo ""
+	@echo "Utilities:"
+	@echo "  clean              Clean build artifacts"
+	@echo "  sysinfo            Display system information"
+	@echo "  config             Display build configuration"
+	@echo "  help               Show this help message"
+	@echo ""
+	@echo "Environment Variables:"
+	@echo "  DEBUG=1            Enable debug build"
+	@echo "  USE_PGO=1          Use profile-guided optimization"
+	@echo "  USE_INTEL_LIBS=1   Use Intel Performance Libraries"
+	@echo "  USE_DPDK=1         Enable DPDK networking"
+	@echo "  USE_RDMA=1         Enable RDMA/InfiniBand support"
+	@echo "  PREFIX=/path       Installation prefix (default: /usr/local)"
+
+# Default target
+.DEFAULT_GOAL := all
