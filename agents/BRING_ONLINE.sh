@@ -426,7 +426,7 @@ create_auto_integration() {
     printf "${BLUE}Creating auto-integration hook...${NC}"
     
     # Create systemd service for automatic startup
-    cat > /tmp/claude-agents.service << 'EOF'
+    cat > "$AGENTS_DIR/claude-agents.service" << 'EOF'
 [Unit]
 Description=Claude Agent Communication System
 After=network.target
@@ -446,13 +446,13 @@ EOF
     
     # Install service (requires sudo)
     if [ "$EUID" -eq 0 ]; then
-        cp /tmp/claude-agents.service /etc/systemd/system/
+        cp "$AGENTS_DIR/claude-agents.service" /etc/systemd/system/
         systemctl daemon-reload
         systemctl enable claude-agents.service
         printf "${GREEN}✓ Auto-start service installed${NC}"
     else
         printf "${YELLOW}Run as root to install auto-start service:${NC}"
-        echo "  sudo cp /tmp/claude-agents.service /etc/systemd/system/"
+        echo "  sudo cp $AGENTS_DIR/claude-agents.service /etc/systemd/system/"
         echo "  sudo systemctl daemon-reload"
         echo "  sudo systemctl enable claude-agents.service"
     fi
