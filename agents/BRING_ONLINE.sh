@@ -71,11 +71,28 @@ build_system() {
     
     # Build binary protocol
     echo "Building ultra-fast binary protocol..."
-    cd "$AGENTS_DIR/binary-communications-system"
+    cd "$AGENTS_DIR"
     
-    # Build the main binary bridge
-    gcc -o "$BUILD_DIR/ultra_hybrid_enhanced" ultra_hybrid_enhanced.c \
-        -lpthread -lm -lrt -O3 -march=native -D_GNU_SOURCE 2>&1 | head -5 || {
+    # Detect CPU features and microcode for AVX support
+    MICROCODE=$(grep -m1 "microcode" /proc/cpuinfo | awk '{print $3}')
+    MICROCODE_HEX=$(printf "%x" $((MICROCODE)))
+    
+    # AVX-512 is disabled in microcode >= 0x20 for Meteor Lake
+    if [[ $((0x$MICROCODE_HEX)) -ge $((0x20)) ]]; then
+        echo "Microcode 0x$MICROCODE_HEX detected - AVX-512 disabled, using AVX2"
+        AVX_FLAGS="-mavx2 -msse4.2"
+    else
+        echo "Microcode 0x$MICROCODE_HEX detected - AVX-512 may be available"
+        AVX_FLAGS="-mavx512f -mavx2 -msse4.2"
+    fi
+    
+    # Build the main binary bridge with compatibility layer
+    gcc -D_GNU_SOURCE -march=native $AVX_FLAGS -O3 \
+        -o "$BUILD_DIR/ultra_hybrid_enhanced" \
+        binary-communications-system/ultra_hybrid_enhanced.c \
+        src/c/compatibility_layer.c \
+        -I. -Ibinary-communications-system \
+        -lpthread -lm -lrt 2>&1 | head -5 || {
         printf "${YELLOW}⚠ Binary bridge build warnings (continuing)${NC}\n"
     }
     
