@@ -52,7 +52,7 @@ get_current_mode() {
 
 # Function to get system status
 get_system_status() {
-    local binary_procs=$(pgrep -f "ultra_hybrid_enhanced|unified_agent_runtime|claude_agent_bridge" 2>/dev/null | wc -l)
+    local binary_procs=$(pgrep -f "agent_bridge|unified_agent_runtime|claude_agent_bridge" 2>/dev/null | wc -l)
     local md_count=$(find "$AGENTS_DIR" -maxdepth 1 -name "*.md" | wc -l)
     
     if [ $binary_procs -gt 0 ]; then
@@ -115,7 +115,7 @@ graceful_deactivate_binary() {
         "python_bridge"
         "claude_agent_bridge"
         "unified_agent_runtime"
-        "ultra_hybrid_enhanced"
+        "agent_bridge"
     )
     
     for proc_group in "${process_groups[@]}"; do
@@ -158,7 +158,7 @@ graceful_deactivate_binary() {
     fi
     
     sleep 1
-    local remaining_procs=$(pgrep -f "ultra_hybrid_enhanced|unified_agent_runtime|claude_agent_bridge" | wc -l)
+    local remaining_procs=$(pgrep -f "agent_bridge|unified_agent_runtime|claude_agent_bridge" | wc -l)
     
     if [ $remaining_procs -eq 0 ]; then
         echo -e "${GREEN}✓ Binary system deactivated${NC}"
@@ -197,7 +197,7 @@ switch_to_binary_mode() {
     sleep 3
     
     # Verify
-    local running_procs=$(pgrep -f "ultra_hybrid_enhanced|unified_agent_runtime|claude_agent_bridge" | wc -l)
+    local running_procs=$(pgrep -f "agent_bridge|unified_agent_runtime|claude_agent_bridge" | wc -l)
     if [ $running_procs -gt 0 ]; then
         echo "binary_system" > "$STATE_FILE"
         echo -e "${GREEN}✓ Binary mode active: $running_procs processes${NC}"
@@ -400,7 +400,7 @@ show_status() {
     echo ""
     echo -e "${BOLD}Process Details:${NC}"
     local processes=(
-        "ultra_hybrid_enhanced:Binary Bridge"
+        "agent_bridge:Binary Bridge"
         "unified_agent_runtime:Agent Runtime"
         "claude_agent_bridge:Python Bridge"
         "linter_agent:Linter Agent"
