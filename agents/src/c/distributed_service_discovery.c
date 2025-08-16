@@ -14,7 +14,7 @@
  */
 
 #include "distributed_network.h"
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 #include "compatibility_layer.h"
 
 #include <stdio.h>

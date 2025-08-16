@@ -32,7 +32,7 @@
 #include <math.h>
 
 // Include headers
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 // Include advanced features when enabled
 #ifdef ENABLE_STREAMING_PIPELINE

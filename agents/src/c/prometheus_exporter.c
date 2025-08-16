@@ -36,7 +36,7 @@
 #include <math.h>
 
 // Include transport protocol headers
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 #define MAX_METRICS 2000
 #define MAX_METRIC_NAME_LEN 256

@@ -31,7 +31,7 @@
 #include <openssl/hmac.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,6 +96,7 @@ extern "C" {
 // Error Codes
 typedef enum {
     AUTH_SUCCESS = 0,
+    AUTH_ERROR_INVALID_PARAM = -1000,
     AUTH_ERROR_INVALID_TOKEN = -1001,
     AUTH_ERROR_EXPIRED_TOKEN = -1002,
     AUTH_ERROR_INVALID_SIGNATURE = -1003,

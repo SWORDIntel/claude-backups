@@ -29,7 +29,7 @@
 #include <sys/un.h>
 #include <fcntl.h>
 #include "compatibility_layer.h"
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 #include <sched.h>
 #include <signal.h>
 

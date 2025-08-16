@@ -26,12 +26,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include "compatibility_layer.h"
-#endif
 #include <sched.h>
 #include <x86intrin.h>
 
 // Include the transport layer header
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 // ============================================================================
 // CONSTANTS AND CONFIGURATION

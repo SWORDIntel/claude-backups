@@ -22,7 +22,7 @@
 
 #define _GNU_SOURCE
 #include "auth_security.h"
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

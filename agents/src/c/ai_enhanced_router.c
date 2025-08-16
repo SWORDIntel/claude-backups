@@ -37,7 +37,7 @@
 #include <sched.h>
 #include <fcntl.h>
 
-// Include AI router header first (which includes ultra_fast_protocol.h)
+// Include AI router header first (which includes agent_protocol.h)
 #include "ai_enhanced_router.h"
 // Then include other headers
 #include "compatibility_layer.h"
@@ -832,10 +832,10 @@ static void extract_message_features(const enhanced_msg_header_t* msg,
     features->payload_size_norm = (float)msg->payload_len / 65536.0f;
     features->priority_norm = (float)msg->priority / 5.0f;
     features->source_agent_norm = (float)msg->source_agent / 65536.0f;
-    features->target_agent_norm = (float)msg->target_agent / 65536.0f;
+    features->target_agent_norm = (float)msg->target_agents[0] / 65536.0f;
     features->message_type_norm = (float)msg->msg_type / 255.0f;
-    features->correlation_norm = (float)msg->correlation_id / 4294967295.0f;
-    features->ttl_norm = (float)msg->ttl / 255.0f;
+    features->correlation_norm = (float)msg->msg_type / 4294967295.0f;
+    // features->flags_norm = (float)msg->flags / 255.0f; // Field not in struct
     
     // Historical features (would be populated from statistics)
     features->historical_latency = 0.1f; // Placeholder
@@ -870,7 +870,7 @@ static ai_routing_decision_t make_ai_routing_decision(const enhanced_msg_header_
     
     if (!g_ai_router || !g_ai_router->running) {
         // Fallback to simple routing
-        decision.recommended_target = msg->target_agent;
+        decision.recommended_target = msg->target_agents[0];
         decision.confidence_score = 0.5f;
         decision.strategy_used = ROUTE_STRATEGY_MANUAL;
         decision.accelerator_used = ACCEL_TYPE_CPU;
@@ -919,7 +919,7 @@ static ai_routing_decision_t make_ai_routing_decision(const enhanced_msg_header_
     // Final fallback to load-based routing
     if (decision.confidence_score < 0.5f) {
         // Simple load balancing (would use real load metrics)
-        decision.recommended_target = (msg->msg_id * 7919) % 65536; // Pseudo-random
+        decision.recommended_target = (msg->sequence * 7919) % 65536; // Pseudo-random
         decision.confidence_score = 0.6f;
         decision.strategy_used = ROUTE_STRATEGY_LOAD_BALANCED;
         decision.accelerator_used = ACCEL_TYPE_CPU;

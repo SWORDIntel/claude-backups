@@ -23,8 +23,9 @@ extern "C" {
 // INCLUDES AND FORWARD DECLARATIONS
 // ============================================================================
 
-// Include main protocol header for enhanced_msg_header_t definition
-#include "ultra_fast_protocol.h"
+// Include main protocol header and compatibility layer
+#include "compatibility_layer.h"
+#include "agent_protocol.h"
 
 // ============================================================================
 // AI ROUTING TYPES

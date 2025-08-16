@@ -718,7 +718,7 @@ void nas_shutdown(void) {
 }
 
 // Demo function
-int main(int argc, char** argv) {
+// int main_disabled(int argc, char** argv) {
     printf("Neural Architecture Search System\n");
     printf("==================================\n\n");
     

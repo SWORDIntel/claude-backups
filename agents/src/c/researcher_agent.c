@@ -44,7 +44,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include "compatibility_layer.h"
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 // RESEARCHER Protocol Constants
 #define RESEARCHER_MAGIC 0x52455345          // 'RESE' - Researcher Magic

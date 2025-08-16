@@ -28,10 +28,11 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <fcntl.h>
 #include <json-c/json.h>
 
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 #define HEALTH_CHECK_PORT 8080
 #define MAX_RESPONSE_SIZE 8192
@@ -283,7 +284,7 @@ static health_status_t check_disk_health(void) {
     }
     
     unsigned long total_blocks = disk_info.f_blocks;
-    unsigned long free_blocks = disk_info.f_avail;
+    unsigned long free_blocks = disk_info.f_bavail;
     double usage_ratio = 1.0 - ((double)free_blocks / total_blocks);
     
     if (usage_ratio > 0.95) {  // > 95% disk usage

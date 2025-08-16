@@ -34,7 +34,7 @@
 #include <fcntl.h>
 
 // Include headers
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 // ============================================================================
 // CONSTANTS AND CONFIGURATION  
@@ -139,7 +139,7 @@ typedef struct __attribute__((aligned(CACHE_LINE_SIZE))) {
     _Atomic uint64_t failed_items;
     pthread_rwlock_t lock;
     routing_strategy_t strategy;
-} work_queue_t;
+} router_work_queue_t;
 
 // Pending request tracking
 typedef struct {
@@ -193,7 +193,7 @@ typedef struct __attribute__((aligned(PAGE_SIZE))) {
     _Atomic uint32_t topic_count;
     
     // Work queues
-    work_queue_t work_queues[MAX_WORK_QUEUES];
+    router_work_queue_t work_queues[MAX_WORK_QUEUES];
     _Atomic uint32_t work_queue_count;
     
     // Request tracking
@@ -675,9 +675,9 @@ int create_work_queue(const char* queue_name, routing_strategy_t strategy) {
     }
     
     // Find free work queue slot
-    work_queue_t* queue = NULL;
+    router_work_queue_t* queue = NULL;
     for (uint32_t i = 0; i < MAX_WORK_QUEUES; i++) {
-        work_queue_t* candidate = &g_router_service->work_queues[i];
+        router_work_queue_t* candidate = &g_router_service->work_queues[i];
         
         pthread_rwlock_wrlock(&candidate->lock);
         
@@ -719,9 +719,9 @@ int register_worker(const char* queue_name, uint32_t worker_agent_id) {
     }
     
     // Find work queue
-    work_queue_t* queue = NULL;
+    router_work_queue_t* queue = NULL;
     for (uint32_t i = 0; i < MAX_WORK_QUEUES; i++) {
-        work_queue_t* candidate = &g_router_service->work_queues[i];
+        router_work_queue_t* candidate = &g_router_service->work_queues[i];
         
         pthread_rwlock_rdlock(&candidate->lock);
         if (strcmp(candidate->name, queue_name) == 0) {
@@ -766,9 +766,9 @@ int distribute_work_item(const char* queue_name, const void* work_item, size_t i
     }
     
     // Find work queue
-    work_queue_t* queue = NULL;
+    router_work_queue_t* queue = NULL;
     for (uint32_t i = 0; i < MAX_WORK_QUEUES; i++) {
-        work_queue_t* candidate = &g_router_service->work_queues[i];
+        router_work_queue_t* candidate = &g_router_service->work_queues[i];
         
         pthread_rwlock_rdlock(&candidate->lock);
         if (strcmp(candidate->name, queue_name) == 0) {
@@ -950,7 +950,7 @@ void print_router_statistics() {
            "----------", "------------", "------------", "------------");
     
     for (uint32_t i = 0; i < MAX_WORK_QUEUES; i++) {
-        work_queue_t* queue = &g_router_service->work_queues[i];
+        router_work_queue_t* queue = &g_router_service->work_queues[i];
         
         if (queue->name[0] != '\0') {
             pthread_rwlock_rdlock(&queue->lock);

@@ -15,7 +15,7 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <errno.h>
-#include <rdkafka/rdkafka.h>
+#include <librdkafka/rdkafka.h>
 
 #define MAX_PARTITIONS 256
 #define BATCH_SIZE 10000
@@ -140,7 +140,8 @@ static inline bool ring_buffer_pop(partition_processor_t* partition, stream_even
     return true;
 }
 
-// AVX-512 vectorized aggregation
+// AVX-512 vectorized aggregation (disabled - CPU doesn't support AVX-512)
+#ifdef __AVX512F__
 static void vectorized_aggregate(__m512i* accumulator, __m512i* values, aggregation_type_t type) {
     switch (type) {
         case AGG_SUM:
@@ -156,6 +157,27 @@ static void vectorized_aggregate(__m512i* accumulator, __m512i* values, aggregat
             break;
     }
 }
+#else
+// Fallback non-vectorized version
+static void vectorized_aggregate(void* accumulator, void* values, aggregation_type_t type) {
+    // Simple scalar implementation
+    uint64_t* acc = (uint64_t*)accumulator;
+    uint64_t* vals = (uint64_t*)values;
+    switch (type) {
+        case AGG_SUM:
+            *acc += *vals;
+            break;
+        case AGG_MAX:
+            if (*vals > *acc) *acc = *vals;
+            break;
+        case AGG_MIN:
+            if (*vals < *acc) *acc = *vals;
+            break;
+        default:
+            break;
+    }
+}
+#endif
 
 // Window processing
 static void process_window(window_state_t* window, stream_event_t* event) {
@@ -169,7 +191,7 @@ static void process_window(window_state_t* window, stream_event_t* event) {
         } else {
             // Use vectorized aggregation for numeric types
             vectorized_aggregate(
-                ((__m512i*)window->aggregate_state),
+                window->aggregate_state,
                 &event->vector_data,
                 window->aggregation
             );

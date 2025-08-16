@@ -37,7 +37,7 @@
 #include <sys/stat.h>
 
 // Include headers
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 // ============================================================================
 // CONSTANTS AND CONFIGURATION

@@ -2,7 +2,7 @@
  * CONSTRUCTOR AGENT - Communication System Integration
  * Version 2.0 - Production-ready implementation
  */
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 #include "agent_system.h"
 #include "compatibility_layer.h"
 #include <stdio.h>

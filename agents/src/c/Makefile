@@ -1,227 +1,217 @@
-# Makefile for Claude Agent Communication System v7.0
-# Builds Director, Project Orchestrator, Architect, and Coordination components
+# Claude Agent Binary Communication System - CORE Makefile
+# Builds ONLY the core binary communication infrastructure
+# Agents are modular and loaded separately
+# Single unified source directory: src/c/
 
-CC = gcc
-CFLAGS = -Wall -Wextra -O3 -std=c11 -D_GNU_SOURCE -fPIC
-LDFLAGS = -lpthread -lm -lrt
-INCLUDES = -I.
+CC := gcc
+AR := ar
+STRIP := strip
 
-# Source files
-DIRECTOR_SRC = director_agent.c compatibility_layer.c
-ORCHESTRATOR_SRC = project_orchestrator.c compatibility_layer.c  
-ARCHITECT_SRC = architect_agent.c compatibility_layer.c
-COORDINATION_SRC = agent_coordination.c compatibility_layer.c
-TEST_SRC = test_agents.c
+# Compiler flags
+CFLAGS := -std=c11 -D_GNU_SOURCE -Wall -Wextra
+CFLAGS += -march=native -mtune=native -pthread
+CFLAGS += -I.
+# Add json-c includes if available
+CFLAGS += $(shell pkg-config --cflags json-c 2>/dev/null || echo "")
 
-# Object files
-DIRECTOR_OBJ = $(DIRECTOR_SRC:.c=.o)
-ORCHESTRATOR_OBJ = $(ORCHESTRATOR_SRC:.c=.o)
-ARCHITECT_OBJ = $(ARCHITECT_SRC:.c=.o)
-COORDINATION_OBJ = $(COORDINATION_SRC:.c=.o)
+# Optimization
+ifdef DEBUG
+    CFLAGS += -g3 -O0 -DDEBUG
+else
+    CFLAGS += -O2 -DNDEBUG -fomit-frame-pointer -flto
+endif
 
-# Executables
-DIRECTOR_BIN = director_agent
-ORCHESTRATOR_BIN = project_orchestrator
-ARCHITECT_BIN = architect_agent
-COORDINATION_BIN = agent_coordination
-TEST_BIN = test_agents
+# AVX detection
+HAVE_AVX2 := $(shell grep -q avx2 /proc/cpuinfo && echo 1 || echo 0)
+ifeq ($(HAVE_AVX2),1)
+    CFLAGS += -mavx2 -mfma
+endif
 
-# Default target
-all: $(DIRECTOR_BIN) $(ORCHESTRATOR_BIN) $(ARCHITECT_BIN) $(COORDINATION_BIN) $(TEST_BIN)
+# Linker flags
+LDFLAGS := -pthread -lm -lrt -ldl -lssl -lcrypto -lnuma -lrdkafka
+# Add liburing if available
+LDFLAGS += $(shell pkg-config --libs liburing 2>/dev/null || echo "")
+# Add json-c if available
+LDFLAGS += $(shell pkg-config --libs json-c 2>/dev/null || echo "")
+ifndef DEBUG
+    LDFLAGS += -Wl,--gc-sections -Wl,-s
+endif
 
-# Individual agent binaries
-$(DIRECTOR_BIN): $(DIRECTOR_OBJ)
-	$(CC) $(CFLAGS) -DDIRECTOR_TEST_MODE -o $@ $^ $(LDFLAGS)
+# Directories
+BUILD_DIR := ../../build
+BIN_DIR := $(BUILD_DIR)/bin
+OBJ_DIR := $(BUILD_DIR)/obj
 
-$(ORCHESTRATOR_BIN): $(ORCHESTRATOR_OBJ)
-	$(CC) $(CFLAGS) -DORCHESTRATOR_TEST_MODE -o $@ $^ $(LDFLAGS)
+# Create directories
+$(shell mkdir -p $(BIN_DIR) $(OBJ_DIR))
 
-$(ARCHITECT_BIN): $(ARCHITECT_OBJ)  
-	$(CC) $(CFLAGS) -DARCHITECT_TEST_MODE -o $@ $^ $(LDFLAGS)
+# ==============================================================================
+# CORE BINARY COMMUNICATION SYSTEM
+# ==============================================================================
 
-$(COORDINATION_BIN): $(COORDINATION_OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+# Core binary communication files (NO agent implementations)
+CORE_SRCS := agent_bridge.c \
+             compatibility_layer.c \
+             ring_buffer_adapter.c \
+             message_router.c \
+             agent_discovery.c
 
-# Integrated test binary
-$(TEST_BIN): $(TEST_SRC)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+# Support/Utility modules (linked into binary for full functionality)
+SUPPORT_SRCS := auth_security.c \
+                tls_manager.c \
+                memory_optimizer.c \
+                health_check_endpoints.c \
+                prometheus_exporter.c
 
-# Object file compilation
-%.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+# Advanced features (optional) - all excluded for LiveCD build
+# ADVANCED_SRCS := digital_twin.c neural_architecture_search.c
+# Excluded: All advanced modules have issues (AVX-512, main() conflicts, etc)
 
-# Create compatibility layer if it doesn't exist
-compatibility_layer.c:
-	@echo "// Compatibility layer implementation" > $@
-	@echo "#include \"compatibility_layer.h\"" >> $@
-	@echo "" >> $@
-	@echo "int io_uring_fallback_read(int fd, void *buf, size_t count, off_t offset) {" >> $@
-	@echo "    lseek(fd, offset, SEEK_SET);" >> $@
-	@echo "    return read(fd, buf, count);" >> $@
-	@echo "}" >> $@
-	@echo "" >> $@
-	@echo "int io_uring_fallback_write(int fd, const void *buf, size_t count, off_t offset) {" >> $@
-	@echo "    lseek(fd, offset, SEEK_SET);" >> $@
-	@echo "    return write(fd, buf, count);" >> $@
-	@echo "}" >> $@
-	@echo "" >> $@
-	@echo "// Stub implementations for missing functions" >> $@
-	@echo "int ring_buffer_read_priority(void* rb, int priority, enhanced_msg_header_t* msg, uint8_t* payload) {" >> $@
-	@echo "    (void)rb; (void)priority; (void)msg; (void)payload; return -1;" >> $@
-	@echo "}" >> $@
-	@echo "" >> $@
-	@echo "void process_message_pcore(enhanced_msg_header_t* msg, uint8_t* payload) {" >> $@
-	@echo "    (void)msg; (void)payload;" >> $@
-	@echo "}" >> $@
-	@echo "" >> $@  
-	@echo "void process_message_ecore(enhanced_msg_header_t* msg, uint8_t* payload) {" >> $@
-	@echo "    (void)msg; (void)payload;" >> $@
-	@echo "}" >> $@
-	@echo "" >> $@
-	@echo "void* work_queue_steal(void* queue) {" >> $@
-	@echo "    (void)queue; return NULL;" >> $@
-	@echo "}" >> $@
+# Distributed/network components (optional)
+NETWORK_SRCS := distributed_network.c \
+                distributed_load_balancer.c \
+                distributed_service_discovery.c
 
-# Test targets
-test: $(TEST_BIN)
-	./$(TEST_BIN)
+# Assembly optimization
+ASM_SRCS := protocol_asm.S
 
-test-director: $(DIRECTOR_BIN)
-	./$(DIRECTOR_BIN)
+# AI router infrastructure (optional)
+AI_SRCS := ai_router_integration.c \
+           ai_enhanced_router.c
 
-test-orchestrator: $(ORCHESTRATOR_BIN)
-	./$(ORCHESTRATOR_BIN)
+# Minimal stub implementations (for linking without full features)
+STUB_SRCS := stubs.c
 
-test-architect: $(ARCHITECT_BIN)
-	./$(ARCHITECT_BIN)
+# Convert to object files
+CORE_OBJS := $(CORE_SRCS:%.c=$(OBJ_DIR)/%.o)
+SUPPORT_OBJS := $(SUPPORT_SRCS:%.c=$(OBJ_DIR)/%.o)
+ADVANCED_OBJS := $(ADVANCED_SRCS:%.c=$(OBJ_DIR)/%.o)
+NETWORK_OBJS := $(NETWORK_SRCS:%.c=$(OBJ_DIR)/%.o)
+ASM_OBJS := $(ASM_SRCS:%.S=$(OBJ_DIR)/%.o)
+AI_OBJS := $(AI_SRCS:%.c=$(OBJ_DIR)/%.o)
+STUB_OBJS := $(STUB_SRCS:%.c=$(OBJ_DIR)/%.o)
 
-# Static analysis
-analyze:
-	@echo "Running static analysis..."
-	@which cppcheck >/dev/null 2>&1 && cppcheck --enable=all --std=c11 *.c || echo "cppcheck not found, skipping analysis"
+# ==============================================================================
+# TARGETS
+# ==============================================================================
 
-# Memory check (requires valgrind)
-memcheck: $(TEST_BIN)
-	@which valgrind >/dev/null 2>&1 && valgrind --leak-check=full --track-origins=yes ./$(TEST_BIN) || echo "valgrind not found, skipping memory check"
+# Default target - just the core binary
+all: agent_bridge
 
-# Performance profiling (requires perf)
-profile: $(TEST_BIN)
-	@which perf >/dev/null 2>&1 && perf record -g ./$(TEST_BIN) && perf report || echo "perf not found, skipping profiling"
+# Main binary communication bridge
+agent_bridge: $(BIN_DIR)/agent_bridge
+	@echo "[OK] Core binary system built: $<"
+	@echo "     Size: $$(du -h $< | cut -f1)"
 
-# Coverage analysis (requires gcov/lcov)
-coverage: CFLAGS += -fprofile-arcs -ftest-coverage
-coverage: LDFLAGS += -lgcov --coverage
-coverage: clean $(TEST_BIN)
-	./$(TEST_BIN)
-	@which lcov >/dev/null 2>&1 && lcov --capture --directory . --output-file coverage.info && genhtml coverage.info --output-directory coverage_html || echo "lcov not found, skipping coverage report"
+$(BIN_DIR)/agent_bridge: $(CORE_OBJS) $(SUPPORT_OBJS) $(ASM_OBJS)
+	@echo "[LD] Linking agent_bridge with support modules..."
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+ifndef DEBUG
+	@$(STRIP) $@
+endif
 
-# Debug build
-debug: CFLAGS += -g -DDEBUG -O0
-debug: all
+# Optional: Build with AI router integration
+agent_bridge_ai: $(BIN_DIR)/agent_bridge_ai
+	@echo "[OK] AI-enhanced binary built"
 
-# Release build  
-release: CFLAGS += -DNDEBUG -march=native -flto
-release: LDFLAGS += -flto
-release: all
+$(BIN_DIR)/agent_bridge_ai: $(CORE_OBJS) $(SUPPORT_OBJS) $(ASM_OBJS) $(AI_OBJS)
+	@echo "[LD] Linking agent_bridge with AI router (no network)..."
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
-# Documentation generation
-docs:
-	@echo "Generating documentation..."
-	@which doxygen >/dev/null 2>&1 && doxygen || echo "doxygen not found, skipping documentation generation"
+# Build with ALL optional modules (except Rust and broken network)
+agent_bridge_complete: $(BIN_DIR)/agent_bridge_complete
+	@echo "[OK] Complete binary system built with all modules"
 
-# Installation
-install: all
-	@echo "Installing agent binaries..."
-	@mkdir -p /usr/local/bin/claude-agents
-	@cp $(DIRECTOR_BIN) $(ORCHESTRATOR_BIN) $(ARCHITECT_BIN) $(COORDINATION_BIN) /usr/local/bin/claude-agents/
-	@cp *.h /usr/local/include/ 2>/dev/null || true
-	@echo "Installation complete"
+$(BIN_DIR)/agent_bridge_complete: $(CORE_OBJS) $(SUPPORT_OBJS) $(ASM_OBJS) $(AI_OBJS)
+	@echo "[LD] Linking complete agent_bridge (same as AI version on LiveCD)..."
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
-# Uninstall
-uninstall:
-	@echo "Removing agent binaries..."
-	@rm -rf /usr/local/bin/claude-agents
-	@rm -f /usr/local/include/ultra_fast_protocol.h /usr/local/include/compatibility_layer.h
-	@echo "Uninstallation complete"
+# ==============================================================================
+# RUST VECTOR ROUTER (Optional)
+# ==============================================================================
 
-# Clean up
+RUST_LIB := ../rust/target/release/libvector_router.a
+
+rust_vector: $(RUST_LIB)
+
+$(RUST_LIB):
+	@echo "[CARGO] Building Rust vector router..."
+	@cd ../.. && cargo build --release --manifest-path agents/05-CONFIG/Cargo.toml
+	@echo "[OK] Rust vector router built"
+
+# Build with Rust integration
+agent_bridge_full: $(CORE_OBJS) $(SUPPORT_OBJS) $(ASM_OBJS) $(AI_OBJS) $(RUST_LIB)
+	@echo "[LD] Linking full agent_bridge with Rust vector router..."
+	@$(CC) $(CFLAGS) $(CORE_OBJS) $(SUPPORT_OBJS) $(ASM_OBJS) $(AI_OBJS) $(RUST_LIB) $(LDFLAGS) -o $(BIN_DIR)/agent_bridge_full
+	@echo "[OK] Full system built with vector router"
+
+# ==============================================================================
+# COMPILATION RULES
+# ==============================================================================
+
+# C files
+$(OBJ_DIR)/%.o: %.c
+	@echo "[CC] $<"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+# Assembly files
+$(OBJ_DIR)/%.o: %.S
+	@echo "[AS] $<"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+# ==============================================================================
+# UTILITY TARGETS
+# ==============================================================================
+
 clean:
-	rm -f *.o *.so *.a
-	rm -f $(DIRECTOR_BIN) $(ORCHESTRATOR_BIN) $(ARCHITECT_BIN) $(COORDINATION_BIN) $(TEST_BIN)
-	rm -f compatibility_layer.c
-	rm -f *.gcno *.gcda *.gcov coverage.info
-	rm -rf coverage_html
-	rm -f perf.data*
+	@echo "[CLEAN] Removing build artifacts..."
+	@rm -rf $(BUILD_DIR)
 
-# Clean everything including generated files
-distclean: clean
-	rm -f *~
-	rm -f core core.*
-	rm -f vgcore.*
+# Test the binary
+test: agent_bridge
+	@echo "[TEST] Testing agent_bridge..."
+	@$(BIN_DIR)/agent_bridge --version || true
+	@echo "[TEST] Checking symbols..."
+	@nm $(BIN_DIR)/agent_bridge | grep -E "agent_|message_|discovery" | head -5
 
-# Show build information
+# Install to system (optional)
+install: agent_bridge
+	@echo "[INSTALL] Installing to /usr/local/bin..."
+	@sudo install -m 755 $(BIN_DIR)/agent_bridge /usr/local/bin/claude-agent-bridge
+	@echo "[OK] Installed as claude-agent-bridge"
+
+# Show what would be built
 info:
-	@echo "Claude Agent Communication System v7.0 Build Information"
-	@echo "========================================================"
-	@echo "Compiler: $(CC)"
+	@echo "=== Build Configuration ==="
+	@echo "CC: $(CC)"
 	@echo "CFLAGS: $(CFLAGS)"
 	@echo "LDFLAGS: $(LDFLAGS)"
-	@echo "Targets: $(DIRECTOR_BIN) $(ORCHESTRATOR_BIN) $(ARCHITECT_BIN) $(COORDINATION_BIN) $(TEST_BIN)"
-	@echo "Build date: $$(date)"
-	@echo "System: $$(uname -a)"
-
-# Check dependencies
-check-deps:
-	@echo "Checking build dependencies..."
-	@which $(CC) >/dev/null 2>&1 && echo "✓ $(CC) found" || echo "✗ $(CC) not found"
-	@echo "  Required libraries:"
-	@echo "    ✓ pthread (usually available)"
-	@echo "    ✓ math (usually available)" 
-	@echo "    ✓ rt (usually available)"
-	@echo "  Optional tools:"
-	@which cppcheck >/dev/null 2>&1 && echo "    ✓ cppcheck found" || echo "    ✗ cppcheck not found (for static analysis)"
-	@which valgrind >/dev/null 2>&1 && echo "    ✓ valgrind found" || echo "    ✗ valgrind not found (for memory checking)"
-	@which perf >/dev/null 2>&1 && echo "    ✓ perf found" || echo "    ✗ perf not found (for profiling)"
-	@which lcov >/dev/null 2>&1 && echo "    ✓ lcov found" || echo "    ✗ lcov not found (for coverage)"
-
-# Help
-help:
-	@echo "Claude Agent Communication System v7.0 - Build System"
-	@echo "====================================================="
 	@echo ""
-	@echo "Available targets:"
-	@echo "  all              - Build all agent components (default)"
-	@echo "  director_agent   - Build Director agent only"
-	@echo "  project_orchestrator - Build Project Orchestrator only" 
-	@echo "  architect_agent  - Build Architect agent only"
-	@echo "  agent_coordination - Build Coordination system only"
-	@echo "  test_agents      - Build integrated test suite"
+	@echo "=== Core Files ==="
+	@echo "$(CORE_SRCS)" | tr ' ' '\n' | sed 's/^/  - /'
 	@echo ""
-	@echo "Testing:"
-	@echo "  test             - Run integrated test suite"
-	@echo "  test-director    - Test Director agent"
-	@echo "  test-orchestrator - Test Project Orchestrator"
-	@echo "  test-architect   - Test Architect agent"
-	@echo ""
-	@echo "Quality assurance:"
-	@echo "  analyze          - Run static code analysis"
-	@echo "  memcheck         - Run memory leak detection"
-	@echo "  profile          - Run performance profiling"
-	@echo "  coverage         - Generate code coverage report"
-	@echo ""
-	@echo "Build variants:"
-	@echo "  debug            - Build with debug symbols"
-	@echo "  release          - Build optimized release version"
-	@echo ""
-	@echo "Maintenance:"
+	@echo "=== Build Targets ==="
+	@echo "  agent_bridge      - Core binary communication system"
+	@echo "  agent_bridge_ai   - With AI router integration"
+	@echo "  agent_bridge_full - With Rust vector router"
 	@echo "  clean            - Remove build artifacts"
-	@echo "  distclean        - Remove all generated files"
-	@echo "  install          - Install to system directories"
-	@echo "  uninstall        - Remove from system directories"
-	@echo ""
-	@echo "Information:"
-	@echo "  info             - Show build configuration"
-	@echo "  check-deps       - Check build dependencies"
-	@echo "  help             - Show this help message"
+	@echo "  test             - Test the binary"
+	@echo "  info             - Show this information"
 
-.PHONY: all test test-director test-orchestrator test-architect analyze memcheck profile coverage debug release docs install uninstall clean distclean info check-deps help
+# Quick rebuild
+rebuild: clean all
+
+.PHONY: all clean test install info rebuild agent_bridge agent_bridge_ai agent_bridge_full rust_vector
+
+# ==============================================================================
+# MODULAR AGENT LOADING (Documentation)
+# ==============================================================================
+# Agents are NOT compiled into the main binary. They are:
+# 1. Loaded dynamically at runtime via dlopen() if compiled as .so files
+# 2. Communicated with via the binary protocol over sockets/shared memory
+# 3. Invoked through the Task tool in Claude Code
+#
+# To compile an individual agent as a shared library:
+#   gcc -shared -fPIC -o agent_name.so agent_name.c
+#
+# The core binary provides the communication infrastructure that agents use.

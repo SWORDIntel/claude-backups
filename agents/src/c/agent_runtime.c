@@ -31,7 +31,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include "ultra_fast_protocol.h"  // Our enhanced protocol
+#include "agent_protocol.h"  // Our enhanced protocol
 
 // ============================================================================
 // AGENT DEFINITIONS

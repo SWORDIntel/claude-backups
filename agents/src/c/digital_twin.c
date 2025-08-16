@@ -669,7 +669,7 @@ static void example_control_callback(digital_twin_t* twin, double* actions) {
 }
 
 // Demo function
-int main(int argc, char** argv) {
+// int main_disabled(int argc, char** argv) {
     printf("Digital Twin System - <10ms Synchronization\n");
     printf("============================================\n\n");
     

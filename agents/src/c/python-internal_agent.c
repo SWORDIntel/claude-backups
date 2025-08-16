@@ -34,7 +34,7 @@
 #include <time.h>
 #include <dirent.h>
 #include "compatibility_layer.h"
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 // Python-Internal Agent Protocol Constants
 #define PYID_MAGIC 0x50594944          // 'PYID' - Python Internal Magic

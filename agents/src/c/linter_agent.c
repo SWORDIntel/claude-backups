@@ -29,7 +29,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/resource.h>
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 #include "agent_system.h"
 
 #define LINTER_VERSION "2.0.0-ULTIMATE"

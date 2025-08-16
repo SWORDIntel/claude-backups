@@ -40,9 +40,18 @@
 // Check for io_uring availability
 #ifdef __linux__
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,1,0)
-#define HAS_IO_URING 1
-#include <liburing.h>
+// Try to include liburing if available
+#ifdef __has_include
+  #if __has_include(<liburing.h>)
+    #define HAS_IO_URING 1
+    #include <liburing.h>
+  #endif
+#else
+  // Fallback: try to include anyway for older compilers
+  #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,1,0)
+    #define HAS_IO_URING 1
+    #include <liburing.h>
+  #endif
 #endif
 #endif
 
@@ -372,8 +381,7 @@ int ring_buffer_write_priority(ring_buffer_t* rb, int priority, enhanced_msg_hea
 }
 
 // Read from ring buffer with priority
-int ring_buffer_read_priority(void* rb_ptr, int priority, enhanced_msg_header_t* msg, uint8_t* payload) {
-    ring_buffer_t* rb = (ring_buffer_t*)rb_ptr;
+int ring_buffer_read_priority(ring_buffer_t* rb, int priority, enhanced_msg_header_t* msg, uint8_t* payload) {
     
     if (!rb || !msg || priority < 0 || priority > 3) {
         return -1;

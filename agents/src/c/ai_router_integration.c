@@ -35,9 +35,12 @@
 #include <time.h>
 #include <sys/mman.h>
 #include <x86intrin.h>
+#include <math.h>
 
-// Include AI router header first (which includes ultra_fast_protocol.h)
+// Include AI router header first (which includes agent_protocol.h)
 #include "ai_enhanced_router.h"
+// Include vector router integration
+#include "vector_router.h"
 // Then include other headers
 #include "compatibility_layer.h"
 
@@ -87,6 +90,12 @@ typedef struct __attribute__((aligned(64))) {
     
     _Atomic uint64_t model_updates;
     _Atomic uint64_t threshold_adjustments;
+    
+    // Vector router performance metrics
+    _Atomic uint64_t vector_searches_total;
+    _Atomic uint64_t vector_searches_p_core;
+    _Atomic uint64_t vector_searches_e_core;
+    _Atomic uint64_t vector_avg_latency_us;
 } integration_stats_t;
 
 // Adaptive batch management
@@ -174,6 +183,12 @@ typedef struct __attribute__((aligned(4096))) {
 
 // Global service instance
 static ai_integration_service_t* g_integration_service = NULL;
+
+// Global vector router instance
+static VectorRouterHandle* g_vector_router = NULL;
+
+// Forward declarations for vector router functions
+static void ai_router_populate_vector_database(void);
 
 // ============================================================================
 // PERFORMANCE FEEDBACK SYSTEM
@@ -465,7 +480,7 @@ static uint32_t integrated_route_message(const enhanced_msg_header_t* msg, const
         if (g_integration_service && g_integration_service->original_route_function) {
             return g_integration_service->original_route_function(msg, payload);
         }
-        return msg->target_agent; // Simple passthrough
+        return msg->target_agents[0]; // Simple passthrough
     }
     
     uint64_t start_time = __builtin_ia32_rdtsc();
@@ -521,7 +536,7 @@ static uint32_t integrated_route_message(const enhanced_msg_header_t* msg, const
             if (service->original_route_function) {
                 routing_result = service->original_route_function(msg, payload);
             } else {
-                routing_result = msg->target_agent;
+                routing_result = msg->target_agents[0];
             }
             
             atomic_fetch_add(&service->stats.fallback_routing_count, 1);
@@ -531,7 +546,7 @@ static uint32_t integrated_route_message(const enhanced_msg_header_t* msg, const
         if (service->original_route_function) {
             routing_result = service->original_route_function(msg, payload);
         } else {
-            routing_result = msg->target_agent;
+            routing_result = msg->target_agents[0];
         }
         
         atomic_fetch_add(&service->stats.ai_routing_disabled_count, 1);
@@ -646,6 +661,19 @@ int ai_integration_service_init(raft_node_id_t local_node_id) {
         return -1;
     }
     
+    // Initialize Enhanced Vector Router
+    printf("AI Integration: Initializing enhanced vector router...\n");
+    g_vector_router = vector_router_create("/tmp/claude_vectors", VECTOR_DIM_SENTENCE_BERT);
+    if (!g_vector_router) {
+        printf("AI Integration: Failed to initialize vector router (continuing without it)\n");
+    } else {
+        printf("AI Integration: Enhanced vector router initialized successfully\n");
+        printf("AI Integration: Vector router version: %s\n", vector_router_version());
+        
+        // Pre-populate with known agent patterns for semantic routing
+        ai_router_populate_vector_database();
+    }
+    
     // Initialize statistics
     memset(&service->stats, 0, sizeof(integration_stats_t));
     atomic_store(&service->stats.current_system_load, 0.0f);
@@ -670,6 +698,162 @@ int ai_integration_service_init(raft_node_id_t local_node_id) {
     printf("AI Integration: - Distributed Coordination: %s\n", service->distributed_coordination_enabled ? "enabled" : "disabled");
     
     return 0;
+}
+
+// ============================================================================
+// VECTOR ROUTER INTEGRATION FUNCTIONS
+// ============================================================================
+
+// Generate a simple embedding for a message (placeholder - real implementation would use ML)
+static void generate_message_embedding(const char* message, float* embedding, size_t dim) {
+    if (!message || !embedding) return;
+    
+    // Simple hash-based embedding for demonstration
+    // In production, this would use a real embedding model
+    uint32_t hash = 5381;
+    const char* p = message;
+    while (*p) {
+        hash = ((hash << 5) + hash) + *p++;
+    }
+    
+    // Generate pseudo-random embedding based on hash
+    for (size_t i = 0; i < dim; i++) {
+        hash = hash * 1103515245 + 12345;
+        embedding[i] = ((hash / 65536) % 32768) / 32768.0f;
+    }
+    
+    // Normalize the embedding
+    float norm = 0.0f;
+    for (size_t i = 0; i < dim; i++) {
+        norm += embedding[i] * embedding[i];
+    }
+    norm = sqrtf(norm);
+    if (norm > 0.0f) {
+        for (size_t i = 0; i < dim; i++) {
+            embedding[i] /= norm;
+        }
+    }
+}
+
+// Populate vector database with known agent patterns
+static void ai_router_populate_vector_database(void) {
+    if (!g_vector_router) return;
+    
+    printf("AI Integration: Populating vector database with agent patterns...\n");
+    
+    // Define agent pattern embeddings
+    struct {
+        const char* pattern;
+        const char* agent;
+    } agent_patterns[] = {
+        {"build compile make cmake", "constructor_agent"},
+        {"debug trace breakpoint segfault", "debugger_agent"},
+        {"security vulnerability CVE", "security_agent"},
+        {"deploy kubernetes docker", "deployer_agent"},
+        {"monitor metrics prometheus", "monitor_agent"},
+        {"optimize performance speed", "optimizer_agent"},
+        {"lint format style", "linter_agent"},
+        {"test unit integration", "testbed_agent"},
+        {"database sql query", "database_agent"},
+        {"api rest graphql", "apidesigner_agent"},
+        {"web react vue angular", "web_agent"},
+        {"mobile ios android", "mobile_agent"},
+        {"python tkinter streamlit", "pygui_agent"},
+        {"terminal ncurses tui", "tui_agent"},
+        {"machine learning model", "mlops_agent"},
+        {"data analysis pandas", "datascience_agent"},
+        {NULL, NULL}
+    };
+    
+    float embedding[VECTOR_DIM_SENTENCE_BERT];
+    int count = 0;
+    
+    for (int i = 0; agent_patterns[i].pattern != NULL; i++) {
+        generate_message_embedding(agent_patterns[i].pattern, embedding, VECTOR_DIM_SENTENCE_BERT);
+        
+        if (vector_router_insert(g_vector_router, embedding, VECTOR_DIM_SENTENCE_BERT, 
+                                agent_patterns[i].agent)) {
+            count++;
+        }
+    }
+    
+    printf("AI Integration: Populated vector database with %d agent patterns\n", count);
+}
+
+// Route a message using semantic similarity
+static const char* ai_router_semantic_route(const char* message) {
+    if (!g_vector_router || !message) {
+        return NULL;
+    }
+    
+    float embedding[VECTOR_DIM_SENTENCE_BERT];
+    generate_message_embedding(message, embedding, VECTOR_DIM_SENTENCE_BERT);
+    
+    // Search for most similar pattern
+    CSearchResults results = vector_router_search(g_vector_router, embedding, 
+                                                 VECTOR_DIM_SENTENCE_BERT, 3);
+    
+    const char* best_agent = NULL;
+    if (results.count > 0 && results.results[0].similarity > 0.7f) {
+        best_agent = results.results[0].metadata;
+    }
+    
+    // Free results
+    vector_router_free_results(results);
+    
+    return best_agent;
+}
+
+// Process a message with AI-enhanced routing
+int ai_router_process_message(enhanced_msg_header_t* msg, uint8_t* payload) {
+    if (!msg || !g_integration_service) {
+        return -1;
+    }
+    
+    // Try semantic routing if enabled
+    if (g_integration_service->ai_routing_enabled && g_vector_router) {
+        // Extract message content for semantic analysis
+        char message_content[256] = {0};
+        if (payload && msg->payload_len > 0) {
+            size_t copy_len = msg->payload_len < 255 ? msg->payload_len : 255;
+            memcpy(message_content, payload, copy_len);
+            message_content[copy_len] = '\0';
+        }
+        
+        // Get semantic routing suggestion
+        const char* suggested_agent = ai_router_semantic_route(message_content);
+        if (suggested_agent) {
+            printf("AI Router: Semantic routing suggests agent: %s\n", suggested_agent);
+            
+            // Update message routing metadata
+            msg->flags |= 0x8000; // Mark as AI-routed
+            
+            // Update metrics
+            atomic_fetch_add(&g_integration_service->stats.ai_routing_enabled_count, 1);
+        }
+    }
+    
+    return 0;
+}
+
+// Get vector router performance metrics
+void ai_router_get_vector_metrics(void) {
+    if (!g_vector_router) return;
+    
+    uint64_t total_searches = 0;
+    uint64_t p_core_searches = 0;
+    uint64_t e_core_searches = 0;
+    uint64_t avg_latency_us = 0;
+    
+    if (vector_router_get_metrics(g_vector_router, &total_searches, 
+                                 &p_core_searches, &e_core_searches, 
+                                 &avg_latency_us)) {
+        printf("Vector Router Metrics:\n");
+        printf("  Total Searches: %lu\n", total_searches);
+        printf("  P-Core Searches: %lu\n", p_core_searches);
+        printf("  E-Core Searches: %lu\n", e_core_searches);
+        printf("  Avg Latency: %lu μs\n", avg_latency_us);
+    }
 }
 
 void ai_integration_service_cleanup(void) {
@@ -706,6 +890,13 @@ void ai_integration_service_cleanup(void) {
     
     free(service);
     g_integration_service = NULL;
+    
+    // Cleanup Enhanced Vector Router
+    if (g_vector_router) {
+        printf("AI Integration: Shutting down enhanced vector router...\n");
+        vector_router_destroy(g_vector_router);
+        g_vector_router = NULL;
+    }
     
     // Cleanup AI router
     ai_router_service_cleanup();

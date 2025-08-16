@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdatomic.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
@@ -119,7 +120,7 @@ typedef struct __attribute__((aligned(64))) {
 #endif
     
     pthread_mutex_t conn_mutex;
-    atomic_bool active;
+    _Atomic bool active;
     uint64_t last_activity;
 } tls_connection_t;
 
@@ -130,7 +131,7 @@ typedef struct __attribute__((aligned(64))) {
     SSL_SESSION* session;
     time_t created;
     time_t last_used;
-    atomic_bool valid;
+    _Atomic bool valid;
     char hostname[256];
 } tls_session_cache_entry_t;
 
@@ -160,7 +161,7 @@ typedef struct {
     // Connection management
     tls_connection_t* connections;
     uint32_t max_connections;
-    atomic_uint32_t active_connections;
+    _Atomic uint32_t active_connections;
     
     // Session management
     tls_session_cache_entry_t* session_cache;
@@ -200,14 +201,14 @@ typedef struct {
     
     // Performance statistics
     struct {
-        atomic_uint64_t handshakes_completed;
-        atomic_uint64_t handshakes_failed;
-        atomic_uint64_t session_cache_hits;
-        atomic_uint64_t session_cache_misses;
-        atomic_uint64_t ticket_resumptions;
-        atomic_uint64_t bytes_encrypted;
-        atomic_uint64_t bytes_decrypted;
-        atomic_uint64_t cipher_operations;
+        _Atomic uint64_t handshakes_completed;
+        _Atomic uint64_t handshakes_failed;
+        _Atomic uint64_t session_cache_hits;
+        _Atomic uint64_t session_cache_misses;
+        _Atomic uint64_t ticket_resumptions;
+        _Atomic uint64_t bytes_encrypted;
+        _Atomic uint64_t bytes_decrypted;
+        _Atomic uint64_t cipher_operations;
         double avg_handshake_time_us;
     } stats;
     

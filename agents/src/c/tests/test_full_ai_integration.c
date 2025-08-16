@@ -17,7 +17,7 @@
 
 // Include our headers
 #include "ai_enhanced_router.h"
-#include "ultra_fast_protocol.h"
+#include "agent_protocol.h"
 
 int main(void) {
     printf("=== Comprehensive AI Router Integration Test ===\n\n");
