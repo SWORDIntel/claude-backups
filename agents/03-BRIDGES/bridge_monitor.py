@@ -9,7 +9,7 @@ import os
 sys.path.append('/home/ubuntu/Documents/Claude/agents')
 sys.path.append('/home/ubuntu/Documents/Claude/agents/03-BRIDGES')
 
-from claude_agent_bridge import BinaryBridgeConnection, AgentConfig
+from 03-BRIDGES.claude_agent_bridge import BinaryBridgeConnection, AgentConfig
 from agent_bridge_main import bridge, task_agent_invoke
 
 class BridgeMonitor:

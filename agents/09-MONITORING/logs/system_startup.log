@@ -1,0 +1,258 @@
+[0;34m═══════════════════════════════════════════════════════════════[0m[0;34m   Claude Agent Communication System v3.0 - Automatic Startup   [0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/8] Checking prerequisites...[0m[0;31m✗ Missing required tool: docker[0m[0;34m═══════════════════════════════════════════════════════════════[0m[0;34m   Claude Agent Communication System v3.0 - Automatic Startup   [0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/8] Checking prerequisites...[0m[0;31m✗ Missing required tool: docker[0m[0;34m═══════════════════════════════════════════════════════════════[0m[0;34m   Claude Agent Communication System v3.0 - Automatic Startup   [0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/8] Checking prerequisites...[0m[0;31m✗ Missing required tool: docker[0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34m   Claude Agent Binary Protocol v4.0 - Production Build         [0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/6] Detecting CPU features...[0m
+CPU: Intel(R) Core(TM) Ultra 7 165H
+Microcode: 0x24
+⚠ Microcode 0x24 >= 0x20: AVX-512 is DISABLED by Intel
+Meteor Lake detected - applying specific optimizations
+Using AVX2-only optimizations (AVX-512 disabled by microcode)
+[0;32m✓ CPU feature detection complete[0m
+  AVX Support: avx2
+  Optimization flags: -march=alderlake -mno-avx512f -mno-avx512vl -mno-avx512dq -mno-avx512bw -mavx2 -mfma -msse4.2 -O3 -mtune=alderlake -mprefer-vector-width=256 -falign-functions=32 -falign-loops=32
+[1;33m[2/6] Preparing runtime environment...[0m
+[0;32m✓ Runtime environment ready[0m
+[1;33m[3/6] Building binary protocol from existing sources...[0m
+Found primary source: ultra_hybrid_enhanced.c
+Creating patched source with runtime socket path...
+Found assembly optimizations: hybrid_protocol_asm.S
+Compiling binary protocol with flags: -march=alderlake -mno-avx512f -mno-avx512vl -mno-avx512dq -mno-avx512bw -mavx2 -mfma -msse4.2 -O3 -mtune=alderlake -mprefer-vector-width=256 -falign-functions=32 -falign-loops=32
+Include paths:  -I/home/ubuntu/Documents/Claude/agents/02-BINARY-PROTOCOL -I/home/ubuntu/Documents/Claude/agents/02-BINARY-PROTOCOL -I/home/ubuntu/Documents/Claude/agents/05-CONFIG
+Compiling with assembly optimizations...
+⚠ Assembly compilation failed, trying without...
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:20: warning: "_GNU_SOURCE" redefined
+   20 | #define _GNU_SOURCE  // Required for CPU affinity functions (sched_setaffinity, etc.)
+      | 
+<command-line>: note: this is the location of the previous definition
+/usr/bin/ld: /tmp/ccjp41xo.o: in function `enhanced_worker_thread':
+ultra_hybrid_enhanced_patched.c:(.text+0x170): undefined reference to `ring_buffer_read_priority'
+/usr/bin/ld: ultra_hybrid_enhanced_patched.c:(.text+0x199): undefined reference to `ring_buffer_read_priority'
+/usr/bin/ld: ultra_hybrid_enhanced_patched.c:(.text+0x1b6): undefined reference to `ring_buffer_read_priority'
+/usr/bin/ld: ultra_hybrid_enhanced_patched.c:(.text+0x1f1): undefined reference to `work_queue_steal'
+/usr/bin/ld: ultra_hybrid_enhanced_patched.c:(.text+0x251): undefined reference to `process_message_pcore'
+/usr/bin/ld: ultra_hybrid_enhanced_patched.c:(.text+0x27f): undefined reference to `process_message_ecore'
+collect2: error: ld returned 1 exit status
+⚠ Full optimization failed, using safe mode...
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:20: warning: "_GNU_SOURCE" redefined
+   20 | #define _GNU_SOURCE  // Required for CPU affinity functions (sched_setaffinity, etc.)
+      | 
+<command-line>: note: this is the location of the previous definition
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c: In function ‘memcpy_auto’:
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:301:13: warning: AVX vector return without AVX enabled changes the ABI [-Wpsabi]
+  301 |             _mm256_stream_si256(d256, _mm256_load_si256(s256));
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/lib/gcc/x86_64-linux-gnu/13/include/immintrin.h:39,
+                 from /usr/lib/gcc/x86_64-linux-gnu/13/include/x86intrin.h:32,
+                 from /home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:41:
+/usr/lib/gcc/x86_64-linux-gnu/13/include/smmintrin.h: In function ‘crc32c_parallel_enhanced’:
+/usr/lib/gcc/x86_64-linux-gnu/13/include/smmintrin.h:822:1: error: inlining failed in call to ‘always_inline’ ‘_mm_crc32_u8’: target specific option mismatch
+  822 | _mm_crc32_u8 (unsigned int __C, unsigned char __V)
+      | ^~~~~~~~~~~~
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:350:19: note: called from here
+  350 |             crc = _mm_crc32_u8(crc, data[i]);
+      |                   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/13/include/smmintrin.h:841:1: error: inlining failed in call to ‘always_inline’ ‘_mm_crc32_u64’: target specific option mismatch
+  841 | _mm_crc32_u64 (unsigned long long __C, unsigned long long __V)
+      | ^~~~~~~~~~~~~
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:368:26: note: called from here
+  368 |             crc[chunk] = _mm_crc32_u64(crc[chunk], ptr[i]);
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/13/include/smmintrin.h:822:1: error: inlining failed in call to ‘always_inline’ ‘_mm_crc32_u8’: target specific option mismatch
+  822 | _mm_crc32_u8 (unsigned int __C, unsigned char __V)
+      | ^~~~~~~~~~~~
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:374:26: note: called from here
+  374 |             crc[chunk] = _mm_crc32_u8(crc[chunk], data[offset + i]);
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/lib/gcc/x86_64-linux-gnu/13/include/smmintrin.h:822:1: error: inlining failed in call to ‘always_inline’ ‘_mm_crc32_u8’: target specific option mismatch
+  822 | _mm_crc32_u8 (unsigned int __C, unsigned char __V)
+      | ^~~~~~~~~~~~
+/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/ultra_hybrid_enhanced_patched.c:389:21: note: called from here
+  389 |         final_crc = _mm_crc32_u8(final_crc, data[i]);
+      |                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34m   Claude Agent Binary Protocol v4.0 - Production Build         [0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+./BRING_ONLINE.sh: line 325: syntax error near unexpected token `}'
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[0;34m   Claude Agent Binary Protocol v4.0 - Production Build         [0m
+[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/6] Detecting CPU features...[0m
+CPU: Intel(R) Core(TM) Ultra 7 165H
+Microcode: 0x24
+⚠ Microcode 0x24 >= 0x20: AVX-512 is DISABLED by Intel
+Meteor Lake detected - applying specific optimizations
+Using AVX2-only optimizations (AVX-512 disabled by microcode)
+[0;32m✓ CPU feature detection complete[0m
+  AVX Support: avx2
+  Optimization flags: -march=alderlake -mno-avx512f -mno-avx512vl -mno-avx512dq -mno-avx512bw -mavx2 -mfma -msse4.2 -O3 -mtune=alderlake -mprefer-vector-width=256 -falign-functions=32 -falign-loops=32
+[1;33m[2/6] Preparing runtime environment...[0m
+[0;32m✓ Runtime environment ready[0m
+[1;33m[3/6] Building binary protocol from existing sources...[0m
+Found Makefile and missing_functions.c - using Makefile build
+Using build_enhanced_script.sh...
+[0;34m====================================[0m
+[0;34m  ULTRA-HYBRID PROTOCOL BUILD[0m
+[0;34m====================================[0m
+
+[1;33mDetecting system capabilities...[0m
+  [0;32m✓[0m NUMA support detected
+  [1;33m⚠[0m io_uring not available (install liburing-dev)
+  [0;32m✓[0m OpenMP support detected
+  [0;32m✓[0m LTO enabled
+
+[1;33mBuild configuration:[0m
+  Compiler: gcc
+  NPU: Disabled
+  GNA: Disabled
+  GPU: Disabled
+  DPDK: Disabled
+  PGO: Disabled
+
+[1;33mBuilding components...[0m
+  [1;33m⚠[0m NASM not found, skipping assembly optimization
+  [0;34m→[0m Compiling missing_functions.c...
+missing_functions.c: In function ‘process_message_ecore’:
+missing_functions.c:275:65: warning: unused parameter ‘payload’ [-Wunused-parameter]
+  275 | void process_message_ecore(enhanced_msg_header_t* msg, uint8_t* payload) {
+      |                                                        ~~~~~~~~~^~~~~~~
+missing_functions.c: In function ‘get_microcode_version’:
+missing_functions.c:63:13: warning: ignoring return value of ‘fscanf’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+   63 |             fscanf(fp, "%x", &microcode);
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+gcc: warning: [0;34mℹ[0m: linker input file unused because linking not done
+gcc: error: [0;34mℹ[0m: linker input file not found: No such file or directory
+gcc: warning: Microcode: linker input file unused because linking not done
+gcc: error: Microcode: linker input file not found: No such file or directory
+gcc: warning: version:: linker input file unused because linking not done
+gcc: error: version:: linker input file not found: No such file or directory
+gcc: warning: 0x24: linker input file unused because linking not done
+gcc: error: 0x24: linker input file not found: No such file or directory
+gcc: warning: [0;32m✓[0m: linker input file unused because linking not done
+gcc: error: [0;32m✓[0m: linker input file not found: No such file or directory
+gcc: warning: AVX2: linker input file unused because linking not done
+gcc: error: AVX2: linker input file not found: No such file or directory
+gcc: warning: detected: linker input file unused because linking not done
+gcc: error: detected: linker input file not found: No such file or directory
+gcc: warning: [0;32m✓[0m: linker input file unused because linking not done
+gcc: error: [0;32m✓[0m: linker input file not found: No such file or directory
+gcc: warning: PCLMULQDQ: linker input file unused because linking not done
+gcc: error: PCLMULQDQ: linker input file not found: No such file or directory
+gcc: warning: detected: linker input file unused because linking not done
+gcc: error: detected: linker input file not found: No such file or directory
+gcc: warning: [0;32m✓[0m: linker input file unused because linking not done
+gcc: error: [0;32m✓[0m: linker input file not found: No such file or directory
+gcc: warning: AES-NI: linker input file unused because linking not done
+gcc: error: AES-NI: linker input file not found: No such file or directory
+gcc: warning: detected: linker input file unused because linking not done
+gcc: error: detected: linker input file not found: No such file or directory
+⚠ Enhanced build script failed, trying Makefile...
+-e [1;33mCleaning build artifacts...[0m
+rm -rf build
+make: *** No rule to make target 'enhanced'.  Stop.
+⚠ Makefile build also failed, trying manual fallback...
+Creating patched source with runtime socket path...
+cp: -r not specified; omitting directory '/home/ubuntu/Documents/Claude/agents/02-BINARY-PROTOCOL/'
+[0;34m═══════════════════════════════════════════════════════════════[0m[0;34m   Claude Agent Communication System v3.0 - Automatic Startup   [0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/8] Checking prerequisites...[0m[0;31m✗ Missing required tool: docker[0m[0;34m═══════════════════════════════════════════════════════════════[0m[0;34m   Claude Agent Communication System v3.0 - Automatic Startup   [0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/8] Checking prerequisites...[0m[0;31m✗ Missing required tool: docker-compose[0m[0;34m═══════════════════════════════════════════════════════════════[0m[0;34m   Claude Agent Communication System v3.0 - Automatic Startup   [0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/8] Checking prerequisites...[0m[0;32m✓ NUMA support detected[0m[0;32m✓ Sufficient memory: 62GB[0m[0;32m✓ Prerequisites check complete[0m
+[1;33m[2/8] Building communication system...[0m
+Building ultra-fast binary protocol...
+Microcode 0x24 detected - AVX-512 disabled, using AVX2
+binary-communications-system/ultra_hybrid_enhanced.c:20: warning: "_GNU_SOURCE" redefined
+   20 | #define _GNU_SOURCE  // Required for CPU affinity functions (sched_setaffinity, etc.)
+      | 
+<command-line>: note: this is the location of the previous definition
+Building core agent components...
+Building unified agent runtime...
+[1;33m⚠ Some components could not be built[0m
+[0;32m✓ Build phase complete[0m
+Checking Python dependencies...
+Installing aiohttp...
+Installing numpy...
+Installing prometheus_client...
+Installing pyyaml...
+[0;32m✓ Build complete[0m
+[1;33m[3/8] Initializing configuration...[0m[0;32m✓ Using existing configuration[0m[0;32m✓ Configuration initialized[0m
+[1;33m[4/8] Starting agent runtime...[0mCleaning up existing processes...
+Starting binary communication bridge...
+Binary bridge started with PID: 79119
+Starting Python agent bridge...
+Python bridge started with PID: 79151
+Starting monitor_agent...
+[0;32m✓ 3 services started successfully[0m
+[0;32m✓ Runtime operational[0m
+[1;33m[5/8] Registering 31 agents...[0mRegistering director... [0;32m✓[0mRegistering project_orchestrator... [0;32m✓[0mRegistering architect... [0;32m✓[0mRegistering security... [0;32m✓[0mRegistering constructor... [0;32m✓[0mRegistering testbed... [0;32m✓[0mRegistering optimizer... [0;32m✓[0mRegistering debugger... [0;32m✓[0mRegistering deployer... [0;32m✓[0mRegistering monitor... [0;32m✓[0mRegistering database... [0;32m✓[0mRegistering ml_ops... [0;32m✓[0mRegistering patcher... [0;32m✓[0mRegistering linter... [0;32m✓[0mRegistering docgen... [0;32m✓[0mRegistering infrastructure... [0;32m✓[0mRegistering api_designer... [0;32m✓[0mRegistering web... [0;32m✓[0mRegistering mobile... [0;32m✓[0mRegistering pygui... [0;32m✓[0mRegistering tui... [0;32m✓[0mRegistering data_science... [0;32m✓[0mRegistering c_internal... [0;32m✓[0mRegistering python_internal... [0;32m✓[0mRegistering security_chaos... [0;32m✓[0mRegistering bastion... [0;32m✓[0mRegistering oversight... [0;32m✓[0mRegistering researcher... [0;32m✓[0mRegistering gnu... [0;32m✓[0mRegistering npu... [0;32m✓[0mRegistering planner... [0;32m✓[0m[0;32m✓ All 31 agents registered[0m
+[1;33m[6/8] Starting monitoring stack...[0m[1;33m⚠ Docker not running, skipping monitoring[0m
+[1;33m[7/8] Running validation tests...[0mRunning system validation...
+[1;33m⚠ Validation skipped (continuing)[0m[0;32m✓ Validation complete[0m
+[1;33m[8/8] System Status[0m[0;32m═══════════════════════════════════════════════════════════════[0mRuntime:        [0;31m● STOPPED[0mAgents:         [0;32m● 31 REGISTERED[0mMonitoring:     [1;33m● INACTIVE[0mPerformance:    [0;32m● 4.2M msg/sec capable[0mSecurity:       [0;32m● RBAC + JWT + TLS 1.3[0mProtocol:       [0;32m● Ultra-fast binary (200ns P99)[0m[0;32m═══════════════════════════════════════════════════════════════[0m
+[0;32m✓ Claude Agent Communication System is ONLINE![0m
+Log files:
+  System log:  /home/ubuntu/Documents/Claude/agents/system_startup.log
+  Runtime log: /home/ubuntu/Documents/Claude/agents/runtime.log
+
+Next steps:
+  1. Check status with: ./STATUS.sh
+  2. View logs: tail -f binary_bridge.log
+  3. Test agents: python3 test_agent_communication.py
+
+[0;34mCreating auto-integration hook...[0m[1;33mRun as root to install auto-start service:[0m  sudo cp /home/ubuntu/Documents/Claude/agents/claude-agents.service /etc/systemd/system/
+  sudo systemctl daemon-reload
+  sudo systemctl enable claude-agents.service
+[0;32m✓ Auto-integration module created[0m
+[0;32m═══════════════════════════════════════════════════════════════[0m[0;32m         System successfully brought online at Sat Aug 16 17:04:00 UTC 2025         [0m[0;32m═══════════════════════════════════════════════════════════════[0m
+Agent system is now ONLINE and running in background.
+To check status: ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)'
+To stop: rm /home/ubuntu/Documents/Claude/agents/.online && pkill -f ultra_hybrid_enhanced
+[0;34m═══════════════════════════════════════════════════════════════[0m[0;34m   Claude Agent Communication System v3.0 - Automatic Startup   [0m[0;34m═══════════════════════════════════════════════════════════════[0m
+[1;33m[1/8] Checking prerequisites...[0m[0;32m✓ NUMA support detected[0m[0;32m✓ Sufficient memory: 62GB[0m[0;32m✓ Prerequisites check complete[0m
+[1;33m[2/8] Building communication system...[0m
+Building ultra-fast binary protocol...
+Microcode 0x24 detected - AVX-512 disabled, using AVX2
+binary-communications-system/ultra_hybrid_enhanced.c:20: warning: "_GNU_SOURCE" redefined
+   20 | #define _GNU_SOURCE  // Required for CPU affinity functions (sched_setaffinity, etc.)
+      | 
+<command-line>: note: this is the location of the previous definition
+Building core agent components...
+Building unified agent runtime...
+[1;33m⚠ Some components could not be built[0m
+[0;32m✓ Build phase complete[0m
+Checking Python dependencies...
+Installing pyyaml...
+[0;32m✓ Build complete[0m
+[1;33m[3/8] Initializing configuration...[0m[0;32m✓ Using existing configuration[0m[0;32m✓ Configuration initialized[0m
+[1;33m[4/8] Starting agent runtime...[0mCleaning up existing processes...
+Starting binary communication bridge...
+Binary bridge started with PID: 79963
+Starting Python agent bridge...
+Python bridge started with PID: 80034
+Starting monitor_agent...
+[0;32m✓ 3 services started successfully[0m
+[0;32m✓ Runtime operational[0m
+[1;33m[5/8] Registering 31 agents...[0mRegistering director... [0;32m✓[0mRegistering project_orchestrator... [0;32m✓[0mRegistering architect... [0;32m✓[0mRegistering security... [0;32m✓[0mRegistering constructor... [0;32m✓[0mRegistering testbed... [0;32m✓[0mRegistering optimizer... [0;32m✓[0mRegistering debugger... [0;32m✓[0mRegistering deployer... [0;32m✓[0mRegistering monitor... [0;32m✓[0mRegistering database... [0;32m✓[0mRegistering ml_ops... [0;32m✓[0mRegistering patcher... [0;32m✓[0mRegistering linter... [0;32m✓[0mRegistering docgen... [0;32m✓[0mRegistering infrastructure... [0;32m✓[0mRegistering api_designer... [0;32m✓[0mRegistering web... [0;32m✓[0mRegistering mobile... [0;32m✓[0mRegistering pygui... [0;32m✓[0mRegistering tui... [0;32m✓[0mRegistering data_science... [0;32m✓[0mRegistering c_internal... [0;32m✓[0mRegistering python_internal... [0;32m✓[0mRegistering security_chaos... [0;32m✓[0mRegistering bastion... [0;32m✓[0mRegistering oversight... [0;32m✓[0mRegistering researcher... [0;32m✓[0mRegistering gnu... [0;32m✓[0mRegistering npu... [0;32m✓[0mRegistering planner... [0;32m✓[0m[0;32m✓ All 31 agents registered[0m
+[1;33m[6/8] Starting monitoring stack...[0m[1;33m⚠ Docker not running, skipping monitoring[0m
+[1;33m[7/8] Running validation tests...[0mRunning system validation...
+[1;33m⚠ Validation skipped (continuing)[0m[0;32m✓ Validation complete[0m
+[1;33m[8/8] System Status[0m[0;32m═══════════════════════════════════════════════════════════════[0mRuntime:        [0;31m● STOPPED[0mAgents:         [0;32m● 31 REGISTERED[0mMonitoring:     [1;33m● INACTIVE[0mPerformance:    [0;32m● 4.2M msg/sec capable[0mSecurity:       [0;32m● RBAC + JWT + TLS 1.3[0mProtocol:       [0;32m● Ultra-fast binary (200ns P99)[0m[0;32m═══════════════════════════════════════════════════════════════[0m
+[0;32m✓ Claude Agent Communication System is ONLINE![0m
+Log files:
+  System log:  /home/ubuntu/Documents/Claude/agents/system_startup.log
+  Runtime log: /home/ubuntu/Documents/Claude/agents/runtime.log
+
+Next steps:
+  1. Check status with: ./STATUS.sh
+  2. View logs: tail -f binary_bridge.log
+  3. Test agents: python3 test_agent_communication.py
+
+[0;34mCreating auto-integration hook...[0m[1;33mRun as root to install auto-start service:[0m  sudo cp /home/ubuntu/Documents/Claude/agents/claude-agents.service /etc/systemd/system/
+  sudo systemctl daemon-reload
+  sudo systemctl enable claude-agents.service
+[0;32m✓ Auto-integration module created[0m
+[0;32m═══════════════════════════════════════════════════════════════[0m[0;32m         System successfully brought online at Sat Aug 16 17:14:18 UTC 2025         [0m[0;32m═══════════════════════════════════════════════════════════════[0m
+Agent system is now ONLINE and running in background.
+To check status: ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)'
+To stop: rm /home/ubuntu/Documents/Claude/agents/.online && pkill -f ultra_hybrid_enhanced

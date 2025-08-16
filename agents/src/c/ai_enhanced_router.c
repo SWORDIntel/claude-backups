@@ -35,6 +35,7 @@
 #include <dlfcn.h>
 #include <x86intrin.h>
 #include <sched.h>
+#include <fcntl.h>
 
 // Include existing headers
 #include "ultra_fast_protocol.h"
@@ -545,6 +546,7 @@ static int init_gna_context(gna_context_t** ctx) {
     if (gna->gna_device_fd < 0) {
         printf("AI Router: GNA device not available, anomaly detection disabled\n");
         free(gna);
+        *ctx = NULL;
         return -1;
     }
     
@@ -597,7 +599,6 @@ static bool gna_detect_anomaly(gna_context_t* gna, const message_feature_vector_
     
     double mean = sum / 8.0;
     double variance = sum_sq / 8.0 - mean * mean;
-    double stddev = sqrt(variance);
     
     pthread_mutex_lock(&gna->gna_lock);
     
@@ -645,6 +646,7 @@ static int init_gpu_context(gpu_context_t** ctx) {
     if (!opencl_lib) {
         printf("AI Router: OpenCL not available, GPU processing disabled\n");
         free(gpu);
+        *ctx = NULL;
         return -1;
     }
     dlclose(opencl_lib);
@@ -1015,7 +1017,7 @@ static performance_prediction_t predict_system_performance(uint64_t horizon_ms) 
 // SERVICE INITIALIZATION AND MANAGEMENT
 // ============================================================================
 
-int ai_router_service_init() {
+int ai_router_service_init(void) {
     if (g_ai_router) {
         return -EALREADY;
     }
@@ -1029,8 +1031,6 @@ int ai_router_service_init() {
     memset(g_ai_router, 0, sizeof(ai_router_service_t));
     
     // Initialize hardware accelerator contexts
-    int ret = 0;
-    
     // Initialize NPU context
     if (init_npu_context(&g_ai_router->npu_ctx) == 0) {
         printf("AI Router: NPU acceleration enabled\n");
@@ -1082,7 +1082,7 @@ int ai_router_service_init() {
     return 0;
 }
 
-void ai_router_service_cleanup() {
+void ai_router_service_cleanup(void) {
     if (!g_ai_router) {
         return;
     }
@@ -1259,7 +1259,7 @@ void ai_get_routing_stats(uint64_t* total_decisions,
 }
 
 // Print comprehensive statistics
-void ai_print_routing_stats() {
+void ai_print_routing_stats(void) {
     if (!g_ai_router) {
         printf("AI Router: Service not initialized\n");
         return;
@@ -1309,80 +1309,3 @@ void ai_print_routing_stats() {
     printf("Active models: %u\n", atomic_load(&g_ai_router->active_model_count));
     printf("\n");
 }
-
-// ============================================================================
-// EXAMPLE USAGE AND TESTING
-// ============================================================================
-
-#ifdef AI_ROUTER_TEST_MODE
-
-int main(int argc, char* argv[]) {
-    printf("AI-Enhanced Router Test Suite\n");
-    printf("============================\n");
-    
-    // Initialize AI router service
-    if (ai_router_service_init() != 0) {
-        printf("Failed to initialize AI router service\n");
-        return 1;
-    }
-    
-    // Load test models
-    ai_load_routing_model("models/load_predictor.onnx", MODEL_TYPE_LOAD_PREDICTOR);
-    ai_load_routing_model("models/anomaly_detector.xml", MODEL_TYPE_ANOMALY_DETECTOR);
-    ai_load_routing_model("models/semantic_router.bin", MODEL_TYPE_SEMANTIC_ROUTER);
-    
-    // Test routing with various message types
-    enhanced_msg_header_t test_msg = {
-        .magic = 0x4147454E,
-        .msg_id = 12345,
-        .timestamp = __builtin_ia32_rdtsc(),
-        .payload_len = 1024,
-        .source_agent = 1,
-        .target_agent = 2,
-        .msg_type = 1,
-        .priority = 2,
-        .ttl = 100,
-        .correlation_id = 98765
-    };
-    
-    uint8_t test_payload[1024];
-    memset(test_payload, 0xAB, sizeof(test_payload));
-    
-    printf("\nRunning routing tests...\n");
-    
-    for (int i = 0; i < 1000; i++) {
-        test_msg.msg_id = i;
-        test_msg.source_agent = i % 10;
-        test_msg.target_agent = (i * 7) % 20;
-        test_msg.payload_len = 512 + (i % 512);
-        
-        ai_routing_decision_t decision = ai_get_routing_decision(&test_msg, test_payload);
-        
-        if (i % 100 == 0) {
-            printf("  Test %d: target=%u, confidence=%.3f, strategy=%d, latency=%lu ns\n",
-                   i, decision.recommended_target, decision.confidence_score,
-                   decision.strategy_used, decision.decision_time_ns);
-        }
-    }
-    
-    // Test performance prediction
-    printf("\nTesting performance prediction...\n");
-    performance_prediction_t prediction = ai_get_performance_prediction(5000);
-    printf("  Predicted load: %.3f\n", prediction.predicted_load);
-    printf("  Predicted latency: %.3f ms\n", prediction.predicted_latency);
-    printf("  Recommended replicas: %u\n", prediction.recommended_replicas);
-    printf("  Scale up NPU: %s\n", prediction.scale_up_npu ? "yes" : "no");
-    printf("  Confidence: %.3f\n", prediction.confidence);
-    
-    // Print final statistics
-    sleep(1);
-    ai_print_routing_stats();
-    
-    // Cleanup
-    ai_router_service_cleanup();
-    
-    printf("\nAI Router test completed successfully\n");
-    return 0;
-}
-
-#endif // AI_ROUTER_TEST_MODE

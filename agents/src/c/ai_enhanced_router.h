@@ -387,6 +387,85 @@ bool ai_is_initialized(void);
 uint64_t ai_get_timestamp_ns(void);
 
 // ============================================================================
+// INTEGRATION SERVICE API (from ai_router_integration.c)
+// ============================================================================
+
+// For integration with existing transport layer
+typedef uint32_t raft_node_id_t;
+
+/**
+ * Initialize AI integration service
+ * @param local_node_id Local node identifier for distributed coordination
+ * @return 0 on success, negative error code on failure
+ */
+int ai_integration_service_init(raft_node_id_t local_node_id);
+
+/**
+ * Cleanup AI integration service
+ */
+void ai_integration_service_cleanup(void);
+
+/**
+ * Enable/disable AI routing in integration layer
+ * @param enabled True to enable, false to disable
+ * @return 0 on success, negative error code on failure
+ */
+int ai_integration_set_ai_routing_enabled(bool enabled);
+
+/**
+ * Set fallback routing function
+ * @param route_func Original routing function for fallback
+ * @return 0 on success, negative error code on failure
+ */
+int ai_integration_set_fallback_router(uint32_t (*route_func)(const enhanced_msg_header_t*, const void*));
+
+/**
+ * Get integrated routing function
+ * @return Function pointer for integrated routing
+ */
+uint32_t (*ai_integration_get_router(void))(const enhanced_msg_header_t*, const void*);
+
+/**
+ * Get integration statistics
+ * @param total_messages Output: total messages processed
+ * @param ai_routed Output: messages routed by AI
+ * @param traditional_routed Output: messages routed traditionally
+ * @param current_load Output: current system load
+ * @param ai_confidence Output: current AI confidence level
+ */
+void ai_integration_get_stats(uint64_t* total_messages,
+                             uint64_t* ai_routed,
+                             uint64_t* traditional_routed,
+                             float* current_load,
+                             float* ai_confidence);
+
+/**
+ * Print integration statistics
+ */
+void ai_integration_print_stats(void);
+
+/**
+ * Get current adaptive thresholds
+ * @param confidence_threshold Output: confidence threshold
+ * @param load_threshold Output: load threshold
+ * @param latency_threshold_ns Output: latency threshold in nanoseconds
+ */
+void ai_integration_get_thresholds(float* confidence_threshold,
+                                  float* load_threshold,
+                                  uint64_t* latency_threshold_ns);
+
+/**
+ * Update adaptive thresholds
+ * @param confidence_threshold New confidence threshold
+ * @param load_threshold New load threshold
+ * @param latency_threshold_ns New latency threshold
+ * @return 0 on success, negative error code on failure
+ */
+int ai_integration_update_thresholds(float confidence_threshold,
+                                    float load_threshold,
+                                    uint64_t latency_threshold_ns);
+
+// ============================================================================
 // ERROR CODES
 // ============================================================================
 
@@ -401,6 +480,12 @@ uint64_t ai_get_timestamp_ns(void);
 #define AI_ROUTER_ERROR_CONFIG      -8
 #define AI_ROUTER_ERROR_IO          -9
 #define AI_ROUTER_ERROR_TIMEOUT     -10
+
+// Additional error codes
+#define EALREADY                    114  // Operation already in progress
+#define ENOSPC                      28   // No space left on device
+#define EINVAL                      22   // Invalid argument
+#define ENOMEM                      12   // Out of memory
 
 #ifdef __cplusplus
 }

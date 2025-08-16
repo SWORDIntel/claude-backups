@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional
 sys.path.append('/home/ubuntu/Documents/Claude/agents/03-BRIDGES')
 sys.path.append('/home/ubuntu/Documents/Claude/agents/04-SOURCE/python-modules')
 
-from claude_agent_bridge import BinaryBridgeConnection, AgentConfig
+from 03-BRIDGES.claude_agent_bridge import BinaryBridgeConnection, AgentConfig
 from ENHANCED_AGENT_INTEGRATION import AgentMessage, AgentOrchestrator, Priority
 from statusline_bridge import update_statusline, get_statusline
 

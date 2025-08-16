@@ -28,10 +28,11 @@
 #include <sched.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
-#if HAVE_LIBURING
+// Include io_uring - better to have it than not
+#ifdef __linux__
 #include <linux/io_uring.h>
-#include <liburing.h>
 #endif
+#include <liburing.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -40,6 +41,14 @@
 #include <cpuid.h>
 #include <x86intrin.h>
 #include <dlfcn.h>
+#include <numa.h>
+#include <numaif.h>
+#include <immintrin.h>  // Include all SIMD intrinsics
+#include <xmmintrin.h>
+#include <emmintrin.h>
+#include <smmintrin.h>
+#include <nmmintrin.h>
+#include <ammintrin.h>
 
 // Fallback functions for systems without io_uring
 #if !HAVE_LIBURING
@@ -95,35 +104,19 @@ typedef enum {
     CORE_TYPE_GNA = 5
 } core_type_t;
 
-// Enhanced message header with AI metadata
-typedef struct __attribute__((packed, aligned(64))) {
-    // First cache line - hot path
-    uint32_t magic;
-    uint32_t msg_id;
-    uint64_t timestamp;
-    uint32_t payload_len;
-    uint32_t checksum;
-    uint16_t source_agent;
-    uint16_t target_agent;
-    uint8_t msg_type;
-    uint8_t priority;
-    uint8_t flags;
-    uint8_t ttl;
-    uint32_t correlation_id;
-    uint8_t padding1[24];
-    
-    // Second cache line - AI metadata
-    float ai_confidence;      // NPU routing confidence
-    float anomaly_score;      // GNA anomaly score
-    uint16_t predicted_path[4]; // NPU predicted route
-    uint64_t feature_hash;    // Message feature fingerprint
-    uint8_t gpu_batch_id;     // GPU batch assignment
-    uint8_t padding2[31];
-} enhanced_msg_header_t;
+// Include compatibility layer for base types and functions
+#include "../src/c/compatibility_layer.h"
+#include "ring_buffer_adapter.h"
+#include "enhanced_msg_extended.h"  // Extended message format with all features
 
-// Now include compatibility layer after struct is defined
-#define ENHANCED_MSG_HEADER_T_DEFINED 1
-#include "compatibility_layer.h"
+// Forward declarations for compatibility layer functions
+extern ring_buffer_t* ring_buffer_create(uint32_t max_size);
+extern void ring_buffer_destroy(ring_buffer_t* rb);
+extern int ring_buffer_write_priority(ring_buffer_t* rb, int priority, 
+                                      enhanced_msg_header_t* msg, uint8_t* payload);
+
+// For now, use the compatibility layer's enhanced_msg_header_t directly
+// AI metadata can be stored in the payload for special messages
 
 // ============================================================================
 // SYSTEM CAPABILITY DETECTION
@@ -396,6 +389,7 @@ static uint32_t crc32c_parallel_enhanced(const uint8_t* data, size_t len) {
 // ENHANCED RING BUFFER WITH MULTIPLE QUEUES
 // ============================================================================
 
+// Enhanced ring buffer that wraps compatibility layer with additional features
 typedef struct __attribute__((aligned(PAGE_SIZE))) {
     // Per-priority queues
     struct {
@@ -418,7 +412,68 @@ typedef struct __attribute__((aligned(PAGE_SIZE))) {
     
 } enhanced_ring_buffer_t;
 
-// Create NUMA-aware ring buffer
+// Enhanced wrapper that combines both implementations
+typedef struct {
+    void* compat_rb;  // Compatibility layer ring buffer for actual queue ops
+    enhanced_ring_buffer_t* stats;  // Statistics and NUMA info
+} hybrid_ring_buffer_t;
+
+// Create hybrid ring buffer combining both systems
+static hybrid_ring_buffer_t* create_hybrid_ring_buffer(size_t size_per_queue) {
+    hybrid_ring_buffer_t* hybrid = calloc(1, sizeof(hybrid_ring_buffer_t));
+    if (!hybrid) return NULL;
+    
+    // Create compatibility layer ring buffer
+    hybrid->compat_rb = (void*)ring_buffer_create(size_per_queue);
+    if (!hybrid->compat_rb) {
+        free(hybrid);
+        return NULL;
+    }
+    
+    // Allocate statistics structure on NUMA node
+    int numa_node = numa_node_of_cpu(sched_getcpu());
+    hybrid->stats = numa_alloc_onnode(sizeof(enhanced_ring_buffer_t), numa_node);
+    if (!hybrid->stats) {
+        ring_buffer_destroy(hybrid->compat_rb);
+        free(hybrid);
+        return NULL;
+    }
+    
+    hybrid->stats->numa_node = numa_node;
+    return hybrid;
+}
+
+// Destroy hybrid ring buffer
+static void destroy_hybrid_ring_buffer(hybrid_ring_buffer_t* hybrid) {
+    if (!hybrid) return;
+    if (hybrid->compat_rb) ring_buffer_destroy((ring_buffer_t*)hybrid->compat_rb);
+    if (hybrid->stats) numa_free(hybrid->stats, sizeof(enhanced_ring_buffer_t));
+    free(hybrid);
+}
+
+// Write with statistics tracking
+static bool hybrid_ring_buffer_write(hybrid_ring_buffer_t* hybrid, int priority,
+                                     const enhanced_msg_header_t* msg,
+                                     const void* payload) {
+    if (!hybrid || !hybrid->compat_rb) return false;
+    
+    // Use compatibility layer for actual write
+    int result = ring_buffer_write_priority((ring_buffer_t*)hybrid->compat_rb, priority, 
+                                           (enhanced_msg_header_t*)msg, (uint8_t*)payload);
+    
+    if (result == 0) {
+        // Update statistics
+        atomic_fetch_add(&hybrid->stats->total_messages, 1);
+        atomic_fetch_add(&hybrid->stats->total_bytes, 
+                        sizeof(enhanced_msg_header_t) + msg->payload_size);
+    } else {
+        atomic_fetch_add(&hybrid->stats->drops[priority], 1);
+    }
+    
+    return (result == 0);
+}
+
+// Create NUMA-aware ring buffer (original, now unused directly)
 static enhanced_ring_buffer_t* create_enhanced_ring_buffer(size_t size_per_queue) {
     // Ensure power of 2
     size_t actual_size = 1;
@@ -451,7 +506,7 @@ static enhanced_ring_buffer_t* create_enhanced_ring_buffer(size_t size_per_queue
                 for (int j = 0; j < i; j++) {
                     munmap(rb->queues[j].buffer, rb->queues[j].size);
                 }
-                numa_free(rb, sizeof(enhanced_ring_buffer_t));
+                destroy_hybrid_ring_buffer((hybrid_ring_buffer_t*)rb);
                 return NULL;
             }
         }
@@ -473,13 +528,14 @@ static enhanced_ring_buffer_t* create_enhanced_ring_buffer(size_t size_per_queue
 }
 
 // Write to appropriate queue based on priority
-static bool ring_buffer_write_priority(enhanced_ring_buffer_t* rb,
+#if 0  // Old function, replaced by hybrid
+static bool ring_buffer_write_priority_old(enhanced_ring_buffer_t* rb,
                                       const enhanced_msg_header_t* msg,
                                       const void* payload) {
     int priority = msg->priority;
     if (priority > 5) priority = 5;
     
-    size_t total_size = sizeof(enhanced_msg_header_t) + msg->payload_len;
+    size_t total_size = sizeof(enhanced_msg_header_t) + msg->payload_size;
     
     // Try to write to priority queue
     uint64_t write_pos = atomic_load_explicit(&rb->queues[priority].write_pos,
@@ -506,8 +562,8 @@ static bool ring_buffer_write_priority(enhanced_ring_buffer_t* rb,
     
     // Copy header and payload
     memcpy_auto(dst, msg, sizeof(enhanced_msg_header_t));
-    if (payload && msg->payload_len > 0) {
-        memcpy_auto(dst + sizeof(enhanced_msg_header_t), payload, msg->payload_len);
+    if (payload && msg->payload_size > 0) {
+        memcpy_auto(dst + sizeof(enhanced_msg_header_t), payload, msg->payload_size);
     }
     
     // Update write position
@@ -521,6 +577,8 @@ static bool ring_buffer_write_priority(enhanced_ring_buffer_t* rb,
     
     return true;
 }
+// End of commented out local ring buffer implementation
+#endif  // Close the #if 0 block
 
 // ============================================================================
 // WORK-STEALING THREAD POOL WITH CORE AFFINITY
@@ -532,17 +590,17 @@ typedef struct {
     void** tasks;
     size_t capacity;
     char padding[CACHE_LINE_SIZE - 32];
-} work_queue_t;
+} work_stealing_queue_t;  // Renamed to avoid conflict with compatibility layer
 
 typedef struct {
     pthread_t thread;
     int thread_id;
     int cpu_id;
     core_type_t core_type;
-    work_queue_t* local_queue;
-    work_queue_t** all_queues;
+    work_stealing_queue_t* local_queue;
+    work_stealing_queue_t** all_queues;
     int num_threads;
-    enhanced_ring_buffer_t* ring_buffer;
+    hybrid_ring_buffer_t* ring_buffer;  // Hybrid ring buffer with stats
     volatile bool running;
     
     // Statistics
@@ -559,7 +617,7 @@ typedef struct {
 } thread_pool_t;
 
 // Create optimized thread pool
-static thread_pool_t* create_thread_pool(enhanced_ring_buffer_t* rb) {
+static thread_pool_t* create_thread_pool(hybrid_ring_buffer_t* rb) {
     thread_pool_t* pool = calloc(1, sizeof(thread_pool_t));
     
     // Create workers for P-cores and E-cores
@@ -567,10 +625,10 @@ static thread_pool_t* create_thread_pool(enhanced_ring_buffer_t* rb) {
     pool->workers = calloc(pool->num_workers, sizeof(worker_thread_t));
     
     // Allocate work queues
-    work_queue_t** all_queues = calloc(pool->num_workers, sizeof(work_queue_t*));
+    work_stealing_queue_t** all_queues = calloc(pool->num_workers, sizeof(work_stealing_queue_t*));
     
     for (int i = 0; i < pool->num_workers; i++) {
-        all_queues[i] = aligned_alloc(CACHE_LINE_SIZE, sizeof(work_queue_t));
+        all_queues[i] = aligned_alloc(CACHE_LINE_SIZE, sizeof(work_stealing_queue_t));
         all_queues[i]->capacity = 4096;
         all_queues[i]->tasks = calloc(4096, sizeof(void*));
         atomic_store(&all_queues[i]->top, 0);
@@ -589,6 +647,8 @@ static thread_pool_t* create_thread_pool(enhanced_ring_buffer_t* rb) {
         pool->workers[i].running = true;
         pool->num_p_workers++;
     }
+    
+    // Store adapter reference in pool if needed
     
     // Initialize E-core workers
     for (int i = 0; i < g_system_caps.num_e_cores; i++) {
@@ -658,9 +718,9 @@ static void npu_batch_classify(enhanced_msg_header_t* messages[],
             
             // Extract features (simplified)
             g_npu_ctx->input_tensor[i * 128 + 0] = msg->priority / 5.0f;
-            g_npu_ctx->input_tensor[i * 128 + 1] = msg->payload_len / 65536.0f;
-            g_npu_ctx->input_tensor[i * 128 + 2] = msg->source_agent / 65536.0f;
-            g_npu_ctx->input_tensor[i * 128 + 3] = msg->target_agent / 65536.0f;
+            g_npu_ctx->input_tensor[i * 128 + 1] = msg->payload_size / 65536.0f;
+            g_npu_ctx->input_tensor[i * 128 + 2] = msg->source_id / 65536.0f;
+            g_npu_ctx->input_tensor[i * 128 + 3] = msg->target_id / 65536.0f;
             // ... more features
         }
         
@@ -727,9 +787,9 @@ static bool gna_check_anomaly(const enhanced_msg_header_t* msg) {
     // Extract pattern from message
     float pattern[16];
     pattern[0] = msg->priority;
-    pattern[1] = msg->payload_len;
-    pattern[2] = msg->source_agent;
-    pattern[3] = msg->target_agent;
+    pattern[1] = msg->payload_size;
+    pattern[2] = msg->source_id;
+    pattern[3] = msg->target_id;
     pattern[4] = msg->ai_confidence;
     pattern[5] = msg->anomaly_score;
     
@@ -833,7 +893,7 @@ static void init_io_uring() {
 }
 
 // Async write using io_uring
-static int async_write(int fd, const void* buf, size_t len) {
+static int async_write_simple(int fd, const void* buf, size_t len) {  // Renamed to avoid conflict
     if (!g_io_ctx.initialized) {
         return write(fd, buf, len);  // Fallback to sync
     }
@@ -882,7 +942,7 @@ static void* enhanced_worker_thread(void* arg) {
         if (worker->core_type == CORE_TYPE_PERFORMANCE) {
             // P-cores handle critical and high priority
             for (int p = PRIORITY_CRITICAL; p <= PRIORITY_HIGH; p++) {
-                if (ring_buffer_read_priority(worker->ring_buffer, p, 
+                if (ring_buffer_read_priority(worker->ring_buffer->compat_rb, p, 
                                             &msg, payload)) {
                     // Process high-priority message
                     process_message_pcore(&msg, payload);
@@ -893,7 +953,7 @@ static void* enhanced_worker_thread(void* arg) {
         } else {
             // E-cores handle normal and low priority
             for (int p = PRIORITY_NORMAL; p <= PRIORITY_BACKGROUND; p++) {
-                if (ring_buffer_read_priority(worker->ring_buffer, p,
+                if (ring_buffer_read_priority(worker->ring_buffer->compat_rb, p,
                                             &msg, payload)) {
                     // Process normal message
                     process_message_ecore(&msg, payload);
@@ -942,8 +1002,8 @@ static void run_enhanced_benchmark(int duration_seconds) {
     printf("\n=== ENHANCED PROTOCOL BENCHMARK ===\n");
     printf("Running for %d seconds...\n", duration_seconds);
     
-    // Create ring buffer
-    enhanced_ring_buffer_t* rb = create_enhanced_ring_buffer(RING_BUFFER_SIZE / 6);
+    // Create hybrid ring buffer combining both systems
+    hybrid_ring_buffer_t* rb = create_hybrid_ring_buffer(RING_BUFFER_SIZE / 6);
     if (!rb) {
         printf("Failed to create ring buffer\n");
         return;
@@ -962,7 +1022,7 @@ static void run_enhanced_benchmark(int duration_seconds) {
     enhanced_msg_header_t msg = {
         .magic = 0x4147454E,  // "AGEN"
         .msg_type = 1,
-        .payload_len = 1024,
+        .payload_size = 1024,
     };
     
     uint8_t payload[1024];
@@ -974,10 +1034,10 @@ static void run_enhanced_benchmark(int duration_seconds) {
     while (time(NULL) - start_time < duration_seconds) {
         // Vary priority
         msg.priority = messages_sent % 6;
-        msg.msg_id = messages_sent;
+        msg.source_id = messages_sent & 0xFFFF;  // Use source_id as msg counter
         msg.timestamp = messages_sent;
-        msg.source_agent = (messages_sent * 7) % 100;
-        msg.target_agent = (messages_sent * 13) % 100;
+        msg.source_id = (messages_sent * 7) % 100;
+        msg.target_id = (messages_sent * 13) % 100;
         
         // Calculate checksum
         msg.checksum = crc32c_parallel_enhanced((uint8_t*)&msg, 
@@ -986,12 +1046,14 @@ static void run_enhanced_benchmark(int duration_seconds) {
 #if ENABLE_GNA
         // Check for anomalies
         if (gna_check_anomaly(&msg)) {
-            msg.anomaly_score = 0.9;
+            // Anomaly detection would set priority higher
+            msg.priority = 0;  // Critical priority for anomalies
         }
 #endif
         
-        // Send message
-        if (ring_buffer_write_priority(rb, &msg, payload)) {
+        // Send message with priority based on message index
+        int priority = messages_sent % 4;  // Rotate through priorities
+        if (hybrid_ring_buffer_write(rb, priority, &msg, payload)) {
             messages_sent++;
         }
         
@@ -1018,17 +1080,19 @@ static void run_enhanced_benchmark(int duration_seconds) {
     // Print statistics
     printf("\n=== RESULTS ===\n");
     printf("Messages sent: %lu\n", messages_sent);
-    printf("Messages processed: %lu\n", atomic_load(&rb->total_messages));
+    printf("Messages processed: %lu\n", atomic_load(&rb->stats->total_messages));
     printf("Total bytes: %.2f GB\n", 
-           atomic_load(&rb->total_bytes) / (1024.0 * 1024 * 1024));
+           atomic_load(&rb->stats->total_bytes) / (1024.0 * 1024 * 1024));
     printf("Throughput: %.0f msg/sec\n", 
            (double)messages_sent / duration_seconds);
     
     // Per-priority statistics
     printf("\nPer-priority drops:\n");
     for (int i = 0; i < 6; i++) {
-        printf("  Priority %d: %lu drops\n", i, 
-               atomic_load(&rb->drops[i]));
+        uint64_t drops = atomic_load(&rb->stats->drops[i]);
+        if (drops > 0) {
+            printf("  Priority %d: %lu drops\n", i, drops);
+        }
     }
     
     // Worker statistics
@@ -1059,11 +1123,8 @@ static void run_enhanced_benchmark(int duration_seconds) {
     }
 #endif
     
-    // Cleanup
-    for (int i = 0; i < 6; i++) {
-        munmap(rb->queues[i].buffer, rb->queues[i].size);
-    }
-    numa_free(rb, sizeof(enhanced_ring_buffer_t));
+    // Cleanup - adapter handles all internal cleanup
+    ring_buffer_destroy_adapter(rb);
     
     for (int i = 0; i < pool->num_workers; i++) {
         free(pool->workers[i].local_queue->tasks);

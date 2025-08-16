@@ -15,7 +15,7 @@ sys.path.append('/home/ubuntu/Documents/Claude/agents')
 sys.path.append('/home/ubuntu/Documents/Claude/agents/03-BRIDGES')
 sys.path.append('/home/ubuntu/Documents/Claude/agents/04-SOURCE/python-modules')
 
-from claude_agent_bridge import BinaryBridgeConnection, AgentConfig
+from 03-BRIDGES.claude_agent_bridge import BinaryBridgeConnection, AgentConfig
 
 class VoiceSystem:
     """Voice input system for agent control"""
