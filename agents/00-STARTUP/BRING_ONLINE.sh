@@ -255,9 +255,10 @@ build_binary_protocol() {
         
         # Check for assembly optimizations
         if [ -f "$BINARY_SRC_DIR/hybrid_protocol_asm.S" ]; then
-        echo "Found assembly optimizations: hybrid_protocol_asm.S"
-        ASM_SOURCE="$BINARY_SRC_DIR/hybrid_protocol_asm.S"
-    fi
+            echo "Found assembly optimizations: hybrid_protocol_asm.S"
+            ASM_SOURCE="$BINARY_SRC_DIR/hybrid_protocol_asm.S"
+        fi
+    fi  # End of USE_MAKEFILE -eq 0 block
     
     # Check for headers
     INCLUDE_FLAGS=""
