@@ -184,6 +184,23 @@ git push origin main
 
 ## Development Guidelines
 
+### Core Development Philosophy ⚠️ CRITICAL ⚠️
+**PRESERVE FUNCTIONALITY OVER SIMPLIFICATION**
+- **NEVER simplify systems just to make them work**
+- **ALWAYS preserve existing functionality when integrating new features**
+- **Use adapter patterns and compatibility layers instead of removing features**
+- **If integration is complex, make it work correctly rather than making it simple**
+- **"Smart way to do this" means finding elegant solutions that preserve ALL capabilities**
+- **When conflicts arise, extend structures rather than remove fields**
+- **Include dependencies we don't need rather than accidentally removing ones we do**
+
+### Integration Approach
+- **Seamless Integration**: New features must work alongside existing systems
+- **Zero Functionality Loss**: Every existing feature must continue working
+- **Comprehensive Solutions**: Use "ultrathink" to plan complete integrations
+- **Adaptive Patterns**: Use adapters, wrappers, and bridges for compatibility
+- **Gradual Enhancement**: Add intelligence without breaking existing paths
+
 ### Creating New Agents
 1. Start with `agents/Template.md`
 2. Define unique UUID and metadata
@@ -198,6 +215,8 @@ git push origin main
 - Follow existing patterns in codebase
 - Check neighboring files for conventions
 - Use existing libraries (check package.json/requirements.txt)
+- Preserve all existing APIs and interfaces
+- Extend rather than replace when possible
 
 ### Testing Requirements
 - Achieve >85% code coverage
@@ -273,6 +292,16 @@ export METEOR_LAKE_OPTIMIZATION=true
 - Verify Task tool parameters
 
 ## Recent Updates
+
+### AI-Enhanced Router Integration v1.0 (2025-08-16) - IN PROGRESS ⚡
+- **AI Router System**: Enhanced ai_enhanced_router.h and .c files with NPU/GNA/GPU acceleration
+- **Integration Philosophy**: Preserving ALL existing functionality while adding AI routing intelligence  
+- **Approach**: Using comprehensive adapter patterns and compatibility layers (NOT simplification)
+- **Current Challenge**: Type conflicts between enhanced_msg_header_t definitions - MUST preserve all fields from both systems
+- **Solution Strategy**: Create unified structure that extends rather than replaces existing definitions
+- **Philosophy Applied**: "Smart way" means elegant integration without losing ANY capabilities
+- **OpenSSL Dependency**: Successfully installed libssl-dev for distributed_network.h integration
+- **Next Phase**: Complete type unification and comprehensive testing
 
 ### Agent Integration Complete v3.1 (2025-08-14)
 - **All 31 Agents Updated**: Every agent now has communication system integration

@@ -147,6 +147,15 @@ typedef struct __attribute__((aligned(UFP_CACHE_LINE_SIZE))) {
     uint64_t processing_end_ns;        // 8 bytes
     uint32_t retry_count;              // 4 bytes
     uint32_t hop_count;                // 4 bytes
+    
+    // AI Router Extensions (preserving compatibility_layer.h fields)
+    uint16_t predicted_path[4];        // 8 bytes - AI routing prediction path
+    uint64_t feature_hash;             // 8 bytes - Message feature hash for ML
+    uint32_t target_agent;             // 4 bytes - Primary target (compatibility)
+    uint32_t correlation_id;           // 4 bytes - Message correlation ID
+    uint8_t ttl;                       // 1 byte - Time to live
+    uint32_t msg_id;                   // 4 bytes - Unique message identifier
+    uint8_t padding_ai[11];            // 11 bytes - Padding for alignment
 } enhanced_msg_header_t;
 
 // UFP Message structure

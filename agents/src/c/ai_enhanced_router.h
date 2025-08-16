@@ -20,10 +20,11 @@ extern "C" {
 #endif
 
 // ============================================================================
-// FORWARD DECLARATIONS
+// INCLUDES AND FORWARD DECLARATIONS
 // ============================================================================
 
-typedef struct enhanced_msg_header enhanced_msg_header_t;
+// Include main protocol header for enhanced_msg_header_t definition
+#include "ultra_fast_protocol.h"
 
 // ============================================================================
 // AI ROUTING TYPES

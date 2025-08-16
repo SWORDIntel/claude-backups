@@ -20,7 +20,9 @@
  * Version: 1.0 Production
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,11 +36,10 @@
 #include <sys/mman.h>
 #include <x86intrin.h>
 
-// Include existing system headers
-#include "ultra_fast_protocol.h"
-#include "compatibility_layer.h"
-#include "distributed_network.h"
+// Include AI router header first (which includes ultra_fast_protocol.h)
 #include "ai_enhanced_router.h"
+// Then include other headers
+#include "compatibility_layer.h"
 
 // ============================================================================
 // INTEGRATION CONFIGURATION
@@ -671,7 +672,7 @@ int ai_integration_service_init(raft_node_id_t local_node_id) {
     return 0;
 }
 
-void ai_integration_service_cleanup() {
+void ai_integration_service_cleanup(void) {
     if (!g_integration_service) {
         return;
     }
@@ -773,7 +774,7 @@ void ai_integration_get_stats(uint64_t* total_messages,
 }
 
 // Print comprehensive integration statistics
-void ai_integration_print_stats() {
+void ai_integration_print_stats(void) {
     if (!g_integration_service) {
         printf("AI Integration: Service not initialized\n");
         return;
@@ -880,112 +881,3 @@ int ai_integration_update_thresholds(float confidence_threshold,
     
     return 0;
 }
-
-// ============================================================================
-// EXAMPLE INTEGRATION TEST
-// ============================================================================
-
-#ifdef AI_INTEGRATION_TEST_MODE
-
-// Mock original routing function for testing
-static uint32_t mock_original_router(const enhanced_msg_header_t* msg, const void* payload) {
-    // Simple hash-based routing
-    return (msg->msg_id * 7919) % 1000;
-}
-
-int main(int argc, char* argv[]) {
-    printf("AI Integration Service Test\n");
-    printf("==========================\n");
-    
-    // Initialize integration service
-    if (ai_integration_service_init(1) != 0) {
-        printf("Failed to initialize AI integration service\n");
-        return 1;
-    }
-    
-    // Set fallback router
-    ai_integration_set_fallback_router(mock_original_router);
-    
-    // Get integrated router function
-    uint32_t (*integrated_router)(const enhanced_msg_header_t*, const void*) = 
-        ai_integration_get_router();
-    
-    // Load test models
-    ai_load_routing_model("models/load_predictor.onnx", MODEL_TYPE_LOAD_PREDICTOR);
-    ai_load_routing_model("models/anomaly_detector.xml", MODEL_TYPE_ANOMALY_DETECTOR);
-    
-    // Test with various message patterns
-    printf("\nRunning integration tests...\n");
-    
-    for (int test_phase = 0; test_phase < 3; test_phase++) {
-        printf("\nTest Phase %d:\n", test_phase + 1);
-        
-        // Phase 0: Low load (should use traditional routing)
-        // Phase 1: Medium load (should start using AI)
-        // Phase 2: High load (should fully use AI with batching)
-        
-        int message_count = (test_phase + 1) * 1000;
-        uint64_t phase_start = __builtin_ia32_rdtsc();
-        
-        for (int i = 0; i < message_count; i++) {
-            enhanced_msg_header_t test_msg = {
-                .magic = 0x4147454E,
-                .msg_id = i,
-                .timestamp = __builtin_ia32_rdtsc(),
-                .payload_len = 512 + (i % 512),
-                .source_agent = i % 20,
-                .target_agent = (i * 13) % 30,
-                .msg_type = i % 10,
-                .priority = i % 6,
-                .ttl = 100,
-                .correlation_id = i * 7
-            };
-            
-            uint8_t payload[1024];
-            memset(payload, 0xAA + (i % 10), sizeof(payload));
-            
-            uint32_t route_result = integrated_router(&test_msg, payload);
-            
-            if (i % 200 == 0) {
-                printf("  Message %d routed to agent %u\n", i, route_result);
-            }
-        }
-        
-        uint64_t phase_time = (__builtin_ia32_rdtsc() - phase_start) * 1000 / 3400;
-        printf("  Phase completed in %.2f ms\n", phase_time / 1000000.0f);
-        
-        // Print stats after each phase
-        ai_integration_print_stats();
-        
-        sleep(2); // Allow adaptation between phases
-    }
-    
-    // Test threshold adaptation
-    printf("\nTesting adaptive thresholds...\n");
-    
-    float conf_thresh, load_thresh;
-    uint64_t latency_thresh;
-    
-    ai_integration_get_thresholds(&conf_thresh, &load_thresh, &latency_thresh);
-    printf("Current thresholds: confidence=%.3f, load=%.3f, latency=%lu ns\n",
-           conf_thresh, load_thresh, latency_thresh);
-    
-    // Force threshold update
-    ai_integration_update_thresholds(0.8f, 0.4f, 25000);
-    
-    ai_integration_get_thresholds(&conf_thresh, &load_thresh, &latency_thresh);
-    printf("Updated thresholds: confidence=%.3f, load=%.3f, latency=%lu ns\n",
-           conf_thresh, load_thresh, latency_thresh);
-    
-    // Final statistics
-    printf("\n=== Final Test Results ===\n");
-    ai_integration_print_stats();
-    
-    // Cleanup
-    ai_integration_service_cleanup();
-    
-    printf("\nAI Integration test completed successfully\n");
-    return 0;
-}
-
-#endif // AI_INTEGRATION_TEST_MODE

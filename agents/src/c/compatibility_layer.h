@@ -31,29 +31,8 @@ struct io_uring_cqe { int dummy; };
 
 // Forward declarations for missing protocol structures
 #include <stdint.h>
-// Always define the structure for compatibility
-#ifndef ENHANCED_MSG_HEADER_T_DEFINED
-typedef struct {
-    uint32_t magic;
-    uint32_t msg_type;
-    uint32_t source_agent;
-    uint32_t target_agents[16];
-    uint32_t target_count;
-    uint64_t timestamp;
-    uint64_t sequence;
-    uint32_t payload_len;
-    uint32_t flags;
-    uint32_t priority;
-    uint32_t crc32;
-    float ai_confidence;
-    float anomaly_score;
-    uint16_t predicted_path[4];
-    uint64_t feature_hash;
-    uint8_t gpu_batch_id;
-    uint8_t padding2[31];
-} enhanced_msg_header_t;
-#define ENHANCED_MSG_HEADER_T_DEFINED
-#endif /* ENHANCED_MSG_HEADER_T_DEFINED */
+// enhanced_msg_header_t is now defined in ultra_fast_protocol.h with ALL fields
+// No need to redefine - use the comprehensive version from ultra_fast_protocol.h
 
 // System constants
 #ifndef PAGE_SIZE
@@ -77,7 +56,9 @@ static inline void streaming_pipeline_start(void) { }
 static inline int nas_init(void) { return 0; }
 static inline void nas_shutdown(void) { }
 static inline void nas_get_stats(uint32_t* arch, double* fitness, uint32_t* gen) {
-    if(arch) *arch = 100; if(fitness) *fitness = 0.95; if(gen) *gen = 10;
+    if(arch) *arch = 100; 
+    if(fitness) *fitness = 0.95; 
+    if(gen) *gen = 10;
 }
 static inline int digital_twin_init(void) { return 0; }
 static inline void* digital_twin_create(const char* name, int type) {
@@ -85,7 +66,10 @@ static inline void* digital_twin_create(const char* name, int type) {
 }
 static inline void digital_twin_shutdown(void) { }
 static inline void digital_twin_get_stats(uint64_t* syncs, double* latency, uint64_t* pred, uint64_t* anom) {
-    if(syncs) *syncs = 1000; if(latency) *latency = 5.0; if(pred) *pred = 500; if(anom) *anom = 2;
+    if(syncs) *syncs = 1000; 
+    if(latency) *latency = 5.0; 
+    if(pred) *pred = 500; 
+    if(anom) *anom = 2;
 }
 static inline int multimodal_fusion_init(void) { return 0; }
 static inline void* fusion_create_instance(int strategy) { (void)strategy; return (void*)1; }

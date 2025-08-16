@@ -19,7 +19,7 @@
  * Version: 1.0 Production
  */
 
-#define _GNU_SOURCE
+// _GNU_SOURCE defined by compiler flags
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,10 +37,10 @@
 #include <sched.h>
 #include <fcntl.h>
 
-// Include existing headers
-#include "ultra_fast_protocol.h"
+// Include AI router header first (which includes ultra_fast_protocol.h)
+#include "ai_enhanced_router.h"
+// Then include other headers
 #include "compatibility_layer.h"
-#include "distributed_network.h"
 
 // ============================================================================
 // CONSTANTS AND CONFIGURATION
@@ -48,6 +48,7 @@
 
 #define AI_ROUTER_VERSION_MAJOR 1
 #define AI_ROUTER_VERSION_MINOR 0
+#define AI_ROUTER_VERSION_PATCH 0
 
 // AI Model Configuration
 #define MAX_ROUTING_MODELS 16
@@ -71,37 +72,11 @@
 #define MAX_CONCURRENT_INFERENCES 128
 
 // ============================================================================
-// AI ROUTING TYPES AND STRUCTURES
+// AI ROUTING IMPLEMENTATION STRUCTURES
 // ============================================================================
 
-// AI routing strategies
-typedef enum {
-    ROUTE_STRATEGY_MANUAL = 0,
-    ROUTE_STRATEGY_LOAD_BALANCED = 1,
-    ROUTE_STRATEGY_LATENCY_OPTIMAL = 2,
-    ROUTE_STRATEGY_SEMANTIC_SIMILARITY = 3,
-    ROUTE_STRATEGY_ML_PREDICTED = 4,
-    ROUTE_STRATEGY_ADAPTIVE = 5
-} ai_routing_strategy_t;
-
-// Model types for different routing decisions
-typedef enum {
-    MODEL_TYPE_LOAD_PREDICTOR = 1,
-    MODEL_TYPE_LATENCY_ESTIMATOR = 2,
-    MODEL_TYPE_ANOMALY_DETECTOR = 3,
-    MODEL_TYPE_SEMANTIC_ROUTER = 4,
-    MODEL_TYPE_PATTERN_CLASSIFIER = 5,
-    MODEL_TYPE_CAPACITY_PLANNER = 6
-} ai_model_type_t;
-
-// Hardware accelerator types
-typedef enum {
-    ACCEL_TYPE_CPU = 0,
-    ACCEL_TYPE_NPU = 1,
-    ACCEL_TYPE_GNA = 2,
-    ACCEL_TYPE_GPU = 3,
-    ACCEL_TYPE_VECTOR_DB = 4
-} accelerator_type_t;
+// All type definitions are now in ai_enhanced_router.h
+// Implementation-specific structures only:
 
 // Message feature vector for ML processing
 typedef struct __attribute__((packed, aligned(32))) {
@@ -163,6 +138,8 @@ typedef struct {
     _Atomic uint64_t total_time_ns;
     pthread_mutex_t npu_lock;
     bool initialized;
+    bool enabled;
+    float utilization;
 } npu_context_t;
 
 // GNA anomaly detection context
@@ -183,6 +160,8 @@ typedef struct {
     _Atomic uint64_t anomalies_detected;
     pthread_mutex_t gna_lock;
     bool initialized;
+    bool enabled;
+    float utilization;
 } gna_context_t;
 
 // GPU batch processing context
@@ -203,6 +182,8 @@ typedef struct {
     
     pthread_mutex_t gpu_lock;
     bool initialized;
+    bool enabled;
+    float utilization;
 } gpu_context_t;
 
 // Vector database for semantic routing
@@ -222,38 +203,12 @@ typedef struct {
     
     pthread_rwlock_t db_lock;
     bool initialized;
+    bool enabled;
 } vector_database_t;
 
-// Routing decision from AI models
-typedef struct {
-    uint32_t recommended_target;
-    float confidence_score;
-    ai_routing_strategy_t strategy_used;
-    accelerator_type_t accelerator_used;
-    
-    // Prediction metadata
-    float expected_latency_ms;
-    float expected_success_rate;
-    float load_impact_score;
-    bool anomaly_detected;
-    
-    uint64_t decision_time_ns;
-    uint32_t model_version;
-} ai_routing_decision_t;
+// ai_routing_decision_t is defined in ai_enhanced_router.h
 
-// Performance prediction for adaptive scaling
-typedef struct {
-    uint64_t timestamp_ns;
-    float predicted_load;
-    float predicted_latency;
-    uint32_t recommended_replicas;
-    float confidence;
-    
-    // Resource recommendations
-    bool scale_up_npu;
-    bool scale_up_gpu;
-    uint32_t additional_threads;
-} performance_prediction_t;
+// performance_prediction_t is defined in ai_enhanced_router.h
 
 // Main AI router service
 typedef struct __attribute__((aligned(4096))) {
@@ -281,9 +236,18 @@ typedef struct __attribute__((aligned(4096))) {
     _Atomic uint64_t max_decision_latency_ns;
     
     // Adaptive thresholds
+    float anomaly_threshold;
+    float confidence_threshold;
     float anomaly_detection_threshold;
     float prediction_confidence_threshold;
     float load_balancing_sensitivity;
+    
+    // Batch processing metrics
+    _Atomic uint64_t total_batch_time_ns;
+    _Atomic uint64_t total_batch_count;
+    
+    // Service state
+    volatile bool service_running;
     
     // Control
     volatile bool running;
@@ -385,6 +349,8 @@ static int init_npu_context(npu_context_t** ctx) {
     atomic_store(&npu->inference_count, 0);
     atomic_store(&npu->total_time_ns, 0);
     npu->initialized = true;
+    npu->enabled = true;
+    npu->utilization = 0.0f;
     
     printf("AI Router: NPU context initialized (batch_size=%zu)\n", npu->batch_size);
     return 0;
@@ -570,6 +536,8 @@ static int init_gna_context(gna_context_t** ctx) {
     
     pthread_mutex_init(&gna->gna_lock, NULL);
     gna->initialized = true;
+    gna->enabled = true;
+    gna->utilization = 0.0f;
     
     printf("AI Router: GNA context initialized for anomaly detection\n");
     return 0;
@@ -671,6 +639,8 @@ static int init_gpu_context(gpu_context_t** ctx) {
     
     pthread_mutex_init(&gpu->gpu_lock, NULL);
     gpu->initialized = true;
+    gpu->enabled = true;
+    gpu->utilization = 0.0f;
     
     printf("AI Router: GPU context initialized (max_batch_size=%zu)\n", gpu->max_batch_size);
     return 0;
@@ -758,6 +728,7 @@ static int init_vector_database(vector_database_t** db) {
     
     pthread_rwlock_init(&vdb->db_lock, NULL);
     vdb->initialized = true;
+    vdb->enabled = true;
     
     printf("AI Router: Vector database initialized (%zu dimensions, %zu capacity)\n",
            vdb->vector_dimensions, vdb->storage_capacity);
@@ -1066,12 +1037,19 @@ int ai_router_service_init(void) {
     atomic_store(&g_ai_router->max_decision_latency_ns, 0);
     
     // Set default thresholds
+    g_ai_router->anomaly_threshold = 0.95f;
+    g_ai_router->confidence_threshold = 0.7f;
     g_ai_router->anomaly_detection_threshold = 0.95f;
     g_ai_router->prediction_confidence_threshold = 0.7f;
     g_ai_router->load_balancing_sensitivity = 0.1f;
     
+    // Initialize batch processing metrics
+    atomic_store(&g_ai_router->total_batch_time_ns, 0);
+    atomic_store(&g_ai_router->total_batch_count, 0);
+    
     pthread_mutex_init(&g_ai_router->service_lock, NULL);
     g_ai_router->running = true;
+    g_ai_router->service_running = true;
     
     printf("AI Router: Service initialized successfully\n");
     printf("AI Router: - NPU: %s\n", g_ai_router->npu_ctx ? "enabled" : "disabled");
@@ -1088,6 +1066,7 @@ void ai_router_service_cleanup(void) {
     }
     
     g_ai_router->running = false;
+    g_ai_router->service_running = false;
     
     // Cleanup NPU context
     if (g_ai_router->npu_ctx) {
@@ -1308,4 +1287,244 @@ void ai_print_routing_stats(void) {
     
     printf("Active models: %u\n", atomic_load(&g_ai_router->active_model_count));
     printf("\n");
+}
+
+// ============================================================================
+// MISSING UTILITY FUNCTION IMPLEMENTATIONS
+// ============================================================================
+
+// Get AI router version
+void ai_get_version(int* major, int* minor, int* patch) {
+    if (major) *major = AI_ROUTER_VERSION_MAJOR;
+    if (minor) *minor = AI_ROUTER_VERSION_MINOR;
+    if (patch) *patch = AI_ROUTER_VERSION_PATCH;
+}
+
+// Check if AI router is initialized
+bool ai_is_initialized(void) {
+    return (g_ai_router != NULL && g_ai_router->service_running);
+}
+
+// Get current timestamp in nanoseconds
+uint64_t ai_get_timestamp_ns(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000UL + (uint64_t)ts.tv_nsec;
+}
+
+// Convert routing strategy to string
+const char* ai_routing_strategy_string(ai_routing_strategy_t strategy) {
+    switch (strategy) {
+        case ROUTE_STRATEGY_MANUAL: return "Manual";
+        case ROUTE_STRATEGY_LOAD_BALANCED: return "Load Balanced";
+        case ROUTE_STRATEGY_LATENCY_OPTIMAL: return "Latency Optimal";
+        case ROUTE_STRATEGY_SEMANTIC_SIMILARITY: return "Semantic Similarity";
+        case ROUTE_STRATEGY_ML_PREDICTED: return "ML Predicted";
+        case ROUTE_STRATEGY_ADAPTIVE: return "Adaptive";
+        default: return "Unknown";
+    }
+}
+
+// Convert model type to string
+const char* ai_model_type_string(ai_model_type_t model_type) {
+    switch (model_type) {
+        case MODEL_TYPE_LOAD_PREDICTOR: return "Load Predictor";
+        case MODEL_TYPE_LATENCY_ESTIMATOR: return "Latency Estimator";
+        case MODEL_TYPE_ANOMALY_DETECTOR: return "Anomaly Detector";
+        case MODEL_TYPE_SEMANTIC_ROUTER: return "Semantic Router";
+        case MODEL_TYPE_PATTERN_CLASSIFIER: return "Pattern Classifier";
+        case MODEL_TYPE_CAPACITY_PLANNER: return "Capacity Planner";
+        default: return "Unknown";
+    }
+}
+
+// Convert accelerator type to string
+const char* ai_accelerator_type_string(accelerator_type_t accel_type) {
+    switch (accel_type) {
+        case ACCEL_TYPE_CPU: return "CPU";
+        case ACCEL_TYPE_NPU: return "NPU";
+        case ACCEL_TYPE_GNA: return "GNA";
+        case ACCEL_TYPE_GPU: return "GPU";
+        case ACCEL_TYPE_VECTOR_DB: return "Vector DB";
+        default: return "Unknown";
+    }
+}
+
+// Process batch of messages for routing decisions
+size_t ai_route_message_batch(const enhanced_msg_header_t** messages,
+                             const void** payloads,
+                             size_t count,
+                             ai_routing_decision_t* decisions) {
+    if (!g_ai_router || !messages || !decisions || count == 0) {
+        return 0;
+    }
+    
+    size_t processed = 0;
+    uint64_t start_time = ai_get_timestamp_ns();
+    
+    for (size_t i = 0; i < count; i++) {
+        if (messages[i]) {
+            decisions[i] = ai_get_routing_decision(messages[i], 
+                                                 payloads ? payloads[i] : NULL);
+            processed++;
+        }
+    }
+    
+    // Update batch processing statistics
+    if (g_ai_router->gpu_ctx) {
+        atomic_fetch_add(&g_ai_router->gpu_ctx->batches_processed, 1);
+    }
+    
+    uint64_t total_time = ai_get_timestamp_ns() - start_time;
+    atomic_fetch_add(&g_ai_router->total_batch_time_ns, total_time);
+    atomic_fetch_add(&g_ai_router->total_batch_count, 1);
+    
+    return processed;
+}
+
+// Set anomaly detection threshold
+int ai_set_anomaly_threshold(float threshold) {
+    if (!g_ai_router || threshold < 0.0f || threshold > 1.0f) {
+        return AI_ROUTER_ERROR_INVALID;
+    }
+    
+    g_ai_router->anomaly_threshold = threshold;
+    printf("AI Router: Anomaly threshold set to %.3f\n", threshold);
+    return AI_ROUTER_SUCCESS;
+}
+
+// Set prediction confidence threshold
+int ai_set_confidence_threshold(float threshold) {
+    if (!g_ai_router || threshold < 0.0f || threshold > 1.0f) {
+        return AI_ROUTER_ERROR_INVALID;
+    }
+    
+    g_ai_router->confidence_threshold = threshold;
+    printf("AI Router: Confidence threshold set to %.3f\n", threshold);
+    return AI_ROUTER_SUCCESS;
+}
+
+// Enable/disable hardware accelerator
+int ai_set_accelerator_enabled(accelerator_type_t accel_type, bool enable) {
+    if (!g_ai_router) {
+        return AI_ROUTER_ERROR_NOT_INIT;
+    }
+    
+    switch (accel_type) {
+        case ACCEL_TYPE_NPU:
+            if (g_ai_router->npu_ctx) {
+                g_ai_router->npu_ctx->enabled = enable;
+                printf("AI Router: NPU %s\n", enable ? "enabled" : "disabled");
+                return AI_ROUTER_SUCCESS;
+            }
+            break;
+            
+        case ACCEL_TYPE_GNA:
+            if (g_ai_router->gna_ctx) {
+                g_ai_router->gna_ctx->enabled = enable;
+                printf("AI Router: GNA %s\n", enable ? "enabled" : "disabled");
+                return AI_ROUTER_SUCCESS;
+            }
+            break;
+            
+        case ACCEL_TYPE_GPU:
+            if (g_ai_router->gpu_ctx) {
+                g_ai_router->gpu_ctx->enabled = enable;
+                printf("AI Router: GPU %s\n", enable ? "enabled" : "disabled");
+                return AI_ROUTER_SUCCESS;
+            }
+            break;
+            
+        case ACCEL_TYPE_VECTOR_DB:
+            if (g_ai_router->vector_db) {
+                g_ai_router->vector_db->enabled = enable;
+                printf("AI Router: Vector DB %s\n", enable ? "enabled" : "disabled");
+                return AI_ROUTER_SUCCESS;
+            }
+            break;
+            
+        default:
+            return AI_ROUTER_ERROR_INVALID;
+    }
+    
+    return AI_ROUTER_ERROR_NOT_FOUND;
+}
+
+// Get accelerator utilization
+float ai_get_accelerator_utilization(accelerator_type_t accel_type) {
+    if (!g_ai_router) {
+        return -1.0f;
+    }
+    
+    switch (accel_type) {
+        case ACCEL_TYPE_NPU:
+            if (g_ai_router->npu_ctx) {
+                return g_ai_router->npu_ctx->utilization;
+            }
+            break;
+            
+        case ACCEL_TYPE_GNA:
+            if (g_ai_router->gna_ctx) {
+                return g_ai_router->gna_ctx->utilization;
+            }
+            break;
+            
+        case ACCEL_TYPE_GPU:
+            if (g_ai_router->gpu_ctx) {
+                return g_ai_router->gpu_ctx->utilization;
+            }
+            break;
+            
+        case ACCEL_TYPE_VECTOR_DB:
+            if (g_ai_router->vector_db) {
+                uint64_t hits = atomic_load(&g_ai_router->vector_db->cache_hits);
+                uint64_t total = hits + atomic_load(&g_ai_router->vector_db->cache_misses);
+                return total > 0 ? (float)hits / total : 0.0f;
+            }
+            break;
+            
+        default:
+            return -1.0f;
+    }
+    
+    return 0.0f;
+}
+
+// Perform accelerator health check
+bool ai_check_accelerator_health(accelerator_type_t accel_type) {
+    if (!g_ai_router) {
+        return false;
+    }
+    
+    switch (accel_type) {
+        case ACCEL_TYPE_NPU:
+            return (g_ai_router->npu_ctx && g_ai_router->npu_ctx->enabled);
+            
+        case ACCEL_TYPE_GNA:
+            return (g_ai_router->gna_ctx && g_ai_router->gna_ctx->enabled);
+            
+        case ACCEL_TYPE_GPU:
+            return (g_ai_router->gpu_ctx && g_ai_router->gpu_ctx->enabled);
+            
+        case ACCEL_TYPE_VECTOR_DB:
+            return (g_ai_router->vector_db && g_ai_router->vector_db->enabled);
+            
+        default:
+            return false;
+    }
+}
+
+// Update routing model with new training data
+int ai_update_model_online(ai_model_type_t model_type, 
+                          const void* training_data, 
+                          size_t data_size) {
+    if (!g_ai_router || !training_data || data_size == 0) {
+        return AI_ROUTER_ERROR_INVALID;
+    }
+    
+    printf("AI Router: Updating model online (type: %s, data size: %zu bytes)\n",
+           ai_model_type_string(model_type), data_size);
+    
+    // Simulate online learning - in real implementation would update model weights
+    return AI_ROUTER_SUCCESS;
 }
