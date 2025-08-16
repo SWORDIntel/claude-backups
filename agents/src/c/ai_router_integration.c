@@ -5,7 +5,7 @@
  * Claude Agent Communication System transport layer
  * 
  * This module provides seamless integration with:
- * - ultra_hybrid_enhanced.c transport layer
+ * - agent_bridge.c transport layer
  * - message_router.c routing service  
  * - distributed_network.c consensus layer
  * 

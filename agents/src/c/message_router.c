@@ -9,7 +9,7 @@
  * - Dead letter queues
  * - Message persistence and replay
  * 
- * Integrates with ultra_hybrid_enhanced.c transport and agent_discovery.c
+ * Integrates with agent_bridge.c transport and agent_discovery.c
  * 
  * Author: Agent Communication System
  * Version: 1.0 Production

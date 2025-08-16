@@ -5,7 +5,7 @@
 
 AGENTS_DIR="/home/ubuntu/Documents/Claude/agents"
 BUILD_DIR="$AGENTS_DIR/build"
-BINARY="$BUILD_DIR/ultra_hybrid_enhanced"
+BINARY="$AGENTS_DIR/binary-communications-system/agent_bridge"
 PID_FILE="$AGENTS_DIR/.agent_service.pid"
 
 # Colors
@@ -18,7 +18,7 @@ NC='\033[0m'
 # Stop any existing runners
 echo -e "${YELLOW}Stopping existing agent runners...${NC}"
 pkill -f run_agent_system.sh
-pkill -f ultra_hybrid_enhanced
+pkill -f agent_bridge
 rm -f "$AGENTS_DIR/.online"
 sleep 2
 

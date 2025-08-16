@@ -26,7 +26,7 @@ TEST_SOURCES = build_test.c
 
 # Object files
 COMPAT_OBJS = compatibility_layer.o
-PROTOCOL_OBJS = ultra_hybrid_enhanced.o
+PROTOCOL_OBJS = agent_bridge.o
 TEST_OBJS = build_test.o
 
 # Libraries

@@ -7,7 +7,7 @@
  * - Health monitoring and failover
  * - NUMA-aware placement
  * 
- * Integrates with ultra_hybrid_enhanced.c transport layer
+ * Integrates with agent_bridge.c transport layer
  * 
  * Author: Agent Communication System
  * Version: 1.0 Production
@@ -711,7 +711,7 @@ int send_discovery_message(uint32_t target_agent_id, const void* payload, size_t
     }
     
     // Use the transport layer to send the message
-    // This would integrate with the ultra_hybrid_enhanced.c transport
+    // This would integrate with the agent_bridge.c transport
     
     return 0;  // Success
 }

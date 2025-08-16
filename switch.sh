@@ -44,7 +44,7 @@ show_header() {
 # Function to get current mode
 get_current_mode() {
     # Always auto-detect based on running processes for accuracy
-    local binary_procs=$(pgrep -f "binary_bridge|ultra_hybrid|unified_agent_runtime|agent_server.py|unified_bridge.py" 2>/dev/null | wc -l)
+    local binary_procs=$(pgrep -f "agent_bridge|ultra_hybrid|unified_agent_runtime|agent_server.py|unified_bridge.py" 2>/dev/null | wc -l)
     if [ $binary_procs -gt 0 ]; then
         echo "binary_system"
     else
@@ -54,7 +54,7 @@ get_current_mode() {
 
 # Function to get system status
 get_system_status() {
-    local binary_procs=$(pgrep -f "binary_bridge|ultra_hybrid|unified_agent_runtime|agent_server.py|unified_bridge.py" 2>/dev/null | wc -l)
+    local binary_procs=$(pgrep -f "agent_bridge|ultra_hybrid|unified_agent_runtime|agent_server.py|unified_bridge.py" 2>/dev/null | wc -l)
     local md_count=$(find "$AGENTS_DIR" -maxdepth 1 -name "*.md" | wc -l)
     
     if [ $binary_procs -gt 0 ]; then
@@ -447,7 +447,7 @@ show_status() {
     echo ""
     echo -e "${BOLD}Process Details:${NC}"
     local processes=(
-        "ultra_hybrid_final:Binary Bridge"
+        "agent_bridge:Binary Bridge"
         "unified_agent_runtime:Agent Runtime"
         "agent_server.py:Binary Protocol Server"
         "unified_bridge.py:Python Bridge"

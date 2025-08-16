@@ -32,7 +32,7 @@ show_status() {
     fi
     
     # Check if binary system is built
-    if [ -f "$BINARY_DIR/ultra_hybrid_final" ]; then
+    if [ -f "$BINARY_DIR/agent_bridge" ]; then
         echo -e "Binary system: ${GREEN}Available${NC}"
     else
         echo -e "Binary system: ${RED}Not built${NC}"
@@ -82,12 +82,12 @@ switch_to_binary() {
     echo -e "${YELLOW}Switching to BINARY protocol mode...${NC}"
     
     # Check if binary system is built
-    if [ ! -f "$BINARY_DIR/ultra_hybrid_final" ]; then
+    if [ ! -f "$BINARY_DIR/agent_bridge" ]; then
         echo -e "${RED}Error: Binary system not built${NC}"
         echo "Building binary system..."
         
         cd "$BINARY_DIR"
-        gcc -o ultra_hybrid_final ultra_hybrid_enhanced.c \
+        gcc -o agent_bridge ultra_hybrid_enhanced.c \
             ring_buffer_adapter.c \
             ../src/c/compatibility_layer.c \
             -pthread -lnuma -luring -lm -march=native -O3 2>/dev/null || {
@@ -115,7 +115,7 @@ EOF
     
     echo -e "${GREEN}✓ Switched to binary protocol${NC}"
     echo "  Path: $CLAUDE_AGENT_PATH"
-    echo "  Protocol: Ultra-fast binary (4.2M msg/sec)"
+    echo "  Protocol: Ultra-fast binary (~100K msg/sec)"
     echo "  Features: NUMA-aware, work-stealing, lock-free"
 }
 

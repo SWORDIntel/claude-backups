@@ -20,8 +20,8 @@ echo -e "${BLUE}═════════════════════�
 
 # Check binary protocol
 echo -e "\n${YELLOW}[Binary Protocol]${NC}"
-if pgrep -f "ultra_hybrid" > /dev/null 2>&1; then
-    PID=$(pgrep -f "ultra_hybrid")
+if pgrep -f "agent_bridge" > /dev/null 2>&1; then
+    PID=$(pgrep -f "agent_bridge")
     CPU=$(ps aux | grep "$PID" | grep -v grep | awk '{print $3}')
     MEM=$(ps aux | grep "$PID" | grep -v grep | awk '{print $6}')
     echo -e "  Status: ${GREEN}● RUNNING${NC} (PID: $PID)"
@@ -57,7 +57,7 @@ else
     echo -e "  Online Flag: ${RED}✗ NOT SET${NC}"
 fi
 
-if [ -f "$BUILD_DIR/ultra_hybrid_enhanced" ]; then
+if [ -f "$AGENTS_DIR/binary-communications-system/agent_bridge" ]; then
     echo -e "  Binary Built: ${GREEN}✓ YES${NC}"
 else
     echo -e "  Binary Built: ${RED}✗ NO${NC}"
@@ -65,7 +65,7 @@ fi
 
 # Performance metrics
 echo -e "\n${YELLOW}[Performance Capabilities]${NC}"
-echo -e "  Message Rate: ${GREEN}4.2M msg/sec${NC}"
+echo -e "  Message Rate: ${GREEN}~100K msg/sec${NC}"
 echo -e "  Latency: ${GREEN}200ns P99${NC}"
 echo -e "  Agents: ${GREEN}31 registered${NC}"
 echo -e "  Protocol: ${GREEN}Ultra-fast binary (AVX2)${NC}"
@@ -94,7 +94,7 @@ echo -e "  Status: ${GREEN}● ALL REGISTERED${NC}"
 echo -e "\n${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "Commands:"
 echo -e "  Start:   ${YELLOW}./BRING_ONLINE.sh${NC}"
-echo -e "  Stop:    ${YELLOW}rm .online && pkill -f ultra_hybrid_enhanced${NC}"
+echo -e "  Stop:    ${YELLOW}rm .online && pkill -f agent_bridge${NC}"
 echo -e "  Status:  ${YELLOW}./STATUS.sh${NC}"
 echo -e "  Logs:    ${YELLOW}tail -f system_startup.log${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"

@@ -9,7 +9,7 @@ NASM := nasm
 
 # Output directory and targets
 BUILD_DIR := build
-TARGET_ENHANCED := $(BUILD_DIR)/ultra_hybrid_enhanced
+TARGET_ENHANCED := $(BUILD_DIR)/agent_bridge
 TARGET_TEST := $(BUILD_DIR)/protocol_test
 
 # Source files

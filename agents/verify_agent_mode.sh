@@ -19,7 +19,7 @@ echo -e "${YELLOW}=== Claude Agent Mode Verification ===${NC}"
 
 # Check if binary system is running
 BINARY_RUNNING=false
-if pgrep -f "ultra_hybrid_enhanced" > /dev/null; then
+if pgrep -f "agent_bridge" > /dev/null; then
     BINARY_RUNNING=true
     echo -e "${RED}⚠️  Binary system detected running${NC}"
 fi
