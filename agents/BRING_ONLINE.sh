@@ -88,8 +88,8 @@ build_system() {
     
     # Build the main binary bridge with compatibility layer
     gcc -D_GNU_SOURCE -march=native $AVX_FLAGS -O3 \
-        -o "$BUILD_DIR/ultra_hybrid_enhanced" \
-        binary-communications-system/ultra_hybrid_enhanced.c \
+        -o "$BUILD_DIR/binary_bridge" \
+        binary-communications-system/binary_bridge.c \
         src/c/compatibility_layer.c \
         -I. -Ibinary-communications-system \
         -lpthread -lm -lrt 2>&1 | head -5 || {
@@ -218,7 +218,7 @@ start_runtime() {
     
     # Kill any existing processes
     echo "Cleaning up existing processes..."
-    pkill -f "ultra_hybrid_enhanced" 2>/dev/null || true
+    pkill -f "binary_bridge|ultra_hybrid" 2>/dev/null || true
     pkill -f "unified_agent_runtime" 2>/dev/null || true
     pkill -f "claude_agent_bridge" 2>/dev/null || true
     sleep 2
@@ -226,9 +226,13 @@ start_runtime() {
     cd "$AGENTS_DIR"
     
     # Start the binary bridge
-    if [ -f "$BUILD_DIR/ultra_hybrid_enhanced" ]; then
+    # Use existing working binary first
+    if [ -f "binary-communications-system/binary_bridge" ]; then
         echo "Starting binary communication bridge..."
-        nohup "$BUILD_DIR/ultra_hybrid_enhanced" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
+        nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
+    elif [ -f "$BUILD_DIR/binary_bridge" ]; then
+        echo "Starting binary communication bridge..."
+        nohup "$BUILD_DIR/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
         BRIDGE_PID=$!
         echo "Binary bridge started with PID: $BRIDGE_PID"
         sleep 2
@@ -236,8 +240,8 @@ start_runtime() {
         if ! ps -p $BRIDGE_PID > /dev/null; then
             printf "${YELLOW}⚠ Binary bridge exited, checking alternative...${NC}\n"
             # Try the fixed version if available
-            if [ -f "$BUILD_DIR/ultra_hybrid_enhanced_fixed" ]; then
-                nohup "$BUILD_DIR/ultra_hybrid_enhanced_fixed" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
+            if [ -f "binary-communications-system/ultra_hybrid_final" ]; then
+                nohup "binary-communications-system/ultra_hybrid_final" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
                 BRIDGE_PID=$!
             fi
         fi
@@ -274,7 +278,7 @@ start_runtime() {
     sleep 3
     
     # Check what's running
-    RUNNING_COUNT=$(pgrep -f "ultra_hybrid_enhanced|unified_agent_runtime|claude_agent_bridge" | wc -l)
+    RUNNING_COUNT=$(pgrep -f "binary_bridge|ultra_hybrid|unified_agent_runtime|claude_agent_bridge" | wc -l)
     if [ $RUNNING_COUNT -gt 0 ]; then
         printf "${GREEN}✓ $RUNNING_COUNT services started successfully${NC}\n"
     else
@@ -546,9 +550,11 @@ main() {
         while [ -f "$AGENTS_DIR/.online" ]; do
             sleep 60
             # Check if processes are still running, restart if needed
-            if ! pgrep -f "ultra_hybrid_enhanced" > /dev/null 2>&1; then
-                if [ -f "$BUILD_DIR/ultra_hybrid_enhanced" ]; then
-                    nohup "$BUILD_DIR/ultra_hybrid_enhanced" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
+            if ! pgrep -f "binary_bridge|ultra_hybrid" > /dev/null 2>&1; then
+                if [ -f "binary-communications-system/binary_bridge" ]; then
+                    nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
+                elif [ -f "$BUILD_DIR/binary_bridge" ]; then
+                    nohup "$BUILD_DIR/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1 &
                 fi
             fi
         done
@@ -559,7 +565,7 @@ main() {
     echo ""
     echo "Agent system is now ONLINE and running in background."
     echo "To check status: ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)'"
-    echo "To stop: rm $AGENTS_DIR/.online && pkill -f ultra_hybrid_enhanced"
+    echo "To stop: rm $AGENTS_DIR/.online && pkill -f binary_bridge"
 }
 
 # Run main function

@@ -1,14 +1,20 @@
 /*
- * AGENT BRIDGE - Binary Communication Protocol
+ * ULTRA-HYBRID ENHANCED PROTOCOL - PRODUCTION VERSION
  * 
- * Core features:
- * - Intel Meteor Lake optimization
- * - Multi-agent coordination
- * - High-throughput messaging
- * - Hardware-aware scheduling
+ * Integrates all optimizations:
+ * - P-core/E-core hybrid scheduling with AVX-512/AVX2
+ * - NPU for AI-driven routing and classification
+ * - GNA for continuous anomaly detection
+ * - GPU offload for batch processing (via OpenCL)
+ * - DPDK for kernel bypass networking
+ * - io_uring for async I/O
+ * - Work-stealing thread pool
+ * - NUMA-aware memory allocation
+ * - Lock-free data structures
+ * - Hardware accelerated CRC32C
  * 
- * Author: Claude Agent Framework
- * Version: 1.0 Production
+ * Author: OPTIMIZER Agent Enhancement
+ * Version: 4.0 Production
  */
 
 #define _GNU_SOURCE  // Required for CPU affinity functions (sched_setaffinity, etc.)

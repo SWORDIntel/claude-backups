@@ -218,6 +218,14 @@ git push origin main
 - Preserve all existing APIs and interfaces
 - Extend rather than replace when possible
 
+### Organization & Cleanliness Policy
+- **Keep directories CLEAN**: Move deprecated/duplicate files to `deprecated/` folders
+- **No duplicate files**: Use descriptive names, not `.duplicate` suffixes
+- **Clear naming**: No confusing suffixes like `_final`, `_enhanced`, `_optimized`
+- **Documented deprecation**: Update READMEs when moving files to deprecated
+- **Systematic cleanup**: Regular organization maintenance is paramount
+- **Active vs Deprecated**: Clear separation between working and legacy code
+
 ### Testing Requirements
 - Achieve >85% code coverage
 - All agents must have success metrics

@@ -17,8 +17,8 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-# Base paths
-CLAUDE_BASE="/home/ubuntu/Documents/Claude"
+# Base paths (script now runs from Claude/ directory)
+CLAUDE_BASE="$(pwd)"
 AGENTS_DIR="$CLAUDE_BASE/agents"
 BACKUP_DIR="$AGENTS_DIR/.backups"
 STATE_FILE="$BACKUP_DIR/.current_mode"
@@ -43,8 +43,10 @@ show_header() {
 
 # Function to get current mode
 get_current_mode() {
-    if [ -f "$STATE_FILE" ]; then
-        cat "$STATE_FILE"
+    # Always auto-detect based on running processes for accuracy
+    local binary_procs=$(pgrep -f "binary_bridge|ultra_hybrid|unified_agent_runtime|agent_server.py|unified_bridge.py" 2>/dev/null | wc -l)
+    if [ $binary_procs -gt 0 ]; then
+        echo "binary_system"
     else
         echo "md_agents"
     fi
@@ -52,7 +54,7 @@ get_current_mode() {
 
 # Function to get system status
 get_system_status() {
-    local binary_procs=$(pgrep -f "ultra_hybrid_enhanced|unified_agent_runtime|claude_agent_bridge" 2>/dev/null | wc -l)
+    local binary_procs=$(pgrep -f "binary_bridge|ultra_hybrid|unified_agent_runtime|agent_server.py|unified_bridge.py" 2>/dev/null | wc -l)
     local md_count=$(find "$AGENTS_DIR" -maxdepth 1 -name "*.md" | wc -l)
     
     if [ $binary_procs -gt 0 ]; then
@@ -93,13 +95,22 @@ verify_active_agents() {
             fi
         fi
         
-        # Check for .md agent files
-        if [ -f "$AGENTS_DIR/${agent^}.md" ] || [ -f "$AGENTS_DIR/${agent}.md" ]; then
-            if [[ ! " ${registered_agents[@]} " =~ " ${agent} " ]]; then
-                ((active_count++))
-                registered_agents+=("$agent")
+# Check for .md agent files (case variations)
+        local agent_files=(
+            "$AGENTS_DIR/${agent}.md"
+            "$AGENTS_DIR/${agent^}.md"
+            "$AGENTS_DIR/${agent^^}.md"
+        )
+        
+        for agent_file in "${agent_files[@]}"; do
+            if [ -f "$agent_file" ]; then
+                if [[ ! " ${registered_agents[@]} " =~ " ${agent} " ]]; then
+                    ((active_count++))
+                    registered_agents+=("$agent")
+                    break
+                fi
             fi
-        fi
+        done
     done
     
     echo "$active_count:${registered_agents[*]}"
@@ -112,10 +123,13 @@ graceful_deactivate_binary() {
     local process_groups=(
         "linter_agent"
         "monitor_agent"
-        "python_bridge"
+        "agent_server.py"
+        "unified_bridge.py"
+        "bridge_monitor.py"
         "claude_agent_bridge"
         "unified_agent_runtime"
-        "ultra_hybrid_enhanced"
+        "binary_bridge"
+        "ultra_hybrid"
     )
     
     for proc_group in "${process_groups[@]}"; do
@@ -158,7 +172,7 @@ graceful_deactivate_binary() {
     fi
     
     sleep 1
-    local remaining_procs=$(pgrep -f "ultra_hybrid_enhanced|unified_agent_runtime|claude_agent_bridge" | wc -l)
+    local remaining_procs=$(pgrep -f "binary_bridge|ultra_hybrid|unified_agent_runtime|claude_agent_bridge" | wc -l)
     
     if [ $remaining_procs -eq 0 ]; then
         echo -e "${GREEN}✓ Binary system deactivated${NC}"
@@ -182,22 +196,42 @@ switch_to_binary_mode() {
         return 1
     fi
     
-    # Start binary system
+    # Start binary system components
     echo "Starting binary communication system..."
     cd "$AGENTS_DIR"
-    chmod +x BRING_ONLINE.sh
     
+    # 1. Start binary protocol server
+    echo "  Starting binary protocol server..."
+    python3 03-BRIDGES/agent_server.py > 09-MONITORING/logs/agent_server.log 2>&1 &
+    AGENT_SERVER_PID=$!
+    sleep 1
+    
+    # 2. Start unified bridge (main coordinator)
+    echo "  Starting unified bridge..."
+    python3 03-BRIDGES/unified_bridge.py > 09-MONITORING/logs/unified_bridge.log 2>&1 &
+    UNIFIED_BRIDGE_PID=$!
+    sleep 1
+    
+    # 3. Start BRING_ONLINE.sh for C binary components
+    echo "  Starting C binary components..."
+    chmod +x BRING_ONLINE.sh
     if ./BRING_ONLINE.sh > /dev/null 2>&1; then
         echo -e "${GREEN}✓ Binary system started${NC}"
     else
         echo -e "${YELLOW}⚠ Binary system started with warnings${NC}"
     fi
     
+    # 4. Optional: Start monitoring
+    if [ -f "03-BRIDGES/bridge_monitor.py" ]; then
+        echo "  Starting bridge monitor..."
+        python3 03-BRIDGES/bridge_monitor.py > 09-MONITORING/logs/bridge_monitor.log 2>&1 &
+    fi
+    
     # Wait for stabilization
     sleep 3
     
     # Verify
-    local running_procs=$(pgrep -f "ultra_hybrid_enhanced|unified_agent_runtime|claude_agent_bridge" | wc -l)
+    local running_procs=$(pgrep -f "binary_bridge|ultra_hybrid|unified_agent_runtime|claude_agent_bridge" | wc -l)
     if [ $running_procs -gt 0 ]; then
         echo "binary_system" > "$STATE_FILE"
         echo -e "${GREEN}✓ Binary mode active: $running_procs processes${NC}"
@@ -232,11 +266,19 @@ test_agent() {
     local agent_name="$1"
     echo -n "Testing $agent_name... "
     
-    # Check if agent file exists
-    if [ -f "$AGENTS_DIR/${agent_name}.md" ] || [ -f "$AGENTS_DIR/${agent_name^}.md" ]; then
-        echo -e "${GREEN}✓ .md${NC}"
-        return 0
-    fi
+    # Check if agent file exists (case variations)
+    local agent_files=(
+        "$AGENTS_DIR/${agent_name}.md"
+        "$AGENTS_DIR/${agent_name^}.md"
+        "$AGENTS_DIR/${agent_name^^}.md"
+    )
+    
+    for agent_file in "${agent_files[@]}"; do
+        if [ -f "$agent_file" ]; then
+            echo -e "${GREEN}✓ .md${NC}"
+            return 0
+        fi
+    done
     
     # Check if binary agent exists
     if [ -x "$BUILD_DIR/${agent_name}_agent" ]; then
@@ -380,30 +422,36 @@ show_status() {
             ;;
     esac
     
-    # Agent verification
+    # Agent verification with details
     echo -e "Agents:         ${GREEN}$agent_count${NC}/31 detected"
+    if [ "$1" = "verbose" ]; then
+        echo -e "  Detected agents: ${agent_list// /, }"
+    fi
     
     # System capabilities
     echo ""
     echo -e "${BOLD}Capabilities:${NC}"
     if [ "$status_type" = "binary_active" ]; then
-        echo "  • 4.2M msg/sec binary protocol"
-        echo "  • 200ns P99 latency"
+        echo "  • ~100K msg/sec binary protocol (realistic)"
+        echo "  • <10ms P99 latency"
         echo "  • Intel Meteor Lake optimization"
         echo "  • Enhanced linter agent (1,475 lines)"
+        echo "  • Python bridge integration"
     else
         echo "  • .md agent coordination"
         echo "  • Claude Code integration"
+        echo "  • Task tool invocation"
     fi
     
     # Process details
     echo ""
     echo -e "${BOLD}Process Details:${NC}"
     local processes=(
-        "ultra_hybrid_enhanced:Binary Bridge"
+        "ultra_hybrid_final:Binary Bridge"
         "unified_agent_runtime:Agent Runtime"
-        "claude_agent_bridge:Python Bridge"
-        "linter_agent:Linter Agent"
+        "agent_server.py:Binary Protocol Server"
+        "unified_bridge.py:Python Bridge"
+        "bridge_monitor.py:Bridge Monitor"
     )
     
     for proc_info in "${processes[@]}"; do
@@ -560,9 +608,11 @@ show_menu() {
 
 # Main execution
 main() {
-    # Check if we're in the right directory
-    cd "$AGENTS_DIR" || {
-        echo -e "${RED}Cannot access agents directory: $AGENTS_DIR${NC}"
+    # Ensure we're in the Claude base directory
+    if [ ! -d "agents" ]; then
+        echo -e "${RED}Error: This script must be run from the Claude base directory${NC}"
+        echo "Current directory: $(pwd)"
+        echo "Expected: /home/ubuntu/Documents/Claude"
         exit 1
     fi
     

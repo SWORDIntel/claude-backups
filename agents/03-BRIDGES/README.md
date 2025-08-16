@@ -66,8 +66,50 @@ All paths are configured in `unified_bridge.Config` class:
 5. **Monitoring** - System health and performance metrics
 6. **Fallback Logic** - Works even if binary protocol is offline
 
+## ULTRATHINK ANALYSIS - Binary System Integration
+
+### 🔥 CRITICAL - Must Start for Binary System:
+1. **`unified_bridge.py`** - MAIN bridge consolidating all functionality
+2. **`agent_server.py`** - Binary protocol server (handles CAGT protocol)  
+3. **`claude_agent_bridge.py`** - Configuration & socket management
+
+### ⚡ SUPPORT - Enhance Functionality:
+4. **`bridge_monitor.py`** - System monitoring (functionality in unified_bridge)
+5. **`voice_system.py`** - Voice input (functionality in unified_bridge)
+6. **`statusline_bridge.py`** - Status display (functionality in unified_bridge)
+
+### ❌ DEPRECATED - Moved to deprecated/:
+7. **`deprecated/agent_config_py.py`** - Duplicate of claude_agent_bridge.py
+8. **`deprecated/auto_integrate.py`** - Broken imports, outdated paths
+9. **`deprecated/*.duplicate`** - Backup copies (cleaned up)
+10. **`deprecated/agent_bridge_main.py`** - Legacy, replaced by unified_bridge
+
+### 🔧 UTILITY - Optional:
+11. **`test_agent_communication.py`** - Testing framework
+12. **`voice_quick.sh`** - Shell voice shortcuts
+13. **`VOICE_INPUT_SYSTEM.py`** - Voice toggle system
+14. **`quick_voice.py`** - Voice command processor
+
+### Binary System Startup Sequence:
+```bash
+# 1. Start binary protocol server
+python3 03-BRIDGES/agent_server.py &
+
+# 2. Start unified bridge (connects to binary)  
+python3 03-BRIDGES/unified_bridge.py &
+
+# 3. Optional: Start monitoring
+python3 03-BRIDGES/bridge_monitor.py &
+```
+
+### Performance Expectations:
+- **NOT 4.2M msg/sec** (that's ridiculous over-engineering)
+- **Target: ~50K-100K msg/sec** (realistic for agent coordination)
+- **Latency: <10ms P99** (reasonable for agent tasks)
+- **Memory: <100MB per bridge** (efficient Python implementation)
+
 ## Migration Plan
-1. Update all imports to use `unified_bridge`
-2. Remove duplicate files (agent_config_py.py, auto_integrate.py)
-3. Eventually deprecate individual bridge files
-4. Keep agent_server.py for binary protocol server
+1. Update switch.sh to start critical components (unified_bridge + agent_server)
+2. Remove duplicate files (agent_config_py.py, auto_integrate.py, *.duplicate)
+3. Test binary system integration with realistic performance targets
+4. Deprecate individual bridge files (keep for compatibility)

@@ -1,8 +1,13 @@
-🧪 Testing Claude Agent Bridge...
-🤖 [BRIDGE] Invoking DIRECTOR agent...
-✅ [BRIDGE] DIRECTOR completed successfully
-✅ Director test: completed
-🤖 [BRIDGE] Invoking PLANNER agent...
-✅ [BRIDGE] PLANNER completed successfully
-✅ PLANNER test: completed
-🎉 Bridge tests completed!
+🔧 Setting up agent environment...
+  CPU: Intel(R) Core(TM) Ultra 7 165H
+  AVX2: ✓
+  AVX512: ✗
+Configuration written to: /home/ubuntu/Documents/Claude/agents/05-CONFIG/agent_system.json
+Socket test failed: [Errno 2] No such file or directory
+⚠️  Binary bridge not available
+   Socket path: /home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/runtime/claude_agent_bridge.sock
+
+🧪 Testing binary bridge connection...
+Connection failed: [Errno 2] No such file or directory
+Message send/receive failed: [Errno 107] Transport endpoint is not connected
+⚠️  No response from bridge
