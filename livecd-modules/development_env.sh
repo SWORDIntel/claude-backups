@@ -46,6 +46,10 @@ dev_setup_kernel_build() {
         "kernel-package" "fakeroot" "dpkg-dev"
         "libpci-dev" "libiberty-dev" "autoconf"
         "libudev-dev" "libcap-dev" "pkg-config"
+        # Binary Communication System dependencies
+        "liburing-dev" "libnuma-dev" "libcrypto-dev"
+        # Optional acceleration libraries
+        "libopencl-dev" "ocl-icd-opencl-dev"
     )
     
     dev_mount_chroot "$chroot_dir"
@@ -533,6 +537,99 @@ dev_install_rust() {
 }
 
 #==============================================================================
+# Binary Communication System Setup
+#==============================================================================
+
+# Install binary communication system dependencies and tools
+dev_setup_binary_comms() {
+    local chroot_dir="$1"
+    
+    log_info "Setting up Binary Communication System dependencies"
+    
+    # Core binary communication system libraries
+    local binary_deps=(
+        # High-performance I/O
+        "liburing-dev"           # io_uring async I/O
+        "libnuma-dev"           # NUMA memory allocation
+        
+        # Cryptographic libraries (already in kernel_deps)
+        "libssl-dev"            # OpenSSL for encryption
+        "libcrypto-dev"         # Cryptographic primitives
+        
+        # Development tools
+        "pkg-config"            # Library configuration
+        "build-essential"       # Core build tools
+        
+        # Optional acceleration libraries
+        "libopencl-dev"         # OpenCL for GPU acceleration
+        "ocl-icd-opencl-dev"    # OpenCL ICD loader
+        
+        # Intel specific libraries (best effort install)
+        "intel-opencl-icd"      # Intel OpenCL driver (if available)
+    )
+    
+    dev_mount_chroot "$chroot_dir"
+    
+    # Install core dependencies first
+    log_info "Installing core binary communication dependencies"
+    for dep in "${binary_deps[@]:0:6}"; do
+        chroot "$chroot_dir" apt-get install -y "$dep" 2>/dev/null || {
+            log_warn "Failed to install $dep (may be optional)"
+        }
+    done
+    
+    # Install optional acceleration libraries (best effort)
+    log_info "Installing optional acceleration libraries"
+    for dep in "${binary_deps[@]:6}"; do
+        chroot "$chroot_dir" apt-get install -y "$dep" 2>/dev/null || {
+            log_info "Optional library $dep not available (skipping)"
+        }
+    done
+    
+    # Verify installation
+    chroot "$chroot_dir" bash -c "
+        echo 'Verifying binary communication system dependencies:'
+        
+        # Check for pkg-config libraries
+        for lib in liburing openssl; do
+            if pkg-config --exists \$lib 2>/dev/null; then
+                echo '  ✓ \$lib: available'
+                pkg-config --modversion \$lib 2>/dev/null | sed 's/^/    version: /'
+            else
+                echo '  ⚠ \$lib: not found via pkg-config'
+            fi
+        done
+        
+        # Check for header files
+        echo
+        echo 'Checking development headers:'
+        for header in linux/io_uring.h numa.h openssl/ssl.h; do
+            if find /usr/include -name \"\$(basename \$header)\" 2>/dev/null | grep -q .; then
+                echo \"  ✓ \$header: available\"
+            else
+                echo \"  ⚠ \$header: not found\"
+            fi
+        done
+        
+        # Check for compiler with AVX2 support
+        echo
+        echo 'Checking compiler capabilities:'
+        if gcc -march=native -Q --help=target 2>/dev/null | grep -q avx2; then
+            echo '  ✓ AVX2 support: available'
+        else
+            echo '  ⚠ AVX2 support: not detected'
+        fi
+        
+        echo
+        echo 'Binary Communication System dependencies setup complete!'
+    " 2>/dev/null || log_warn "Verification completed with warnings"
+    
+    dev_umount_chroot "$chroot_dir"
+    
+    log_info "Binary Communication System dependencies installed"
+}
+
+#==============================================================================
 # Container and Virtualization Support
 #==============================================================================
 
@@ -716,11 +813,15 @@ dev_main() {
         "containers")
             dev_setup_containers "$chroot_dir"
             ;;
+        "binary-comms")
+            dev_setup_binary_comms "$chroot_dir"
+            ;;
         "all")
             log_info "Setting up complete development environment"
             dev_setup_kernel_build "$chroot_dir"
             dev_setup_zfs "$chroot_dir"
             dev_install_languages "$chroot_dir"
+            dev_setup_binary_comms "$chroot_dir"
             dev_setup_containers "$chroot_dir"
             log_info "Development environment setup completed"
             ;;

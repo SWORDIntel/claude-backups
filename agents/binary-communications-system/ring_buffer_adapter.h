@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../src/c/compatibility_layer.h"
+#include "compatibility_layer.h"
 
 // Forward declaration
 typedef struct ring_buffer_adapter ring_buffer_adapter_t;

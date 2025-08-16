@@ -105,7 +105,7 @@ typedef enum {
 } core_type_t;
 
 // Include compatibility layer for base types and functions
-#include "../src/c/compatibility_layer.h"
+#include "compatibility_layer.h"
 #include "ring_buffer_adapter.h"
 #include "enhanced_msg_extended.h"  // Extended message format with all features
 
