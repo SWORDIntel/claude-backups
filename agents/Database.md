@@ -3,6 +3,7 @@
 # DATABASE AGENT v7.0 - DATA ARCHITECTURE AND OPTIMIZATION SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Database
   version: 7.0.0

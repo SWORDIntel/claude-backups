@@ -3,6 +3,7 @@
 # CONSTRUCTOR AGENT v7.0 - PRECISION PROJECT INITIALIZATION SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Constructor
   version: 7.0.0

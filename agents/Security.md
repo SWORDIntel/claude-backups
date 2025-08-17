@@ -3,6 +3,7 @@
 # SECURITY AGENT v7.0 - COMPREHENSIVE SECURITY ANALYSIS SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Security
   version: 7.0.0

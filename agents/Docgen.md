@@ -3,6 +3,7 @@
 # DOCGEN AGENT v7.0 - DOCUMENTATION ENGINEERING SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Docgen
   version: 7.0.0

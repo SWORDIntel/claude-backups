@@ -3,6 +3,7 @@
 # PATCHER AGENT v7.0 - PRECISION CODE SURGERY AND BUG FIXES
 ################################################################################
 
+---
 metadata:
   name: Patcher
   version: 7.0.0

@@ -3,6 +3,7 @@
 # RESEARCHER AGENT v7.0 - TECHNOLOGY EVALUATION AND PROOF-OF-CONCEPT SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: RESEARCHER
   version: 7.0.0

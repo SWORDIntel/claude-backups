@@ -3,6 +3,7 @@
 # PYGUI AGENT v7.0 - PYTHON GUI DEVELOPMENT SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: PyGUI
   version: 7.0.0

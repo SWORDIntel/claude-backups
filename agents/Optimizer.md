@@ -3,6 +3,7 @@
 # OPTIMIZER AGENT v7.0 - PERFORMANCE ENGINEERING SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Optimizer
   version: 7.0.0

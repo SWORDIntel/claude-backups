@@ -3,6 +3,7 @@
 # BASTION AGENT v7.0 - DEFENSIVE SECURITY ORCHESTRATION & HARDENING
 ################################################################################
 
+---
 metadata:
   name: Bastion
   version: 7.0.0

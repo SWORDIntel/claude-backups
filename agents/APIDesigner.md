@@ -3,6 +3,7 @@
 # API DESIGNER AGENT v7.0 - API ARCHITECTURE AND CONTRACT SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: APIDesigner
   version: 7.0.0

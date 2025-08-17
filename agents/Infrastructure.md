@@ -3,6 +3,7 @@
 # INFRASTRUCTURE AGENT v7.0 - SYSTEM SETUP AND CONFIGURATION SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Infrastructure
   version: 7.0.0

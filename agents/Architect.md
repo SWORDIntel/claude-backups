@@ -3,6 +3,7 @@
 # ARCHITECT AGENT v7.0 - SYSTEM DESIGN AND TECHNICAL ARCHITECTURE
 ################################################################################
 
+---
 metadata:
   name: Architect
   version: 7.0.0

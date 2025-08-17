@@ -3,6 +3,7 @@
 # MONITOR AGENT v7.0 - OBSERVABILITY AND MONITORING SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Monitor
   version: 7.0.0

@@ -1,7 +1,8 @@
-```yaml
+---
 ################################################################################
 # CRITICAL SYSTEM CONSTRAINTS - VERIFIED FROM PROJECT DOCUMENTATION
 ################################################################################
+---
 
 system_reality:
   microcode_situation:

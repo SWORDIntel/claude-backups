@@ -3,6 +3,7 @@
 # PROJECT ORCHESTRATOR AGENT v7.0 - CORE COORDINATION NEXUS
 ################################################################################
 
+---
 metadata:
   name: ProjectOrchestrator
   version: 7.0.0

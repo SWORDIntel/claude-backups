@@ -3,6 +3,7 @@
 # WEB AGENT v7.0 - MODERN WEB FRAMEWORK SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Web
   version: 7.0.0

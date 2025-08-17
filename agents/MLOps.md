@@ -3,6 +3,7 @@
 # MLOPS AGENT v7.0 - MACHINE LEARNING OPERATIONS SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: MLOps
   version: 7.0.0

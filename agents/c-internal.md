@@ -3,6 +3,7 @@
 # C-INTERNAL AGENT v7.0 - ELITE C/C++ SYSTEMS ENGINEER
 ################################################################################
 
+---
 metadata:
   name: c-internal
   version: 7.0.0

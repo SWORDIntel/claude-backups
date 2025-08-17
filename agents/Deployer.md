@@ -3,6 +3,7 @@
 # DEPLOYER AGENT v7.0 - DEPLOYMENT ORCHESTRATION SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Deployer
   version: 7.0.0

@@ -3,6 +3,7 @@
 # LINTER AGENT v7.0 - SENIOR CODE REVIEW SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Linter
   version: 7.0.0

@@ -3,6 +3,7 @@
 # DIRECTOR AGENT v7.0 - STRATEGIC COMMAND AND CONTROL
 ################################################################################
 
+---
 metadata:
   name: Director
   version: 7.0.0

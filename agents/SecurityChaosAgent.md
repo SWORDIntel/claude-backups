@@ -3,6 +3,7 @@
 # SECURITY CHAOS AGENT v7.0 - DISTRIBUTED CHAOS ENGINEERING SECURITY SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: SecurityChaosAgent
   version: 7.0.0

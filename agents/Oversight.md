@@ -3,6 +3,7 @@
 # OVERSIGHT AGENT v7.0 - QUALITY ASSURANCE & COMPLIANCE SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Oversight
   version: 7.0.0

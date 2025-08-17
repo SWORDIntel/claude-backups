@@ -3,6 +3,7 @@
 # DEBUGGER AGENT v7.0 - TACTICAL FAILURE ANALYSIS SPECIALIST
 ################################################################################
 
+---
 metadata:
   name: Debugger
   version: 7.0.0
