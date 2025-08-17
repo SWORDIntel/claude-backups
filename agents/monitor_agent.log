@@ -14,39 +14,39 @@ Features: Real system metrics, alerting, Prometheus export
 [Monitor] Collector thread started (interval: 1000ms)
 
 [Monitor] === METRICS EXPORT #1 ===
-CPU: 28.9% | Memory: 15.6% | Temp: 37.0°C | Disk: 10.9%
-P-cores avg: 48.7% | E-cores avg: 2.1%
-Network RX: 1266 MB | TX: 657 MB
+CPU: 27.7% | Memory: 19.6% | Temp: 36.0°C | Disk: 16.3%
+P-cores avg: 46.8% | E-cores avg: 2.0%
+Network RX: 1514 MB | TX: 902 MB
 Metrics collected: 15 | Alerts triggered: 0
 
 [Monitor] === METRICS EXPORT #2 ===
-CPU: 28.9% | Memory: 15.6% | Temp: 37.0°C | Disk: 10.9%
-P-cores avg: 48.7% | E-cores avg: 2.1%
-Network RX: 1266 MB | TX: 657 MB
+CPU: 27.7% | Memory: 19.8% | Temp: 36.0°C | Disk: 16.3%
+P-cores avg: 46.8% | E-cores avg: 2.0%
+Network RX: 1514 MB | TX: 902 MB
 Metrics collected: 30 | Alerts triggered: 0
 
 [Monitor] === METRICS EXPORT #3 ===
-CPU: 28.9% | Memory: 15.7% | Temp: 37.0°C | Disk: 10.9%
-P-cores avg: 48.7% | E-cores avg: 2.1%
-Network RX: 1266 MB | TX: 657 MB
+CPU: 27.7% | Memory: 19.9% | Temp: 36.0°C | Disk: 16.3%
+P-cores avg: 46.8% | E-cores avg: 2.0%
+Network RX: 1514 MB | TX: 902 MB
 Metrics collected: 45 | Alerts triggered: 0
 
 [Monitor] === METRICS EXPORT #4 ===
-CPU: 28.9% | Memory: 15.9% | Temp: 37.0°C | Disk: 10.9%
-P-cores avg: 48.7% | E-cores avg: 2.1%
-Network RX: 1266 MB | TX: 658 MB
+CPU: 27.7% | Memory: 19.1% | Temp: 36.0°C | Disk: 16.3%
+P-cores avg: 46.8% | E-cores avg: 2.0%
+Network RX: 1514 MB | TX: 902 MB
 Metrics collected: 60 | Alerts triggered: 0
 
 [Monitor] === METRICS EXPORT #5 ===
-CPU: 28.9% | Memory: 16.1% | Temp: 37.0°C | Disk: 10.9%
-P-cores avg: 48.7% | E-cores avg: 2.1%
-Network RX: 1266 MB | TX: 659 MB
+CPU: 27.7% | Memory: 18.7% | Temp: 36.0°C | Disk: 16.3%
+P-cores avg: 46.8% | E-cores avg: 2.0%
+Network RX: 1514 MB | TX: 902 MB
 Metrics collected: 75 | Alerts triggered: 0
 
 [Monitor] === METRICS EXPORT #6 ===
-CPU: 28.9% | Memory: 15.4% | Temp: 37.0°C | Disk: 10.9%
-P-cores avg: 48.7% | E-cores avg: 2.1%
-Network RX: 1266 MB | TX: 659 MB
+CPU: 27.7% | Memory: 19.0% | Temp: 36.0°C | Disk: 16.3%
+P-cores avg: 46.8% | E-cores avg: 2.0%
+Network RX: 1514 MB | TX: 902 MB
 Metrics collected: 90 | Alerts triggered: 0
 [Monitor] Collector thread stopped
 

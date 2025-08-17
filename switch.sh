@@ -95,12 +95,28 @@ verify_active_agents() {
             fi
         fi
         
-# Check for .md agent files (case variations)
-        local agent_files=(
-            "$AGENTS_DIR/${agent}.md"
-            "$AGENTS_DIR/${agent^}.md"
-            "$AGENTS_DIR/${agent^^}.md"
-        )
+# Check for .md agent files (case variations and special names)
+        local agent_files=()
+        
+        # Handle special naming cases
+        case "$agent" in
+            "project_orchestrator") agent_files+=("$AGENTS_DIR/ProjectOrchestrator.md") ;;
+            "ml_ops") agent_files+=("$AGENTS_DIR/MLOps.md") ;;
+            "api_designer") agent_files+=("$AGENTS_DIR/APIDesigner.md") ;;
+            "pygui") agent_files+=("$AGENTS_DIR/PyGUI.md") ;;
+            "data_science") agent_files+=("$AGENTS_DIR/DataScience.md") ;;
+            "c_internal") agent_files+=("$AGENTS_DIR/c-internal.md") ;;
+            "python_internal") agent_files+=("$AGENTS_DIR/python-internal.md") ;;
+            "security_chaos") agent_files+=("$AGENTS_DIR/SecurityChaosAgent.md") ;;
+            *)
+                # Default case variations
+                agent_files+=(
+                    "$AGENTS_DIR/${agent}.md"
+                    "$AGENTS_DIR/${agent^}.md"
+                    "$AGENTS_DIR/${agent^^}.md"
+                )
+                ;;
+        esac
         
         for agent_file in "${agent_files[@]}"; do
             if [ -f "$agent_file" ]; then
@@ -202,13 +218,13 @@ switch_to_binary_mode() {
     
     # 1. Start binary protocol server
     echo "  Starting binary protocol server..."
-    python3 03-BRIDGES/agent_server.py > 09-MONITORING/logs/agent_server.log 2>&1 &
+    python3 src/python/agent_protocol_server.py > 09-MONITORING/logs/agent_server.log 2>&1 &
     AGENT_SERVER_PID=$!
     sleep 1
     
     # 2. Start unified bridge (main coordinator)
     echo "  Starting unified bridge..."
-    python3 03-BRIDGES/unified_bridge.py > 09-MONITORING/logs/unified_bridge.log 2>&1 &
+    python3 src/python/binary_bridge_connector.py > 09-MONITORING/logs/unified_bridge.log 2>&1 &
     UNIFIED_BRIDGE_PID=$!
     sleep 1
     
@@ -222,9 +238,9 @@ switch_to_binary_mode() {
     fi
     
     # 4. Optional: Start monitoring
-    if [ -f "03-BRIDGES/bridge_monitor.py" ]; then
+    if [ -f "src/python/bridge_health_monitor.py" ]; then
         echo "  Starting bridge monitor..."
-        python3 03-BRIDGES/bridge_monitor.py > 09-MONITORING/logs/bridge_monitor.log 2>&1 &
+        python3 src/python/bridge_health_monitor.py > 09-MONITORING/logs/bridge_monitor.log 2>&1 &
     fi
     
     # Wait for stabilization
@@ -266,12 +282,28 @@ test_agent() {
     local agent_name="$1"
     echo -n "Testing $agent_name... "
     
-    # Check if agent file exists (case variations)
-    local agent_files=(
-        "$AGENTS_DIR/${agent_name}.md"
-        "$AGENTS_DIR/${agent_name^}.md"
-        "$AGENTS_DIR/${agent_name^^}.md"
-    )
+    # Check if agent file exists (case variations and special names)
+    local agent_files=()
+    
+    # Handle special naming cases
+    case "$agent_name" in
+        "project_orchestrator") agent_files+=("$AGENTS_DIR/ProjectOrchestrator.md") ;;
+        "ml_ops") agent_files+=("$AGENTS_DIR/MLOps.md") ;;
+        "api_designer") agent_files+=("$AGENTS_DIR/APIDesigner.md") ;;
+        "pygui") agent_files+=("$AGENTS_DIR/PyGUI.md") ;;
+        "data_science") agent_files+=("$AGENTS_DIR/DataScience.md") ;;
+        "c_internal") agent_files+=("$AGENTS_DIR/c-internal.md") ;;
+        "python_internal") agent_files+=("$AGENTS_DIR/python-internal.md") ;;
+        "security_chaos") agent_files+=("$AGENTS_DIR/SecurityChaosAgent.md") ;;
+        *)
+            # Default case variations
+            agent_files+=(
+                "$AGENTS_DIR/${agent_name}.md"
+                "$AGENTS_DIR/${agent_name^}.md"
+                "$AGENTS_DIR/${agent_name^^}.md"
+            )
+            ;;
+    esac
     
     for agent_file in "${agent_files[@]}"; do
         if [ -f "$agent_file" ]; then

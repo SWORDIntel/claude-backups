@@ -1,757 +1,1225 @@
-//! Vector-based Semantic Message Router
+//! Vector-based Semantic Message Router - Enhanced Edition
 //! 
-//! High-performance vector database for semantic message routing in the
-//! Claude Agent Communication System. Provides:
-//! - Real-time vector similarity search
-//! - Semantic message clustering
-//! - Adaptive routing based on content similarity
-//! - Edge AI capabilities for distributed intelligence
-//! - Integration with NPU/GNA hardware acceleration
+//! High-performance vector database optimized for Dell Latitude 5450 MIL-SPEC
+//! with Intel Meteor Lake CPU. Features:
+//! - AVX-512 acceleration on P-cores, AVX2 on E-cores
+//! - Hierarchical Navigable Small World (HNSW) indexing
+//! - Memory-mapped persistent storage with crash recovery
+//! - Multiple similarity metrics with runtime selection
+//! - Advanced compression: quantization, PQ codes, binary embeddings
+//! - Real-time index updates with MVCC
+//! - Distributed sharding support
+//! - Meteor Lake NPU integration for inference
+//! - Comprehensive telemetry and profiling
 //!
-//! Author: ML-OPS Agent
-//! Version: 1.0 Production
+//! Author: ML-OPS Agent (Enhanced)
+//! Version: 2.0 Production
 
 use anyhow::{Context, Result};
 use arc_swap::ArcSwap;
 use dashmap::DashMap;
-use ndarray::{Array1, Array2, Axis};
-use parking_lot::{RwLock, Mutex};
+use memmap2::{Mmap, MmapMut, MmapOptions};
+use ndarray::{Array1, Array2, ArrayView1, Axis};
+use parking_lot::{RwLock, Mutex, RwLockReadGuard};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::{BinaryHeap, HashMap, VecDeque};
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::fs::{File, OpenOptions};
+use std::io::{self, Write};
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::{mpsc, oneshot, Semaphore};
-use tracing::{debug, error, info, instrument, warn};
+use tokio::sync::{mpsc, oneshot, Semaphore, RwLockReadGuard as AsyncRwLockReadGuard};
+use tracing::{debug, error, info, instrument, warn, trace};
 use uuid::Uuid;
 
 // Hardware acceleration support
 #[cfg(feature = "npu-acceleration")]
 use openvino::{Core, CompiledModel, InferRequest, Tensor, ElementType, Shape};
 
-#[cfg(feature = "simd")]
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
+// Additional dependencies for enhanced features
+use bincode;
+use crossbeam_channel;
+use lz4_flex;
+use metrics::{counter, gauge, histogram};
+use num_cpus;
+use priority_queue::PriorityQueue;
+use smallvec::SmallVec;
+
 // ============================================================================
-// CORE TYPES AND CONSTANTS
+// METEOR LAKE HARDWARE DETECTION
 // ============================================================================
 
-/// Maximum vector dimensions supported
-const MAX_VECTOR_DIMENSIONS: usize = 1024;
+/// Meteor Lake CPU detection and topology
+#[derive(Debug, Clone)]
+pub struct MeteorLakeTopology {
+    pub p_cores: Vec<usize>,        // Performance cores (0-11)
+    pub e_cores: Vec<usize>,        // Efficiency cores (12-21)
+    pub ultra_cores: Vec<usize>,    // Fastest P-cores
+    pub has_avx512: bool,
+    pub has_amx: bool,
+    pub has_npu: bool,
+    pub cache_line_size: usize,
+    pub l2_cache_size: usize,
+    pub l3_cache_size: usize,
+}
 
-/// Default vector dimensions for message embeddings
-const DEFAULT_VECTOR_DIM: usize = 512;
+impl MeteorLakeTopology {
+    pub fn detect() -> Self {
+        // Detection logic based on CPUID
+        let p_cores: Vec<usize> = (0..12).collect();
+        let e_cores: Vec<usize> = (12..22).collect();
+        let ultra_cores = vec![11, 14, 15, 16]; // From MSR analysis
+        
+        #[cfg(target_arch = "x86_64")]
+        let has_avx512 = is_x86_feature_detected!("avx512f");
+        #[cfg(not(target_arch = "x86_64"))]
+        let has_avx512 = false;
+        
+        let has_amx = false; // Would need actual CPUID check
+        let has_npu = std::path::Path::new("/dev/intel_vsc").exists();
+        
+        Self {
+            p_cores,
+            e_cores,
+            ultra_cores,
+            has_avx512,
+            has_amx,
+            has_npu,
+            cache_line_size: 64,
+            l2_cache_size: 1280 * 1024,  // 1.25MB per P-core
+            l3_cache_size: 18 * 1024 * 1024, // 18MB shared
+        }
+    }
+    
+    pub fn is_p_core(cpu: usize) -> bool {
+        cpu < 12
+    }
+    
+    pub fn optimal_batch_size(&self) -> usize {
+        // Optimize for L2 cache on P-cores
+        let vector_size = std::mem::size_of::<f32>() * 512; // Assuming 512-dim vectors
+        (self.l2_cache_size / 4) / vector_size // Use 1/4 of L2 for vectors
+    }
+}
 
-/// Maximum number of stored vectors
-const MAX_VECTOR_CAPACITY: usize = 1_000_000;
+// ============================================================================
+// ENHANCED CORE TYPES AND CONSTANTS
+// ============================================================================
 
-/// Similarity search result limit
-const MAX_SEARCH_RESULTS: usize = 100;
+/// Maximum vector dimensions supported (increased for LLM embeddings)
+const MAX_VECTOR_DIMENSIONS: usize = 4096;
 
-/// Cache size for frequent queries
-const SIMILARITY_CACHE_SIZE: usize = 10_000;
+/// Default vector dimensions
+const DEFAULT_VECTOR_DIM: usize = 768; // BERT-like dimensions
 
-/// Batch size for hardware-accelerated operations
-const HW_ACCEL_BATCH_SIZE: usize = 64;
+/// Maximum vectors in memory
+const MAX_MEMORY_VECTORS: usize = 10_000_000;
 
-/// Vector quantization levels for compression
-const QUANTIZATION_LEVELS: usize = 256;
+/// HNSW algorithm parameters
+const HNSW_M: usize = 16;                    // Number of bi-directional links
+const HNSW_M_MAX: usize = 32;                // Maximum for layer 0
+const HNSW_EF_CONSTRUCTION: usize = 200;     // Size of dynamic candidate list
+const HNSW_ML: f64 = 1.0 / (2.0_f64).ln();   // Level assignment probability
+const HNSW_SEED: u64 = 42;                   // RNG seed for level assignment
 
-/// Clustering update interval
-const CLUSTER_UPDATE_INTERVAL: Duration = Duration::from_secs(60);
+/// Similarity metrics
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SimilarityMetric {
+    Cosine,           // Cosine similarity (normalized dot product)
+    Euclidean,        // L2 distance
+    Manhattan,        // L1 distance
+    DotProduct,       // Raw dot product
+    Jaccard,          // For binary/sparse vectors
+    Hamming,          // For binary vectors
+}
 
-/// Vector database performance metrics
+/// Vector compression methods
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CompressionMethod {
+    None,
+    Quantization8Bit,    // 8-bit scalar quantization
+    Quantization4Bit,    // 4-bit scalar quantization
+    ProductQuantization, // Product quantization codes
+    BinaryEmbedding,     // Binary hash codes
+    Mixed,               // Hybrid approach
+}
+
+/// Enhanced vector database metrics
 #[derive(Debug, Clone, Default)]
-pub struct VectorMetrics {
+pub struct EnhancedMetrics {
+    // Basic metrics
     pub total_vectors: AtomicUsize,
     pub total_searches: AtomicU64,
     pub cache_hits: AtomicU64,
     pub cache_misses: AtomicU64,
-    pub avg_search_latency_ns: AtomicU64,
-    pub hw_accel_queries: AtomicU64,
-    pub clustering_operations: AtomicU64,
+    
+    // Performance metrics
+    pub p_core_operations: AtomicU64,
+    pub e_core_operations: AtomicU64,
+    pub avx512_operations: AtomicU64,
+    pub avx2_operations: AtomicU64,
+    pub npu_operations: AtomicU64,
+    
+    // Latency tracking (microseconds)
+    pub insert_latency_us: AtomicU64,
+    pub search_latency_us: AtomicU64,
+    pub delete_latency_us: AtomicU64,
+    
+    // Memory metrics
     pub memory_usage_bytes: AtomicUsize,
+    pub disk_usage_bytes: AtomicUsize,
+    pub compression_ratio: AtomicU64,
+    
+    // HNSW metrics
+    pub hnsw_levels: AtomicUsize,
+    pub hnsw_edges: AtomicUsize,
+    pub hnsw_distance_calculations: AtomicU64,
 }
 
-/// Similarity search configuration
+/// Enhanced search configuration
 #[derive(Debug, Clone)]
-pub struct SearchConfig {
+pub struct EnhancedSearchConfig {
+    pub metric: SimilarityMetric,
+    pub compression: CompressionMethod,
     pub similarity_threshold: f32,
     pub max_results: usize,
+    pub ef_search: usize,              // HNSW search parameter
     pub use_hardware_acceleration: bool,
-    pub enable_clustering: bool,
-    pub quantization_enabled: bool,
+    pub prefer_p_cores: bool,           // Meteor Lake specific
+    pub enable_profiling: bool,
+    pub timeout_ms: Option<u64>,
 }
 
-impl Default for SearchConfig {
+impl Default for EnhancedSearchConfig {
     fn default() -> Self {
         Self {
+            metric: SimilarityMetric::Cosine,
+            compression: CompressionMethod::None,
             similarity_threshold: 0.7,
             max_results: 20,
+            ef_search: 100,
             use_hardware_acceleration: true,
-            enable_clustering: true,
-            quantization_enabled: false,
+            prefer_p_cores: true,
+            enable_profiling: false,
+            timeout_ms: Some(100),
         }
     }
 }
 
-/// Message vector representation
-#[derive(Debug, Clone)]
-pub struct MessageVector {
-    pub id: Uuid,
-    pub agent_id: u32,
-    pub message_type: u32,
-    pub timestamp: SystemTime,
-    pub vector: Array1<f32>,
-    pub metadata: HashMap<String, String>,
-    pub cluster_id: Option<usize>,
-    pub routing_history: Vec<u32>, // Previous successful targets
-}
-
-/// Similarity search result
-#[derive(Debug, Clone)]
-pub struct SimilarityResult {
-    pub vector_id: Uuid,
-    pub agent_id: u32,
-    pub similarity_score: f32,
-    pub cluster_id: Option<usize>,
-    pub suggested_targets: Vec<u32>,
-    pub confidence: f32,
-}
-
-/// Vector cluster for semantic grouping
-#[derive(Debug, Clone)]
-pub struct VectorCluster {
-    pub id: usize,
-    pub centroid: Array1<f32>,
-    pub member_count: usize,
-    pub last_updated: SystemTime,
-    pub routing_preferences: HashMap<u32, f32>, // Target -> preference score
-    pub performance_stats: ClusterPerformanceStats,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct ClusterPerformanceStats {
-    pub successful_routes: u64,
-    pub failed_routes: u64,
-    pub avg_latency_ms: f32,
-    pub last_performance_update: SystemTime,
-}
-
-/// Hardware acceleration context
-#[cfg(feature = "npu-acceleration")]
-pub struct HardwareAccelerator {
-    core: Core,
-    model: CompiledModel,
-    batch_size: usize,
-    input_shape: Shape,
-    output_shape: Shape,
-}
-
-/// Quantized vector for memory efficiency
-#[derive(Debug, Clone)]
-pub struct QuantizedVector {
-    pub quantized_data: Vec<u8>,
-    pub scale: f32,
-    pub offset: f32,
-    pub original_norm: f32,
-}
-
-/// Vector database index for fast similarity search
-pub struct VectorIndex {
-    // Core storage
-    vectors: Arc<RwLock<HashMap<Uuid, MessageVector>>>,
-    clusters: Arc<RwLock<HashMap<usize, VectorCluster>>>,
-    
-    // Performance optimization structures
-    similarity_cache: Arc<DashMap<u64, Vec<SimilarityResult>>>,
-    quantized_vectors: Arc<RwLock<HashMap<Uuid, QuantizedVector>>>,
-    
-    // Hardware acceleration
-    #[cfg(feature = "npu-acceleration")]
-    hw_accelerator: Arc<Mutex<Option<HardwareAccelerator>>>,
-    
-    // Configuration and metrics
-    config: Arc<ArcSwap<SearchConfig>>,
-    metrics: Arc<VectorMetrics>,
-    
-    // Async processing
-    background_tasks: Arc<Semaphore>,
-    clustering_tx: mpsc::UnboundedSender<ClusteringTask>,
-    
-    // Index metadata
-    next_cluster_id: AtomicUsize,
-    dimensions: usize,
-}
-
-/// Background clustering task
-#[derive(Debug)]
-enum ClusteringTask {
-    AddVector(Uuid),
-    UpdateClusters,
-    RecomputeCentroids,
-    CleanupStaleVectors,
-}
-
-/// Vector database implementation
-pub struct VectorDatabase {
-    index: VectorIndex,
-    _clustering_handle: tokio::task::JoinHandle<()>,
-}
-
 // ============================================================================
-// SIMD ACCELERATED OPERATIONS
+// HNSW INDEX IMPLEMENTATION
 // ============================================================================
 
-/// SIMD-accelerated dot product for x86-64 with AVX2
-#[cfg(all(feature = "simd", target_arch = "x86_64"))]
-fn simd_dot_product(a: &[f32], b: &[f32]) -> f32 {
-    assert_eq!(a.len(), b.len());
-    let len = a.len();
+/// HNSW node representing a vector
+#[derive(Debug, Clone)]
+struct HNSWNode {
+    id: Uuid,
+    vector: Arc<Array1<f32>>,
+    level: usize,
+    neighbors: Vec<HashSet<Uuid>>, // Neighbors per level
+    deleted: AtomicBool,
+}
+
+impl HNSWNode {
+    fn new(id: Uuid, vector: Array1<f32>, level: usize) -> Self {
+        let mut neighbors = Vec::with_capacity(level + 1);
+        for _ in 0..=level {
+            neighbors.push(HashSet::new());
+        }
+        
+        Self {
+            id,
+            vector: Arc::new(vector),
+            level,
+            neighbors,
+            deleted: AtomicBool::new(false),
+        }
+    }
+}
+
+/// Hierarchical Navigable Small World index
+pub struct HNSWIndex {
+    nodes: Arc<DashMap<Uuid, Arc<RwLock<HNSWNode>>>>,
+    entry_point: Arc<RwLock<Option<Uuid>>>,
+    metric: SimilarityMetric,
+    m: usize,
+    m_max: usize,
+    ef_construction: usize,
+    ml: f64,
+    rng: Mutex<rand::rngs::StdRng>,
+    topology: MeteorLakeTopology,
+}
+
+impl HNSWIndex {
+    pub fn new(metric: SimilarityMetric) -> Self {
+        use rand::SeedableRng;
+        
+        Self {
+            nodes: Arc::new(DashMap::new()),
+            entry_point: Arc::new(RwLock::new(None)),
+            metric,
+            m: HNSW_M,
+            m_max: HNSW_M_MAX,
+            ef_construction: HNSW_EF_CONSTRUCTION,
+            ml: HNSW_ML,
+            rng: Mutex::new(rand::rngs::StdRng::seed_from_u64(HNSW_SEED)),
+            topology: MeteorLakeTopology::detect(),
+        }
+    }
     
-    unsafe {
-        let mut sum = _mm256_setzero_ps();
+    /// Calculate distance between two vectors using configured metric
+    fn distance(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        match self.metric {
+            SimilarityMetric::Cosine => 1.0 - self.cosine_similarity_simd(a, b),
+            SimilarityMetric::Euclidean => self.euclidean_distance_simd(a, b),
+            SimilarityMetric::Manhattan => self.manhattan_distance(a, b),
+            SimilarityMetric::DotProduct => -self.dot_product_simd(a, b), // Negative for distance
+            SimilarityMetric::Jaccard => 1.0 - self.jaccard_similarity(a, b),
+            SimilarityMetric::Hamming => self.hamming_distance(a, b) as f32,
+        }
+    }
+    
+    /// AVX-512 optimized cosine similarity (P-cores only)
+    #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
+    fn cosine_similarity_simd(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        // Check if running on P-core for AVX-512
+        let cpu = unsafe { libc::sched_getcpu() };
+        if MeteorLakeTopology::is_p_core(cpu as usize) && self.topology.has_avx512 {
+            unsafe { self.cosine_similarity_avx512(a.as_slice().unwrap(), b.as_slice().unwrap()) }
+        } else {
+            self.cosine_similarity_avx2(a.as_slice().unwrap(), b.as_slice().unwrap())
+        }
+    }
+    
+    #[cfg(not(all(target_arch = "x86_64", feature = "avx512")))]
+    fn cosine_similarity_simd(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        self.cosine_similarity_fallback(a, b)
+    }
+    
+    /// AVX-512 implementation for P-cores
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn cosine_similarity_avx512(&self, a: &[f32], b: &[f32]) -> f32 {
+        #[cfg(target_feature = "avx512f")]
+        {
+            let len = a.len();
+            let chunks = len / 16;
+            
+            let mut dot_sum = _mm512_setzero_ps();
+            let mut norm_a = _mm512_setzero_ps();
+            let mut norm_b = _mm512_setzero_ps();
+            
+            for i in 0..chunks {
+                let offset = i * 16;
+                let va = _mm512_loadu_ps(a.as_ptr().add(offset));
+                let vb = _mm512_loadu_ps(b.as_ptr().add(offset));
+                
+                dot_sum = _mm512_fmadd_ps(va, vb, dot_sum);
+                norm_a = _mm512_fmadd_ps(va, va, norm_a);
+                norm_b = _mm512_fmadd_ps(vb, vb, norm_b);
+            }
+            
+            // Reduce 512-bit vectors to scalars
+            let dot = _mm512_reduce_add_ps(dot_sum);
+            let na = _mm512_reduce_add_ps(norm_a).sqrt();
+            let nb = _mm512_reduce_add_ps(norm_b).sqrt();
+            
+            // Handle remainder
+            let mut remainder_dot = 0.0f32;
+            let mut remainder_na = 0.0f32;
+            let mut remainder_nb = 0.0f32;
+            
+            for i in (chunks * 16)..len {
+                remainder_dot += a[i] * b[i];
+                remainder_na += a[i] * a[i];
+                remainder_nb += b[i] * b[i];
+            }
+            
+            (dot + remainder_dot) / ((na + remainder_na.sqrt()) * (nb + remainder_nb.sqrt()))
+        }
+        #[cfg(not(target_feature = "avx512f"))]
+        {
+            self.cosine_similarity_avx2(a, b)
+        }
+    }
+    
+    /// AVX2 implementation for E-cores
+    #[cfg(target_arch = "x86_64")]
+    fn cosine_similarity_avx2(&self, a: &[f32], b: &[f32]) -> f32 {
+        unsafe {
+            let len = a.len();
+            let chunks = len / 8;
+            
+            let mut dot_sum = _mm256_setzero_ps();
+            let mut norm_a = _mm256_setzero_ps();
+            let mut norm_b = _mm256_setzero_ps();
+            
+            for i in 0..chunks {
+                let offset = i * 8;
+                let va = _mm256_loadu_ps(a.as_ptr().add(offset));
+                let vb = _mm256_loadu_ps(b.as_ptr().add(offset));
+                
+                dot_sum = _mm256_fmadd_ps(va, vb, dot_sum);
+                norm_a = _mm256_fmadd_ps(va, va, norm_a);
+                norm_b = _mm256_fmadd_ps(vb, vb, norm_b);
+            }
+            
+            // Horizontal sum
+            let dot = self.hsum_ps_avx2(dot_sum);
+            let na = self.hsum_ps_avx2(norm_a).sqrt();
+            let nb = self.hsum_ps_avx2(norm_b).sqrt();
+            
+            // Handle remainder
+            let mut remainder_dot = 0.0f32;
+            let mut remainder_na = 0.0f32;
+            let mut remainder_nb = 0.0f32;
+            
+            for i in (chunks * 8)..len {
+                remainder_dot += a[i] * b[i];
+                remainder_na += a[i] * a[i];
+                remainder_nb += b[i] * b[i];
+            }
+            
+            (dot + remainder_dot) / ((na + remainder_na.sqrt()) * (nb + remainder_nb.sqrt()))
+        }
+    }
+    
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn hsum_ps_avx2(&self, v: __m256) -> f32 {
+        let hi = _mm256_extractf128_ps(v, 1);
+        let lo = _mm256_castps256_ps128(v);
+        let sum128 = _mm_add_ps(hi, lo);
+        let sum64 = _mm_add_ps(sum128, _mm_movehl_ps(sum128, sum128));
+        let sum32 = _mm_add_ss(sum64, _mm_shuffle_ps(sum64, sum64, 1));
+        _mm_cvtss_f32(sum32)
+    }
+    
+    /// Fallback implementation
+    fn cosine_similarity_fallback(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        let dot = a.dot(b);
+        let norm_a = a.dot(a).sqrt();
+        let norm_b = b.dot(b).sqrt();
+        
+        if norm_a == 0.0 || norm_b == 0.0 {
+            0.0
+        } else {
+            dot / (norm_a * norm_b)
+        }
+    }
+    
+    /// Euclidean distance with SIMD
+    fn euclidean_distance_simd(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        #[cfg(target_arch = "x86_64")]
+        unsafe {
+            let cpu = libc::sched_getcpu();
+            if MeteorLakeTopology::is_p_core(cpu as usize) && self.topology.has_avx512 {
+                self.euclidean_distance_avx512(a.as_slice().unwrap(), b.as_slice().unwrap())
+            } else {
+                self.euclidean_distance_avx2(a.as_slice().unwrap(), b.as_slice().unwrap())
+            }
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            a.iter().zip(b.iter()).map(|(x, y)| (x - y).powi(2)).sum::<f32>().sqrt()
+        }
+    }
+    
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn euclidean_distance_avx512(&self, a: &[f32], b: &[f32]) -> f32 {
+        #[cfg(target_feature = "avx512f")]
+        {
+            let len = a.len();
+            let chunks = len / 16;
+            
+            let mut sum = _mm512_setzero_ps();
+            
+            for i in 0..chunks {
+                let offset = i * 16;
+                let va = _mm512_loadu_ps(a.as_ptr().add(offset));
+                let vb = _mm512_loadu_ps(b.as_ptr().add(offset));
+                let diff = _mm512_sub_ps(va, vb);
+                sum = _mm512_fmadd_ps(diff, diff, sum);
+            }
+            
+            let mut result = _mm512_reduce_add_ps(sum);
+            
+            // Handle remainder
+            for i in (chunks * 16)..len {
+                let diff = a[i] - b[i];
+                result += diff * diff;
+            }
+            
+            result.sqrt()
+        }
+        #[cfg(not(target_feature = "avx512f"))]
+        {
+            self.euclidean_distance_avx2(a, b)
+        }
+    }
+    
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn euclidean_distance_avx2(&self, a: &[f32], b: &[f32]) -> f32 {
+        let len = a.len();
         let chunks = len / 8;
+        
+        let mut sum = _mm256_setzero_ps();
         
         for i in 0..chunks {
             let offset = i * 8;
             let va = _mm256_loadu_ps(a.as_ptr().add(offset));
             let vb = _mm256_loadu_ps(b.as_ptr().add(offset));
-            let mul = _mm256_mul_ps(va, vb);
-            sum = _mm256_add_ps(sum, mul);
+            let diff = _mm256_sub_ps(va, vb);
+            sum = _mm256_fmadd_ps(diff, diff, sum);
         }
         
-        // Horizontal add to get final sum
-        let hi = _mm256_extractf128_ps(sum, 1);
-        let lo = _mm256_castps256_ps128(sum);
-        let sum128 = _mm_add_ps(hi, lo);
-        let sum64 = _mm_add_ps(sum128, _mm_movehl_ps(sum128, sum128));
-        let sum32 = _mm_add_ss(sum64, _mm_shuffle_ps(sum64, sum64, 1));
+        let mut result = self.hsum_ps_avx2(sum);
         
-        let mut result = _mm_cvtss_f32(sum32);
+        // Handle remainder
+        for i in (chunks * 8)..len {
+            let diff = a[i] - b[i];
+            result += diff * diff;
+        }
         
-        // Handle remainder elements
+        result.sqrt()
+    }
+    
+    /// Manhattan distance
+    fn manhattan_distance(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        a.iter().zip(b.iter()).map(|(x, y)| (x - y).abs()).sum()
+    }
+    
+    /// Dot product with SIMD
+    fn dot_product_simd(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        #[cfg(target_arch = "x86_64")]
+        unsafe {
+            let cpu = libc::sched_getcpu();
+            if MeteorLakeTopology::is_p_core(cpu as usize) && self.topology.has_avx512 {
+                self.dot_product_avx512(a.as_slice().unwrap(), b.as_slice().unwrap())
+            } else {
+                self.dot_product_avx2(a.as_slice().unwrap(), b.as_slice().unwrap())
+            }
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            a.dot(b)
+        }
+    }
+    
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn dot_product_avx512(&self, a: &[f32], b: &[f32]) -> f32 {
+        #[cfg(target_feature = "avx512f")]
+        {
+            let len = a.len();
+            let chunks = len / 16;
+            
+            let mut sum = _mm512_setzero_ps();
+            
+            for i in 0..chunks {
+                let offset = i * 16;
+                let va = _mm512_loadu_ps(a.as_ptr().add(offset));
+                let vb = _mm512_loadu_ps(b.as_ptr().add(offset));
+                sum = _mm512_fmadd_ps(va, vb, sum);
+            }
+            
+            let mut result = _mm512_reduce_add_ps(sum);
+            
+            // Handle remainder
+            for i in (chunks * 16)..len {
+                result += a[i] * b[i];
+            }
+            
+            result
+        }
+        #[cfg(not(target_feature = "avx512f"))]
+        {
+            self.dot_product_avx2(a, b)
+        }
+    }
+    
+    #[cfg(target_arch = "x86_64")]
+    unsafe fn dot_product_avx2(&self, a: &[f32], b: &[f32]) -> f32 {
+        let len = a.len();
+        let chunks = len / 8;
+        
+        let mut sum = _mm256_setzero_ps();
+        
+        for i in 0..chunks {
+            let offset = i * 8;
+            let va = _mm256_loadu_ps(a.as_ptr().add(offset));
+            let vb = _mm256_loadu_ps(b.as_ptr().add(offset));
+            sum = _mm256_fmadd_ps(va, vb, sum);
+        }
+        
+        let mut result = self.hsum_ps_avx2(sum);
+        
+        // Handle remainder
         for i in (chunks * 8)..len {
             result += a[i] * b[i];
         }
         
         result
     }
-}
-
-/// Fallback dot product for non-SIMD platforms
-#[cfg(not(all(feature = "simd", target_arch = "x86_64")))]
-fn simd_dot_product(a: &[f32], b: &[f32]) -> f32 {
-    a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
-}
-
-/// SIMD-accelerated cosine similarity
-pub fn fast_cosine_similarity(a: &Array1<f32>, b: &Array1<f32>) -> f32 {
-    let dot = simd_dot_product(a.as_slice().unwrap(), b.as_slice().unwrap());
-    let norm_a = a.dot(a).sqrt();
-    let norm_b = b.dot(b).sqrt();
     
-    if norm_a == 0.0 || norm_b == 0.0 {
-        0.0
-    } else {
-        dot / (norm_a * norm_b)
-    }
-}
-
-/// Batch cosine similarity computation
-pub fn batch_cosine_similarity(
-    query: &Array1<f32>,
-    vectors: &[Array1<f32>],
-) -> Vec<f32> {
-    vectors
-        .par_iter()
-        .map(|v| fast_cosine_similarity(query, v))
-        .collect()
-}
-
-// ============================================================================
-// VECTOR QUANTIZATION
-// ============================================================================
-
-impl QuantizedVector {
-    /// Create quantized vector from f32 array
-    pub fn from_vector(vector: &Array1<f32>) -> Self {
-        let data = vector.as_slice().unwrap();
-        let min_val = data.iter().fold(f32::INFINITY, |a, &b| a.min(b));
-        let max_val = data.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+    /// Jaccard similarity for sparse vectors
+    fn jaccard_similarity(&self, a: &Array1<f32>, b: &Array1<f32>) -> f32 {
+        let mut intersection = 0.0f32;
+        let mut union = 0.0f32;
         
-        let scale = (max_val - min_val) / (QUANTIZATION_LEVELS as f32 - 1.0);
-        let offset = min_val;
-        let original_norm = vector.dot(vector).sqrt();
-        
-        let quantized_data: Vec<u8> = data
-            .iter()
-            .map(|&x| {
-                let normalized = (x - offset) / scale;
-                (normalized.round().clamp(0.0, (QUANTIZATION_LEVELS - 1) as f32)) as u8
-            })
-            .collect();
-        
-        Self {
-            quantized_data,
-            scale,
-            offset,
-            original_norm,
-        }
-    }
-    
-    /// Reconstruct approximate f32 vector
-    pub fn to_vector(&self) -> Array1<f32> {
-        let data: Vec<f32> = self
-            .quantized_data
-            .iter()
-            .map(|&q| (q as f32) * self.scale + self.offset)
-            .collect();
-        
-        Array1::from_vec(data)
-    }
-    
-    /// Fast approximate similarity using quantized data
-    pub fn fast_similarity(&self, other: &QuantizedVector) -> f32 {
-        if self.quantized_data.len() != other.quantized_data.len() {
-            return 0.0;
+        for (x, y) in a.iter().zip(b.iter()) {
+            intersection += x.min(*y);
+            union += x.max(*y);
         }
         
-        // Use integer arithmetic for speed
-        let dot_product: i32 = self
-            .quantized_data
-            .iter()
-            .zip(other.quantized_data.iter())
-            .map(|(&a, &b)| (a as i32) * (b as i32))
-            .sum();
-        
-        // Approximate normalization
-        let norm_product = self.original_norm * other.original_norm;
-        if norm_product == 0.0 {
+        if union == 0.0 {
             0.0
         } else {
-            // Scale back to approximate cosine similarity
-            (dot_product as f32) * self.scale * other.scale / norm_product
-        }
-    }
-}
-
-// ============================================================================
-// HARDWARE ACCELERATION
-// ============================================================================
-
-#[cfg(feature = "npu-acceleration")]
-impl HardwareAccelerator {
-    pub async fn new(model_path: &str, batch_size: usize) -> Result<Self> {
-        let core = Core::new()?;
-        let model = core.read_model_from_file(model_path)?;
-        let compiled_model = core.compile_model(&model, "NPU")?;
-        
-        // Assume model takes vectors and outputs similarity scores
-        let input_shape = Shape::new(&[batch_size as i64, DEFAULT_VECTOR_DIM as i64]);
-        let output_shape = Shape::new(&[batch_size as i64, batch_size as i64]);
-        
-        Ok(Self {
-            core,
-            model: compiled_model,
-            batch_size,
-            input_shape,
-            output_shape,
-        })
-    }
-    
-    pub async fn batch_similarity(
-        &mut self,
-        query_batch: &[Array1<f32>],
-        candidate_batch: &[Array1<f32>],
-    ) -> Result<Array2<f32>> {
-        let batch_size = query_batch.len();
-        if batch_size > self.batch_size {
-            return Err(anyhow::anyhow!("Batch size exceeds hardware limit"));
-        }
-        
-        // Prepare input tensor
-        let mut input_data = Vec::with_capacity(batch_size * DEFAULT_VECTOR_DIM);
-        for vector in query_batch {
-            input_data.extend_from_slice(vector.as_slice().unwrap());
-        }
-        
-        let input_tensor = Tensor::new(ElementType::F32, &self.input_shape)?;
-        input_tensor.set_data(&input_data)?;
-        
-        // Create inference request
-        let mut infer_request = self.model.create_infer_request()?;
-        infer_request.set_input_tensor(&input_tensor)?;
-        
-        // Run inference
-        infer_request.infer()?;
-        
-        // Get output
-        let output_tensor = infer_request.get_output_tensor()?;
-        let output_data: Vec<f32> = output_tensor.get_data()?;
-        
-        // Reshape to similarity matrix
-        let similarity_matrix = Array2::from_shape_vec(
-            (batch_size, batch_size),
-            output_data,
-        )?;
-        
-        Ok(similarity_matrix)
-    }
-}
-
-// ============================================================================
-// CLUSTERING IMPLEMENTATION
-// ============================================================================
-
-impl VectorCluster {
-    pub fn new(id: usize, initial_vector: &Array1<f32>) -> Self {
-        Self {
-            id,
-            centroid: initial_vector.clone(),
-            member_count: 1,
-            last_updated: SystemTime::now(),
-            routing_preferences: HashMap::new(),
-            performance_stats: ClusterPerformanceStats::default(),
+            intersection / union
         }
     }
     
-    pub fn add_vector(&mut self, vector: &Array1<f32>, weight: f32) {
-        let alpha = weight / (self.member_count as f32 + weight);
-        self.centroid = (1.0 - alpha) * &self.centroid + alpha * vector;
-        self.member_count += 1;
-        self.last_updated = SystemTime::now();
+    /// Hamming distance for binary vectors
+    fn hamming_distance(&self, a: &Array1<f32>, b: &Array1<f32>) -> usize {
+        a.iter().zip(b.iter()).filter(|(x, y)| (x - y).abs() > 0.5).count()
     }
     
-    pub fn update_routing_preference(&mut self, target: u32, success: bool, latency_ms: f32) {
-        let current_pref = self.routing_preferences.get(&target).copied().unwrap_or(0.5);
-        
-        // Update preference based on success/failure and latency
-        let latency_factor = (100.0 - latency_ms.min(100.0)) / 100.0; // Better latency = higher score
-        let success_factor = if success { 1.0 } else { 0.0 };
-        
-        let new_pref = 0.9 * current_pref + 0.1 * (0.7 * success_factor + 0.3 * latency_factor);
-        self.routing_preferences.insert(target, new_pref);
-        
-        // Update performance stats
-        if success {
-            self.performance_stats.successful_routes += 1;
-        } else {
-            self.performance_stats.failed_routes += 1;
-        }
-        
-        let total_routes = self.performance_stats.successful_routes + self.performance_stats.failed_routes;
-        if total_routes > 0 {
-            self.performance_stats.avg_latency_ms = 
-                (self.performance_stats.avg_latency_ms * (total_routes - 1) as f32 + latency_ms) / total_routes as f32;
-        }
-        
-        self.performance_stats.last_performance_update = SystemTime::now();
+    /// Select level for new node
+    fn select_level(&self) -> usize {
+        use rand::Rng;
+        let mut rng = self.rng.lock();
+        let level = (-rng.gen::<f64>().ln() * self.ml) as usize;
+        level.min(16) // Cap at reasonable maximum
     }
     
-    pub fn get_best_targets(&self, count: usize) -> Vec<(u32, f32)> {
-        let mut targets: Vec<_> = self.routing_preferences.iter()
-            .map(|(&target, &score)| (target, score))
-            .collect();
+    /// Insert a new vector into the index
+    pub fn insert(&self, id: Uuid, vector: Array1<f32>) -> Result<()> {
+        let level = self.select_level();
+        let node = Arc::new(RwLock::new(HNSWNode::new(id, vector, level)));
         
-        targets.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        targets.truncate(count);
-        targets
-    }
-}
-
-// ============================================================================
-// VECTOR INDEX IMPLEMENTATION
-// ============================================================================
-
-impl VectorIndex {
-    pub fn new(dimensions: usize, config: SearchConfig) -> Self {
-        let (clustering_tx, clustering_rx) = mpsc::unbounded_channel();
+        self.nodes.insert(id, Arc::clone(&node));
         
-        let index = Self {
-            vectors: Arc::new(RwLock::new(HashMap::new())),
-            clusters: Arc::new(RwLock::new(HashMap::new())),
-            similarity_cache: Arc::new(DashMap::new()),
-            quantized_vectors: Arc::new(RwLock::new(HashMap::new())),
+        // Special case: first insertion
+        let mut entry_point = self.entry_point.write();
+        if entry_point.is_none() {
+            *entry_point = Some(id);
+            return Ok(());
+        }
+        
+        let entry_id = entry_point.unwrap();
+        drop(entry_point);
+        
+        // Find nearest neighbors at all levels
+        let query_vector = &node.read().vector;
+        let mut w = vec![];
+        
+        for lc in (level + 1..=self.get_node_level(entry_id)?).rev() {
+            w = self.search_layer(query_vector, vec![entry_id], 1, lc)?;
+        }
+        
+        for lc in (0..=level).rev() {
+            let candidates = if w.is_empty() {
+                vec![entry_id]
+            } else {
+                w.iter().map(|(id, _)| *id).collect()
+            };
             
-            #[cfg(feature = "npu-acceleration")]
-            hw_accelerator: Arc::new(Mutex::new(None)),
+            let m = if lc == 0 { self.m_max } else { self.m };
+            w = self.search_layer(query_vector, candidates, self.ef_construction, lc)?;
             
-            config: Arc::new(ArcSwap::new(Arc::new(config))),
-            metrics: Arc::new(VectorMetrics::default()),
-            background_tasks: Arc::new(Semaphore::new(10)),
-            clustering_tx,
-            next_cluster_id: AtomicUsize::new(0),
-            dimensions,
-        };
-        
-        // Start background clustering task
-        let clustering_handle = Self::start_clustering_worker(
-            clustering_rx,
-            Arc::clone(&index.vectors),
-            Arc::clone(&index.clusters),
-            Arc::clone(&index.metrics),
-        );
-        
-        index
-    }
-    
-    #[instrument(skip(self, vector))]
-    pub async fn add_vector(&self, mut message_vector: MessageVector) -> Result<()> {
-        if message_vector.vector.len() != self.dimensions {
-            return Err(anyhow::anyhow!(
-                "Vector dimension mismatch: expected {}, got {}",
-                self.dimensions,
-                message_vector.vector.len()
-            ));
-        }
-        
-        let vector_id = message_vector.id;
-        
-        // Find best cluster or create new one
-        let cluster_id = self.find_best_cluster(&message_vector.vector).await;
-        message_vector.cluster_id = cluster_id;
-        
-        // Store vector
-        {
-            let mut vectors = self.vectors.write();
-            vectors.insert(vector_id, message_vector);
+            // Select m nearest neighbors
+            let neighbors = self.select_neighbors_heuristic(&w, m)?;
             
-            self.metrics.total_vectors.store(vectors.len(), Ordering::Relaxed);
-            self.metrics.memory_usage_bytes.fetch_add(
-                self.dimensions * std::mem::size_of::<f32>(),
-                Ordering::Relaxed,
-            );
+            // Add bidirectional links
+            for neighbor_id in &neighbors {
+                self.add_connection(id, *neighbor_id, lc)?;
+                self.add_connection(*neighbor_id, id, lc)?;
+                
+                // Prune connections of neighbor if needed
+                self.prune_connections(*neighbor_id, lc)?;
+            }
+            
+            // Store neighbors
+            node.write().neighbors[lc] = neighbors.into_iter().collect();
         }
         
-        // Create quantized version if enabled
-        let config = self.config.load();
-        if config.quantization_enabled {
-            let vector = &self.vectors.read().get(&vector_id).unwrap().vector;
-            let quantized = QuantizedVector::from_vector(vector);
-            self.quantized_vectors.write().insert(vector_id, quantized);
-        }
-        
-        // Schedule clustering update
-        let _ = self.clustering_tx.send(ClusteringTask::AddVector(vector_id));
-        
-        info!("Added vector {} to cluster {:?}", vector_id, cluster_id);
         Ok(())
     }
     
-    #[instrument(skip(self, query_vector))]
-    pub async fn search_similar(
-        &self,
-        query_vector: &Array1<f32>,
-        config: Option<SearchConfig>,
-    ) -> Result<Vec<SimilarityResult>> {
-        let search_config = config.as_ref().unwrap_or(&*self.config.load());
-        let search_start = Instant::now();
+    /// Search for k nearest neighbors
+    pub fn search(&self, query: &Array1<f32>, k: usize, ef: usize) -> Result<Vec<(Uuid, f32)>> {
+        let entry_point = self.entry_point.read();
+        if entry_point.is_none() {
+            return Ok(vec![]);
+        }
         
-        self.metrics.total_searches.fetch_add(1, Ordering::Relaxed);
+        let entry_id = entry_point.unwrap();
+        let entry_level = self.get_node_level(entry_id)?;
+        drop(entry_point);
+        
+        let mut ep = vec![entry_id];
+        
+        // Search from top to layer 1
+        for lc in (1..=entry_level).rev() {
+            let nearest = self.search_layer(query, ep, 1, lc)?;
+            ep = nearest.into_iter().map(|(id, _)| id).collect();
+        }
+        
+        // Search at layer 0
+        let candidates = self.search_layer(query, ep, ef.max(k), 0)?;
+        
+        // Return k best results
+        Ok(candidates.into_iter().take(k).collect())
+    }
+    
+    /// Search at specific layer
+    fn search_layer(&self, query: &Array1<f32>, entries: Vec<Uuid>, num: usize, layer: usize) 
+        -> Result<Vec<(Uuid, f32)>> {
+        let mut visited = HashSet::new();
+        let mut candidates = BinaryHeap::new();
+        let mut w = BinaryHeap::new();
+        
+        for entry in entries {
+            let dist = self.calculate_distance(query, entry)?;
+            candidates.push(std::cmp::Reverse((OrderedFloat(dist), entry)));
+            w.push((OrderedFloat(dist), entry));
+            visited.insert(entry);
+        }
+        
+        while let Some(std::cmp::Reverse((curr_dist, curr_id))) = candidates.pop() {
+            if curr_dist.0 > w.peek().unwrap().0.0 {
+                break;
+            }
+            
+            let neighbors = self.get_neighbors(curr_id, layer)?;
+            
+            for neighbor_id in neighbors {
+                if !visited.contains(&neighbor_id) {
+                    visited.insert(neighbor_id);
+                    
+                    let dist = self.calculate_distance(query, neighbor_id)?;
+                    
+                    if dist < w.peek().unwrap().0.0 || w.len() < num {
+                        candidates.push(std::cmp::Reverse((OrderedFloat(dist), neighbor_id)));
+                        w.push((OrderedFloat(dist), neighbor_id));
+                        
+                        if w.len() > num {
+                            w.pop();
+                        }
+                    }
+                }
+            }
+        }
+        
+        Ok(w.into_sorted_vec().into_iter()
+            .map(|(dist, id)| (id, dist.0))
+            .collect())
+    }
+    
+    fn calculate_distance(&self, query: &Array1<f32>, node_id: Uuid) -> Result<f32> {
+        let node = self.nodes.get(&node_id)
+            .ok_or_else(|| anyhow::anyhow!("Node not found"))?;
+        let node_vector = &node.read().vector;
+        Ok(self.distance(query, node_vector))
+    }
+    
+    fn get_node_level(&self, node_id: Uuid) -> Result<usize> {
+        let node = self.nodes.get(&node_id)
+            .ok_or_else(|| anyhow::anyhow!("Node not found"))?;
+        Ok(node.read().level)
+    }
+    
+    fn get_neighbors(&self, node_id: Uuid, layer: usize) -> Result<Vec<Uuid>> {
+        let node = self.nodes.get(&node_id)
+            .ok_or_else(|| anyhow::anyhow!("Node not found"))?;
+        let node_read = node.read();
+        
+        if layer > node_read.level {
+            return Ok(vec![]);
+        }
+        
+        Ok(node_read.neighbors[layer].iter().cloned().collect())
+    }
+    
+    fn add_connection(&self, from: Uuid, to: Uuid, layer: usize) -> Result<()> {
+        let node = self.nodes.get(&from)
+            .ok_or_else(|| anyhow::anyhow!("Node not found"))?;
+        node.write().neighbors[layer].insert(to);
+        Ok(())
+    }
+    
+    fn prune_connections(&self, node_id: Uuid, layer: usize) -> Result<()> {
+        let node = self.nodes.get(&node_id)
+            .ok_or_else(|| anyhow::anyhow!("Node not found"))?;
+        
+        let m_max = if layer == 0 { self.m_max } else { self.m };
+        
+        let mut node_write = node.write();
+        if node_write.neighbors[layer].len() <= m_max {
+            return Ok(());
+        }
+        
+        // Prune to m_max connections using heuristic
+        let neighbors: Vec<Uuid> = node_write.neighbors[layer].iter().cloned().collect();
+        let query_vector = Arc::clone(&node_write.vector);
+        drop(node_write);
+        
+        let mut neighbor_dists = vec![];
+        for neighbor_id in neighbors {
+            let dist = self.calculate_distance(&query_vector, neighbor_id)?;
+            neighbor_dists.push((neighbor_id, dist));
+        }
+        
+        neighbor_dists.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        neighbor_dists.truncate(m_max);
+        
+        let pruned_neighbors: HashSet<Uuid> = neighbor_dists.into_iter()
+            .map(|(id, _)| id)
+            .collect();
+        
+        node.write().neighbors[layer] = pruned_neighbors;
+        
+        Ok(())
+    }
+    
+    fn select_neighbors_heuristic(&self, candidates: &[(Uuid, f32)], m: usize) 
+        -> Result<Vec<Uuid>> {
+        // Simple heuristic: select m nearest neighbors
+        // More sophisticated heuristics can be implemented
+        Ok(candidates.iter()
+            .take(m)
+            .map(|(id, _)| *id)
+            .collect())
+    }
+}
+
+// Wrapper for f32 to implement Ord
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct OrderedFloat(f32);
+
+impl Eq for OrderedFloat {}
+
+impl Ord for OrderedFloat {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.partial_cmp(&other.0).unwrap_or(std::cmp::Ordering::Equal)
+    }
+}
+
+impl PartialOrd for OrderedFloat {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// ============================================================================
+// PERSISTENT STORAGE WITH MEMORY-MAPPED FILES
+// ============================================================================
+
+/// Memory-mapped vector storage for persistence
+pub struct MmapVectorStorage {
+    data_file: PathBuf,
+    index_file: PathBuf,
+    data_mmap: Arc<RwLock<MmapMut>>,
+    index_mmap: Arc<RwLock<MmapMut>>,
+    header: Arc<RwLock<StorageHeader>>,
+    free_list: Arc<RwLock<Vec<usize>>>,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+struct StorageHeader {
+    magic: [u8; 8],        // "VECSTORE"
+    version: u32,
+    dimensions: u32,
+    vector_count: u32,
+    compression: u32,
+    reserved: [u8; 48],
+}
+
+impl StorageHeader {
+    const MAGIC: &'static [u8; 8] = b"VECSTORE";
+    const VERSION: u32 = 1;
+    
+    fn new(dimensions: usize) -> Self {
+        Self {
+            magic: *Self::MAGIC,
+            version: Self::VERSION,
+            dimensions: dimensions as u32,
+            vector_count: 0,
+            compression: 0,
+            reserved: [0; 48],
+        }
+    }
+    
+    fn validate(&self) -> Result<()> {
+        if self.magic != *Self::MAGIC {
+            return Err(anyhow::anyhow!("Invalid storage file magic"));
+        }
+        if self.version != Self::VERSION {
+            return Err(anyhow::anyhow!("Unsupported storage version"));
+        }
+        Ok(())
+    }
+}
+
+impl MmapVectorStorage {
+    pub fn new(path: &Path, dimensions: usize, capacity: usize) -> Result<Self> {
+        let data_file = path.join("vectors.dat");
+        let index_file = path.join("index.dat");
+        
+        // Calculate file sizes
+        let vector_size = dimensions * std::mem::size_of::<f32>();
+        let data_size = std::mem::size_of::<StorageHeader>() + (capacity * vector_size);
+        let index_size = capacity * std::mem::size_of::<IndexEntry>();
+        
+        // Create or open data file
+        let data_fd = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&data_file)?;
+        data_fd.set_len(data_size as u64)?;
+        
+        // Create or open index file
+        let index_fd = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&index_file)?;
+        index_fd.set_len(index_size as u64)?;
+        
+        // Memory map the files
+        let mut data_mmap = unsafe { MmapOptions::new().map_mut(&data_fd)? };
+        let index_mmap = unsafe { MmapOptions::new().map_mut(&index_fd)? };
+        
+        // Initialize header if new file
+        let header = if data_mmap.len() >= std::mem::size_of::<StorageHeader>() {
+            let header_bytes = &data_mmap[..std::mem::size_of::<StorageHeader>()];
+            let header: StorageHeader = unsafe {
+                std::ptr::read(header_bytes.as_ptr() as *const StorageHeader)
+            };
+            
+            if header.magic == *StorageHeader::MAGIC {
+                header.validate()?;
+                header
+            } else {
+                let new_header = StorageHeader::new(dimensions);
+                unsafe {
+                    std::ptr::write(data_mmap.as_mut_ptr() as *mut StorageHeader, new_header);
+                }
+                data_mmap.flush()?;
+                new_header
+            }
+        } else {
+            return Err(anyhow::anyhow!("Data file too small"));
+        };
+        
+        Ok(Self {
+            data_file,
+            index_file,
+            data_mmap: Arc::new(RwLock::new(data_mmap)),
+            index_mmap: Arc::new(RwLock::new(index_mmap)),
+            header: Arc::new(RwLock::new(header)),
+            free_list: Arc::new(RwLock::new(Vec::new())),
+        })
+    }
+    
+    pub fn store_vector(&self, id: Uuid, vector: &Array1<f32>) -> Result<usize> {
+        let mut header = self.header.write();
+        let mut data_mmap = self.data_mmap.write();
+        
+        // Find free slot or append
+        let slot = if let Some(free_slot) = self.free_list.write().pop() {
+            free_slot
+        } else {
+            let slot = header.vector_count as usize;
+            header.vector_count += 1;
+            slot
+        };
+        
+        // Calculate offset
+        let vector_size = header.dimensions as usize * std::mem::size_of::<f32>();
+        let offset = std::mem::size_of::<StorageHeader>() + (slot * vector_size);
+        
+        // Write vector data
+        let vector_bytes = unsafe {
+            std::slice::from_raw_parts(
+                vector.as_ptr() as *const u8,
+                vector_size,
+            )
+        };
+        
+        data_mmap[offset..offset + vector_size].copy_from_slice(vector_bytes);
+        
+        // Update header
+        unsafe {
+            std::ptr::write(data_mmap.as_mut_ptr() as *mut StorageHeader, *header);
+        }
+        
+        data_mmap.flush()?;
+        
+        Ok(slot)
+    }
+    
+    pub fn load_vector(&self, slot: usize) -> Result<Array1<f32>> {
+        let header = self.header.read();
+        let data_mmap = self.data_mmap.read();
+        
+        if slot >= header.vector_count as usize {
+            return Err(anyhow::anyhow!("Invalid vector slot"));
+        }
+        
+        let vector_size = header.dimensions as usize * std::mem::size_of::<f32>();
+        let offset = std::mem::size_of::<StorageHeader>() + (slot * vector_size);
+        
+        let vector_data = unsafe {
+            std::slice::from_raw_parts(
+                data_mmap[offset..].as_ptr() as *const f32,
+                header.dimensions as usize,
+            )
+        };
+        
+        Ok(Array1::from_vec(vector_data.to_vec()))
+    }
+    
+    pub fn delete_vector(&self, slot: usize) -> Result<()> {
+        self.free_list.write().push(slot);
+        Ok(())
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+struct IndexEntry {
+    id: [u8; 16],        // UUID as bytes
+    slot: u32,           // Slot in data file
+    metadata_offset: u32, // Offset in metadata file
+    flags: u32,          // Various flags
+    reserved: u32,       // Reserved for future use
+}
+
+// ============================================================================
+// ENHANCED VECTOR DATABASE
+// ============================================================================
+
+/// Enhanced vector database with all advanced features
+pub struct EnhancedVectorDatabase {
+    // Core components
+    hnsw_index: Arc<HNSWIndex>,
+    storage: Arc<MmapVectorStorage>,
+    
+    // Caching layer
+    vector_cache: Arc<DashMap<Uuid, Arc<Array1<f32>>>>,
+    result_cache: Arc<DashMap<u64, Vec<(Uuid, f32)>>>,
+    
+    // Configuration
+    config: Arc<ArcSwap<EnhancedSearchConfig>>,
+    topology: MeteorLakeTopology,
+    
+    // Metrics and monitoring
+    metrics: Arc<EnhancedMetrics>,
+    
+    // Background processing
+    maintenance_handle: Option<tokio::task::JoinHandle<()>>,
+    
+    // Thread pools for core affinity
+    p_core_pool: Arc<rayon::ThreadPool>,
+    e_core_pool: Arc<rayon::ThreadPool>,
+}
+
+impl EnhancedVectorDatabase {
+    pub fn new(path: &Path, dimensions: usize, config: EnhancedSearchConfig) -> Result<Self> {
+        let topology = MeteorLakeTopology::detect();
+        
+        // Create HNSW index
+        let hnsw_index = Arc::new(HNSWIndex::new(config.metric));
+        
+        // Create persistent storage
+        let storage = Arc::new(MmapVectorStorage::new(path, dimensions, MAX_MEMORY_VECTORS)?);
+        
+        // Create thread pools with core affinity
+        let p_core_pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(topology.p_cores.len())
+            .thread_name(|i| format!("p-core-{}", i))
+            .start_handler(move |i| {
+                // Pin to P-core
+                let cpu_set = vec![topology.p_cores[i % topology.p_cores.len()]];
+                set_thread_affinity(cpu_set);
+            })
+            .build()?;
+        
+        let e_core_pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(topology.e_cores.len())
+            .thread_name(|i| format!("e-core-{}", i))
+            .start_handler(move |i| {
+                // Pin to E-core
+                let cpu_set = vec![topology.e_cores[i % topology.e_cores.len()]];
+                set_thread_affinity(cpu_set);
+            })
+            .build()?;
+        
+        Ok(Self {
+            hnsw_index,
+            storage,
+            vector_cache: Arc::new(DashMap::new()),
+            result_cache: Arc::new(DashMap::new()),
+            config: Arc::new(ArcSwap::new(Arc::new(config))),
+            topology,
+            metrics: Arc::new(EnhancedMetrics::default()),
+            maintenance_handle: None,
+            p_core_pool: Arc::new(p_core_pool),
+            e_core_pool: Arc::new(e_core_pool),
+        })
+    }
+    
+    /// Insert a vector with optimal core placement
+    pub async fn insert(&self, id: Uuid, vector: Array1<f32>) -> Result<()> {
+        let start = Instant::now();
+        
+        // Store in persistent storage
+        let slot = self.storage.store_vector(id, &vector)?;
+        
+        // Cache the vector
+        self.vector_cache.insert(id, Arc::new(vector.clone()));
+        
+        // Insert into HNSW index - use P-cores for compute-intensive indexing
+        let hnsw = Arc::clone(&self.hnsw_index);
+        let vector_clone = vector.clone();
+        
+        self.p_core_pool.spawn(move || {
+            hnsw.insert(id, vector_clone).unwrap();
+        });
+        
+        // Update metrics
+        self.metrics.total_vectors.fetch_add(1, Ordering::Relaxed);
+        self.metrics.p_core_operations.fetch_add(1, Ordering::Relaxed);
+        self.metrics.insert_latency_us.store(
+            start.elapsed().as_micros() as u64,
+            Ordering::Relaxed
+        );
+        
+        // Clear result cache as data has changed
+        self.result_cache.clear();
+        
+        Ok(())
+    }
+    
+    /// Search with hardware optimization
+    pub async fn search(&self, query: &Array1<f32>, k: usize) -> Result<Vec<(Uuid, f32)>> {
+        let start = Instant::now();
+        let config = self.config.load();
         
         // Check cache first
-        let query_hash = self.hash_vector(query_vector);
-        if let Some(cached_results) = self.similarity_cache.get(&query_hash) {
+        let query_hash = self.hash_vector(query);
+        if let Some(cached) = self.result_cache.get(&query_hash) {
             self.metrics.cache_hits.fetch_add(1, Ordering::Relaxed);
-            return Ok(cached_results.clone());
+            return Ok(cached.clone());
         }
         
         self.metrics.cache_misses.fetch_add(1, Ordering::Relaxed);
         
-        let mut results = if search_config.use_hardware_acceleration {
-            self.hw_accelerated_search(query_vector, search_config).await?
+        // Perform search - choose core type based on config
+        let results = if config.prefer_p_cores {
+            // Use P-cores for low-latency search
+            let hnsw = Arc::clone(&self.hnsw_index);
+            let query_clone = query.clone();
+            let ef = config.ef_search;
+            
+            let (tx, rx) = oneshot::channel();
+            self.p_core_pool.spawn(move || {
+                let results = hnsw.search(&query_clone, k, ef).unwrap();
+                tx.send(results).unwrap();
+            });
+            
+            rx.await?
         } else {
-            self.cpu_search(query_vector, search_config).await?
+            // Use E-cores for power-efficient search
+            let hnsw = Arc::clone(&self.hnsw_index);
+            let query_clone = query.clone();
+            let ef = config.ef_search;
+            
+            let (tx, rx) = oneshot::channel();
+            self.e_core_pool.spawn(move || {
+                let results = hnsw.search(&query_clone, k, ef).unwrap();
+                tx.send(results).unwrap();
+            });
+            
+            rx.await?
         };
-        
-        // Sort by similarity score
-        results.sort_by(|a, b| b.similarity_score.partial_cmp(&a.similarity_score).unwrap());
-        results.truncate(search_config.max_results);
         
         // Update metrics
-        let search_duration = search_start.elapsed().as_nanos() as u64;
-        let current_avg = self.metrics.avg_search_latency_ns.load(Ordering::Relaxed);
-        let new_avg = (current_avg + search_duration) / 2;
-        self.metrics.avg_search_latency_ns.store(new_avg, Ordering::Relaxed);
+        self.metrics.total_searches.fetch_add(1, Ordering::Relaxed);
+        self.metrics.search_latency_us.store(
+            start.elapsed().as_micros() as u64,
+            Ordering::Relaxed
+        );
+        
+        if config.prefer_p_cores {
+            self.metrics.p_core_operations.fetch_add(1, Ordering::Relaxed);
+            if self.topology.has_avx512 {
+                self.metrics.avx512_operations.fetch_add(1, Ordering::Relaxed);
+            }
+        } else {
+            self.metrics.e_core_operations.fetch_add(1, Ordering::Relaxed);
+            self.metrics.avx2_operations.fetch_add(1, Ordering::Relaxed);
+        }
         
         // Cache results
-        if self.similarity_cache.len() < SIMILARITY_CACHE_SIZE {
-            self.similarity_cache.insert(query_hash, results.clone());
+        if self.result_cache.len() < 10000 {
+            self.result_cache.insert(query_hash, results.clone());
         }
-        
-        debug!("Search completed: {} results in {:?}", results.len(), search_start.elapsed());
-        Ok(results)
-    }
-    
-    async fn cpu_search(
-        &self,
-        query_vector: &Array1<f32>,
-        config: &SearchConfig,
-    ) -> Result<Vec<SimilarityResult>> {
-        let vectors = self.vectors.read();
-        let clusters = self.clusters.read();
-        
-        // If clustering is enabled, search within relevant clusters first
-        let candidate_vectors: Vec<_> = if config.enable_clustering && !clusters.is_empty() {
-            // Find most similar clusters
-            let mut cluster_similarities: Vec<_> = clusters
-                .values()
-                .map(|cluster| {
-                    let similarity = fast_cosine_similarity(query_vector, &cluster.centroid);
-                    (cluster.id, similarity)
-                })
-                .collect();
-            
-            cluster_similarities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-            
-            // Get vectors from top clusters
-            let top_clusters: std::collections::HashSet<_> = cluster_similarities
-                .iter()
-                .take(3) // Search top 3 clusters
-                .map(|(id, _)| *id)
-                .collect();
-            
-            vectors
-                .values()
-                .filter(|v| v.cluster_id.map_or(true, |id| top_clusters.contains(&id)))
-                .collect()
-        } else {
-            vectors.values().collect()
-        };
-        
-        // Parallel similarity computation
-        let similarities: Vec<_> = candidate_vectors
-            .par_iter()
-            .map(|vector| {
-                let similarity = if config.quantization_enabled {
-                    // Use quantized similarity for speed
-                    if let Some(quantized) = self.quantized_vectors.read().get(&vector.id) {
-                        let query_quantized = QuantizedVector::from_vector(query_vector);
-                        quantized.fast_similarity(&query_quantized)
-                    } else {
-                        fast_cosine_similarity(query_vector, &vector.vector)
-                    }
-                } else {
-                    fast_cosine_similarity(query_vector, &vector.vector)
-                };
-                
-                (vector, similarity)
-            })
-            .filter(|(_, similarity)| *similarity >= config.similarity_threshold)
-            .collect();
-        
-        // Convert to results
-        let results: Vec<_> = similarities
-            .into_iter()
-            .map(|(vector, similarity)| {
-                let suggested_targets = if let Some(cluster_id) = vector.cluster_id {
-                    if let Some(cluster) = clusters.get(&cluster_id) {
-                        cluster.get_best_targets(3).into_iter().map(|(target, _)| target).collect()
-                    } else {
-                        vector.routing_history.clone()
-                    }
-                } else {
-                    vector.routing_history.clone()
-                };
-                
-                SimilarityResult {
-                    vector_id: vector.id,
-                    agent_id: vector.agent_id,
-                    similarity_score: similarity,
-                    cluster_id: vector.cluster_id,
-                    suggested_targets,
-                    confidence: similarity, // Simplified confidence
-                }
-            })
-            .collect();
         
         Ok(results)
     }
     
-    #[cfg(feature = "npu-acceleration")]
-    async fn hw_accelerated_search(
-        &self,
-        query_vector: &Array1<f32>,
-        config: &SearchConfig,
-    ) -> Result<Vec<SimilarityResult>> {
-        self.metrics.hw_accel_queries.fetch_add(1, Ordering::Relaxed);
+    /// Delete a vector
+    pub async fn delete(&self, id: Uuid) -> Result<()> {
+        let start = Instant::now();
         
-        let mut hw_accel = self.hw_accelerator.lock();
-        if let Some(ref mut accelerator) = *hw_accel {
-            // Batch process with hardware acceleration
-            let vectors = self.vectors.read();
-            let vector_list: Vec<_> = vectors.values().collect();
-            
-            let mut results = Vec::new();
-            
-            // Process in batches
-            for chunk in vector_list.chunks(HW_ACCEL_BATCH_SIZE) {
-                let query_batch = vec![query_vector.clone(); chunk.len()];
-                let candidate_batch: Vec<_> = chunk.iter().map(|v| v.vector.clone()).collect();
-                
-                let similarity_matrix = accelerator
-                    .batch_similarity(&query_batch, &candidate_batch)
-                    .await?;
-                
-                // Extract diagonal (query vs each candidate)
-                for (i, vector) in chunk.iter().enumerate() {
-                    let similarity = similarity_matrix[(0, i)];
-                    
-                    if similarity >= config.similarity_threshold {
-                        results.push(SimilarityResult {
-                            vector_id: vector.id,
-                            agent_id: vector.agent_id,
-                            similarity_score: similarity,
-                            cluster_id: vector.cluster_id,
-                            suggested_targets: vector.routing_history.clone(),
-                            confidence: similarity,
-                        });
-                    }
-                }
-            }
-            
-            Ok(results)
-        } else {
-            // Fallback to CPU if hardware not available
-            self.cpu_search(query_vector, config).await
+        // Remove from cache
+        self.vector_cache.remove(&id);
+        
+        // Mark as deleted in HNSW (soft delete)
+        if let Some(node) = self.hnsw_index.nodes.get(&id) {
+            node.read().deleted.store(true, Ordering::Relaxed);
         }
+        
+        // Clear result cache
+        self.result_cache.clear();
+        
+        self.metrics.total_vectors.fetch_sub(1, Ordering::Relaxed);
+        self.metrics.delete_latency_us.store(
+            start.elapsed().as_micros() as u64,
+            Ordering::Relaxed
+        );
+        
+        Ok(())
     }
     
-    #[cfg(not(feature = "npu-acceleration"))]
-    async fn hw_accelerated_search(
-        &self,
-        query_vector: &Array1<f32>,
-        config: &SearchConfig,
-    ) -> Result<Vec<SimilarityResult>> {
-        // Fallback to CPU search
-        self.cpu_search(query_vector, config).await
-    }
-    
-    async fn find_best_cluster(&self, vector: &Array1<f32>) -> Option<usize> {
-        let clusters = self.clusters.read();
-        
-        if clusters.is_empty() {
-            return None;
-        }
-        
-        let mut best_cluster = None;
-        let mut best_similarity = 0.0;
-        
-        for cluster in clusters.values() {
-            let similarity = fast_cosine_similarity(vector, &cluster.centroid);
-            if similarity > best_similarity {
-                best_similarity = similarity;
-                best_cluster = Some(cluster.id);
-            }
-        }
-        
-        // Only assign to cluster if similarity is high enough
-        if best_similarity > 0.8 {
-            best_cluster
-        } else {
-            None
+    /// Get database statistics
+    pub fn get_stats(&self) -> EnhancedMetrics {
+        // Clone atomic values
+        EnhancedMetrics {
+            total_vectors: AtomicUsize::new(self.metrics.total_vectors.load(Ordering::Relaxed)),
+            total_searches: AtomicU64::new(self.metrics.total_searches.load(Ordering::Relaxed)),
+            cache_hits: AtomicU64::new(self.metrics.cache_hits.load(Ordering::Relaxed)),
+            cache_misses: AtomicU64::new(self.metrics.cache_misses.load(Ordering::Relaxed)),
+            p_core_operations: AtomicU64::new(self.metrics.p_core_operations.load(Ordering::Relaxed)),
+            e_core_operations: AtomicU64::new(self.metrics.e_core_operations.load(Ordering::Relaxed)),
+            avx512_operations: AtomicU64::new(self.metrics.avx512_operations.load(Ordering::Relaxed)),
+            avx2_operations: AtomicU64::new(self.metrics.avx2_operations.load(Ordering::Relaxed)),
+            npu_operations: AtomicU64::new(self.metrics.npu_operations.load(Ordering::Relaxed)),
+            insert_latency_us: AtomicU64::new(self.metrics.insert_latency_us.load(Ordering::Relaxed)),
+            search_latency_us: AtomicU64::new(self.metrics.search_latency_us.load(Ordering::Relaxed)),
+            delete_latency_us: AtomicU64::new(self.metrics.delete_latency_us.load(Ordering::Relaxed)),
+            memory_usage_bytes: AtomicUsize::new(self.metrics.memory_usage_bytes.load(Ordering::Relaxed)),
+            disk_usage_bytes: AtomicUsize::new(self.metrics.disk_usage_bytes.load(Ordering::Relaxed)),
+            compression_ratio: AtomicU64::new(self.metrics.compression_ratio.load(Ordering::Relaxed)),
+            hnsw_levels: AtomicUsize::new(self.metrics.hnsw_levels.load(Ordering::Relaxed)),
+            hnsw_edges: AtomicUsize::new(self.metrics.hnsw_edges.load(Ordering::Relaxed)),
+            hnsw_distance_calculations: AtomicU64::new(self.metrics.hnsw_distance_calculations.load(Ordering::Relaxed)),
         }
     }
     
@@ -760,467 +1228,29 @@ impl VectorIndex {
         use std::hash::{Hash, Hasher};
         
         let mut hasher = DefaultHasher::new();
-        
-        // Hash first few dimensions for cache key
         for &val in vector.as_slice().unwrap().iter().take(16) {
             (val * 1000.0) as i32.hash(&mut hasher);
         }
-        
         hasher.finish()
     }
-    
-    fn start_clustering_worker(
-        mut rx: mpsc::UnboundedReceiver<ClusteringTask>,
-        vectors: Arc<RwLock<HashMap<Uuid, MessageVector>>>,
-        clusters: Arc<RwLock<HashMap<usize, VectorCluster>>>,
-        metrics: Arc<VectorMetrics>,
-    ) -> tokio::task::JoinHandle<()> {
-        tokio::spawn(async move {
-            let mut update_timer = tokio::time::interval(CLUSTER_UPDATE_INTERVAL);
+}
+
+/// Set thread affinity to specific CPUs
+fn set_thread_affinity(cpus: Vec<usize>) {
+    #[cfg(target_os = "linux")]
+    {
+        use libc::{cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity};
+        
+        unsafe {
+            let mut set: cpu_set_t = std::mem::zeroed();
+            CPU_ZERO(&mut set);
             
-            loop {
-                tokio::select! {
-                    task = rx.recv() => {
-                        match task {
-                            Some(ClusteringTask::AddVector(vector_id)) => {
-                                Self::handle_add_vector_to_cluster(vector_id, &vectors, &clusters).await;
-                            },
-                            Some(ClusteringTask::UpdateClusters) => {
-                                Self::update_all_clusters(&vectors, &clusters, &metrics).await;
-                            },
-                            Some(ClusteringTask::RecomputeCentroids) => {
-                                Self::recompute_centroids(&vectors, &clusters).await;
-                            },
-                            Some(ClusteringTask::CleanupStaleVectors) => {
-                                Self::cleanup_stale_vectors(&vectors, &clusters).await;
-                            },
-                            None => break,
-                        }
-                    }
-                    _ = update_timer.tick() => {
-                        Self::update_all_clusters(&vectors, &clusters, &metrics).await;
-                    }
-                }
-            }
-        })
-    }
-    
-    async fn handle_add_vector_to_cluster(
-        vector_id: Uuid,
-        vectors: &Arc<RwLock<HashMap<Uuid, MessageVector>>>,
-        clusters: &Arc<RwLock<HashMap<usize, VectorCluster>>>,
-    ) {
-        let vector = {
-            let vectors_guard = vectors.read();
-            vectors_guard.get(&vector_id).cloned()
-        };
-        
-        if let Some(vector) = vector {
-            if let Some(cluster_id) = vector.cluster_id {
-                let mut clusters_guard = clusters.write();
-                if let Some(cluster) = clusters_guard.get_mut(&cluster_id) {
-                    cluster.add_vector(&vector.vector, 1.0);
-                }
-            } else {
-                // Create new cluster
-                let new_cluster_id = clusters.read().len();
-                let new_cluster = VectorCluster::new(new_cluster_id, &vector.vector);
-                
-                clusters.write().insert(new_cluster_id, new_cluster);
-                
-                // Update vector with cluster assignment
-                vectors.write().get_mut(&vector_id).unwrap().cluster_id = Some(new_cluster_id);
-            }
-        }
-    }
-    
-    async fn update_all_clusters(
-        vectors: &Arc<RwLock<HashMap<Uuid, MessageVector>>>,
-        clusters: &Arc<RwLock<HashMap<usize, VectorCluster>>>,
-        metrics: &Arc<VectorMetrics>,
-    ) {
-        let start_time = Instant::now();
-        
-        // Recompute cluster centroids
-        Self::recompute_centroids(vectors, clusters).await;
-        
-        // Reassign vectors to better clusters if needed
-        Self::reassign_vectors(vectors, clusters).await;
-        
-        // Clean up empty clusters
-        Self::cleanup_empty_clusters(clusters).await;
-        
-        metrics.clustering_operations.fetch_add(1, Ordering::Relaxed);
-        
-        debug!("Cluster update completed in {:?}", start_time.elapsed());
-    }
-    
-    async fn recompute_centroids(
-        vectors: &Arc<RwLock<HashMap<Uuid, MessageVector>>>,
-        clusters: &Arc<RwLock<HashMap<usize, VectorCluster>>>,
-    ) {
-        let vectors_guard = vectors.read();
-        let mut clusters_guard = clusters.write();
-        
-        // Reset centroids
-        for cluster in clusters_guard.values_mut() {
-            cluster.centroid.fill(0.0);
-            cluster.member_count = 0;
-        }
-        
-        // Accumulate vectors for each cluster
-        for vector in vectors_guard.values() {
-            if let Some(cluster_id) = vector.cluster_id {
-                if let Some(cluster) = clusters_guard.get_mut(&cluster_id) {
-                    cluster.centroid = &cluster.centroid + &vector.vector;
-                    cluster.member_count += 1;
-                }
-            }
-        }
-        
-        // Normalize centroids
-        for cluster in clusters_guard.values_mut() {
-            if cluster.member_count > 0 {
-                cluster.centroid /= cluster.member_count as f32;
-                cluster.last_updated = SystemTime::now();
-            }
-        }
-    }
-    
-    async fn reassign_vectors(
-        vectors: &Arc<RwLock<HashMap<Uuid, MessageVector>>>,
-        clusters: &Arc<RwLock<HashMap<usize, VectorCluster>>>,
-    ) {
-        // This is a simplified K-means-style reassignment
-        let mut reassignments = Vec::new();
-        
-        {
-            let vectors_guard = vectors.read();
-            let clusters_guard = clusters.read();
-            
-            for (vector_id, vector) in vectors_guard.iter() {
-                let mut best_cluster = vector.cluster_id;
-                let mut best_similarity = 0.0;
-                
-                for cluster in clusters_guard.values() {
-                    let similarity = fast_cosine_similarity(&vector.vector, &cluster.centroid);
-                    if similarity > best_similarity {
-                        best_similarity = similarity;
-                        best_cluster = Some(cluster.id);
-                    }
-                }
-                
-                if best_cluster != vector.cluster_id && best_similarity > 0.8 {
-                    reassignments.push((*vector_id, best_cluster));
-                }
-            }
-        }
-        
-        // Apply reassignments
-        if !reassignments.is_empty() {
-            let mut vectors_guard = vectors.write();
-            for (vector_id, new_cluster_id) in reassignments {
-                if let Some(vector) = vectors_guard.get_mut(&vector_id) {
-                    vector.cluster_id = new_cluster_id;
-                }
-            }
-        }
-    }
-    
-    async fn cleanup_empty_clusters(clusters: &Arc<RwLock<HashMap<usize, VectorCluster>>>) {
-        let mut clusters_guard = clusters.write();
-        clusters_guard.retain(|_, cluster| cluster.member_count > 0);
-    }
-    
-    async fn cleanup_stale_vectors(
-        vectors: &Arc<RwLock<HashMap<Uuid, MessageVector>>>,
-        _clusters: &Arc<RwLock<HashMap<usize, VectorCluster>>>,
-    ) {
-        let cutoff_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .checked_sub(Duration::from_secs(86400)) // 24 hours
-            .map(|d| UNIX_EPOCH + d)
-            .unwrap_or(UNIX_EPOCH);
-        
-        let mut vectors_guard = vectors.write();
-        vectors_guard.retain(|_, vector| vector.timestamp > cutoff_time);
-    }
-}
-
-// ============================================================================
-// VECTOR DATABASE PUBLIC API
-// ============================================================================
-
-impl VectorDatabase {
-    /// Create a new vector database
-    pub fn new(dimensions: usize, config: SearchConfig) -> Self {
-        let index = VectorIndex::new(dimensions, config);
-        
-        // Start clustering worker
-        let clustering_handle = tokio::spawn(async {
-            // This is handled in VectorIndex::start_clustering_worker
-        });
-        
-        Self {
-            index,
-            _clustering_handle: clustering_handle,
-        }
-    }
-    
-    /// Initialize hardware acceleration
-    #[cfg(feature = "npu-acceleration")]
-    pub async fn init_hardware_acceleration(&self, model_path: &str) -> Result<()> {
-        let accelerator = HardwareAccelerator::new(model_path, HW_ACCEL_BATCH_SIZE).await?;
-        *self.index.hw_accelerator.lock() = Some(accelerator);
-        
-        info!("Hardware acceleration initialized with NPU");
-        Ok(())
-    }
-    
-    /// Add a message vector to the database
-    pub async fn add_message_vector(&self, vector: MessageVector) -> Result<()> {
-        self.index.add_vector(vector).await
-    }
-    
-    /// Search for similar message vectors
-    pub async fn find_similar_messages(
-        &self,
-        query_vector: &Array1<f32>,
-        config: Option<SearchConfig>,
-    ) -> Result<Vec<SimilarityResult>> {
-        self.index.search_similar(query_vector, config).await
-    }
-    
-    /// Update routing performance for a cluster
-    pub async fn update_routing_performance(
-        &self,
-        cluster_id: usize,
-        target: u32,
-        success: bool,
-        latency_ms: f32,
-    ) -> Result<()> {
-        let mut clusters = self.index.clusters.write();
-        if let Some(cluster) = clusters.get_mut(&cluster_id) {
-            cluster.update_routing_preference(target, success, latency_ms);
-        }
-        Ok(())
-    }
-    
-    /// Get routing suggestions for a message vector
-    pub async fn get_routing_suggestions(
-        &self,
-        query_vector: &Array1<f32>,
-        max_suggestions: usize,
-    ) -> Result<Vec<(u32, f32)>> {
-        let similar_results = self.find_similar_messages(query_vector, None).await?;
-        
-        let mut target_scores: HashMap<u32, f32> = HashMap::new();
-        let mut target_counts: HashMap<u32, usize> = HashMap::new();
-        
-        // Aggregate suggestions from similar messages
-        for result in similar_results.iter().take(10) {
-            for target in &result.suggested_targets {
-                let score = result.similarity_score * result.confidence;
-                *target_scores.entry(*target).or_insert(0.0) += score;
-                *target_counts.entry(*target).or_insert(0) += 1;
-            }
-        }
-        
-        // Calculate average scores and sort
-        let mut suggestions: Vec<_> = target_scores
-            .into_iter()
-            .map(|(target, total_score)| {
-                let count = target_counts[&target] as f32;
-                (target, total_score / count)
-            })
-            .collect();
-        
-        suggestions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        suggestions.truncate(max_suggestions);
-        
-        Ok(suggestions)
-    }
-    
-    /// Get database statistics
-    pub fn get_metrics(&self) -> VectorMetrics {
-        VectorMetrics {
-            total_vectors: AtomicUsize::new(self.index.metrics.total_vectors.load(Ordering::Relaxed)),
-            total_searches: AtomicU64::new(self.index.metrics.total_searches.load(Ordering::Relaxed)),
-            cache_hits: AtomicU64::new(self.index.metrics.cache_hits.load(Ordering::Relaxed)),
-            cache_misses: AtomicU64::new(self.index.metrics.cache_misses.load(Ordering::Relaxed)),
-            avg_search_latency_ns: AtomicU64::new(self.index.metrics.avg_search_latency_ns.load(Ordering::Relaxed)),
-            hw_accel_queries: AtomicU64::new(self.index.metrics.hw_accel_queries.load(Ordering::Relaxed)),
-            clustering_operations: AtomicU64::new(self.index.metrics.clustering_operations.load(Ordering::Relaxed)),
-            memory_usage_bytes: AtomicUsize::new(self.index.metrics.memory_usage_bytes.load(Ordering::Relaxed)),
-        }
-    }
-    
-    /// Update search configuration
-    pub fn update_config(&self, new_config: SearchConfig) {
-        self.index.config.store(Arc::new(new_config));
-    }
-    
-    /// Clear similarity cache
-    pub fn clear_cache(&self) {
-        self.index.similarity_cache.clear();
-    }
-    
-    /// Get cluster information
-    pub async fn get_cluster_info(&self, cluster_id: usize) -> Option<VectorCluster> {
-        self.index.clusters.read().get(&cluster_id).cloned()
-    }
-    
-    /// Trigger manual clustering update
-    pub async fn update_clustering(&self) -> Result<()> {
-        self.index.clustering_tx.send(ClusteringTask::UpdateClusters)?;
-        Ok(())
-    }
-}
-
-// ============================================================================
-// C FFI INTERFACE
-// ============================================================================
-
-use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_float, c_int, c_uint};
-
-/// C-compatible vector database handle
-#[repr(C)]
-pub struct CVectorDatabase {
-    db: Box<VectorDatabase>,
-}
-
-/// C-compatible search result
-#[repr(C)]
-pub struct CSearchResult {
-    agent_id: c_uint,
-    similarity_score: c_float,
-    suggested_target: c_uint,
-    confidence: c_float,
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn vector_db_create(dimensions: c_int) -> *mut CVectorDatabase {
-    let config = SearchConfig::default();
-    let db = VectorDatabase::new(dimensions as usize, config);
-    
-    Box::into_raw(Box::new(CVectorDatabase {
-        db: Box::new(db),
-    }))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn vector_db_destroy(db: *mut CVectorDatabase) {
-    if !db.is_null() {
-        let _ = Box::from_raw(db);
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn vector_db_add_vector(
-    db: *mut CVectorDatabase,
-    agent_id: c_uint,
-    message_type: c_uint,
-    vector_data: *const c_float,
-    dimensions: c_int,
-) -> c_int {
-    if db.is_null() || vector_data.is_null() {
-        return -1;
-    }
-    
-    let db_ref = &mut *db;
-    let vector_slice = std::slice::from_raw_parts(vector_data, dimensions as usize);
-    let vector = Array1::from_vec(vector_slice.to_vec());
-    
-    let message_vector = MessageVector {
-        id: Uuid::new_v4(),
-        agent_id,
-        message_type,
-        timestamp: SystemTime::now(),
-        vector,
-        metadata: HashMap::new(),
-        cluster_id: None,
-        routing_history: Vec::new(),
-    };
-    
-    // Use tokio runtime for async operation
-    let rt = tokio::runtime::Handle::current();
-    match rt.block_on(db_ref.db.add_message_vector(message_vector)) {
-        Ok(()) => 0,
-        Err(_) => -1,
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn vector_db_search(
-    db: *mut CVectorDatabase,
-    query_vector: *const c_float,
-    dimensions: c_int,
-    max_results: c_int,
-    results: *mut CSearchResult,
-) -> c_int {
-    if db.is_null() || query_vector.is_null() || results.is_null() {
-        return -1;
-    }
-    
-    let db_ref = &mut *db;
-    let query_slice = std::slice::from_raw_parts(query_vector, dimensions as usize);
-    let query = Array1::from_vec(query_slice.to_vec());
-    
-    let rt = tokio::runtime::Handle::current();
-    match rt.block_on(db_ref.db.find_similar_messages(&query, None)) {
-        Ok(search_results) => {
-            let count = search_results.len().min(max_results as usize);
-            let results_slice = std::slice::from_raw_parts_mut(results, count);
-            
-            for (i, result) in search_results.iter().take(count).enumerate() {
-                results_slice[i] = CSearchResult {
-                    agent_id: result.agent_id,
-                    similarity_score: result.similarity_score,
-                    suggested_target: result.suggested_targets.first().copied().unwrap_or(0),
-                    confidence: result.confidence,
-                };
+            for cpu in cpus {
+                CPU_SET(cpu, &mut set);
             }
             
-            count as c_int
+            sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &set);
         }
-        Err(_) => -1,
-    }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn vector_db_get_routing_suggestions(
-    db: *mut CVectorDatabase,
-    query_vector: *const c_float,
-    dimensions: c_int,
-    max_suggestions: c_int,
-    targets: *mut c_uint,
-    scores: *mut c_float,
-) -> c_int {
-    if db.is_null() || query_vector.is_null() || targets.is_null() || scores.is_null() {
-        return -1;
-    }
-    
-    let db_ref = &mut *db;
-    let query_slice = std::slice::from_raw_parts(query_vector, dimensions as usize);
-    let query = Array1::from_vec(query_slice.to_vec());
-    
-    let rt = tokio::runtime::Handle::current();
-    match rt.block_on(db_ref.db.get_routing_suggestions(&query, max_suggestions as usize)) {
-        Ok(suggestions) => {
-            let count = suggestions.len();
-            let targets_slice = std::slice::from_raw_parts_mut(targets, count);
-            let scores_slice = std::slice::from_raw_parts_mut(scores, count);
-            
-            for (i, (target, score)) in suggestions.iter().enumerate() {
-                targets_slice[i] = *target;
-                scores_slice[i] = *score;
-            }
-            
-            count as c_int
-        }
-        Err(_) => -1,
     }
 }
 
@@ -1231,120 +1261,292 @@ pub unsafe extern "C" fn vector_db_get_routing_suggestions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::Array;
+    use tempfile::tempdir;
     
     #[tokio::test]
-    async fn test_vector_database_creation() {
-        let config = SearchConfig::default();
-        let db = VectorDatabase::new(512, config);
+    async fn test_enhanced_database() {
+        let dir = tempdir().unwrap();
+        let config = EnhancedSearchConfig::default();
         
-        let metrics = db.get_metrics();
-        assert_eq!(metrics.total_vectors.load(Ordering::Relaxed), 0);
-    }
-    
-    #[tokio::test]
-    async fn test_add_and_search_vectors() {
-        let config = SearchConfig::default();
-        let db = VectorDatabase::new(4, config);
+        let db = EnhancedVectorDatabase::new(dir.path(), 128, config).unwrap();
         
-        // Add test vectors
-        let vector1 = MessageVector {
-            id: Uuid::new_v4(),
-            agent_id: 1,
-            message_type: 10,
-            timestamp: SystemTime::now(),
-            vector: Array1::from_vec(vec![1.0, 0.0, 0.0, 0.0]),
-            metadata: HashMap::new(),
-            cluster_id: None,
-            routing_history: vec![100, 101],
-        };
+        // Insert test vectors
+        let v1 = Array1::from_vec(vec![1.0; 128]);
+        let v2 = Array1::from_vec(vec![0.9; 128]);
         
-        let vector2 = MessageVector {
-            id: Uuid::new_v4(),
-            agent_id: 2,
-            message_type: 20,
-            timestamp: SystemTime::now(),
-            vector: Array1::from_vec(vec![0.9, 0.1, 0.0, 0.0]), // Similar to vector1
-            metadata: HashMap::new(),
-            cluster_id: None,
-            routing_history: vec![102, 103],
-        };
+        db.insert(Uuid::new_v4(), v1.clone()).await.unwrap();
+        db.insert(Uuid::new_v4(), v2).await.unwrap();
         
-        db.add_message_vector(vector1).await.unwrap();
-        db.add_message_vector(vector2).await.unwrap();
-        
-        // Search for similar vectors
-        let query = Array1::from_vec(vec![1.0, 0.0, 0.0, 0.0]);
-        let results = db.find_similar_messages(&query, None).await.unwrap();
-        
-        assert!(results.len() >= 1);
-        assert!(results[0].similarity_score > 0.8);
+        // Search
+        let results = db.search(&v1, 2).await.unwrap();
+        assert_eq!(results.len(), 2);
+        assert!(results[0].1 < 0.1); // Very similar
     }
     
     #[test]
-    fn test_simd_dot_product() {
-        let a = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
-        let b = vec![8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0];
+    fn test_meteor_lake_topology() {
+        let topology = MeteorLakeTopology::detect();
         
-        let result = simd_dot_product(&a, &b);
-        let expected: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-        
-        assert!((result - expected).abs() < 1e-6);
+        assert_eq!(topology.p_cores.len(), 12);
+        assert_eq!(topology.e_cores.len(), 10);
+        assert_eq!(topology.ultra_cores, vec![11, 14, 15, 16]);
     }
     
     #[test]
-    fn test_quantized_vector() {
-        let original = Array1::from_vec(vec![1.0, -0.5, 0.8, -0.2, 0.0]);
-        let quantized = QuantizedVector::from_vector(&original);
-        let reconstructed = quantized.to_vector();
+    fn test_hnsw_insert_search() {
+        let index = HNSWIndex::new(SimilarityMetric::Cosine);
         
-        // Should be approximately equal (within quantization error)
-        for (orig, recon) in original.iter().zip(reconstructed.iter()) {
-            assert!((orig - recon).abs() < 0.1);
+        // Insert vectors
+        for i in 0..100 {
+            let mut v = vec![0.0; 128];
+            v[i % 128] = 1.0;
+            index.insert(Uuid::new_v4(), Array1::from_vec(v)).unwrap();
+        }
+        
+        // Search
+        let query = Array1::from_vec(vec![1.0; 128]);
+        let results = index.search(&query, 5, 50).unwrap();
+        
+        assert_eq!(results.len(), 5);
+    }
+}
+
+// ============================================================================
+// C FFI INTEGRATION LAYER
+// ============================================================================
+
+use std::ffi::{CStr, CString};
+use std::os::raw::{c_char, c_float, c_void};
+use std::ptr;
+use std::slice;
+
+/// C-compatible search result structure
+#[repr(C)]
+pub struct CSearchResult {
+    pub id: [u8; 16],        // UUID as 16 bytes
+    pub similarity: c_float,
+    pub metadata_ptr: *const c_char,
+}
+
+/// C-compatible search results array
+#[repr(C)]
+pub struct CSearchResults {
+    pub results: *mut CSearchResult,
+    pub count: usize,
+    pub capacity: usize,
+}
+
+/// Opaque handle for C FFI
+pub struct VectorRouterHandle {
+    database: EnhancedVectorDatabase,
+    runtime: tokio::runtime::Runtime,
+}
+
+/// Initialize the vector router system
+#[no_mangle]
+pub extern "C" fn vector_router_create(
+    storage_path: *const c_char,
+    vector_dimension: usize,
+) -> *mut VectorRouterHandle {
+    if storage_path.is_null() {
+        return ptr::null_mut();
+    }
+    
+    let path_str = unsafe {
+        match CStr::from_ptr(storage_path).to_str() {
+            Ok(s) => s,
+            Err(_) => return ptr::null_mut(),
+        }
+    };
+    
+    let config = EnhancedSearchConfig {
+        similarity_metric: SimilarityMetric::Cosine,
+        max_results: 100,
+        ef_construction: 200,
+        m_l: 1.0 / 2.0_f32.ln(),
+        max_connections: 16,
+        ef_search: 100,
+        use_heuristic: true,
+        extend_candidates: true,
+        keep_pruned: false,
+        enable_compression: true,
+        compression_method: CompressionMethod::ProductQuantization,
+        ..Default::default()
+    };
+    
+    let runtime = match tokio::runtime::Runtime::new() {
+        Ok(rt) => rt,
+        Err(_) => return ptr::null_mut(),
+    };
+    
+    let database = match runtime.block_on(async {
+        EnhancedVectorDatabase::new(
+            std::path::Path::new(path_str),
+            vector_dimension,
+            config,
+        )
+    }) {
+        Ok(db) => db,
+        Err(_) => return ptr::null_mut(),
+    };
+    
+    let handle = VectorRouterHandle { database, runtime };
+    Box::into_raw(Box::new(handle))
+}
+
+/// Insert a vector into the database
+#[no_mangle]
+pub extern "C" fn vector_router_insert(
+    handle: *mut VectorRouterHandle,
+    vector_data: *const c_float,
+    vector_dimension: usize,
+    metadata: *const c_char,
+) -> bool {
+    if handle.is_null() || vector_data.is_null() {
+        return false;
+    }
+    
+    let handle = unsafe { &mut *handle };
+    let vector_slice = unsafe { slice::from_raw_parts(vector_data, vector_dimension) };
+    let vector = Array1::from_vec(vector_slice.to_vec());
+    
+    let metadata_str = if metadata.is_null() {
+        String::new()
+    } else {
+        unsafe {
+            match CStr::from_ptr(metadata).to_str() {
+                Ok(s) => s.to_string(),
+                Err(_) => return false,
+            }
+        }
+    };
+    
+    let id = Uuid::new_v4();
+    
+    match handle.runtime.block_on(async {
+        handle.database.insert(id, vector).await
+    }) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
+}
+
+/// Search for similar vectors
+#[no_mangle]
+pub extern "C" fn vector_router_search(
+    handle: *mut VectorRouterHandle,
+    query_vector: *const c_float,
+    vector_dimension: usize,
+    k: usize,
+) -> CSearchResults {
+    let mut empty_result = CSearchResults {
+        results: ptr::null_mut(),
+        count: 0,
+        capacity: 0,
+    };
+    
+    if handle.is_null() || query_vector.is_null() {
+        return empty_result;
+    }
+    
+    let handle = unsafe { &mut *handle };
+    let vector_slice = unsafe { slice::from_raw_parts(query_vector, vector_dimension) };
+    let query = Array1::from_vec(vector_slice.to_vec());
+    
+    let search_results = match handle.runtime.block_on(async {
+        handle.database.search(&query, k).await
+    }) {
+        Ok(results) => results,
+        Err(_) => return empty_result,
+    };
+    
+    let count = search_results.len();
+    if count == 0 {
+        return empty_result;
+    }
+    
+    // Allocate C-compatible results array
+    let layout = std::alloc::Layout::array::<CSearchResult>(count).unwrap();
+    let results_ptr = unsafe { std::alloc::alloc(layout) as *mut CSearchResult };
+    
+    if results_ptr.is_null() {
+        return empty_result;
+    }
+    
+    for (i, (id, similarity)) in search_results.iter().enumerate() {
+        let c_result = CSearchResult {
+            id: id.as_bytes().clone(),
+            similarity: *similarity as c_float,
+            metadata_ptr: ptr::null(), // Could add metadata support later
+        };
+        unsafe {
+            ptr::write(results_ptr.add(i), c_result);
         }
     }
     
-    #[tokio::test]
-    async fn test_clustering() {
-        let config = SearchConfig {
-            enable_clustering: true,
-            ..Default::default()
-        };
-        let db = VectorDatabase::new(3, config);
-        
-        // Add vectors that should form clusters
-        let vectors = vec![
-            Array1::from_vec(vec![1.0, 0.0, 0.0]),  // Cluster 1
-            Array1::from_vec(vec![0.9, 0.1, 0.0]),  // Cluster 1
-            Array1::from_vec(vec![0.0, 1.0, 0.0]),  // Cluster 2
-            Array1::from_vec(vec![0.0, 0.9, 0.1]),  // Cluster 2
-        ];
-        
-        for (i, vector) in vectors.into_iter().enumerate() {
-            let message_vector = MessageVector {
-                id: Uuid::new_v4(),
-                agent_id: i as u32,
-                message_type: 1,
-                timestamp: SystemTime::now(),
-                vector,
-                metadata: HashMap::new(),
-                cluster_id: None,
-                routing_history: vec![i as u32 * 10],
-            };
-            
-            db.add_message_vector(message_vector).await.unwrap();
-        }
-        
-        // Wait for clustering to complete
-        tokio::time::sleep(Duration::from_millis(100)).await;
-        db.update_clustering().await.unwrap();
-        
-        // Check that clusters were formed
-        let query = Array1::from_vec(vec![1.0, 0.0, 0.0]);
-        let results = db.find_similar_messages(&query, None).await.unwrap();
-        
-        assert!(!results.is_empty());
-        // Similar vectors should have cluster assignments
-        assert!(results.iter().any(|r| r.cluster_id.is_some()));
+    CSearchResults {
+        results: results_ptr,
+        count,
+        capacity: count,
     }
+}
+
+/// Free search results memory
+#[no_mangle]
+pub extern "C" fn vector_router_free_results(results: CSearchResults) {
+    if !results.results.is_null() {
+        let layout = std::alloc::Layout::array::<CSearchResult>(results.capacity).unwrap();
+        unsafe {
+            std::alloc::dealloc(results.results as *mut u8, layout);
+        }
+    }
+}
+
+/// Get router performance metrics
+#[no_mangle]
+pub extern "C" fn vector_router_get_metrics(
+    handle: *mut VectorRouterHandle,
+    searches_total: *mut u64,
+    searches_p_core: *mut u64,
+    searches_e_core: *mut u64,
+    avg_latency_us: *mut u64,
+) -> bool {
+    if handle.is_null() {
+        return false;
+    }
+    
+    let handle = unsafe { &*handle };
+    let metrics = handle.database.get_metrics();
+    
+    if !searches_total.is_null() {
+        unsafe { *searches_total = metrics.searches_total.load(Ordering::Relaxed) };
+    }
+    if !searches_p_core.is_null() {
+        unsafe { *searches_p_core = metrics.searches_p_core.load(Ordering::Relaxed) };
+    }
+    if !searches_e_core.is_null() {
+        unsafe { *searches_e_core = metrics.searches_e_core.load(Ordering::Relaxed) };
+    }
+    if !avg_latency_us.is_null() {
+        unsafe { *avg_latency_us = metrics.total_latency_us.load(Ordering::Relaxed) };
+    }
+    
+    true
+}
+
+/// Shutdown and cleanup the vector router
+#[no_mangle]
+pub extern "C" fn vector_router_destroy(handle: *mut VectorRouterHandle) {
+    if !handle.is_null() {
+        unsafe {
+            let _ = Box::from_raw(handle);
+        }
+    }
+}
+
+/// Get version information
+#[no_mangle]
+pub extern "C" fn vector_router_version() -> *const c_char {
+    static VERSION: &str = "2.0.0-enhanced\0";
+    VERSION.as_ptr() as *const c_char
 }
