@@ -69,13 +69,13 @@ tmux send-keys -t "$SESSION_NAME:0.1" "echo 'Commands:'" Enter
 tmux send-keys -t "$SESSION_NAME:0.1" "echo '  watch -n 2 \"zfs list | grep buildpool || echo 'No buildpool'\"'" Enter
 tmux send-keys -t "$SESSION_NAME:0.1" "echo '  # Monitor ZFS build progress'" Enter
 
-# Panel 3 (top-right): Agent System Control
+# Panel 3 (top-right): LiveCD Management & Tools
 tmux send-keys -t "$SESSION_NAME:0.2" "cd '$WORK_DIR'" Enter
-tmux send-keys -t "$SESSION_NAME:0.2" "echo '═══ PANEL 3: Agent System Control ═══'" Enter
+tmux send-keys -t "$SESSION_NAME:0.2" "echo '═══ PANEL 3: LiveCD Management & Tools ═══'" Enter
 tmux send-keys -t "$SESSION_NAME:0.2" "echo 'Commands:'" Enter
-tmux send-keys -t "$SESSION_NAME:0.2" "echo '  ./scripts/run-agents.sh'" Enter
-tmux send-keys -t "$SESSION_NAME:0.2" "echo '  ./scripts/switch.sh'" Enter
-tmux send-keys -t "$SESSION_NAME:0.2" "echo '  # Agent coordination and management'" Enter
+tmux send-keys -t "$SESSION_NAME:0.2" "echo '  ./scripts/claude-livecd-unified-with-agents.sh'" Enter
+tmux send-keys -t "$SESSION_NAME:0.2" "echo '  ./scripts/build-master-livecd.sh'" Enter
+tmux send-keys -t "$SESSION_NAME:0.2" "echo '  # LiveCD building and configuration'" Enter
 
 # Panel 4 (bottom-right): Persistence & Boot Management
 tmux send-keys -t "$SESSION_NAME:0.3" "cd '$WORK_DIR'" Enter
@@ -89,7 +89,7 @@ tmux send-keys -t "$SESSION_NAME:0.3" "echo '  # Boot configuration and persiste
 # Set panel titles
 tmux select-pane -t "$SESSION_NAME:0.0" -T "UltraThink Build"
 tmux select-pane -t "$SESSION_NAME:0.1" -T "Build Monitor"
-tmux select-pane -t "$SESSION_NAME:0.2" -T "Agent Control"
+tmux select-pane -t "$SESSION_NAME:0.2" -T "LiveCD Tools"
 tmux select-pane -t "$SESSION_NAME:0.3" -T "Persistence"
 
 # Enable pane titles display
@@ -103,7 +103,7 @@ tmux select-pane -t "$SESSION_NAME:0.0"
 log "4-panel UltraThink environment created successfully!"
 info "Session: $SESSION_NAME"
 info "Layout: ┌─────────────┬─────────────┐"
-info "        │ Build       │ Agent Ctrl  │"
+info "        │ Build       │ LiveCD Tools│"
 info "        ├─────────────┼─────────────┤"
 info "        │ Monitor     │ Persistence │"
 info "        └─────────────┴─────────────┘"
