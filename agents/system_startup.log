@@ -101,3 +101,19 @@ Next steps:
 Agent system is now ONLINE and running in background.
 To check status: ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)'
 To stop: rm /home/ubuntu/Documents/Claude/agents/.online && pkill -f binary_bridge
+BRING_ONLINE.sh: line 587: 768056 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 768394 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 768564 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 769072 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 772574 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 793872 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 806795 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 815163 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 823416 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 831470 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 839813 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 858513 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 880951 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 903182 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 911813 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
+BRING_ONLINE.sh: line 587: 926174 Segmentation fault      nohup "binary-communications-system/binary_bridge" > "$AGENTS_DIR/binary_bridge.log" 2>&1
