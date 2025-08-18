@@ -310,6 +310,31 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ## Recent Updates
 
+### Complete Repository Separation (2025-08-18) ✅ 
+- **LiveCD Generator Separated**: Moved to independent repository at `https://github.com/SWORDIntel/livecd-gen`
+- **No Submodule Dependencies**: Removed all submodule references and circular dependencies
+- **Clean Separation Achieved**: 
+  - Claude agent framework: `/home/ubuntu/Documents/Claude/` (this repository)
+  - LiveCD generator: `/home/ubuntu/Documents/livecd-gen/` (separate repository)
+- **Files Moved to livecd-gen**:
+  - All LiveCD build scripts and modules
+  - Persistence configuration scripts  
+  - Hardware-specific build tools
+- **Result**: Both projects can now be developed independently without confusion
+
+### New Modular Runtime System (2025-08-18) 🚀
+- **Location**: `agents/src/c/runtime/`
+- **Architecture**: Ultra-minimal runtime with dynamic module loading
+- **Core Components**:
+  - `main.c`: Runtime entry point and coordination
+  - `shm_arena.c`: Lock-free shared memory arena management
+  - `module_loader.c`: Dynamic module loading with hot-reload support
+  - `io_dispatcher.c`: Event-driven I/O dispatching with io_uring
+  - `module_interface.h`: Standardized module API
+- **Build System**: `Makefile.modular` with optimized compilation flags
+- **Performance Target**: 4.2M msg/sec throughput, <200ns P99 latency
+- **Status**: Initial implementation ready for testing
+
 ### REPOSITORY CLEANUP COMPLETE (2025-08-17) ✅
 - **Duplicate Directory Elimination**: Removed 8 obsolete numbered directories (285 files, 142k+ lines)
 - **Directory Pattern**: Eliminated all numbered organizational structure (00-, 01-, 02-, 03-, 04-, 07-)
@@ -466,6 +491,6 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ---
 
-*Last Updated: 2024*  
+*Last Updated: 2025-08-18*  
 *Framework Version: 7.0*  
 *Status: PRODUCTION*

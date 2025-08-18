@@ -2,6 +2,8 @@
 
 **Complete Claude Code installation suite with three powerful installers for LiveCD environments**
 
+> **Note**: The LiveCD *generator/builder* tools have been moved to a separate repository at [github.com/SWORDIntel/livecd-gen](https://github.com/SWORDIntel/livecd-gen). This repository focuses on installing Claude Code and the agent framework on LiveCD systems.
+
 ## 🚀 Quick Start - Choose Your Method
 
 ### Method 1: Portable Installation (Best for LiveCD)
