@@ -1,7 +1,19 @@
 -- God-tier statusline with comprehensive project repo checking and agent subsystem integration
 -- Neovim configuration for advanced technical environments with military-spec hardware support
+-- Updated with environment-relative paths for Claude Agent Framework v7.0
 
 local M = {}
+
+-- Environment configuration
+local claude_root = os.getenv("CLAUDE_AGENTS_ROOT") or vim.fn.expand("~/Documents/Claude/agents")
+local runtime_dir = claude_root .. "/runtime"
+local log_dir = claude_root .. "/logs"
+local status_file = runtime_dir .. "/status.json"
+local agent_socket = runtime_dir .. "/claude_agent_bridge.sock"
+
+-- Ensure directories exist
+vim.fn.mkdir(runtime_dir, "p")
+vim.fn.mkdir(log_dir, "p")
 
 -- Git status cache for performance
 local git_cache = {
@@ -33,7 +45,12 @@ local agent_status = {
   active_agents = 0,
   last_chaos_findings = 0,
   dsmil_devices_active = 0,
-  mode5_status = "dormant"
+  mode5_status = "dormant",
+  binary_bridge_status = "unknown",
+  agents_online = {},
+  last_task = "none",
+  task_count = 0,
+  error_count = 0
 }
 
 -- Performance monitoring
@@ -130,9 +147,9 @@ local function get_ci_status()
     local files = exec_cmd("ls " .. pattern)
     if files ~= "" then
       -- Check for common failure indicators in logs
-      local status_file = ".ci_status"
-      if vim.fn.filereadable(status_file) == 1 then
-        local content = vim.fn.readfile(status_file)[1] or "unknown"
+      local ci_status_file = ".ci_status"
+      if vim.fn.filereadable(ci_status_file) == 1 then
+        local content = vim.fn.readfile(ci_status_file)[1] or "unknown"
         health_indicators.ci_status = content
         return content
       end
@@ -185,7 +202,7 @@ local function get_lint_status()
       -- Quick lint check if possible
       local errors = 0
       if config:match("eslint") then
-        errors = tonumber(exec_cmd("npx eslint . --format json | jq '.[] | .errorCount' | paste -sd+ | bc")) or 0
+        errors = tonumber(exec_cmd("npx eslint . --format json 2>/dev/null | jq '.[] | .errorCount' | paste -sd+ | bc")) or 0
       elseif config:match("py") then
         errors = tonumber(exec_cmd("flake8 --statistics 2>/dev/null | tail -1 | awk '{print $1}'")) or 0
       end
@@ -235,19 +252,19 @@ local function get_project_context()
   if vim.fn.filereadable("Cargo.toml") == 1 then project_type = "rust" end
   if vim.fn.filereadable("go.mod") == 1 then project_type = "go" end
   if vim.fn.filereadable("pom.xml") == 1 then project_type = "java" end
+  if vim.fn.filereadable("CLAUDE.md") == 1 then project_type = "claude-agents" end
   
   return project_name, project_type
 end
 
--- Agent subsystem status check
+-- Agent subsystem status check with environment-relative paths
 local function get_agent_status()
   local start_time = vim.loop.hrtime()
   
-  -- Check Claude agent socket
-  local sock_path = "/tmp/claude-agent.sock"
-  if vim.fn.filereadable(sock_path) == 1 then
-    -- Try to get status via socket (simplified for now)
-    local status_json = exec_cmd("echo 'STATUS' | nc -U " .. sock_path .. " 2>/dev/null | head -1")
+  -- Check Claude agent socket (updated path)
+  if vim.fn.filereadable(agent_socket) == 1 then
+    -- Try to get status via socket
+    local status_json = exec_cmd("echo 'STATUS' | nc -U " .. agent_socket .. " 2>/dev/null | head -1")
     if status_json ~= "" then
       -- Parse JSON response if available
       local ok, data = pcall(vim.json.decode, status_json)
@@ -257,8 +274,21 @@ local function get_agent_status()
     end
   end
   
-  -- Check chaos test results
-  local chaos_log = "/var/log/claude-chaos/latest.json"
+  -- Check Python statusline bridge status file
+  if vim.fn.filereadable(status_file) == 1 then
+    local content = table.concat(vim.fn.readfile(status_file), "")
+    local ok, data = pcall(vim.json.decode, content)
+    if ok and data then
+      agent_status.binary_bridge_status = data.binary_bridge or "unknown"
+      agent_status.agents_online = data.agents or {}
+      agent_status.last_task = data.last_event or "none"
+      agent_status.task_count = data.tasks and data.tasks.completed or 0
+      agent_status.error_count = data.tasks and data.tasks.errors or 0
+    end
+  end
+  
+  -- Check chaos test results (updated path)
+  local chaos_log = log_dir .. "/chaos_latest.json"
   if vim.fn.filereadable(chaos_log) == 1 then
     local content = table.concat(vim.fn.readfile(chaos_log), "")
     local ok, data = pcall(vim.json.decode, content)
@@ -267,6 +297,14 @@ local function get_agent_status()
       agent_status.chaos_tests_running = data.active_tests or 0
     end
   end
+  
+  -- Check binary communication system status
+  local binary_bridge_running = exec_cmd("pgrep -f ultra_hybrid_enhanced") ~= ""
+  agent_status.binary_bridge_status = binary_bridge_running and "running" or "stopped"
+  
+  -- Count available agents
+  local agent_count = tonumber(exec_cmd("ls " .. claude_root .. "/*.md 2>/dev/null | wc -l")) or 0
+  agent_status.active_agents = agent_count
   
   -- Check DSMIL device status (Dell military subsystems)
   local dsmil_count = tonumber(exec_cmd("ls /sys/devices/platform/ | grep -c DSMIL 2>/dev/null")) or 0
@@ -302,9 +340,32 @@ local function get_consensus_status()
   elseif agent_status.consensus_state == "candidate" then
     return "🗳️ Election"
   elseif agent_status.active_agents > 1 then
-    return string.format("🤝 Agents:%d", agent_status.active_agents)
+    return string.format("🤖 Agents:%d", agent_status.active_agents)
   end
   return ""
+end
+
+-- Get binary communication status
+local function get_binary_status()
+  local status_parts = {}
+  
+  if agent_status.binary_bridge_status == "running" then
+    table.insert(status_parts, "🟢 Bridge")
+  elseif agent_status.binary_bridge_status == "stopped" then
+    table.insert(status_parts, "🔴 Bridge")
+  else
+    table.insert(status_parts, "⚪ Bridge")
+  end
+  
+  if agent_status.task_count > 0 then
+    table.insert(status_parts, string.format("✅ %d", agent_status.task_count))
+  end
+  
+  if agent_status.error_count > 0 then
+    table.insert(status_parts, string.format("❌ %d", agent_status.error_count))
+  end
+  
+  return table.concat(status_parts, " ")
 end
 
 -- Get military hardware status
@@ -404,6 +465,12 @@ function M.get_statusline()
     end
     
     table.insert(components, git_info)
+  end
+  
+  -- Binary communication status
+  local binary_info = get_binary_status()
+  if binary_info ~= "" then
+    table.insert(components, binary_info)
   end
   
   -- CI/CD Status
@@ -560,11 +627,17 @@ function M.setup()
     print("Security Issues:", health_indicators.security_issues)
     print("")
     print("━━━ AGENT STATUS ━━━")
+    print("Claude Root:", claude_root)
+    print("Binary Bridge:", agent_status.binary_bridge_status)
+    print("Agent Socket:", agent_socket)
+    print("Status File:", status_file)
     print("Consensus:", agent_status.consensus_state)
     print("Active Agents:", agent_status.active_agents)
     print("Chaos Tests:", agent_status.chaos_tests_running)
     print("Last Findings:", agent_status.last_chaos_findings)
     print("Queue Depth:", agent_status.message_queue_depth)
+    print("Task Count:", agent_status.task_count)
+    print("Error Count:", agent_status.error_count)
     print("")
     print("━━━ MILSPEC STATUS ━━━")
     print("DSMIL Devices:", agent_status.dsmil_devices_active)
@@ -577,10 +650,10 @@ function M.setup()
     print("Total Update:", perf_monitor.total_update_time .. "ms")
   end, {})
   
-  -- Agent control commands
+  -- Agent control commands (updated paths)
   vim.api.nvim_create_user_command("AgentChaosTest", function(opts)
     local target = opts.args or "localhost"
-    exec_cmd(string.format("echo 'CHAOS_TEST %s' | nc -U /tmp/claude-agent.sock", target))
+    exec_cmd(string.format("echo 'CHAOS_TEST %s' | nc -U %s", target, agent_socket))
     print("Chaos test initiated for:", target)
   end, { nargs = "?" })
   
@@ -588,6 +661,33 @@ function M.setup()
     get_agent_status()
     print(vim.inspect(agent_status))
   end, {})
+  
+  -- Agent framework specific commands
+  vim.api.nvim_create_user_command("AgentList", function()
+    local agents = exec_cmd("ls " .. claude_root .. "/*.md | xargs -I {} basename {} .md")
+    print("Available Agents:")
+    for agent in agents:gmatch("[^\r\n]+") do
+      print("  - " .. agent)
+    end
+  end, {})
+  
+  vim.api.nvim_create_user_command("AgentBridge", function(opts)
+    local action = opts.args or "status"
+    if action == "start" then
+      exec_cmd(claude_root .. "/BRING_ONLINE.sh")
+      print("Starting agent bridge...")
+    elseif action == "stop" then
+      exec_cmd("pkill -f ultra_hybrid_enhanced")
+      print("Stopping agent bridge...")
+    elseif action == "restart" then
+      exec_cmd("pkill -f ultra_hybrid_enhanced && " .. claude_root .. "/BRING_ONLINE.sh")
+      print("Restarting agent bridge...")
+    else
+      print("Binary Bridge Status:", agent_status.binary_bridge_status)
+      print("Socket Path:", agent_socket)
+      print("Status File:", status_file)
+    end
+  end, { nargs = "?" })
   
   -- Initial update
   M.update_all()
