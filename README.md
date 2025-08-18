@@ -29,8 +29,40 @@
 
 All methods install Claude Code v1.0.77 with agents, statusline, and auto-permission bypass.
 
+## 🌟 NEW: Unified Orchestration System
+
+**Complete integration of permission bypass + Tandem Orchestration in one command!**
+
+```bash
+# Use as drop-in replacement for claude
+alias claude='./claude-unified'
+
+# Automatic permission bypass + intelligent orchestration:
+claude /task "create authentication system with tests and documentation"
+# → Automatically adds --dangerously-skip-permissions
+# → Detects multi-agent workflow opportunity
+# → Offers Tandem Orchestration with architect + constructor + testbed + docgen
+
+# Simple tasks handled directly:
+claude /task "fix typo in README"
+# → Permission bypass only, direct execution
+
+# Configuration:
+claude --unified-status                    # Show system status
+CLAUDE_PERMISSION_BYPASS=false claude     # Disable permission bypass
+CLAUDE_ORCHESTRATION=false claude         # Disable orchestration
+```
+
+**Key Benefits:**
+- ✅ **Zero Learning Curve** - Works exactly like regular Claude
+- ✅ **LiveCD Compatible** - Auto permission bypass by default  
+- ✅ **Intelligent Enhancement** - Orchestration when beneficial
+- ✅ **Seamless Fallback** - Direct Claude for simple tasks
+- ✅ **Full Backward Compatibility** - All existing commands work
+
 ## ✨ Features
 
+- ✅ **Unified Orchestration System** - Permission bypass + orchestration in one command
 - ✅ **Claude Code v1.0.77** - Official @anthropic-ai/claude-code package
 - ✅ **Three Installation Methods** - Portable, Quick, or Direct
 - ✅ **Zero Dependencies** - Auto-installs npm, node, nano, and more
@@ -40,6 +72,7 @@ All methods install Claude Code v1.0.77 with agents, statusline, and auto-permis
 - ✅ **Auto Permission Bypass** - No prompts for LiveCD usage
 - ✅ **32 Production Agents** - Full v7.0 agent system with local detection
 - ✅ **Python Tandem Orchestration** - Standalone launcher with 85.7% success rate
+- ✅ **Intelligent Workflow Detection** - Auto-suggests multi-agent coordination
 - ✅ **God-tier Statusline** - For Neovim, Vim, Nano, and Shell
 - ✅ **Nano Default Editor** - User-friendly with syntax highlighting
 - ✅ **AVX-512 Cloaking Detection** - Detects when microcode disables AVX-512
@@ -49,9 +82,12 @@ All methods install Claude Code v1.0.77 with agents, statusline, and auto-permis
 
 ## 📦 What Gets Installed
 
-### 1. **Claude Code** with three commands:
+### 1. **Claude Code** with unified orchestration:
+   - `claude-unified` - **NEW**: Complete integration (permission bypass + orchestration)
    - `claude` - Auto permission bypass (LiveCD default)
    - `claude-normal` - Standard mode with prompts
+   - `claude-enhanced` - Legacy enhanced wrapper with orchestration suggestions
+   - `claude-orchestrate` - Direct access to orchestration capabilities
    - `claude-first-launch` - Guided first-time setup
 
 ### 2. **Claude Agents** (28 production agents):

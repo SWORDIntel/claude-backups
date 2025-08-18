@@ -208,23 +208,30 @@ Currently operating in **Python-first mode** with seamless C integration capabil
 
 The system offers multiple integration approaches to match different user preferences:
 
-**1. Seamless Integration (Recommended)**:
+**1. Unified Orchestration (RECOMMENDED - NEW)**:
+- `claude-unified` - Complete integration of permission bypass + orchestration
+- Automatic `--dangerously-skip-permissions` for LiveCD compatibility
+- Intelligent multi-agent workflow detection and routing
+- Zero learning curve - works as drop-in replacement for `claude`
+- Environment controls: `CLAUDE_PERMISSION_BYPASS=false`, `CLAUDE_ORCHESTRATION=false`
+
+**2. Seamless Integration (Legacy)**:
 - `claude-enhanced` - Drop-in replacement for `claude` command
 - Automatic detection of multi-step workflows with gentle suggestions
 - Zero learning curve - existing commands work exactly the same
 - Intelligent pattern recognition for orchestration opportunities
 
-**2. Direct Orchestration**:
+**3. Direct Orchestration**:
 - `claude-orchestrate` - Direct access to orchestration capabilities
 - Natural language task analysis and workflow suggestions
 - Best for known complex tasks requiring coordination
 
-**3. Standalone Launcher**:
+**4. Standalone Launcher**:
 - `python-orchestrator-launcher.sh` - Comprehensive interactive interface
 - Full system control with status monitoring and testing
 - Temporary activation with proper lifecycle management
 
-**4. Advanced Integration**:
+**5. Advanced Integration**:
 - Direct Python API access for custom integrations
 - Switch.sh integration for system mode management
 - Environment controls for selective enhancement
@@ -347,7 +354,33 @@ CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh md  # Activate .md mode + Python orchestra
 python3 src/python/production_orchestrator.py  # Direct Python orchestration
 ```
 
-### Seamless Claude Code Integration (Recommended)
+### Unified Orchestration System (RECOMMENDED - NEW)
+```bash
+# Complete unified solution - permission bypass + orchestration
+alias claude='./claude-unified'
+
+# Automatic permission bypass + intelligent orchestration detection:
+claude /task "create user authentication with tests and security review"
+# → Adds permission bypass, offers orchestration for multi-step tasks
+
+# Simple tasks handled directly with permission bypass:
+claude /task "fix typo in README"
+# → Direct Claude execution with automatic permission bypass
+
+# Safe mode (no permission bypass):
+claude --safe /task "production deployment"
+
+# Environment controls:
+CLAUDE_PERMISSION_BYPASS=false claude /task "task"     # Disable permission bypass
+CLAUDE_ORCHESTRATION=false claude /task "task"         # Disable orchestration
+export CLAUDE_PERMISSION_BYPASS=false                  # Global disable
+
+# System status and help:
+claude --unified-status    # Show unified system status
+claude --unified-help      # Show comprehensive help
+```
+
+### Legacy Seamless Integration
 ```bash
 # Zero learning curve - use existing claude commands with smart enhancements
 alias claude='./claude-enhanced'
@@ -511,6 +544,28 @@ export METEOR_LAKE_OPTIMIZATION=true
 - Verify Task tool parameters
 
 ## Recent Updates
+
+### Unified Orchestration System (2025-08-18) 🚀 NEW
+- **Location**: Root directory - `claude-unified`, `claude-orchestration-bridge.py`
+- **Architecture**: Complete integration of permission bypass + Tandem Orchestration
+- **Core Features**:
+  - `claude-unified`: Bash wrapper with automatic permission bypass and orchestration detection
+  - Enhanced `claude-orchestration-bridge.py`: Python bridge with permission bypass integration
+  - Unified configuration via environment variables
+- **Permission Bypass Integration**: 
+  - Automatic `--dangerously-skip-permissions` for LiveCD compatibility
+  - Configurable via `CLAUDE_PERMISSION_BYPASS=false`
+  - Safe mode support with `--safe` flag
+- **Orchestration Integration**:
+  - Pattern detection for multi-agent workflows
+  - Intelligent routing between direct Claude and Tandem Orchestrator
+  - Full backward compatibility with existing commands
+- **Status**: PRODUCTION READY - Complete unified solution
+- **Benefits**: 
+  - Zero learning curve - drop-in replacement for `claude` command
+  - LiveCD compatibility by default
+  - Intelligent workflow enhancement when beneficial
+  - Seamless fallback for simple tasks
 
 ### Complete Repository Separation (2025-08-18) ✅ 
 - **LiveCD Generator Separated**: Moved to independent repository at `https://github.com/SWORDIntel/livecd-gen`
