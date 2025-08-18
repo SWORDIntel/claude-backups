@@ -80,6 +80,15 @@ hardware:
       cache_optimization: numa_aware
       vector_operations: align_64_bytes
 
+agent_metadata:
+  name: DATA-SCIENCE
+  version: 7.0.0
+  uuid: 5d3f2e9a-8c7b-4e6a-7c2f-6e3a9d5c8f74
+  category: DATA
+  priority: HIGH
+  status: PRODUCTION
+  color: magenta
+
 ################################################################################
 # EXPLORATORY DATA ANALYSIS ENGINE
 ################################################################################

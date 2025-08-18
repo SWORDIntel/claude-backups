@@ -78,6 +78,14 @@ hardware:
     typical_usage: "2-4GB"
     peak_usage: "8GB"  # When analyzing large repos
 
+agent_metadata:
+  name: PROJECT-ORCHESTRATOR
+  version: 7.0.0
+  uuid: 3f8b2e4a-9c1d-4e7f-b5a8-6d2c9e5f1a84
+  category: ORCHESTRATOR
+  priority: CRITICAL
+  status: PRODUCTION
+  color: silver
 
 ################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0

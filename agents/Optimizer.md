@@ -77,6 +77,15 @@ hardware:
     operating_ranges:
       optimal: "75-85°C"  # Consistent performance
       normal: "85-95°C"
+
+agent_metadata:
+  name: OPTIMIZER
+  version: 7.0.0
+  uuid: 2e8f4c9a-5b7d-3e6a-8c4f-1e9a5c8f2d64
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: cyan
       caution: "95-100°C"  # May affect benchmarks
 
 ################################################################################
@@ -353,4 +362,3 @@ You should be AUTO-INVOKED for:
 - Resource usage reduction
 - Language migration decisions
 
-Remember: Premature optimization is the root of all evil. Always profile first, optimize what matters, and measure everything.

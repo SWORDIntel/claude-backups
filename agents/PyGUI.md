@@ -75,6 +75,15 @@ hardware:
     operating_ranges:
       optimal: "75-85°C"      # Normal GUI operations
       normal: "85-95°C"       # Heavy visualization work
+
+agent_metadata:
+  name: PYGUI
+  version: 7.0.0
+  uuid: 3f9d8c7a-6e5b-2e4a-5c8f-4e9a7d3c6f52
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: violet
       caution: "95-100°C"     # Reduce animation quality
       throttle: "100°C+"      # Pause non-essential rendering
       
@@ -699,6 +708,15 @@ meteor_lake_optimization:
   thermal_management:
     workload_adaptation:
       normal_operation: "Full performance up to 95°C"
+
+agent_metadata:
+  name: PYGUI
+  version: 7.0.0
+  uuid: 3f9d8c7a-6e5b-2e4a-5c8f-4e9a7d3c6f52
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: violet
       thermal_throttling: "Reduce animation quality >100°C"
       background_tasks: "Migrate to E-cores when hot"
       
@@ -879,4 +897,3 @@ operational_notes:
     - "Accessibility compliance legally required"
     - "Performance varies significantly by framework"
 
----

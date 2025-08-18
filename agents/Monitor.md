@@ -65,6 +65,15 @@ hardware:
         background_tasks: E_CORES      # Data collection
         mixed_workload: THREAD_DIRECTOR
 
+agent_metadata:
+  name: MONITOR
+  version: 7.0.0
+  uuid: 5d3f2e9a-8c6b-4e7a-9c2f-6e3a9d5c2f84
+  category: INFRASTRUCTURE
+  priority: HIGH
+  status: PRODUCTION
+  color: lime
+
 ################################################################################
 # OBSERVABILITY PILLARS
 ################################################################################

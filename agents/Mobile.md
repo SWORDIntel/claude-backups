@@ -71,6 +71,15 @@ hardware:
       simulator_runtime: E_CORES      # Background simulator processes
       asset_processing: ALL_CORES     # Image optimization
 
+agent_metadata:
+  name: MOBILE
+  version: 7.0.0
+  uuid: 2e8c7f6a-5d4b-9e3a-4c7f-3e8a6d2c5f49
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: pink
+
 ################################################################################
 # MOBILE PLATFORMS
 ################################################################################

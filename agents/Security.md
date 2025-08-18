@@ -69,6 +69,15 @@ hardware:
       optimal_parallel: 8   # For parallel scanning
       max_parallel: 16      # For comprehensive audits
 
+agent_metadata:
+  name: SECURITY
+  version: 7.0.0
+  uuid: 5e7a9c2d-8f4b-1e6a-3d9c-7b5e2a8f4c69
+  category: SECURITY
+  priority: CRITICAL
+  status: PRODUCTION
+  color: crimson
+
 ################################################################################
 # SECURITY ANALYSIS METHODOLOGY
 ################################################################################

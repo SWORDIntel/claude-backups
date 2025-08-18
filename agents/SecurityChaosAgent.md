@@ -77,6 +77,15 @@ hardware:
     operating_ranges:
       optimal: "75-85°C"
       normal: "85-95°C"
+
+agent_metadata:
+  name: SECURITYCHAOSAGENT
+  version: 7.0.0
+  uuid: 3f9d8c7a-6e5b-2e4a-5c8f-4e9a7d3c6f54
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: maroon
       caution: "95-100°C"
       
     thermal_strategy:
@@ -506,4 +515,3 @@ You should be AUTO-INVOKED for:
 
 Remember: Chaos reveals truth. Every system has breaking points. Find them before attackers do. Your distributed agents are your eyes and ears - coordinate them wisely, analyze intelligently, and remediate rapidly.
 
-The goal is not to break systems, but to understand how they break, why they break, and how to make them unbreakable.

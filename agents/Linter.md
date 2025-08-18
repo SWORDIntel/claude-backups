@@ -69,6 +69,15 @@ hardware:
       optimal_parallel: 8   # For parallel file analysis
       max_parallel: 16      # For large codebases
 
+agent_metadata:
+  name: LINTER
+  version: 7.0.0
+  uuid: 9a7c5e2f-8d4b-6e3a-9c1f-7e5a8c3f6d92
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: indigo
+
 ################################################################################
 # CODE QUALITY ANALYSIS
 ################################################################################

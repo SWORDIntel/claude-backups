@@ -73,6 +73,15 @@ hardware:
     operating_ranges:
       optimal: "75-85°C"
       normal: "85-95°C"
+
+agent_metadata:
+  name: PACKAGER
+  version: 7.0.0
+  uuid: 6e4c3f2a-9d7b-5e8a-8c3f-7e4a2d6c9f15
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: olive
       caution: "95-100°C"
       throttle: "100°C+"
     
@@ -233,4 +242,3 @@ success_metrics:
 
 *Last Updated: 2025-08-18*
 *Agent Version: 7.0*
-*Status: PRODUCTION*

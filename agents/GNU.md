@@ -67,6 +67,7 @@ agent_template:
     category: ML-OPS  # Machine learning operations specialized for GNA
     priority: HIGH
     status: PRODUCTION
+    color: black
     
     description: |
       Ultra-low power neural inference agent for Intel GNA (Gaussian Neural Accelerator).

@@ -74,6 +74,7 @@ agent_template:
       
     priority: CRITICAL
     status: PRODUCTION
+    color: gold
     last_verified: "2025-08-14"
     
   # Hardware Requirements & Constraints

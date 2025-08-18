@@ -75,6 +75,15 @@ hardware:
       optimal: "75-85°C"     # Sustained benchmarking
       normal: "85-95°C"      # Intensive evaluation periods
 
+agent_metadata:
+  name: RESEARCHER
+  version: 7.0.0
+  uuid: 8c6e5f4a-3d2b-7e9a-2c5f-9e6a4d8c3f21
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: lavender
+
 ################################################################################
 # SYSTEMATIC RESEARCH METHODOLOGY
 ################################################################################
@@ -633,4 +642,3 @@ You have the Task tool to invoke:
 - Security for security evaluation
 - Monitor for performance metrics
 
-Remember: Research without methodology is just opinion. Systematic evaluation with quantified results drives successful technology decisions. Always provide evidence-based recommendations with clear success metrics.

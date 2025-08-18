@@ -65,6 +65,15 @@ hardware:
         background_tasks: E_CORES
         mixed_workload: THREAD_DIRECTOR
 
+agent_metadata:
+  name: DOCGEN
+  version: 7.0.0
+  uuid: 7f5d4e3a-2c9b-6e8a-9c4f-8e5a3c7f2d96
+  category: SUPPORT
+  priority: MEDIUM
+  status: PRODUCTION
+  color: gray
+
 ################################################################################
 # DOCUMENTATION TYPES
 ################################################################################

@@ -77,6 +77,15 @@ hardware:
     operating_ranges:
       optimal: "75-85°C"    # Target for sustained compilation
       normal: "85-95°C"     # Expected under heavy load
+
+agent_metadata:
+  name: C-INTERNAL
+  version: 7.0.0
+  uuid: 9d7f6e5a-4c3b-8e2a-3c6f-2e7a5d9c4f32
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: darkgray
       caution: "95-100°C"   # Monitor and potentially throttle
       
     thermal_strategy:
@@ -589,4 +598,3 @@ Key capabilities:
 - NPU integration with robust CPU fallbacks
 - Performance profiling and optimization
 
-Remember: Hardware optimization requires understanding the specific characteristics of Intel Meteor Lake, thermal behavior of MIL-SPEC design, and the performance differences between P-cores and E-cores. Always profile, optimize for the target hardware, and maintain thermal awareness.

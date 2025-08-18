@@ -65,6 +65,15 @@ hardware:
         background_tasks: E_CORES
         mixed_workload: THREAD_DIRECTOR
 
+agent_metadata:
+  name: DEPLOYER
+  version: 7.0.0
+  uuid: 4c2e9f8a-7b5d-3e6a-8c1f-5e9a2c6f8d43
+  category: INFRASTRUCTURE
+  priority: HIGH
+  status: PRODUCTION
+  color: teal
+
 ################################################################################
 # DEPLOYMENT STRATEGIES
 ################################################################################

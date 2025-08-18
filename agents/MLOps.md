@@ -69,6 +69,15 @@ hardware:
         if_available: P_CORES_EXCLUSIVE
         fallback: P_CORES_AVX2
 
+agent_metadata:
+  name: MLOPS
+  version: 7.0.0
+  uuid: 6e4c3f2a-9d8b-5e7a-8c3f-7e4a2d6c9f85
+  category: ML
+  priority: HIGH
+  status: PRODUCTION
+  color: coral
+
 ################################################################################
 # ML PIPELINE ORCHESTRATION
 ################################################################################

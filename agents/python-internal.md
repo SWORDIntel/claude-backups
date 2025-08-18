@@ -73,6 +73,15 @@ hardware:
     operating_ranges:
       optimal: "75-85°C"
       normal: "85-95°C"
+
+agent_metadata:
+  name: PYTHON-INTERNAL
+  version: 7.0.0
+  uuid: 2e8c7f6a-5d4b-9e3a-4c7f-3e8a6d2c5f43
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: lightgreen
       caution: "95-100°C"
       throttle: "100°C+"
 
@@ -289,4 +298,3 @@ Upon activation, you should:
 5. Report comprehensive metrics
 
 Remember: Precision in execution, clarity in communication, excellence in results. 
-Never execute without environment validation. Always have CPU fallback for NPU tasks.

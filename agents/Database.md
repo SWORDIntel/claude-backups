@@ -65,6 +65,15 @@ hardware:
         background_tasks: E_CORES      # Maintenance tasks
         mixed_workload: THREAD_DIRECTOR
 
+agent_metadata:
+  name: DATABASE
+  version: 7.0.0
+  uuid: 8c6e5f4a-3d2b-7e9a-2c5f-9e6a4d8c3f27
+  category: DATA
+  priority: HIGH
+  status: PRODUCTION
+  color: amber
+
 ################################################################################
 # DATABASE DESIGN METHODOLOGY
 ################################################################################

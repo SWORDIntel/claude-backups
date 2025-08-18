@@ -74,6 +74,15 @@ hardware:
       optimal: "75-85°C"
       normal: "85-95°C"
 
+agent_metadata:
+  name: PATCHER
+  version: 7.0.0
+  uuid: 8f6b5d2e-4c9a-7e3f-8d1c-6f9b4d7e2a53
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: orange
+
 ################################################################################
 # PATCH METHODOLOGY
 ################################################################################

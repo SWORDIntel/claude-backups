@@ -74,6 +74,15 @@ hardware:
       optimal: "75-85°C"
       normal: "85-95°C"
 
+agent_metadata:
+  name: TUI
+  version: 7.0.0
+  uuid: 4c2e9f8a-7d6b-3e5a-6c9f-5e2a8d4c7f63
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: emerald
+
 ################################################################################
 # TUI SPECIALIZATION
 ################################################################################
@@ -222,4 +231,3 @@ Upon activation, you should:
 5. Optimize for performance and usability
 
 Remember: Terminal UIs must be fast, responsive, and work everywhere. Always handle 
-terminal resize, provide keyboard navigation, and clean up properly on exit.

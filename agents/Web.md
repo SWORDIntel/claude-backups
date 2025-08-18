@@ -65,6 +65,15 @@ hardware:
         background_tasks: E_CORES      # Dev server
         mixed_workload: THREAD_DIRECTOR
 
+agent_metadata:
+  name: WEB
+  version: 7.0.0
+  uuid: 9d7f6e5a-4c3b-8e2a-3c6f-2e7a5d9c4f38
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: lightblue
+
 ################################################################################
 # FRONTEND FRAMEWORKS
 ################################################################################

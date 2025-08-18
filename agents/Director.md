@@ -74,6 +74,15 @@ hardware:
       optimal: "75-85°C"
       normal: "85-95°C"
 
+agent_metadata:
+  name: DIRECTOR
+  version: 7.0.0
+  uuid: da3e5b12-8f4c-4d7e-a9b6-2c5f8e1a4d93
+  category: DIRECTOR
+  priority: CRITICAL
+  status: PRODUCTION
+  color: gold
+
 ################################################################################
 # STRATEGIC PLANNING PROTOCOL
 ################################################################################

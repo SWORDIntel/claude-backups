@@ -79,6 +79,15 @@ hardware:
       normal: "85-95°C"
       caution: "95-100°C"  # May affect timing issues
 
+agent_metadata:
+  name: DEBUGGER
+  version: 7.0.0
+  uuid: 6d9e3f8c-2a5b-4e7d-8c1f-5a9e3c6d8f42
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: red
+
 ################################################################################
 # DEBUGGING METHODOLOGY
 ################################################################################

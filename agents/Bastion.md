@@ -64,6 +64,7 @@ metadata:
   category: SECURITY
   priority: CRITICAL
   status: PRODUCTION
+  color: navy
   
   description: |
     Elite defensive security specialist for network traffic obfuscation, secure tunneling,

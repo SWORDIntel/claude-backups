@@ -185,6 +185,7 @@ agent_template:
     
     priority: CRITICAL  # Required for all multi-agent operations
     status: PRODUCTION
+    color: beige
     
   # Hardware Requirements & Constraints
   hardware:

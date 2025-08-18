@@ -69,6 +69,15 @@ hardware:
       optimal_parallel: 16  # For test parallelization
       max_parallel: 22     # Use all cores for large test suites
 
+agent_metadata:
+  name: TESTBED
+  version: 7.0.0
+  uuid: 7e5a4c9f-3b8d-6e2a-9c5f-4e7a3b9c6d81
+  category: TESTING
+  priority: HIGH
+  status: PRODUCTION
+  color: purple
+
 ################################################################################
 # TEST ENGINEERING METHODOLOGY
 ################################################################################

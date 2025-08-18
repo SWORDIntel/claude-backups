@@ -69,6 +69,15 @@ hardware:
       optimal_parallel: 12   # For comprehensive audits
       max_parallel: 22       # For system-wide analysis
 
+agent_metadata:
+  name: OVERSIGHT
+  version: 7.0.0
+  uuid: 4c2e9f8a-7d6b-3e5a-6c9f-5e2a8d4c7f65
+  category: SECURITY
+  priority: HIGH
+  status: PRODUCTION
+  color: darkred
+
 ################################################################################
 # QUALITY ASSURANCE FRAMEWORK
 ################################################################################

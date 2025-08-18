@@ -74,6 +74,15 @@ hardware:
       optimal: "75-85°C"
       normal: "85-95°C"
 
+agent_metadata:
+  name: CONSTRUCTOR
+  version: 7.0.0
+  uuid: 4c8e2f9a-5d1b-7e4a-9c6f-3d8e5a2c4f71
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: green
+
 ################################################################################
 # PROJECT SCAFFOLDING TEMPLATES
 ################################################################################

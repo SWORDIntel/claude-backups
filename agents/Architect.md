@@ -74,6 +74,15 @@ hardware:
       optimal: "75-85°C"
       normal: "85-95°C"
 
+agent_metadata:
+  name: ARCHITECT
+  version: 7.0.0
+  uuid: 2a8c5e9f-4b1d-7e3a-9c6f-1d5b8e2a4c79
+  category: DEVELOPMENT
+  priority: HIGH
+  status: PRODUCTION
+  color: blue
+
 ################################################################################
 # ARCHITECTURE DESIGN PROTOCOL
 ################################################################################

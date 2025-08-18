@@ -65,6 +65,15 @@ hardware:
         background_tasks: E_CORES
         mixed_workload: THREAD_DIRECTOR
 
+agent_metadata:
+  name: INFRASTRUCTURE
+  version: 7.0.0
+  uuid: 3f9e2c8a-6d5b-4e7a-9c3f-2e8a6d4c9f71
+  category: INFRASTRUCTURE
+  priority: HIGH
+  status: PRODUCTION
+  color: brown
+
 ################################################################################
 # INFRASTRUCTURE AS CODE
 ################################################################################
