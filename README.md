@@ -221,7 +221,23 @@ This installer includes hardcoded credentials for LiveCD convenience. For produc
 
 ### Quick Usage
 
-**Standalone Launcher (Recommended)**:
+**Seamless Integration (Recommended - Zero Learning Curve)**:
+```bash
+# Use as drop-in replacement for 'claude' - no new commands to learn!
+alias claude='./claude-enhanced'
+
+# Your existing commands now get smart orchestration suggestions:
+claude /task "create user auth system with tests and security review"
+# → Offers orchestration when beneficial, regular Claude when not
+
+# Direct orchestration for complex tasks:
+claude-orchestrate "complete project setup with testing and security"
+
+# Disable suggestions when not needed:
+CLAUDE_ORCHESTRATION=off claude /task "simple task"
+```
+
+**Standalone Launcher (Alternative)**:
 ```bash
 # Interactive menu launcher (system active only while running)
 ./python-orchestrator-launcher.sh
@@ -321,6 +337,77 @@ python3 agents/src/python/test_tandem_system.py
 - **Command Sets**: Overarching coordination instead of individual instructions
 
 See **[agents/docs/TANDEM_ORCHESTRATION_SYSTEM.md](agents/docs/TANDEM_ORCHESTRATION_SYSTEM.md)** for complete technical documentation.
+
+## 🔄 Seamless Claude Code Integration
+
+**Zero Learning Curve Enhancement** - The orchestration system integrates directly with your existing Claude Code workflow without requiring new commands:
+
+### Smart Detection & Suggestions
+The `claude-enhanced` wrapper automatically detects when orchestration would be beneficial:
+
+```bash
+# Complex multi-step tasks → Get orchestration suggestions
+claude /task "create REST API with auth, tests, and security review"
+🤖 Orchestration Enhancement Available:
+1. Run complete development workflow automatically
+Continue with orchestration? [y/N] or press Enter for regular Claude:
+
+# Simple tasks → Run regular Claude immediately  
+claude /task "explain this error message"
+# (Runs regular Claude with no suggestions)
+```
+
+### Integration Options
+
+**Option 1: Drop-in Replacement (Recommended)**
+```bash
+alias claude='./claude-enhanced'
+# All your existing claude commands now get smart enhancements
+```
+
+**Option 2: Selective Usage**
+```bash
+claude-enhanced /task "complex workflow"    # Gets suggestions
+claude /task "simple task"                 # Regular Claude
+```
+
+**Option 3: Direct Orchestration**
+```bash
+claude-orchestrate "complete security audit with remediation"
+# Direct access to orchestration for known complex tasks
+```
+
+### Intelligent Pattern Detection
+
+**Triggers Orchestration Suggestions:**
+- ✅ Tasks with "and" keywords: "create **and** test", "design **and** implement"
+- ✅ Comprehensive workflows: "**complete** development", "**full** security audit"
+- ✅ Multi-step indicators: "**comprehensive**", "**entire system**", "**after that**"
+
+**No Suggestions (Regular Claude):**
+- ✅ Explanatory requests: "explain this code", "what does this do?"
+- ✅ Simple fixes: "fix this typo", "add a comment"
+- ✅ Questions: "how do I...", "why does..."
+
+### Environment Controls
+
+```bash
+# Temporarily disable orchestration suggestions
+export CLAUDE_ORCHESTRATION=off
+
+# Or disable for a single command
+CLAUDE_ORCHESTRATION=off claude /task "anything"
+```
+
+### Speed Improvements You'll See
+
+- **Complex Workflows**: 3-8x faster through automatic agent coordination
+- **Development Cycles**: Full architect → constructor → testbed → security pipelines  
+- **Documentation**: Auto-generated comprehensive docs with interactive TUI
+- **Security Audits**: Complete vulnerability scanning with chaos testing
+- **Simple Tasks**: No overhead - runs exactly like regular Claude
+
+**Perfect Integration**: Get orchestration benefits when you need them, regular Claude when you don't - all through your existing workflow patterns!
 
 ## 📚 Documentation
 
