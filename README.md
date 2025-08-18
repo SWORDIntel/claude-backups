@@ -38,7 +38,8 @@ All methods install Claude Code v1.0.77 with agents, statusline, and auto-permis
 - ✅ **Portable Mode** - Everything in one directory (~300MB)
 - ✅ **LiveCD Optimized** - Works on non-persistent systems  
 - ✅ **Auto Permission Bypass** - No prompts for LiveCD usage
-- ✅ **28 Production Agents** - Full v7.0 agent system with local detection
+- ✅ **32 Production Agents** - Full v7.0 agent system with local detection
+- ✅ **Python Tandem Orchestration** - Standalone launcher with 85.7% success rate
 - ✅ **God-tier Statusline** - For Neovim, Vim, Nano, and Shell
 - ✅ **Nano Default Editor** - User-friendly with syntax highlighting
 - ✅ **AVX-512 Cloaking Detection** - Detects when microcode disables AVX-512
@@ -219,6 +220,20 @@ This installer includes hardcoded credentials for LiveCD convenience. For produc
 - **Performance**: 85.7% test success rate - Production ready!
 
 ### Quick Usage
+
+**Standalone Launcher (Recommended)**:
+```bash
+# Interactive menu launcher (system active only while running)
+./python-orchestrator-launcher.sh
+
+# Direct commands
+./python-orchestrator-launcher.sh demo         # Quick demo
+./python-orchestrator-launcher.sh test         # Comprehensive tests
+./python-orchestrator-launcher.sh interactive  # Interactive CLI
+./python-orchestrator-launcher.sh status       # System status
+```
+
+**Direct Python Usage**:
 ```python
 from production_orchestrator import ProductionOrchestrator, StandardWorkflows
 
@@ -265,7 +280,22 @@ agents/src/python/
 - **Mock Execution**: Immediate functionality without C layer dependencies
 - **Real-Time Monitoring**: Health scores, task counters, execution metrics
 
-### System Status
+### System Status and Integration
+
+**Switch.sh Integration**: The Tandem Orchestration System is now integrated with the agent switch system:
+
+```bash
+# Switch between modes with Python orchestration always active
+cd agents
+CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh md      # .md mode + Python orchestration
+CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh binary  # Binary mode + Python orchestration (binary will fail due to microcode restrictions)
+
+# Interactive menu with Python testing option
+CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh menu
+# Then select option [4] to test Python Tandem Orchestration
+```
+
+**Python System Testing**:
 ```bash
 # Run comprehensive tests
 python3 agents/src/python/test_tandem_system.py --comprehensive
@@ -276,6 +306,12 @@ python3 agents/src/python/test_tandem_system.py --demo
 # Or both (default)
 python3 agents/src/python/test_tandem_system.py
 ```
+
+**Current System State**:
+- ✅ **Python Orchestration**: Fully functional (85.7% test success rate)
+- ✅ **.md Agent Mode**: 35 agents discovered, Python orchestration active
+- ⚠️ **Binary Mode**: Python orchestration works, but binary system fails due to microcode restrictions
+- 🔄 **Tandem Operation**: Python provides immediate functionality with upgrade path to C when hardware allows
 
 ### Integration Benefits
 - **Microcode Resilience**: Python-first approach bypasses hardware restrictions
