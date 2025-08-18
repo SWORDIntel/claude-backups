@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Status Line Bridge for Claude Agent System
+Status Line Bridge for Claude Agent System v7.0
 Integrates with statusline.lua for real-time status display
+Updated with environment-relative paths
 """
 
 import os
@@ -15,13 +16,20 @@ class StatusLineBridge:
     """Bridge between Python agent system and Lua statusline"""
     
     def __init__(self):
-        self.lua_script = Path("/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build/scripts/statusline.lua")
-        self.status_file = Path("/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/runtime/status.json")
+        # Use environment-relative paths
+        self.claude_root = Path(os.getenv("CLAUDE_AGENTS_ROOT", 
+                                        os.path.expanduser("~/Documents/Claude/agents")))
+        self.runtime_dir = self.claude_root / "runtime"
+        self.log_dir = self.claude_root / "logs"
+        self.status_file = self.runtime_dir / "status.json"
+        self.agent_socket = self.runtime_dir / "claude_agent_bridge.sock"
+        self.lua_script = self.claude_root / "statusline.lua"
         self.ensure_paths()
         
     def ensure_paths(self):
         """Ensure required paths exist"""
-        self.status_file.parent.mkdir(parents=True, exist_ok=True)
+        self.runtime_dir.mkdir(parents=True, exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         
     def update_status(self, status_data: Dict[str, Any]):
         """Update status file for Lua script to read"""
@@ -52,14 +60,13 @@ class StatusLineBridge:
     
     def check_socket(self) -> bool:
         """Check if socket exists"""
-        socket_path = Path("/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/runtime/claude_agent_bridge.sock")
-        return socket_path.exists() and socket_path.is_socket()
+        return self.agent_socket.exists() and self.agent_socket.is_socket()
     
     def count_agents(self) -> int:
         """Count available agent definitions"""
-        agents_dir = Path("/home/ubuntu/Documents/Claude/agents/01-AGENTS-DEFINITIONS/ACTIVE")
-        if agents_dir.exists():
-            return len(list(agents_dir.glob("*.md")))
+        # Count .md files in the main agents directory
+        if self.claude_root.exists():
+            return len(list(self.claude_root.glob("*.md")))
         return 0
     
     def get_status_line(self) -> str:
