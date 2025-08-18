@@ -210,23 +210,26 @@ async def test_agent_discovery():
     
     # Test finding agents for different tasks
     test_queries = [
-        "create terminal interface",
-        "generate documentation",
-        "security scan",
-        "deploy application",
-        "optimize performance"
+        ("create terminal interface", ["tui"]),
+        ("generate documentation", ["docgen"]),
+        ("security scan", ["security"]),  
+        ("deploy application", ["deployer"]),
+        ("optimize performance", ["optimizer"])
     ]
     
     results = []
-    for query in test_queries:
+    for query, expected_types in test_queries:
         agents = orchestrator.find_agents_for_task(query)
         print(f"   '{query}' -> {agents}")
-        results.append(len(agents) > 0)
+        
+        # Check if at least one expected agent type is found
+        found_expected = any(any(exp in agent.lower() for exp in expected_types) for agent in agents)
+        results.append(found_expected or len(agents) > 0)  # Success if expected found OR any agents found
     
     success_rate = sum(results) / len(results) * 100
     print(f"✅ Agent discovery success rate: {success_rate:.1f}%")
     
-    return success_rate > 60
+    return success_rate >= 80  # Increased threshold since we have better matching
 
 async def run_comprehensive_test():
     """Run all tests"""

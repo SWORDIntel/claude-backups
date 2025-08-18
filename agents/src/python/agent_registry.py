@@ -343,17 +343,72 @@ class AgentRegistry:
         return self.category_index.get(category, [])
     
     def find_agents_by_pattern(self, text: str) -> List[str]:
-        """Find agents that should auto-invoke based on text patterns"""
+        """Find agents that should auto-invoke based on text patterns and capabilities"""
         matching_agents = []
-        
         text_lower = text.lower()
+        
+        # First try specific capability-based matching for better accuracy
+        capability_matches = self._find_by_capability_keywords(text_lower)
+        if capability_matches:
+            matching_agents.extend(capability_matches)
+        
+        # Then check auto-invoke patterns for additional matches
+        pattern_matches = []
         for agent_name, agent in self.agents.items():
             for pattern in agent.auto_invoke_patterns:
                 if any(keyword in text_lower for keyword in pattern.lower().split('|')):
-                    matching_agents.append(agent_name)
+                    if agent_name not in matching_agents:  # Avoid duplicates
+                        pattern_matches.append(agent_name)
                     break
         
+        # If capability matching found specific agents, prioritize those
+        # Otherwise use pattern matches
+        if matching_agents:
+            # Add pattern matches only if they're complementary (not overly broad)
+            for agent in pattern_matches:
+                if agent in ['security', 'testbed', 'linter', 'optimizer', 'monitor'] and agent not in matching_agents:
+                    matching_agents.append(agent)
+        else:
+            matching_agents = pattern_matches
+        
         return matching_agents
+    
+    def _find_by_capability_keywords(self, text: str) -> List[str]:
+        """Find agents based on capability keywords"""
+        capability_keywords = {
+            "deploy": ["deployer", "infrastructure"],
+            "deployment": ["deployer", "infrastructure"], 
+            "optimize": ["optimizer"],
+            "performance": ["optimizer", "monitor"],
+            "security": ["security", "bastion"],
+            "test": ["testbed", "debugger"],
+            "document": ["docgen", "tui"],
+            "design": ["architect", "api-designer"],
+            "build": ["constructor", "architect"],
+            "monitor": ["monitor", "oversight"],
+            "database": ["database"],
+            "web": ["web"],
+            "mobile": ["mobile"],
+            "fix": ["patcher", "debugger"],
+            "debug": ["debugger"],
+            "lint": ["linter"],
+            "review": ["linter", "security", "oversight"]
+        }
+        
+        matching_agents = []
+        for keyword, agents in capability_keywords.items():
+            if keyword in text:
+                matching_agents.extend(agents)
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        result = []
+        for agent in matching_agents:
+            if agent not in seen and agent in self.agents:
+                seen.add(agent)
+                result.append(agent)
+        
+        return result
     
     def get_agent_info(self, agent_name: str) -> Optional[AgentMetadata]:
         """Get detailed information about an agent"""
