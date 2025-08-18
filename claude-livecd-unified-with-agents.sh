@@ -610,547 +610,435 @@ install_node_if_needed() {
 }
 
 install_claude_code() {
-    log "Installing Claude Code..."
+    log "Installing Claude Code with robust retry mechanisms..."
     
     # Create directories
     mkdir -p "$USER_BIN_DIR"
     
-    # Try npm installation first
-    if command -v npm &> /dev/null; then
-        log "Attempting npm installation..."
-        
-        mkdir -p "$LOCAL_NPM_PREFIX"
-        export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
-        export PATH="$LOCAL_NPM_PREFIX/bin:$PATH"
-        
-        # Try different package names
-        npm install -g @anthropic-ai/claude-code 2>/dev/null || \
-        npm install -g claude-code 2>/dev/null || \
-        npm install -g claude 2>/dev/null || true
-        
-        # Check if installed and create wrapper
-        if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
-            # Move original binary
-            mv "$LOCAL_NPM_PREFIX/bin/claude" "$LOCAL_NPM_PREFIX/bin/claude.original"
-            
-            # Create unified wrapper with permission bypass + orchestration
-            cat > "$LOCAL_NPM_PREFIX/bin/claude" << 'CLAUDE_UNIFIED_WRAPPER'
-#!/bin/bash
-# ============================================================================
-# CLAUDE UNIFIED WRAPPER - LiveCD Integration
-# 
-# Combines automatic permission bypass (for LiveCD) with intelligent
-# orchestration detection and routing through the Tandem Orchestrator
-# 
-# Version: 2.0 - Integrated LiveCD Installation
-# ============================================================================
-
-set -euo pipefail
-
-# Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$HOME/.local/share/claude/agents}"
-ORCHESTRATOR_PATH="$AGENTS_DIR/src/python/production_orchestrator.py"
-ORCHESTRATION_BRIDGE="$SCRIPT_DIR/claude-orchestration-bridge.py"
-
-# Colors
-readonly CYAN='\033[0;36m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly MAGENTA='\033[0;35m'
-readonly BOLD='\033[1m'
-readonly NC='\033[0m'
-
-# Permission bypass configuration (LiveCD default: enabled)
-PERMISSION_BYPASS_ENABLED=${CLAUDE_PERMISSION_BYPASS:-true}
-ORCHESTRATION_ENABLED=${CLAUDE_ORCHESTRATION:-true}
-
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
-log_info() {
-    echo -e "${GREEN}[UNIFIED]${NC} $1" >&2
+    # Method 1: Advanced NPM installation with retries
+    if attempt_npm_installation; then return 0; fi
+    
+    # Method 2: Pip installation with retries
+    if attempt_pip_installation; then return 0; fi
+    
+    # Method 3: Direct download methods
+    if attempt_direct_download; then return 0; fi
+    
+    # Method 4: GitHub releases download
+    if attempt_github_download; then return 0; fi
+    
+    # Method 5: Manual installation from source
+    if attempt_source_installation; then return 0; fi
+    
+    # If all methods fail, create minimal stub (should be rare)
+    log "All installation methods failed - creating minimal stub"
+    create_minimal_stub
 }
 
-log_orchestration() {
-    echo -e "${CYAN}[ORCHESTRATE]${NC} $1" >&2
-}
-
-log_permission() {
-    echo -e "${YELLOW}[PERMISSION]${NC} $1" >&2
-}
-
-# Find the actual Claude binary (not this wrapper)
-find_claude_binary() {
-    local claude_bin=""
+# Method 1: NPM with comprehensive retry logic
+attempt_npm_installation() {
+    if ! command -v npm &> /dev/null; then
+        log "NPM not available, skipping NPM installation"
+        return 1
+    fi
     
-    # Check for the original binary
-    for loc in \
-        "$HOME/.local/npm-global/bin/claude.original" \
-        "$HOME/.local/bin/claude.original" \
-        "/usr/local/bin/claude.original"
-    do
-        if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
-            claude_bin="$loc"
-            break
-        fi
-    done
+    log "Attempting NPM installation with retries..."
     
-    echo "$claude_bin"
-}
-
-# Check if orchestration should be suggested
-should_orchestrate() {
-    local task_text="$*"
+    mkdir -p "$LOCAL_NPM_PREFIX"
+    export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
+    export PATH="$LOCAL_NPM_PREFIX/bin:$PATH"
     
-    # Quick exit if orchestration is disabled
-    [ "$ORCHESTRATION_ENABLED" = "false" ] && return 1
-    
-    # Multi-agent workflow patterns
-    local patterns=(
-        "create.*and.*test"
-        "build.*deploy"
-        "design.*implement"
-        "review.*fix"
-        "document.*code"
-        "security.*audit"
-        "complete.*project"
-        "full.*development"
-        "comprehensive"
-        "entire.*system"
-        "multi.*agent"
-        "orchestrat"
-        "workflow"
-        "pipeline"
+    # Package names to try in order
+    local packages=(
+        "@anthropic-ai/claude-code"
+        "claude-code" 
+        "claude"
+        "@anthropic/claude-code"
+        "anthropic-claude"
     )
     
-    for pattern in "${patterns[@]}"; do
-        if echo "$task_text" | grep -qi "$pattern"; then
-            return 0
+    # Try each package with multiple retry attempts
+    for package in "${packages[@]}"; do
+        log "Trying package: $package"
+        
+        for attempt in {1..3}; do
+            log "  Attempt $attempt/3..."
+            
+            # Try with different npm configurations
+            if npm install -g "$package" --no-audit --no-fund --prefer-offline 2>/dev/null || \
+               npm install -g "$package" --no-audit --no-fund 2>/dev/null || \
+               npm install -g "$package" --force 2>/dev/null || \
+               npm install -g "$package" 2>/dev/null; then
+                
+                # Verify installation
+                if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
+                    log "  ✓ Successfully installed $package"
+                    create_unified_wrapper_npm "$LOCAL_NPM_PREFIX/bin/claude"
+                    success "Claude Code installed via npm ($package)"
+                    return 0
+                fi
+            fi
+            
+            # Clear npm cache and try again
+            npm cache clean --force 2>/dev/null || true
+            sleep 2
+        done
+    done
+    
+    # Try alternative npm registries
+    log "Trying alternative npm registries..."
+    for registry in "https://registry.npmjs.org/" "https://registry.yarnpkg.com/"; do
+        log "  Using registry: $registry"
+        if npm install -g @anthropic-ai/claude-code --registry="$registry" 2>/dev/null; then
+            if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
+                create_unified_wrapper_npm "$LOCAL_NPM_PREFIX/bin/claude"
+                success "Claude Code installed via npm (alternative registry)"
+                return 0
+            fi
         fi
     done
     
+    log "NPM installation failed after all attempts"
     return 1
 }
 
-# ============================================================================
-# ORCHESTRATION INTEGRATION
-# ============================================================================
-
-run_with_orchestration() {
-    local claude_bin="$1"
-    shift
-    local args=("$@")
+# Method 2: Pip with comprehensive retry logic  
+attempt_pip_installation() {
+    if ! command -v pip3 &> /dev/null && ! command -v pip &> /dev/null; then
+        log "Pip not available, skipping pip installation"
+        return 1
+    fi
     
-    log_orchestration "Detected multi-agent workflow opportunity"
+    log "Attempting pip installation with retries..."
     
-    # Check if orchestration bridge exists
-    if [ -f "$ORCHESTRATION_BRIDGE" ]; then
-        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${CYAN}║         ${BOLD}Tandem Orchestration System Available${NC}${CYAN}             ║${NC}"
-        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-        echo ""
-        echo -e "${GREEN}Detected task that could benefit from multi-agent coordination.${NC}"
-        echo ""
-        echo "Options:"
-        echo "  [1] Use Tandem Orchestrator (recommended for complex tasks)"
-        echo "  [2] Use regular Claude Code"
-        echo "  [3] Show orchestration analysis"
-        echo ""
-        echo -n "Choice [1-3, default=2]: "
+    # Pip commands to try
+    local pip_commands=("pip3" "pip")
+    
+    # Package names to try
+    local packages=(
+        "claude-code"
+        "anthropic"
+        "claude"
+        "anthropic-claude"
+        "claude-ai"
+    )
+    
+    for pip_cmd in "${pip_commands[@]}"; do
+        if ! command -v "$pip_cmd" &> /dev/null; then continue; fi
         
-        read -t 10 -n 1 choice || choice="2"
-        echo ""
+        log "Using $pip_cmd..."
         
-        case "$choice" in
-            1)
-                log_orchestration "Launching Tandem Orchestrator..."
-                export CLAUDE_BINARY="$claude_bin"
-                export CLAUDE_PERMISSION_BYPASS="$PERMISSION_BYPASS_ENABLED"
+        for package in "${packages[@]}"; do
+            log "  Trying package: $package"
+            
+            for attempt in {1..3}; do
+                log "    Attempt $attempt/3..."
                 
-                # Launch orchestrator bridge with task
-                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
-                exit $?
-                ;;
-            3)
-                # Show analysis then ask again
-                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
-                echo ""
-                echo -n "Continue with orchestrator? [y/N]: "
-                read -n 1 use_orch
-                echo ""
-                if [ "$use_orch" = "y" ] || [ "$use_orch" = "Y" ]; then
-                    python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
-                    exit $?
+                # Try different pip installation methods
+                if "$pip_cmd" install --user "$package" --no-cache-dir 2>/dev/null || \
+                   "$pip_cmd" install --user "$package" --force-reinstall 2>/dev/null || \
+                   "$pip_cmd" install --user "$package" --upgrade 2>/dev/null || \
+                   "$pip_cmd" install --user "$package" 2>/dev/null; then
+                    
+                    # Check common installation locations
+                    for location in "$HOME/.local/bin/claude" "/usr/local/bin/claude"; do
+                        if [ -f "$location" ]; then
+                            log "    ✓ Successfully installed $package via $pip_cmd"
+                            create_unified_wrapper_pip "$location"
+                            success "Claude Code installed via pip ($package)"
+                            return 0
+                        fi
+                    done
                 fi
-                ;;
-        esac
-    fi
-    
-    # Fall through to regular execution
-    return 1
-}
-
-# ============================================================================
-# MAIN EXECUTION
-# ============================================================================
-
-main() {
-    local claude_bin=$(find_claude_binary)
-    
-    # Check if Claude is installed
-    if [ -z "$claude_bin" ]; then
-        echo -e "${YELLOW}Claude Code not found!${NC}"
-        echo ""
-        echo "This is the unified wrapper but Claude Code is not installed."
-        echo "To install: npm install -g @anthropic-ai/claude-code"
-        exit 1
-    fi
-    
-    # Parse arguments
-    local args=()
-    local skip_permissions=true
-    local task_mode=false
-    
-    for arg in "$@"; do
-        case "$arg" in
-            --no-skip-permissions|--safe)
-                skip_permissions=false
-                ;;
-            --dangerously-skip-permissions)
-                # Already requesting skip, don't add it twice
-                skip_permissions=false
-                args+=("$arg")
-                ;;
-            /task|task)
-                task_mode=true
-                args+=("$arg")
-                ;;
-            --unified-help)
-                echo "Claude Unified Wrapper v2.0 (LiveCD Integration)"
-                echo "Automatic Permission Bypass + Tandem Orchestration"
-                echo ""
-                echo "Features:"
-                echo "  • Auto permission bypass (LiveCD mode)"
-                echo "  • Intelligent orchestration detection"
-                echo "  • Multi-agent workflow coordination"
-                echo ""
-                echo "Environment Variables:"
-                echo "  CLAUDE_PERMISSION_BYPASS=false  # Disable permission bypass"
-                echo "  CLAUDE_ORCHESTRATION=false      # Disable orchestration"
-                exit 0
-                ;;
-            --unified-status)
-                echo "Unified Wrapper Status:"
-                echo "  Claude Binary: $claude_bin"
-                echo "  Permission Bypass: ${PERMISSION_BYPASS_ENABLED}"
-                echo "  Orchestration: ${ORCHESTRATION_ENABLED}"
-                [ -f "$ORCHESTRATOR_PATH" ] && echo "  Orchestrator: Available" || echo "  Orchestrator: Not found"
-                exit 0
-                ;;
-            *)
-                args+=("$arg")
-                ;;
-        esac
+                
+                sleep 2
+            done
+        done
     done
     
-    # Check for orchestration opportunity
-    if [ "$task_mode" = true ] && [ "$ORCHESTRATION_ENABLED" != "false" ]; then
-        if should_orchestrate "${args[@]}"; then
-            if run_with_orchestration "$claude_bin" "${args[@]}"; then
-                exit 0
+    log "Pip installation failed after all attempts"
+    return 1
+}
+
+# Method 3: Direct download from various sources
+attempt_direct_download() {
+    log "Attempting direct download methods..."
+    
+    # Create work directory
+    local work_dir="$WORK_DIR/claude-download"
+    mkdir -p "$work_dir"
+    cd "$work_dir"
+    
+    # URLs to try for direct download
+    local download_urls=(
+        "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-1.0.77.tgz"
+        "https://files.pythonhosted.org/packages/source/c/claude-code/claude-code-1.0.77.tar.gz"
+        "https://github.com/anthropics/claude-code/releases/download/v1.0.77/claude-code-1.0.77.tar.gz"
+    )
+    
+    for url in "${download_urls[@]}"; do
+        log "  Trying download from: $url"
+        
+        local filename=$(basename "$url")
+        
+        # Try different download methods
+        if command -v curl &> /dev/null; then
+            if curl -L -o "$filename" "$url" 2>/dev/null; then
+                if attempt_manual_install "$filename"; then
+                    success "Claude Code installed via direct download (curl)"
+                    return 0
+                fi
+            fi
+        fi
+        
+        if command -v wget &> /dev/null; then
+            if wget -O "$filename" "$url" 2>/dev/null; then
+                if attempt_manual_install "$filename"; then
+                    success "Claude Code installed via direct download (wget)"
+                    return 0
+                fi
+            fi
+        fi
+    done
+    
+    cd - > /dev/null
+    log "Direct download failed"
+    return 1
+}
+
+# Method 4: GitHub releases download
+attempt_github_download() {
+    log "Attempting GitHub releases download..."
+    
+    if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
+        log "No download tools available"
+        return 1
+    fi
+    
+    local work_dir="$WORK_DIR/github-download" 
+    mkdir -p "$work_dir"
+    cd "$work_dir"
+    
+    # GitHub API to get latest release
+    local api_url="https://api.github.com/repos/anthropics/claude-code/releases/latest"
+    
+    if command -v curl &> /dev/null; then
+        local latest_info=$(curl -s "$api_url" 2>/dev/null)
+        if [ -n "$latest_info" ]; then
+            # Extract download URL from JSON (basic parsing)
+            local download_url=$(echo "$latest_info" | grep -o '"browser_download_url":[^,]*' | head -1 | cut -d'"' -f4)
+            if [ -n "$download_url" ]; then
+                log "  Found release: $download_url"
+                if curl -L -o "claude-latest.tar.gz" "$download_url" 2>/dev/null; then
+                    if attempt_manual_install "claude-latest.tar.gz"; then
+                        success "Claude Code installed via GitHub releases"
+                        return 0
+                    fi
+                fi
             fi
         fi
     fi
     
-    # Add permission bypass if enabled and not explicitly disabled
-    if [ "$PERMISSION_BYPASS_ENABLED" = "true" ] && [ "$skip_permissions" = true ]; then
-        log_permission "Auto-adding permission bypass (LiveCD mode)"
-        args=("--dangerously-skip-permissions" "${args[@]}")
-    fi
-    
-    # Execute Claude with final arguments
-    exec "$claude_bin" "${args[@]}"
-}
-
-# Run main execution
-main "$@"
-CLAUDE_UNIFIED_WRAPPER
-            chmod +x "$LOCAL_NPM_PREFIX/bin/claude"
-            CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
-            success "Claude Code installed via npm with unified orchestration system"
-            return 0
-        fi
-    fi
-    
-    # Try pip installation
-    if command -v pip3 &> /dev/null; then
-        log "Attempting pip installation..."
-        pip3 install --user claude-code 2>/dev/null || \
-        pip3 install --user anthropic 2>/dev/null || true
-        
-        # Check if installed and create wrapper
-        if [ -f "$HOME/.local/bin/claude" ]; then
-            # Move original binary
-            mv "$HOME/.local/bin/claude" "$HOME/.local/bin/claude.original"
-            
-            # Create unified wrapper with permission bypass + orchestration
-            cat > "$HOME/.local/bin/claude" << 'CLAUDE_UNIFIED_WRAPPER'
-#!/bin/bash
-# ============================================================================
-# CLAUDE UNIFIED WRAPPER - LiveCD Integration (PIP Installation)
-# 
-# Combines automatic permission bypass (for LiveCD) with intelligent
-# orchestration detection and routing through the Tandem Orchestrator
-# 
-# Version: 2.0 - Integrated LiveCD Installation
-# ============================================================================
-
-set -euo pipefail
-
-# Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$HOME/.local/share/claude/agents}"
-ORCHESTRATOR_PATH="$AGENTS_DIR/src/python/production_orchestrator.py"
-ORCHESTRATION_BRIDGE="$SCRIPT_DIR/claude-orchestration-bridge.py"
-
-# Colors
-readonly CYAN='\033[0;36m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly MAGENTA='\033[0;35m'
-readonly BOLD='\033[1m'
-readonly NC='\033[0m'
-
-# Permission bypass configuration (LiveCD default: enabled)
-PERMISSION_BYPASS_ENABLED=${CLAUDE_PERMISSION_BYPASS:-true}
-ORCHESTRATION_ENABLED=${CLAUDE_ORCHESTRATION:-true}
-
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
-log_info() {
-    echo -e "${GREEN}[UNIFIED]${NC} $1" >&2
-}
-
-log_orchestration() {
-    echo -e "${CYAN}[ORCHESTRATE]${NC} $1" >&2
-}
-
-log_permission() {
-    echo -e "${YELLOW}[PERMISSION]${NC} $1" >&2
-}
-
-# Find the actual Claude binary (not this wrapper)
-find_claude_binary() {
-    local claude_bin=""
-    
-    # Check for the original binary
-    for loc in \
-        "$HOME/.local/bin/claude.original" \
-        "$HOME/.local/npm-global/bin/claude.original" \
-        "/usr/local/bin/claude.original"
-    do
-        if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
-            claude_bin="$loc"
-            break
-        fi
-    done
-    
-    echo "$claude_bin"
-}
-
-# Check if orchestration should be suggested
-should_orchestrate() {
-    local task_text="$*"
-    
-    # Quick exit if orchestration is disabled
-    [ "$ORCHESTRATION_ENABLED" = "false" ] && return 1
-    
-    # Multi-agent workflow patterns
-    local patterns=(
-        "create.*and.*test"
-        "build.*deploy"
-        "design.*implement"
-        "review.*fix"
-        "document.*code"
-        "security.*audit"
-        "complete.*project"
-        "full.*development"
-        "comprehensive"
-        "entire.*system"
-        "multi.*agent"
-        "orchestrat"
-        "workflow"
-        "pipeline"
-    )
-    
-    for pattern in "${patterns[@]}"; do
-        if echo "$task_text" | grep -qi "$pattern"; then
-            return 0
-        fi
-    done
-    
+    cd - > /dev/null
+    log "GitHub download failed"
     return 1
 }
 
-# ============================================================================
-# ORCHESTRATION INTEGRATION
-# ============================================================================
-
-run_with_orchestration() {
-    local claude_bin="$1"
-    shift
-    local args=("$@")
+# Method 5: Source installation
+attempt_source_installation() {
+    log "Attempting source installation..."
     
-    log_orchestration "Detected multi-agent workflow opportunity"
+    if ! command -v git &> /dev/null; then
+        log "Git not available for source installation"
+        return 1
+    fi
     
-    # Check if orchestration bridge exists
-    if [ -f "$ORCHESTRATION_BRIDGE" ]; then
-        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${CYAN}║         ${BOLD}Tandem Orchestration System Available${NC}${CYAN}             ║${NC}"
-        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-        echo ""
-        echo -e "${GREEN}Detected task that could benefit from multi-agent coordination.${NC}"
-        echo ""
-        echo "Options:"
-        echo "  [1] Use Tandem Orchestrator (recommended for complex tasks)"
-        echo "  [2] Use regular Claude Code"
-        echo "  [3] Show orchestration analysis"
-        echo ""
-        echo -n "Choice [1-3, default=2]: "
+    local work_dir="$WORK_DIR/source-install"
+    mkdir -p "$work_dir"
+    cd "$work_dir"
+    
+    # Try cloning Claude Code repository
+    if git clone https://github.com/anthropics/claude-code.git 2>/dev/null; then
+        cd claude-code
         
-        read -t 10 -n 1 choice || choice="2"
-        echo ""
+        # Try different build methods
+        if [ -f "package.json" ] && command -v npm &> /dev/null; then
+            log "  Building from source with npm..."
+            if npm install 2>/dev/null && npm run build 2>/dev/null; then
+                # Look for built binary
+                for binary_path in "dist/claude" "build/claude" "bin/claude" "claude"; do
+                    if [ -f "$binary_path" ] && [ -x "$binary_path" ]; then
+                        cp "$binary_path" "$USER_BIN_DIR/claude.original"
+                        chmod +x "$USER_BIN_DIR/claude.original"
+                        create_unified_wrapper_manual "$USER_BIN_DIR/claude.original"
+                        success "Claude Code built from source"
+                        return 0
+                    fi
+                done
+            fi
+        fi
         
-        case "$choice" in
-            1)
-                log_orchestration "Launching Tandem Orchestrator..."
-                export CLAUDE_BINARY="$claude_bin"
-                export CLAUDE_PERMISSION_BYPASS="$PERMISSION_BYPASS_ENABLED"
-                
-                # Launch orchestrator bridge with task
-                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
-                exit $?
-                ;;
-            3)
-                # Show analysis then ask again
-                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
-                echo ""
-                echo -n "Continue with orchestrator? [y/N]: "
-                read -n 1 use_orch
-                echo ""
-                if [ "$use_orch" = "y" ] || [ "$use_orch" = "Y" ]; then
-                    python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
-                    exit $?
+        if [ -f "setup.py" ] && command -v python3 &> /dev/null; then
+            log "  Building from source with Python..."
+            if python3 setup.py install --user 2>/dev/null; then
+                if [ -f "$HOME/.local/bin/claude" ]; then
+                    create_unified_wrapper_pip "$HOME/.local/bin/claude"
+                    success "Claude Code built from Python source"
+                    return 0
                 fi
-                ;;
-        esac
-    fi
-    
-    # Fall through to regular execution
-    return 1
-}
-
-# ============================================================================
-# MAIN EXECUTION
-# ============================================================================
-
-main() {
-    local claude_bin=$(find_claude_binary)
-    
-    # Check if Claude is installed
-    if [ -z "$claude_bin" ]; then
-        echo -e "${YELLOW}Claude Code not found!${NC}"
-        echo ""
-        echo "This is the unified wrapper but Claude Code is not installed."
-        echo "To install: pip3 install --user claude-code"
-        exit 1
-    fi
-    
-    # Parse arguments
-    local args=()
-    local skip_permissions=true
-    local task_mode=false
-    
-    for arg in "$@"; do
-        case "$arg" in
-            --no-skip-permissions|--safe)
-                skip_permissions=false
-                ;;
-            --dangerously-skip-permissions)
-                # Already requesting skip, don't add it twice
-                skip_permissions=false
-                args+=("$arg")
-                ;;
-            /task|task)
-                task_mode=true
-                args+=("$arg")
-                ;;
-            --unified-help)
-                echo "Claude Unified Wrapper v2.0 (LiveCD Integration)"
-                echo "Automatic Permission Bypass + Tandem Orchestration"
-                echo ""
-                echo "Features:"
-                echo "  • Auto permission bypass (LiveCD mode)"
-                echo "  • Intelligent orchestration detection"
-                echo "  • Multi-agent workflow coordination"
-                echo ""
-                echo "Environment Variables:"
-                echo "  CLAUDE_PERMISSION_BYPASS=false  # Disable permission bypass"
-                echo "  CLAUDE_ORCHESTRATION=false      # Disable orchestration"
-                exit 0
-                ;;
-            --unified-status)
-                echo "Unified Wrapper Status:"
-                echo "  Claude Binary: $claude_bin"
-                echo "  Permission Bypass: ${PERMISSION_BYPASS_ENABLED}"
-                echo "  Orchestration: ${ORCHESTRATION_ENABLED}"
-                [ -f "$ORCHESTRATOR_PATH" ] && echo "  Orchestrator: Available" || echo "  Orchestrator: Not found"
-                exit 0
-                ;;
-            *)
-                args+=("$arg")
-                ;;
-        esac
-    done
-    
-    # Check for orchestration opportunity
-    if [ "$task_mode" = true ] && [ "$ORCHESTRATION_ENABLED" != "false" ]; then
-        if should_orchestrate "${args[@]}"; then
-            if run_with_orchestration "$claude_bin" "${args[@]}"; then
-                exit 0
             fi
         fi
     fi
     
-    # Add permission bypass if enabled and not explicitly disabled
-    if [ "$PERMISSION_BYPASS_ENABLED" = "true" ] && [ "$skip_permissions" = true ]; then
-        log_permission "Auto-adding permission bypass (LiveCD mode)"
-        args=("--dangerously-skip-permissions" "${args[@]}")
-    fi
-    
-    # Execute Claude with final arguments
-    exec "$claude_bin" "${args[@]}"
+    cd - > /dev/null
+    log "Source installation failed"
+    return 1
 }
 
-# Run main execution
-main "$@"
-CLAUDE_UNIFIED_WRAPPER
-            chmod +x "$HOME/.local/bin/claude"
-            CLAUDE_BINARY="$HOME/.local/bin/claude"
-            success "Claude Code installed via pip with unified orchestration system"
-            return 0
+# Helper to attempt manual installation from downloaded file
+attempt_manual_install() {
+    local filename="$1"
+    
+    if [ ! -f "$filename" ]; then
+        return 1
+    fi
+    
+    # Extract and install based on file type
+    if [[ "$filename" == *.tgz ]] || [[ "$filename" == *.tar.gz ]]; then
+        if tar -xzf "$filename" 2>/dev/null; then
+            # Look for Claude binary in extracted files
+            local binary=$(find . -name "claude" -type f -executable 2>/dev/null | head -1)
+            if [ -n "$binary" ]; then
+                cp "$binary" "$USER_BIN_DIR/claude.original"
+                chmod +x "$USER_BIN_DIR/claude.original"
+                create_unified_wrapper_manual "$USER_BIN_DIR/claude.original"
+                return 0
+            fi
+            
+            # Look for package.json and try npm install
+            if [ -f "package/package.json" ]; then
+                cd package
+                if command -v npm &> /dev/null && npm install 2>/dev/null; then
+                    local built_binary=$(find . -name "claude" -type f -executable 2>/dev/null | head -1)
+                    if [ -n "$built_binary" ]; then
+                        cp "$built_binary" "$USER_BIN_DIR/claude.original"
+                        chmod +x "$USER_BIN_DIR/claude.original"
+                        create_unified_wrapper_manual "$USER_BIN_DIR/claude.original"
+                        return 0
+                    fi
+                fi
+                cd ..
+            fi
         fi
     fi
     
-    # Create functional stub as fallback WITH PERMISSION BYPASS BY DEFAULT
-    log "Creating Claude Code launcher with default permission bypass..."
-    cat > "$USER_BIN_DIR/claude" << 'CLAUDE_STUB'
+    return 1
+}
+
+# Wrapper creation functions for different installation methods
+create_unified_wrapper_npm() {
+    local claude_path="$1"
+    if [ ! -f "$claude_path" ]; then
+        log "Claude binary not found at $claude_path"
+        return 1
+    fi
+    
+    # Move original binary
+    mv "$claude_path" "${claude_path}.original"
+    
+    # Copy the unified wrapper content
+    if [ -f "$SCRIPT_DIR/claude-unified" ]; then
+        cp "$SCRIPT_DIR/claude-unified" "$claude_path"
+        chmod +x "$claude_path"
+        log "Unified wrapper installed at $claude_path"
+        return 0
+    else
+        log "Warning: claude-unified template not found, creating basic wrapper"
+        create_basic_wrapper "$claude_path" "${claude_path}.original"
+        return 0
+    fi
+}
+
+create_unified_wrapper_pip() {
+    local claude_path="$1"
+    if [ ! -f "$claude_path" ]; then
+        log "Claude binary not found at $claude_path"
+        return 1
+    fi
+    
+    # Move original binary
+    mv "$claude_path" "${claude_path}.original"
+    
+    # Copy the unified wrapper content
+    if [ -f "$SCRIPT_DIR/claude-unified" ]; then
+        cp "$SCRIPT_DIR/claude-unified" "$claude_path"
+        chmod +x "$claude_path"
+        log "Unified wrapper installed at $claude_path"
+        return 0
+    else
+        log "Warning: claude-unified template not found, creating basic wrapper"
+        create_basic_wrapper "$claude_path" "${claude_path}.original"
+        return 0
+    fi
+}
+
+create_unified_wrapper_manual() {
+    local claude_path="$1"
+    if [ ! -f "$claude_path" ]; then
+        log "Claude binary not found at $claude_path"
+        return 1
+    fi
+    
+    # The binary is already named .original, create wrapper
+    local wrapper_path="${claude_path%.original}"
+    
+    # Copy the unified wrapper content
+    if [ -f "$SCRIPT_DIR/claude-unified" ]; then
+        cp "$SCRIPT_DIR/claude-unified" "$wrapper_path"
+        chmod +x "$wrapper_path"
+        log "Unified wrapper installed at $wrapper_path"
+        return 0
+    else
+        log "Warning: claude-unified template not found, creating basic wrapper"
+        create_basic_wrapper "$wrapper_path" "$claude_path"
+        return 0
+    fi
+}
+
+# Create basic wrapper when template is not available
+create_basic_wrapper() {
+    local wrapper_path="$1"
+    local original_path="$2"
+    
+    cat > "$wrapper_path" << 'BASIC_WRAPPER'
 #!/bin/bash
-# Claude Code Launcher with DEFAULT Permission Bypass
+# Basic Claude wrapper with permission bypass
+set -euo pipefail
+
+# Configuration
+ORIGINAL_CLAUDE="${ORIGINAL_CLAUDE_PATH}"
+PERMISSION_BYPASS_ENABLED=${CLAUDE_PERMISSION_BYPASS:-true}
+
+# Add permission bypass by default
+if [ "$PERMISSION_BYPASS_ENABLED" = "true" ] && [[ " $@ " != *" --no-skip-permissions "* ]] && [[ " $@ " != *" --safe "* ]]; then
+    exec "$ORIGINAL_CLAUDE" --dangerously-skip-permissions "$@"
+else
+    exec "$ORIGINAL_CLAUDE" "$@"
+fi
+BASIC_WRAPPER
+    
+    # Replace placeholder with actual path
+    sed -i "s|\${ORIGINAL_CLAUDE_PATH}|$original_path|g" "$wrapper_path"
+    chmod +x "$wrapper_path"
+    log "Basic wrapper created at $wrapper_path"
+}
+
+# Create minimal stub as absolute last resort
+create_minimal_stub() {
+    log "Creating minimal Claude stub as last resort..."
+    cat > "$USER_BIN_DIR/claude" << 'MINIMAL_STUB'
+#!/bin/bash
+# Minimal Claude stub with permission bypass
 
 # Set environment
 export CLAUDE_AGENTS_DIR="$HOME/.local/share/claude/agents"
@@ -1166,56 +1054,40 @@ for loc in "$HOME/.local/npm-global/bin/claude.original" "$HOME/.local/bin/claud
 done
 
 if [ -n "$CLAUDE_ACTUAL" ]; then
-    # ALWAYS add --dangerously-skip-permissions unless explicitly disabled
-    if [[ " $@ " == *" --no-skip-permissions "* ]]; then
-        # Remove our custom flag and run without permission skip
-        args="${@//--no-skip-permissions/}"
-        exec "$CLAUDE_ACTUAL" $args
-    else
-        # DEFAULT: Always add permission bypass
+    # Add permission bypass by default unless disabled
+    if [[ " $@ " != *" --no-skip-permissions "* ]] && [[ " $@ " != *" --safe "* ]]; then
         exec "$CLAUDE_ACTUAL" --dangerously-skip-permissions "$@"
+    else
+        exec "$CLAUDE_ACTUAL" "$@"
     fi
 else
-    echo "Claude Code v1.0 (LiveCD Stub with Auto Permission Bypass)"
+    echo "Claude Code Stub v1.0 (LiveCD compatible)"
     echo ""
-    echo "This launcher automatically includes --dangerously-skip-permissions"
-    echo "To disable: use --no-skip-permissions flag"
+    echo "This stub automatically includes --dangerously-skip-permissions for LiveCD compatibility"
+    echo "To install Claude Code: npm install -g @anthropic-ai/claude-code"
     echo ""
-    echo "To install the official Claude Code, run:"
-    echo "  npm install -g @anthropic-ai/claude-code"
-    echo ""
-    echo "Arguments received: $@"
     
-    # Basic command handling
     case "$1" in
         --version)
-            echo "1.0.0-livecd-stub"
+            echo "1.0.0-stub"
             ;;
         --help)
             echo "Usage: claude [options] [command]"
             echo "Options:"
-            echo "  --version                      Show version"
-            echo "  --help                         Show this help"
-            echo "  --no-skip-permissions          Disable automatic permission bypass"
-            echo ""
-            echo "NOTE: Permission bypass (--dangerously-skip-permissions) is"
-            echo "      applied BY DEFAULT for LiveCD compatibility"
+            echo "  --version                 Show version"
+            echo "  --help                    Show this help"
+            echo "  --no-skip-permissions     Disable permission bypass"
             ;;
         *)
-            echo ""
-            echo "Agents directory: $CLAUDE_AGENTS_DIR"
-            local agent_count=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
-            echo "Agents available: $agent_count"
-            echo ""
-            echo "Permission bypass: ENABLED (default for LiveCD)"
+            echo "Arguments: $@"
             ;;
     esac
 fi
-CLAUDE_STUB
+MINIMAL_STUB
     
     chmod +x "$USER_BIN_DIR/claude"
     CLAUDE_BINARY="$USER_BIN_DIR/claude"
-    success "Claude unified launcher created with integrated orchestration system"
+    warn "Minimal Claude stub created - install Claude Code for full functionality"
     return 0
 }
 
@@ -1509,3 +1381,8 @@ case "${1:-}" in
         run_installation
         ;;
 esac
+
+# Run main function if script is executed directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main_function_called=true
+fi
