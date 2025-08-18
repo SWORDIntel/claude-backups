@@ -257,6 +257,319 @@ NVIM_APPEND
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ORCHESTRATION BRIDGE DEPLOYMENT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+deploy_orchestration_bridge() {
+    log "Deploying orchestration bridge..."
+    
+    # Deploy to both common installation locations
+    local bridge_locations=(
+        "$HOME/.local/npm-global/bin/claude-orchestration-bridge.py"
+        "$HOME/.local/bin/claude-orchestration-bridge.py"
+        "$USER_BIN_DIR/claude-orchestration-bridge.py"
+    )
+    
+    # Create the orchestration bridge script
+    for location in "${bridge_locations[@]}"; do
+        # Ensure directory exists
+        mkdir -p "$(dirname "$location")"
+        
+        cat > "$location" << 'ORCHESTRATION_BRIDGE'
+#!/usr/bin/env python3
+"""
+Claude Code Orchestration Bridge - LiveCD Integration
+Seamlessly integrates Python Tandem Orchestration with Claude Code workflows
+while maintaining permission bypass for LiveCD environments
+"""
+
+import asyncio
+import sys
+import os
+import json
+import time
+import subprocess
+from pathlib import Path
+
+# Add the Python orchestration system to path
+SCRIPT_DIR = Path(__file__).parent
+AGENTS_DIR = os.environ.get('CLAUDE_AGENTS_DIR', Path.home() / '.local/share/claude/agents')
+PYTHON_DIR = AGENTS_DIR / 'src' / 'python'
+sys.path.insert(0, str(PYTHON_DIR))
+
+try:
+    from production_orchestrator import ProductionOrchestrator, StandardWorkflows, CommandSet, CommandStep, CommandType, ExecutionMode, Priority
+    from agent_registry import get_registry
+    ORCHESTRATOR_AVAILABLE = True
+except ImportError:
+    ORCHESTRATOR_AVAILABLE = False
+
+class ClaudeOrchestrationBridge:
+    """Bridge between Claude Code and the Tandem Orchestrator with LiveCD integration"""
+    
+    def __init__(self):
+        self.orchestrator = None
+        self.permission_bypass = os.environ.get('CLAUDE_PERMISSION_BYPASS', 'true').lower() == 'true'
+        self.claude_binary = self._find_claude_binary()
+        self.pattern_triggers = {
+            # Development workflow triggers
+            "create": ["architect", "constructor"],
+            "build": ["constructor", "testbed"],
+            "test": ["testbed", "debugger"],
+            "fix": ["debugger", "patcher"],
+            "deploy": ["deployer", "monitor"],
+            "document": ["docgen", "tui"],
+            "review": ["linter", "security"],
+            "optimize": ["optimizer", "monitor"],
+            
+            # Multi-agent workflow triggers
+            "full development": "dev_cycle",
+            "complete project": "dev_cycle", 
+            "security audit": "security_audit",
+            "documentation": "document_generation",
+            "code review": ["linter", "security", "testbed"],
+            
+            # Agent coordination patterns
+            "design and implement": ["architect", "constructor"],
+            "test and fix": ["testbed", "debugger", "patcher"],
+            "secure and deploy": ["security", "deployer"],
+            "document and review": ["docgen", "linter"]
+        }
+    
+    def _find_claude_binary(self):
+        """Find the actual Claude binary (not wrapper)"""
+        search_paths = [
+            os.path.expanduser("~/.local/npm-global/bin/claude.original"),
+            os.path.expanduser("~/.local/bin/claude.original"),
+            "/usr/local/bin/claude.original",
+            os.path.expanduser("~/.local/npm-global/bin/claude"),
+            os.path.expanduser("~/.local/bin/claude"),
+        ]
+        
+        for path in search_paths:
+            if os.path.isfile(path) and os.access(path, os.X_OK):
+                return path
+        
+        # Try which command
+        try:
+            result = subprocess.run(['which', 'claude'], capture_output=True, text=True)
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except:
+            pass
+        
+        return None
+    
+    async def initialize(self):
+        """Initialize the orchestration system"""
+        if not ORCHESTRATOR_AVAILABLE:
+            return False
+            
+        self.orchestrator = ProductionOrchestrator()
+        return await self.orchestrator.initialize()
+    
+    def detect_workflow_intent(self, user_input):
+        """Analyze user input to detect if orchestration would be beneficial"""
+        user_lower = user_input.lower()
+        
+        # Check for workflow keywords
+        detected_patterns = []
+        for trigger, agents in self.pattern_triggers.items():
+            if trigger in user_lower:
+                detected_patterns.append((trigger, agents))
+        
+        # Check for multi-agent indicators
+        multi_agent_indicators = [
+            "and then", "after that", "also", "plus", "in addition",
+            "complete", "full", "comprehensive", "entire", "whole"
+        ]
+        
+        has_multi_agent = any(indicator in user_lower for indicator in multi_agent_indicators)
+        
+        return detected_patterns, has_multi_agent
+    
+    async def suggest_orchestration(self, user_input, detected_patterns, has_multi_agent):
+        """Suggest orchestration enhancements based on detected patterns"""
+        if not detected_patterns and not has_multi_agent:
+            return None
+        
+        suggestions = []
+        
+        # Standard workflow suggestions
+        for pattern, agents in detected_patterns:
+            if isinstance(agents, str):  # Pre-built workflow
+                suggestions.append({
+                    "type": "workflow",
+                    "name": agents,
+                    "description": f"Run {pattern} workflow automatically",
+                    "command": f"orchestration:{agents}"
+                })
+            elif isinstance(agents, list):  # Multi-agent coordination
+                suggestions.append({
+                    "type": "coordination",
+                    "agents": agents,
+                    "description": f"Coordinate {', '.join(agents)} for {pattern}",
+                    "command": f"coordinate:{','.join(agents)}"
+                })
+        
+        # Multi-agent suggestion for complex tasks
+        if has_multi_agent and len(detected_patterns) > 1:
+            suggestions.append({
+                "type": "workflow",
+                "name": "dev_cycle",
+                "description": "Run complete development workflow",
+                "command": "orchestration:dev_cycle"
+            })
+        
+        return suggestions
+    
+    async def execute_orchestration_command(self, command):
+        """Execute orchestration command and return results"""
+        if not self.orchestrator:
+            return {"error": "Orchestrator not initialized"}
+        
+        try:
+            if command.startswith("orchestration:"):
+                workflow_name = command.split(":", 1)[1]
+                
+                if workflow_name == "dev_cycle":
+                    workflow = StandardWorkflows.create_development_workflow()
+                elif workflow_name == "security_audit":
+                    workflow = StandardWorkflows.create_security_audit_workflow()
+                elif workflow_name == "document_generation":
+                    workflow = StandardWorkflows.create_document_generation_workflow()
+                else:
+                    return {"error": f"Unknown workflow: {workflow_name}"}
+                
+                result = await self.orchestrator.execute_command_set(workflow)
+                return result
+            
+            elif command.startswith("coordinate:"):
+                agent_names = command.split(":", 1)[1].split(",")
+                
+                # Create a simple coordination workflow
+                steps = []
+                for i, agent in enumerate(agent_names):
+                    steps.append(CommandStep(
+                        id=f"step_{i}",
+                        agent=agent.strip(),
+                        action="coordinate",
+                        payload={"context": "User requested coordination"}
+                    ))
+                
+                workflow = CommandSet(
+                    name=f"Coordination: {', '.join(agent_names)}",
+                    type=CommandType.WORKFLOW,
+                    steps=steps
+                )
+                
+                result = await self.orchestrator.execute_command_set(workflow)
+                return result
+            
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def format_suggestion_output(self, suggestions):
+        """Format suggestions for display to user"""
+        if not suggestions:
+            return ""
+        
+        output = ["\n🤖 Orchestration Enhancement Available:"]
+        
+        for i, suggestion in enumerate(suggestions, 1):
+            output.append(f"\n{i}. {suggestion['description']}")
+            output.append(f"   Command: {suggestion['command']}")
+        
+        output.append(f"\nTo use: Select option above or continue with regular Claude")
+        output.append("To disable: export CLAUDE_ORCHESTRATION=off")
+        
+        return "\n".join(output)
+
+async def main():
+    """Main bridge function - LiveCD integrated"""
+    
+    # Check if orchestration is disabled
+    if os.environ.get("CLAUDE_ORCHESTRATION", "").lower() == "off":
+        sys.exit(0)
+    
+    # Get user input from command line or stdin
+    if len(sys.argv) > 1:
+        user_input = " ".join(sys.argv[1:])
+    else:
+        user_input = sys.stdin.read().strip() if not sys.stdin.isatty() else ""
+    
+    if not user_input:
+        print("╔════════════════════════════════════════════════════════════╗")
+        print("║    Claude Unified Orchestration Bridge (LiveCD)            ║")
+        print("║    Permission Bypass + Tandem Orchestration                ║")
+        print("╚════════════════════════════════════════════════════════════╝")
+        print()
+        print("Usage: claude-orchestrate '<your task description>'")
+        print("   or: echo 'your task' | claude-orchestrate")
+        print()
+        print("Current Configuration:")
+        print(f"  Permission Bypass: {'ENABLED' if os.environ.get('CLAUDE_PERMISSION_BYPASS', 'true').lower() == 'true' else 'DISABLED'}")
+        print(f"  Orchestration: ENABLED")
+        sys.exit(1)
+    
+    # Initialize bridge
+    bridge = ClaudeOrchestrationBridge()
+    
+    print("🔍 Analyzing task for orchestration opportunities...")
+    if bridge.permission_bypass:
+        print("🔓 Permission bypass: ENABLED (LiveCD mode)")
+    
+    if not await bridge.initialize():
+        print("❌ Could not initialize orchestration system - using mock mode")
+        # Continue with simplified orchestration
+    
+    # Detect patterns
+    detected_patterns, has_multi_agent = bridge.detect_workflow_intent(user_input)
+    
+    # Generate suggestions
+    suggestions = await bridge.suggest_orchestration(user_input, detected_patterns, has_multi_agent)
+    
+    if not suggestions:
+        print("✅ No orchestration enhancement needed - proceeding with standard Claude Code")
+        sys.exit(0)
+    
+    # Show suggestions
+    print(bridge.format_suggestion_output(suggestions))
+    
+    # If running interactively, ask user if they want to execute
+    if sys.stdin.isatty():
+        print(f"\nExecute suggestion 1? [y/N]: ", end="", flush=True)
+        response = input().strip().lower()
+        
+        if response in ['y', 'yes']:
+            print(f"\n🚀 Executing: {suggestions[0]['description']}")
+            if bridge.orchestrator:
+                result = await bridge.execute_orchestration_command(suggestions[0]['command'])
+                
+                print(f"\n📊 Results:")
+                print(f"Status: {result.get('status', 'unknown')}")
+                print(f"Steps completed: {len(result.get('results', {}))}")
+                
+                if result.get('status') == 'completed':
+                    print("✅ Orchestration completed successfully!")
+                else:
+                    print(f"⚠️  Orchestration finished with status: {result.get('status')}")
+            else:
+                print("⚠️  Running in mock mode - orchestration simulated")
+        else:
+            print("👍 Proceeding with standard Claude Code workflow")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+ORCHESTRATION_BRIDGE
+        
+        chmod +x "$location"
+    done
+    
+    success "Orchestration bridge deployed to multiple locations"
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CLAUDE CODE INSTALLATION WITH DEFAULT PERMISSION BYPASS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -320,15 +633,253 @@ install_claude_code() {
             # Move original binary
             mv "$LOCAL_NPM_PREFIX/bin/claude" "$LOCAL_NPM_PREFIX/bin/claude.original"
             
-            # Create wrapper that always adds --dangerously-skip-permissions
-            cat > "$LOCAL_NPM_PREFIX/bin/claude" << 'CLAUDE_WRAPPER'
+            # Create unified wrapper with permission bypass + orchestration
+            cat > "$LOCAL_NPM_PREFIX/bin/claude" << 'CLAUDE_UNIFIED_WRAPPER'
 #!/bin/bash
-# Claude wrapper with automatic permission bypass for LiveCD
-exec "$HOME/.local/npm-global/bin/claude.original" --dangerously-skip-permissions "$@"
-CLAUDE_WRAPPER
+# ============================================================================
+# CLAUDE UNIFIED WRAPPER - LiveCD Integration
+# 
+# Combines automatic permission bypass (for LiveCD) with intelligent
+# orchestration detection and routing through the Tandem Orchestrator
+# 
+# Version: 2.0 - Integrated LiveCD Installation
+# ============================================================================
+
+set -euo pipefail
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$HOME/.local/share/claude/agents}"
+ORCHESTRATOR_PATH="$AGENTS_DIR/src/python/production_orchestrator.py"
+ORCHESTRATION_BRIDGE="$SCRIPT_DIR/claude-orchestration-bridge.py"
+
+# Colors
+readonly CYAN='\033[0;36m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly MAGENTA='\033[0;35m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m'
+
+# Permission bypass configuration (LiveCD default: enabled)
+PERMISSION_BYPASS_ENABLED=${CLAUDE_PERMISSION_BYPASS:-true}
+ORCHESTRATION_ENABLED=${CLAUDE_ORCHESTRATION:-true}
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+log_info() {
+    echo -e "${GREEN}[UNIFIED]${NC} $1" >&2
+}
+
+log_orchestration() {
+    echo -e "${CYAN}[ORCHESTRATE]${NC} $1" >&2
+}
+
+log_permission() {
+    echo -e "${YELLOW}[PERMISSION]${NC} $1" >&2
+}
+
+# Find the actual Claude binary (not this wrapper)
+find_claude_binary() {
+    local claude_bin=""
+    
+    # Check for the original binary
+    for loc in \
+        "$HOME/.local/npm-global/bin/claude.original" \
+        "$HOME/.local/bin/claude.original" \
+        "/usr/local/bin/claude.original"
+    do
+        if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
+            claude_bin="$loc"
+            break
+        fi
+    done
+    
+    echo "$claude_bin"
+}
+
+# Check if orchestration should be suggested
+should_orchestrate() {
+    local task_text="$*"
+    
+    # Quick exit if orchestration is disabled
+    [ "$ORCHESTRATION_ENABLED" = "false" ] && return 1
+    
+    # Multi-agent workflow patterns
+    local patterns=(
+        "create.*and.*test"
+        "build.*deploy"
+        "design.*implement"
+        "review.*fix"
+        "document.*code"
+        "security.*audit"
+        "complete.*project"
+        "full.*development"
+        "comprehensive"
+        "entire.*system"
+        "multi.*agent"
+        "orchestrat"
+        "workflow"
+        "pipeline"
+    )
+    
+    for pattern in "${patterns[@]}"; do
+        if echo "$task_text" | grep -qi "$pattern"; then
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# ============================================================================
+# ORCHESTRATION INTEGRATION
+# ============================================================================
+
+run_with_orchestration() {
+    local claude_bin="$1"
+    shift
+    local args=("$@")
+    
+    log_orchestration "Detected multi-agent workflow opportunity"
+    
+    # Check if orchestration bridge exists
+    if [ -f "$ORCHESTRATION_BRIDGE" ]; then
+        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║         ${BOLD}Tandem Orchestration System Available${NC}${CYAN}             ║${NC}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo -e "${GREEN}Detected task that could benefit from multi-agent coordination.${NC}"
+        echo ""
+        echo "Options:"
+        echo "  [1] Use Tandem Orchestrator (recommended for complex tasks)"
+        echo "  [2] Use regular Claude Code"
+        echo "  [3] Show orchestration analysis"
+        echo ""
+        echo -n "Choice [1-3, default=2]: "
+        
+        read -t 10 -n 1 choice || choice="2"
+        echo ""
+        
+        case "$choice" in
+            1)
+                log_orchestration "Launching Tandem Orchestrator..."
+                export CLAUDE_BINARY="$claude_bin"
+                export CLAUDE_PERMISSION_BYPASS="$PERMISSION_BYPASS_ENABLED"
+                
+                # Launch orchestrator bridge with task
+                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
+                exit $?
+                ;;
+            3)
+                # Show analysis then ask again
+                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
+                echo ""
+                echo -n "Continue with orchestrator? [y/N]: "
+                read -n 1 use_orch
+                echo ""
+                if [ "$use_orch" = "y" ] || [ "$use_orch" = "Y" ]; then
+                    python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
+                    exit $?
+                fi
+                ;;
+        esac
+    fi
+    
+    # Fall through to regular execution
+    return 1
+}
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+
+main() {
+    local claude_bin=$(find_claude_binary)
+    
+    # Check if Claude is installed
+    if [ -z "$claude_bin" ]; then
+        echo -e "${YELLOW}Claude Code not found!${NC}"
+        echo ""
+        echo "This is the unified wrapper but Claude Code is not installed."
+        echo "To install: npm install -g @anthropic-ai/claude-code"
+        exit 1
+    fi
+    
+    # Parse arguments
+    local args=()
+    local skip_permissions=true
+    local task_mode=false
+    
+    for arg in "$@"; do
+        case "$arg" in
+            --no-skip-permissions|--safe)
+                skip_permissions=false
+                ;;
+            --dangerously-skip-permissions)
+                # Already requesting skip, don't add it twice
+                skip_permissions=false
+                args+=("$arg")
+                ;;
+            /task|task)
+                task_mode=true
+                args+=("$arg")
+                ;;
+            --unified-help)
+                echo "Claude Unified Wrapper v2.0 (LiveCD Integration)"
+                echo "Automatic Permission Bypass + Tandem Orchestration"
+                echo ""
+                echo "Features:"
+                echo "  • Auto permission bypass (LiveCD mode)"
+                echo "  • Intelligent orchestration detection"
+                echo "  • Multi-agent workflow coordination"
+                echo ""
+                echo "Environment Variables:"
+                echo "  CLAUDE_PERMISSION_BYPASS=false  # Disable permission bypass"
+                echo "  CLAUDE_ORCHESTRATION=false      # Disable orchestration"
+                exit 0
+                ;;
+            --unified-status)
+                echo "Unified Wrapper Status:"
+                echo "  Claude Binary: $claude_bin"
+                echo "  Permission Bypass: ${PERMISSION_BYPASS_ENABLED}"
+                echo "  Orchestration: ${ORCHESTRATION_ENABLED}"
+                [ -f "$ORCHESTRATOR_PATH" ] && echo "  Orchestrator: Available" || echo "  Orchestrator: Not found"
+                exit 0
+                ;;
+            *)
+                args+=("$arg")
+                ;;
+        esac
+    done
+    
+    # Check for orchestration opportunity
+    if [ "$task_mode" = true ] && [ "$ORCHESTRATION_ENABLED" != "false" ]; then
+        if should_orchestrate "${args[@]}"; then
+            if run_with_orchestration "$claude_bin" "${args[@]}"; then
+                exit 0
+            fi
+        fi
+    fi
+    
+    # Add permission bypass if enabled and not explicitly disabled
+    if [ "$PERMISSION_BYPASS_ENABLED" = "true" ] && [ "$skip_permissions" = true ]; then
+        log_permission "Auto-adding permission bypass (LiveCD mode)"
+        args=("--dangerously-skip-permissions" "${args[@]}")
+    fi
+    
+    # Execute Claude with final arguments
+    exec "$claude_bin" "${args[@]}"
+}
+
+# Run main execution
+main "$@"
+CLAUDE_UNIFIED_WRAPPER
             chmod +x "$LOCAL_NPM_PREFIX/bin/claude"
             CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
-            success "Claude Code installed via npm with permission bypass"
+            success "Claude Code installed via npm with unified orchestration system"
             return 0
         fi
     fi
@@ -344,15 +895,253 @@ CLAUDE_WRAPPER
             # Move original binary
             mv "$HOME/.local/bin/claude" "$HOME/.local/bin/claude.original"
             
-            # Create wrapper
-            cat > "$HOME/.local/bin/claude" << 'CLAUDE_WRAPPER'
+            # Create unified wrapper with permission bypass + orchestration
+            cat > "$HOME/.local/bin/claude" << 'CLAUDE_UNIFIED_WRAPPER'
 #!/bin/bash
-# Claude wrapper with automatic permission bypass for LiveCD
-exec "$HOME/.local/bin/claude.original" --dangerously-skip-permissions "$@"
-CLAUDE_WRAPPER
+# ============================================================================
+# CLAUDE UNIFIED WRAPPER - LiveCD Integration (PIP Installation)
+# 
+# Combines automatic permission bypass (for LiveCD) with intelligent
+# orchestration detection and routing through the Tandem Orchestrator
+# 
+# Version: 2.0 - Integrated LiveCD Installation
+# ============================================================================
+
+set -euo pipefail
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$HOME/.local/share/claude/agents}"
+ORCHESTRATOR_PATH="$AGENTS_DIR/src/python/production_orchestrator.py"
+ORCHESTRATION_BRIDGE="$SCRIPT_DIR/claude-orchestration-bridge.py"
+
+# Colors
+readonly CYAN='\033[0;36m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly MAGENTA='\033[0;35m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m'
+
+# Permission bypass configuration (LiveCD default: enabled)
+PERMISSION_BYPASS_ENABLED=${CLAUDE_PERMISSION_BYPASS:-true}
+ORCHESTRATION_ENABLED=${CLAUDE_ORCHESTRATION:-true}
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+log_info() {
+    echo -e "${GREEN}[UNIFIED]${NC} $1" >&2
+}
+
+log_orchestration() {
+    echo -e "${CYAN}[ORCHESTRATE]${NC} $1" >&2
+}
+
+log_permission() {
+    echo -e "${YELLOW}[PERMISSION]${NC} $1" >&2
+}
+
+# Find the actual Claude binary (not this wrapper)
+find_claude_binary() {
+    local claude_bin=""
+    
+    # Check for the original binary
+    for loc in \
+        "$HOME/.local/bin/claude.original" \
+        "$HOME/.local/npm-global/bin/claude.original" \
+        "/usr/local/bin/claude.original"
+    do
+        if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
+            claude_bin="$loc"
+            break
+        fi
+    done
+    
+    echo "$claude_bin"
+}
+
+# Check if orchestration should be suggested
+should_orchestrate() {
+    local task_text="$*"
+    
+    # Quick exit if orchestration is disabled
+    [ "$ORCHESTRATION_ENABLED" = "false" ] && return 1
+    
+    # Multi-agent workflow patterns
+    local patterns=(
+        "create.*and.*test"
+        "build.*deploy"
+        "design.*implement"
+        "review.*fix"
+        "document.*code"
+        "security.*audit"
+        "complete.*project"
+        "full.*development"
+        "comprehensive"
+        "entire.*system"
+        "multi.*agent"
+        "orchestrat"
+        "workflow"
+        "pipeline"
+    )
+    
+    for pattern in "${patterns[@]}"; do
+        if echo "$task_text" | grep -qi "$pattern"; then
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# ============================================================================
+# ORCHESTRATION INTEGRATION
+# ============================================================================
+
+run_with_orchestration() {
+    local claude_bin="$1"
+    shift
+    local args=("$@")
+    
+    log_orchestration "Detected multi-agent workflow opportunity"
+    
+    # Check if orchestration bridge exists
+    if [ -f "$ORCHESTRATION_BRIDGE" ]; then
+        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║         ${BOLD}Tandem Orchestration System Available${NC}${CYAN}             ║${NC}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo -e "${GREEN}Detected task that could benefit from multi-agent coordination.${NC}"
+        echo ""
+        echo "Options:"
+        echo "  [1] Use Tandem Orchestrator (recommended for complex tasks)"
+        echo "  [2] Use regular Claude Code"
+        echo "  [3] Show orchestration analysis"
+        echo ""
+        echo -n "Choice [1-3, default=2]: "
+        
+        read -t 10 -n 1 choice || choice="2"
+        echo ""
+        
+        case "$choice" in
+            1)
+                log_orchestration "Launching Tandem Orchestrator..."
+                export CLAUDE_BINARY="$claude_bin"
+                export CLAUDE_PERMISSION_BYPASS="$PERMISSION_BYPASS_ENABLED"
+                
+                # Launch orchestrator bridge with task
+                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
+                exit $?
+                ;;
+            3)
+                # Show analysis then ask again
+                python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
+                echo ""
+                echo -n "Continue with orchestrator? [y/N]: "
+                read -n 1 use_orch
+                echo ""
+                if [ "$use_orch" = "y" ] || [ "$use_orch" = "Y" ]; then
+                    python3 "$ORCHESTRATION_BRIDGE" "${args[@]}"
+                    exit $?
+                fi
+                ;;
+        esac
+    fi
+    
+    # Fall through to regular execution
+    return 1
+}
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+
+main() {
+    local claude_bin=$(find_claude_binary)
+    
+    # Check if Claude is installed
+    if [ -z "$claude_bin" ]; then
+        echo -e "${YELLOW}Claude Code not found!${NC}"
+        echo ""
+        echo "This is the unified wrapper but Claude Code is not installed."
+        echo "To install: pip3 install --user claude-code"
+        exit 1
+    fi
+    
+    # Parse arguments
+    local args=()
+    local skip_permissions=true
+    local task_mode=false
+    
+    for arg in "$@"; do
+        case "$arg" in
+            --no-skip-permissions|--safe)
+                skip_permissions=false
+                ;;
+            --dangerously-skip-permissions)
+                # Already requesting skip, don't add it twice
+                skip_permissions=false
+                args+=("$arg")
+                ;;
+            /task|task)
+                task_mode=true
+                args+=("$arg")
+                ;;
+            --unified-help)
+                echo "Claude Unified Wrapper v2.0 (LiveCD Integration)"
+                echo "Automatic Permission Bypass + Tandem Orchestration"
+                echo ""
+                echo "Features:"
+                echo "  • Auto permission bypass (LiveCD mode)"
+                echo "  • Intelligent orchestration detection"
+                echo "  • Multi-agent workflow coordination"
+                echo ""
+                echo "Environment Variables:"
+                echo "  CLAUDE_PERMISSION_BYPASS=false  # Disable permission bypass"
+                echo "  CLAUDE_ORCHESTRATION=false      # Disable orchestration"
+                exit 0
+                ;;
+            --unified-status)
+                echo "Unified Wrapper Status:"
+                echo "  Claude Binary: $claude_bin"
+                echo "  Permission Bypass: ${PERMISSION_BYPASS_ENABLED}"
+                echo "  Orchestration: ${ORCHESTRATION_ENABLED}"
+                [ -f "$ORCHESTRATOR_PATH" ] && echo "  Orchestrator: Available" || echo "  Orchestrator: Not found"
+                exit 0
+                ;;
+            *)
+                args+=("$arg")
+                ;;
+        esac
+    done
+    
+    # Check for orchestration opportunity
+    if [ "$task_mode" = true ] && [ "$ORCHESTRATION_ENABLED" != "false" ]; then
+        if should_orchestrate "${args[@]}"; then
+            if run_with_orchestration "$claude_bin" "${args[@]}"; then
+                exit 0
+            fi
+        fi
+    fi
+    
+    # Add permission bypass if enabled and not explicitly disabled
+    if [ "$PERMISSION_BYPASS_ENABLED" = "true" ] && [ "$skip_permissions" = true ]; then
+        log_permission "Auto-adding permission bypass (LiveCD mode)"
+        args=("--dangerously-skip-permissions" "${args[@]}")
+    fi
+    
+    # Execute Claude with final arguments
+    exec "$claude_bin" "${args[@]}"
+}
+
+# Run main execution
+main "$@"
+CLAUDE_UNIFIED_WRAPPER
             chmod +x "$HOME/.local/bin/claude"
             CLAUDE_BINARY="$HOME/.local/bin/claude"
-            success "Claude Code installed via pip with permission bypass"
+            success "Claude Code installed via pip with unified orchestration system"
             return 0
         fi
     fi
@@ -426,7 +1215,7 @@ CLAUDE_STUB
     
     chmod +x "$USER_BIN_DIR/claude"
     CLAUDE_BINARY="$USER_BIN_DIR/claude"
-    success "Claude launcher created with DEFAULT permission bypass"
+    success "Claude unified launcher created with integrated orchestration system"
     return 0
 }
 
@@ -562,7 +1351,11 @@ run_installation() {
     install_agents_from_github
     echo
     
-    # Step 3: Install Claude Code with permission bypass wrapper
+    # Step 2.5: Deploy orchestration bridge
+    deploy_orchestration_bridge
+    echo
+    
+    # Step 3: Install Claude Code with unified wrapper
     install_claude_code
     echo
     
@@ -582,9 +1375,20 @@ run_installation() {
     echo "  1. Run: source ~/.bashrc"
     echo "  2. Launch Claude: claude"
     echo
-    printf "${YELLOW}${BOLD}IMPORTANT:${NC} Permission bypass is ${GREEN}ENABLED BY DEFAULT${NC}\n"
-    echo "  - Use 'claude' for LiveCD (with permission bypass)"
-    echo "  - Use 'claude-normal' or 'claude-safe' for regular use"
+    printf "${YELLOW}${BOLD}NEW:${NC} ${GREEN}Unified Orchestration System${NC} integrated!\n"
+    echo "  • ${GREEN}Permission bypass${NC}: Automatic for LiveCD compatibility"
+    echo "  • ${CYAN}Orchestration${NC}: Intelligent multi-agent workflow detection"
+    echo "  • ${MAGENTA}Zero learning curve${NC}: Works exactly like regular Claude"
+    echo
+    echo "${BOLD}Usage:${NC}"
+    echo "  claude /task \"create feature with tests\"  → Auto permission bypass + orchestration"
+    echo "  claude --unified-status                    → Show system status"
+    echo "  claude --unified-help                      → Show help"
+    echo "  claude-normal                              → Regular Claude without bypass"
+    echo
+    echo "${BOLD}Environment Controls:${NC}"
+    echo "  export CLAUDE_PERMISSION_BYPASS=false     → Disable permission bypass"
+    echo "  export CLAUDE_ORCHESTRATION=false         → Disable orchestration"
     echo
     
     # Ask if user wants to launch Claude now

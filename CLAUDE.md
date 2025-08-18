@@ -312,10 +312,15 @@ system:
 # Smart installer with CPU detection
 ```
 
-### Method 3: Direct Installation
+### Method 3: Direct Installation (NOW WITH UNIFIED ORCHESTRATION)
 ```bash
 ./claude-livecd-unified-with-agents.sh --auto-mode
-# Main installer with full control
+# Main installer with integrated permission bypass + orchestration
+
+# After installation, claude command provides:
+claude /task "create feature with tests"  # → Auto permission bypass + orchestration
+claude --unified-status                   # → Show system status  
+claude --unified-help                     # → Show unified features
 ```
 
 ## Important Commands
@@ -342,16 +347,19 @@ git push origin main
 # Sync every 3 agents when doing bulk updates
 ```
 
-### Agent Invocation
+### Agent Invocation (NOW UNIFIED IN CLAUDE COMMAND)
 ```bash
-# Agents are auto-invoked based on context
-# Manual invocation via Task tool:
-# Task(subagent_type="architect", prompt="Design system...")
+# Unified Claude command with integrated orchestration (DEFAULT after installation):
+claude /task "create authentication with tests and security review"
+# → Auto permission bypass + intelligent orchestration detection
 
-# OR via Python Tandem Orchestration System:
+# Manual orchestration system access:
 cd agents
 CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh md  # Activate .md mode + Python orchestration
 python3 src/python/production_orchestrator.py  # Direct Python orchestration
+
+# Traditional Task tool (for development):
+# Task(subagent_type="architect", prompt="Design system...")
 ```
 
 ### Unified Orchestration System (RECOMMENDED - NEW)
