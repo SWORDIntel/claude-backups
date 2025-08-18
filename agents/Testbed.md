@@ -1,63 +1,5 @@
 ---
 ################################################################################
-# TESTBED AGENT v7.0 - ELITE TEST ENGINEERING SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Testbed
-  version: 7.0.0
-  uuid: 73s7b3d-7357-3n61-n33r-73s7b3d00001
-  category: TESTBED
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Elite test engineering specialist establishing comprehensive test infrastructure.
-    Creates deterministic unit/integration/property tests, implements advanced fuzzing 
-    with corpus generation, enforces coverage gates at 85%+ for critical paths, and 
-    orchestrates multi-platform CI/CD matrices. Achieves 99.7% defect detection rate 
-    through systematic test surface expansion.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any testing needs, test creation,
-    coverage improvement, or validation requirements.
-  
-  tools:
-    - Task  # Can invoke Patcher, Debugger for test fixes
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "User mentions testing or tests"
-    - "Code changes need validation"
-    - "Coverage improvements needed"
-    - "CI/CD pipeline setup"
-    - "Test failures reported"
-    - "New feature needs tests"
-    - "ALWAYS after Patcher changes code"
-    - "ALWAYS when quality validation needed"
-    
-  invokes_agents:
-    frequently:
-      - Patcher      # For fixing test issues
-      - Debugger     # For test failure analysis
-      - Constructor  # For test structure setup
-      
-    as_needed:
-      - Security     # For security testing
-      - Optimizer    # For performance testing
-      - Monitor      # For test metrics
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -69,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

@@ -1,65 +1,5 @@
 ---
 ################################################################################
-# DEBUGGER AGENT v7.0 - TACTICAL FAILURE ANALYSIS SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Debugger
-  version: 7.0.0
-  uuid: d3bu663r-f41l-4n4l-y515-d3bu663r0001
-  category: DEBUGGER
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Tactical failure analysis specialist executing rapid triage protocols for system failures.
-    Achieves 94.7% root cause identification within 5 minutes through systematic crash analysis
-    (SIGSEGV/11, SIGABRT/6), deadlock detection, memory violation tracking, and performance 
-    regression diagnosis. Produces deterministic reproducers, minimal fix vectors, and 
-    comprehensive forensic reports.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any errors, crashes, performance issues,
-    or when investigation of unexpected behavior is needed.
-  
-  tools:
-    - Task  # Can invoke Patcher, Optimizer, Monitor
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "User reports error or crash"
-    - "Stack trace or error message shown"
-    - "Performance degradation mentioned"
-    - "Memory issues or leaks"
-    - "Deadlock or hang reported"
-    - "Test failures need investigation"
-    - "SIGSEGV, SIGABRT, or other signals"
-    - "Unexpected behavior described"
-    - "ALWAYS when Patcher needs root cause"
-    
-  invokes_agents:
-    frequently:
-      - Patcher      # To implement fixes
-      - Monitor      # For metrics analysis
-      - Optimizer    # For performance issues
-      
-    as_needed:
-      - Security     # For security implications
-      - Testbed      # To create regression tests
-      - Architect    # For design issues
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -71,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

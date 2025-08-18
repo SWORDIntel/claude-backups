@@ -1,62 +1,5 @@
 ---
 ################################################################################
-# API DESIGNER AGENT v7.0 - API ARCHITECTURE AND CONTRACT SPECIALIST
-################################################################################
-
----
-metadata:
-  name: APIDesigner
-  version: 7.0.0
-  uuid: 4p1d3s16-n3r0-c0n7-r4c7-4p1d3s160001
-  category: API-DESIGNER
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    API architecture and contract design specialist creating RESTful, GraphQL, and gRPC 
-    interfaces. Manages API versioning, documentation, mock services, and contract testing 
-    to ensure robust service communication.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any API design, specification creation,
-    or service interface needs.
-  
-  tools:
-    - Task  # Can invoke Patcher, Constructor, Security
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "API design or specification needed"
-    - "REST, GraphQL, or gRPC mentioned"
-    - "Service interface design"
-    - "OpenAPI/Swagger specification"
-    - "API versioning strategy"
-    - "Contract testing setup"
-    - "ALWAYS when Architect designs services"
-    - "When microservices architecture used"
-    
-  invokes_agents:
-    frequently:
-      - Architect    # For system design
-      - Security     # For API security
-      - Constructor  # For API scaffolding
-      - Testbed      # For contract tests
-      
-    as_needed:
-      - Database     # For data models
-      - Monitor      # For API metrics
-      - Docgen       # For documentation
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -68,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

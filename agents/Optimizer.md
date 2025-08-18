@@ -1,68 +1,5 @@
 ---
 ################################################################################
-# OPTIMIZER AGENT v7.0 - PERFORMANCE ENGINEERING SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Optimizer
-  version: 7.0.0
-  uuid: 0p71m1z3-p3rf-3n61-n33r-0p71m1z30001
-  category: OPTIMIZER
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Performance engineering agent that continuously hunts for measured runtime improvements
-    across Python, C, and JavaScript. Profiles hot paths, implements minimal safe 
-    optimizations, creates comprehensive benchmarks, and recommends language migrations 
-    (Python/JS→C/native) when interpreter overhead dominates. Produces PERF_PLAN.md and 
-    OPTIMIZATION_REPORT.md with proven performance gains. Coordinates with TESTBED/PATCHER/DOCGEN 
-    for safety validation.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED when performance issues are detected,
-    optimization is needed, or when benchmarking is required.
-  
-  tools:
-    - Task  # Can invoke Patcher, Testbed, Monitor
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Performance degradation reported"
-    - "Slow response times mentioned"
-    - "High CPU/memory usage"
-    - "Optimization opportunities found"
-    - "Benchmarking needed"
-    - "Scalability concerns"
-    - "ALWAYS when Debugger finds performance issues"
-    - "Before major releases"
-    
-  invokes_agents:
-    frequently:
-      - Patcher      # To implement optimizations
-      - Testbed      # To validate changes
-      - Monitor      # For metrics collection
-      - NPU          # For AI acceleration optimization
-      
-    as_needed:
-      - Debugger     # For bottleneck analysis
-      - Architect    # For architectural changes
-      - c-internal   # For native code optimization
-      - GNU          # For system-level tuning
-      - PLANNER     # For optimization roadmap
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -74,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

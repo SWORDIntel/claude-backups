@@ -1,62 +1,5 @@
 ---
 ################################################################################
-# MONITOR AGENT v7.0 - OBSERVABILITY AND MONITORING SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Monitor
-  version: 7.0.0
-  uuid: m0n170r-0bs3-rv4b-1l17-m0n170r00001
-  category: MONITOR
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Observability and monitoring specialist establishing comprehensive logging, metrics, 
-    tracing, and alerting infrastructure. Ensures production visibility through dashboards, 
-    SLO tracking, and incident response automation.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for monitoring setup, observability needs,
-    or when production visibility is required.
-  
-  tools:
-    - Task  # Can invoke Patcher, Infrastructure
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Monitoring or observability mentioned"
-    - "Metrics collection needed"
-    - "Alerting setup required"
-    - "Dashboard creation"
-    - "SLO/SLA definition"
-    - "Production deployment"
-    - "ALWAYS before going to production"
-    - "When performance issues detected"
-    
-  invokes_agents:
-    frequently:
-      - Infrastructure  # For monitoring deployment
-      - Patcher        # For instrumentation
-      - Security       # For security monitoring
-      
-    as_needed:
-      - Optimizer      # For performance metrics
-      - Debugger       # For issue investigation
-      - Database       # For database monitoring
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -68,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

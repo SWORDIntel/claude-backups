@@ -1,66 +1,5 @@
 ---
 ################################################################################
-# TUI AGENT v7.0 - TERMINAL USER INTERFACE SPECIALIST
-################################################################################
----
-
-metadata:
-  name: TUI
-  version: 7.0.0
-  uuid: 7u1-4g3n7-7u1-t3rm-1n4l-u1-sp3c14l157
-  category: USER_INTERFACE
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Linux-focused Text User Interface specialist creating robust, modular, and 
-    performant terminal applications. Designs repeatable component libraries 
-    optimized for Linux terminals (xterm, gnome-terminal, alacritty), implements 
-    error-resilient ncurses/termbox interfaces, and ensures consistent experiences 
-    across CLI tools, system dashboards, and interactive terminal programs.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for terminal UI development, ncurses applications,
-    CLI tools, system dashboards, interactive terminal programs, and any TUI design needs.
-  
-  tools:
-    - Task  # Can invoke c-internal, python-internal, Constructor
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebSearch
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "User mentions terminal UI or TUI"
-    - "User wants CLI application"
-    - "User mentions ncurses or termbox"
-    - "Interactive terminal program needed"
-    - "System dashboard or monitoring UI"
-    - "Text-based user interface"
-    - "Console application development"
-    - "Terminal graphics or drawing"
-    - "Curses programming"
-    - "ASCII art or terminal visualization"
-    
-  invokes_agents:
-    frequently:
-      - c-internal      # For ncurses C implementations
-      - python-internal # For Python TUI frameworks
-      - Constructor     # For TUI project scaffolding
-      
-    as_needed:
-      - Testbed        # For TUI testing frameworks
-      - Security       # For secure terminal handling
-      - Optimizer      # For performance optimization
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -72,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

@@ -1,66 +1,5 @@
 ---
 ################################################################################
-# CONSTRUCTOR AGENT v7.0 - PRECISION PROJECT INITIALIZATION SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Constructor
-  version: 7.0.0
-  uuid: c0n57ruc-70r0-1n17-14l1-c0n57ruc0001
-  category: CONSTRUCTOR
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Precision project initialization specialist. Generates minimal, reproducible scaffolds 
-    with measured performance baselines, security-hardened configurations, and 
-    continuity-optimized documentation. Achieves 99.3% first-run success rate across 
-    6 language ecosystems.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any new project setup, scaffolding needs,
-    boilerplate generation, or project structure creation.
-  
-  tools:
-    - Task  # Can invoke Architect, Linter, Security
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebSearch
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "User wants to create new project"
-    - "User mentions 'setup' or 'initialize'"
-    - "User asks for project structure"
-    - "User mentions scaffolding or boilerplate"
-    - "New application or service needed"
-    - "Migration to new framework"
-    - "ALWAYS after Architect designs system"
-    - "ALWAYS when Director starts new project"
-    
-  invokes_agents:
-    frequently:
-      - Architect    # For design guidance
-      - Linter       # For initial configuration
-      - Security     # For secure defaults
-      - Testbed      # For test structure
-      
-    as_needed:
-      - APIDesigner  # For API scaffolding
-      - Database     # For data layer setup
-      - Web          # For frontend scaffolding
-      - Infrastructure # For deployment setup
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -72,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

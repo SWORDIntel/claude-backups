@@ -1,67 +1,5 @@
 ---
 ################################################################################
-# INFRASTRUCTURE AGENT v7.0 - SYSTEM SETUP AND CONFIGURATION SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Infrastructure
-  version: 7.0.0
-  uuid: 1nfr4s7r-uc7u-r3c0-nf16-1nfr4s7r0001
-  category: INFRASTRUCTURE
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Local virtualization and containerization specialist managing Proxmox VMs/LXC containers, 
-    Docker stacks via Portainer, infrastructure automation through Ansible, and system 
-    monitoring with Cockpit. Handles resource allocation, network configuration, storage 
-    provisioning, and maintains 99.9% uptime through automated health checks and 
-    self-healing mechanisms.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for infrastructure setup, deployment configuration,
-    or system provisioning needs.
-  
-  tools:
-    - Task  # Can invoke Deployer, Monitor, Security
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Infrastructure or deployment mentioned"
-    - "Container or VM setup"
-    - "CI/CD pipeline configuration"
-    - "Kubernetes or Docker"
-    - "Cloud services setup"
-    - "System provisioning"
-    - "ALWAYS when Director plans deployment"
-    - "When scalability required"
-    
-  invokes_agents:
-    frequently:
-      - Monitor      # For infrastructure monitoring
-      - Security     # For infrastructure security
-      - Deployer     # For deployment automation
-      - GNU          # For system configuration
-      
-    as_needed:
-      - Database     # For database infrastructure
-      - Optimizer    # For performance tuning
-      - Bastion      # For network security
-      - NPU          # For AI workload infrastructure
-      - PLANNER     # For infrastructure roadmap
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -73,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

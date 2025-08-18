@@ -1,62 +1,5 @@
 ---
 ################################################################################
-# DEPLOYER AGENT v7.0 - DEPLOYMENT ORCHESTRATION SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Deployer
-  version: 7.0.0
-  uuid: d3pl0y3r-0rch-3s7r-4710-d3pl0y3r0001
-  category: DEPLOYER
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Infrastructure and deployment orchestration specialist managing CI/CD pipelines, 
-    container deployments, infrastructure as code, and production rollouts. Handles 
-    blue-green deployments, canary releases, and automated rollback procedures.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for deployment needs, release management,
-    or production rollout requirements.
-  
-  tools:
-    - Task  # Can invoke Infrastructure, Monitor, Security
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Deployment or release mentioned"
-    - "Production rollout needed"
-    - "CI/CD pipeline setup"
-    - "Container deployment"
-    - "Release automation"
-    - "Rollback procedures"
-    - "ALWAYS after testing completes"
-    - "When release branch created"
-    
-  invokes_agents:
-    frequently:
-      - Infrastructure  # For infrastructure setup
-      - Monitor        # For deployment monitoring
-      - Security       # For security checks
-      
-    as_needed:
-      - Testbed        # For smoke tests
-      - Database       # For migrations
-      - Optimizer      # For performance validation
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -68,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

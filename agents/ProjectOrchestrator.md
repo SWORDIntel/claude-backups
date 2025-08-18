@@ -1,73 +1,56 @@
 ---
 ################################################################################
-# PROJECT ORCHESTRATOR AGENT v7.0 - CORE COORDINATION NEXUS
+# COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
----
-metadata:
-  name: ProjectOrchestrator
-  version: 7.0.0
-  uuid: 527a974a-f0e6-4cb5-916a-12c085de7aa4
-  category: DIRECTOR
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Tactical cross-agent synthesis and coordination layer managing active development workflows.
-    Analyzes repository state in real-time, detects gaps across all operational agents,
-    generates optimal execution sequences, and produces actionable AGENT_PLAN.md with 
-    ready-to-execute prompts. Operates autonomously or under DIRECTOR for multi-phase projects.
+communication:
+  protocol: ultra_fast_binary_v3
+  capabilities:
+    throughput: 4.2M_msg_sec
+    latency: 200ns_p99
     
-    THIS AGENT SHOULD BE INVOKED PROACTIVELY for any multi-step task, code changes,
-    or when coordinating between multiple agents is needed.
-  
-  tools: 
-    - Task  # Can invoke ALL other agents
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Grep
-    - Glob
-    - LS
-    - Bash
-    - WebSearch
-    - ProjectKnowledgeSearch
-    - TodoWrite
+  integration:
+    auto_register: true
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
-  proactive_triggers:
-    - "User asks for any multi-step development task"
-    - "User mentions planning or organizing work"
-    - "Multiple files need to be created or modified"
-    - "User asks to implement a feature"
-    - "User asks to fix multiple bugs"
-    - "User asks for code review or analysis"
-    - "Any task requiring 2+ agents"
-    - "ALWAYS when Director is invoked"
+  ipc_methods:
+    CRITICAL: shared_memory_50ns
+    HIGH: io_uring_500ns
+    NORMAL: unix_sockets_2us
+    LOW: mmap_files_10us
+    BATCH: dma_regions
     
-  invokes_agents:
-    frequently:
-      - PLANNER      # For execution planning
-      - Architect     # For design decisions
-      - Constructor   # For scaffolding
-      - Patcher      # For code changes
-      - Testbed      # For testing
-      - Linter       # For code quality
-      - Debugger     # For issue analysis
+  message_patterns:
+    - publish_subscribe
+    - request_response
+    - work_queues
+    - broadcast
+    - multicast
     
-    as_needed:
-      - Optimizer    # For performance
-      - Security     # For security audit
-      - GNU          # For system-level tasks
-      - NPU          # For AI acceleration
-      - Docgen       # For documentation
-      - Deployer     # For deployment
-      - Monitor      # For observability
-      - Database     # For data layer
-      - APIDesigner  # For API work
-      - Web          # For frontend
-      - MLOps        # For ML pipelines
-      
+  security:
+    authentication: JWT_RS256_HS256
+    authorization: RBAC_4_levels
+    encryption: TLS_1.3
+    integrity: HMAC_SHA256
+    
+  monitoring:
+    prometheus_port: 8001
+    grafana_dashboard: true
+    health_check: "/health/ready"
+    metrics_endpoint: "/metrics"
+    
+  auto_integration_code: |
+    # Python integration
+    from auto_integrate import integrate_with_claude_agent_system
+    agent = integrate_with_claude_agent_system("projectorchestrator")
+    
+    # C integration
+    #include "ultra_fast_protocol.h"
+    ufp_context_t* ctx = ufp_create_context("projectorchestrator");
+
 hardware:
   cpu_requirements:
     meteor_lake_specific: true

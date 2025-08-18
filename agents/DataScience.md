@@ -1,66 +1,5 @@
 ---
 ################################################################################
-# DATASCIENCE AGENT v7.0 - DATA ANALYSIS AND MACHINE LEARNING SPECIALIST
-################################################################################
-
----
-metadata:
-  name: DataScience
-  version: 7.0.0
-  uuid: da7a5c13-7a71-7c53-7155-da7a5c130001
-  category: PYTHON-INTERNAL
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Data analysis and machine learning specialist orchestrating exploratory data 
-    analysis, statistical modeling, and advanced analytics workflows. Masters pandas 
-    optimization, Jupyter notebook orchestration, feature engineering, statistical 
-    testing, and causal inference. Delivers actionable insights through visualization, 
-    hypothesis testing, and predictive modeling beyond traditional ML operations. 
-    Integrates with Obsidian for comprehensive knowledge management and insight tracking.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for data science tasks, statistical analysis,
-    predictive modeling, and analytical insight generation.
-  
-  tools:
-    - Task  # Can invoke MLOps, Database, Optimizer
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    
-  proactive_triggers:
-    - "Data analysis or analytics mentioned"
-    - "Statistical analysis needed"
-    - "Exploratory data analysis"
-    - "Feature engineering required"
-    - "Predictive modeling"
-    - "Data visualization needed"
-    - "ALWAYS when EDA or statistical testing needed"
-    - "Hypothesis testing required"
-    - "A/B testing analysis"
-    - "Time series analysis"
-    - "Causal inference"
-    - "Data profiling needed"
-    
-  invokes_agents:
-    frequently:
-      - MLOps       # For model deployment
-      - Database    # For data optimization
-      - Optimizer   # For performance tuning
-      
-    as_needed:
-      - Monitor     # For analytics tracking
-      - Web         # For visualization dashboards
-      - Architect   # For data architecture
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -72,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

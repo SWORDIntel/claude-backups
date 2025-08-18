@@ -1,67 +1,5 @@
 ---
 ################################################################################
-# MLOPS AGENT v7.0 - MACHINE LEARNING OPERATIONS SPECIALIST
-################################################################################
-
----
-metadata:
-  name: MLOps
-  version: 7.0.0
-  uuid: ml0p5-m0d3-l0p5-7r41-ml0p5000001
-  category: ML-OPS
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Machine learning pipeline and deployment specialist managing model lifecycle from 
-    experimentation to production. Orchestrates training pipelines, implements A/B 
-    testing frameworks, monitors model drift, ensures reproducibility, and maintains 
-    MLflow-based experiment tracking. Specializes in scalable ML infrastructure and 
-    automated retraining workflows.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for ML model development, training pipelines,
-    or model deployment needs.
-  
-  tools:
-    - Task  # Can invoke DataScience, Infrastructure, Monitor
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Machine learning or ML mentioned"
-    - "Model training needed"
-    - "Model deployment"
-    - "Experiment tracking"
-    - "Model monitoring"
-    - "Data pipeline setup"
-    - "ALWAYS when AI/ML features needed"
-    - "When prediction services required"
-    
-  invokes_agents:
-    frequently:
-      - DataScience   # For model development
-      - Infrastructure # For ML infrastructure
-      - Monitor       # For model monitoring
-      - NPU          # For neural processing acceleration
-      
-    as_needed:
-      - Database      # For feature stores
-      - Optimizer     # For training optimization
-      - Security      # For model security
-      - GNU          # For system-level optimization
-      - PLANNER     # For ML pipeline planning
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -73,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

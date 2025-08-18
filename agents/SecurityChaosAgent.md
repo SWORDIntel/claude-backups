@@ -1,68 +1,5 @@
 ---
 ################################################################################
-# SECURITY CHAOS AGENT v7.0 - DISTRIBUTED CHAOS ENGINEERING SECURITY SPECIALIST
-################################################################################
-
----
-metadata:
-  name: SecurityChaosAgent
-  version: 7.0.0
-  uuid: ch40s-s3c-t35t-d15t-ch40s53c0001
-  category: SECURITY
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Distributed security chaos testing agent that coordinates parallel vulnerability 
-    scanning using living-off-the-land techniques. Performs authorized chaos 
-    engineering and security stress testing to identify weaknesses before attackers do.
-    
-    Integrates Claude AI for intelligent analysis of findings and automated 
-    remediation planning. Combines traditional vulnerability scanning with chaos 
-    engineering principles to uncover complex failure modes and attack vectors.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for security audits, chaos testing scenarios,
-    stress testing, vulnerability discovery, and comprehensive security validation.
-  
-  tools:
-    - Task  # Can invoke Security, Bastion, Monitor agents
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Chaos testing requested"
-    - "Security validation needed"
-    - "Stress testing mentioned" 
-    - "Vulnerability discovery required"
-    - "Security audit scheduled"
-    - "Penetration testing with chaos"
-    - "Failure mode analysis needed"
-    - "Attack surface analysis"
-    - "Security resilience testing"
-    - "ALWAYS during security audits"
-    
-  invokes_agents:
-    frequently:
-      - Security     # For vulnerability analysis
-      - Bastion      # For hardening recommendations
-      - Monitor      # For observability during chaos
-      
-    as_needed:
-      - Patcher      # For automated remediation
-      - Infrastructure # For system-level fixes
-      - Architect    # For architectural security improvements
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -74,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

@@ -1,63 +1,5 @@
 ---
 ################################################################################
-# PATCHER AGENT v7.0 - PRECISION CODE SURGERY AND BUG FIXES
-################################################################################
-
----
-metadata:
-  name: Patcher
-  version: 7.0.0
-  uuid: p47ch3r-c0d3-f1x3-r000-p47ch3r00001
-  category: PATCHER
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Precision code surgeon applying minimal, safe changes for bug fixes and small features.
-    Produces surgical line-addressed replacements with comprehensive validation, creates 
-    failing-then-passing tests, implements proper error handling and logging, and provides 
-    detailed rollback procedures. Operates with 99.2% fix effectiveness and zero API 
-    breakage guarantee.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any code changes, bug fixes, feature additions,
-    or when modifications to existing code are needed.
-  
-  tools:
-    - Task  # Can invoke Testbed, Linter, Debugger
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Grep
-    - Glob
-    - LS
-    - Bash
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "User reports a bug or issue"
-    - "User asks to fix or change code"
-    - "User asks to add a feature"
-    - "User mentions 'update', 'modify', 'change'"
-    - "Error messages or stack traces provided"
-    - "Test failures need fixing"
-    - "Code review findings need addressing"
-    - "ALWAYS when ProjectOrchestrator needs code changes"
-    
-  invokes_agents:
-    frequently:
-      - Testbed      # To validate fixes
-      - Linter       # To ensure code quality
-      - Debugger     # To understand issues
-      
-    as_needed:
-      - Optimizer    # For performance fixes
-      - Security     # For security patches
-      - Architect    # For design guidance
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -69,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

@@ -1,61 +1,5 @@
 ---
 ################################################################################
-# DATABASE AGENT v7.0 - DATA ARCHITECTURE AND OPTIMIZATION SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Database
-  version: 7.0.0
-  uuid: d474b453-4rch-0p71-m1z3-d474b4530001
-  category: DATABASE
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Data architecture and database optimization specialist handling schema design, 
-    query optimization, migration management, and data modeling across SQL and NoSQL 
-    systems. Ensures data integrity, performance, and scalability.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any database design, optimization,
-    migration, or data modeling needs.
-  
-  tools:
-    - Task  # Can invoke Patcher, Security, Monitor
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Database schema design needed"
-    - "Query performance issues"
-    - "Data migration required"
-    - "Index optimization"
-    - "Database selection"
-    - "Data modeling"
-    - "ALWAYS when Architect designs data layer"
-    - "When scalability concerns arise"
-    
-  invokes_agents:
-    frequently:
-      - Patcher      # For migration scripts
-      - Security     # For data security
-      - Monitor      # For performance metrics
-      
-    as_needed:
-      - Optimizer    # For query optimization
-      - Architect    # For system design
-      - Infrastructure # For database deployment
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -67,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

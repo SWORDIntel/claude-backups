@@ -1,67 +1,5 @@
 ---
 ################################################################################
-# OVERSIGHT AGENT v7.0 - QUALITY ASSURANCE & COMPLIANCE SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Oversight
-  version: 7.0.0
-  uuid: 0v3r51gh7-qu41-c0mp-14nc-0v3r51gh7001
-  category: SECURITY|INFRASTRUCTURE
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Comprehensive quality assurance and compliance specialist ensuring code quality,
-    security standards, and regulatory compliance across all development activities.
-    Performs systematic audits, manages approval workflows, maintains governance
-    documentation, and enforces standards throughout the entire development lifecycle.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED before releases, deployments, security 
-    changes, compliance assessments, and major architectural decisions.
-  
-  tools:
-    - Task  # Can invoke Security, Linter, Testbed, Docgen agents
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Code quality concerns"
-    - "Compliance requirements (SOC2, ISO27001, GDPR)"
-    - "Security policy violations"
-    - "Release candidate preparation"
-    - "Deployment readiness assessment"
-    - "ALWAYS before production releases"
-    - "Architecture review needed"
-    - "Audit trail requirements"
-    - "Quality gate failures"
-    - "Regulatory compliance checks"
-    
-  invokes_agents:
-    frequently:
-      - Security     # For security compliance
-      - Linter       # For code quality
-      - Testbed      # For quality gates
-      - Docgen       # For compliance documentation
-      
-    as_needed:
-      - Architect    # For architectural compliance
-      - Monitor      # For operational compliance
-      - Infrastructure # For infrastructure compliance
-      - Deployer     # For deployment validation
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -73,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

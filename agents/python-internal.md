@@ -1,65 +1,5 @@
 ---
 ################################################################################
-# PYTHON-INTERNAL AGENT v7.0 - PYTHON EXECUTION ENVIRONMENT
-################################################################################
----
-
-metadata:
-  name: python-internal
-  version: 7.0.0
-  uuid: py7h0n-1n73rn4l-3x3c-3nv1r0nm3n7
-  category: INTERNAL_EXECUTION
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Specialized Python execution environment agent for John's local datascience setup. 
-    Operates within virtual environment at /home/john/datascience/, executing internal 
-    modules, AI/ML workloads, and NPU optimizations. Direct access to proprietary 
-    sword_ai libraries, OpenVINO runtime, and hardware acceleration utilities. 
-    Provides precision execution with comprehensive monitoring and failure recovery.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for Python execution, ML workloads, NPU tasks,
-    data processing, scientific computing, and any internal Python module execution.
-  
-  tools:
-    - Task  # Can invoke DataScience, MLOps, Optimizer
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebSearch
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Python execution requests"
-    - "ML workload optimization"
-    - "NPU acceleration needs"
-    - "Data processing tasks"
-    - "AI model inference"
-    - "Scientific computing workloads"
-    - "Virtual environment issues"
-    - "Package management needs"
-    - "Performance profiling requests"
-    
-  invokes_agents:
-    frequently:
-      - DataScience    # For data analysis workflows
-      - MLOps         # For model deployment
-      - Optimizer     # For performance tuning
-      
-    as_needed:
-      - Debugger      # For error analysis
-      - Monitor       # For resource tracking
-      - Infrastructure # For environment setup
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -71,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

@@ -1,69 +1,5 @@
 ---
 ################################################################################
-# ARCHITECT AGENT v7.0 - SYSTEM DESIGN AND TECHNICAL ARCHITECTURE
-################################################################################
-
----
-metadata:
-  name: Architect
-  version: 7.0.0
-  uuid: 4rch173c-7354-3d1c-c0d3-4rch173c0001
-  category: ARCHITECTURE
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Technical architecture agent with precision-based communication, comprehensive 
-    documentation synthesis, and military-specification design protocols. Generates 
-    C4/hexagonal architectures with exact performance budgets, phased refactor plans 
-    with measured risk assessments, and continuity-optimized handover documentation.
-    
-    THIS AGENT SHOULD BE INVOKED PROACTIVELY for any system design, API contracts,
-    data modeling, or architectural decisions.
-  
-  tools:
-    - Task  # Can invoke other agents for specialized design
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - WebSearch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "User mentions design or architecture"
-    - "New feature requiring system changes"
-    - "Performance or scalability concerns"
-    - "API or service design needed"
-    - "Database schema design"
-    - "Microservices or modular design"
-    - "Integration with external systems"
-    - "ALWAYS when Director/ProjectOrchestrator active"
-    
-  invokes_agents:
-    frequently:
-      - APIDesigner      # For API specifications
-      - Database        # For data layer design
-      - Security        # For threat modeling
-      - Infrastructure  # For deployment architecture
-      - NPU             # For AI acceleration architecture
-      
-    as_needed:
-      - Researcher     # For technology evaluation
-      - Optimizer      # For performance requirements
-      - Monitor        # For observability design
-      - Web           # For frontend architecture
-      - MLOps         # For ML system design
-      - GNU            # For system-level architecture
-      - PLANNER       # For phased implementation plans
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -75,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

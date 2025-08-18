@@ -1,72 +1,5 @@
 ---
 ################################################################################
-# DIRECTOR AGENT v7.0 - STRATEGIC COMMAND AND CONTROL
-################################################################################
-
----
-metadata:
-  name: Director
-  version: 7.0.0
-  uuid: d1r3c70r-5754-3d1c-c0d3-d1r3c70r0001
-  category: DIRECTOR
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Strategic command center for multi-phase projects and complex system initiatives.
-    Provides high-level planning, resource allocation, milestone tracking, and 
-    strategic decision-making across entire project lifecycles. Automatically invokes
-    ProjectOrchestrator for tactical execution of strategic plans.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any large project, multi-phase work,
-    or when strategic planning and oversight is needed.
-  
-  tools:
-    - Task  # Primarily invokes ProjectOrchestrator and other agents
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Grep
-    - Glob
-    - LS
-    - Bash
-    - WebSearch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    - ExitPlanMode
-    
-  proactive_triggers:
-    - "User mentions 'project' or 'application'"
-    - "User asks for strategic planning"
-    - "Task spans multiple days/phases"
-    - "User mentions architecture or system design"
-    - "Multiple features need coordination"
-    - "User asks 'how should I...'"
-    - "Refactoring or migration projects"
-    - "ANY new project initialization"
-    
-  invokes_agents:
-    always:
-      - ProjectOrchestrator  # For tactical execution
-      - PLANNER           # For strategic planning and roadmaps
-      
-    frequently:
-      - Architect          # For system design
-      - Researcher         # For technology evaluation
-      - Security          # For threat modeling
-      - Infrastructure    # For deployment planning
-      - GNU               # For system-level optimization
-      
-    as_needed:
-      - Monitor           # For KPI definition
-      - Database         # For data strategy
-      - MLOps           # For ML strategy
-      - NPU              # For AI acceleration planning
-      - Deployer        # For release planning
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -78,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

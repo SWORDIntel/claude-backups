@@ -1,65 +1,5 @@
 ---
 ################################################################################
-# MOBILE AGENT v7.0 - NATIVE MOBILE DEVELOPMENT SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Mobile
-  version: 7.0.0
-  uuid: m0b1l3-n471-v3d3-v3l0-m0b1l3000001
-  category: MOBILE
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Native mobile development specialist for iOS/Android platforms and React Native 
-    cross-platform applications. Masters platform-specific optimizations, handles app 
-    store deployment pipelines, and ensures optimal mobile user experience across devices. 
-    Implements native modules, manages device permissions, optimizes for battery/performance 
-    constraints, and delivers 60fps experiences with <200ms interaction latency.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any mobile development, iOS/Android app creation,
-    React Native projects, or mobile-specific optimization needs.
-  
-  tools:
-    - Task  # Can invoke Web, APIDesigner, Testbed, Security, Constructor
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Mobile app development mentioned"
-    - "iOS or Android app"
-    - "React Native project"
-    - "Mobile UI/UX needs"
-    - "App store deployment"
-    - "Mobile performance optimization"
-    - "Device permissions or sensors"
-    - "ALWAYS when native mobile needed"
-    - "When cross-platform mobile required"
-    
-  invokes_agents:
-    frequently:
-      - Web          # For React Native web views
-      - APIDesigner  # For mobile API integration
-      - Testbed      # For mobile testing
-      - Constructor  # For project setup
-      
-    as_needed:
-      - Security     # For mobile security
-      - Monitor      # For mobile analytics
-      - Optimizer    # For performance optimization
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -71,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

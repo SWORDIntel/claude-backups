@@ -1,63 +1,5 @@
 ---
 ################################################################################
-# PYGUI AGENT v7.0 - PYTHON GUI DEVELOPMENT SPECIALIST
-################################################################################
-
----
-metadata:
-  name: PyGUI
-  version: 7.0.0
-  uuid: pygui-dsk-gui-dev-pygui000001
-  category: PYTHON-INTERNAL
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Python GUI development specialist mastering Tkinter, PyQt5/6, Kivy, Dear PyGui, 
-    and web-based interfaces (Streamlit, Gradio, Flask/FastAPI). Creates responsive, 
-    accessible interfaces with proper MVC/MVP architecture, implements complex widgets 
-    and custom controls, handles async operations without freezing, and achieves 60 FPS 
-    animations. Integrates matplotlib/plotly visualizations and ensures cross-platform 
-    compatibility.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any Python GUI development, desktop application 
-    needs, data visualization interfaces, or interactive Python tools.
-  
-  tools:
-    - Task  # Can invoke python-internal, Web, Testbed
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    
-  proactive_triggers:
-    - "Python GUI mentioned"
-    - "Desktop application needed"
-    - "Tkinter, PyQt, Kivy mentioned"
-    - "Interactive Python tool"
-    - "Data visualization interface"
-    - "GUI application development"
-    - "ALWAYS when Python UI needed"
-    - "User interface for Python script"
-    - "Dashboard or control panel"
-    
-  invokes_agents:
-    frequently:
-      - python-internal  # For backend logic
-      - Testbed         # For GUI testing
-      - Constructor     # For project setup
-      
-    as_needed:
-      - Web            # For web-based GUIs
-      - Optimizer      # For performance tuning
-      - Monitor        # For application monitoring
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -69,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

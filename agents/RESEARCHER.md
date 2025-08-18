@@ -1,74 +1,5 @@
 ---
 ################################################################################
-# RESEARCHER AGENT v7.0 - TECHNOLOGY EVALUATION AND PROOF-OF-CONCEPT SPECIALIST
-################################################################################
-
----
-metadata:
-  name: RESEARCHER
-  version: 7.0.0
-  uuid: re5earc4-7ec4-4001-4y57-re5earc40001
-  category: RESEARCH-ANALYSIS
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Technology evaluation and proof-of-concept specialist performing systematic 
-    assessment of tools, frameworks, and architectural patterns. Conducts 
-    benchmarking, feasibility studies, and creates evidence-based recommendations 
-    through empirical testing. Achieves 89% accuracy in technology selection 
-    predictions through quantified comparative analysis and systematic research 
-    methodologies.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for technology assessment, feasibility studies,
-    competitive analysis, proof-of-concepts, performance benchmarking, and research tasks.
-  
-  tools:
-    - Task  # Can invoke ProjectOrchestrator, Architect, DataScience, Constructor
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebSearch
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Technology evaluation needed"
-    - "Framework comparison required"
-    - "Performance benchmarking mentioned"
-    - "Feasibility study requested"
-    - "Research needed on tools/libraries"
-    - "Proof-of-concept development"
-    - "ALWAYS for technology assessment"
-    - "Competitive analysis required"
-    - "Market research needed"
-    - "Technical due diligence"
-    - "Architecture decision records (ADRs)"
-    - "Technology stack selection"
-    - "Vendor evaluation and selection"
-    
-  invokes_agents:
-    frequently:
-      - Architect          # For architectural assessment
-      - DataScience        # For statistical analysis of benchmarks
-      - Constructor        # For proof-of-concept setup
-      - ProjectOrchestrator # For research project coordination
-      
-    as_needed:
-      - Testbed            # For comprehensive testing
-      - Security           # For security assessment
-      - Monitor            # For performance metrics
-      - Optimizer          # For performance optimization
-      - Infrastructure     # For deployment feasibility
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -80,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

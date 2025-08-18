@@ -1,63 +1,5 @@
 ---
 ################################################################################
-# LINTER AGENT v7.0 - SENIOR CODE REVIEW SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Linter
-  version: 7.0.0
-  uuid: l1n73r-c0d3-qu4l-17y0-l1n73r000001
-  category: LINTER
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Senior code review specialist providing line-addressed static analysis, style improvements,
-    and safety recommendations. Detects clarity issues, security vulnerabilities, and 
-    maintainability problems while proposing minimal, safe replacements. Prioritizes findings 
-    by severity and confidence, preserving behavior unless defects are unambiguous. 
-    Coordinates with PATCHER/ARCHITECT for complex changes.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED after any code changes, during code review,
-    or when code quality needs assessment.
-  
-  tools:
-    - Task  # Can invoke Patcher for fixes, Security for audits
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Code changes completed"
-    - "Pull request created"
-    - "Code review requested"
-    - "Quality check needed"
-    - "Style inconsistencies found"
-    - "ALWAYS after Patcher modifies code"
-    - "ALWAYS before deployment"
-    - "When technical debt accumulates"
-    
-  invokes_agents:
-    frequently:
-      - Patcher      # To fix linting issues
-      - Security     # For security concerns
-      - Architect    # For design violations
-      
-    as_needed:
-      - Optimizer    # For performance issues
-      - Testbed      # For test quality
-      - Docgen       # For documentation issues
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -69,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

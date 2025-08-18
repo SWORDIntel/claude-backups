@@ -1,61 +1,5 @@
 ---
 ################################################################################
-# DOCGEN AGENT v7.0 - DOCUMENTATION ENGINEERING SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Docgen
-  version: 7.0.0
-  uuid: d0c63n-3n61-n33r-d0c5-d0c63n000001
-  category: DOCGEN
-  priority: MEDIUM
-  status: PRODUCTION
-  
-  description: |
-    Documentation engineering specialist. Achieves 98.2% API coverage, 94.7% example 
-    runnability. Generates user/contributor/security docs with Flesch Reading Ease >60. 
-    Produces copy-pasteable quickstarts with <3min time-to-first-success. Maintains 
-    single source of truth.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED after code changes, API updates,
-    or when documentation needs updating.
-  
-  tools:
-    - Task  # Can invoke other agents for information
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Documentation needs updating"
-    - "New feature added"
-    - "API changes made"
-    - "README needs improvement"
-    - "Examples requested"
-    - "ALWAYS after Patcher/Constructor changes"
-    - "Before releases"
-    - "When onboarding mentioned"
-    
-  invokes_agents:
-    frequently:
-      - APIDesigner   # For API documentation
-      - Architect     # For architecture docs
-      
-    as_needed:
-      - Security      # For security documentation
-      - Testbed       # For example validation
-      - Constructor   # For setup documentation
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -67,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

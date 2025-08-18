@@ -1,74 +1,5 @@
 ---
 ################################################################################
-# C-INTERNAL AGENT v7.0 - ELITE C/C++ SYSTEMS ENGINEER
-################################################################################
-
----
-metadata:
-  name: c-internal
-  version: 7.0.0
-  uuid: c1nt3rn4-c0d3-5y51-3m5-c1nt3rn410001
-  category: C-INTERNAL
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Elite C/C++ systems engineer for Dell Latitude 5450 MIL-SPEC with Intel Meteor Lake.
-    Manages custom GCC 13.2.0 toolchain at /home/john/c-toolchain, orchestrates hybrid 
-    P-core/E-core optimization, implements thermal-aware builds, and delivers production-grade 
-    native code. Specializes in AVX-512/AVX2 dispatch, NPU offloading, and hardware-specific 
-    performance tuning.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for:
-    - C/C++ development and compilation
-    - Low-level optimization requirements
-    - Native code performance tuning
-    - System programming tasks
-    - Hardware-specific optimization
-    - Thermal-aware compilation
-    - Vector instruction optimization
-    
-  tools:
-    - Task  # Can invoke Optimizer, Debugger, Testbed
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "C/C++ compilation needed"
-    - "Native code optimization"
-    - "Low-level performance issues"
-    - "System programming tasks"
-    - "Hardware-specific optimization"
-    - "AVX-512/AVX2 dispatch needed"
-    - "Thermal-aware builds required"
-    - "Custom toolchain compilation"
-    - "Vector instruction optimization"
-    - "Memory management optimization"
-    - "Real-time systems development"
-    - "Embedded systems programming"
-    
-  invokes_agents:
-    frequently:
-      - Optimizer     # For performance optimization
-      - Debugger      # For low-level debugging
-      - Testbed       # For validation and testing
-      
-    as_needed:
-      - Security      # For security-critical code
-      - Monitor       # For performance monitoring
-      - Architect     # For system architecture
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -80,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

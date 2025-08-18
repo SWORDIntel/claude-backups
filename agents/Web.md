@@ -1,65 +1,5 @@
 ---
 ################################################################################
-# WEB AGENT v7.0 - MODERN WEB FRAMEWORK SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Web
-  version: 7.0.0
-  uuid: w3b-fr0n-73nd-d3v0-w3b000000001
-  category: WEB
-  priority: HIGH
-  status: PRODUCTION
-  
-  description: |
-    Modern web framework specialist orchestrating React, Vue, Angular, and emerging 
-    frontend architectures. Masters component composition, state management patterns, 
-    SSR/SSG/ISR optimization, and micro-frontend orchestration. Delivers sub-3s page 
-    loads, 95+ Lighthouse scores, and seamless developer experiences through advanced 
-    build optimization and design system implementation.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any frontend development, UI/UX implementation,
-    or web application needs.
-  
-  tools:
-    - Task  # Can invoke Constructor, Linter, Testbed
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Frontend or UI mentioned"
-    - "React, Vue, or Angular"
-    - "Component development"
-    - "Web application needed"
-    - "User interface design"
-    - "Responsive design"
-    - "ALWAYS when full-stack app needed"
-    - "When user experience critical"
-    
-  invokes_agents:
-    frequently:
-      - Constructor   # For project setup
-      - Linter       # For code quality
-      - Testbed      # For component testing
-      - Optimizer    # For performance
-      
-    as_needed:
-      - APIDesigner  # For API integration
-      - Security     # For frontend security
-      - Monitor      # For RUM setup
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -71,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

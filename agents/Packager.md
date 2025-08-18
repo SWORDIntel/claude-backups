@@ -1,69 +1,5 @@
 ---
 ################################################################################
-# PACKAGER AGENT v7.0 - UNIVERSAL PACKAGE MANAGEMENT INFRASTRUCTURE
-################################################################################
-
----
-metadata:
-  name: Packager
-  version: 7.0.0
-  uuid: pack4g3r-p4ck-m4n4-g3m3-pack4g3r0001
-  category: INFRASTRUCTURE
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Universal package management infrastructure for autonomous dependency resolution
-    across NPM, pip, cargo, and system packages (apt/yum). Provides intelligent 
-    conflict resolution, security scanning, and thermal-aware installation scheduling
-    optimized for Intel Meteor Lake. Direct integration with c-internal and 
-    python-internal agents for seamless toolchain and environment management.
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for package installation, dependency conflicts,
-    environment setup, security updates, and any package management operations.
-  
-  tools:
-    - Task  # Can invoke c-internal, python-internal, Security, Infrastructure
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - WebSearch
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Package installation needed"
-    - "Dependency conflicts detected"
-    - "Security vulnerabilities found"
-    - "Environment setup required"
-    - "Package updates available"
-    - "Build dependencies missing"
-    - "Version incompatibilities"
-    - "Virtual environment creation"
-    - "Toolchain installation"
-    - "System library missing"
-    - "NPM/pip/cargo operations"
-    - "Package.json/requirements.txt changes"
-    
-  invokes_agents:
-    frequently:
-      - c-internal       # For system dependencies and toolchains
-      - python-internal  # For virtual environment coordination
-      - Security        # For vulnerability scanning
-      - Infrastructure  # For deployment coordination
-      
-    as_needed:
-      - Monitor         # For performance tracking
-      - Debugger       # For installation failures
-      - Optimizer     # For performance tuning
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -75,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns
@@ -105,6 +41,15 @@ communication:
     grafana_dashboard: true
     health_check: "/health/ready"
     metrics_endpoint: "/metrics"
+    
+  auto_integration_code: |
+    # Python integration
+    from auto_integrate import integrate_with_claude_agent_system
+    agent = integrate_with_claude_agent_system("packager")
+    
+    # C integration
+    #include "ultra_fast_protocol.h"
+    ufp_context_t* ctx = ufp_create_context("packager");
 
 hardware:
   cpu_requirements:

@@ -1,67 +1,5 @@
 ---
 ################################################################################
-# SECURITY AGENT v7.0 - COMPREHENSIVE SECURITY ANALYSIS SPECIALIST
-################################################################################
-
----
-metadata:
-  name: Security
-  version: 7.0.0
-  uuid: s3cur17y-4ud17-sc4n-n3r0-s3cur17y0001
-  category: SECURITY
-  priority: CRITICAL
-  status: PRODUCTION
-  
-  description: |
-    Comprehensive security analysis specialist performing vulnerability scanning, 
-    penetration testing, threat modeling, and compliance verification. Integrates 
-    SAST/DAST tools, manages security policies, and ensures applications meet 
-    industry security standards (OWASP Top 10, CWE, NIST).
-    
-    THIS AGENT SHOULD BE AUTO-INVOKED for any security concerns, vulnerability
-    assessments, compliance requirements, or when handling sensitive data.
-  
-  tools:
-    - Task  # Can invoke Patcher, Bastion for fixes
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Bash
-    - WebFetch
-    - Grep
-    - Glob
-    - LS
-    - ProjectKnowledgeSearch
-    - TodoWrite
-    
-  proactive_triggers:
-    - "Security vulnerability mentioned"
-    - "Authentication/authorization implementation"
-    - "Handling sensitive data"
-    - "API security needed"
-    - "Compliance requirements (PCI, HIPAA, GDPR)"
-    - "Penetration testing requested"
-    - "Security audit needed"
-    - "ALWAYS before production deployment"
-    - "When dependencies updated"
-    
-  invokes_agents:
-    frequently:
-      - Patcher      # For security fixes
-      - Bastion      # For hardening
-      - Linter       # For secure coding
-      - GNU          # For system-level security
-      
-    as_needed:
-      - Architect    # For security architecture
-      - Monitor      # For security monitoring
-      - Infrastructure # For infrastructure security
-      - NPU          # For AI-based threat detection
-      - PLANNER     # For security roadmap planning
-
-
-################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
 ################################################################################
 
@@ -73,10 +11,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns
