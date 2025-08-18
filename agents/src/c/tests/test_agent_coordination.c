@@ -22,10 +22,13 @@
 #include <assert.h>
 #include <sched.h>
 
-// Include system headers
-#include "../binary-communications-system/ultra_fast_protocol.h"
-#include "../binary-communications-system/ultra_hybrid_enhanced.c"
-#include "../src/c/auth_security.h"
+// Include system headers - adapted for new structure
+#include "../../binary-communications-system/ultra_fast_protocol.h"
+#include "../auth_security.h"
+// Use agent_bridge instead of including implementation directly
+extern void* create_agent_bridge(void);
+extern int agent_bridge_send_message(void* bridge, enhanced_msg_header_t* msg, uint8_t* payload);
+extern int agent_bridge_receive_message(void* bridge, enhanced_msg_header_t* msg, uint8_t* payload);
 
 // Test configuration
 #define TEST_AGENTS_COUNT 29

@@ -26,9 +26,15 @@
 #include <x86intrin.h>
 #include <math.h>
 
-// Include system headers
-#include "../binary-communications-system/ultra_hybrid_enhanced.c"
-#include "../src/c/auth_security.h"
+// Include system headers - adapted for agent_bridge model
+#include "../../binary-communications-system/ultra_fast_protocol.h"
+#include "../auth_security.h"
+
+// Agent bridge interface for performance testing
+extern void* create_agent_bridge(void);
+extern int agent_bridge_send_batch(void* bridge, enhanced_msg_header_t* msgs, uint8_t* payloads, int count);
+extern double agent_bridge_get_throughput(void* bridge);
+extern double agent_bridge_get_latency_p99(void* bridge);
 
 // Performance test configuration
 #define PERF_TEST_DURATION_SECONDS 30

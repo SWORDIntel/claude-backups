@@ -24,9 +24,14 @@
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 
-// Include system headers
-#include "../src/c/auth_security.h"
-#include "../binary-communications-system/ultra_fast_protocol.h"
+// Include system headers - adapted for new test location
+#include "../auth_security.h"
+#include "../../binary-communications-system/ultra_fast_protocol.h"
+
+// Agent bridge auth interface
+extern void* create_agent_bridge(void);
+extern int agent_bridge_set_jwt_token(void* bridge, const char* token);
+extern int agent_bridge_validate_permission(void* bridge, uint32_t agent_id, const char* permission);
 
 // Test configuration
 #define TEST_AGENTS_COUNT 29

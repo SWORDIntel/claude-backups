@@ -12,12 +12,13 @@
 
 set -euo pipefail
 
-# Test configuration
+# Test configuration - adapted for src/c/tests location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+SRC_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_DIR="${SCRIPT_DIR}/logs"
 RESULTS_DIR="${SCRIPT_DIR}/results"
-BUILD_DIR="${SCRIPT_DIR}/build"
+BUILD_DIR="${PROJECT_ROOT}/build"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Colors for output
@@ -162,17 +163,16 @@ check_system_requirements() {
     
     # Check for required tools
     local required_tools=("gcc" "make" "pkg-config" "openssl")
-    for tool in "${required_tools[@]}"; do &
+    for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             log_error "Required tool not found: $tool"
             return 1
         fi
-wait
     done
     
     # Check for optional but recommended tools
     local optional_tools=("perf" "numactl" "taskset")
-    for tool in "${optional_tools[@]}"; do &
+    for tool in "${optional_tools[@]}"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
             log_warn "Optional tool not found: $tool (some tests may be limited)"
         fi
@@ -211,7 +211,7 @@ setup_environment() {
     fi
     
     # Set CPU governor to performance if available
-    for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do &
+    for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
         if [ -w "$cpu" ]; then
             echo performance > "$cpu" 2>/dev/null || true
         fi
@@ -838,7 +838,7 @@ wait
         fi
         
         # Wait for parallel tests to complete
-        for pid in "${pids[@]}"; do &
+        for pid in "${pids[@]}"; do
             wait "$pid"
 wait
         done
