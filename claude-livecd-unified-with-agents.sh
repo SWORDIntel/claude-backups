@@ -1,29 +1,21 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# CLAUDE CODE LAUNCHER - FIXED VERSION 2.0
-# Prevents recursive loops and properly handles installation
-# For LiveCD and non-persistent environments
+# CLAUDE CODE ALL-IN-ONE INSTALLER WITH GITHUB AGENTS
+# Complete installation without external dependencies
+# Version 3.1 - LiveCD optimized with DEFAULT permission bypass
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
 # Configuration
-readonly SCRIPT_VERSION="2.0-fixed"
+readonly SCRIPT_VERSION="3.1-all-in-one"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly INSTALL_SCRIPT="$SCRIPT_DIR/paste.txt"  # The full installer
 readonly WORK_DIR="/tmp/claude-install-$$"
+readonly LOG_FILE="$HOME/Documents/Claude/install-$(date +%Y%m%d-%H%M%S).log"
 
-# Binary locations - check these in order
-readonly CLAUDE_LOCATIONS=(
-    "$HOME/.local/bin/claude.original"
-    "$HOME/.local/bin/claude-actual"
-    "$HOME/.local/npm-global/bin/claude"
-    "$HOME/.local/node/bin/claude"
-    "$HOME/.nvm/versions/node/*/bin/claude"
-    "/usr/local/bin/claude"
-    "/usr/bin/claude"
-    "$(which claude 2>/dev/null || echo '')"
-)
+# GitHub Configuration - UPDATE THIS WITH YOUR REPO
+readonly GITHUB_REPO="https://github.com/SWORDIntel/claude-backups"  # CHANGE THIS
+readonly GITHUB_BRANCH="main"
 
 # Installation paths
 readonly USER_BIN_DIR="$HOME/.local/bin"
@@ -48,10 +40,25 @@ CLAUDE_BINARY=""
 # HELPER FUNCTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-log() { printf "${GREEN}[INFO]${NC} %s\n" "$1"; }
-error() { printf "${RED}[ERROR]${NC} %s\n" "$1" >&2; }
-warn() { printf "${YELLOW}[WARNING]${NC} %s\n" "$1" >&2; }
-success() { printf "${GREEN}[SUCCESS]${NC} %s\n" "$1"; }
+log() { 
+    printf "${GREEN}[INFO]${NC} %s\n" "$1"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE" 2>/dev/null || true
+}
+
+error() { 
+    printf "${RED}[ERROR]${NC} %s\n" "$1" >&2
+    echo "[ERROR] $1" >> "$LOG_FILE" 2>/dev/null || true
+}
+
+warn() { 
+    printf "${YELLOW}[WARNING]${NC} %s\n" "$1" >&2
+    echo "[WARNING] $1" >> "$LOG_FILE" 2>/dev/null || true
+}
+
+success() { 
+    printf "${GREEN}[SUCCESS]${NC} %s\n" "$1"
+    echo "[SUCCESS] $1" >> "$LOG_FILE" 2>/dev/null || true
+}
 
 cleanup() {
     if [[ -d "$WORK_DIR" ]]; then
@@ -71,195 +78,233 @@ show_banner() {
  | |____| | (_| | |_| | (_| |  __/ | |___| (_) | (_| |  __/
   \_______|_\__,_|\__,_|\__,_|\___|  \_____\___/ \__,_|\___|
                                                            
-            Intel Core Ultra 7 Optimized Edition          
+    All-in-One Installer v3.1 - LiveCD Optimized Edition
+           WITH DEFAULT PERMISSION BYPASS
 EOF
     printf "${NC}\n"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# INSTALLATION DETECTION
+# AGENT INSTALLATION FROM GITHUB
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-check_installation() {
-    # Reset global variable
-    CLAUDE_BINARY=""
+install_agents_from_github() {
+    log "Installing agents from GitHub repository..."
     
-    # Check each possible location
-    for location in "${CLAUDE_LOCATIONS[@]}"; do
-        # Skip empty locations
-        [ -z "$location" ] && continue
-        
-        # Expand glob patterns
-        if [[ "$location" == *"*"* ]]; then
-            for expanded in $location; do
-                if [ -f "$expanded" ] && [ -x "$expanded" ]; then
-                    # Check if it's not this launcher script itself
-                    if [ "$(realpath "$expanded" 2>/dev/null)" != "$(realpath "$0" 2>/dev/null)" ]; then
-                        CLAUDE_BINARY="$expanded"
-                        return 0
-                    fi
-                fi
-            done
-        else
-            if [ -f "$location" ] && [ -x "$location" ]; then
-                # Check if it's not this launcher script itself
-                if [ "$(realpath "$location" 2>/dev/null)" != "$(realpath "$0" 2>/dev/null)" ]; then
-                    CLAUDE_BINARY="$location"
-                    return 0
-                fi
-            fi
+    # Create agents directory
+    mkdir -p "$AGENTS_DIR"
+    mkdir -p "$WORK_DIR"
+    
+    # Method 1: Try local agents first
+    if [ -d "$SCRIPT_DIR/agents" ]; then
+        log "Found local agents directory"
+        cp -r "$SCRIPT_DIR/agents/"* "$AGENTS_DIR/" 2>/dev/null || true
+        local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+        if [ "$agent_count" -gt 0 ]; then
+            success "Installed $agent_count agents from local directory"
+            return 0
         fi
-    done
+    fi
     
-    # Check if 'claude' command exists but might be this script
-    local claude_path=$(which claude 2>/dev/null || echo "")
-    if [ -n "$claude_path" ] && [ -f "$claude_path" ]; then
-        # Make sure it's not this launcher
-        if [ "$(realpath "$claude_path" 2>/dev/null)" != "$(realpath "$0" 2>/dev/null)" ]; then
-            # Check if it's a wrapper that points to a real binary
-            if grep -q "claude.original\|claude-actual" "$claude_path" 2>/dev/null; then
-                # It's a wrapper, try to extract the actual binary
-                local actual=$(grep -oE '(claude\.original|claude-actual|/[^ ]+/claude)' "$claude_path" 2>/dev/null | head -1)
-                if [ -n "$actual" ] && [ -f "$actual" ] && [ -x "$actual" ]; then
-                    CLAUDE_BINARY="$actual"
-                    return 0
-                fi
-            else
-                CLAUDE_BINARY="$claude_path"
+    cd "$WORK_DIR"
+    
+    # Method 2: Git clone (if git available)
+    if command -v git &> /dev/null; then
+        log "Cloning agents from GitHub..."
+        if git clone --depth 1 --filter=blob:none --sparse "$GITHUB_REPO" repo 2>/dev/null; then
+            cd repo
+            git sparse-checkout set agents 2>/dev/null || true
+            
+            if [ -d "agents" ]; then
+                cp -r agents/* "$AGENTS_DIR/" 2>/dev/null || true
+                local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+                success "Downloaded $agent_count agents from GitHub"
                 return 0
             fi
         fi
     fi
     
-    return 1
+    # Method 3: Download as archive
+    log "Downloading repository archive..."
+    local archive_url="${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
+    
+    if command -v wget &> /dev/null; then
+        wget -q "$archive_url" -O repo.tar.gz 2>/dev/null || true
+    elif command -v curl &> /dev/null; then
+        curl -fsSL "$archive_url" -o repo.tar.gz 2>/dev/null || true
+    fi
+    
+    if [ -f "repo.tar.gz" ]; then
+        tar -xzf repo.tar.gz 2>/dev/null || true
+        local repo_dir=$(find . -maxdepth 1 -type d -name "*claude*" 2>/dev/null | head -1)
+        
+        if [ -n "$repo_dir" ] && [ -d "$repo_dir/agents" ]; then
+            cp -r "$repo_dir/agents/"* "$AGENTS_DIR/" 2>/dev/null || true
+            local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+            success "Downloaded $agent_count agents from GitHub archive"
+            return 0
+        fi
+    fi
+    
+    # Method 4: Create sample agents if download fails
+    warn "Could not download agents from GitHub, creating sample agents..."
+    create_sample_agents
+    return 0
+}
+
+create_sample_agents() {
+    cat > "$AGENTS_DIR/Director.md" << 'EOF'
+# Director Agent
+## Role
+Project orchestration and task delegation
+
+## Capabilities
+- Task breakdown and assignment
+- Progress monitoring
+- Resource coordination
+EOF
+
+    cat > "$AGENTS_DIR/Security.md" << 'EOF'
+# Security Agent
+## Role
+Security analysis and vulnerability assessment
+
+## Capabilities
+- Code security review
+- Vulnerability scanning
+- Security best practices
+EOF
+
+    cat > "$AGENTS_DIR/Testing.md" << 'EOF'
+# Testing Agent
+## Role
+Test creation and quality assurance
+
+## Capabilities
+- Unit test generation
+- Integration testing
+- Test coverage analysis
+EOF
+
+    success "Created 3 sample agents"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# LAUNCH FUNCTIONS
+# NEOVIM STATUSLINE DEPLOYMENT
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-launch_claude_direct() {
-    log "Checking Claude Code installation..."
+deploy_neovim_statusline() {
+    local statusline_src="$SCRIPT_DIR/statusline.lua"
+    local nvim_config_dir="$HOME/.config/nvim"
+    local nvim_lua_dir="$nvim_config_dir/lua"
     
-    if ! check_installation; then
-        error "Claude Code not installed."
-        echo
-        warn "Please run Quick Install (option 2) first."
-        echo
-        printf "${YELLOW}Press ENTER to return to menu...${NC}"
-        read -r
+    # Check if statusline.lua exists locally
+    if [ ! -f "$statusline_src" ]; then
+        # Try to download from GitHub
+        log "Downloading statusline.lua from GitHub..."
+        local statusline_url="${GITHUB_REPO}/raw/${GITHUB_BRANCH}/statusline.lua"
+        
+        mkdir -p "$WORK_DIR"
+        if command -v wget &> /dev/null; then
+            wget -q "$statusline_url" -O "$WORK_DIR/statusline.lua" 2>/dev/null || true
+        elif command -v curl &> /dev/null; then
+            curl -fsSL "$statusline_url" -o "$WORK_DIR/statusline.lua" 2>/dev/null || true
+        fi
+        
+        if [ -f "$WORK_DIR/statusline.lua" ]; then
+            statusline_src="$WORK_DIR/statusline.lua"
+        else
+            warn "statusline.lua not found"
+            return 1
+        fi
+    fi
+    
+    log "Deploying Neovim statusline..."
+    
+    # Create directories
+    mkdir -p "$nvim_lua_dir"
+    mkdir -p "$AGENTS_DIR"
+    
+    # Copy statusline to both locations
+    cp "$statusline_src" "$nvim_lua_dir/statusline.lua"
+    cp "$statusline_src" "$AGENTS_DIR/statusline.lua"
+    
+    # Create/update init.lua
+    if [ ! -f "$nvim_config_dir/init.lua" ]; then
+        cat > "$nvim_config_dir/init.lua" << 'NVIM_INIT'
+-- Claude Agent Framework Statusline
+vim.env.CLAUDE_AGENTS_ROOT = vim.env.CLAUDE_AGENTS_ROOT or vim.fn.expand("~/.local/share/claude/agents")
+package.path = package.path .. ";" .. vim.env.CLAUDE_AGENTS_ROOT .. "/?.lua"
+local ok, statusline = pcall(require, "statusline")
+if ok then statusline.setup() end
+NVIM_INIT
+        success "Created Neovim config with statusline"
+    else
+        if ! grep -q "statusline.setup()" "$nvim_config_dir/init.lua" 2>/dev/null; then
+            cat >> "$nvim_config_dir/init.lua" << 'NVIM_APPEND'
+
+-- Claude Agent Framework Statusline
+vim.env.CLAUDE_AGENTS_ROOT = vim.env.CLAUDE_AGENTS_ROOT or vim.fn.expand("~/.local/share/claude/agents")
+package.path = package.path .. ";" .. vim.env.CLAUDE_AGENTS_ROOT .. "/?.lua"
+local ok, statusline = pcall(require, "statusline")
+if ok then statusline.setup() end
+NVIM_APPEND
+            success "Updated Neovim config"
+        fi
+    fi
+    
+    return 0
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CLAUDE CODE INSTALLATION WITH DEFAULT PERMISSION BYPASS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+install_node_if_needed() {
+    if command -v node &> /dev/null; then
+        log "Node.js found: $(node --version)"
+        return 0
+    fi
+    
+    log "Installing Node.js locally..."
+    warn "This may take a few minutes on first run..."
+    
+    mkdir -p "$WORK_DIR"
+    cd "$WORK_DIR"
+    
+    local node_version="v20.11.0"
+    local node_arch="linux-x64"
+    local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-${node_arch}.tar.gz"
+    
+    log "Downloading Node.js ${node_version}..."
+    if command -v wget &> /dev/null; then
+        wget --progress=bar:force "$node_url" -O node.tar.gz 2>&1 | grep -E 'ETA|%' || return 1
+    elif command -v curl &> /dev/null; then
+        curl -L --progress-bar "$node_url" -o node.tar.gz || return 1
+    else
+        error "Neither wget nor curl available"
         return 1
     fi
     
-    success "Found Claude Code at: $CLAUDE_BINARY"
-    echo
-    log "Launching Claude Code with LiveCD permissions..."
-    echo
+    log "Extracting Node.js..."
+    tar -xzf node.tar.gz
+    mkdir -p "$LOCAL_NODE_DIR"
+    cp -r "node-${node_version}-${node_arch}"/* "$LOCAL_NODE_DIR/"
     
-    # Set environment for agents
-    export CLAUDE_AGENTS_DIR="$AGENTS_DIR"
-    
-    # Check if agents exist
-    if [ -d "$AGENTS_DIR" ]; then
-        local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
-        if [ "$agent_count" -gt 0 ]; then
-            success "Agents loaded: $agent_count configurations"
-        fi
-    fi
-    
-    # Launch with bypass flag for LiveCD
-    exec "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+    export PATH="$LOCAL_NODE_DIR/bin:$PATH"
+    success "Node.js installed locally"
+    return 0
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# INSTALLATION FUNCTIONS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-run_quick_install() {
-    log "Starting quick installation..."
-    echo
+install_claude_code() {
+    log "Installing Claude Code..."
     
-    # Check if the full installer exists
-    if [ -f "$INSTALL_SCRIPT" ]; then
-        success "Found full installer at: $INSTALL_SCRIPT"
-        echo
-        log "Running automated installation with optimal settings..."
-        echo
-        
-        # Make installer executable
-        chmod +x "$INSTALL_SCRIPT"
-        
-        # Run with automatic flags for LiveCD
-        if bash "$INSTALL_SCRIPT" --auto-mode --local --force; then
-            success "Installation completed successfully!"
-        else
-            warn "Installation completed with warnings. Checking installation..."
-        fi
-    else
-        warn "Full installer not found. Running minimal installation..."
-        run_minimal_install
-    fi
-    
-    # Verify installation
-    echo
-    log "Verifying installation..."
-    if check_installation; then
-        success "Claude Code installed successfully at: $CLAUDE_BINARY"
-        
-        # Check agents
-        if [ -d "$AGENTS_DIR" ]; then
-            local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
-            if [ "$agent_count" -gt 0 ]; then
-                success "Agents installed: $agent_count configurations"
-            fi
-        fi
-    else
-        warn "Claude Code binary not found after installation."
-        echo "You may need to restart your terminal or run: source ~/.bashrc"
-    fi
-    
-    echo
-    printf "${YELLOW}Press ENTER to return to menu...${NC}"
-    read -r
-}
-
-run_minimal_install() {
-    log "Running minimal Claude Code installation..."
-    echo
-    
-    # Create necessary directories
+    # Create directories
     mkdir -p "$USER_BIN_DIR"
-    mkdir -p "$AGENTS_DIR"
-    mkdir -p "$WORK_DIR"
     
-    # Method 1: Install Node.js locally if not present
-    if ! command -v node &> /dev/null; then
-        log "Installing Node.js locally..."
-        
-        local node_version="v20.11.0"
-        local node_arch="linux-x64"
-        local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-${node_arch}.tar.gz"
-        
-        if command -v wget &> /dev/null; then
-            wget -q "$node_url" -O "$WORK_DIR/node.tar.gz"
-        elif command -v curl &> /dev/null; then
-            curl -fsSL "$node_url" -o "$WORK_DIR/node.tar.gz"
-        fi
-        
-        if [ -f "$WORK_DIR/node.tar.gz" ]; then
-            tar -xzf "$WORK_DIR/node.tar.gz" -C "$WORK_DIR"
-            
-            mkdir -p "$LOCAL_NODE_DIR"
-            cp -r "$WORK_DIR/node-${node_version}-${node_arch}"/* "$LOCAL_NODE_DIR/"
-            
-            export PATH="$LOCAL_NODE_DIR/bin:$PATH"
-            success "Node.js installed locally"
-        fi
-    fi
-    
-    # Method 2: Try npm installation
+    # Try npm installation first
     if command -v npm &> /dev/null; then
-        log "Installing Claude Code via npm..."
+        log "Attempting npm installation..."
         
         mkdir -p "$LOCAL_NPM_PREFIX"
         export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
@@ -268,236 +313,179 @@ run_minimal_install() {
         # Try different package names
         npm install -g @anthropic-ai/claude-code 2>/dev/null || \
         npm install -g claude-code 2>/dev/null || \
-        npm install -g claude 2>/dev/null || \
-        warn "npm packages not found"
+        npm install -g claude 2>/dev/null || true
+        
+        # Check if installed and create wrapper
+        if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
+            # Move original binary
+            mv "$LOCAL_NPM_PREFIX/bin/claude" "$LOCAL_NPM_PREFIX/bin/claude.original"
+            
+            # Create wrapper that always adds --dangerously-skip-permissions
+            cat > "$LOCAL_NPM_PREFIX/bin/claude" << 'CLAUDE_WRAPPER'
+#!/bin/bash
+# Claude wrapper with automatic permission bypass for LiveCD
+exec "$HOME/.local/npm-global/bin/claude.original" --dangerously-skip-permissions "$@"
+CLAUDE_WRAPPER
+            chmod +x "$LOCAL_NPM_PREFIX/bin/claude"
+            CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
+            success "Claude Code installed via npm with permission bypass"
+            return 0
+        fi
     fi
     
-    # Method 3: Try pip installation
-    if ! check_installation && command -v pip3 &> /dev/null; then
-        log "Installing Claude Code via pip..."
-        
+    # Try pip installation
+    if command -v pip3 &> /dev/null; then
+        log "Attempting pip installation..."
         pip3 install --user claude-code 2>/dev/null || \
-        pip3 install --user anthropic 2>/dev/null || \
-        warn "pip packages not found"
-    fi
-    
-    # Method 4: Create functional stub
-    if ! check_installation; then
-        warn "Creating Claude Code stub as fallback..."
+        pip3 install --user anthropic 2>/dev/null || true
         
-        cat > "$USER_BIN_DIR/claude.original" << 'STUB_EOF'
-#!/usr/bin/env python3
-"""Claude Code Stub - Functional placeholder"""
-import sys
-import os
+        # Check if installed and create wrapper
+        if [ -f "$HOME/.local/bin/claude" ]; then
+            # Move original binary
+            mv "$HOME/.local/bin/claude" "$HOME/.local/bin/claude.original"
+            
+            # Create wrapper
+            cat > "$HOME/.local/bin/claude" << 'CLAUDE_WRAPPER'
+#!/bin/bash
+# Claude wrapper with automatic permission bypass for LiveCD
+exec "$HOME/.local/bin/claude.original" --dangerously-skip-permissions "$@"
+CLAUDE_WRAPPER
+            chmod +x "$HOME/.local/bin/claude"
+            CLAUDE_BINARY="$HOME/.local/bin/claude"
+            success "Claude Code installed via pip with permission bypass"
+            return 0
+        fi
+    fi
+    
+    # Create functional stub as fallback WITH PERMISSION BYPASS BY DEFAULT
+    log "Creating Claude Code launcher with default permission bypass..."
+    cat > "$USER_BIN_DIR/claude" << 'CLAUDE_STUB'
+#!/bin/bash
+# Claude Code Launcher with DEFAULT Permission Bypass
 
-def main():
-    print("Claude Code Stub v1.0")
-    print("This is a placeholder for the official Claude Code.")
-    print()
+# Set environment
+export CLAUDE_AGENTS_DIR="$HOME/.local/share/claude/agents"
+export CLAUDE_AGENTS_ROOT="$CLAUDE_AGENTS_DIR"
+
+# Check for actual Claude binary
+CLAUDE_ACTUAL=""
+for loc in "$HOME/.local/npm-global/bin/claude.original" "$HOME/.local/bin/claude.original" "$(which claude-actual 2>/dev/null)"; do
+    if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
+        CLAUDE_ACTUAL="$loc"
+        break
+    fi
+done
+
+if [ -n "$CLAUDE_ACTUAL" ]; then
+    # ALWAYS add --dangerously-skip-permissions unless explicitly disabled
+    if [[ " $@ " == *" --no-skip-permissions "* ]]; then
+        # Remove our custom flag and run without permission skip
+        args="${@//--no-skip-permissions/}"
+        exec "$CLAUDE_ACTUAL" $args
+    else
+        # DEFAULT: Always add permission bypass
+        exec "$CLAUDE_ACTUAL" --dangerously-skip-permissions "$@"
+    fi
+else
+    echo "Claude Code v1.0 (LiveCD Stub with Auto Permission Bypass)"
+    echo ""
+    echo "This launcher automatically includes --dangerously-skip-permissions"
+    echo "To disable: use --no-skip-permissions flag"
+    echo ""
+    echo "To install the official Claude Code, run:"
+    echo "  npm install -g @anthropic-ai/claude-code"
+    echo ""
+    echo "Arguments received: $@"
     
-    if "--version" in sys.argv:
-        print("Version: 1.0.0-stub")
-    elif "--help" in sys.argv:
-        print("Usage: claude [options] [command]")
-        print("Options:")
-        print("  --version    Show version")
-        print("  --help       Show this help")
-    else:
-        print("Arguments received:", sys.argv[1:])
-        print()
-        print("To install the official Claude Code:")
-        print("  npm install -g @anthropic-ai/claude-code")
-        print("  or")
-        print("  pip install claude-code")
+    # Basic command handling
+    case "$1" in
+        --version)
+            echo "1.0.0-livecd-stub"
+            ;;
+        --help)
+            echo "Usage: claude [options] [command]"
+            echo "Options:"
+            echo "  --version                      Show version"
+            echo "  --help                         Show this help"
+            echo "  --no-skip-permissions          Disable automatic permission bypass"
+            echo ""
+            echo "NOTE: Permission bypass (--dangerously-skip-permissions) is"
+            echo "      applied BY DEFAULT for LiveCD compatibility"
+            ;;
+        *)
+            echo ""
+            echo "Agents directory: $CLAUDE_AGENTS_DIR"
+            local agent_count=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+            echo "Agents available: $agent_count"
+            echo ""
+            echo "Permission bypass: ENABLED (default for LiveCD)"
+            ;;
+    esac
+fi
+CLAUDE_STUB
     
+    chmod +x "$USER_BIN_DIR/claude"
+    CLAUDE_BINARY="$USER_BIN_DIR/claude"
+    success "Claude launcher created with DEFAULT permission bypass"
     return 0
+}
 
-if __name__ == "__main__":
-    sys.exit(main())
-STUB_EOF
-        chmod +x "$USER_BIN_DIR/claude.original"
-        CLAUDE_BINARY="$USER_BIN_DIR/claude.original"
-        success "Claude stub created at: $CLAUDE_BINARY"
-    fi
+# Also create a 'claude-normal' command for running WITHOUT permission bypass
+create_claude_normal_command() {
+    cat > "$USER_BIN_DIR/claude-normal" << 'CLAUDE_NORMAL'
+#!/bin/bash
+# Claude launcher WITHOUT automatic permission bypass
+exec claude --no-skip-permissions "$@"
+CLAUDE_NORMAL
+    chmod +x "$USER_BIN_DIR/claude-normal"
+    log "Created 'claude-normal' command for non-LiveCD use"
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ENVIRONMENT SETUP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+setup_environment() {
+    log "Setting up environment..."
     
-    # Update PATH in shell config
+    # Export variables for current session
+    export CLAUDE_AGENTS_DIR="$AGENTS_DIR"
+    export CLAUDE_AGENTS_ROOT="$AGENTS_DIR"
+    export PATH="$USER_BIN_DIR:$LOCAL_NODE_DIR/bin:$LOCAL_NPM_PREFIX/bin:$PATH"
+    
+    # Update shell configuration
     local shell_rc="$HOME/.bashrc"
-    if [ -n "${ZSH_VERSION:-}" ]; then
-        shell_rc="$HOME/.zshrc"
-    fi
+    [ -n "${ZSH_VERSION:-}" ] && shell_rc="$HOME/.zshrc"
     
+    # Add PATH
     if ! grep -q "$USER_BIN_DIR" "$shell_rc" 2>/dev/null; then
         echo "export PATH=\"$USER_BIN_DIR:\$PATH\"" >> "$shell_rc"
     fi
     
-    success "Minimal installation complete!"
-}
-
-run_custom_install() {
-    clear
-    show_banner
-    
-    printf "${BOLD}${CYAN}Custom Installation Options${NC}\n"
-    echo "═══════════════════════════════════════"
-    echo
-    echo "1) Local installation (no sudo required) - Recommended"
-    echo "2) System-wide installation (requires sudo)"
-    echo "3) Install WITH agents (31 configurations)"
-    echo "4) Install WITHOUT agents (Claude Code only)"
-    echo "5) Reinstall/Repair existing installation"
-    echo "6) Return to main menu"
-    echo
-    
-    echo -n "Enter your choice [1-6]: "
-    read -r choice
-    
-    local install_flags=""
-    
-    case "$choice" in
-        1) 
-            install_flags="--local"
-            log "Local installation selected"
-            ;;
-        2) 
-            install_flags="--system"
-            warn "System installation requires sudo privileges"
-            ;;
-        3) 
-            install_flags="--local"
-            log "Installing with full agent system"
-            ;;
-        4) 
-            install_flags="--local --skip-agents"
-            log "Installing Claude Code only (no agents)"
-            ;;
-        5)
-            install_flags="--local --force"
-            log "Reinstalling/repairing Claude Code"
-            ;;
-        6) 
-            return 
-            ;;
-        *) 
-            error "Invalid choice"
-            sleep 2
-            return 
-            ;;
-    esac
-    
-    echo
-    if [ -f "$INSTALL_SCRIPT" ]; then
-        log "Running installer with options: $install_flags"
-        chmod +x "$INSTALL_SCRIPT"
-        bash "$INSTALL_SCRIPT" $install_flags
-    else
-        error "Full installer not found at: $INSTALL_SCRIPT"
-        echo
-        echo -n "Run minimal installation instead? (y/N): "
-        read -r response
-        if [[ "$response" =~ ^[Yy]$ ]]; then
-            run_minimal_install
-        fi
+    if [ -d "$LOCAL_NODE_DIR" ] && ! grep -q "$LOCAL_NODE_DIR" "$shell_rc" 2>/dev/null; then
+        echo "export PATH=\"$LOCAL_NODE_DIR/bin:\$PATH\"" >> "$shell_rc"
     fi
     
-    echo
-    printf "${YELLOW}Press ENTER to return to menu...${NC}"
-    read -r
-}
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# DOCUMENTATION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-show_documentation() {
-    clear
-    show_banner
+    if [ -d "$LOCAL_NPM_PREFIX" ] && ! grep -q "$LOCAL_NPM_PREFIX" "$shell_rc" 2>/dev/null; then
+        echo "export PATH=\"$LOCAL_NPM_PREFIX/bin:\$PATH\"" >> "$shell_rc"
+    fi
     
-    printf "${BOLD}${CYAN}Claude Code Documentation${NC}\n"
-    echo "═══════════════════════════════════════"
-    echo
+    # Add agent environment variables
+    if ! grep -q "CLAUDE_AGENTS_DIR" "$shell_rc" 2>/dev/null; then
+        echo "export CLAUDE_AGENTS_DIR=\"$AGENTS_DIR\"" >> "$shell_rc"
+        echo "export CLAUDE_AGENTS_ROOT=\"$AGENTS_DIR\"" >> "$shell_rc"
+    fi
     
-    cat << 'DOC_EOF'
-OVERVIEW
---------
-Claude Code is an AI-powered coding assistant that runs directly in your
-terminal. This LiveCD edition is optimized for non-persistent environments.
-
-KEY FEATURES
-------------
-• Automatic permission bypass for LiveCD operation
-• Local installation without sudo requirements  
-• 31 pre-configured AI agents for various tasks
-• CPU optimizations (AVX512/AVX2 auto-detection)
-• Binary communication protocol (4.2M msg/sec)
-• Git integration and project awareness
-
-COMMANDS
---------
-claude                  Launch with LiveCD permissions (default)
-claude-normal          Launch without permission bypass
-claude /config         Open configuration interface
-claude /terminal-setup Setup terminal integration
-claude --help          Show Claude help menu
-claude --version       Display version information
-
-FILE LOCATIONS
---------------
-Binary:  ~/.local/bin/claude
-Agents:  ~/.local/share/claude/agents
-Config:  ~/.config/claude/
-Logs:    ~/Documents/Claude/install-*.log
-
-AGENT SYSTEM
-------------
-The agent system includes specialized assistants for:
-• Code review and refactoring
-• Security analysis
-• Documentation generation
-• Testing and debugging
-• Project management
-• Performance optimization
-• And 25+ more specialized agents
-
-TROUBLESHOOTING
----------------
-Problem: Claude won't start
-Solution: Run Quick Install (menu option 2)
-
-Problem: "Command not found" error
-Solution: Run: source ~/.bashrc
-         Or restart your terminal
-
-Problem: Agents not detected
-Solution: Check CLAUDE_AGENTS_DIR environment variable
-         Run: export CLAUDE_AGENTS_DIR=~/.local/share/claude/agents
-
-Problem: Permission errors
-Solution: Use the default 'claude' command (includes --dangerously-skip-permissions)
-
-Problem: Installation fails
-Solution: Check ~/Documents/Claude/install-*.log for details
-         Try minimal install (Custom Install option)
-
-OPTIMIZATION NOTES
-------------------
-This build automatically detects and uses:
-• AVX512 instructions (Intel Core Ultra)
-• AVX2 fallback for older CPUs
-• P-core optimization for hybrid CPUs
-• Thermal monitoring for sustained performance
-
-LINKS
------
-GitHub:  https://github.com/anthropic-ai/claude-code
-Docs:    https://docs.anthropic.com/claude-code
-Support: https://support.anthropic.com
-
-DOC_EOF
+    # Add alias for convenience
+    if ! grep -q "alias claude-safe" "$shell_rc" 2>/dev/null; then
+        echo "# Claude aliases for LiveCD" >> "$shell_rc"
+        echo "alias claude-safe='claude --no-skip-permissions'  # Run without permission bypass" >> "$shell_rc"
+    fi
     
-    echo
-    printf "${YELLOW}Press ENTER to return to menu...${NC}"
-    read -r
+    success "Environment configured"
+    
+    # Create the alternative command
+    create_claude_normal_command
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -505,112 +493,115 @@ DOC_EOF
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 show_status() {
-    clear
-    show_banner
-    
-    printf "${BOLD}${CYAN}System Status Check${NC}\n"
-    echo "═══════════════════════════════════════"
     echo
+    printf "${BOLD}${CYAN}Installation Status${NC}\n"
+    echo "═══════════════════════════════════════"
     
-    # Claude installation
+    # Claude Code
     printf "${BOLD}Claude Code:${NC} "
-    if check_installation; then
-        printf "${GREEN}✓ Installed${NC}\n"
-        printf "  Location: ${CYAN}$CLAUDE_BINARY${NC}\n"
-        
-        # Try to get version
-        if [ -n "$CLAUDE_BINARY" ]; then
-            local version=$("$CLAUDE_BINARY" --version 2>/dev/null | head -1 || echo "Unknown")
-            printf "  Version: ${CYAN}$version${NC}\n"
-        fi
+    if [ -n "$CLAUDE_BINARY" ] && [ -f "$CLAUDE_BINARY" ]; then
+        printf "${GREEN}✓ Installed${NC} at $CLAUDE_BINARY\n"
+        printf "  ${YELLOW}Permission bypass: ENABLED by default${NC}\n"
     else
         printf "${RED}✗ Not installed${NC}\n"
     fi
-    echo
     
     # Agents
-    printf "${BOLD}Agent System:${NC} "
+    printf "${BOLD}Agents:${NC} "
     if [ -d "$AGENTS_DIR" ]; then
         local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
-        local binary_count=$(find "$AGENTS_DIR" -type f -executable 2>/dev/null | wc -l || echo 0)
-        
-        if [ "$agent_count" -gt 0 ]; then
-            printf "${GREEN}✓ Installed${NC}\n"
-            printf "  Configurations: ${CYAN}$agent_count${NC}\n"
-            printf "  Binaries: ${CYAN}$binary_count${NC}\n"
-        else
-            printf "${YELLOW}⚠ No agents found${NC}\n"
-        fi
+        printf "${GREEN}✓ $agent_count agents${NC} in $AGENTS_DIR\n"
     else
         printf "${RED}✗ Not installed${NC}\n"
     fi
-    echo
     
-    # System tools
-    printf "${BOLD}System Tools:${NC}\n"
-    
-    local tools=(
-        "node:Node.js"
-        "npm:NPM"
-        "python3:Python 3"
-        "pip3:Pip 3"
-        "git:Git"
-        "gcc:GCC Compiler"
-        "make:Make"
-    )
-    
-    for tool_spec in "${tools[@]}"; do
-        IFS=':' read -r cmd name <<< "$tool_spec"
-        printf "  $name: "
-        if command -v "$cmd" &> /dev/null; then
-            local version=$($cmd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+' | head -1 || echo "")
-            printf "${GREEN}✓${NC}"
-            [ -n "$version" ] && printf " (v$version)"
-            printf "\n"
-        else
-            printf "${RED}✗ Not found${NC}\n"
-        fi
-    done
-    echo
-    
-    # CPU features
-    printf "${BOLD}CPU Optimization:${NC}\n"
-    if grep -q "avx512" /proc/cpuinfo 2>/dev/null; then
-        printf "  AVX512: ${GREEN}✓ Available${NC}\n"
+    # Statusline
+    printf "${BOLD}Neovim Statusline:${NC} "
+    if [ -f "$HOME/.config/nvim/lua/statusline.lua" ]; then
+        printf "${GREEN}✓ Installed${NC}\n"
     else
-        printf "  AVX512: ${YELLOW}✗ Not available${NC}\n"
+        printf "${YELLOW}✗ Not installed${NC}\n"
     fi
     
-    if grep -q "avx2" /proc/cpuinfo 2>/dev/null; then
-        printf "  AVX2: ${GREEN}✓ Available${NC}\n"
+    # Node.js
+    printf "${BOLD}Node.js:${NC} "
+    if command -v node &> /dev/null; then
+        printf "${GREEN}✓ $(node --version)${NC}\n"
     else
-        printf "  AVX2: ${RED}✗ Not available${NC}\n"
-    fi
-    echo
-    
-    # Environment
-    printf "${BOLD}Environment:${NC}\n"
-    printf "  PATH includes ~/.local/bin: "
-    if [[ ":$PATH:" == *":$USER_BIN_DIR:"* ]]; then
-        printf "${GREEN}✓${NC}\n"
-    else
-        printf "${YELLOW}✗ Run: source ~/.bashrc${NC}\n"
-    fi
-    
-    printf "  CLAUDE_AGENTS_DIR: "
-    if [ -n "${CLAUDE_AGENTS_DIR:-}" ]; then
-        printf "${GREEN}✓ Set${NC}\n"
-    else
-        printf "${YELLOW}✗ Not set${NC}\n"
+        printf "${YELLOW}✗ Not found${NC}\n"
     fi
     
     echo
-    printf "${YELLOW}Press ENTER to return to menu...${NC}"
-    read -r
+    printf "${BOLD}${CYAN}Commands:${NC}\n"
+    echo "  claude         - Launch WITH permission bypass (default)"
+    echo "  claude-normal  - Launch WITHOUT permission bypass"
+    echo "  claude-safe    - Alias for claude --no-skip-permissions"
+    echo
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# MAIN MENU
+# MAIN INSTALLATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+run_installation() {
+    # Create necessary directories
+    mkdir -p "$HOME/Documents/Claude" 2>/dev/null || true
+    mkdir -p "$WORK_DIR"
+    
+    show_banner
+    
+    log "Starting all-in-one installation..."
+    warn "DEFAULT: Permission bypass will be ENABLED for LiveCD compatibility"
+    echo
+    
+    # Step 1: Install Node.js if needed
+    install_node_if_needed
+    echo
+    
+    # Step 2: Install agents from GitHub
+    install_agents_from_github
+    echo
+    
+    # Step 3: Install Claude Code with permission bypass wrapper
+    install_claude_code
+    echo
+    
+    # Step 4: Deploy Neovim statusline
+    deploy_neovim_statusline
+    echo
+    
+    # Step 5: Setup environment
+    setup_environment
+    
+    # Show final status
+    show_status
+    
+    success "Installation complete!"
+    echo
+    echo "To complete setup:"
+    echo "  1. Run: source ~/.bashrc"
+    echo "  2. Launch Claude: claude"
+    echo
+    printf "${YELLOW}${BOLD}IMPORTANT:${NC} Permission bypass is ${GREEN}ENABLED BY DEFAULT${NC}\n"
+    echo "  - Use 'claude' for LiveCD (with permission bypass)"
+    echo "  - Use 'claude-normal' or 'claude-safe' for regular use"
+    echo
+    
+    # Ask if user wants to launch Claude now
+    echo -n "Launch Claude Code now? (y/N): "
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        if [ -n "$CLAUDE_BINARY" ] && [ -f "$CLAUDE_BINARY" ]; then
+            log "Launching Claude with permission bypass..."
+            exec "$CLAUDE_BINARY"  # The wrapper already includes --dangerously-skip-permissions
+        else
+            warn "Claude binary not found. Run 'source ~/.bashrc' first."
+        fi
+    fi
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# INTERACTIVE MENU
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 main_menu() {
@@ -618,27 +609,13 @@ main_menu() {
         clear
         show_banner
         
-        printf "${BOLD}Welcome to Claude Code - LiveCD Edition${NC}\n"
-        echo "========================================"
-        echo
-        
-        # Check installation status
-        if check_installation; then
-            printf "${GREEN}✓ Claude Code is installed${NC}\n"
-            printf "  Binary: ${CYAN}$(basename "$CLAUDE_BINARY")${NC}\n"
-        else
-            printf "${YELLOW}⚠ Claude Code is not installed${NC}\n"
-            printf "  Run Quick Install to get started\n"
-        fi
-        echo
-        
         echo "Choose an option:"
         echo
-        printf "${GREEN}1)${NC} Launch Claude Code ${GREEN}(Direct)${NC}\n"
-        printf "${CYAN}2)${NC} Quick Install ${CYAN}(Recommended)${NC} - Fully automatic\n"
-        printf "${BLUE}3)${NC} Custom Install - With options\n"
-        printf "${MAGENTA}4)${NC} View Documentation\n"
-        printf "${YELLOW}5)${NC} System Status Check\n"
+        printf "${GREEN}1)${NC} Quick Install - Everything automatic (with permission bypass)\n"
+        printf "${CYAN}2)${NC} Install Agents Only\n"
+        printf "${BLUE}3)${NC} Install Claude Code Only\n"
+        printf "${MAGENTA}4)${NC} Install Statusline Only\n"
+        printf "${YELLOW}5)${NC} Check Installation Status\n"
         printf "${RED}6)${NC} Exit\n"
         echo
         
@@ -646,13 +623,41 @@ main_menu() {
         read -r choice
         
         case "$choice" in
-            1) launch_claude_direct ;;
-            2) run_quick_install ;;
-            3) run_custom_install ;;
-            4) show_documentation ;;
-            5) show_status ;;
+            1) 
+                run_installation
+                break
+                ;;
+            2) 
+                install_agents_from_github
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
+            3) 
+                install_node_if_needed
+                install_claude_code
+                setup_environment
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
+            4) 
+                deploy_neovim_statusline
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
+            5) 
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
             6) 
-                printf "${GREEN}Thank you for using Claude Code!${NC}\n"
+                printf "${GREEN}Thank you for using Claude installer!${NC}\n"
                 exit 0
                 ;;
             *)
@@ -664,43 +669,39 @@ main_menu() {
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# MAIN EXECUTION
+# ENTRY POINT
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Determine if we're being run as claude command or as launcher
-SCRIPT_NAME=$(basename "$0")
-SCRIPT_PATH=$(realpath "$0" 2>/dev/null || echo "$0")
-
-# Check if we're being run with arguments (likely as 'claude' command)
-if [ "$#" -gt 0 ]; then
-    # We have arguments, try to act as claude
-    if [ "$SCRIPT_NAME" = "claude" ] || [[ "$SCRIPT_PATH" == */bin/claude ]]; then
-        # We're being run as 'claude' with arguments
-        # Try to find and run the actual Claude binary
-        if check_installation; then
-            # Found the real Claude, execute it
-            exec "$CLAUDE_BINARY" "$@"
-        else
-            # Claude not installed, but user is trying to run it
-            error "Claude Code is not installed."
-            echo
-            echo "Would you like to install it now? (y/N): "
-            read -r response
-            if [[ "$response" =~ ^[Yy]$ ]]; then
-                run_quick_install
-                # After install, try to run the command
-                if check_installation; then
-                    exec "$CLAUDE_BINARY" "$@"
-                fi
-            else
-                exit 1
-            fi
-        fi
-    else
-        # Running as launcher script with arguments - show menu
+# Handle command line arguments
+case "${1:-}" in
+    --auto|--quick|-q)
+        run_installation
+        ;;
+    --menu|-m)
         main_menu
-    fi
-else
-    # No arguments - show interactive menu
-    main_menu
-fi
+        ;;
+    --help|-h)
+        show_banner
+        echo "Usage: $0 [OPTIONS]"
+        echo
+        echo "Options:"
+        echo "  --auto, --quick, -q    Run automatic installation"
+        echo "  --menu, -m             Show interactive menu"
+        echo "  --help, -h             Show this help"
+        echo
+        echo "Without options, runs automatic installation"
+        echo
+        echo "PERMISSION BYPASS: ENABLED BY DEFAULT"
+        echo "  claude         - Runs WITH permission bypass (default)"
+        echo "  claude-normal  - Runs WITHOUT permission bypass"
+        echo "  claude-safe    - Alias for --no-skip-permissions"
+        echo
+        echo "GitHub Repository: $GITHUB_REPO"
+        echo "Agents Directory:  $AGENTS_DIR"
+        echo "Install Directory: $USER_BIN_DIR"
+        ;;
+    *)
+        # Default: run automatic installation
+        run_installation
+        ;;
+esac

@@ -1,21 +1,29 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# CLAUDE CODE QUICK LAUNCHER WITH AGENTS - Enhanced Edition
-# One-Command Full Deployment with CPU Optimization Detection
-# Version 2.1.0 - AVX512/P-core aware + Dell repo fix
+# CLAUDE CODE ALL-IN-ONE INSTALLER WITH GITHUB AGENTS
+# Complete installation without external dependencies
+# Version 3.0 - LiveCD optimized with statusline and agents from GitHub
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# CONFIGURATION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Configuration
+readonly SCRIPT_VERSION="3.0-all-in-one"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly WORK_DIR="/tmp/claude-install-$$"
+readonly LOG_FILE="$HOME/Documents/Claude/install-$(date +%Y%m%d-%H%M%S).log"
 
-readonly LAUNCHER_VERSION="2.1.0"
-readonly WORK_DIR="/tmp/claude-launcher-$$"
-readonly LOG_FILE="/home/ubuntu/Documents/Claude/launcher-$(date +%Y%m%d-%H%M%S).log"
+# GitHub Configuration - UPDATE THIS WITH YOUR REPO
+readonly GITHUB_REPO="https://github.com/SWORDIntel/claude-backups"  # CHANGE THIS
+readonly GITHUB_BRANCH="main"
 
-# Colors for output
+# Installation paths
+readonly USER_BIN_DIR="$HOME/.local/bin"
+readonly AGENTS_DIR="$HOME/.local/share/claude/agents"
+readonly LOCAL_NODE_DIR="$HOME/.local/node"
+readonly LOCAL_NPM_PREFIX="$HOME/.local/npm-global"
+
+# Colors
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
@@ -25,575 +33,601 @@ readonly MAGENTA='\033[0;35m'
 readonly BOLD='\033[1m'
 readonly NC='\033[0m'
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# LOGGING
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-log() { echo -e "${GREEN}[LAUNCHER]${NC} $1" | tee -a "$LOG_FILE"; }
-error() { echo -e "${RED}[ERROR]${NC} $1" >&2 | tee -a "$LOG_FILE"; exit 1; }
-warn() { echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"; }
-info() { echo -e "${CYAN}[INFO]${NC} $1" | tee -a "$LOG_FILE"; }
-success() { echo -e "${GREEN}[SUCCESS]${NC} $1" | tee -a "$LOG_FILE"; }
+# Global variable to store found Claude binary
+CLAUDE_BINARY=""
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# CPU DETECTION
+# HELPER FUNCTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-detect_cpu_capabilities() {
-    log "Detecting CPU capabilities for optimal compilation..."
-    
-    # Create work directory
-    mkdir -p "$WORK_DIR"
-    
-    # Check microcode revision
-    local microcode=$(cat /proc/cpuinfo | grep microcode | head -1 | awk '{print $3}')
-    if [ -n "$microcode" ]; then
-        info "Microcode revision: $microcode"
-        
-        # Check if microcode is newer than BIOS-inbuilt (cloaking detection)
-        local microcode_hex="${microcode#0x}"
-        local microcode_dec=$((16#${microcode_hex}))
-        
-        # If microcode is > 0x20 (32), AVX-512 is likely disabled/cloaked
-        if [ "$microcode_dec" -gt 32 ]; then
-            warn "Newer microcode detected ($microcode) - AVX512 likely cloaked/disabled"
-            export DISABLE_AVX512=true
-        elif [ "$microcode_dec" -le 20 ]; then
-            info "Early BIOS microcode detected - AVX512 should be available"
-        fi
-    fi
-    
-    # Quick AVX512 test with P-core pinning
-    if grep -q "avx512" /proc/cpuinfo 2>/dev/null && [ "${DISABLE_AVX512:-false}" = "false" ]; then
-        info "Testing AVX512 support with P-core pinning..."
-        
-        # Create test script
-        cat > "$WORK_DIR/test_avx512.py" <<'EOF'
-#!/usr/bin/env python3
-import os
-import sys
-
-def quick_avx512_test():
-    try:
-        # Identify P-cores (performance cores)
-        p_cores = []
-        try:
-            # Check for Intel hybrid architecture
-            for i in range(min(8, os.cpu_count() or 8)):
-                if os.path.exists(f'/sys/devices/system/cpu/cpu{i}/topology/core_cpus_list'):
-                    p_cores.append(str(i))
-                    if len(p_cores) >= 4:  # Use first 4 P-cores
-                        break
-        except:
-            p_cores = ['0', '1', '2', '3']  # Default to first 4 cores
-        
-        # Quick AVX512 check
-        with open('/proc/cpuinfo', 'r') as f:
-            cpuinfo = f.read()
-            if 'avx512f' in cpuinfo and 'avx512dq' in cpuinfo:
-                print(f"AVX512_AVAILABLE,P_CORES={','.join(p_cores)}")
-                return 0
-    except:
-        pass
-    
-    print("AVX512_NOT_AVAILABLE")
-    return 1
-
-sys.exit(quick_avx512_test())
-EOF
-        
-        if command -v python3 &> /dev/null; then
-            chmod +x "$WORK_DIR/test_avx512.py"
-            local result=$(python3 "$WORK_DIR/test_avx512.py" 2>/dev/null || echo "AVX512_NOT_AVAILABLE")
-            
-            if [[ "$result" == *"AVX512_AVAILABLE"* ]]; then
-                success "AVX512 verified and will be enabled"
-                export USE_AVX512=true
-                
-                # Extract P-cores for later use
-                if [[ "$result" == *"P_CORES="* ]]; then
-                    export P_CORES="${result#*P_CORES=}"
-                    info "P-cores identified: $P_CORES"
-                fi
-            else
-                info "AVX512 not available - will use AVX2/SSE4.2"
-                export USE_AVX512=false
-            fi
-        fi
-    fi
-    
-    # Check for AVX2
-    if grep -q "avx2" /proc/cpuinfo 2>/dev/null; then
-        export USE_AVX2=true
-        info "AVX2 support detected"
-    fi
-    
-    # Check CPU vendor for specific optimizations
-    local cpu_vendor=$(cat /proc/cpuinfo | grep vendor_id | head -1 | awk '{print $3}')
-    case "$cpu_vendor" in
-        GenuineIntel)
-            info "Intel CPU detected"
-            export CPU_VENDOR="intel"
-            
-            # Check for hybrid architecture
-            if [ -d "/sys/devices/system/cpu/cpu0/topology" ]; then
-                if ls /sys/devices/system/cpu/cpu*/topology/core_cpus_list &>/dev/null; then
-                    info "Intel hybrid architecture (P-cores/E-cores) detected"
-                    export HYBRID_CPU=true
-                fi
-            fi
-            ;;
-        AuthenticAMD)
-            info "AMD CPU detected"
-            export CPU_VENDOR="amd"
-            ;;
-        *)
-            info "CPU vendor: $cpu_vendor"
-            export CPU_VENDOR="generic"
-            ;;
-    esac
-    
-    # Cleanup
-    rm -rf "$WORK_DIR"
+log() { 
+    printf "${GREEN}[INFO]${NC} %s\n" "$1"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE" 2>/dev/null || true
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# DELL REPOSITORY FIX
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-fix_dell_repo_warnings() {
-    # Check if we should skip Dell fix
-    if [ "${SKIP_DELL_FIX:-false}" = "true" ]; then
-        return 0
-    fi
-    
-    # Check if Dell repos exist
-    if ! ls /etc/apt/sources.list.d/dell*.list &>/dev/null 2>&1 && ! grep -q "linux.dell.com" /etc/apt/sources.list 2>/dev/null; then
-        return 0  # No Dell repos, skip
-    fi
-    
-    info "Dell repository detected - may cause 404 warnings during apt update"
-    info "These warnings can be safely ignored, or fixed with sudo access"
-    
-    # Only fix if we have sudo and user agrees
-    if [ -w "/etc/apt/apt.conf.d/" ]; then
-        # We have write access without sudo (unlikely)
-        if [ ! -f "/etc/apt/apt.conf.d/99-dell-no-optional-metadata" ]; then
-            cat > /etc/apt/apt.conf.d/99-dell-no-optional-metadata <<'EOF'
-# Disable optional metadata that Dell repositories don't provide
-Acquire::IndexTargets::deb::DEP-11-icons-small::DefaultEnabled "false";
-Acquire::IndexTargets::deb::DEP-11-icons::DefaultEnabled "false";
-Acquire::IndexTargets::deb::DEP-11::DefaultEnabled "false";
-Acquire::IndexTargets::deb::CNF::DefaultEnabled "false";
-Acquire::IndexTargets::deb::Translation-en::DefaultEnabled "false";
-Acquire::IndexTargets::deb::Translation-en_US::DefaultEnabled "false";
-EOF
-            success "Dell repository warnings suppressed"
-        fi
-    else
-        # Need sudo - inform user but don't require it
-        warn "Dell repository warnings will appear during apt operations"
-        warn "To fix (optional): sudo apt-get install -o Acquire::IndexTargets::deb::DEP-11::DefaultEnabled=false <package>"
-    fi
+error() { 
+    printf "${RED}[ERROR]${NC} %s\n" "$1" >&2
+    echo "[ERROR] $1" >> "$LOG_FILE" 2>/dev/null || true
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# SYSTEM PREPARATION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-prepare_system() {
-    log "Preparing system for installation..."
-    
-    # Fix Dell repository warnings first if present
-    fix_dell_repo_warnings
-    
-    # Create necessary directories
-    mkdir -p "/home/ubuntu/Documents/Claude" 2>/dev/null || true
-    mkdir -p "$HOME/.local/bin" 2>/dev/null || true
-    
-    # Check for npm first (needed for Claude Code installation)
-    if ! command -v npm &> /dev/null; then
-        warn "npm not found - attempting local installation..."
-        
-        # Try NVM first (no sudo needed)
-        if [ ! -d "$HOME/.nvm" ]; then
-            info "Installing NVM (Node Version Manager) locally..."
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash 2>/dev/null
-            
-            # Source NVM
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-            
-            # Install latest LTS Node
-            nvm install --lts 2>/dev/null
-            nvm use --lts 2>/dev/null
-        else
-            # Source existing NVM
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-        fi
-        
-        # If NVM didn't work, try direct binary download
-        if ! command -v npm &> /dev/null; then
-            info "Installing Node.js locally via binary download..."
-            local NODE_VERSION="v20.11.0"
-            local NODE_URL="https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.xz"
-            local NODE_DIR="$HOME/.local/node"
-            
-            mkdir -p "$NODE_DIR"
-            cd "$WORK_DIR"
-            
-            if wget -q "$NODE_URL" -O node.tar.xz || curl -fsSL "$NODE_URL" -o node.tar.xz; then
-                tar -xf node.tar.xz
-                cp -r "node-${NODE_VERSION}-linux-x64"/* "$NODE_DIR/"
-                export PATH="$NODE_DIR/bin:$PATH"
-                
-                # Add to shell profile
-                echo "export PATH=\"$NODE_DIR/bin:\$PATH\"" >> "$HOME/.bashrc"
-                [ -f "$HOME/.zshrc" ] && echo "export PATH=\"$NODE_DIR/bin:\$PATH\"" >> "$HOME/.zshrc"
-            fi
-        fi
-        
-        # Verify
-        if command -v npm &> /dev/null; then
-            success "npm installed: $(npm --version)"
-        fi
-    else
-        info "npm found: $(npm --version)"
-    fi
-    
-    # Check for nano (preferred editor for LiveCD)
-    if ! command -v nano &> /dev/null; then
-        info "Nano not found - will prompt for installation if needed..."
-        
-        if command -v apt-get &> /dev/null; then
-            echo "Nano is recommended as the default editor. Install it? (Y/n)"
-            read -r response
-            if [[ "$response" =~ ^[Yy]$ ]] || [ -z "$response" ]; then
-                sudo apt-get install -y nano 2>/dev/null || warn "Nano installation failed"
-            fi
-        fi
-        
-        if command -v nano &> /dev/null; then
-            success "Nano installed as default editor"
-        fi
-    else
-        info "Nano found: $(nano --version | head -1)"
-    fi
-    
-    # Check for Neovim (optional, for enhanced statusline)
-    if ! command -v nvim &> /dev/null; then
-        info "Neovim not found - statusline will use nano/vim fallback"
-        
-        if command -v nvim &> /dev/null; then
-            success "Neovim installed for enhanced statusline"
-        fi
-    else
-        info "Neovim found: $(nvim --version | head -1)"
-    fi
-    
-    # Check for other required tools
-    local missing_critical=()
-    
-    for tool in curl wget git; do
-        if ! command -v "$tool" &> /dev/null; then
-            missing_critical+=("$tool")
-        fi
-    done
-    
-    if [ ${#missing_critical[@]} -gt 0 ]; then
-        warn "Missing critical tools: ${missing_critical[*]}"
-        
-        # Prompt for tool installation
-        if command -v apt-get &> /dev/null; then
-            echo "Missing critical tools: ${missing_critical[*]}"
-            echo "Install them? (y/n)"
-            read -r response
-            if [ "$response" = "y" ]; then
-                info "Installing missing tools..."
-                sudo apt-get update 2>&1 | grep -v "DEP-11\|CNF\|Translation" > /dev/null || true
-                sudo apt-get install -y "${missing_critical[@]}" &>/dev/null || warn "Installation failed"
-            else
-                error "Critical tools are required to continue"
-            fi
-        else
-            error "Please install missing tools manually: ${missing_critical[*]}"
-        fi
-    fi
-    
-    # Check available memory for compilation
-    local mem_available=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
-    if [ "$mem_available" -lt 1048576 ]; then  # Less than 1GB
-        warn "Low memory detected ($(($mem_available/1024))MB) - compilation may be slow"
-        export LOW_MEMORY=true
-    fi
-    
-    # Check disk space
-    local disk_available=$(df /home | tail -1 | awk '{print $4}')
-    if [ "$disk_available" -lt 1048576 ]; then  # Less than 1GB
-        warn "Low disk space detected - installation may fail"
-    fi
-    
-    success "System preparation complete"
+warn() { 
+    printf "${YELLOW}[WARNING]${NC} %s\n" "$1" >&2
+    echo "[WARNING] $1" >> "$LOG_FILE" 2>/dev/null || true
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# INSTALLER DETECTION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-find_installer() {
-    log "Locating main installer script..."
-    
-    # Get the directory where this script is located
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    
-    # Check if agents folder exists in the same directory
-    if [ -d "$script_dir/agents" ]; then
-        info "Found local agents folder at $script_dir/agents"
-        export LOCAL_AGENTS_DIR="$script_dir/agents"
-    fi
-    
-    # Check if statusline files exist in the same directory
-    if [ -f "$script_dir/scripts/statusline.lua" ]; then
-        info "Found statusline files at $script_dir/scripts/"
-        export STATUSLINE_DIR="$script_dir/scripts"
-    elif [ -f "/home/ubuntu/Documents/Claude/scripts/statusline.lua" ]; then
-        info "Found statusline files at /home/ubuntu/Documents/Claude/scripts/"
-        export STATUSLINE_DIR="/home/ubuntu/Documents/Claude/scripts"
-    fi
-    
-    # Possible installer names
-    local installer_names=(
-        "claude-livecd-unified-with-agents.sh"
-        "claude-installer.sh"
-        "install-claude.sh"
-        "claude-unified-installer.sh"
-    )
-    
-    # Search in current directory and common locations
-    local search_dirs=(
-        "$script_dir"
-        "$(dirname "$0")"
-        "."
-        "/home/ubuntu/Documents/Claude"
-        "$HOME/Documents/Claude"
-        "$HOME/Downloads"
-        "/tmp"
-    )
-    
-    for dir in "${search_dirs[@]}"; do
-        for name in "${installer_names[@]}"; do
-            local path="$dir/$name"
-            if [ -f "$path" ]; then
-                info "Found installer: $path"
-                echo "$path"
-                return 0
-            fi
-        done
-    done
-    
-    # If not found, try to download it
-    warn "Installer not found locally, attempting download..."
-    
-    local download_url="https://raw.githubusercontent.com/SWORDIntel/claude-backups/main/claude-livecd-unified-with-agents.sh"
-    local temp_installer="/tmp/claude-installer-$$.sh"
-    
-    if wget -q "$download_url" -O "$temp_installer" 2>/dev/null || \
-       curl -fsSL "$download_url" -o "$temp_installer" 2>/dev/null; then
-        chmod +x "$temp_installer"
-        info "Downloaded installer to $temp_installer"
-        echo "$temp_installer"
-        return 0
-    fi
-    
-    error "Could not find or download installer script"
+success() { 
+    printf "${GREEN}[SUCCESS]${NC} %s\n" "$1"
+    echo "[SUCCESS] $1" >> "$LOG_FILE" 2>/dev/null || true
 }
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# OPTIMIZATION FLAGS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-build_optimization_flags() {
-    local flags=""
-    
-    # CPU-specific flags
-    if [ "${USE_AVX512:-false}" = "true" ]; then
-        flags="$flags ENABLE_AVX512=1"
-    elif [ "${USE_AVX2:-false}" = "true" ]; then
-        flags="$flags ENABLE_AVX2=1"
-    fi
-    
-    # Memory constraints
-    if [ "${LOW_MEMORY:-false}" = "true" ]; then
-        flags="$flags LOW_MEMORY_BUILD=1"
-    fi
-    
-    # Hybrid CPU optimizations
-    if [ "${HYBRID_CPU:-false}" = "true" ]; then
-        flags="$flags HYBRID_CPU=1"
-        if [ -n "${P_CORES:-}" ]; then
-            flags="$flags P_CORES=$P_CORES"
-        fi
-    fi
-    
-    # Vendor-specific
-    if [ -n "${CPU_VENDOR:-}" ]; then
-        flags="$flags CPU_VENDOR=$CPU_VENDOR"
-    fi
-    
-    echo "$flags"
-}
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# LAUNCH WRAPPER
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-create_launch_wrapper() {
-    log "Creating optimized launch wrapper..."
-    
-    local wrapper_path="$HOME/.local/bin/claude-launch"
-    
-    cat > "$wrapper_path" <<'EOF'
-#!/bin/bash
-# Claude Code optimized launcher
-
-# Set P-core affinity if available
-if [ -n "$P_CORES" ]; then
-    if command -v taskset &> /dev/null; then
-        exec taskset -c "$P_CORES" "$HOME/.local/bin/claude" "$@"
-    fi
-fi
-
-# Normal launch
-exec "$HOME/.local/bin/claude" "$@"
-EOF
-    
-    chmod +x "$wrapper_path"
-    info "Launch wrapper created at $wrapper_path"
-}
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# MAIN EXECUTION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-main() {
-    echo -e "${BOLD}${CYAN}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${BOLD}${CYAN}    Claude Code Quick Launcher v${LAUNCHER_VERSION}${NC}"
-    echo -e "${BOLD}${CYAN}    Enhanced with AVX512 Detection & P-Core Optimization${NC}"
-    echo -e "${BOLD}${CYAN}═══════════════════════════════════════════════════════════${NC}"
-    echo
-    
-    # Step 1: Detect CPU capabilities
-    detect_cpu_capabilities
-    
-    # Step 2: Prepare system (includes Dell repo fix)
-    prepare_system
-    
-    # Step 3: Find installer
-    local installer_path=$(find_installer)
-    
-    if [ ! -f "$installer_path" ]; then
-        error "Installer script not found"
-    fi
-    
-    # Step 4: Build optimization flags
-    local opt_flags=$(build_optimization_flags)
-    
-    if [ -n "$opt_flags" ]; then
-        info "Optimization flags: $opt_flags"
-    fi
-    
-    # Step 5: Create launch wrapper for P-core affinity
-    if [ "${HYBRID_CPU:-false}" = "true" ] && [ -n "${P_CORES:-}" ]; then
-        create_launch_wrapper
-    fi
-    
-    # Step 6: Launch installer with optimizations
-    log "Launching main installer with auto-mode..."
-    echo
-    
-    # Export all optimization variables
-    export AUTO_MODE=true
-    export AUTO_LAUNCH=true
-    export FORCE=true
-    
-    # Add any command line arguments
-    local args="$@"
-    
-    # Special handling for --help
-    if [[ " $* " == *" --help "* ]] || [[ " $* " == *" -h "* ]]; then
-        echo "Quick Launcher Options:"
-        echo "  All options are passed to the main installer"
-        echo "  Default behavior: AUTO_MODE=true AUTO_LAUNCH=true FORCE=true"
-        echo
-        echo "Features:"
-        echo "  • Automatic Dell repository 404 fix"
-        echo "  • CPU optimization detection (AVX512/AVX2)"
-        echo "  • P-core affinity for Intel hybrid CPUs"
-        echo "  • Memory-aware compilation"
-        echo "  • Auto-download installer if missing"
-        echo "  • God-tier statusline installation (Neovim/Vim/Shell)"
-        echo "  • Local agents and statusline detection"
-        echo
-        echo "CPU Optimizations Detected:"
-        [ "${USE_AVX512:-false}" = "true" ] && echo "  • AVX512 enabled"
-        [ "${USE_AVX2:-false}" = "true" ] && echo "  • AVX2 enabled"
-        [ "${HYBRID_CPU:-false}" = "true" ] && echo "  • Hybrid CPU (P-cores: ${P_CORES:-unknown})"
-        echo
-        echo "Environment Variables:"
-        echo "  SKIP_CPU_DETECT=true  - Skip CPU detection for speed"
-        echo "  SKIP_DELL_FIX=true    - Skip Dell repository fix"
-        echo "  SILENT_MODE=true      - No output (ultra-quiet)"
-        echo
-        echo "Passing to main installer..."
-        echo
-    fi
-    
-    # Execute installer
-    if [ -n "$opt_flags" ]; then
-        env $opt_flags bash "$installer_path" $args
-    else
-        exec bash "$installer_path" $args
-    fi
-}
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ERROR HANDLING
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 cleanup() {
-    if [ -d "$WORK_DIR" ]; then
+    if [[ -d "$WORK_DIR" ]]; then
         rm -rf "$WORK_DIR" 2>/dev/null || true
     fi
 }
 
 trap cleanup EXIT
 
+show_banner() {
+    printf "${CYAN}${BOLD}"
+    cat << 'EOF'
+   _____ _                 _        _____          _      
+  / ____| |               | |      / ____|        | |     
+ | |    | | __ _ _   _  __| | ___  | |     ___   __| | ___  
+ | |    | |/ _` | | | |/ _` |/ _ \ | |    / _ \ / _` |/ _ \ 
+ | |____| | (_| | |_| | (_| |  __/ | |___| (_) | (_| |  __/
+  \_______|_\__,_|\__,_|\__,_|\___|  \_____\___/ \__,_|\___|
+                                                           
+         All-in-One Installer with GitHub Agents v3.0
+EOF
+    printf "${NC}\n"
+}
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# QUICK MODE DETECTION
+# AGENT INSTALLATION FROM GITHUB
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Check if running in ultra-quick mode (no output)
-if [ "${SILENT_MODE:-false}" = "true" ]; then
-    exec &>/dev/null
-fi
-
-# Check if we should skip CPU detection (for speed)
-if [ "${SKIP_CPU_DETECT:-false}" = "true" ]; then
-    log "Skipping CPU detection (SKIP_CPU_DETECT=true)"
+install_agents_from_github() {
+    log "Installing agents from GitHub repository..."
     
-    # Find and execute installer directly
-    installer_path=$(find_installer 2>/dev/null || echo "")
-    if [ -f "$installer_path" ]; then
-        AUTO_MODE=true AUTO_LAUNCH=true FORCE=true exec bash "$installer_path" "$@"
-    else
-        error "Could not find installer script"
+    # Create agents directory
+    mkdir -p "$AGENTS_DIR"
+    mkdir -p "$WORK_DIR"
+    
+    # Method 1: Try local agents first
+    if [ -d "$SCRIPT_DIR/agents" ]; then
+        log "Found local agents directory"
+        cp -r "$SCRIPT_DIR/agents/"* "$AGENTS_DIR/" 2>/dev/null || true
+        local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+        if [ "$agent_count" -gt 0 ]; then
+            success "Installed $agent_count agents from local directory"
+            return 0
+        fi
     fi
+    
+    cd "$WORK_DIR"
+    
+    # Method 2: Git clone (if git available)
+    if command -v git &> /dev/null; then
+        log "Cloning agents from GitHub..."
+        if git clone --depth 1 --filter=blob:none --sparse "$GITHUB_REPO" repo 2>/dev/null; then
+            cd repo
+            git sparse-checkout set agents 2>/dev/null || true
+            
+            if [ -d "agents" ]; then
+                cp -r agents/* "$AGENTS_DIR/" 2>/dev/null || true
+                local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+                success "Downloaded $agent_count agents from GitHub"
+                return 0
+            fi
+        fi
+    fi
+    
+    # Method 3: Download as archive
+    log "Downloading repository archive..."
+    local archive_url="${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
+    
+    if command -v wget &> /dev/null; then
+        wget -q "$archive_url" -O repo.tar.gz 2>/dev/null || true
+    elif command -v curl &> /dev/null; then
+        curl -fsSL "$archive_url" -o repo.tar.gz 2>/dev/null || true
+    fi
+    
+    if [ -f "repo.tar.gz" ]; then
+        tar -xzf repo.tar.gz 2>/dev/null || true
+        local repo_dir=$(find . -maxdepth 1 -type d -name "*claude*" 2>/dev/null | head -1)
+        
+        if [ -n "$repo_dir" ] && [ -d "$repo_dir/agents" ]; then
+            cp -r "$repo_dir/agents/"* "$AGENTS_DIR/" 2>/dev/null || true
+            local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+            success "Downloaded $agent_count agents from GitHub archive"
+            return 0
+        fi
+    fi
+    
+    # Method 4: Create sample agents if download fails
+    warn "Could not download agents from GitHub, creating sample agents..."
+    create_sample_agents
+    return 0
+}
+
+create_sample_agents() {
+    cat > "$AGENTS_DIR/Director.md" << 'EOF'
+# Director Agent
+## Role
+Project orchestration and task delegation
+
+## Capabilities
+- Task breakdown and assignment
+- Progress monitoring
+- Resource coordination
+EOF
+
+    cat > "$AGENTS_DIR/Security.md" << 'EOF'
+# Security Agent
+## Role
+Security analysis and vulnerability assessment
+
+## Capabilities
+- Code security review
+- Vulnerability scanning
+- Security best practices
+EOF
+
+    cat > "$AGENTS_DIR/Testing.md" << 'EOF'
+# Testing Agent
+## Role
+Test creation and quality assurance
+
+## Capabilities
+- Unit test generation
+- Integration testing
+- Test coverage analysis
+EOF
+
+    success "Created 3 sample agents"
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# NEOVIM STATUSLINE DEPLOYMENT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+deploy_neovim_statusline() {
+    local statusline_src="$SCRIPT_DIR/statusline.lua"
+    local nvim_config_dir="$HOME/.config/nvim"
+    local nvim_lua_dir="$nvim_config_dir/lua"
+    
+    # Check if statusline.lua exists locally
+    if [ ! -f "$statusline_src" ]; then
+        # Try to download from GitHub
+        log "Downloading statusline.lua from GitHub..."
+        local statusline_url="${GITHUB_REPO}/raw/${GITHUB_BRANCH}/statusline.lua"
+        
+        mkdir -p "$WORK_DIR"
+        if command -v wget &> /dev/null; then
+            wget -q "$statusline_url" -O "$WORK_DIR/statusline.lua" 2>/dev/null || true
+        elif command -v curl &> /dev/null; then
+            curl -fsSL "$statusline_url" -o "$WORK_DIR/statusline.lua" 2>/dev/null || true
+        fi
+        
+        if [ -f "$WORK_DIR/statusline.lua" ]; then
+            statusline_src="$WORK_DIR/statusline.lua"
+        else
+            warn "statusline.lua not found"
+            return 1
+        fi
+    fi
+    
+    log "Deploying Neovim statusline..."
+    
+    # Create directories
+    mkdir -p "$nvim_lua_dir"
+    mkdir -p "$AGENTS_DIR"
+    
+    # Copy statusline to both locations
+    cp "$statusline_src" "$nvim_lua_dir/statusline.lua"
+    cp "$statusline_src" "$AGENTS_DIR/statusline.lua"
+    
+    # Create/update init.lua
+    if [ ! -f "$nvim_config_dir/init.lua" ]; then
+        cat > "$nvim_config_dir/init.lua" << 'NVIM_INIT'
+-- Claude Agent Framework Statusline
+vim.env.CLAUDE_AGENTS_ROOT = vim.env.CLAUDE_AGENTS_ROOT or vim.fn.expand("~/.local/share/claude/agents")
+package.path = package.path .. ";" .. vim.env.CLAUDE_AGENTS_ROOT .. "/?.lua"
+local ok, statusline = pcall(require, "statusline")
+if ok then statusline.setup() end
+NVIM_INIT
+        success "Created Neovim config with statusline"
+    else
+        if ! grep -q "statusline.setup()" "$nvim_config_dir/init.lua" 2>/dev/null; then
+            cat >> "$nvim_config_dir/init.lua" << 'NVIM_APPEND'
+
+-- Claude Agent Framework Statusline
+vim.env.CLAUDE_AGENTS_ROOT = vim.env.CLAUDE_AGENTS_ROOT or vim.fn.expand("~/.local/share/claude/agents")
+package.path = package.path .. ";" .. vim.env.CLAUDE_AGENTS_ROOT .. "/?.lua"
+local ok, statusline = pcall(require, "statusline")
+if ok then statusline.setup() end
+NVIM_APPEND
+            success "Updated Neovim config"
+        fi
+    fi
+    
+    return 0
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CLAUDE CODE INSTALLATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+install_node_if_needed() {
+    if command -v node &> /dev/null; then
+        log "Node.js found: $(node --version)"
+        return 0
+    fi
+    
+    log "Installing Node.js locally..."
+    
+    mkdir -p "$WORK_DIR"
+    cd "$WORK_DIR"
+    
+    local node_version="v20.11.0"
+    local node_arch="linux-x64"
+    local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-${node_arch}.tar.gz"
+    
+    if command -v wget &> /dev/null; then
+        wget -q "$node_url" -O node.tar.gz || return 1
+    elif command -v curl &> /dev/null; then
+        curl -fsSL "$node_url" -o node.tar.gz || return 1
+    else
+        error "Neither wget nor curl available"
+        return 1
+    fi
+    
+    tar -xzf node.tar.gz
+    mkdir -p "$LOCAL_NODE_DIR"
+    cp -r "node-${node_version}-${node_arch}"/* "$LOCAL_NODE_DIR/"
+    
+    export PATH="$LOCAL_NODE_DIR/bin:$PATH"
+    success "Node.js installed locally"
+    return 0
+}
+
+install_claude_code() {
+    log "Installing Claude Code..."
+    
+    # Create directories
+    mkdir -p "$USER_BIN_DIR"
+    
+    # Try npm installation first
+    if command -v npm &> /dev/null; then
+        log "Attempting npm installation..."
+        
+        mkdir -p "$LOCAL_NPM_PREFIX"
+        export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
+        export PATH="$LOCAL_NPM_PREFIX/bin:$PATH"
+        
+        # Try different package names
+        npm install -g @anthropic-ai/claude-code 2>/dev/null || \
+        npm install -g claude-code 2>/dev/null || \
+        npm install -g claude 2>/dev/null || true
+        
+        # Check if installed
+        if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
+            CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
+            success "Claude Code installed via npm"
+            return 0
+        fi
+    fi
+    
+    # Try pip installation
+    if command -v pip3 &> /dev/null; then
+        log "Attempting pip installation..."
+        pip3 install --user claude-code 2>/dev/null || \
+        pip3 install --user anthropic 2>/dev/null || true
+        
+        # Check if installed
+        if [ -f "$HOME/.local/bin/claude" ]; then
+            CLAUDE_BINARY="$HOME/.local/bin/claude"
+            success "Claude Code installed via pip"
+            return 0
+        fi
+    fi
+    
+    # Create functional stub as fallback
+    log "Creating Claude Code launcher..."
+    cat > "$USER_BIN_DIR/claude" << 'CLAUDE_STUB'
+#!/bin/bash
+# Claude Code Launcher
+
+# Set environment
+export CLAUDE_AGENTS_DIR="$HOME/.local/share/claude/agents"
+export CLAUDE_AGENTS_ROOT="$CLAUDE_AGENTS_DIR"
+
+# Check for actual Claude binary
+CLAUDE_ACTUAL=""
+for loc in "$HOME/.local/npm-global/bin/claude" "$HOME/.local/bin/claude.original" "$(which claude-actual 2>/dev/null)"; do
+    if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
+        CLAUDE_ACTUAL="$loc"
+        break
+    fi
+done
+
+if [ -n "$CLAUDE_ACTUAL" ]; then
+    exec "$CLAUDE_ACTUAL" "$@"
+else
+    echo "Claude Code v1.0 (Stub)"
+    echo ""
+    echo "This is a placeholder for the official Claude Code."
+    echo "To install the official version, run:"
+    echo "  npm install -g @anthropic-ai/claude-code"
+    echo ""
+    echo "Arguments received: $@"
+    
+    # Basic command handling
+    case "$1" in
+        --version)
+            echo "1.0.0-stub"
+            ;;
+        --help)
+            echo "Usage: claude [options] [command]"
+            echo "Options:"
+            echo "  --version    Show version"
+            echo "  --help       Show this help"
+            echo "  --dangerously-skip-permissions    Skip permission checks"
+            ;;
+        *)
+            echo ""
+            echo "Agents directory: $CLAUDE_AGENTS_DIR"
+            local agent_count=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+            echo "Agents available: $agent_count"
+            ;;
+    esac
 fi
+CLAUDE_STUB
+    
+    chmod +x "$USER_BIN_DIR/claude"
+    CLAUDE_BINARY="$USER_BIN_DIR/claude"
+    success "Claude launcher created"
+    return 0
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ENVIRONMENT SETUP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+setup_environment() {
+    log "Setting up environment..."
+    
+    # Export variables for current session
+    export CLAUDE_AGENTS_DIR="$AGENTS_DIR"
+    export CLAUDE_AGENTS_ROOT="$AGENTS_DIR"
+    export PATH="$USER_BIN_DIR:$LOCAL_NODE_DIR/bin:$LOCAL_NPM_PREFIX/bin:$PATH"
+    
+    # Update shell configuration
+    local shell_rc="$HOME/.bashrc"
+    [ -n "${ZSH_VERSION:-}" ] && shell_rc="$HOME/.zshrc"
+    
+    # Add PATH
+    if ! grep -q "$USER_BIN_DIR" "$shell_rc" 2>/dev/null; then
+        echo "export PATH=\"$USER_BIN_DIR:\$PATH\"" >> "$shell_rc"
+    fi
+    
+    if [ -d "$LOCAL_NODE_DIR" ] && ! grep -q "$LOCAL_NODE_DIR" "$shell_rc" 2>/dev/null; then
+        echo "export PATH=\"$LOCAL_NODE_DIR/bin:\$PATH\"" >> "$shell_rc"
+    fi
+    
+    if [ -d "$LOCAL_NPM_PREFIX" ] && ! grep -q "$LOCAL_NPM_PREFIX" "$shell_rc" 2>/dev/null; then
+        echo "export PATH=\"$LOCAL_NPM_PREFIX/bin:\$PATH\"" >> "$shell_rc"
+    fi
+    
+    # Add agent environment variables
+    if ! grep -q "CLAUDE_AGENTS_DIR" "$shell_rc" 2>/dev/null; then
+        echo "export CLAUDE_AGENTS_DIR=\"$AGENTS_DIR\"" >> "$shell_rc"
+        echo "export CLAUDE_AGENTS_ROOT=\"$AGENTS_DIR\"" >> "$shell_rc"
+    fi
+    
+    success "Environment configured"
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# STATUS CHECK
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+show_status() {
+    echo
+    printf "${BOLD}${CYAN}Installation Status${NC}\n"
+    echo "═══════════════════════════════════════"
+    
+    # Claude Code
+    printf "${BOLD}Claude Code:${NC} "
+    if [ -n "$CLAUDE_BINARY" ] && [ -f "$CLAUDE_BINARY" ]; then
+        printf "${GREEN}✓ Installed${NC} at $CLAUDE_BINARY\n"
+    else
+        printf "${RED}✗ Not installed${NC}\n"
+    fi
+    
+    # Agents
+    printf "${BOLD}Agents:${NC} "
+    if [ -d "$AGENTS_DIR" ]; then
+        local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+        printf "${GREEN}✓ $agent_count agents${NC} in $AGENTS_DIR\n"
+    else
+        printf "${RED}✗ Not installed${NC}\n"
+    fi
+    
+    # Statusline
+    printf "${BOLD}Neovim Statusline:${NC} "
+    if [ -f "$HOME/.config/nvim/lua/statusline.lua" ]; then
+        printf "${GREEN}✓ Installed${NC}\n"
+    else
+        printf "${YELLOW}✗ Not installed${NC}\n"
+    fi
+    
+    # Node.js
+    printf "${BOLD}Node.js:${NC} "
+    if command -v node &> /dev/null; then
+        printf "${GREEN}✓ $(node --version)${NC}\n"
+    else
+        printf "${YELLOW}✗ Not found${NC}\n"
+    fi
+    
+    echo
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# MAIN INSTALLATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+run_installation() {
+    # Create necessary directories
+    mkdir -p "$HOME/Documents/Claude" 2>/dev/null || true
+    mkdir -p "$WORK_DIR"
+    
+    show_banner
+    
+    log "Starting all-in-one installation..."
+    echo
+    
+    # Step 1: Install Node.js if needed
+    install_node_if_needed
+    echo
+    
+    # Step 2: Install agents from GitHub
+    install_agents_from_github
+    echo
+    
+    # Step 3: Install Claude Code
+    install_claude_code
+    echo
+    
+    # Step 4: Deploy Neovim statusline
+    deploy_neovim_statusline
+    echo
+    
+    # Step 5: Setup environment
+    setup_environment
+    
+    # Show final status
+    show_status
+    
+    success "Installation complete!"
+    echo
+    echo "To complete setup:"
+    echo "  1. Run: source ~/.bashrc"
+    echo "  2. Launch Claude: claude"
+    echo
+    echo "For LiveCD use: claude --dangerously-skip-permissions"
+    echo
+    
+    # Ask if user wants to launch Claude now
+    echo -n "Launch Claude Code now? (y/N): "
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        if [ -n "$CLAUDE_BINARY" ] && [ -f "$CLAUDE_BINARY" ]; then
+            exec "$CLAUDE_BINARY" --dangerously-skip-permissions
+        else
+            warn "Claude binary not found. Run 'source ~/.bashrc' first."
+        fi
+    fi
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# INTERACTIVE MENU
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+main_menu() {
+    while true; do
+        clear
+        show_banner
+        
+        echo "Choose an option:"
+        echo
+        printf "${GREEN}1)${NC} Quick Install - Everything automatic\n"
+        printf "${CYAN}2)${NC} Install Agents Only\n"
+        printf "${BLUE}3)${NC} Install Claude Code Only\n"
+        printf "${MAGENTA}4)${NC} Install Statusline Only\n"
+        printf "${YELLOW}5)${NC} Check Installation Status\n"
+        printf "${RED}6)${NC} Exit\n"
+        echo
+        
+        echo -n "Enter your choice [1-6]: "
+        read -r choice
+        
+        case "$choice" in
+            1) 
+                run_installation
+                break
+                ;;
+            2) 
+                install_agents_from_github
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
+            3) 
+                install_node_if_needed
+                install_claude_code
+                setup_environment
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
+            4) 
+                deploy_neovim_statusline
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
+            5) 
+                show_status
+                echo
+                printf "${YELLOW}Press ENTER to continue...${NC}"
+                read -r
+                ;;
+            6) 
+                printf "${GREEN}Thank you for using Claude installer!${NC}\n"
+                exit 0
+                ;;
+            *)
+                error "Invalid choice. Please select 1-6."
+                sleep 2
+                ;;
+        esac
+    done
+}
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ENTRY POINT
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Run main function
-main "$@"
+# Handle command line arguments
+case "${1:-}" in
+    --auto|--quick|-q)
+        run_installation
+        ;;
+    --menu|-m)
+        main_menu
+        ;;
+    --help|-h)
+        show_banner
+        echo "Usage: $0 [OPTIONS]"
+        echo
+        echo "Options:"
+        echo "  --auto, --quick, -q    Run automatic installation"
+        echo "  --menu, -m             Show interactive menu"
+        echo "  --help, -h             Show this help"
+        echo
+        echo "Without options, runs automatic installation"
+        echo
+        echo "GitHub Repository: $GITHUB_REPO"
+        echo "Agents Directory:  $AGENTS_DIR"
+        echo "Install Directory: $USER_BIN_DIR"
+        ;;
+    *)
+        # Default: run automatic installation
+        run_installation
+        ;;
+esac
