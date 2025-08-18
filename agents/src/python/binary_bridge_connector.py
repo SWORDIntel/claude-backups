@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 # Import from local enhanced modules (same directory now)
-from ENHANCED_AGENT_INTEGRATION import AgentMessage, AgentOrchestrator, Priority
+from ENHANCED_AGENT_INTEGRATION import EnhancedAgentMessage, EnhancedAgentOrchestrator, Priority
 
 # ============================================================================
 # CONFIGURATION
@@ -263,7 +263,7 @@ class AgentBridge:
     
     def __init__(self):
         self.binary_bridge = BinaryBridge()
-        self.orchestrator = AgentOrchestrator()
+        self.orchestrator = EnhancedAgentOrchestrator()
         self.status_line = StatusLine()
         self.monitor = Monitor()
         self.voice = VoiceSystem()
@@ -299,16 +299,17 @@ class AgentBridge:
                     self.status_line.task_failed(agent_name, str(e))
         
         # Fallback to orchestrator
-        msg = AgentMessage(
+        msg = EnhancedAgentMessage(
             source_agent="claude_code",
             target_agents=[agent_name],
-            message_type="task",
+            action="task",
             payload={"task": task, **kwargs},
             priority=Priority.HIGH
         )
         
-        # Check if agent exists
-        agent_path = Config.AGENTS_DEFS_DIR / f"{agent_name}.md"
+        # Check if agent exists (use agents directory directly)
+        agents_dir = Path("/home/ubuntu/Documents/Claude/agents")
+        agent_path = agents_dir / f"{agent_name}.md"
         if agent_path.exists():
             self.status_line.task_completed(agent_name)
             return {
@@ -329,9 +330,10 @@ class AgentBridge:
     def list_agents(self) -> List[str]:
         """List all available agents"""
         agents = []
-        for agent_file in Config.AGENTS_DEFS_DIR.glob("*.md"):
+        agents_dir = Path("/home/ubuntu/Documents/Claude/agents")
+        for agent_file in agents_dir.glob("*.md"):
             name = agent_file.stem
-            if name not in ["Template", "README"]:
+            if name not in ["Template", "README", "STATUSLINE_INTEGRATION"]:
                 agents.append(name)
         return sorted(agents)
     
