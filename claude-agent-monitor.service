@@ -1,0 +1,25 @@
+[Unit]
+Description=Claude Agent Auto-Discovery Monitor
+Documentation=https://github.com/SWORDIntel/claude-backups
+After=network.target
+
+[Service]
+Type=simple
+User=%u
+WorkingDirectory=/home/ubuntu/Documents/Claude
+ExecStart=/usr/bin/python3 /home/ubuntu/Documents/Claude/register-custom-agents.py --monitor
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+Environment="HOME=/home/ubuntu"
+
+# Resource limits
+MemoryLimit=256M
+CPUQuota=10%
+
+[Install]
+WantedBy=default.target

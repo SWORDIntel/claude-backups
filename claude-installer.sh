@@ -1374,6 +1374,89 @@ EOF
 # FUZZY MATCHING SYSTEM
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+setup_agent_registration() {
+    if [ "$INSTALL_AGENTS" != true ]; then
+        debug "Skipping agent registration (agents not installed)"
+        return 0
+    fi
+    
+    log "Setting up agent registration with auto-discovery..."
+    
+    # Install the registration script
+    if [ -f "$SCRIPT_DIR/register-custom-agents.py" ]; then
+        cp "$SCRIPT_DIR/register-custom-agents.py" "$USER_BIN_DIR/register-custom-agents"
+        chmod +x "$USER_BIN_DIR/register-custom-agents"
+        
+        # Run initial registration
+        log "Registering all project agents..."
+        python3 "$USER_BIN_DIR/register-custom-agents"
+        
+        # Setup auto-discovery monitoring
+        if command -v systemctl &> /dev/null; then
+            log "Setting up systemd monitoring service..."
+            
+            # Copy service file to user systemd directory
+            mkdir -p ~/.config/systemd/user/
+            if [ -f "$SCRIPT_DIR/claude-agent-monitor.service" ]; then
+                cp "$SCRIPT_DIR/claude-agent-monitor.service" ~/.config/systemd/user/
+                
+                # Enable and start the service
+                systemctl --user daemon-reload
+                systemctl --user enable claude-agent-monitor.service 2>/dev/null || true
+                systemctl --user start claude-agent-monitor.service 2>/dev/null || true
+                
+                if systemctl --user is-active claude-agent-monitor.service &> /dev/null; then
+                    success "Auto-discovery monitor active"
+                    debug "New agents will be automatically registered"
+                else
+                    warn "Monitor service not started (manual start may be required)"
+                fi
+            else
+                warn "Service file not found - using cron fallback"
+            fi
+        fi
+        
+        # Fallback: Add to cron if systemd not available
+        if ! systemctl --user is-active claude-agent-monitor.service &> /dev/null 2>&1; then
+            log "Setting up cron-based auto-discovery..."
+            (crontab -l 2>/dev/null | grep -v "register-custom-agents" ; \
+             echo "*/5 * * * * /usr/bin/python3 $USER_BIN_DIR/register-custom-agents --check && /usr/bin/python3 $USER_BIN_DIR/register-custom-agents >/dev/null 2>&1") | crontab -
+            success "Cron job added for agent auto-discovery"
+        fi
+        
+        # Create convenience commands
+        cat > "$USER_BIN_DIR/claude-agent-register" << 'EOF'
+#!/bin/bash
+# Manual agent registration
+/usr/bin/python3 ~/.local/bin/register-custom-agents "$@"
+EOF
+        chmod +x "$USER_BIN_DIR/claude-agent-register"
+        
+        cat > "$USER_BIN_DIR/claude-agent-monitor" << 'EOF'
+#!/bin/bash
+# Check agent monitor status
+if systemctl --user is-active claude-agent-monitor.service &> /dev/null; then
+    echo "✅ Agent monitor is active"
+    systemctl --user status claude-agent-monitor.service --no-pager
+else
+    echo "❌ Agent monitor is not running"
+    echo "Start with: systemctl --user start claude-agent-monitor.service"
+fi
+EOF
+        chmod +x "$USER_BIN_DIR/claude-agent-monitor"
+        
+        success "Agent registration system installed with auto-discovery"
+        echo "  • Registry: ~/.config/claude/project-agents.json"
+        echo "  • Monitor status: claude-agent-monitor"
+        echo "  • Manual register: claude-agent-register"
+        echo "  • Auto-discovery: Enabled (checks every 30s)"
+        
+    else
+        warn "Registration script not found - skipping"
+        return 1
+    fi
+}
+
 install_fuzzy_matching() {
     if [ "$INSTALL_AGENTS" != true ]; then
         debug "Skipping fuzzy matching (agents not installed)"
@@ -1678,6 +1761,9 @@ run_installation() {
     
     # Step 10: Install fuzzy matching system
     install_fuzzy_matching
+    
+    # Step 11: Setup agent registration with auto-discovery
+    setup_agent_registration
     
     # Show final status
     show_status
