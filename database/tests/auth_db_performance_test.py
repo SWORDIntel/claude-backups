@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 Claude Agent Framework - Authentication Database Performance Test Suite
-Database Agent Production Performance Testing v1.0
+Database Agent Production Performance Testing v2.0 - PostgreSQL 17 Optimized
 
-Tests authentication database performance against targets:
-- Authentication queries: <50ms P95 latency
-- User lookups: <20ms P95 latency  
-- Concurrent connections: >500
-- Throughput: >1000 authentications/second
+Tests authentication database performance against enhanced targets:
+- Authentication queries: <25ms P95 latency (PostgreSQL 17 enhanced)
+- User lookups: <10ms P95 latency (PostgreSQL 17 JSON improvements)
+- Concurrent connections: >750 (PostgreSQL 17 memory optimization)
+- Throughput: >2000 authentications/second (PostgreSQL 17 parallel processing)
 
-Compatible with auth_security.h/.c implementation.
+Compatible with auth_security.h/.c implementation and PostgreSQL 17 features.
 """
 
 import asyncio
@@ -60,9 +60,9 @@ class TestConfig:
     redis_port: int = 6379
     redis_password: str = None
     
-    # Test parameters
-    concurrent_users: int = 1000
-    operations_per_user: int = 10
+    # Test parameters (PostgreSQL 17 enhanced)
+    concurrent_users: int = 1500  # Increased for PostgreSQL 17 memory optimization
+    operations_per_user: int = 15  # More operations per user
     test_duration_seconds: int = 60
 
 class AuthDatabasePerformanceTest:
@@ -85,9 +85,9 @@ class AuthDatabasePerformanceTest:
             user=self.config.db_user,
             password=self.config.db_password,
             database=self.config.db_name,
-            min_size=50,
-            max_size=200,
-            command_timeout=5
+            min_size=100,  # Increased for PostgreSQL 17 enhanced connections
+            max_size=400,   # Increased for PostgreSQL 17 concurrent processing
+            command_timeout=3  # Reduced for PostgreSQL 17 enhanced performance
         )
         
         # Create Redis connection pool

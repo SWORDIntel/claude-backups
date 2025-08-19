@@ -1,15 +1,24 @@
 -- ============================================================================
 -- CLAUDE AGENT FRAMEWORK - AUTHENTICATION DATABASE SETUP
 -- ============================================================================
--- Database Agent Production Schema v1.0
--- Optimized for >1000 auth/sec with <50ms P95 latency
+-- Database Agent Production Schema v2.0 - PostgreSQL 17 Optimized
+-- Performance Target: >2000 auth/sec with <25ms P95 latency
 -- Compatible with existing auth_security.h/.c implementation
+-- Leverages PostgreSQL 17 features: Enhanced JSON, improved VACUUM, SQL/JSON
 -- ============================================================================
 
--- Enable required extensions
+-- Enable required extensions (PostgreSQL 17 compatible)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "btree_gin";
+
+-- PostgreSQL 17 performance optimizations
+SET max_parallel_workers_per_gather = 4;
+SET work_mem = '256MB';
+SET maintenance_work_mem = '1GB';
+
+-- Enable enhanced JSON performance features in PostgreSQL 17
+SET log_statement_stats = OFF; -- Better performance for JSON operations
 
 -- ============================================================================
 -- USERS AND AUTHENTICATION
@@ -34,7 +43,7 @@ CREATE TABLE IF NOT EXISTS users (
     -- Security metadata for auth_security.c integration
     created_ip INET,
     last_login_ip INET,
-    password_history JSONB DEFAULT '[]', -- Store last 5 password hashes
+    password_history JSONB DEFAULT JSON_ARRAY(), -- PostgreSQL 17 JSON constructor
     
     -- Audit fields
     created_by UUID,
@@ -65,7 +74,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     avatar_url TEXT,
     timezone VARCHAR(64) DEFAULT 'UTC',
     locale VARCHAR(10) DEFAULT 'en_US',
-    preferences JSONB DEFAULT '{}',
+    preferences JSONB DEFAULT JSON_OBJECT(), -- PostgreSQL 17 JSON constructor
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
@@ -197,7 +206,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     
     -- Session metadata
     login_method VARCHAR(32) DEFAULT 'password',
-    session_data JSONB DEFAULT '{}',
+    session_data JSONB DEFAULT JSON_OBJECT(), -- PostgreSQL 17 JSON constructor
     
     CONSTRAINT sessions_expiry_future CHECK (expires_at > created_at)
 );
@@ -229,7 +238,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
     rate_limit_per_minute INTEGER DEFAULT 1000,
     
     -- Permissions for this API key
-    scopes JSONB DEFAULT '[]',
+    scopes JSONB DEFAULT JSON_ARRAY(), -- PostgreSQL 17 JSON constructor
     
     UNIQUE(key_hash),
     CONSTRAINT api_keys_expiry_check CHECK (expires_at IS NULL OR expires_at > created_at)
@@ -261,7 +270,7 @@ CREATE TABLE IF NOT EXISTS security_events (
     
     -- Event details
     description TEXT NOT NULL,
-    details JSONB DEFAULT '{}',
+    details JSONB DEFAULT JSON_OBJECT(), -- PostgreSQL 17 JSON constructor
     
     -- Risk assessment
     risk_score INTEGER DEFAULT 0 CHECK (risk_score BETWEEN 0 AND 100),

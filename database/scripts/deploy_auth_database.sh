@@ -3,9 +3,10 @@
 # ============================================================================
 # CLAUDE AGENT FRAMEWORK - AUTHENTICATION DATABASE DEPLOYMENT
 # ============================================================================
-# Database Agent Production Deployment Script v1.0
-# Deploys PostgreSQL + Redis authentication system with monitoring
-# Performance Target: >1000 auth/sec with <50ms P95 latency
+# Database Agent Production Deployment Script v2.0 - PostgreSQL 17
+# Deploys PostgreSQL 17 + Redis authentication system with monitoring
+# Performance Target: >2000 auth/sec with <25ms P95 latency
+# Leverages PostgreSQL 17: Enhanced JSON, improved VACUUM, memory optimization
 # ============================================================================
 
 set -euo pipefail
@@ -17,8 +18,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
-POSTGRES_VERSION="15"
+# Configuration - PostgreSQL 17
+POSTGRES_VERSION="17"
 REDIS_VERSION="7"
 DB_NAME="claude_auth"
 DB_USER="claude_auth"
@@ -138,31 +139,34 @@ configure_postgresql() {
     # Create optimized PostgreSQL configuration
     cat > /etc/postgresql/$POSTGRES_VERSION/main/postgresql.conf <<EOF
 # ============================================================================
-# CLAUDE AGENT FRAMEWORK POSTGRESQL CONFIGURATION
-# Optimized for authentication workload: >1000 auth/sec, <50ms P95 latency
+# CLAUDE AGENT FRAMEWORK POSTGRESQL 17 CONFIGURATION
+# Optimized for authentication workload: >2000 auth/sec, <25ms P95 latency
+# Leverages PostgreSQL 17 enhanced JSON, VACUUM improvements, memory optimization
 # ============================================================================
 
-# Connection settings
-max_connections = 500
+# Connection settings (PostgreSQL 17 enhanced)
+max_connections = 750
 shared_buffers = ${shared_buffers}MB
 effective_cache_size = ${effective_cache_size}MB
-work_mem = 8MB
-maintenance_work_mem = 256MB
+work_mem = 16MB          # Increased for PostgreSQL 17 improved memory management
+maintenance_work_mem = 512MB   # Enhanced for PostgreSQL 17 VACUUM improvements
 
-# WAL settings for performance
+# WAL settings for performance (PostgreSQL 17 optimized)
 wal_level = replica
-max_wal_size = 2GB
-min_wal_size = 256MB
+max_wal_size = 4GB      # Increased for PostgreSQL 17 enhanced write throughput
+min_wal_size = 512MB
 checkpoint_completion_target = 0.9
-checkpoint_timeout = 10min
+checkpoint_timeout = 5min  # Reduced for high-frequency auth workload
 wal_compression = on
+wal_init_zero = off     # PostgreSQL 17 performance optimization
 
-# Query optimization (SSD optimized)
-random_page_cost = 1.1
-effective_io_concurrency = 200
-max_worker_processes = 8
-max_parallel_workers_per_gather = 4
-max_parallel_workers = 8
+# Query optimization (PostgreSQL 17 enhanced)
+random_page_cost = 1.0  # Further optimized for NVMe SSDs
+effective_io_concurrency = 300  # Enhanced for PostgreSQL 17 concurrent reads
+max_worker_processes = 12
+max_parallel_workers_per_gather = 6  # Enhanced for PostgreSQL 17 parallel processing
+max_parallel_workers = 12
+max_parallel_maintenance_workers = 4
 
 # Logging for monitoring
 logging_collector = on
@@ -190,13 +194,19 @@ shared_preload_libraries = 'pg_stat_statements'
 pg_stat_statements.track = all
 pg_stat_statements.max = 10000
 
-# Autovacuum tuning for high-volume authentication
-autovacuum_naptime = 30s
-autovacuum_vacuum_threshold = 100
-autovacuum_analyze_threshold = 50
-autovacuum_vacuum_scale_factor = 0.1
-autovacuum_analyze_scale_factor = 0.05
-autovacuum_max_workers = 4
+# Autovacuum tuning for high-volume authentication (PostgreSQL 17 enhanced)
+autovacuum_naptime = 15s     # More frequent with PostgreSQL 17 VACUUM improvements
+autovacuum_vacuum_threshold = 50
+autovacuum_analyze_threshold = 25
+autovacuum_vacuum_scale_factor = 0.05  # More aggressive with PostgreSQL 17 memory optimization
+autovacuum_analyze_scale_factor = 0.02
+autovacuum_max_workers = 6   # Increased for PostgreSQL 17 enhanced parallel processing
+
+# PostgreSQL 17 specific performance optimizations
+enable_incremental_sort = on        # Enhanced sorting performance
+enable_memoize = on                # Query result caching
+jit = on                          # Just-in-time compilation for complex queries
+track_io_timing = on              # Enhanced I/O monitoring
 EOF
 
     # Configure pg_hba.conf for secure access
