@@ -293,59 +293,412 @@ install_node_if_needed() {
 }
 
 install_claude_code() {
-    log "Installing Claude Code..."
+    log "Installing Claude Code with robust retry mechanisms..."
     
     # Create directories
     mkdir -p "$USER_BIN_DIR"
     
-    # Try npm installation first
-    if command -v npm &> /dev/null; then
-        log "Attempting npm installation..."
+    # Method 1: Advanced NPM installation with retries
+    if attempt_npm_installation; then 
+        create_permission_bypass_wrapper
+        return 0
+    fi
+    
+    # Method 2: Pip installation with retries
+    if attempt_pip_installation; then 
+        create_permission_bypass_wrapper
+        return 0
+    fi
+    
+    # Method 3: Direct download methods
+    if attempt_direct_download; then 
+        create_permission_bypass_wrapper
+        return 0
+    fi
+    
+    # Method 4: GitHub releases download
+    if attempt_github_download; then 
+        create_permission_bypass_wrapper
+        return 0
+    fi
+    
+    # Method 5: Manual installation from source
+    if attempt_source_installation; then 
+        create_permission_bypass_wrapper
+        return 0
+    fi
+    
+    # If all methods fail, create minimal stub (should be rare)
+    log "All installation methods failed - creating minimal stub"
+    create_minimal_stub
+}
+
+# Method 1: NPM with comprehensive retry logic
+attempt_npm_installation() {
+    if ! command -v npm &> /dev/null; then
+        log "NPM not available, skipping NPM installation"
+        return 1
+    fi
+    
+    log "Attempting NPM installation with retries..."
+    
+    mkdir -p "$LOCAL_NPM_PREFIX"
+    export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
+    export PATH="$LOCAL_NPM_PREFIX/bin:$PATH"
+    
+    # Package names to try in order
+    local packages=(
+        "@anthropic-ai/claude-code"
+        "claude-code" 
+        "claude"
+        "@anthropic/claude-code"
+        "anthropic-claude"
+    )
+    
+    # Try each package with multiple retry attempts
+    for package in "${packages[@]}"; do
+        log "Trying package: $package"
         
-        mkdir -p "$LOCAL_NPM_PREFIX"
-        export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
-        export PATH="$LOCAL_NPM_PREFIX/bin:$PATH"
+        for attempt in {1..3}; do
+            log "  Attempt $attempt/3..."
+            
+            # Try with different npm configurations
+            if npm install -g "$package" --no-audit --no-fund --prefer-offline 2>/dev/null || \
+               npm install -g "$package" --no-audit --no-fund 2>/dev/null || \
+               npm install -g "$package" 2>/dev/null; then
+                
+                # Check if actually installed
+                if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
+                    # Move original binary and keep path
+                    mv "$LOCAL_NPM_PREFIX/bin/claude" "$LOCAL_NPM_PREFIX/bin/claude.original"
+                    CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
+                    success "Claude Code installed via npm ($package)"
+                    return 0
+                fi
+            fi
+            
+            # Clear npm cache and try again
+            npm cache clean --force 2>/dev/null || true
+            sleep 2
+        done
+    done
+    
+    # Try alternative npm registries
+    log "Trying alternative npm registries..."
+    for registry in "https://registry.npmjs.org/" "https://registry.yarnpkg.com/"; do
+        log "  Using registry: $registry"
+        if npm install -g @anthropic-ai/claude-code --registry="$registry" 2>/dev/null; then
+            if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
+                mv "$LOCAL_NPM_PREFIX/bin/claude" "$LOCAL_NPM_PREFIX/bin/claude.original"
+                CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
+                success "Claude Code installed via npm (alternative registry)"
+                return 0
+            fi
+        fi
+    done
+    
+    log "NPM installation failed after all attempts"
+    return 1
+}
+
+# Method 2: Pip with comprehensive retry logic  
+attempt_pip_installation() {
+    if ! command -v pip3 &> /dev/null && ! command -v pip &> /dev/null; then
+        log "Pip not available, skipping pip installation"
+        return 1
+    fi
+    
+    log "Attempting pip installation with retries..."
+    
+    # Pip commands to try
+    local pip_commands=("pip3" "pip")
+    
+    # Package names to try
+    local packages=(
+        "claude-code"
+        "anthropic"
+        "claude"
+        "anthropic-claude"
+        "claude-ai"
+    )
+    
+    for pip_cmd in "${pip_commands[@]}"; do
+        if ! command -v "$pip_cmd" &> /dev/null; then continue; fi
         
-        # Try different package names
-        npm install -g @anthropic-ai/claude-code 2>/dev/null || \
-        npm install -g claude-code 2>/dev/null || \
-        npm install -g claude 2>/dev/null || true
+        log "Using $pip_cmd..."
         
-        # Check if installed
-        if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
-            CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
-            success "Claude Code installed via npm"
-            return 0
+        for package in "${packages[@]}"; do
+            log "  Trying package: $package"
+            
+            for attempt in {1..3}; do
+                log "    Attempt $attempt/3..."
+                
+                # Try different pip installation methods
+                if "$pip_cmd" install --user "$package" --no-cache-dir 2>/dev/null || \
+                   "$pip_cmd" install --user "$package" --force-reinstall 2>/dev/null || \
+                   "$pip_cmd" install --user "$package" --upgrade 2>/dev/null || \
+                   "$pip_cmd" install --user "$package" 2>/dev/null; then
+                    
+                    # Check common installation locations
+                    for location in "$HOME/.local/bin/claude" "/usr/local/bin/claude"; do
+                        if [ -f "$location" ] && [ -x "$location" ]; then
+                            mv "$location" "${location}.original"
+                            CLAUDE_BINARY="$location"
+                            success "Claude Code installed via pip ($package)"
+                            return 0
+                        fi
+                    done
+                fi
+                
+                sleep 2
+            done
+        done
+    done
+    
+    log "Pip installation failed after all attempts"
+    return 1
+}
+
+# Method 3: Direct download with retries
+attempt_direct_download() {
+    log "Attempting direct download methods..."
+    
+    # Create work directory
+    local work_dir="$WORK_DIR/claude-download"
+    mkdir -p "$work_dir"
+    cd "$work_dir"
+    
+    # URLs to try for direct download
+    local download_urls=(
+        "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-1.0.77.tgz"
+        "https://files.pythonhosted.org/packages/source/c/claude-code/claude-code-1.0.77.tar.gz"
+        "https://github.com/anthropics/claude-code/releases/download/v1.0.77/claude-code-1.0.77.tar.gz"
+    )
+    
+    for url in "${download_urls[@]}"; do
+        log "  Trying download from: $url"
+        
+        local filename=$(basename "$url")
+        
+        # Try different download methods
+        if command -v curl &> /dev/null; then
+            if curl -L -o "$filename" "$url" 2>/dev/null; then
+                if attempt_manual_install "$filename"; then
+                    success "Claude Code installed via direct download (curl)"
+                    return 0
+                fi
+            fi
+        fi
+        
+        if command -v wget &> /dev/null; then
+            if wget -q "$url" -O "$filename" 2>/dev/null; then
+                if attempt_manual_install "$filename"; then
+                    success "Claude Code installed via direct download (wget)"
+                    return 0
+                fi
+            fi
+        fi
+    done
+    
+    cd - > /dev/null
+    log "Direct download failed"
+    return 1
+}
+
+# Method 4: GitHub releases with retry
+attempt_github_download() {
+    log "Attempting GitHub releases download..."
+    
+    if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
+        log "No download tools available"
+        return 1
+    fi
+    
+    local work_dir="$WORK_DIR/github-download" 
+    mkdir -p "$work_dir"
+    cd "$work_dir"
+    
+    # GitHub API to get latest release
+    local api_url="https://api.github.com/repos/anthropics/claude-code/releases/latest"
+    
+    if command -v curl &> /dev/null; then
+        local latest_info=$(curl -s "$api_url" 2>/dev/null)
+        if [ -n "$latest_info" ]; then
+            # Extract download URL from JSON (basic parsing)
+            local download_url=$(echo "$latest_info" | grep -o '"browser_download_url":[^,]*' | head -1 | cut -d'"' -f4)
+            if [ -n "$download_url" ]; then
+                log "  Found release: $download_url"
+                if curl -L -o "claude-latest.tar.gz" "$download_url" 2>/dev/null; then
+                    if attempt_manual_install "claude-latest.tar.gz"; then
+                        success "Claude Code installed via GitHub releases"
+                        return 0
+                    fi
+                fi
+            fi
         fi
     fi
     
-    # Try pip installation
-    if command -v pip3 &> /dev/null; then
-        log "Attempting pip installation..."
-        pip3 install --user claude-code 2>/dev/null || \
-        pip3 install --user anthropic 2>/dev/null || true
+    cd - > /dev/null
+    log "GitHub download failed"
+    return 1
+}
+
+# Method 5: Source installation with retry
+attempt_source_installation() {
+    log "Attempting source installation..."
+    
+    if ! command -v git &> /dev/null; then
+        log "Git not available for source installation"
+        return 1
+    fi
+    
+    local work_dir="$WORK_DIR/source-install"
+    mkdir -p "$work_dir"
+    cd "$work_dir"
+    
+    # Try cloning Claude Code repository
+    if git clone https://github.com/anthropics/claude-code.git 2>/dev/null; then
+        cd claude-code
         
-        # Check if installed
-        if [ -f "$HOME/.local/bin/claude" ]; then
-            CLAUDE_BINARY="$HOME/.local/bin/claude"
-            success "Claude Code installed via pip"
-            return 0
+        # Try different build methods
+        if [ -f "package.json" ] && command -v npm &> /dev/null; then
+            log "  Building from source with npm..."
+            if npm install 2>/dev/null && npm run build 2>/dev/null; then
+                # Look for built binary
+                for binary_path in "dist/claude" "build/claude" "bin/claude" "claude"; do
+                    if [ -f "$binary_path" ] && [ -x "$binary_path" ]; then
+                        cp "$binary_path" "$USER_BIN_DIR/claude.original"
+                        chmod +x "$USER_BIN_DIR/claude.original"
+                        CLAUDE_BINARY="$USER_BIN_DIR/claude"
+                        success "Claude Code built from source"
+                        return 0
+                    fi
+                done
+            fi
+        fi
+        
+        if [ -f "setup.py" ] && command -v python3 &> /dev/null; then
+            log "  Building from source with Python..."
+            if python3 setup.py install --user 2>/dev/null; then
+                if [ -f "$HOME/.local/bin/claude" ]; then
+                    mv "$HOME/.local/bin/claude" "$HOME/.local/bin/claude.original"
+                    CLAUDE_BINARY="$HOME/.local/bin/claude"
+                    success "Claude Code built from Python source"
+                    return 0
+                fi
+            fi
         fi
     fi
     
-    # Create functional stub as fallback
-    log "Creating Claude Code launcher..."
-    cat > "$USER_BIN_DIR/claude" << 'CLAUDE_STUB'
+    cd - > /dev/null
+    log "Source installation failed"
+    return 1
+}
+
+# Helper function for manual installation from archives
+attempt_manual_install() {
+    local filename="$1"
+    
+    if [ ! -f "$filename" ]; then
+        return 1
+    fi
+    
+    # Extract and install based on file type
+    if [[ "$filename" == *.tgz ]] || [[ "$filename" == *.tar.gz ]]; then
+        if tar -xzf "$filename" 2>/dev/null; then
+            # Look for Claude binary in extracted files
+            local binary=$(find . -name "claude" -type f -executable 2>/dev/null | head -1)
+            if [ -n "$binary" ]; then
+                cp "$binary" "$USER_BIN_DIR/claude.original"
+                chmod +x "$USER_BIN_DIR/claude.original"
+                CLAUDE_BINARY="$USER_BIN_DIR/claude"
+                return 0
+            fi
+            
+            # Look for package.json and try npm install
+            if [ -f "package/package.json" ]; then
+                cd package
+                if command -v npm &> /dev/null && npm install 2>/dev/null; then
+                    local built_binary=$(find . -name "claude" -type f -executable 2>/dev/null | head -1)
+                    if [ -n "$built_binary" ]; then
+                        cp "$built_binary" "$USER_BIN_DIR/claude.original"
+                        chmod +x "$USER_BIN_DIR/claude.original"
+                        CLAUDE_BINARY="$USER_BIN_DIR/claude"
+                        return 0
+                    fi
+                fi
+                cd ..
+            fi
+        fi
+    fi
+    
+    return 1
+}
+
+# Create wrapper with permission bypass for LiveCD
+create_permission_bypass_wrapper() {
+    if [ -z "$CLAUDE_BINARY" ] || [ ! -f "${CLAUDE_BINARY%.original}.original" ] && [ ! -f "${CLAUDE_BINARY}.original" ]; then
+        log "Warning: Claude binary not properly set up for wrapper"
+        return 1
+    fi
+    
+    local wrapper_path="$CLAUDE_BINARY"
+    local original_path="${CLAUDE_BINARY%.original}.original"
+    
+    # Ensure we have the original binary at the right path
+    if [ ! -f "$original_path" ] && [ -f "${CLAUDE_BINARY}.original" ]; then
+        original_path="${CLAUDE_BINARY}.original"
+    fi
+    
+    log "Creating permission bypass wrapper..."
+    cat > "$wrapper_path" << PERMISSION_WRAPPER
 #!/bin/bash
-# Claude Code Launcher
+# Claude Permission Bypass Wrapper (LiveCD Optimized)
+set -euo pipefail
+
+# Configuration
+ORIGINAL_CLAUDE="$original_path"
+PERMISSION_BYPASS_ENABLED=\${CLAUDE_PERMISSION_BYPASS:-true}
+
+# Set environment
+export CLAUDE_AGENTS_DIR="\$HOME/.local/share/claude/agents"
+export CLAUDE_AGENTS_ROOT="\$CLAUDE_AGENTS_DIR"
+
+# Add permission bypass by default for LiveCD
+if [ "\$PERMISSION_BYPASS_ENABLED" = "true" ] && [[ " \$@ " != *" --no-skip-permissions "* ]] && [[ " \$@ " != *" --safe "* ]] && [[ " \$@ " != *" --dangerously-skip-permissions "* ]]; then
+    exec "\$ORIGINAL_CLAUDE" --dangerously-skip-permissions "\$@"
+else
+    # Remove our custom flags if present
+    args=()
+    for arg in "\$@"; do
+        if [ "\$arg" != "--no-skip-permissions" ] && [ "\$arg" != "--safe" ]; then
+            args+=("\$arg")
+        fi
+    done
+    exec "\$ORIGINAL_CLAUDE" "\${args[@]}"
+fi
+PERMISSION_WRAPPER
+    
+    chmod +x "$wrapper_path"
+    success "Permission bypass wrapper created at $wrapper_path"
+    return 0
+}
+
+# Create minimal stub as absolute last resort
+create_minimal_stub() {
+    log "Creating minimal Claude stub as last resort..."
+    cat > "$USER_BIN_DIR/claude" << 'MINIMAL_STUB'
+#!/bin/bash
+# Minimal Claude stub with automatic permission bypass
 
 # Set environment
 export CLAUDE_AGENTS_DIR="$HOME/.local/share/claude/agents"
 export CLAUDE_AGENTS_ROOT="$CLAUDE_AGENTS_DIR"
+PERMISSION_BYPASS_ENABLED=${CLAUDE_PERMISSION_BYPASS:-true}
 
-# Check for actual Claude binary
+# Check for actual Claude binary that might be installed later
 CLAUDE_ACTUAL=""
-for loc in "$HOME/.local/npm-global/bin/claude" "$HOME/.local/bin/claude.original" "$(which claude-actual 2>/dev/null)"; do
+for loc in "$HOME/.local/npm-global/bin/claude.original" "$HOME/.local/bin/claude.original" "$(which claude-actual 2>/dev/null)"; do
     if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
         CLAUDE_ACTUAL="$loc"
         break
@@ -353,41 +706,49 @@ for loc in "$HOME/.local/npm-global/bin/claude" "$HOME/.local/bin/claude.origina
 done
 
 if [ -n "$CLAUDE_ACTUAL" ]; then
-    exec "$CLAUDE_ACTUAL" "$@"
+    # Add permission bypass by default unless disabled
+    if [ "$PERMISSION_BYPASS_ENABLED" = "true" ] && [[ " $@ " != *" --no-skip-permissions "* ]] && [[ " $@ " != *" --safe "* ]]; then
+        exec "$CLAUDE_ACTUAL" --dangerously-skip-permissions "$@"
+    else
+        exec "$CLAUDE_ACTUAL" "$@"
+    fi
 else
-    echo "Claude Code v1.0 (Stub)"
+    echo "Claude Code Quick Launcher v1.0 (LiveCD Stub)"
     echo ""
-    echo "This is a placeholder for the official Claude Code."
-    echo "To install the official version, run:"
-    echo "  npm install -g @anthropic-ai/claude-code"
+    echo "This stub automatically includes --dangerously-skip-permissions for LiveCD compatibility"
+    echo "To install Claude Code: npm install -g @anthropic-ai/claude-code"
     echo ""
-    echo "Arguments received: $@"
     
-    # Basic command handling
     case "$1" in
         --version)
-            echo "1.0.0-stub"
+            echo "1.0.0-quicklaunch-stub"
             ;;
         --help)
             echo "Usage: claude [options] [command]"
             echo "Options:"
-            echo "  --version    Show version"
-            echo "  --help       Show this help"
-            echo "  --dangerously-skip-permissions    Skip permission checks"
+            echo "  --version                 Show version"
+            echo "  --help                    Show this help"
+            echo "  --no-skip-permissions     Disable permission bypass"
+            echo "  --safe                    Same as --no-skip-permissions"
+            echo ""
+            echo "Default: Permission bypass enabled for LiveCD"
             ;;
         *)
+            echo "Arguments: $@"
             echo ""
             echo "Agents directory: $CLAUDE_AGENTS_DIR"
             local agent_count=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
             echo "Agents available: $agent_count"
+            echo ""
+            echo "Permission bypass: ${PERMISSION_BYPASS_ENABLED}"
             ;;
     esac
 fi
-CLAUDE_STUB
+MINIMAL_STUB
     
     chmod +x "$USER_BIN_DIR/claude"
     CLAUDE_BINARY="$USER_BIN_DIR/claude"
-    success "Claude launcher created"
+    warn "Minimal Claude stub created - install Claude Code for full functionality"
     return 0
 }
 
