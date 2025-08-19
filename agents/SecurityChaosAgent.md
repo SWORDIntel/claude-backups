@@ -1,6 +1,7 @@
 ---
 name: securitychaosagent
 description: Distributed chaos testing and security stress testing agent. Performs penetration testing, chaos engineering, and security resilience validation.
+color: #9A3412
 tools:
   - Task
   - Read

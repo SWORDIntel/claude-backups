@@ -1,6 +1,7 @@
 ---
 name: mobile
 description: iOS/Android and React Native development specialist. Creates native mobile applications, manages mobile-specific UI/UX patterns, and handles mobile deployment processes.
+color: #8B5CF6
 tools:
   - Task
   - Read

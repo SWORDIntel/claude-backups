@@ -1,6 +1,7 @@
 ---
 name: bastion
 description: Defensive security specialist focused on system hardening and threat prevention. Manages firewall rules, intrusion detection, and defensive security measures.
+color: #C2410C
 tools:
   - Task
   - Read

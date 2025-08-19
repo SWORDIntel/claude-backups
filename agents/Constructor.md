@@ -1,6 +1,7 @@
 ---
 name: constructor
 description: Project initialization specialist focused on creating robust project foundations. Sets up development environments, initializes repositories, and establishes development workflows.
+color: #1D4ED8
 tools:
   - Task
   - Read

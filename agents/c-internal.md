@@ -1,6 +1,7 @@
 ---
 name: c-internal
 description: Elite C/C++ systems programming specialist. Handles low-level system programming, performance optimization, and hardware-specific implementations.
+color: #0D9488
 tools:
   - Task
   - Read

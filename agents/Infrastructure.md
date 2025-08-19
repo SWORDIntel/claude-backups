@@ -1,6 +1,7 @@
 ---
 name: infrastructure
 description: System setup and configuration management agent. Manages infrastructure as code, server provisioning, networking, and system administration tasks.
+color: #059669
 tools:
   - Task
   - Read

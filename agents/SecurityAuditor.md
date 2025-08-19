@@ -1,6 +1,7 @@
 ---
 name: securityauditor
 description: Securityauditor agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+color: #92400E
 tools:
   - Task
   - Read

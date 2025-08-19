@@ -1,6 +1,7 @@
 ---
 name: cryptoexpert
 description: Cryptoexpert agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+color: #B45309
 tools:
   - Task
   - Read

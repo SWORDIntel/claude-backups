@@ -1,6 +1,7 @@
 ---
 name: debugger
 description: Tactical failure analysis and debugging specialist. Identifies root causes, traces execution paths, and provides detailed diagnostic information for complex system issues.
+color: #3B82F6
 tools:
   - Task
   - Read

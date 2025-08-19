@@ -1,6 +1,7 @@
 ---
 name: datascience
 description: Data analysis and machine learning specialist. Performs statistical analysis, creates predictive models, handles data preprocessing, and generates insights from complex datasets.
+color: #A855F7
 tools:
   - Task
   - Read

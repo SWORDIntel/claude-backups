@@ -1,6 +1,7 @@
 ---
 name: monitor
 description: Observability and monitoring specialist providing real-time system insights. Manages metrics collection, alerting systems, and performance monitoring across the entire infrastructure.
+color: #065F46
 tools:
   - Task
   - Read

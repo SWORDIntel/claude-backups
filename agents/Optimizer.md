@@ -1,6 +1,7 @@
 ---
 name: optimizer
 description: Performance engineering specialist for Intel Meteor Lake hardware optimization. Manages P-core/E-core allocation, thermal management, and AVX-512/AVX2 instruction set optimization.
+color: #2563EB
 tools:
   - Task
   - Read

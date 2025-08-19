@@ -1,6 +1,7 @@
 ---
 name: apidesigner
 description: API architecture and contracts specialist. Designs RESTful APIs, manages OpenAPI specifications, handles API versioning, and ensures API consistency across services.
+color: #7C3AED
 tools:
   - Task
   - Read

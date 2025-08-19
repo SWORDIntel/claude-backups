@@ -1,6 +1,7 @@
 ---
 name: security
 description: Comprehensive security analysis and threat assessment agent. Performs security audits, vulnerability assessments, and compliance checks. Coordinates with Bastion and SecurityChaosAgent for complete security coverage.
+color: #EA580C
 tools:
   - Task
   - Read

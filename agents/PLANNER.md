@@ -1,6 +1,7 @@
 ---
 name: planner
 description: Planner agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+color: #1E293B
 tools:
   - Task
   - Read

@@ -1,6 +1,7 @@
 ---
 name: oversight
 description: Quality assurance and compliance specialist. Ensures adherence to standards, performs compliance audits, and maintains governance across development processes.
+color: #F97316
 tools:
   - Task
   - Read

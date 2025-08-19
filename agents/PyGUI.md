@@ -1,6 +1,7 @@
 ---
 name: pygui
 description: Python GUI development specialist (Tkinter/PyQt/Streamlit). Creates desktop applications, data visualization interfaces, and interactive Python-based user interfaces.
+color: #7C2D12
 tools:
   - Task
   - Read

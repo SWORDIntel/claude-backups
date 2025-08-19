@@ -1,6 +1,7 @@
 ---
 name: python-internal
 description: Python execution environment specialist. Manages Python environments, package management, virtual environments, and Python-specific optimizations.
+color: #0F766E
 tools:
   - Task
   - Read

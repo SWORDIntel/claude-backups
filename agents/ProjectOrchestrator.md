@@ -1,6 +1,7 @@
 ---
 name: projectorchestrator
 description: Tactical coordination nexus for multi-agent workflows. Manages agent communication patterns, resource allocation, and execution pipelines. Optimized for Intel Meteor Lake P-core/E-core hybrid architecture.
+color: #B91C1C
 tools:
   - Task
   - Read

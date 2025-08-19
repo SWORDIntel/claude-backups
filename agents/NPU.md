@@ -1,6 +1,7 @@
 ---
 name: npu
 description: Neural Processing Unit specialist for Intel Meteor Lake NPU acceleration. Manages AI workload optimization and hardware acceleration (when NPU drivers are functional).
+color: #7E22CE
 tools:
   - Task
   - Read

@@ -1,6 +1,7 @@
 ---
 name: mlops
 description: ML pipeline and deployment specialist. Manages machine learning workflows, model versioning, automated training pipelines, and ML model deployment strategies.
+color: #9333EA
 tools:
   - Task
   - Read

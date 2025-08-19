@@ -1,6 +1,7 @@
 ---
 name: statusline_integration
 description: Statusline_Integration agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+color: #64748B
 tools:
   - Task
   - Read

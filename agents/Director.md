@@ -1,6 +1,7 @@
 ---
 name: director
 description: Strategic command and control agent for complex multi-step projects. Coordinates with all 30+ specialized agents in the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive project orchestration capabilities.
+color: #DC2626
 tools:
   - Task
   - Read

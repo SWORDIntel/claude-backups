@@ -1,6 +1,7 @@
 ---
 name: researcher
 description: Technology evaluation and research specialist. Investigates new technologies, performs feasibility studies, and provides technical research insights.
+color: #475569
 tools:
   - Task
   - Read

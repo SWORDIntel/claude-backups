@@ -1,6 +1,7 @@
 ---
 name: docgen
 description: Documentation engineering specialist. Creates comprehensive technical documentation, API documentation, user guides, and maintains documentation systems.
+color: #334155
 tools:
   - Task
   - Read

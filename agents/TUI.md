@@ -1,6 +1,7 @@
 ---
 name: tui
 description: Terminal UI specialist (ncurses/termbox). Creates command-line interfaces, terminal-based applications, and text-based user interaction systems.
+color: #581C87
 tools:
   - Task
   - Read

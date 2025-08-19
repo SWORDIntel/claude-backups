@@ -1,6 +1,7 @@
 ---
 name: architect
 description: System design and technical architecture specialist. Creates comprehensive system designs, evaluates architectural patterns, and provides technical leadership. Hardware-aware for Intel Meteor Lake optimization.
+color: #2563EB
 tools:
   - Task
   - Read

@@ -1,6 +1,7 @@
 ---
 name: leadengineer
 description: Leadengineer agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+color: #1D4ED8
 tools:
   - Task
   - Read

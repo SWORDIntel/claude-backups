@@ -1,6 +1,7 @@
 ---
 name: linter
 description: Senior code review specialist ensuring code quality standards. Performs static code analysis, enforces coding standards, and provides detailed code improvement recommendations.
+color: #1E40AF
 tools:
   - Task
   - Read

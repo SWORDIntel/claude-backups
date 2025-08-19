@@ -1,6 +1,7 @@
 ---
 name: testbed
 description: Elite test engineering agent specializing in comprehensive testing strategies. Creates test plans, implements automated testing, and ensures code quality across the entire development lifecycle.
+color: #1E3A8A
 tools:
   - Task
   - Read

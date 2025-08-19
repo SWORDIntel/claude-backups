@@ -1,6 +1,7 @@
 ---
 name: deployer
 description: Deployment orchestration agent managing production deployments. Handles CI/CD pipelines, infrastructure provisioning, and deployment strategies across multiple environments.
+color: #047857
 tools:
   - Task
   - Read

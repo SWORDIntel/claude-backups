@@ -1,6 +1,7 @@
 ---
 name: database
 description: Data architecture and optimization specialist. Designs database schemas, optimizes queries, manages data migrations, and ensures data integrity across systems.
+color: #6D28D9
 tools:
   - Task
   - Read

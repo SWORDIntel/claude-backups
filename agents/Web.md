@@ -1,6 +1,7 @@
 ---
 name: web
 description: Modern web frameworks specialist (React/Vue/Angular). Creates responsive web applications, manages frontend build systems, and implements modern web development practices.
+color: #5B21B6
 tools:
   - Task
   - Read

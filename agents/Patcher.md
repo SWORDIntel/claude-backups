@@ -1,6 +1,7 @@
 ---
 name: patcher
 description: Precision code surgery and bug fixes specialist. Identifies and fixes bugs, applies security patches, manages code refactoring, and maintains code quality.
+color: #1E40AF
 tools:
   - Task
   - Read

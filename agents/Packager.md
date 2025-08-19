@@ -1,6 +1,7 @@
 ---
 name: packager
 description: Package management and distribution specialist. Manages software packaging, dependency resolution, artifact publishing, and distribution strategies.
+color: #10B981
 tools:
   - Task
   - Read

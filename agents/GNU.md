@@ -1,6 +1,7 @@
 ---
 name: gnu
 description: GNU/Linux systems specialist managing system-level operations, package management, and Unix/Linux environment optimization.
+color: #16A34A
 tools:
   - Task
   - Read

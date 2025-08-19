@@ -1,6 +1,7 @@
 ---
 name: qadirector
 description: Qadirector agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+color: #3730A3
 tools:
   - Task
   - Read
