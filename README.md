@@ -4,6 +4,30 @@
 
 > **Note**: The LiveCD *generator/builder* tools have been moved to a separate repository at [github.com/SWORDIntel/livecd-gen](https://github.com/SWORDIntel/livecd-gen). This repository focuses on installing Claude Code and the agent framework.
 
+## 📁 Organized Directory Structure
+
+The project has been reorganized for clarity and maintainability:
+
+```
+Claude/
+├── 📄 Core Files (Root)
+│   ├── claude-installer.sh  → installers/    # Master installer (symlink)
+│   ├── claude-unified       → orchestration/ # Main command (symlink)
+│   ├── CLAUDE.md                             # Project context
+│   ├── README.md                             # This file
+│   └── VERSION                               # Version tracking
+│
+├── 📦 installers/           # All installation scripts
+├── 🎭 orchestration/        # Orchestration system
+├── ⚙️ config/              # Configuration files
+├── 🔧 tools/               # Utility tools
+├── 📚 docs/                # Documentation
+├── 🤖 agents/              # Agent definitions & source
+└── 📜 scripts/             # Helper scripts
+```
+
+See `DIRECTORY_STRUCTURE.md` for complete details.
+
 ## 🚀 Quick Start - Unified Installer (RECOMMENDED)
 
 ### The Ultimate Installation Solution

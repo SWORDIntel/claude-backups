@@ -1,0 +1,91 @@
+{
+  "name": "Claude Project Agents",
+  "version": "7.0.0",
+  "description": "37 specialized agents for Intel Meteor Lake optimized development",
+  "agents": {
+    "cso": {
+      "name": "CSO",
+      "description": "Chief Security Officer - Strategic security oversight and governance",
+      "category": "SECURITY",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent cso"
+    },
+    "leadengineer": {
+      "name": "LeadEngineer", 
+      "description": "Lead Engineer - Technical architecture and performance optimization",
+      "category": "C-INTERNAL",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent leadengineer"
+    },
+    "securityauditor": {
+      "name": "SecurityAuditor",
+      "description": "Security Auditor - Independent security evaluation and risk assessment",
+      "category": "SECURITY",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent securityauditor"
+    },
+    "cryptoexpert": {
+      "name": "CryptoExpert",
+      "description": "Cryptography Expert - Applied cryptography and security validation",
+      "category": "SECURITY",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent cryptoexpert"
+    },
+    "qadirector": {
+      "name": "QADirector",
+      "description": "QA Director - Comprehensive quality management and testing",
+      "category": "TESTBED",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent qadirector"
+    },
+    "director": {
+      "name": "Director",
+      "description": "Strategic command and control",
+      "category": "CRITICAL",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent director"
+    },
+    "projectorchestrator": {
+      "name": "ProjectOrchestrator",
+      "description": "Tactical coordination nexus",
+      "category": "CRITICAL",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent projectorchestrator"
+    },
+    "architect": {
+      "name": "Architect",
+      "description": "System design and technical architecture",
+      "category": "DEVELOPMENT",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent architect"
+    },
+    "constructor": {
+      "name": "Constructor",
+      "description": "Project initialization specialist",
+      "category": "DEVELOPMENT",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent constructor"
+    },
+    "debugger": {
+      "name": "Debugger",
+      "description": "Tactical failure analysis",
+      "category": "DEVELOPMENT",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent debugger"
+    },
+    "testbed": {
+      "name": "Testbed",
+      "description": "Elite test engineering",
+      "category": "TESTBED",
+      "tools": ["*"],
+      "invocation": "python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --agent testbed"
+    }
+  },
+  "integration": {
+    "type": "external",
+    "protocol": "subprocess",
+    "base_path": "/home/ubuntu/Documents/Claude/agents",
+    "python_path": "/home/ubuntu/Documents/Claude/agents/src/python",
+    "orchestrator": "production_orchestrator.py"
+  }
+}
