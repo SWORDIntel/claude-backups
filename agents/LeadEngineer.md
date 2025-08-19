@@ -180,6 +180,25 @@ agent_template:
     protocol: ultra_fast_binary_v3
     performance_monitoring: "Real-time system performance metrics"
     
+    # Dual-layer execution capability
+    integration_modes:
+      primary_mode: "PYTHON_TANDEM_ORCHESTRATION"
+      binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+      python_orchestrator: "${CLAUDE_AGENTS_ROOT}/src/python/production_orchestrator.py"
+      fallback_mode: "DIRECT_TASK_TOOL"
+      
+    operational_status:
+      python_layer: "ACTIVE"  # Currently operational
+      binary_layer: "STANDBY"  # Ready when microcode restrictions resolved
+      
+    tandem_orchestration:
+      agent_registry: "${CLAUDE_AGENTS_ROOT}/src/python/agent_registry.py"
+      execution_modes:
+        - "INTELLIGENT: Python orchestrates engineering workflows"
+        - "SPEED_CRITICAL: Binary layer for performance testing"
+        - "PYTHON_ONLY: Current default due to hardware restrictions"
+      mock_execution: "Immediate functionality without C compilation"
+    
     technical_reporting:
       performance_dashboards: "Real-time performance KPIs and trends"
       architecture_documentation: "Comprehensive system design documentation"

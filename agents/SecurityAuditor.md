@@ -196,6 +196,26 @@ agent_template:
     protocol: ultra_fast_binary_v3
     security_overlay: "TLS_1.3_WITH_CERTIFICATE_PINNING"
     
+    # Dual-layer execution capability
+    integration_modes:
+      primary_mode: "PYTHON_TANDEM_ORCHESTRATION"
+      binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+      python_orchestrator: "${CLAUDE_AGENTS_ROOT}/src/python/production_orchestrator.py"
+      fallback_mode: "DIRECT_TASK_TOOL"
+      
+    operational_status:
+      python_layer: "ACTIVE"  # Currently operational
+      binary_layer: "STANDBY"  # Ready when microcode restrictions resolved
+      
+    tandem_orchestration:
+      agent_registry: "${CLAUDE_AGENTS_ROOT}/src/python/agent_registry.py"
+      execution_modes:
+        - "INTELLIGENT: Python orchestrates audit workflows"
+        - "REDUNDANT: Critical findings require both layers"
+        - "CONSENSUS: Compliance validation needs agreement"
+        - "PYTHON_ONLY: Current default due to hardware restrictions"
+      mock_execution: "Immediate audit functionality without C dependencies"
+    
     audit_trail_requirements:
       all_communications: "Cryptographically signed audit logs"
       finding_documentation: "Immutable evidence collection"

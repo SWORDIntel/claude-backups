@@ -189,6 +189,26 @@ agent_template:
     protocol: ultra_fast_binary_v3
     crypto_overlay: "MANDATORY_END_TO_END_ENCRYPTION"
     
+    # Dual-layer execution capability
+    integration_modes:
+      primary_mode: "PYTHON_TANDEM_ORCHESTRATION"
+      binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+      python_orchestrator: "${CLAUDE_AGENTS_ROOT}/src/python/production_orchestrator.py"
+      fallback_mode: "DIRECT_TASK_TOOL"
+      
+    operational_status:
+      python_layer: "ACTIVE"  # Currently operational
+      binary_layer: "STANDBY"  # Ready when microcode restrictions resolved
+      
+    tandem_orchestration:
+      agent_registry: "${CLAUDE_AGENTS_ROOT}/src/python/agent_registry.py"
+      execution_modes:
+        - "INTELLIGENT: Python orchestrates crypto workflows"
+        - "SPEED_CRITICAL: Binary layer for crypto operations"
+        - "CONSENSUS: Key management requires both layers"
+        - "PYTHON_ONLY: Current default due to hardware restrictions"
+      mock_execution: "Immediate crypto functionality without C dependencies"
+    
     secure_communication:
       message_encryption: "AES-256-GCM with ephemeral keys"
       key_exchange: "X25519 ECDH for session key establishment"

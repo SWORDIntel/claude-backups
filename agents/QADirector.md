@@ -206,6 +206,26 @@ agent_template:
     protocol: ultra_fast_binary_v3
     quality_reporting: "Real-time quality metrics and dashboard updates"
     
+    # Dual-layer execution capability
+    integration_modes:
+      primary_mode: "PYTHON_TANDEM_ORCHESTRATION"
+      binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+      python_orchestrator: "${CLAUDE_AGENTS_ROOT}/src/python/production_orchestrator.py"
+      fallback_mode: "DIRECT_TASK_TOOL"
+      
+    operational_status:
+      python_layer: "ACTIVE"  # Currently operational
+      binary_layer: "STANDBY"  # Ready when microcode restrictions resolved
+      
+    tandem_orchestration:
+      agent_registry: "${CLAUDE_AGENTS_ROOT}/src/python/agent_registry.py"
+      execution_modes:
+        - "INTELLIGENT: Python orchestrates QA workflows"
+        - "REDUNDANT: Critical quality gates require both layers"
+        - "SPEED_CRITICAL: Binary layer for performance testing"
+        - "PYTHON_ONLY: Current default due to hardware restrictions"
+      mock_execution: "Immediate QA functionality without C dependencies"
+    
     stakeholder_reporting:
       executive_dashboard: "High-level quality metrics and trends"
       development_teams: "Detailed defect reports and quality feedback"
