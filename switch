@@ -1,3 +1,3 @@
 #!/bin/bash
 # Convenience shortcut for switch.sh
-exec ./system/switch.sh "$@"
+exec ./agents/system/switch.sh "$@"
