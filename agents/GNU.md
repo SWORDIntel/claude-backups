@@ -1,57 +1,75 @@
 ---
-################################################################################
-# COMMUNICATION SYSTEM INTEGRATION v3.0
-################################################################################
+# Claude Code Agent Definition v7.0
+name: GNU
+version: 7.0.0
+uuid: gnu-2025-claude-code
+category: ML
+priority: HIGH
+status: PRODUCTION
+
+metadata:
+  role: "GNU Agent"
+  expertise: "Specialized capabilities"
+  focus: "Project-specific tasks"
+  
+capabilities:
+  - "Analysis and assessment"
+  - "Planning and coordination"
+  - "Execution and monitoring"
+
+tools:
+  - Task
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  - WebFetch
 
 communication:
   protocol: ultra_fast_binary_v3
-  capabilities:
-    throughput: 4.2M_msg_sec
-    latency: 200ns_p99
-    
-  integration:
-    auto_register: true
+  integration_modes:
+    primary_mode: "PYTHON_TANDEM_ORCHESTRATION"
     binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "${CLAUDE_AGENTS_ROOT}/src/c/agent_discovery.c"
-    message_router: "${CLAUDE_AGENTS_ROOT}/src/c/message_router.c"
-    runtime: "${CLAUDE_AGENTS_ROOT}/src/c/unified_agent_runtime.c"
+    python_orchestrator: "${CLAUDE_AGENTS_ROOT}/src/python/production_orchestrator.py"
+    fallback_mode: "DIRECT_TASK_TOOL"
     
-  ipc_methods:
-    CRITICAL: shared_memory_50ns
-    HIGH: io_uring_500ns
-    NORMAL: unix_sockets_2us
-    LOW: mmap_files_10us
-    BATCH: dma_regions
+  operational_status:
+    python_layer: "ACTIVE"
+    binary_layer: "STANDBY"
     
-  message_patterns:
-    - publish_subscribe
-    - request_response
-    - work_queues
-    - broadcast
-    - multicast
-    
-  security:
-    authentication: JWT_RS256_HS256
-    authorization: RBAC_4_levels
-    encryption: TLS_1.3
-    integrity: HMAC_SHA256
-    
-  monitoring:
-    prometheus_port: 8001
-    grafana_dashboard: true
-    health_check: "/health/ready"
-    metrics_endpoint: "/metrics"
-    
-  auto_integration_code: |
-    # Python integration
-    from auto_integrate import integrate_with_claude_agent_system
-    agent = integrate_with_claude_agent_system("gnu")
-    
-    # C integration
-    #include "ultra_fast_protocol.h"
-    ufp_context_t* ctx = ufp_create_context("gnu");
+  tandem_orchestration:
+    agent_registry: "${CLAUDE_AGENTS_ROOT}/src/python/agent_registry.py"
+    execution_modes:
+      - "INTELLIGENT: Python orchestrates workflows"
+      - "PYTHON_ONLY: Current default due to hardware restrictions"
+    mock_execution: "Immediate functionality without C dependencies"
 
+proactive_triggers:
+  - pattern: "gnu|ml"
+    confidence: HIGH
+    action: AUTO_INVOKE
+
+invokes_agents:
+  - Director
+  - ProjectOrchestrator
+
+hardware_optimization:
+  meteor_lake:
+    p_cores: "ADAPTIVE"
+    e_cores: "BACKGROUND"
+    thermal_target: "85°C"
+
+success_metrics:
+  response_time: "<500ms"
+  success_rate: ">95%"
+  accuracy: ">98%"
 ---
+
+# GNU Agent
+
 ################################################################################
 # GAUSSIAN PROCESSING UNIT (GNA) AGENT DEFINITION v7.0
 ################################################################################
@@ -517,3 +535,4 @@ communication:
     # C integration
     #include "ultra_fast_protocol.h"
     ufp_context_t* ctx = ufp_create_context("gnu");
+
