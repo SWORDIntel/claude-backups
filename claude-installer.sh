@@ -1232,6 +1232,145 @@ EOF
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# GLOBAL AGENT SYSTEM INSTALLATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+install_global_agent_system() {
+    if [ "$INSTALL_AGENTS" != true ]; then
+        debug "Skipping global agent system (agents not installed)"
+        return 0
+    fi
+    
+    log "Installing global agent discovery system..."
+    
+    # Check for installation scripts
+    if [ -f "$SCRIPT_DIR/install-global-agents.sh" ]; then
+        debug "Using install-global-agents.sh"
+        bash "$SCRIPT_DIR/install-global-agents.sh"
+        success "Global agent system installed via script"
+    elif [ -f "$SCRIPT_DIR/claude-global-agents-bridge.py" ]; then
+        debug "Using claude-global-agents-bridge.py"
+        python3 "$SCRIPT_DIR/claude-global-agents-bridge.py" install
+        success "Global agent system installed via Python bridge"
+    else
+        warn "Global agent system scripts not found - skipping"
+        return 1
+    fi
+    
+    # Verify installation
+    if [ -f "$HOME/.local/share/claude-agents/manifest.json" ]; then
+        local agent_count=$(grep -c '"id"' "$HOME/.local/share/claude-agents/manifest.json" 2>/dev/null || echo "0")
+        success "Global agent system active with $agent_count agents"
+    fi
+    
+    return 0
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CLAUDE.MD GLOBAL SYNC
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+setup_claude_md_sync() {
+    log "Setting up CLAUDE.md global synchronization..."
+    
+    # Define paths
+    local claude_md_source="$SCRIPT_DIR/CLAUDE.md"
+    local claude_md_target="$HOME/.claude/CLAUDE.md"
+    local claude_config_dir="$HOME/.claude"
+    local sync_script="$HOME/sync-claude-md.sh"
+    
+    # Create config directory
+    mkdir -p "$claude_config_dir"
+    
+    # Create sync script for CLAUDE.md
+    cat > "$sync_script" << 'EOF'
+#!/bin/bash
+# CLAUDE.md Global Sync Script
+set -euo pipefail
+
+SOURCE="/home/ubuntu/Documents/Claude/CLAUDE.md"
+TARGET="$HOME/.claude/CLAUDE.md"
+LOGFILE="$HOME/claude-md-sync.log"
+
+log_message() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOGFILE"
+}
+
+# Create target directory if needed
+mkdir -p "$(dirname "$TARGET")"
+
+# Check if source exists
+if [ ! -f "$SOURCE" ]; then
+    log_message "ERROR: Source CLAUDE.md not found at $SOURCE"
+    exit 1
+fi
+
+# Sync CLAUDE.md
+if cp "$SOURCE" "$TARGET" 2>> "$LOGFILE"; then
+    log_message "SUCCESS: CLAUDE.md synced to $TARGET"
+    
+    # Also sync to other common locations
+    for dir in "$HOME/.config/claude" "$HOME/.local/share/claude"; do
+        if [ -d "$dir" ] || mkdir -p "$dir" 2>/dev/null; then
+            cp "$SOURCE" "$dir/CLAUDE.md" 2>> "$LOGFILE" || true
+        fi
+    done
+else
+    log_message "ERROR: Failed to sync CLAUDE.md"
+    exit 1
+fi
+EOF
+    
+    chmod +x "$sync_script"
+    
+    # Initial sync
+    bash "$sync_script"
+    
+    # Add to cron (every 5 minutes, offset by 2 minutes from agent sync)
+    local cron_line="*/5 * * * * sleep 120 && $sync_script >/dev/null 2>&1"
+    
+    # Check if cron job already exists
+    if ! crontab -l 2>/dev/null | grep -qF "$sync_script"; then
+        (crontab -l 2>/dev/null || echo ""; echo "$cron_line") | crontab -
+        success "CLAUDE.md cron sync added (runs every 5 minutes)"
+    else
+        log "CLAUDE.md cron sync already exists"
+    fi
+    
+    # Create status command
+    local status_script="$USER_BIN_DIR/claude-md-status"
+    cat > "$status_script" << 'EOF'
+#!/bin/bash
+echo "📋 CLAUDE.md Sync Status"
+echo "━━━━━━━━━━━━━━━━━━━━━"
+echo "Source: /home/ubuntu/Documents/Claude/CLAUDE.md"
+echo "Targets:"
+for target in "$HOME/.claude/CLAUDE.md" "$HOME/.config/claude/CLAUDE.md" "$HOME/.local/share/claude/CLAUDE.md"; do
+    if [ -f "$target" ]; then
+        echo "  ✓ $target ($(ls -lh "$target" | awk '{print $5}'))"
+    else
+        echo "  ✗ $target (not found)"
+    fi
+done
+echo
+echo "Last sync log entries:"
+tail -5 "$HOME/claude-md-sync.log" 2>/dev/null || echo "  No log entries yet"
+echo
+echo "Cron job:"
+crontab -l 2>/dev/null | grep "claude-md" || echo "  Not found"
+EOF
+    
+    chmod +x "$status_script"
+    
+    success "CLAUDE.md global sync configured"
+    log "  • Source: $claude_md_source"
+    log "  • Synced to: ~/.claude/, ~/.config/claude/, ~/.local/share/claude/"
+    log "  • Status: claude-md-status"
+    
+    return 0
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ENVIRONMENT SETUP
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1422,6 +1561,12 @@ run_installation() {
     # Step 7: Setup agent synchronization
     setup_agent_sync
     
+    # Step 8: Install global agent system
+    install_global_agent_system
+    
+    # Step 9: Setup CLAUDE.md global sync
+    setup_claude_md_sync
+    
     # Show final status
     show_status
     
@@ -1431,6 +1576,8 @@ run_installation() {
     echo "  1. Run: source ~/.bashrc"
     echo "  2. Launch Claude: claude"
     echo "  3. Check agent sync: claude-sync-status"
+    echo "  4. Check CLAUDE.md sync: claude-md-status"
+    echo "  5. List global agents: claude-agent list"
     echo
     
     if [ "$INSTALL_ORCHESTRATION" = true ]; then

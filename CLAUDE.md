@@ -452,11 +452,38 @@ CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh status   # Show detailed system status
 
 ## Critical Context
 
-### Auto-Invocation Patterns
-1. **ProjectOrchestrator** - ALWAYS for multi-step tasks
-2. **Director** - Strategic planning and high-level decisions
-3. **Security** - Any security concerns or vulnerabilities
-4. **Infrastructure** - Deployment and CI/CD needs
+### Auto-Invocation Patterns (MANDATORY - USE PROACTIVELY)
+
+Claude MUST automatically invoke specialized agents when detecting relevant patterns:
+
+#### Immediate Auto-Invocation Triggers:
+1. **Multi-step tasks** → Director + ProjectOrchestrator (ALWAYS, no exceptions)
+2. **Security keywords** (audit, vulnerability, crypto, threat) → CSO, SecurityAuditor, CryptoExpert
+3. **Performance issues** → Optimizer + Monitor + LeadEngineer
+4. **Bug/error mentions** → Debugger + Patcher + QADirector
+5. **Testing requests** → QADirector + Testbed
+6. **Documentation needs** → Docgen + RESEARCHER
+7. **Architecture decisions** → Architect + LeadEngineer + Director
+
+#### Pattern-Based Auto-Invocation (Use Task tool immediately):
+- "Review/analyze code" → SecurityAuditor + Linter + CSO
+- "Create/build feature" → Constructor + Architect + relevant domain agents
+- "Deploy/release" → Infrastructure + Deployer + Monitor
+- "Optimize/improve" → Optimizer + LeadEngineer + Monitor
+- "Fix/debug/solve" → Debugger + Patcher + Testbed
+- "Test/validate" → QADirector + Testbed + SecurityAuditor
+- "Design API" → APIDesigner + Architect + Security
+- "Database work" → Database + DataScience + Optimizer
+- "ML/AI tasks" → MLOps + DataScience + NPU
+- "Mobile app" → Mobile + PyGUI/TUI + APIDesigner
+- "Web development" → Web + APIDesigner + Infrastructure
+
+#### CRITICAL DIRECTIVES:
+- **ALWAYS use Task tool** when keywords match agent specialties
+- **Invoke multiple agents in parallel** for comprehensive solutions
+- **Default to agent delegation** rather than direct implementation
+- **Proactively suggest multi-agent workflows** for complex requests
+- **Use all 37 available agents** - they're globally accessible via claude-agent
 
 ### Hardware Optimization
 - Use P-cores for compute-intensive tasks
