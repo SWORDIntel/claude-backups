@@ -1,1 +1,4 @@
+# Log files
+logs/
+*.log
 system_startup.log
