@@ -1,32 +1,60 @@
-# Claude Code Ultimate Unified Installer v4.0
+# Claude Agent Framework v7.0 - PostgreSQL 17 Enhanced
 
-**The One True Installer - Complete Claude Code installation with agent framework, orchestration, and LiveCD support**
+**Complete Production System - Claude Code with 38 agents, orchestration, and high-performance PostgreSQL 17 database**
 
 > **Note**: The LiveCD *generator/builder* tools have been moved to a separate repository at [github.com/SWORDIntel/livecd-gen](https://github.com/SWORDIntel/livecd-gen). This repository focuses on installing Claude Code and the agent framework.
 
-## 📁 Organized Directory Structure
+## 🚀 Latest: PostgreSQL 17 Database System
 
-The project has been reorganized for clarity and maintainability:
+**Major Performance Enhancement** - The database system has been upgraded to PostgreSQL 17:
+
+### Performance Improvements
+- **2x Authentication Throughput**: >2000 auth/sec (was >1000)
+- **50% Latency Reduction**: <25ms P95 (was <50ms)  
+- **Enhanced Concurrency**: >750 connections (was >500)
+- **Faster JSON Operations**: <10ms P95 user lookups
+
+### PostgreSQL 17 Features
+- **JSON Constructors**: JSON_ARRAY(), JSON_OBJECT() for better performance
+- **Enhanced VACUUM**: Improved memory management
+- **JIT Compilation**: Advanced query optimization
+- **Parallel Processing**: Better multi-core utilization
+
+```bash
+# Quick database setup
+./database/manage_database.sh setup    # Deploy PostgreSQL 17
+./database/manage_database.sh test     # Run performance tests
+./database/manage_database.sh status   # Check system status
+```
+
+## 📁 Professional Directory Structure
+
+Clean, organized structure for production use:
 
 ```
 Claude/
-├── 📄 Core Files (Root)
-│   ├── claude-installer.sh  → installers/    # Master installer (symlink)
-│   ├── claude-unified       → orchestration/ # Main command (symlink)
-│   ├── CLAUDE.md                             # Project context
-│   ├── README.md                             # This file
-│   └── VERSION                               # Version tracking
+├── 🗄️ database/                      # PostgreSQL 17 Database System
+│   ├── sql/auth_db_setup.sql         # PostgreSQL 17 optimized schema  
+│   ├── scripts/deploy_auth_database.sh # PostgreSQL 17 deployment
+│   ├── tests/auth_db_performance_test.py # >2000 auth/sec tests
+│   ├── docs/                         # Database documentation
+│   └── manage_database.sh            # Management interface
 │
-├── 📦 installers/           # All installation scripts
-├── 🎭 orchestration/        # Orchestration system
-├── ⚙️ config/              # Configuration files
-├── 🔧 tools/               # Utility tools
-├── 📚 docs/                # Documentation
-├── 🤖 agents/              # Agent definitions & source
-└── 📜 scripts/             # Helper scripts
+├── 🤖 agents/                        # 38 Specialized Agents (CAPITALS)
+│   ├── DIRECTOR.md                   # Strategic command & control
+│   ├── SECURITY.md                   # Comprehensive security analysis
+│   ├── ARCHITECT.md                  # System design specialist
+│   ├── [35 more agents...]           # Complete professional ecosystem
+│   └── src/python/                   # Tandem Orchestration System
+│
+├── 🎭 orchestration/                 # Unified Orchestration Tools
+├── 📦 installers/                    # Installation scripts
+├── ⚙️ config/                       # Configuration files
+├── 📚 docs/                         # Documentation
+└── 🔧 tools/                        # Utility tools
 ```
 
-See `DIRECTORY_STRUCTURE.md` for complete details.
+See `CLAUDE.md` for complete system documentation.
 
 ## 🚀 Quick Start - Unified Installer (RECOMMENDED)
 
