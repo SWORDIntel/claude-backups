@@ -74,3 +74,14 @@
 
 All installer scripts have been updated to reference files from their new locations.
 Symlinks ensure backward compatibility for critical commands.
+
+## Database Directory
+```
+database/                   # Database components (organized 2025-08-19)
+├── sql/                   # SQL schemas and scripts
+├── python/                # Python database utilities
+├── scripts/               # Deployment and setup scripts
+├── tests/                 # Performance tests and validation
+├── docs/                  # Database documentation
+└── manage_database.sh     # Convenience management script
+```

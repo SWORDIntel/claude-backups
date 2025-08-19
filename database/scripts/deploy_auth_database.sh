@@ -326,11 +326,11 @@ ALTER USER $DB_USER CREATEDB;
 EOF
 
     # Run database setup script
-    if [[ -f "$SCRIPT_DIR/auth_db_setup.sql" ]]; then
+    if [[ -f "$SCRIPT_DIR/../sql/auth_db_setup.sql" ]]; then
         log_info "Running database schema setup..."
-        sudo -u postgres psql -d $DB_NAME -f "$SCRIPT_DIR/auth_db_setup.sql"
+        sudo -u postgres psql -d $DB_NAME -f "$SCRIPT_DIR/../sql/auth_db_setup.sql"
     else
-        log_error "Database setup script not found: $SCRIPT_DIR/auth_db_setup.sql"
+        log_error "Database setup script not found: $SCRIPT_DIR/../sql/auth_db_setup.sql"
         exit 1
     fi
     
@@ -592,14 +592,14 @@ EOF
 run_performance_test() {
     log_step "Running performance validation test..."
     
-    if [[ -f "$SCRIPT_DIR/auth_db_performance_test.py" ]]; then
+    if [[ -f "$SCRIPT_DIR/../tests/auth_db_performance_test.py" ]]; then
         # Install test dependencies
         source /opt/claude-auth-monitor/bin/activate
         pip install asyncpg redis
         
         # Run performance test
         cd "$SCRIPT_DIR"
-        python3 auth_db_performance_test.py
+        python3 ../tests/auth_db_performance_test.py
         
         if [[ $? -eq 0 ]]; then
             log_info "✓ Performance test PASSED - Database is production ready"
@@ -676,7 +676,7 @@ redis-cli -a [password from credentials file]
 Run performance validation:
 \`\`\`bash
 cd $SCRIPT_DIR
-python3 auth_db_performance_test.py
+python3 ../tests/auth_db_performance_test.py
 \`\`\`
 
 ## Troubleshooting

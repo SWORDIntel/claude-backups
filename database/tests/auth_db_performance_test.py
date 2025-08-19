@@ -114,7 +114,7 @@ class AuthDatabasePerformanceTest:
                 )
                 
                 if not agent_role_id:
-                    raise RuntimeError("Agent role not found. Run auth_db_setup.sql first.")
+                    raise RuntimeError("Agent role not found. Run ../sql/auth_db_setup.sql first.")
                 
                 # Create test users
                 for i in range(self.config.concurrent_users):
