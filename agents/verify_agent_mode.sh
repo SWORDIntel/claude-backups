@@ -1,1 +1,0 @@
-system/verify_agent_mode.sh

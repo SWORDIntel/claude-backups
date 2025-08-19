@@ -25,7 +25,7 @@ All agent .md files remain in the root agents/ directory for compatibility.
 - `../switch` → Runs agents/system/switch.sh
 - `../bring-online` → Runs agents/system/BRING_ONLINE.sh  
 - `../status` → Runs agents/system/STATUS.sh
-- Symlinks for backward compatibility where needed
+- Clean structure - no symlinks needed (self-contained project)
 
 ### Agent Files:
 All 40 agent .md files remain in the root directory to maintain compatibility
@@ -45,9 +45,9 @@ with existing scripts and references.
 ./system/STATUS.sh             # Full path to status
 ```
 
-### Backward Compatibility:
-Symlinks are maintained for files with external references:
-- BRING_ONLINE.sh → system/BRING_ONLINE.sh
-- STATUS.sh → system/STATUS.sh
-- switch.sh → system/switch.sh
-- auto_integrate.py → integration/auto_integrate.py (if referenced)
+### Clean Structure:
+No symlinks needed - this is a self-contained project where:
+- System scripts are in `system/` directory
+- Integration tools are in `integration/` directory  
+- Service files are in `services/` directory
+- Convenience shortcuts are in parent directory for easy access
