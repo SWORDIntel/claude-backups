@@ -495,25 +495,26 @@ Claude MUST automatically invoke specialized agents when detecting relevant patt
 
 #### Immediate Auto-Invocation Triggers:
 1. **Multi-step tasks** → Director + ProjectOrchestrator (ALWAYS, no exceptions)
-2. **Security keywords** (audit, vulnerability, crypto, threat, penetration, compliance, risk, authentication, authorization) → CSO, SecurityAuditor, CryptoExpert, Bastion
-3. **Performance keywords** (slow, optimize, speed, latency, throughput, bottleneck, cache, performance) → Optimizer + Monitor + LeadEngineer
-4. **Bug/error keywords** (bug, error, fix, crash, exception, failure, broken, debug, patch) → Debugger + Patcher + QADirector
-5. **Testing keywords** (test, QA, quality, validate, verify, coverage, unit test, integration) → QADirector + Testbed
-6. **Documentation keywords** (document, docs, README, explain, help, guide, manual, tutorial) → Docgen + RESEARCHER
-7. **Architecture keywords** (design, architecture, structure, pattern, framework, blueprint) → Architect + LeadEngineer + Director
-8. **GUI/Interface keywords** (GUI, UI, interface, desktop, window, widget, button, form) → PyGUI (Python), TUI (terminal), Web (browser)
-9. **Terminal/CLI keywords** (terminal, console, CLI, command-line, ncurses, text interface) → TUI + GNU
-10. **Python GUI keywords** (tkinter, PyQt, Streamlit, Kivy, wxPython, Python GUI) → PyGUI
-11. **Web interface keywords** (React, Vue, Angular, frontend, webpage, browser, HTML, CSS) → Web + APIDesigner
-12. **Mobile keywords** (iOS, Android, React Native, mobile app, smartphone, tablet) → Mobile + APIDesigner
-13. **Database keywords** (SQL, PostgreSQL, MySQL, MongoDB, database, schema, query) → Database + DataScience
-14. **ML/AI keywords** (machine learning, AI, model, training, neural network, deep learning) → MLOps + DataScience + NPU
-15. **Package/Deploy keywords** (package, deploy, release, distribution, container, Docker) → Packager + Deployer + Infrastructure
-16. **Planning keywords** (plan, strategy, roadmap, timeline, milestone, project) → PLANNER + Director
-17. **Research keywords** (research, investigate, analyze, evaluate, study, explore) → RESEARCHER + DataScience
-18. **Infrastructure keywords** (server, cloud, AWS, Azure, DevOps, kubernetes) → Infrastructure + Deployer
-19. **C/C++ keywords** (C, C++, systems programming, embedded, low-level, kernel) → c-internal + GNU
-20. **Python keywords** (Python, pip, venv, pandas, numpy, Django, Flask) → python-internal + PyGUI
+2. **Parallel execution keywords** (parallel, concurrent, simultaneously, at the same time, together) → Multiple agents with PARALLEL execution mode
+3. **Security keywords** (audit, vulnerability, crypto, threat, penetration, compliance, risk, authentication, authorization) → CSO, SecurityAuditor, CryptoExpert, Bastion
+4. **Performance keywords** (slow, optimize, speed, latency, throughput, bottleneck, cache, performance) → Optimizer + Monitor + LeadEngineer
+5. **Bug/error keywords** (bug, error, fix, crash, exception, failure, broken, debug, patch) → Debugger + Patcher + QADirector
+6. **Testing keywords** (test, QA, quality, validate, verify, coverage, unit test, integration) → QADirector + Testbed
+7. **Documentation keywords** (document, docs, README, explain, help, guide, manual, tutorial) → Docgen + RESEARCHER
+8. **Architecture keywords** (design, architecture, structure, pattern, framework, blueprint) → Architect + LeadEngineer + Director
+9. **GUI/Interface keywords** (GUI, UI, interface, desktop, window, widget, button, form) → PyGUI (Python), TUI (terminal), Web (browser)
+10. **Terminal/CLI keywords** (terminal, console, CLI, command-line, ncurses, text interface) → TUI + GNU
+11. **Python GUI keywords** (tkinter, PyQt, Streamlit, Kivy, wxPython, Python GUI) → PyGUI
+12. **Web interface keywords** (React, Vue, Angular, frontend, webpage, browser, HTML, CSS) → Web + APIDesigner
+13. **Mobile keywords** (iOS, Android, React Native, mobile app, smartphone, tablet) → Mobile + APIDesigner
+14. **Database keywords** (SQL, PostgreSQL, MySQL, MongoDB, database, schema, query) → Database + DataScience
+15. **ML/AI keywords** (machine learning, AI, model, training, neural network, deep learning) → MLOps + DataScience + NPU
+16. **Package/Deploy keywords** (package, deploy, release, distribution, container, Docker) → Packager + Deployer + Infrastructure
+17. **Planning keywords** (plan, strategy, roadmap, timeline, milestone, project) → PLANNER + Director
+18. **Research keywords** (research, investigate, analyze, evaluate, study, explore) → RESEARCHER + DataScience
+19. **Infrastructure keywords** (server, cloud, AWS, Azure, DevOps, kubernetes) → Infrastructure + Deployer
+20. **C/C++ keywords** (C, C++, systems programming, embedded, low-level, kernel) → c-internal + GNU
+21. **Python keywords** (Python, pip, venv, pandas, numpy, Django, Flask) → python-internal + PyGUI
 
 #### Explicit Invocation Patterns (ALWAYS use Task tool):
 - "invoke/use/call [agent]" → Specified agent(s) immediately
@@ -523,9 +524,11 @@ Claude MUST automatically invoke specialized agents when detecting relevant patt
 - "coordinate with [agents]" → Multi-agent orchestration
 
 #### Advanced Compound Patterns (Multi-agent workflows):
-- "security audit" + "production" → CSO + SecurityAuditor + Infrastructure + Monitor
-- "API" + "security" → APIDesigner + Security + Architect
-- "database" + "performance" → Database + Optimizer + Monitor
+- "parallel" + any task → Execute all identified agents IN PARALLEL with dependency resolution
+- "concurrent" + multiple tasks → Run independent agents SIMULTANEOUSLY
+- "security audit" + "production" → CSO + SecurityAuditor + Infrastructure + Monitor (PARALLEL)
+- "API" + "security" → APIDesigner + Security + Architect (PARALLEL where possible)
+- "database" + "performance" → Database + Optimizer + Monitor (PARALLEL execution)
 - "deploy" + "monitor" → Deployer + Infrastructure + Monitor + Oversight
 - "full stack" + "web" → Web + APIDesigner + Database + Infrastructure
 - "machine learning" + "production" → MLOps + DataScience + NPU + Deployer
@@ -568,10 +571,12 @@ Claude MUST automatically invoke specialized agents when detecting relevant patt
 
 #### CRITICAL DIRECTIVES:
 - **ALWAYS use Task tool** when keywords match agent specialties
-- **Invoke multiple agents in parallel** for comprehensive solutions
+- **Invoke multiple agents in PARALLEL** when "parallel" keyword detected
+- **Execute concurrently** when tasks have no dependencies
 - **Default to agent delegation** rather than direct implementation
 - **Proactively suggest multi-agent workflows** for complex requests
 - **Use all 37 available agents** - they're globally accessible via claude-agent
+- **Optimize with parallel execution** - run independent agents simultaneously for speed
 
 ### Hardware Optimization
 - Use P-cores for compute-intensive tasks
