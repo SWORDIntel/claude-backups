@@ -458,25 +458,43 @@ Claude MUST automatically invoke specialized agents when detecting relevant patt
 
 #### Immediate Auto-Invocation Triggers:
 1. **Multi-step tasks** → Director + ProjectOrchestrator (ALWAYS, no exceptions)
-2. **Security keywords** (audit, vulnerability, crypto, threat) → CSO, SecurityAuditor, CryptoExpert
-3. **Performance issues** → Optimizer + Monitor + LeadEngineer
-4. **Bug/error mentions** → Debugger + Patcher + QADirector
-5. **Testing requests** → QADirector + Testbed
-6. **Documentation needs** → Docgen + RESEARCHER
-7. **Architecture decisions** → Architect + LeadEngineer + Director
+2. **Security keywords** (audit, vulnerability, crypto, threat, penetration, compliance, risk) → CSO, SecurityAuditor, CryptoExpert
+3. **Performance keywords** (slow, optimize, speed, latency, throughput, bottleneck) → Optimizer + Monitor + LeadEngineer
+4. **Bug/error keywords** (bug, error, fix, crash, exception, failure, broken) → Debugger + Patcher + QADirector
+5. **Testing keywords** (test, QA, quality, validate, verify, coverage) → QADirector + Testbed
+6. **Documentation keywords** (document, docs, README, explain, help, guide) → Docgen + RESEARCHER
+7. **Architecture keywords** (design, architecture, structure, pattern, framework) → Architect + LeadEngineer + Director
 
-#### Pattern-Based Auto-Invocation (Use Task tool immediately):
-- "Review/analyze code" → SecurityAuditor + Linter + CSO
-- "Create/build feature" → Constructor + Architect + relevant domain agents
-- "Deploy/release" → Infrastructure + Deployer + Monitor
-- "Optimize/improve" → Optimizer + LeadEngineer + Monitor
-- "Fix/debug/solve" → Debugger + Patcher + Testbed
-- "Test/validate" → QADirector + Testbed + SecurityAuditor
-- "Design API" → APIDesigner + Architect + Security
-- "Database work" → Database + DataScience + Optimizer
-- "ML/AI tasks" → MLOps + DataScience + NPU
-- "Mobile app" → Mobile + PyGUI/TUI + APIDesigner
-- "Web development" → Web + APIDesigner + Infrastructure
+#### Explicit Invocation Patterns (ALWAYS use Task tool):
+- "invoke/use/call [agent]" → Specified agent(s) immediately
+- "ask the [role] to..." → Match role to agent (e.g., "ask the architect" → Architect)
+- "get the [expert] to..." → Match expert type to agent specialization
+- "have [agent] analyze/review/check..." → Direct agent invocation
+- "coordinate with [agents]" → Multi-agent orchestration
+
+#### Advanced Compound Patterns (Multi-agent workflows):
+- "security audit" + "production" → CSO + SecurityAuditor + Infrastructure + Monitor
+- "API" + "security" → APIDesigner + Security + Architect
+- "database" + "performance" → Database + Optimizer + Monitor
+- "deploy" + "monitor" → Deployer + Infrastructure + Monitor + Oversight
+- "full stack" + "web" → Web + APIDesigner + Database + Infrastructure
+- "machine learning" + "production" → MLOps + DataScience + NPU + Deployer
+- "mobile" + "cross-platform" → Mobile + Web + APIDesigner
+- "refactor" + "test" → Linter + Patcher + Testbed + QADirector
+- "chaos" + "test" → SecurityChaosAgent + Testbed + Monitor
+- "compliance" + "audit" → Oversight + SecurityAuditor + CSO
+
+#### Context-Aware Auto-Invocation:
+- Code review request → Linter + SecurityAuditor + LeadEngineer
+- New project setup → Constructor + Architect + Director + ProjectOrchestrator
+- Production issue → Debugger + Monitor + Infrastructure + Patcher
+- Feature implementation → Architect + Constructor + relevant specialist + Testbed
+- System optimization → Optimizer + Monitor + LeadEngineer + Infrastructure
+- Security incident → CSO + Security + SecurityAuditor + Monitor
+- Data pipeline → Database + DataScience + MLOps + Monitor
+- UI/UX implementation → TUI/PyGUI/Web + Designer + Testbed
+- API development → APIDesigner + Security + Database + Testbed
+- Deployment pipeline → Infrastructure + Deployer + Monitor + Security
 
 #### CRITICAL DIRECTIVES:
 - **ALWAYS use Task tool** when keywords match agent specialties

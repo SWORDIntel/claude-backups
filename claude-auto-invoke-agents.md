@@ -72,22 +72,133 @@ Claude analyzes the full context of your request to determine:
 
 ## Usage Examples
 
-### Example 1: Security Request
+### Explicit Invocation Examples
+
+#### Direct Agent Request
 ```
-User: "Review this code for security vulnerabilities"
-Claude: *Automatically invokes SecurityAuditor, then Security for comprehensive analysis*
+User: "Invoke the CSO to review our security posture"
+Claude: *Immediately invokes CSO agent via Task tool*
 ```
 
-### Example 2: Full Development Cycle
+#### Role-Based Request
 ```
-User: "Create a new REST API with authentication"
-Claude: *Invokes Director → ProjectOrchestrator → APIDesigner → Security → Testbed*
+User: "Ask the architect to design a microservices structure"
+Claude: *Invokes Architect agent based on role matching*
 ```
 
-### Example 3: Performance Issue
+#### Multi-Agent Coordination
 ```
-User: "This function is running slowly"
-Claude: *Invokes Debugger → Optimizer → Monitor for analysis and optimization*
+User: "Use the security team to audit this code"
+Claude: *Invokes CSO + SecurityAuditor + CryptoExpert + Security*
+```
+
+### Keyword Pattern Examples
+
+#### Security Patterns
+```
+User: "Check for vulnerabilities and ensure compliance"
+Keywords: vulnerabilities, compliance
+Claude: *Invokes SecurityAuditor + CSO + Oversight*
+```
+
+#### Performance Patterns
+```
+User: "This API has high latency and throughput issues"
+Keywords: latency, throughput
+Claude: *Invokes Optimizer + Monitor + LeadEngineer + APIDesigner*
+```
+
+#### Bug Fix Patterns
+```
+User: "There's a crash in production, need to fix this exception"
+Keywords: crash, production, fix, exception
+Claude: *Invokes Debugger + Patcher + Monitor + Infrastructure*
+```
+
+### Compound Pattern Examples
+
+#### Security + Production
+```
+User: "We need a security audit before going to production"
+Compound: "security audit" + "production"
+Claude: *Invokes CSO + SecurityAuditor + Infrastructure + Monitor + Deployer*
+```
+
+#### Database + Performance
+```
+User: "Database queries are slow, optimize the performance"
+Compound: "database" + "performance"
+Claude: *Invokes Database + Optimizer + Monitor + DataScience*
+```
+
+#### Full Stack Development
+```
+User: "Build a full stack web application with React and Node"
+Compound: "full stack" + "web"
+Claude: *Invokes Web + APIDesigner + Database + Infrastructure + Constructor*
+```
+
+### Context-Aware Examples
+
+#### Code Review
+```
+User: "Review this pull request"
+Context: Code review request
+Claude: *Invokes Linter + SecurityAuditor + LeadEngineer + QADirector*
+```
+
+#### Production Incident
+```
+User: "Production is down, customers can't log in"
+Context: Production issue
+Claude: *Invokes Debugger + Monitor + Infrastructure + Patcher + Security*
+```
+
+#### New Project
+```
+User: "Starting a new machine learning project for fraud detection"
+Context: New project setup + ML
+Claude: *Invokes Director + ProjectOrchestrator + MLOps + DataScience + Security*
+```
+
+### Advanced Multi-Agent Workflows
+
+#### Complete Development Cycle
+```
+User: "Create, test, and deploy a secure payment API"
+Pattern: Multiple action verbs + security + API
+Claude: *Orchestrates:*
+1. Director + ProjectOrchestrator (planning)
+2. APIDesigner + Architect (design)
+3. Constructor + Security (implementation)
+4. QADirector + Testbed (testing)
+5. Infrastructure + Deployer (deployment)
+6. Monitor + Oversight (post-deployment)
+```
+
+#### Security Incident Response
+```
+User: "We detected unauthorized access, need immediate response and audit"
+Pattern: Security incident keywords
+Claude: *Emergency response team:*
+- CSO (strategic response)
+- Security + SecurityAuditor (investigation)
+- Monitor + Infrastructure (system analysis)
+- Patcher (immediate fixes)
+- Oversight (compliance reporting)
+```
+
+#### ML Pipeline Development
+```
+User: "Build and deploy a recommendation system with real-time updates"
+Pattern: ML + deployment + real-time
+Claude: *ML pipeline team:*
+- DataScience + MLOps (model development)
+- Database (data pipeline)
+- NPU (optimization)
+- APIDesigner (serving layer)
+- Infrastructure + Deployer (deployment)
+- Monitor (performance tracking)
 ```
 
 ## Enabling Auto-Invocation
