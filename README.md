@@ -1,30 +1,56 @@
-# Claude Code LiveCD Unified Installer
+# Claude Code Ultimate Unified Installer v4.0
 
-**Complete Claude Code installation suite with three powerful installers for LiveCD environments**
+**The One True Installer - Complete Claude Code installation with agent framework, orchestration, and LiveCD support**
 
-> **Note**: The LiveCD *generator/builder* tools have been moved to a separate repository at [github.com/SWORDIntel/livecd-gen](https://github.com/SWORDIntel/livecd-gen). This repository focuses on installing Claude Code and the agent framework on LiveCD systems.
+> **Note**: The LiveCD *generator/builder* tools have been moved to a separate repository at [github.com/SWORDIntel/livecd-gen](https://github.com/SWORDIntel/livecd-gen). This repository focuses on installing Claude Code and the agent framework.
 
-## 🚀 Quick Start - Choose Your Method
+## 🚀 Quick Start - Unified Installer (RECOMMENDED)
 
-### Method 1: Portable Installation (Best for LiveCD)
+### The Ultimate Installation Solution
+**One installer to rule them all** - combines all features from previous installers:
+
 ```bash
-# Everything in one self-contained directory - no system dependencies
+# Quick installation (minimal components)
+./claude-installer.sh --quick
+
+# Full installation (all features: agents, orchestration, statusline, permission bypass)  
+./claude-installer.sh --full
+
+# Portable installation (self-contained)
+./claude-installer.sh --portable
+
+# Custom installation (choose components)
+./claude-installer.sh --custom
+
+# Automated installation (no prompts)
+./claude-installer.sh --full --auto
+```
+
+**Unified Installer Features:**
+- ✅ **5 Installation Methods**: npm, pip, direct download, GitHub API, source compilation
+- ✅ **75+ Installation Attempts**: Comprehensive retry logic - "stub fallback should never happen"
+- ✅ **Intelligent Mode Detection**: Automatically selects optimal configuration
+- ✅ **Complete Integration**: Agents + Orchestration + Statusline + Permission Bypass
+- ✅ **Zero Learning Curve**: Drop-in replacement for claude command
+
+### Legacy Installers (Still Supported)
+
+#### Method 2: Portable Installation 
+```bash
+# Everything in one self-contained directory
 ./claude-portable-launch.sh
 ```
 
-### Method 2: Quick System Installation
+#### Method 3: Quick System Installation
 ```bash
 # Smart installer with CPU optimization detection
 ./claude-quick-launch-agents.sh
 ```
 
-### Method 3: Direct Installation  
+#### Method 4: LiveCD Installation  
 ```bash
-# Main installer - now defaults to local (no sudo needed)
+# Original installer with unified orchestration
 ./claude-livecd-unified-with-agents.sh --auto-mode
-
-# For system-wide installation use --system flag
-./claude-livecd-unified-with-agents.sh --system --auto-mode
 ```
 
 All methods install Claude Code v1.0.77 with agents, statusline, and auto-permission bypass.

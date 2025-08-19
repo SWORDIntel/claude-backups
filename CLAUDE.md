@@ -300,27 +300,63 @@ system:
 
 ## Installation Methods
 
-### Method 1: Portable Installation (Recommended for LiveCD)
+### Unified Installer v4.0 - The One True Installer (RECOMMENDED)
+The ultimate installation solution that combines all features from previous installers into one comprehensive tool.
+
+```bash
+# Quick installation (minimal components)
+./claude-installer.sh --quick
+
+# Full installation (all features: agents, orchestration, statusline, permission bypass)
+./claude-installer.sh --full
+
+# Portable installation (self-contained)
+./claude-installer.sh --portable
+
+# Custom installation (choose components)
+./claude-installer.sh --custom
+
+# Automated installation (no prompts)
+./claude-installer.sh --full --auto
+
+# Test installation (dry run)
+./claude-installer.sh --full --dry-run --verbose
+```
+
+**Features of Unified Installer:**
+- ✅ **5 Installation Methods**: npm, pip, direct download, GitHub API, source compilation
+- ✅ **Comprehensive Retry Logic**: 75+ installation attempts before fallback
+- ✅ **Intelligent Mode Detection**: Automatically selects best configuration
+- ✅ **Orchestration Integration**: Tandem Orchestration System deployment
+- ✅ **Permission Bypass**: Automatic LiveCD compatibility
+- ✅ **Statusline Integration**: Neovim statusline with agent monitoring
+- ✅ **Zero Learning Curve**: Works exactly like original claude command
+
+**After installation, claude command provides:**
+```bash
+claude /task "create feature with tests"  # → Auto permission bypass + orchestration
+claude --unified-status                   # → Show system status  
+claude --unified-help                     # → Show unified features
+```
+
+### Legacy Installers (Still Supported)
+
+#### Method 2: Portable Installation 
 ```bash
 ./claude-portable-launch.sh
 # Creates self-contained installation in ./claude-portable/
 ```
 
-### Method 2: Quick System Installation
+#### Method 3: Quick System Installation
 ```bash
 ./claude-quick-launch-agents.sh
 # Smart installer with CPU detection
 ```
 
-### Method 3: Direct Installation (NOW WITH UNIFIED ORCHESTRATION)
+#### Method 4: LiveCD Installation 
 ```bash
 ./claude-livecd-unified-with-agents.sh --auto-mode
-# Main installer with integrated permission bypass + orchestration
-
-# After installation, claude command provides:
-claude /task "create feature with tests"  # → Auto permission bypass + orchestration
-claude --unified-status                   # → Show system status  
-claude --unified-help                     # → Show unified features
+# Original installer with unified orchestration
 ```
 
 ## Important Commands
