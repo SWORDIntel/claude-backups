@@ -1103,6 +1103,101 @@ CLAUDE_NORMAL
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# AGENT SYNC SETUP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+setup_agent_sync() {
+    log "Setting up agent synchronization..."
+    
+    # Define paths
+    local sync_script="$HOME/sync-agents.sh"
+    local source_dir="$SCRIPT_DIR/agents"
+    local target_dir="$HOME/agents"
+    
+    # Create sync script
+    cat > "$sync_script" << 'EOF'
+#!/bin/bash
+
+SOURCE="/home/ubuntu/Documents/Claude/agents"
+TARGET="/home/ubuntu/agents"
+LOGFILE="/home/ubuntu/agent-sync.log"
+
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+log_message() {
+    echo "[$TIMESTAMP] $1" >> "$LOGFILE"
+}
+
+if [ ! -d "$SOURCE" ]; then
+    log_message "ERROR: Source directory $SOURCE does not exist"
+    exit 1
+fi
+
+if [ -L "$TARGET" ] || [ -d "$TARGET" ]; then
+    rm -rf "$TARGET"
+    log_message "Removed existing target: $TARGET"
+fi
+
+mkdir -p "$TARGET"
+
+if rsync -av --delete "$SOURCE/" "$TARGET/" >> "$LOGFILE" 2>&1; then
+    log_message "SUCCESS: Agents synced successfully"
+    MD_COUNT=$(find "$TARGET" -name "*.md" -type f | wc -l)
+    log_message "INFO: Synced $MD_COUNT agent definition files"
+else
+    log_message "ERROR: Sync failed"
+    exit 1
+fi
+
+if [ -f "$LOGFILE" ]; then
+    tail -n 1000 "$LOGFILE" > "${LOGFILE}.tmp" && mv "${LOGFILE}.tmp" "$LOGFILE"
+fi
+EOF
+    
+    chmod +x "$sync_script"
+    
+    # Test sync if source exists
+    if [ -d "$source_dir" ]; then
+        log "Running initial agent sync..."
+        if "$sync_script"; then
+            success "Initial agent sync completed"
+        else
+            warn "Initial sync failed, but cron job will retry"
+        fi
+    fi
+    
+    # Set up cron job
+    local cron_line="*/5 * * * * $sync_script >/dev/null 2>&1"
+    if ! crontab -l 2>/dev/null | grep -q "$sync_script"; then
+        (crontab -l 2>/dev/null; echo "$cron_line") | crontab -
+        if [ $? -eq 0 ]; then
+            success "Agent sync cron job installed (runs every 5 minutes)"
+        else
+            warn "Failed to install cron job"
+        fi
+    fi
+    
+    # Create status command
+    mkdir -p "$USER_BIN_DIR"
+    cat > "$USER_BIN_DIR/claude-sync-status" << 'EOF'
+#!/bin/bash
+echo "Agent Sync Status:"
+echo "=================="
+if [ -f "/home/ubuntu/agent-sync.log" ]; then
+    echo "Last sync entries:"
+    tail -5 /home/ubuntu/agent-sync.log
+    echo
+    echo "Agent count: $(find ~/agents -name "*.md" -maxdepth 1 2>/dev/null | wc -l) files"
+else
+    echo "No sync log found"
+fi
+EOF
+    chmod +x "$USER_BIN_DIR/claude-sync-status"
+    
+    log "Created claude-sync-status command for monitoring"
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ENVIRONMENT SETUP
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1237,6 +1332,10 @@ run_installation() {
     
     # Step 5: Setup environment
     setup_environment
+    echo
+    
+    # Setup agent synchronization
+    setup_agent_sync
     
     # Show final status
     show_status
@@ -1246,6 +1345,7 @@ run_installation() {
     echo "To complete setup:"
     echo "  1. Run: source ~/.bashrc"
     echo "  2. Launch Claude: claude"
+    echo "  3. Check agent sync: claude-sync-status"
     echo
     printf "${YELLOW}${BOLD}NEW:${NC} ${GREEN}Unified Orchestration System${NC} integrated!\n"
     echo "  • ${GREEN}Permission bypass${NC}: Automatic for LiveCD compatibility"

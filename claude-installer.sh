@@ -1114,6 +1114,124 @@ NVIM_APPEND
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# AGENT SYNC SETUP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+setup_agent_sync() {
+    if [ "$INSTALL_AGENTS" != true ]; then
+        debug "Skipping agent sync setup (agents not installed)"
+        return 0
+    fi
+    
+    log "Setting up agent synchronization..."
+    
+    # Define paths
+    local sync_script="$HOME/sync-agents.sh"
+    local source_dir="$SCRIPT_DIR/agents"
+    local target_dir="$HOME/agents"
+    local log_file="$HOME/agent-sync.log"
+    
+    # Create sync script
+    cat > "$sync_script" << 'EOF'
+#!/bin/bash
+
+# Agent synchronization script
+# Syncs agents from Documents/Claude/agents to ~/agents every 5 minutes
+
+SOURCE="/home/ubuntu/Documents/Claude/agents"
+TARGET="/home/ubuntu/agents"
+LOGFILE="/home/ubuntu/agent-sync.log"
+
+# Create timestamp
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Function to log messages
+log_message() {
+    echo "[$TIMESTAMP] $1" >> "$LOGFILE"
+}
+
+# Check if source exists
+if [ ! -d "$SOURCE" ]; then
+    log_message "ERROR: Source directory $SOURCE does not exist"
+    exit 1
+fi
+
+# Remove existing symlink or directory
+if [ -L "$TARGET" ] || [ -d "$TARGET" ]; then
+    rm -rf "$TARGET"
+    log_message "Removed existing target: $TARGET"
+fi
+
+# Create target directory
+mkdir -p "$TARGET"
+
+# Sync with rsync for efficiency
+if rsync -av --delete "$SOURCE/" "$TARGET/" >> "$LOGFILE" 2>&1; then
+    log_message "SUCCESS: Agents synced successfully"
+    
+    # Count synced files
+    MD_COUNT=$(find "$TARGET" -name "*.md" -type f | wc -l)
+    log_message "INFO: Synced $MD_COUNT agent definition files"
+else
+    log_message "ERROR: Sync failed"
+    exit 1
+fi
+
+# Keep log file manageable (last 1000 lines)
+if [ -f "$LOGFILE" ]; then
+    tail -n 1000 "$LOGFILE" > "${LOGFILE}.tmp" && mv "${LOGFILE}.tmp" "$LOGFILE"
+fi
+EOF
+    
+    # Make sync script executable
+    chmod +x "$sync_script"
+    
+    # Test the sync script once
+    if [ -d "$source_dir" ]; then
+        log "Running initial agent sync..."
+        if "$sync_script"; then
+            success "Initial agent sync completed"
+        else
+            warn "Initial sync failed, but cron job will retry"
+        fi
+    fi
+    
+    # Set up cron job
+    local cron_line="*/5 * * * * $sync_script >/dev/null 2>&1"
+    
+    # Check if cron job already exists
+    if crontab -l 2>/dev/null | grep -q "$sync_script"; then
+        debug "Agent sync cron job already exists"
+    else
+        # Add cron job
+        (crontab -l 2>/dev/null; echo "$cron_line") | crontab -
+        if [ $? -eq 0 ]; then
+            success "Agent sync cron job installed (runs every 5 minutes)"
+        else
+            warn "Failed to install cron job - you may need to set it up manually"
+        fi
+    fi
+    
+    # Create status check command
+    cat > "$HOME/.local/bin/claude-sync-status" << 'EOF'
+#!/bin/bash
+echo "Agent Sync Status:"
+echo "=================="
+if [ -f "/home/ubuntu/agent-sync.log" ]; then
+    echo "Last sync entries:"
+    tail -5 /home/ubuntu/agent-sync.log
+    echo
+    echo "Agent count: $(find ~/agents -name "*.md" -maxdepth 1 2>/dev/null | wc -l) files"
+else
+    echo "No sync log found"
+fi
+EOF
+    chmod +x "$HOME/.local/bin/claude-sync-status"
+    
+    log "Created claude-sync-status command for monitoring"
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ENVIRONMENT SETUP
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1186,6 +1304,18 @@ show_status() {
     if [ -d "$AGENTS_DIR" ]; then
         local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
         printf "${GREEN}✓ $agent_count agents${NC} in $AGENTS_DIR\n"
+        
+        # Check sync status
+        if [ -f "$HOME/sync-agents.sh" ]; then
+            printf "  ${CYAN}Sync: ENABLED${NC} (every 5 minutes to ~/agents)\n"
+            if crontab -l 2>/dev/null | grep -q "sync-agents.sh"; then
+                printf "  ${GREEN}Cron job: ACTIVE${NC}\n"
+            else
+                printf "  ${YELLOW}Cron job: NOT FOUND${NC}\n"
+            fi
+        else
+            printf "  ${YELLOW}Sync: NOT CONFIGURED${NC}\n"
+        fi
     else
         printf "${RED}✗ Not installed${NC}\n"
     fi
@@ -1289,6 +1419,9 @@ run_installation() {
     # Step 6: Setup environment
     setup_environment
     
+    # Step 7: Setup agent synchronization
+    setup_agent_sync
+    
     # Show final status
     show_status
     
@@ -1297,6 +1430,7 @@ run_installation() {
     echo "To complete setup:"
     echo "  1. Run: source ~/.bashrc"
     echo "  2. Launch Claude: claude"
+    echo "  3. Check agent sync: claude-sync-status"
     echo
     
     if [ "$INSTALL_ORCHESTRATION" = true ]; then
