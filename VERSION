@@ -1,11 +1,35 @@
-6.0.0-portable
-Release Date: 2025-08-13
+7.1.0
+Release Date: 2025-08-19
 Platform: Intel Core Ultra 7 155H (Meteor Lake)
 Microcode: Detection improved (>0x20 = AVX-512 cloaked)
 Ubuntu: 24.04+ LiveCD
 Claude Code: v1.0.77 (@anthropic-ai/claude-code)
 
-Changes in 6.0.0:
+Changes in 7.1.0:
+- NEW: Organized directory structure for clarity
+- NEW: Agent registration with auto-discovery monitoring
+- NEW: Enhanced keyword matching patterns in CLAUDE.md
+- NEW: Systemd service for continuous agent monitoring
+- IMPROVED: Installer paths use PROJECT_ROOT variable
+- IMPROVED: Symlinks maintain backward compatibility
+- ADDED: DIRECTORY_STRUCTURE.md navigation guide
+- ADDED: 5 new expert panel agents (CSO, LeadEngineer, SecurityAuditor, CryptoExpert, QADirector)
+- FIXED: All import paths updated for new structure
+- ENHANCED: Fuzzy matching with ML-style semantic patterns
+
+Changes in 7.0.0:
+- NEW: Unified Installer v4.0 - The One True Installer
+- NEW: Tandem Orchestration System (Python-first with C integration)
+- NEW: Complete agent framework with 37 specialized agents
+- NEW: Unified orchestration (permission bypass + orchestration)
+- NEW: Global agent discovery and registration
+- NEW: ML-style fuzzy matching for agent invocation
+- IMPROVED: 75+ installation retry attempts
+- IMPROVED: Zero learning curve design
+- ADDED: Agent auto-invocation patterns
+- ADDED: Production-ready monitoring and metrics
+
+Changes in 6.0.0-portable:
 - NEW: Portable installer (claude-portable-launch.sh)
 - Everything in one directory (~300MB)
 - Fixed AVX-512 cloaking detection
@@ -15,12 +39,4 @@ Changes in 6.0.0:
 - Three installation methods
 - Local Node.js option (no sudo needed)
 
-Changes in 5.0.0:
-- Changed from Claude CLI to Claude Code
-- Added npm/node auto-installation
-- Added God-tier statusline for all editors
-- Nano as default editor with syntax highlighting
-- First-launch helper with /config and /terminal-setup
-- Local agents folder detection
-- Enhanced shell prompt with project info
-- 28 production agents with v7.0 framework
+Previous versions: See git history

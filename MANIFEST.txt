@@ -1,26 +1,50 @@
-CLAUDE CODE LIVECD INSTALLER PACKAGE MANIFEST
-==============================================
+CLAUDE CODE AGENT FRAMEWORK MANIFEST
+=====================================
 
-Package: claude-code-livecd-installer-package
-Version: 6.0.0-portable
-Date: 2025-08-13
+Package: claude-code-agent-framework
+Version: 7.1.0
+Date: 2025-08-19
+Status: PRODUCTION
 Claude Code: v1.0.77 (@anthropic-ai/claude-code)
-Size: ~150KB (package), ~300MB (portable), ~60MB (system install)
+Repository: https://github.com/SWORDIntel/claude-backups
+Size: ~50MB (repository), ~300MB (portable), ~60MB (system install)
+Agents: 37 production agents (5 expert panel + 32 specialized)
 
 CONTENTS:
 ---------
 
-## Main Installer Files
-/claude-portable-launch.sh              # NEW: Portable installer (everything in one dir)
-/claude-livecd-unified-with-agents.sh   # Full installer with options
-/claude-quick-launch-agents.sh          # Smart launcher with CPU detection
-/run-claude.sh                          # Claude runner script
+## Root Files (Symlinks maintained for compatibility)
 /CLAUDE.md                              # Project context and instructions
 /README.md                              # Quick start guide  
 /VERSION                                # Version information
 /MANIFEST.txt                           # This file
+/DIRECTORY_STRUCTURE.md                 # NEW: Navigation guide
+/organize-root.sh                       # NEW: Directory organization script
 
-## Scripts
+## Installers Directory (/installers/)
+/installers/claude-installer.sh         # NEW: Unified Installer v4.0 - The One True Installer
+/installers/claude-portable-launch.sh   # Portable installer (everything in one dir)
+/installers/claude-livecd-unified-with-agents.sh  # Full installer with options
+/installers/claude-quick-launch-agents.sh  # Smart launcher with CPU detection
+/installers/update-installer-paths.sh   # NEW: Path update utility
+
+## Orchestration Directory (/orchestration/)
+/orchestration/claude-unified           # NEW: Complete unified solution
+/orchestration/claude-enhanced          # NEW: Seamless integration wrapper
+/orchestration/claude-orchestrate       # NEW: Direct orchestration access
+/orchestration/claude-orchestration-bridge.py  # NEW: Python bridge with permission bypass
+/orchestration/python-orchestrator-launcher.sh # NEW: Interactive launcher
+
+## Tools Directory (/tools/)
+/tools/register-custom-agents.py        # NEW: Agent registration with auto-discovery
+/tools/test-sync-integration.sh         # NEW: Agent sync test script
+/tools/run-claude.sh                    # Claude runner script
+
+## Config Directory (/config/)
+/config/claude-agent-monitor.service    # NEW: Systemd service for agent monitoring
+/config/agent-monitor.cron              # NEW: Cron fallback for monitoring
+
+## Scripts Directory
 /scripts/
   ├── statusline.lua                    # God-tier statusline for Neovim
   ├── statusline.md                     # Statusline documentation
@@ -28,23 +52,80 @@ CONTENTS:
   ├── install.sh                        # Installation helper
   └── repos.sh                          # Repository management
 
-## Agents (28 production agents)
+## Agents Directory (37 production agents)
 /agents/
-  ├── *.md                              # Agent configuration files
+  ├── Expert Panel Agents (NEW in 7.1.0):
+  │   ├── CSO.md                        # Chief Security Officer
+  │   ├── CryptoExpert.md               # Cryptography specialist
+  │   ├── LeadEngineer.md               # Lead engineering architect
+  │   ├── QADirector.md                 # Quality assurance director
+  │   └── SecurityAuditor.md            # Security audit specialist
+  │
+  ├── Core Development Agents:
+  │   ├── Architect.md                  # System design and architecture
+  │   ├── Constructor.md                # Project initialization
+  │   ├── Patcher.md                    # Precision code surgery
+  │   ├── Debugger.md                   # Tactical failure analysis
+  │   ├── Testbed.md                    # Elite test engineering
+  │   ├── Linter.md                     # Code review specialist
+  │   ├── Optimizer.md                  # Performance engineering
+  │   └── c-internal.md                 # C/C++ systems engineer
+  │
+  ├── Command & Control:
+  │   ├── Director.md                   # Strategic command (CRITICAL)
+  │   └── ProjectOrchestrator.md        # Tactical coordination (CRITICAL)
+  │
+  ├── Security Agents:
+  │   ├── Security.md                   # Comprehensive security
+  │   ├── Bastion.md                    # Defensive security
+  │   ├── SecurityChaosAgent.md         # Chaos testing
+  │   └── Oversight.md                  # Quality assurance
+  │
+  ├── Infrastructure:
+  │   ├── Infrastructure.md             # System setup
+  │   ├── Deployer.md                   # Deployment orchestration
+  │   ├── Monitor.md                    # Observability
+  │   └── Packager.md                   # Package management
+  │
+  ├── Specialized Development:
+  │   ├── APIDesigner.md                # API architecture
+  │   ├── Database.md                   # Data architecture
+  │   ├── Web.md                        # Modern web frameworks
+  │   ├── Mobile.md                     # iOS/Android development
+  │   ├── PyGUI.md                      # Python GUI development
+  │   ├── TUI.md                        # Terminal UI specialist
+  │   └── python-internal.md            # Python execution environment
+  │
+  ├── Data & ML:
+  │   ├── DataScience.md                # Data analysis and ML
+  │   └── MLOps.md                      # ML pipeline and deployment
+  │
+  ├── Support:
+  │   ├── Docgen.md                     # Documentation engineering
+  │   └── RESEARCHER.md                 # Technology evaluation
+  │
   ├── Template.md                       # Agent template v7.0
-  ├── admin/                           # Admin tools and TUI
+  ├── STATUSLINE_INTEGRATION.md         # Statusline documentation
+  ├── admin/                            # Admin tools and TUI
   ├── binary-communications-system/     # High-performance IPC
-  ├── config/                          # Configuration files
-  ├── docs/                            # Documentation
-  ├── src/                             # Source code (C/Python/Rust)
-  ├── monitoring/                      # Monitoring and metrics
-  └── oldagents/                       # Legacy agent backups
+  ├── src/                              # Source code:
+  │   ├── c/                            # C implementations (84 files)
+  │   ├── python/                       # Tandem Orchestration System
+  │   │   ├── production_orchestrator.py  # Main orchestration (608 lines)
+  │   │   ├── agent_registry.py        # Agent discovery (461 lines)
+  │   │   └── test_tandem_system.py    # Test suite (331 lines)
+  │   └── rust/                         # Rust components
+  ├── docs/                             # Agent documentation
+  ├── monitoring/                       # Monitoring and metrics
+  └── oldagents/                        # Legacy agent backups
 
-## Documentation
+## Documentation Directory
 /docs/
   ├── AGENT_FRAMEWORK_V7.md            # Agent framework documentation
   ├── AGENT_QUICK_REFERENCE_V7.md      # Quick reference guide
-  └── COMPLETE_SETUP_DOCUMENTATION.md  # Comprehensive documentation
+  ├── COMPLETE_SETUP_DOCUMENTATION.md  # Comprehensive documentation
+  ├── TANDEM_ORCHESTRATION_SYSTEM.md   # NEW: Orchestration technical docs
+  └── TANDEM_QUICK_START.md            # NEW: Orchestration quick reference
 
 /deprecated/                            # Old scripts (reference only)
   ├── claude-agents-installer.sh
@@ -69,29 +150,47 @@ SYSTEM REQUIREMENTS:
 
 FEATURES:
 ---------
-✓ Claude Code (not CLI) installation
+✓ Claude Code (not CLI) installation v1.0.77
 ✓ Zero external dependencies - auto-installs npm/node
 ✓ LiveCD optimized (non-persistent)
 ✓ Auto permission bypass for Claude Code
-✓ 28 production agents with local detection
+✓ 37 production agents (5 expert + 32 specialized)
+✓ NEW: Agent auto-discovery with monitoring
+✓ NEW: ML-style fuzzy matching for invocation
+✓ NEW: Tandem Orchestration System (Python-first)
+✓ NEW: Unified orchestration + permission bypass
+✓ NEW: 5 execution modes for different requirements
 ✓ God-tier statusline (Neovim/Vim/Nano/Shell)
 ✓ Nano as default editor with syntax highlighting
 ✓ AVX512/AVX2 SIMD acceleration
 ✓ P-core/E-core aware for Intel hybrid CPUs
 ✓ First-launch helper with /config and /terminal-setup
 ✓ Local agents folder detection (same directory)
+✓ 75+ installation retry attempts before fallback
+✓ Organized directory structure with symlinks
 
 INSTALLATION:
 -------------
-1. Make scripts executable:
-   chmod +x claude-quick-launch-agents.sh
-   chmod +x claude-livecd-unified-with-agents.sh
+1. Unified Installer v4.0 (RECOMMENDED):
+   chmod +x installers/claude-installer.sh
+   ./installers/claude-installer.sh --full
+   
+   Options:
+   --quick    # Minimal components
+   --full     # All features (agents, orchestration, statusline)
+   --portable # Self-contained installation
+   --custom   # Choose components
+   --auto     # No prompts
+   --dry-run  # Test installation
 
-2. Quick install (recommended):
-   ./claude-quick-launch-agents.sh
+2. Quick install (legacy):
+   ./installers/claude-quick-launch-agents.sh
 
-3. Or manual install with options:
-   ./claude-livecd-unified-with-agents.sh
+3. Portable install (self-contained):
+   ./installers/claude-portable-launch.sh
+
+4. Manual install with options:
+   ./installers/claude-livecd-unified-with-agents.sh
 
 WHAT GETS INSTALLED:
 --------------------
@@ -100,16 +199,26 @@ WHAT GETS INSTALLED:
 - GitHub CLI → ~/.local/bin/gh
 - Nano editor with enhanced config
 - Statusline for Neovim/Vim/Nano/Shell
-- Three commands:
+- Agent Registration → ~/.local/bin/register-custom-agents
+- Orchestration Commands:
+  * claude-unified (permission bypass + orchestration)
+  * claude-enhanced (seamless integration)
+  * claude-orchestrate (direct orchestration)
+- Standard Commands:
   * claude (with auto permission bypass)
   * claude-normal (standard mode)
   * claude-first-launch (guided setup)
+- Monitoring Services:
+  * claude-agent-monitor.service (systemd)
+  * Agent auto-discovery cron job
 
 KNOWN ISSUES:
 -------------
-- AVX-512 disabled by microcode 0x20
+- AVX-512 disabled by microcode 0x20 (Intel ME restriction)
+- Binary communication system fails due to microcode restrictions
 - /tmp has noexec on LiveCD
 - Repository key warnings (can ignore)
+- Python-first mode active until hardware restrictions resolved
 
 SUPPORT:
 --------

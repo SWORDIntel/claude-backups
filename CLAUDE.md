@@ -452,18 +452,68 @@ CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh status   # Show detailed system status
 
 ## Critical Context
 
+
+## Available Task Tool Agents
+
+These agents can be invoked directly with Task():
+
+### Built-in Agents
+- `general-purpose`: General-purpose agent for complex tasks
+- `statusline-setup`: Configure status line settings
+- `output-style-setup`: Configure output styles
+- `C-INTERNAL`: Low-level C operations
+
+### Project Agents (37 available)
+- `apidesigner`: APIDesigner Agent
+- `architect`: Architect Agent
+- `bastion`: Primary VPN protocol
+- `c-internal`: c-internal Agent
+- `constructor`: Constructor Agent
+- `cryptoexpert`: Cryptography Expert
+- `cso`: Chief Security Officer
+- `database`: Database Agent
+- `datascience`: DataScience Agent
+- `debugger`: Debugger Agent
+- `deployer`: Deployer Agent
+- `director`: Director Agent
+- `docgen`: Docgen Agent
+- `gnu`: GNU Agent
+- `infrastructure`: Infrastructure Agent
+
+... and 22 more agents
+
+### Usage Example
+```python
+Task(subagent_type="director", prompt="Create strategic plan")
+Task(subagent_type="security", prompt="Audit for vulnerabilities")
+Task(subagent_type="optimizer", prompt="Optimize performance")
+```
+
 ### Auto-Invocation Patterns (MANDATORY - USE PROACTIVELY)
 
 Claude MUST automatically invoke specialized agents when detecting relevant patterns:
 
 #### Immediate Auto-Invocation Triggers:
 1. **Multi-step tasks** → Director + ProjectOrchestrator (ALWAYS, no exceptions)
-2. **Security keywords** (audit, vulnerability, crypto, threat, penetration, compliance, risk) → CSO, SecurityAuditor, CryptoExpert
-3. **Performance keywords** (slow, optimize, speed, latency, throughput, bottleneck) → Optimizer + Monitor + LeadEngineer
-4. **Bug/error keywords** (bug, error, fix, crash, exception, failure, broken) → Debugger + Patcher + QADirector
-5. **Testing keywords** (test, QA, quality, validate, verify, coverage) → QADirector + Testbed
-6. **Documentation keywords** (document, docs, README, explain, help, guide) → Docgen + RESEARCHER
-7. **Architecture keywords** (design, architecture, structure, pattern, framework) → Architect + LeadEngineer + Director
+2. **Security keywords** (audit, vulnerability, crypto, threat, penetration, compliance, risk, authentication, authorization) → CSO, SecurityAuditor, CryptoExpert, Bastion
+3. **Performance keywords** (slow, optimize, speed, latency, throughput, bottleneck, cache, performance) → Optimizer + Monitor + LeadEngineer
+4. **Bug/error keywords** (bug, error, fix, crash, exception, failure, broken, debug, patch) → Debugger + Patcher + QADirector
+5. **Testing keywords** (test, QA, quality, validate, verify, coverage, unit test, integration) → QADirector + Testbed
+6. **Documentation keywords** (document, docs, README, explain, help, guide, manual, tutorial) → Docgen + RESEARCHER
+7. **Architecture keywords** (design, architecture, structure, pattern, framework, blueprint) → Architect + LeadEngineer + Director
+8. **GUI/Interface keywords** (GUI, UI, interface, desktop, window, widget, button, form) → PyGUI (Python), TUI (terminal), Web (browser)
+9. **Terminal/CLI keywords** (terminal, console, CLI, command-line, ncurses, text interface) → TUI + GNU
+10. **Python GUI keywords** (tkinter, PyQt, Streamlit, Kivy, wxPython, Python GUI) → PyGUI
+11. **Web interface keywords** (React, Vue, Angular, frontend, webpage, browser, HTML, CSS) → Web + APIDesigner
+12. **Mobile keywords** (iOS, Android, React Native, mobile app, smartphone, tablet) → Mobile + APIDesigner
+13. **Database keywords** (SQL, PostgreSQL, MySQL, MongoDB, database, schema, query) → Database + DataScience
+14. **ML/AI keywords** (machine learning, AI, model, training, neural network, deep learning) → MLOps + DataScience + NPU
+15. **Package/Deploy keywords** (package, deploy, release, distribution, container, Docker) → Packager + Deployer + Infrastructure
+16. **Planning keywords** (plan, strategy, roadmap, timeline, milestone, project) → PLANNER + Director
+17. **Research keywords** (research, investigate, analyze, evaluate, study, explore) → RESEARCHER + DataScience
+18. **Infrastructure keywords** (server, cloud, AWS, Azure, DevOps, kubernetes) → Infrastructure + Deployer
+19. **C/C++ keywords** (C, C++, systems programming, embedded, low-level, kernel) → c-internal + GNU
+20. **Python keywords** (Python, pip, venv, pandas, numpy, Django, Flask) → python-internal + PyGUI
 
 #### Explicit Invocation Patterns (ALWAYS use Task tool):
 - "invoke/use/call [agent]" → Specified agent(s) immediately
@@ -483,6 +533,16 @@ Claude MUST automatically invoke specialized agents when detecting relevant patt
 - "refactor" + "test" → Linter + Patcher + Testbed + QADirector
 - "chaos" + "test" → SecurityChaosAgent + Testbed + Monitor
 - "compliance" + "audit" → Oversight + SecurityAuditor + CSO
+- "Python" + "GUI" → PyGUI + python-internal + Constructor
+- "terminal" + "interface" → TUI + GNU + c-internal
+- "desktop" + "application" → PyGUI (Python) or TUI (terminal) + Packager
+- "web" + "dashboard" → Web + APIDesigner + Database + Monitor
+- "mobile" + "backend" → Mobile + APIDesigner + Database + Infrastructure
+- "CLI" + "tool" → TUI + GNU + Packager + python-internal
+- "data" + "visualization" → DataScience + PyGUI/Web + Database
+- "admin" + "panel" → Web/PyGUI + Security + Database + Monitor
+- "game" + "development" → PyGUI/TUI + c-internal + Optimizer
+- "chat" + "interface" → TUI/Web + APIDesigner + Database
 
 #### Context-Aware Auto-Invocation:
 - Code review request → Linter + SecurityAuditor + LeadEngineer
@@ -495,6 +555,16 @@ Claude MUST automatically invoke specialized agents when detecting relevant patt
 - UI/UX implementation → TUI/PyGUI/Web + Designer + Testbed
 - API development → APIDesigner + Security + Database + Testbed
 - Deployment pipeline → Infrastructure + Deployer + Monitor + Security
+- Desktop application → PyGUI + Constructor + Packager + Testbed
+- Terminal application → TUI + GNU + c-internal + Testbed
+- Web application → Web + APIDesigner + Database + Security
+- Mobile application → Mobile + APIDesigner + Infrastructure + Testbed
+- Data analysis tool → DataScience + PyGUI/TUI + Database + python-internal
+- Admin dashboard → Web/PyGUI + Security + Monitor + Database
+- Command-line tool → TUI + GNU + python-internal/c-internal + Packager
+- Visualization project → DataScience + PyGUI/Web + Database + Monitor
+- Game development → PyGUI/TUI + c-internal + Optimizer + Monitor
+- Chat application → TUI/Web/Mobile + APIDesigner + Database + Security
 
 #### CRITICAL DIRECTIVES:
 - **ALWAYS use Task tool** when keywords match agent specialties

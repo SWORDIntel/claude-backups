@@ -1,1 +1,0 @@
-/home/ubuntu/Documents/Claude/agents/Director.md
