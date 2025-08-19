@@ -1371,6 +1371,103 @@ EOF
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# FUZZY MATCHING SYSTEM
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+install_fuzzy_matching() {
+    if [ "$INSTALL_AGENTS" != true ]; then
+        debug "Skipping fuzzy matching (agents not installed)"
+        return 0
+    fi
+    
+    log "Installing ML-style fuzzy matching system..."
+    
+    # Define target directories
+    local lib_dir="$HOME/.local/lib/claude-agents"
+    local bin_dir="$USER_BIN_DIR"
+    local config_dir="$HOME/.config/claude"
+    
+    # Create directories
+    mkdir -p "$lib_dir" "$config_dir"
+    
+    # Install semantic matcher library
+    if [ -f "$SCRIPT_DIR/agent-semantic-matcher.py" ]; then
+        cp "$SCRIPT_DIR/agent-semantic-matcher.py" "$lib_dir/agent_semantic_matcher.py"
+        debug "Installed semantic matcher to $lib_dir"
+    else
+        warn "Semantic matcher not found - using basic matching only"
+        return 1
+    fi
+    
+    # Install fuzzy matcher integration
+    if [ -f "$SCRIPT_DIR/claude-fuzzy-agent-matcher.py" ]; then
+        cp "$SCRIPT_DIR/claude-fuzzy-agent-matcher.py" "$lib_dir/claude_fuzzy_agent_matcher.py"
+        debug "Installed fuzzy matcher integration"
+    fi
+    
+    # Copy pattern configuration
+    if [ -f "$SCRIPT_DIR/agent-invocation-patterns.yaml" ]; then
+        cp "$SCRIPT_DIR/agent-invocation-patterns.yaml" "$config_dir/agent-invocation-patterns.yaml"
+        debug "Installed invocation patterns to $config_dir"
+    fi
+    
+    # Create fuzzy-match command for testing
+    cat > "$bin_dir/claude-fuzzy-match" << 'EOF'
+#!/usr/bin/env python3
+"""Test fuzzy matching for Claude agent invocation"""
+import sys
+sys.path.insert(0, '/home/ubuntu/.local/lib/claude-agents')
+from agent_semantic_matcher import EnhancedAgentMatcher
+
+if __name__ == "__main__":
+    matcher = EnhancedAgentMatcher()
+    
+    if len(sys.argv) > 1:
+        user_input = ' '.join(sys.argv[1:])
+    else:
+        user_input = input("Enter request: ")
+        
+    results = matcher.match(user_input)
+    command = matcher.get_invocation_command(user_input)
+    
+    print(f"\n🎯 Top Agents: {', '.join([a for a, _ in list(results['semantic_agents'].items())[:3]])}")
+    print(f"📊 Confidence: {results['confidence']:.2f}")
+    
+    if command:
+        print(f"💡 Command: {command}")
+EOF
+    chmod +x "$bin_dir/claude-fuzzy-match"
+    
+    # Create Python import helper for Claude
+    cat > "$lib_dir/__init__.py" << 'EOF'
+"""Claude Agent Fuzzy Matching Library"""
+from .agent_semantic_matcher import SemanticAgentMatcher, EnhancedAgentMatcher
+from .claude_fuzzy_agent_matcher import ClaudeFuzzyMatcher, fuzzy_match_agents, get_agent_command
+
+__all__ = [
+    'SemanticAgentMatcher',
+    'EnhancedAgentMatcher', 
+    'ClaudeFuzzyMatcher',
+    'fuzzy_match_agents',
+    'get_agent_command'
+]
+EOF
+    
+    # Add to Python path in bashrc
+    if ! grep -q "PYTHONPATH.*claude-agents" "$HOME/.bashrc" 2>/dev/null; then
+        echo "export PYTHONPATH=\"\$HOME/.local/lib/claude-agents:\$PYTHONPATH\"" >> "$HOME/.bashrc"
+        debug "Added fuzzy matching library to PYTHONPATH"
+    fi
+    
+    success "Fuzzy matching system installed"
+    log "  • Semantic matcher: $lib_dir/agent_semantic_matcher.py"
+    log "  • Pattern config: $config_dir/agent-invocation-patterns.yaml"
+    log "  • Test command: claude-fuzzy-match"
+    
+    return 0
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ENVIRONMENT SETUP
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1475,6 +1572,18 @@ show_status() {
         printf "${YELLOW}✗ Not installed${NC}\n"
     fi
     
+    # Fuzzy Matching
+    printf "${BOLD}Fuzzy Matching:${NC} "
+    if [ -f "$HOME/.local/lib/claude-agents/agent_semantic_matcher.py" ]; then
+        printf "${GREEN}✓ Installed${NC}\n"
+        printf "  ${CYAN}ML-style semantic matching: ENABLED${NC}\n"
+        if [ -f "$USER_BIN_DIR/claude-fuzzy-match" ]; then
+            printf "  ${GREEN}Test command: claude-fuzzy-match${NC}\n"
+        fi
+    else
+        printf "${GRAY}Not configured${NC}\n"
+    fi
+    
     # Node.js
     printf "${BOLD}Node.js:${NC} "
     if command -v node &> /dev/null; then
@@ -1567,6 +1676,9 @@ run_installation() {
     # Step 9: Setup CLAUDE.md global sync
     setup_claude_md_sync
     
+    # Step 10: Install fuzzy matching system
+    install_fuzzy_matching
+    
     # Show final status
     show_status
     
@@ -1578,6 +1690,7 @@ run_installation() {
     echo "  3. Check agent sync: claude-sync-status"
     echo "  4. Check CLAUDE.md sync: claude-md-status"
     echo "  5. List global agents: claude-agent list"
+    echo "  6. Test fuzzy matching: claude-fuzzy-match 'optimize database'"
     echo
     
     if [ "$INSTALL_ORCHESTRATION" = true ]; then
