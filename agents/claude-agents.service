@@ -1,15 +1,1 @@
-[Unit]
-Description=Claude Agent Communication System
-After=network.target
-
-[Service]
-Type=forking
-User=ubuntu
-WorkingDirectory=/home/ubuntu/Documents/Claude/agents
-ExecStart=/home/ubuntu/Documents/Claude/agents/BRING_ONLINE.sh
-ExecStop=/usr/bin/pkill -f unified_agent_runtime
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
+services/claude-agents.service

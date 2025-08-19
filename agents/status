@@ -1,0 +1,3 @@
+#!/bin/bash
+# Convenience shortcut for STATUS.sh
+exec ./system/STATUS.sh "$@"
