@@ -12,8 +12,43 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$HOME/.local/share/claude/agents}"
-ORCHESTRATOR_PATH="$AGENTS_DIR/src/python/production_orchestrator.py"
+
+# Auto-detect project root
+find_project_root() {
+    local current_dir="$SCRIPT_DIR"
+    while [ "$current_dir" != "/" ]; do
+        if [ -d "$current_dir/agents" ] && [ -f "$current_dir/CLAUDE.md" ]; then
+            echo "$current_dir"
+            return 0
+        fi
+        current_dir="$(dirname "$current_dir")"
+    done
+    # Fallback to known location
+    echo "/home/siducer/Documents/Claude"
+}
+
+PROJECT_ROOT="$(find_project_root)"
+AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$PROJECT_ROOT/agents}"
+VENV_DIR="$HOME/.local/share/claude/venv"
+
+# Try to find orchestrator in multiple locations
+find_orchestrator() {
+    local paths=(
+        "$AGENTS_DIR/src/python/production_orchestrator.py"
+        "$AGENTS_DIR/src/python/tandem_orchestrator.py"
+        "$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
+        "$PROJECT_ROOT/agents/src/python/tandem_orchestrator.py"
+    )
+    for path in "${paths[@]}"; do
+        if [ -f "$path" ]; then
+            echo "$path"
+            return 0
+        fi
+    done
+    return 1
+}
+
+ORCHESTRATOR_PATH="$(find_orchestrator || echo "")"
 ORCHESTRATION_BRIDGE="$SCRIPT_DIR/claude-orchestration-bridge.py"
 
 # Colors
@@ -54,11 +89,16 @@ find_claude_binary() {
         "$HOME/.local/bin/claude.original" \
         "/usr/local/bin/claude.original" \
         "$(which claude-actual 2>/dev/null)" \
-        "$(npm root -g 2>/dev/null)/@anthropic-ai/claude-code/bin/claude"
+        "$(npm root -g 2>/dev/null)/@anthropic-ai/claude-code/bin/claude" \
+        "$HOME/.npm-global/bin/claude" \
+        "$HOME/.local/npm-global/bin/claude"
     do
-        if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
-            claude_bin="$loc"
-            break
+        if [ -n "$loc" ] && [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
+            # Make sure it's the actual claude binary, not another wrapper
+            if ! grep -q "CLAUDE UNIFIED WRAPPER" "$loc" 2>/dev/null; then
+                claude_bin="$loc"
+                break
+            fi
         fi
     done
     
@@ -66,7 +106,10 @@ find_claude_binary() {
     if [ -z "$claude_bin" ]; then
         local system_claude=$(which claude 2>/dev/null)
         if [ -n "$system_claude" ] && [ "$system_claude" != "$0" ]; then
-            claude_bin="$system_claude"
+            # Make sure it's the actual claude binary, not another wrapper
+            if ! grep -q "CLAUDE UNIFIED WRAPPER" "$system_claude" 2>/dev/null; then
+                claude_bin="$system_claude"
+            fi
         fi
     fi
     
@@ -119,7 +162,7 @@ run_with_orchestration() {
     log_orchestration "Detected multi-agent workflow opportunity"
     
     # Check if orchestrator is available
-    if [ -f "$ORCHESTRATOR_PATH" ]; then
+    if [ -n "$ORCHESTRATOR_PATH" ] && [ -f "$ORCHESTRATOR_PATH" ]; then
         echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${CYAN}║         ${BOLD}Tandem Orchestration System Available${NC}${CYAN}             ║${NC}"
         echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
@@ -139,18 +182,40 @@ run_with_orchestration() {
         case "$choice" in
             1)
                 log_orchestration "Launching Tandem Orchestrator..."
+                
+                # Activate venv if available
+                if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/activate" ]; then
+                    source "$VENV_DIR/bin/activate"
+                    log_info "Virtual environment activated"
+                fi
+                
+                # Set up environment
                 export CLAUDE_BINARY="$claude_bin"
                 export CLAUDE_PERMISSION_BYPASS="$PERMISSION_BYPASS_ENABLED"
+                export CLAUDE_PROJECT_ROOT="$PROJECT_ROOT"
+                export CLAUDE_AGENTS_DIR="$AGENTS_DIR"
+                export PYTHONPATH="$(dirname "$ORCHESTRATOR_PATH"):$AGENTS_DIR/src/python:$PYTHONPATH"
                 
                 # Launch orchestrator with task
-                python3 "$ORCHESTRATOR_PATH" --task "${args[@]}"
+                cd "$(dirname "$ORCHESTRATOR_PATH")"
+                python3 "$(basename "$ORCHESTRATOR_PATH")" --task "${args[@]}"
                 exit $?
                 ;;
             3)
                 # Show analysis
                 echo -e "${CYAN}Task Analysis:${NC}"
+                
+                # Activate venv if available
+                if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/activate" ]; then
+                    source "$VENV_DIR/bin/activate"
+                fi
+                
+                export PYTHONPATH="$(dirname "$ORCHESTRATOR_PATH"):$AGENTS_DIR/src/python:$PYTHONPATH"
+                export CLAUDE_AGENTS_DIR="$AGENTS_DIR"
+                
                 python3 -c "
 import sys
+import os
 task = ' '.join(sys.argv[1:])
 print(f'Task: {task}')
 print('Suggested agents:')
@@ -163,15 +228,24 @@ if 'document' in task.lower():
     print('  - docgen: Documentation generation')
 if 'deploy' in task.lower():
     print('  - deployer: Deployment orchestration')
+if 'architect' in task.lower() or 'design' in task.lower():
+    print('  - architect: System design')
+if 'debug' in task.lower() or 'fix' in task.lower():
+    print('  - debugger: Debug issues')
+    print('  - patcher: Apply fixes')
 print('')
 print('Execution mode: INTELLIGENT (Python orchestrates)')
+print(f'Agents directory: {os.environ.get(\"CLAUDE_AGENTS_DIR\", \"Not set\")}')
 " "${args[@]}"
                 echo ""
                 echo -n "Continue with orchestrator? [y/N]: "
                 read -n 1 use_orch
                 echo ""
                 if [ "$use_orch" = "y" ] || [ "$use_orch" = "Y" ]; then
-                    python3 "$ORCHESTRATOR_PATH" --task "${args[@]}"
+                    export CLAUDE_PROJECT_ROOT="$PROJECT_ROOT"
+                    export CLAUDE_AGENTS_DIR="$AGENTS_DIR"
+                    cd "$(dirname "$ORCHESTRATOR_PATH")"
+                    python3 "$(basename "$ORCHESTRATOR_PATH")" --task "${args[@]}"
                     exit $?
                 fi
                 ;;
@@ -297,10 +371,13 @@ EOF
         echo -e "${BOLD}Unified Wrapper Status:${NC}"
         echo ""
         
+        # Project root
+        echo -e "Project Root: ${GREEN}$PROJECT_ROOT${NC}"
+        
         # Claude binary
         claude_bin=$(find_claude_binary)
         if [ -n "$claude_bin" ]; then
-            echo -e "Claude Binary: ${GREEN}✓${NC} $claude_bin"
+            echo -e "Claude Binary: ${GREEN}✓${NC} ${claude_bin#$HOME/}"
         else
             echo -e "Claude Binary: ${YELLOW}✗${NC} Not found"
         fi
@@ -312,20 +389,31 @@ EOF
             echo -e "Permission Bypass: ${GREEN}Enabled (default)${NC}"
         fi
         
+        # Virtual environment
+        if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/activate" ]; then
+            echo -e "Python venv: ${GREEN}✓${NC} $VENV_DIR"
+        else
+            echo -e "Python venv: ${YELLOW}✗${NC} Not created"
+        fi
+        
         # Orchestration
         if [ "${CLAUDE_ORCHESTRATION:-true}" = "false" ]; then
             echo -e "Orchestration: ${YELLOW}Disabled${NC}"
-        elif [ -f "$ORCHESTRATOR_PATH" ]; then
+        elif [ -n "$ORCHESTRATOR_PATH" ] && [ -f "$ORCHESTRATOR_PATH" ]; then
             echo -e "Orchestration: ${GREEN}✓ Available${NC}"
-            echo "  Path: $ORCHESTRATOR_PATH"
+            echo "  Path: ${ORCHESTRATOR_PATH#$PROJECT_ROOT/}"
         else
-            echo -e "Orchestration: ${YELLOW}✗ Not installed${NC}"
+            echo -e "Orchestration: ${YELLOW}✗${NC} Not found"
+            echo "  Searched in: $AGENTS_DIR/src/python/"
         fi
         
         # Agents
         if [ -d "$AGENTS_DIR" ]; then
-            agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l)
-            echo -e "Agents: ${GREEN}✓${NC} $agent_count agents in $AGENTS_DIR"
+            # Count main agent files (uppercase .md files in agents root)
+            agent_count=$(find "$AGENTS_DIR" -maxdepth 1 -name "*.md" -type f 2>/dev/null | grep -E '[A-Z]+\.md$' | wc -l)
+            py_files=$(find "$AGENTS_DIR/src/python" -name "*.py" 2>/dev/null | wc -l)
+            echo -e "Agents: ${GREEN}✓${NC} $agent_count agents, $py_files Python files"
+            echo "  Directory: ${AGENTS_DIR#$PROJECT_ROOT/}"
         else
             echo -e "Agents: ${YELLOW}✗${NC} Directory not found"
         fi
