@@ -92,6 +92,9 @@ readonly CONFIG_DIR="$HOME/.config/claude"
 readonly NVIM_CONFIG_DIR="$HOME/.config/nvim"
 readonly CLAUDE_HOME_AGENTS="$HOME/agents"
 
+# Python venv path
+readonly VENV_DIR="$HOME/.local/share/claude/venv"
+
 # Dynamic source paths - all relative to PROJECT_ROOT
 get_source_file() {
     local filename="$1"
@@ -136,8 +139,10 @@ get_orchestration_files() {
         "tandem_orchestrator")
             local paths=(
                 "$PROJECT_ROOT/agents/src/python/tandem_orchestrator.py"
+                "$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
                 "$PROJECT_ROOT/src/python/tandem_orchestrator.py"
                 "$PROJECT_ROOT/orchestration/tandem_orchestrator.py"
+                "$PROJECT_ROOT/python/tandem_orchestrator.py"
             )
             ;;
         "production_orchestrator")
@@ -145,6 +150,7 @@ get_orchestration_files() {
                 "$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
                 "$PROJECT_ROOT/src/python/production_orchestrator.py"
                 "$PROJECT_ROOT/orchestration/production_orchestrator.py"
+                "$PROJECT_ROOT/python/production_orchestrator.py"
             )
             ;;
         "setup_production")
@@ -449,6 +455,89 @@ EOF
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PYTHON VIRTUAL ENVIRONMENT SETUP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+setup_python_venv() {
+    log "Setting up Python virtual environment..."
+    
+    # Check if Python 3 is installed
+    if ! command -v python3 &> /dev/null; then
+        error "Python 3 is required but not installed"
+        return 1
+    fi
+    
+    # Create venv directory if it doesn't exist
+    mkdir -p "$(dirname "$VENV_DIR")"
+    
+    # Create virtual environment
+    if [ ! -d "$VENV_DIR" ]; then
+        log "Creating virtual environment at $VENV_DIR..."
+        python3 -m venv "$VENV_DIR" || {
+            error "Failed to create virtual environment"
+            return 1
+        }
+        success "Virtual environment created"
+    else
+        debug "Virtual environment already exists at $VENV_DIR"
+    fi
+    
+    # Activate venv and upgrade pip
+    log "Activating virtual environment and upgrading pip..."
+    source "$VENV_DIR/bin/activate"
+    python3 -m pip install --upgrade pip setuptools wheel &> /dev/null || {
+        warn "Failed to upgrade pip/setuptools/wheel"
+    }
+    
+    # Install requirements.txt if it exists
+    local requirements_files=(
+        "$PROJECT_ROOT/requirements.txt"
+        "$PROJECT_ROOT/agents/requirements.txt"
+        "$PROJECT_ROOT/orchestration/requirements.txt"
+    )
+    
+    local installed_requirements=false
+    for req_file in "${requirements_files[@]}"; do
+        if [ -f "$req_file" ]; then
+            log "Installing dependencies from ${req_file#$PROJECT_ROOT/}..."
+            # Show progress for large requirements files
+            if command -v pv &> /dev/null; then
+                python3 -m pip install -r "$req_file" 2>&1 | pv -l -s $(wc -l < "$req_file") > /dev/null || {
+                    warn "Some dependencies from ${req_file#$PROJECT_ROOT/} failed to install"
+                }
+            else
+                python3 -m pip install -r "$req_file" || {
+                    warn "Some dependencies from ${req_file#$PROJECT_ROOT/} failed to install"
+                }
+            fi
+            installed_requirements=true
+        fi
+    done
+    
+    if [ "$installed_requirements" = false ]; then
+        log "No requirements.txt found, installing basic dependencies..."
+        python3 -m pip install aiofiles aiohttp asyncpg PyYAML rich click psutil &> /dev/null || {
+            warn "Failed to install basic dependencies"
+        }
+    fi
+    
+    success "Python environment setup complete"
+    
+    # Create activation script for users
+    cat > "$USER_BIN_DIR/claude-venv" << EOF
+#!/bin/bash
+# Activate Claude Python virtual environment
+source "$VENV_DIR/bin/activate"
+echo "Claude virtual environment activated"
+echo "Python: \$(which python3)"
+echo "Pip: \$(which pip3)"
+EOF
+    chmod +x "$USER_BIN_DIR/claude-venv"
+    
+    return 0
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ORCHESTRATION COMPONENTS - FULLY DYNAMIC
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -468,15 +557,23 @@ deploy_orchestration_system() {
     # Create main orchestrator launcher
     cat > "$USER_BIN_DIR/orchestrator" << EOF
 #!/bin/bash
-# Dynamic Orchestrator Launcher - No Hardcoded Paths
+# Dynamic Orchestrator Launcher with Virtual Environment
 
 PROJECT_ROOT="$PROJECT_ROOT"
+VENV_DIR="$VENV_DIR"
+
+# Activate virtual environment if it exists
+if [ -d "\$VENV_DIR" ] && [ -f "\$VENV_DIR/bin/activate" ]; then
+    source "\$VENV_DIR/bin/activate"
+fi
 
 # Search for orchestrator in multiple locations
 find_orchestrator() {
     local search_paths=(
         "\$PROJECT_ROOT/agents/src/python/tandem_orchestrator.py"
+        "\$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
         "\$PROJECT_ROOT/src/python/tandem_orchestrator.py"
+        "\$PROJECT_ROOT/src/python/production_orchestrator.py"
         "\$PROJECT_ROOT/orchestration/tandem_orchestrator.py"
         "\$PROJECT_ROOT/python/tandem_orchestrator.py"
     )
@@ -499,13 +596,19 @@ if [ -z "\$ORCHESTRATOR" ] || [ ! -f "\$ORCHESTRATOR" ]; then
     echo "  - \$PROJECT_ROOT/agents/src/python/"
     echo "  - \$PROJECT_ROOT/src/python/"
     echo "  - \$PROJECT_ROOT/orchestration/"
+    echo ""
+    echo "Available Python files:"
+    find "\$PROJECT_ROOT" -name "*orchestrator*.py" -type f 2>/dev/null | head -10
     exit 1
 fi
 
 # Set up environment
 export CLAUDE_PROJECT_ROOT="\$PROJECT_ROOT"
 export CLAUDE_AGENTS_DIR="\$PROJECT_ROOT/agents"
-export PYTHONPATH="\$(dirname "\$ORCHESTRATOR"):\$PYTHONPATH"
+export PYTHONPATH="\$(dirname "\$ORCHESTRATOR"):\$PROJECT_ROOT/agents/src/python:\$PYTHONPATH"
+
+echo "Using orchestrator: \${ORCHESTRATOR#\$PROJECT_ROOT/}"
+echo "Python: \$(which python3)"
 
 # Launch orchestrator
 cd "\$(dirname "\$ORCHESTRATOR")"
@@ -518,7 +621,13 @@ EOF
         cat > "$USER_BIN_DIR/orchestrator-production" << EOF
 #!/bin/bash
 PROJECT_ROOT="$PROJECT_ROOT"
+VENV_DIR="$VENV_DIR"
 PRODUCTION_ORCHESTRATOR="${prod_orch#$PROJECT_ROOT/}"
+
+# Activate virtual environment if it exists
+if [ -d "\$VENV_DIR" ] && [ -f "\$VENV_DIR/bin/activate" ]; then
+    source "\$VENV_DIR/bin/activate"
+fi
 
 if [ ! -f "\$PROJECT_ROOT/\$PRODUCTION_ORCHESTRATOR" ]; then
     echo "Production orchestrator not found, using standard"
@@ -527,6 +636,11 @@ fi
 
 export CLAUDE_PROJECT_ROOT="\$PROJECT_ROOT"
 export CLAUDE_AGENTS_DIR="\$PROJECT_ROOT/agents"
+export PYTHONPATH="\$PROJECT_ROOT/\$(dirname "\$PRODUCTION_ORCHESTRATOR"):\$PROJECT_ROOT/agents/src/python:\$PYTHONPATH"
+
+echo "Using production orchestrator: \$PRODUCTION_ORCHESTRATOR"
+echo "Python: \$(which python3)"
+
 cd "\$PROJECT_ROOT/\$(dirname "\$PRODUCTION_ORCHESTRATOR")"
 exec python3 "\$(basename "\$PRODUCTION_ORCHESTRATOR")" "\$@"
 EOF
@@ -849,9 +963,21 @@ launch_orchestration_system() {
     printf "${CYAN}${BOLD}═══════════════════════════════════════════════════${NC}\n"
     echo
     
-    # Find orchestrator dynamically
+    # Activate virtual environment if it exists
+    if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/activate" ]; then
+        source "$VENV_DIR/bin/activate"
+        echo "Virtual environment activated"
+    fi
+    
+    # Find orchestrator dynamically - prefer production_orchestrator
     local orchestrator=""
     for dir in "agents/src/python" "src/python" "orchestration" "python"; do
+        # First try production_orchestrator
+        if [ -f "$PROJECT_ROOT/$dir/production_orchestrator.py" ]; then
+            orchestrator="$PROJECT_ROOT/$dir/production_orchestrator.py"
+            break
+        fi
+        # Fall back to tandem_orchestrator
         if [ -f "$PROJECT_ROOT/$dir/tandem_orchestrator.py" ]; then
             orchestrator="$PROJECT_ROOT/$dir/tandem_orchestrator.py"
             break
@@ -860,11 +986,15 @@ launch_orchestration_system() {
     
     if [ -z "$orchestrator" ] || [ ! -f "$orchestrator" ]; then
         warn "Orchestrator not found in project"
+        echo "Available Python files:"
+        find "$PROJECT_ROOT" -name "*orchestrator*.py" -type f 2>/dev/null | head -10
+        echo ""
         echo "You can launch it later with: orchestrator"
         return 1
     fi
     
     echo "Orchestrator found: ${orchestrator#$PROJECT_ROOT/}"
+    echo "Python: $(which python3)"
     echo
     echo "Options:"
     echo "  [1] Launch interactive orchestrator"
@@ -876,6 +1006,9 @@ launch_orchestration_system() {
     read -n 1 choice
     echo
     echo
+    
+    # Set up Python path
+    export PYTHONPATH="$(dirname "$orchestrator"):$PROJECT_ROOT/agents/src/python:$PYTHONPATH"
     
     case "$choice" in
         "1")
@@ -940,6 +1073,7 @@ show_final_status() {
     echo "  • orchestrator        - Launch orchestration"
     echo "  • orchestration-status - Check system"
     echo "  • claude-project-info  - Show paths"
+    echo "  • claude-venv         - Activate Python environment"
     echo
     echo "🚀 Next Steps:"
     echo "  1. source ~/.bashrc"
@@ -975,6 +1109,7 @@ main() {
     local steps=(
         "Node.js:install_node_if_needed"
         "Claude Code:install_claude_code"
+        "Python venv:setup_python_venv"
         "Unified wrapper:deploy_unified_wrapper"
         "Orchestration:deploy_orchestration_system"
         "Agents:install_agents_with_sync"
