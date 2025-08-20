@@ -1,18 +1,19 @@
-# 📍 WHERE I AM - Claude Agent Communication System v3.0
-*Complete Directory Structure and Component Guide*
+# WHERE I AM - Agent System Navigation
 
----
+**Current Location**: `/home/siducer/Documents/Claude/agents/`  
+**Last Updated**: 2025-08-20  
+**Version**: 7.0.0
 
 ## 🏗️ System Architecture Overview
 
-The Claude Agent Communication System is a production-ready distributed AI framework achieving **4.2M messages/second** throughput with **200ns P99 latency**. This guide maps every component and its purpose.
+The Claude Agent Communication System is a production-ready distributed AI framework with **47 agents**, achieving **4.2M messages/second** throughput with **<25ms P99 latency**.
 
 ---
 
 ## 📁 Directory Structure
 
 ```
-/home/ubuntu/Documents/Claude/agents/
+/home/siducer/Documents/Claude/agents/
 │
 ├── 🎯 ACTIVE PRODUCTION COMPONENTS
 │   │

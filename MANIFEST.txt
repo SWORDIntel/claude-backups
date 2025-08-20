@@ -2,43 +2,50 @@ CLAUDE CODE AGENT FRAMEWORK MANIFEST
 =====================================
 
 Package: claude-code-agent-framework
-Version: 7.1.0
-Date: 2025-08-19
+Version: 7.0.0
+Date: 2025-08-20
 Status: PRODUCTION
 Claude Code: v1.0.77 (@anthropic-ai/claude-code)
 Repository: https://github.com/SWORDIntel/claude-backups
 Size: ~50MB (repository), ~300MB (portable), ~60MB (system install)
-Agents: 37 production agents (5 expert panel + 32 specialized)
+Agents: 47 production agents (full ecosystem)
 
 CONTENTS:
 ---------
 
-## Root Files (Symlinks maintained for compatibility)
-/CLAUDE.md                              # Project context and instructions
+## Root Files
+/CLAUDE.md                              # Project context (45KB)
 /README.md                              # Quick start guide  
-/VERSION                                # Version information
+/VERSION                                # Version: 7.0.0
 /MANIFEST.txt                           # This file
-/DIRECTORY_STRUCTURE.md                 # NEW: Navigation guide
-/organize-root.sh                       # NEW: Directory organization script
+/DIRECTORY_STRUCTURE.md                 # Navigation guide
+/CLAUDE_UNIFIED_SETUP.md                # Unified wrapper docs
+/INSTALLER_COMPARISON.md                # Installer comparison
+/AGENT_VISIBILITY_FIX.md                # Agent visibility fix
+/TANDEM_ORCHESTRATION_SETUP.md          # Tandem setup guide
 
 ## Installers Directory (/installers/)
-/installers/claude-installer.sh         # NEW: Unified Installer v4.0 - The One True Installer
-/installers/claude-portable-launch.sh   # Portable installer (everything in one dir)
-/installers/claude-livecd-unified-with-agents.sh  # Full installer with options
-/installers/claude-quick-launch-agents.sh  # Smart launcher with CPU detection
-/installers/update-installer-paths.sh   # NEW: Path update utility
+/installers/claude-installer.sh         # Full Installer v5.4 (43KB)
+/installers/claude-livecd-unified-with-agents.sh  # LiveCD installer (36KB)
+/installers/claude-portable-launch.sh   # Portable installer
+/installers/claude-quick-launch-agents.sh  # Quick installer
 
 ## Orchestration Directory (/orchestration/)
-/orchestration/claude-unified           # NEW: Complete unified solution
-/orchestration/claude-enhanced          # NEW: Seamless integration wrapper
-/orchestration/claude-orchestrate       # NEW: Direct orchestration access
-/orchestration/claude-orchestration-bridge.py  # NEW: Python bridge with permission bypass
-/orchestration/python-orchestrator-launcher.sh # NEW: Interactive launcher
+/orchestration/claude-unified           # Main unified wrapper (426 lines)
+/orchestration/claude-enhanced          # Enhanced wrapper
+/orchestration/claude-orchestrate       # Direct orchestration
+/orchestration/claude-orchestration-bridge.py  # Python bridge
+/orchestration/python-orchestrator-launcher.sh # Standalone launcher
+
+## Scripts Directory (/scripts/)
+/scripts/sync-agents-to-claude.sh       # Agent sync to ~/.claude/
+/scripts/setup-tandem-for-claude.sh     # Tandem setup script
+/scripts/test-agent-visibility.sh       # Agent visibility test
 
 ## Tools Directory (/tools/)
-/tools/register-custom-agents.py        # NEW: Agent registration with auto-discovery
-/tools/test-sync-integration.sh         # NEW: Agent sync test script
-/tools/run-claude.sh                    # Claude runner script
+/tools/register-custom-agents.py        # Agent registration
+/tools/standardize-all-agents.py        # Agent standardization
+/tools/claude-global-agents-bridge.py   # Global agent bridge
 
 ## Config Directory (/config/)
 /config/claude-agent-monitor.service    # NEW: Systemd service for agent monitoring
@@ -52,44 +59,32 @@ CONTENTS:
   ├── install.sh                        # Installation helper
   └── repos.sh                          # Repository management
 
-## Agents Directory (37 production agents)
+## Agents Directory (47 production agents)
 /agents/
-  ├── Expert Panel Agents (NEW in 7.1.0):
-  │   ├── CSO.md                        # Chief Security Officer
-  │   ├── CryptoExpert.md               # Cryptography specialist
-  │   ├── LeadEngineer.md               # Lead engineering architect
-  │   ├── QADirector.md                 # Quality assurance director
-  │   └── SecurityAuditor.md            # Security audit specialist
+  ├── Agent Files (47 total):
+  │   ├── DIRECTOR.md                   # Strategic command and control
+  │   ├── PROJECTORCHESTRATOR.md        # Tactical coordination nexus
+  │   ├── ARCHITECT.md                  # System design specialist
+  │   ├── SECURITY.md                   # Comprehensive security analysis
+  │   ├── [43 more agents...]           # Complete ecosystem
+  │   └── Template.md                   # v7.0 agent template
   │
-  ├── Core Development Agents:
-  │   ├── Architect.md                  # System design and architecture
-  │   ├── Constructor.md                # Project initialization
-  │   ├── Patcher.md                    # Precision code surgery
-  │   ├── Debugger.md                   # Tactical failure analysis
-  │   ├── Testbed.md                    # Elite test engineering
-  │   ├── Linter.md                     # Code review specialist
-  │   ├── Optimizer.md                  # Performance engineering
-  │   └── c-internal.md                 # C/C++ systems engineer
+  ├── Source Code (/agents/src/):
+  │   ├── c/                            # C implementations (84 files)
+  │   ├── python/                       # Python implementations (24 files)
+  │   │   ├── production_orchestrator.py
+  │   │   ├── tandem_orchestrator.py
+  │   │   └── agent_registry.py
+  │   └── rust/                         # Rust components
   │
-  ├── Command & Control:
-  │   ├── Director.md                   # Strategic command (CRITICAL)
-  │   └── ProjectOrchestrator.md        # Tactical coordination (CRITICAL)
+  ├── Binary Communications System:
+  │   └── 4.2M msg/sec protocol         # Ultra-fast messaging
   │
-  ├── Security Agents:
-  │   ├── Security.md                   # Comprehensive security
-  │   ├── Bastion.md                    # Defensive security
-  │   ├── SecurityChaosAgent.md         # Chaos testing
-  │   └── Oversight.md                  # Quality assurance
-  │
-  ├── Infrastructure:
-  │   ├── Infrastructure.md             # System setup
-  │   ├── Deployer.md                   # Deployment orchestration
-  │   ├── Monitor.md                    # Observability
-  │   └── Packager.md                   # Package management
-  │
-  ├── Specialized Development:
-  │   ├── APIDesigner.md                # API architecture
-  │   ├── Database.md                   # Data architecture
+  └── Supporting Directories:
+      ├── docs/                          # Agent documentation
+      ├── admin/                         # Administrative tools
+      ├── monitoring/                    # System monitoring
+      └── .backups/                      # Historical backups
   │   ├── Web.md                        # Modern web frameworks
   │   ├── Mobile.md                     # iOS/Android development
   │   ├── PyGUI.md                      # Python GUI development
