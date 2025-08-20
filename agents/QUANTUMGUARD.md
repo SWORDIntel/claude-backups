@@ -1028,7 +1028,3 @@ operational_directives:
     - "Test disaster recovery daily"
     - "Validate compliance continuously"
     - "Assume breach, verify everything"
-
-################################################################################
-# END QUANTUMGUARD AGENT DEFINITION
-################################################################################
