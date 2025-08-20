@@ -1,25 +1,54 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# CLAUDE CODE ALL-IN-ONE INSTALLER WITH GITHUB AGENTS
-# Complete installation without external dependencies
-# Version 3.0 - LiveCD optimized with statusline and agents from GitHub
+# CLAUDE CODE QUICK LAUNCHER - FIXED FOR INSTALLERS/ SUBDIRECTORY
+# Complete installation with proper path detection and agent discovery
+# Version 3.1 - Subdirectory-aware with agent sync
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PATH DETECTION - FIXED FOR SUBDIRECTORY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Resolve symlinks and get real script location
+if [ -L "${BASH_SOURCE[0]}" ]; then
+    REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]}")"
+    SCRIPT_DIR="$(cd "$(dirname "$REAL_SCRIPT")" && pwd)"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+# Determine project root based on script location
+if [[ "$SCRIPT_DIR" == */installers ]]; then
+    # Running from installers/ subdirectory
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+    echo "Running from installers/ subdirectory"
+else
+    # Running from project root
+    PROJECT_ROOT="$SCRIPT_DIR"
+    echo "Running from project root"
+fi
+
 # Configuration
-readonly SCRIPT_VERSION="3.0-all-in-one"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_VERSION="3.1-subdirectory-aware"
 readonly WORK_DIR="/tmp/claude-install-$$"
 readonly LOG_FILE="$HOME/Documents/Claude/install-$(date +%Y%m%d-%H%M%S).log"
 
-# GitHub Configuration - UPDATE THIS WITH YOUR REPO
-readonly GITHUB_REPO="https://github.com/SWORDIntel/claude-backups"  # CHANGE THIS
+# Set paths relative to project root
+readonly SOURCE_AGENTS_DIR="$PROJECT_ROOT/agents"
+readonly STATUSLINE_SRC="$PROJECT_ROOT/statusline.lua"
+readonly UNIFIED_WRAPPER="$PROJECT_ROOT/claude-unified"
+readonly ORCHESTRATION_BRIDGE="$PROJECT_ROOT/claude-orchestration-bridge.py"
+
+# GitHub Configuration (fallback if local not found)
+readonly GITHUB_REPO="https://github.com/SWORDIntel/claude-backups"
 readonly GITHUB_BRANCH="main"
 
 # Installation paths
 readonly USER_BIN_DIR="$HOME/.local/bin"
 readonly AGENTS_DIR="$HOME/.local/share/claude/agents"
+readonly CLAUDE_HOME_AGENTS="$HOME/agents"  # Where Task tool looks
 readonly LOCAL_NODE_DIR="$HOME/.local/node"
 readonly LOCAL_NPM_PREFIX="$HOME/.local/npm-global"
 
@@ -42,6 +71,7 @@ CLAUDE_BINARY=""
 
 log() { 
     printf "${GREEN}[INFO]${NC} %s\n" "$1"
+    mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE" 2>/dev/null || true
 }
 
@@ -78,45 +108,108 @@ show_banner() {
  | |____| | (_| | |_| | (_| |  __/ | |___| (_) | (_| |  __/
   \_______|_\__,_|\__,_|\__,_|\___|  \_____\___/ \__,_|\___|
                                                            
-         All-in-One Installer with GitHub Agents v3.0
+         Quick Launcher v3.1 - Smart Path Detection Edition
 EOF
     printf "${NC}\n"
+    printf "${GREEN}Project Root:${NC} $PROJECT_ROOT\n"
+    printf "${GREEN}Agents Source:${NC} $SOURCE_AGENTS_DIR\n\n"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# AGENT INSTALLATION FROM GITHUB
+# DETECT AND RUN MAIN INSTALLER
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-install_agents_from_github() {
-    log "Installing agents from GitHub repository..."
+find_and_run_main_installer() {
+    log "Looking for main installer..."
     
-    # Create agents directory
+    # Possible locations for the main installer
+    local installer_paths=(
+        "$PROJECT_ROOT/installers/claude-installer.sh"
+        "$PROJECT_ROOT/claude-installer.sh"
+        "$SCRIPT_DIR/claude-installer.sh"
+        "$PROJECT_ROOT/installers/claude-livecd-unified-with-agents.sh"
+        "$PROJECT_ROOT/claude-livecd-unified-with-agents.sh"
+    )
+    
+    for installer in "${installer_paths[@]}"; do
+        if [ -f "$installer" ] && [ -x "$installer" ]; then
+            success "Found main installer: $installer"
+            echo "Launching main installer..."
+            exec "$installer" "$@"
+            exit $?
+        elif [ -f "$installer" ]; then
+            success "Found main installer (making executable): $installer"
+            chmod +x "$installer"
+            exec "$installer" "$@"
+            exit $?
+        fi
+    done
+    
+    warn "Main installer not found, continuing with quick installation..."
+    return 1
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# AGENT INSTALLATION WITH PROPER PATH DETECTION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+install_agents_with_discovery() {
+    log "Installing agents with Task tool discovery..."
+    
+    # Create necessary directories
     mkdir -p "$AGENTS_DIR"
+    mkdir -p "$CLAUDE_HOME_AGENTS"
     mkdir -p "$WORK_DIR"
     
-    # Method 1: Try local agents first
-    if [ -d "$SCRIPT_DIR/agents" ]; then
-        log "Found local agents directory"
-        cp -r "$SCRIPT_DIR/agents/"* "$AGENTS_DIR/" 2>/dev/null || true
-        local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+    # Method 1: Try local agents from project root
+    if [ -d "$SOURCE_AGENTS_DIR" ]; then
+        log "Found agents at: $SOURCE_AGENTS_DIR"
+        
+        # Count agents before copying
+        local source_count=$(find "$SOURCE_AGENTS_DIR" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l || echo 0)
+        log "Found $source_count agents in source directory"
+        
+        # Copy to standard agent directory
+        cp -r "$SOURCE_AGENTS_DIR/"* "$AGENTS_DIR/" 2>/dev/null || true
+        
+        # CRITICAL: Copy to ~/agents for Task tool discovery
+        rm -rf "$CLAUDE_HOME_AGENTS" 2>/dev/null || true
+        cp -r "$SOURCE_AGENTS_DIR" "$CLAUDE_HOME_AGENTS"
+        
+        local agent_count=$(find "$CLAUDE_HOME_AGENTS" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l || echo 0)
+        
         if [ "$agent_count" -gt 0 ]; then
-            success "Installed $agent_count agents from local directory"
+            success "Installed $agent_count agents"
+            echo "Agents installed to:"
+            echo "  • Standard: $AGENTS_DIR"
+            echo "  • Task discovery: $CLAUDE_HOME_AGENTS"
+            
+            # List first few agents
+            echo "Discovered agents:"
+            find "$CLAUDE_HOME_AGENTS" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | head -5 | while read -r agent; do
+                echo "  • $(basename "$agent" | sed 's/\.[mM][dD]$//')"
+            done
+            
             return 0
         fi
+    else
+        warn "Local agents directory not found at $SOURCE_AGENTS_DIR"
     fi
     
+    # Method 2: Download from GitHub
     cd "$WORK_DIR"
+    log "Attempting to download agents from GitHub..."
     
-    # Method 2: Git clone (if git available)
+    # Try git clone first
     if command -v git &> /dev/null; then
-        log "Cloning agents from GitHub..."
         if git clone --depth 1 --filter=blob:none --sparse "$GITHUB_REPO" repo 2>/dev/null; then
             cd repo
             git sparse-checkout set agents 2>/dev/null || true
             
             if [ -d "agents" ]; then
                 cp -r agents/* "$AGENTS_DIR/" 2>/dev/null || true
-                local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+                cp -r agents "$CLAUDE_HOME_AGENTS" 2>/dev/null || true
+                local agent_count=$(find "$CLAUDE_HOME_AGENTS" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l || echo 0)
                 success "Downloaded $agent_count agents from GitHub"
                 return 0
             fi
@@ -139,53 +232,155 @@ install_agents_from_github() {
         
         if [ -n "$repo_dir" ] && [ -d "$repo_dir/agents" ]; then
             cp -r "$repo_dir/agents/"* "$AGENTS_DIR/" 2>/dev/null || true
-            local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
+            cp -r "$repo_dir/agents" "$CLAUDE_HOME_AGENTS" 2>/dev/null || true
+            local agent_count=$(find "$CLAUDE_HOME_AGENTS" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l || echo 0)
             success "Downloaded $agent_count agents from GitHub archive"
             return 0
         fi
     fi
     
-    # Method 4: Create sample agents if download fails
-    warn "Could not download agents from GitHub, creating sample agents..."
+    # Method 4: Create sample agents
+    warn "Could not download agents, creating samples..."
     create_sample_agents
-    return 0
 }
 
 create_sample_agents() {
-    cat > "$AGENTS_DIR/Director.md" << 'EOF'
+    for dir in "$AGENTS_DIR" "$CLAUDE_HOME_AGENTS"; do
+        mkdir -p "$dir"
+        
+        cat > "$dir/DIRECTOR.md" << 'EOF'
+---
+uuid: director-001
+name: Director
+role: Strategic Command and Control
+tools:
+  - Task
+---
+
 # Director Agent
-## Role
 Project orchestration and task delegation
-
-## Capabilities
-- Task breakdown and assignment
-- Progress monitoring
-- Resource coordination
 EOF
 
-    cat > "$AGENTS_DIR/Security.md" << 'EOF'
+        cat > "$dir/SECURITY.md" << 'EOF'
+---
+uuid: security-001
+name: Security
+role: Security Analysis
+tools:
+  - Task
+---
+
 # Security Agent
-## Role
 Security analysis and vulnerability assessment
-
-## Capabilities
-- Code security review
-- Vulnerability scanning
-- Security best practices
 EOF
 
-    cat > "$AGENTS_DIR/Testing.md" << 'EOF'
+        cat > "$dir/TESTBED.md" << 'EOF'
+---
+uuid: testbed-001
+name: Testbed
+role: Testing and QA
+tools:
+  - Task
+---
+
 # Testing Agent
-## Role
 Test creation and quality assurance
-
-## Capabilities
-- Unit test generation
-- Integration testing
-- Test coverage analysis
 EOF
+    done
+    
+    success "Created 3 sample agents in both locations"
+}
 
-    success "Created 3 sample agents"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# AGENT SYNC WITH PROPER PATHS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+setup_agent_sync() {
+    log "Setting up 5-minute agent synchronization..."
+    
+    # Create sync script with correct paths
+    local sync_script="$USER_BIN_DIR/sync-claude-agents.sh"
+    mkdir -p "$USER_BIN_DIR"
+    
+    cat > "$sync_script" << SYNC_SCRIPT
+#!/bin/bash
+# Claude Agent Sync - Updates every 5 minutes
+
+SOURCE="$SOURCE_AGENTS_DIR"  # Using detected project root
+TARGET="$CLAUDE_HOME_AGENTS"
+BACKUP="$AGENTS_DIR"
+LOG="\$HOME/.local/share/claude/agent-sync.log"
+
+mkdir -p "\$(dirname "\$LOG")"
+TIMESTAMP=\$(date '+%Y-%m-%d %H:%M:%S')
+
+if [ ! -d "\$SOURCE" ]; then
+    echo "[\$TIMESTAMP] ERROR: Source not found at \$SOURCE" >> "\$LOG"
+    exit 1
+fi
+
+# Check if changed
+if [ -f "\$HOME/.agent-sync-marker" ]; then
+    if [ "\$SOURCE" -ot "\$HOME/.agent-sync-marker" ]; then
+        exit 0
+    fi
+fi
+
+echo "[\$TIMESTAMP] Syncing from \$SOURCE to \$TARGET" >> "\$LOG"
+
+# Sync to Task tool location
+rm -rf "\$TARGET.old" 2>/dev/null
+[ -d "\$TARGET" ] && mv "\$TARGET" "\$TARGET.old"
+cp -r "\$SOURCE" "\$TARGET"
+
+# Also sync to backup location
+cp -r "\$SOURCE/"* "\$BACKUP/" 2>/dev/null || true
+
+COUNT=\$(find "\$TARGET" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l)
+echo "[\$TIMESTAMP] Synced \$COUNT agents" >> "\$LOG"
+
+touch "\$HOME/.agent-sync-marker"
+tail -n 100 "\$LOG" > "\${LOG}.tmp" && mv "\${LOG}.tmp" "\$LOG"
+SYNC_SCRIPT
+    
+    chmod +x "$sync_script"
+    
+    # Run initial sync
+    "$sync_script" 2>/dev/null || true
+    
+    # Setup cron job
+    (crontab -l 2>/dev/null | grep -v "$sync_script"; echo "*/5 * * * * $sync_script >/dev/null 2>&1") | crontab -
+    
+    success "Agent sync cron job configured (every 5 minutes)"
+    
+    # Create status command
+    cat > "$USER_BIN_DIR/claude-agent-status" << 'STATUS_SCRIPT'
+#!/bin/bash
+echo "═══════════════════════════════════════════════════"
+echo "           Claude Agent System Status"
+echo "═══════════════════════════════════════════════════"
+echo
+echo "Agent Locations:"
+echo "  • Task Discovery: ~/agents"
+echo "  • Standard: ~/.local/share/claude/agents"
+echo
+echo "Agent Counts:"
+echo "  • ~/agents: $(find ~/agents -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l) agents"
+echo "  • Standard: $(find ~/.local/share/claude/agents -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l) agents"
+echo
+echo "Cron Job:"
+if crontab -l 2>/dev/null | grep -q "sync-claude-agents"; then
+    echo "  ✅ Active (runs every 5 minutes)"
+else
+    echo "  ❌ Not found"
+fi
+echo
+if [ -f "$HOME/.local/share/claude/agent-sync.log" ]; then
+    echo "Last sync activity:"
+    tail -3 "$HOME/.local/share/claude/agent-sync.log"
+fi
+STATUS_SCRIPT
+    chmod +x "$USER_BIN_DIR/claude-agent-status"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -193,14 +388,15 @@ EOF
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 deploy_neovim_statusline() {
-    local statusline_src="$SCRIPT_DIR/statusline.lua"
     local nvim_config_dir="$HOME/.config/nvim"
     local nvim_lua_dir="$nvim_config_dir/lua"
     
-    # Check if statusline.lua exists locally
-    if [ ! -f "$statusline_src" ]; then
+    # Check if statusline.lua exists in project root
+    if [ ! -f "$STATUSLINE_SRC" ]; then
+        warn "statusline.lua not found at $STATUSLINE_SRC"
+        
         # Try to download from GitHub
-        log "Downloading statusline.lua from GitHub..."
+        log "Attempting to download statusline.lua from GitHub..."
         local statusline_url="${GITHUB_REPO}/raw/${GITHUB_BRANCH}/statusline.lua"
         
         mkdir -p "$WORK_DIR"
@@ -211,9 +407,9 @@ deploy_neovim_statusline() {
         fi
         
         if [ -f "$WORK_DIR/statusline.lua" ]; then
-            statusline_src="$WORK_DIR/statusline.lua"
+            STATUSLINE_SRC="$WORK_DIR/statusline.lua"
         else
-            warn "statusline.lua not found"
+            warn "Could not obtain statusline.lua"
             return 1
         fi
     fi
@@ -224,9 +420,9 @@ deploy_neovim_statusline() {
     mkdir -p "$nvim_lua_dir"
     mkdir -p "$AGENTS_DIR"
     
-    # Copy statusline to both locations
-    cp "$statusline_src" "$nvim_lua_dir/statusline.lua"
-    cp "$statusline_src" "$AGENTS_DIR/statusline.lua"
+    # Copy statusline
+    cp "$STATUSLINE_SRC" "$nvim_lua_dir/statusline.lua"
+    cp "$STATUSLINE_SRC" "$AGENTS_DIR/statusline.lua"
     
     # Create/update init.lua
     if [ ! -f "$nvim_config_dir/init.lua" ]; then
@@ -256,7 +452,7 @@ NVIM_APPEND
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# CLAUDE CODE INSTALLATION
+# NODE.JS INSTALLATION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 install_node_if_needed() {
@@ -272,15 +468,17 @@ install_node_if_needed() {
     
     local node_version="v20.11.0"
     local node_arch="linux-x64"
+    
+    case "$(uname -m)" in
+        arm64|aarch64) node_arch="linux-arm64" ;;
+    esac
+    
     local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-${node_arch}.tar.gz"
     
     if command -v wget &> /dev/null; then
         wget -q "$node_url" -O node.tar.gz || return 1
     elif command -v curl &> /dev/null; then
         curl -fsSL "$node_url" -o node.tar.gz || return 1
-    else
-        error "Neither wget nor curl available"
-        return 1
     fi
     
     tar -xzf node.tar.gz
@@ -292,578 +490,81 @@ install_node_if_needed() {
     return 0
 }
 
-install_claude_code() {
-    log "Installing Claude Code with robust retry mechanisms..."
-    
-    # Create directories
-    mkdir -p "$USER_BIN_DIR"
-    
-    # Method 1: Advanced NPM installation with retries
-    if attempt_npm_installation; then 
-        create_permission_bypass_wrapper
-        return 0
-    fi
-    
-    # Method 2: Pip installation with retries
-    if attempt_pip_installation; then 
-        create_permission_bypass_wrapper
-        return 0
-    fi
-    
-    # Method 3: Direct download methods
-    if attempt_direct_download; then 
-        create_permission_bypass_wrapper
-        return 0
-    fi
-    
-    # Method 4: GitHub releases download
-    if attempt_github_download; then 
-        create_permission_bypass_wrapper
-        return 0
-    fi
-    
-    # Method 5: Manual installation from source
-    if attempt_source_installation; then 
-        create_permission_bypass_wrapper
-        return 0
-    fi
-    
-    # If all methods fail, create minimal stub (should be rare)
-    log "All installation methods failed - creating minimal stub"
-    create_minimal_stub
-}
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CLAUDE CODE INSTALLATION (simplified for quick launch)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Method 1: NPM with comprehensive retry logic
-attempt_npm_installation() {
-    if ! command -v npm &> /dev/null; then
-        log "NPM not available, skipping NPM installation"
-        return 1
-    fi
+install_claude_code() {
+    log "Installing Claude Code..."
     
-    log "Attempting NPM installation with retries..."
-    
+    mkdir -p "$USER_BIN_DIR"
     mkdir -p "$LOCAL_NPM_PREFIX"
+    
     export NPM_CONFIG_PREFIX="$LOCAL_NPM_PREFIX"
     export PATH="$LOCAL_NPM_PREFIX/bin:$PATH"
     
-    # Package names to try in order
-    local packages=(
-        "@anthropic-ai/claude-code"
-        "claude-code" 
-        "claude"
-        "@anthropic/claude-code"
-        "anthropic-claude"
-    )
-    
-    # Try each package with multiple retry attempts
-    for package in "${packages[@]}"; do
-        log "Trying package: $package"
+    # Try npm installation
+    if command -v npm &> /dev/null; then
+        log "Installing Claude Code via npm..."
         
-        for attempt in {1..3}; do
-            log "  Attempt $attempt/3..."
-            
-            # Try with different npm configurations
-            if npm install -g "$package" --no-audit --no-fund --prefer-offline 2>/dev/null || \
-               npm install -g "$package" --no-audit --no-fund 2>/dev/null || \
-               npm install -g "$package" 2>/dev/null; then
-                
-                # Check if actually installed
-                if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
-                    # Move original binary and keep path
-                    mv "$LOCAL_NPM_PREFIX/bin/claude" "$LOCAL_NPM_PREFIX/bin/claude.original"
-                    CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
-                    success "Claude Code installed via npm ($package)"
-                    return 0
-                fi
-            fi
-            
-            # Clear npm cache and try again
-            npm cache clean --force 2>/dev/null || true
-            sleep 2
-        done
-    done
-    
-    # Try alternative npm registries
-    log "Trying alternative npm registries..."
-    for registry in "https://registry.npmjs.org/" "https://registry.yarnpkg.com/"; do
-        log "  Using registry: $registry"
-        if npm install -g @anthropic-ai/claude-code --registry="$registry" 2>/dev/null; then
+        if npm install -g @anthropic-ai/claude-code --no-audit --no-fund 2>/dev/null; then
             if [ -f "$LOCAL_NPM_PREFIX/bin/claude" ]; then
                 mv "$LOCAL_NPM_PREFIX/bin/claude" "$LOCAL_NPM_PREFIX/bin/claude.original"
-                CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude"
-                success "Claude Code installed via npm (alternative registry)"
+                CLAUDE_BINARY="$LOCAL_NPM_PREFIX/bin/claude.original"
+                success "Claude Code installed via npm"
+                
+                # Create wrapper (check for unified wrapper first)
+                if [ -f "$UNIFIED_WRAPPER" ]; then
+                    log "Using unified wrapper"
+                    cp "$UNIFIED_WRAPPER" "$USER_BIN_DIR/claude"
+                    chmod +x "$USER_BIN_DIR/claude"
+                else
+                    create_permission_bypass_wrapper
+                fi
+                
                 return 0
             fi
         fi
-    done
-    
-    log "NPM installation failed after all attempts"
-    return 1
-}
-
-# Method 2: Pip with comprehensive retry logic  
-attempt_pip_installation() {
-    if ! command -v pip3 &> /dev/null && ! command -v pip &> /dev/null; then
-        log "Pip not available, skipping pip installation"
-        return 1
     fi
     
-    log "Attempting pip installation with retries..."
-    
-    # Pip commands to try
-    local pip_commands=("pip3" "pip")
-    
-    # Package names to try
-    local packages=(
-        "claude-code"
-        "anthropic"
-        "claude"
-        "anthropic-claude"
-        "claude-ai"
-    )
-    
-    for pip_cmd in "${pip_commands[@]}"; do
-        if ! command -v "$pip_cmd" &> /dev/null; then continue; fi
-        
-        log "Using $pip_cmd..."
-        
-        for package in "${packages[@]}"; do
-            log "  Trying package: $package"
-            
-            for attempt in {1..3}; do
-                log "    Attempt $attempt/3..."
-                
-                # Try different pip installation methods
-                if "$pip_cmd" install --user "$package" --no-cache-dir 2>/dev/null || \
-                   "$pip_cmd" install --user "$package" --force-reinstall 2>/dev/null || \
-                   "$pip_cmd" install --user "$package" --upgrade 2>/dev/null || \
-                   "$pip_cmd" install --user "$package" 2>/dev/null; then
-                    
-                    # Check common installation locations
-                    for location in "$HOME/.local/bin/claude" "/usr/local/bin/claude"; do
-                        if [ -f "$location" ] && [ -x "$location" ]; then
-                            mv "$location" "${location}.original"
-                            CLAUDE_BINARY="$location"
-                            success "Claude Code installed via pip ($package)"
-                            return 0
-                        fi
-                    done
-                fi
-                
-                sleep 2
-            done
-        done
-    done
-    
-    log "Pip installation failed after all attempts"
-    return 1
-}
-
-# Method 3: Direct download with retries
-attempt_direct_download() {
-    log "Attempting direct download methods..."
-    
-    # Create work directory
-    local work_dir="$WORK_DIR/claude-download"
-    mkdir -p "$work_dir"
-    cd "$work_dir"
-    
-    # URLs to try for direct download
-    local download_urls=(
-        "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-1.0.77.tgz"
-        "https://files.pythonhosted.org/packages/source/c/claude-code/claude-code-1.0.77.tar.gz"
-        "https://github.com/anthropics/claude-code/releases/download/v1.0.77/claude-code-1.0.77.tar.gz"
-    )
-    
-    for url in "${download_urls[@]}"; do
-        log "  Trying download from: $url"
-        
-        local filename=$(basename "$url")
-        
-        # Try different download methods
-        if command -v curl &> /dev/null; then
-            if curl -L -o "$filename" "$url" 2>/dev/null; then
-                if attempt_manual_install "$filename"; then
-                    success "Claude Code installed via direct download (curl)"
-                    return 0
-                fi
-            fi
-        fi
-        
-        if command -v wget &> /dev/null; then
-            if wget -q "$url" -O "$filename" 2>/dev/null; then
-                if attempt_manual_install "$filename"; then
-                    success "Claude Code installed via direct download (wget)"
-                    return 0
-                fi
-            fi
-        fi
-    done
-    
-    cd - > /dev/null
-    log "Direct download failed"
-    return 1
-}
-
-# Method 4: GitHub releases with retry
-attempt_github_download() {
-    log "Attempting GitHub releases download..."
-    
-    if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
-        log "No download tools available"
-        return 1
-    fi
-    
-    local work_dir="$WORK_DIR/github-download" 
-    mkdir -p "$work_dir"
-    cd "$work_dir"
-    
-    # GitHub API to get latest release
-    local api_url="https://api.github.com/repos/anthropics/claude-code/releases/latest"
-    
-    if command -v curl &> /dev/null; then
-        local latest_info=$(curl -s "$api_url" 2>/dev/null)
-        if [ -n "$latest_info" ]; then
-            # Extract download URL from JSON (basic parsing)
-            local download_url=$(echo "$latest_info" | grep -o '"browser_download_url":[^,]*' | head -1 | cut -d'"' -f4)
-            if [ -n "$download_url" ]; then
-                log "  Found release: $download_url"
-                if curl -L -o "claude-latest.tar.gz" "$download_url" 2>/dev/null; then
-                    if attempt_manual_install "claude-latest.tar.gz"; then
-                        success "Claude Code installed via GitHub releases"
-                        return 0
-                    fi
-                fi
-            fi
-        fi
-    fi
-    
-    cd - > /dev/null
-    log "GitHub download failed"
-    return 1
-}
-
-# Method 5: Source installation with retry
-attempt_source_installation() {
-    log "Attempting source installation..."
-    
-    if ! command -v git &> /dev/null; then
-        log "Git not available for source installation"
-        return 1
-    fi
-    
-    local work_dir="$WORK_DIR/source-install"
-    mkdir -p "$work_dir"
-    cd "$work_dir"
-    
-    # Try cloning Claude Code repository
-    if git clone https://github.com/anthropics/claude-code.git 2>/dev/null; then
-        cd claude-code
-        
-        # Try different build methods
-        if [ -f "package.json" ] && command -v npm &> /dev/null; then
-            log "  Building from source with npm..."
-            if npm install 2>/dev/null && npm run build 2>/dev/null; then
-                # Look for built binary
-                for binary_path in "dist/claude" "build/claude" "bin/claude" "claude"; do
-                    if [ -f "$binary_path" ] && [ -x "$binary_path" ]; then
-                        cp "$binary_path" "$USER_BIN_DIR/claude.original"
-                        chmod +x "$USER_BIN_DIR/claude.original"
-                        CLAUDE_BINARY="$USER_BIN_DIR/claude"
-                        success "Claude Code built from source"
-                        return 0
-                    fi
-                done
-            fi
-        fi
-        
-        if [ -f "setup.py" ] && command -v python3 &> /dev/null; then
-            log "  Building from source with Python..."
-            if python3 setup.py install --user 2>/dev/null; then
-                if [ -f "$HOME/.local/bin/claude" ]; then
-                    mv "$HOME/.local/bin/claude" "$HOME/.local/bin/claude.original"
-                    CLAUDE_BINARY="$HOME/.local/bin/claude"
-                    success "Claude Code built from Python source"
-                    return 0
-                fi
-            fi
-        fi
-    fi
-    
-    cd - > /dev/null
-    log "Source installation failed"
-    return 1
-}
-
-# Helper function for manual installation from archives
-attempt_manual_install() {
-    local filename="$1"
-    
-    if [ ! -f "$filename" ]; then
-        return 1
-    fi
-    
-    # Extract and install based on file type
-    if [[ "$filename" == *.tgz ]] || [[ "$filename" == *.tar.gz ]]; then
-        if tar -xzf "$filename" 2>/dev/null; then
-            # Look for Claude binary in extracted files
-            local binary=$(find . -name "claude" -type f -executable 2>/dev/null | head -1)
-            if [ -n "$binary" ]; then
-                cp "$binary" "$USER_BIN_DIR/claude.original"
-                chmod +x "$USER_BIN_DIR/claude.original"
-                CLAUDE_BINARY="$USER_BIN_DIR/claude"
-                return 0
-            fi
-            
-            # Look for package.json and try npm install
-            if [ -f "package/package.json" ]; then
-                cd package
-                if command -v npm &> /dev/null && npm install 2>/dev/null; then
-                    local built_binary=$(find . -name "claude" -type f -executable 2>/dev/null | head -1)
-                    if [ -n "$built_binary" ]; then
-                        cp "$built_binary" "$USER_BIN_DIR/claude.original"
-                        chmod +x "$USER_BIN_DIR/claude.original"
-                        CLAUDE_BINARY="$USER_BIN_DIR/claude"
-                        return 0
-                    fi
-                fi
-                cd ..
-            fi
-        fi
-    fi
-    
-    return 1
-}
-
-# Create wrapper with permission bypass for LiveCD
-create_permission_bypass_wrapper() {
-    if [ -z "$CLAUDE_BINARY" ] || [ ! -f "${CLAUDE_BINARY%.original}.original" ] && [ ! -f "${CLAUDE_BINARY}.original" ]; then
-        log "Warning: Claude binary not properly set up for wrapper"
-        return 1
-    fi
-    
-    local wrapper_path="$CLAUDE_BINARY"
-    local original_path="${CLAUDE_BINARY%.original}.original"
-    
-    # Ensure we have the original binary at the right path
-    if [ ! -f "$original_path" ] && [ -f "${CLAUDE_BINARY}.original" ]; then
-        original_path="${CLAUDE_BINARY}.original"
-    fi
-    
-    log "Creating permission bypass wrapper..."
-    cat > "$wrapper_path" << PERMISSION_WRAPPER
-#!/bin/bash
-# Claude Permission Bypass Wrapper (LiveCD Optimized)
-set -euo pipefail
-
-# Configuration
-ORIGINAL_CLAUDE="$original_path"
-PERMISSION_BYPASS_ENABLED=\${CLAUDE_PERMISSION_BYPASS:-true}
-
-# Set environment
-export CLAUDE_AGENTS_DIR="\$HOME/.local/share/claude/agents"
-export CLAUDE_AGENTS_ROOT="\$CLAUDE_AGENTS_DIR"
-
-# Add permission bypass by default for LiveCD
-if [ "\$PERMISSION_BYPASS_ENABLED" = "true" ] && [[ " \$@ " != *" --no-skip-permissions "* ]] && [[ " \$@ " != *" --safe "* ]] && [[ " \$@ " != *" --dangerously-skip-permissions "* ]]; then
-    exec "\$ORIGINAL_CLAUDE" --dangerously-skip-permissions "\$@"
-else
-    # Remove our custom flags if present
-    args=()
-    for arg in "\$@"; do
-        if [ "\$arg" != "--no-skip-permissions" ] && [ "\$arg" != "--safe" ]; then
-            args+=("\$arg")
-        fi
-    done
-    exec "\$ORIGINAL_CLAUDE" "\${args[@]}"
-fi
-PERMISSION_WRAPPER
-    
-    chmod +x "$wrapper_path"
-    success "Permission bypass wrapper created at $wrapper_path"
+    # Create stub if installation failed
+    create_minimal_stub
     return 0
 }
 
-# Create minimal stub as absolute last resort
-create_minimal_stub() {
-    log "Creating minimal Claude stub as last resort..."
-    cat > "$USER_BIN_DIR/claude" << 'MINIMAL_STUB'
+create_permission_bypass_wrapper() {
+    log "Creating permission bypass wrapper..."
+    cat > "$USER_BIN_DIR/claude" << EOF
 #!/bin/bash
-# Minimal Claude stub with automatic permission bypass
+# Claude LiveCD Wrapper
+export CLAUDE_AGENTS_DIR="$CLAUDE_HOME_AGENTS"
+export CLAUDE_AGENTS_ROOT="$CLAUDE_HOME_AGENTS"
 
-# Set environment
-export CLAUDE_AGENTS_DIR="$HOME/.local/share/claude/agents"
-export CLAUDE_AGENTS_ROOT="$CLAUDE_AGENTS_DIR"
-PERMISSION_BYPASS_ENABLED=${CLAUDE_PERMISSION_BYPASS:-true}
-
-# Check for actual Claude binary that might be installed later
-CLAUDE_ACTUAL=""
-for loc in "$HOME/.local/npm-global/bin/claude.original" "$HOME/.local/bin/claude.original" "$(which claude-actual 2>/dev/null)"; do
-    if [ -f "$loc" ] && [ -x "$loc" ] && [ "$loc" != "$0" ]; then
-        CLAUDE_ACTUAL="$loc"
-        break
-    fi
-done
-
-if [ -n "$CLAUDE_ACTUAL" ]; then
-    # Add permission bypass by default unless disabled
-    if [ "$PERMISSION_BYPASS_ENABLED" = "true" ] && [[ " $@ " != *" --no-skip-permissions "* ]] && [[ " $@ " != *" --safe "* ]]; then
-        exec "$CLAUDE_ACTUAL" --dangerously-skip-permissions "$@"
+ORIGINAL="$CLAUDE_BINARY"
+if [ -f "\$ORIGINAL" ]; then
+    if [[ " \$@ " != *" --no-skip-permissions "* ]]; then
+        exec "\$ORIGINAL" --dangerously-skip-permissions "\$@"
     else
-        exec "$CLAUDE_ACTUAL" "$@"
+        exec "\$ORIGINAL" "\$@"
     fi
 else
-    echo "Claude Code Quick Launcher v1.0 (LiveCD Stub)"
-    echo ""
-    echo "This stub automatically includes --dangerously-skip-permissions for LiveCD compatibility"
-    echo "To install Claude Code: npm install -g @anthropic-ai/claude-code"
-    echo ""
-    
-    case "$1" in
-        --version)
-            echo "1.0.0-quicklaunch-stub"
-            ;;
-        --help)
-            echo "Usage: claude [options] [command]"
-            echo "Options:"
-            echo "  --version                 Show version"
-            echo "  --help                    Show this help"
-            echo "  --no-skip-permissions     Disable permission bypass"
-            echo "  --safe                    Same as --no-skip-permissions"
-            echo ""
-            echo "Default: Permission bypass enabled for LiveCD"
-            ;;
-        *)
-            echo "Arguments: $@"
-            echo ""
-            echo "Agents directory: $CLAUDE_AGENTS_DIR"
-            local agent_count=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
-            echo "Agents available: $agent_count"
-            echo ""
-            echo "Permission bypass: ${PERMISSION_BYPASS_ENABLED}"
-            ;;
-    esac
+    echo "Claude Code not found. Install with: npm install -g @anthropic-ai/claude-code"
 fi
-MINIMAL_STUB
-    
+EOF
+    chmod +x "$USER_BIN_DIR/claude"
+    success "Wrapper created"
+}
+
+create_minimal_stub() {
+    log "Creating minimal stub..."
+    cat > "$USER_BIN_DIR/claude" << 'STUB'
+#!/bin/bash
+echo "Claude Code - Installation Required"
+echo "Run: npm install -g @anthropic-ai/claude-code"
+echo "Agents directory: ~/agents"
+STUB
     chmod +x "$USER_BIN_DIR/claude"
     CLAUDE_BINARY="$USER_BIN_DIR/claude"
-    warn "Minimal Claude stub created - install Claude Code for full functionality"
-    return 0
-}
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# AGENT SYNC SETUP
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-setup_agent_sync() {
-    log "Setting up agent synchronization..."
-    
-    # Define paths
-    local sync_script="$HOME/sync-agents.sh"
-    local source_dir="$SCRIPT_DIR/agents"
-    local target_dir="$HOME/agents"
-    local log_file="$HOME/agent-sync.log"
-    
-    # Create sync script
-    cat > "$sync_script" << 'EOF'
-#!/bin/bash
-
-# Agent synchronization script
-# Syncs agents from Documents/Claude/agents to ~/agents every 5 minutes
-
-SOURCE="/home/ubuntu/Documents/Claude/agents"
-TARGET="/home/ubuntu/agents"
-LOGFILE="/home/ubuntu/agent-sync.log"
-
-# Create timestamp
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-
-# Function to log messages
-log_message() {
-    echo "[$TIMESTAMP] $1" >> "$LOGFILE"
-}
-
-# Check if source exists
-if [ ! -d "$SOURCE" ]; then
-    log_message "ERROR: Source directory $SOURCE does not exist"
-    exit 1
-fi
-
-# Remove existing symlink or directory
-if [ -L "$TARGET" ] || [ -d "$TARGET" ]; then
-    rm -rf "$TARGET"
-    log_message "Removed existing target: $TARGET"
-fi
-
-# Create target directory
-mkdir -p "$TARGET"
-
-# Sync with rsync for efficiency
-if rsync -av --delete "$SOURCE/" "$TARGET/" >> "$LOGFILE" 2>&1; then
-    log_message "SUCCESS: Agents synced successfully"
-    
-    # Count synced files
-    MD_COUNT=$(find "$TARGET" -name "*.md" -type f | wc -l)
-    log_message "INFO: Synced $MD_COUNT agent definition files"
-else
-    log_message "ERROR: Sync failed"
-    exit 1
-fi
-
-# Keep log file manageable (last 1000 lines)
-if [ -f "$LOGFILE" ]; then
-    tail -n 1000 "$LOGFILE" > "${LOGFILE}.tmp" && mv "${LOGFILE}.tmp" "$LOGFILE"
-fi
-EOF
-    
-    # Make sync script executable
-    chmod +x "$sync_script"
-    
-    # Test the sync script once
-    if [ -d "$source_dir" ]; then
-        log "Running initial agent sync..."
-        if "$sync_script"; then
-            success "Initial agent sync completed"
-        else
-            warn "Initial sync failed, but cron job will retry"
-        fi
-    fi
-    
-    # Set up cron job
-    local cron_line="*/5 * * * * $sync_script >/dev/null 2>&1"
-    
-    # Check if cron job already exists
-    if crontab -l 2>/dev/null | grep -q "$sync_script"; then
-        debug "Agent sync cron job already exists"
-    else
-        # Add cron job
-        (crontab -l 2>/dev/null; echo "$cron_line") | crontab -
-        if [ $? -eq 0 ]; then
-            success "Agent sync cron job installed (runs every 5 minutes)"
-        else
-            warn "Failed to install cron job - you may need to set it up manually"
-        fi
-    fi
-    
-    # Create status check command
-    mkdir -p "$USER_BIN_DIR"
-    cat > "$USER_BIN_DIR/claude-sync-status" << 'EOF'
-#!/bin/bash
-echo "Agent Sync Status:"
-echo "=================="
-if [ -f "/home/ubuntu/agent-sync.log" ]; then
-    echo "Last sync entries:"
-    tail -5 /home/ubuntu/agent-sync.log
-    echo
-    echo "Agent count: $(find ~/agents -name "*.md" -maxdepth 1 2>/dev/null | wc -l) files"
-else
-    echo "No sync log found"
-fi
-EOF
-    chmod +x "$USER_BIN_DIR/claude-sync-status"
-    
-    log "Created claude-sync-status command for monitoring"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -874,31 +575,41 @@ setup_environment() {
     log "Setting up environment..."
     
     # Export variables for current session
-    export CLAUDE_AGENTS_DIR="$AGENTS_DIR"
-    export CLAUDE_AGENTS_ROOT="$AGENTS_DIR"
+    export CLAUDE_AGENTS_DIR="$CLAUDE_HOME_AGENTS"
+    export CLAUDE_AGENTS_ROOT="$CLAUDE_HOME_AGENTS"
     export PATH="$USER_BIN_DIR:$LOCAL_NODE_DIR/bin:$LOCAL_NPM_PREFIX/bin:$PATH"
     
-    # Update shell configuration
+    # Update bashrc
     local shell_rc="$HOME/.bashrc"
-    [ -n "${ZSH_VERSION:-}" ] && shell_rc="$HOME/.zshrc"
     
     # Add PATH
     if ! grep -q "$USER_BIN_DIR" "$shell_rc" 2>/dev/null; then
         echo "export PATH=\"$USER_BIN_DIR:\$PATH\"" >> "$shell_rc"
     fi
     
-    if [ -d "$LOCAL_NODE_DIR" ] && ! grep -q "$LOCAL_NODE_DIR" "$shell_rc" 2>/dev/null; then
-        echo "export PATH=\"$LOCAL_NODE_DIR/bin:\$PATH\"" >> "$shell_rc"
-    fi
-    
-    if [ -d "$LOCAL_NPM_PREFIX" ] && ! grep -q "$LOCAL_NPM_PREFIX" "$shell_rc" 2>/dev/null; then
-        echo "export PATH=\"$LOCAL_NPM_PREFIX/bin:\$PATH\"" >> "$shell_rc"
-    fi
-    
     # Add agent environment variables
     if ! grep -q "CLAUDE_AGENTS_DIR" "$shell_rc" 2>/dev/null; then
-        echo "export CLAUDE_AGENTS_DIR=\"$AGENTS_DIR\"" >> "$shell_rc"
-        echo "export CLAUDE_AGENTS_ROOT=\"$AGENTS_DIR\"" >> "$shell_rc"
+        cat >> "$shell_rc" << 'BASHRC_ENV'
+
+# Claude Agent Framework
+export CLAUDE_AGENTS_DIR="$HOME/agents"
+export CLAUDE_AGENTS_ROOT="$HOME/agents"
+export CLAUDE_PERMISSION_BYPASS=true
+
+# Aliases
+alias claude-safe='claude --no-skip-permissions'
+alias ca-status='claude-agent-status'
+alias ca-list='claude-list-agents'
+
+# List agents function
+claude-list-agents() {
+    echo "Available agents in ~/agents:"
+    find ~/agents -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) -type f 2>/dev/null | \
+        while read -r agent; do
+            echo "  • $(basename "$agent" | sed 's/\.[mM][dD]$//')"
+        done | sort
+}
+BASHRC_ENV
     fi
     
     success "Environment configured"
@@ -915,19 +626,27 @@ show_status() {
     
     # Claude Code
     printf "${BOLD}Claude Code:${NC} "
-    if [ -n "$CLAUDE_BINARY" ] && [ -f "$CLAUDE_BINARY" ]; then
-        printf "${GREEN}✓ Installed${NC} at $CLAUDE_BINARY\n"
+    if [ -f "$USER_BIN_DIR/claude" ]; then
+        printf "${GREEN}✓ Installed${NC}\n"
     else
         printf "${RED}✗ Not installed${NC}\n"
     fi
     
     # Agents
     printf "${BOLD}Agents:${NC} "
-    if [ -d "$AGENTS_DIR" ]; then
-        local agent_count=$(find "$AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l || echo 0)
-        printf "${GREEN}✓ $agent_count agents${NC} in $AGENTS_DIR\n"
+    if [ -d "$CLAUDE_HOME_AGENTS" ]; then
+        local agent_count=$(find "$CLAUDE_HOME_AGENTS" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l || echo 0)
+        printf "${GREEN}✓ $agent_count agents${NC} in ~/agents\n"
     else
         printf "${RED}✗ Not installed${NC}\n"
+    fi
+    
+    # Cron sync
+    printf "${BOLD}Agent Sync:${NC} "
+    if crontab -l 2>/dev/null | grep -q "sync-claude-agents"; then
+        printf "${GREEN}✓ Active${NC} (every 5 minutes)\n"
+    else
+        printf "${YELLOW}✗ Not configured${NC}\n"
     fi
     
     # Statusline
@@ -953,62 +672,82 @@ show_status() {
 # MAIN INSTALLATION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-run_installation() {
+run_quick_installation() {
+    show_banner
+    
+    # First, try to find and run the main installer
+    if find_and_run_main_installer "$@"; then
+        exit 0
+    fi
+    
+    # If main installer not found, continue with quick installation
+    log "Starting quick installation..."
+    echo
+    
     # Create necessary directories
     mkdir -p "$HOME/Documents/Claude" 2>/dev/null || true
     mkdir -p "$WORK_DIR"
     
-    show_banner
-    
-    log "Starting all-in-one installation..."
-    echo
-    
     # Step 1: Install Node.js if needed
-    install_node_if_needed
-    echo
+    echo -n "Installing Node.js... "
+    if install_node_if_needed &>/dev/null; then
+        echo "✅"
+    else
+        echo "⚠️"
+    fi
     
-    # Step 2: Install agents from GitHub
-    install_agents_from_github
-    echo
+    # Step 2: Install agents with proper discovery
+    echo -n "Installing agents... "
+    if install_agents_with_discovery &>/dev/null; then
+        echo "✅"
+    else
+        echo "⚠️"
+    fi
     
-    # Step 3: Install Claude Code
-    install_claude_code
-    echo
+    # Step 3: Setup agent sync
+    echo -n "Setting up agent sync... "
+    if setup_agent_sync &>/dev/null; then
+        echo "✅"
+    else
+        echo "⚠️"
+    fi
     
-    # Step 4: Deploy Neovim statusline
-    deploy_neovim_statusline
-    echo
+    # Step 4: Install Claude Code
+    echo -n "Installing Claude Code... "
+    if install_claude_code &>/dev/null; then
+        echo "✅"
+    else
+        echo "⚠️"
+    fi
     
-    # Step 5: Setup environment
-    setup_environment
-    echo
+    # Step 5: Deploy Neovim statusline
+    echo -n "Installing statusline... "
+    if deploy_neovim_statusline &>/dev/null; then
+        echo "✅"
+    else
+        echo "⚠️"
+    fi
     
-    # Step 6: Setup agent synchronization
-    setup_agent_sync
+    # Step 6: Setup environment
+    echo -n "Configuring environment... "
+    if setup_environment &>/dev/null; then
+        echo "✅"
+    else
+        echo "⚠️"
+    fi
     
     # Show final status
     show_status
     
-    success "Installation complete!"
+    success "Quick installation complete!"
     echo
-    echo "To complete setup:"
+    echo "Next steps:"
     echo "  1. Run: source ~/.bashrc"
-    echo "  2. Launch Claude: claude"
-    echo "  3. Check agent sync: claude-sync-status"
+    echo "  2. Check: claude-agent-status"
+    echo "  3. Launch: claude"
     echo
-    echo "For LiveCD use: claude --dangerously-skip-permissions"
+    echo "For LiveCD: claude is configured with auto permission bypass"
     echo
-    
-    # Ask if user wants to launch Claude now
-    echo -n "Launch Claude Code now? (y/N): "
-    read -r response
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-        if [ -n "$CLAUDE_BINARY" ] && [ -f "$CLAUDE_BINARY" ]; then
-            exec "$CLAUDE_BINARY" --dangerously-skip-permissions
-        else
-            warn "Claude binary not found. Run 'source ~/.bashrc' first."
-        fi
-    fi
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1023,9 +762,9 @@ main_menu() {
         echo "Choose an option:"
         echo
         printf "${GREEN}1)${NC} Quick Install - Everything automatic\n"
-        printf "${CYAN}2)${NC} Install Agents Only\n"
-        printf "${BLUE}3)${NC} Install Claude Code Only\n"
-        printf "${MAGENTA}4)${NC} Install Statusline Only\n"
+        printf "${CYAN}2)${NC} Find & Run Main Installer\n"
+        printf "${BLUE}3)${NC} Install Agents Only\n"
+        printf "${MAGENTA}4)${NC} Install Claude Code Only\n"
         printf "${YELLOW}5)${NC} Check Installation Status\n"
         printf "${RED}6)${NC} Exit\n"
         echo
@@ -1035,27 +774,30 @@ main_menu() {
         
         case "$choice" in
             1) 
-                run_installation
+                run_quick_installation
                 break
                 ;;
-            2) 
-                install_agents_from_github
-                show_status
-                echo
-                printf "${YELLOW}Press ENTER to continue...${NC}"
-                read -r
+            2)
+                if find_and_run_main_installer; then
+                    exit 0
+                else
+                    echo "Main installer not found"
+                    echo "Press ENTER to continue..."
+                    read -r
+                fi
                 ;;
             3) 
-                install_node_if_needed
-                install_claude_code
-                setup_environment
+                install_agents_with_discovery
+                setup_agent_sync
                 show_status
                 echo
                 printf "${YELLOW}Press ENTER to continue...${NC}"
                 read -r
                 ;;
             4) 
-                deploy_neovim_statusline
+                install_node_if_needed
+                install_claude_code
+                setup_environment
                 show_status
                 echo
                 printf "${YELLOW}Press ENTER to continue...${NC}"
@@ -1068,7 +810,7 @@ main_menu() {
                 read -r
                 ;;
             6) 
-                printf "${GREEN}Thank you for using Claude installer!${NC}\n"
+                printf "${GREEN}Thank you for using Claude quick launcher!${NC}\n"
                 exit 0
                 ;;
             *)
@@ -1086,7 +828,7 @@ main_menu() {
 # Handle command line arguments
 case "${1:-}" in
     --auto|--quick|-q)
-        run_installation
+        run_quick_installation
         ;;
     --menu|-m)
         main_menu
@@ -1100,14 +842,16 @@ case "${1:-}" in
         echo "  --menu, -m             Show interactive menu"
         echo "  --help, -h             Show this help"
         echo
-        echo "Without options, runs automatic installation"
+        echo "This script will:"
+        echo "  1. Try to find and run the main installer"
+        echo "  2. If not found, run quick installation"
         echo
-        echo "GitHub Repository: $GITHUB_REPO"
-        echo "Agents Directory:  $AGENTS_DIR"
+        echo "Project Root: $PROJECT_ROOT"
+        echo "Agents Source: $SOURCE_AGENTS_DIR"
         echo "Install Directory: $USER_BIN_DIR"
         ;;
     *)
         # Default: run automatic installation
-        run_installation
+        run_quick_installation
         ;;
 esac
