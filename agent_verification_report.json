@@ -1,13 +1,13 @@
 {
   "summary": {
-    "total_agents": 42,
-    "fully_compliant": 36,
-    "high_compliance": 36,
-    "medium_compliance": 3,
-    "low_compliance": 3,
-    "task_tool_ready": 39,
-    "tandem_ready": 39,
-    "fallback_ready": 39
+    "total_agents": 43,
+    "fully_compliant": 40,
+    "high_compliance": 40,
+    "medium_compliance": 2,
+    "low_compliance": 1,
+    "task_tool_ready": 40,
+    "tandem_ready": 42,
+    "fallback_ready": 42
   },
   "compliance_groups": {
     "high": [
@@ -35,13 +35,17 @@
       "MONITOR",
       "NPU",
       "OPTIMIZER",
+      "ORGANIZATION",
       "OVERSIGHT",
       "PACKAGER",
       "PATCHER",
+      "PLANNER",
       "PROJECTORCHESTRATOR",
       "PYTHON-INTERNAL",
       "QADIRECTOR",
+      "QUANTUMGUARD",
       "REDTEAMORCHESTRATOR",
+      "RESEARCHER",
       "SECURITY",
       "SECURITYAUDITOR",
       "SECURITYCHAOSAGENT",
@@ -49,33 +53,28 @@
       "WEB"
     ],
     "medium": [
-      "PLANNER",
       "PYGUI",
       "TUI"
     ],
     "low": [
-      "ORGANIZATION",
-      "QUANTUMGUARD",
-      "RESEARCHER"
+      "Agents Readme"
     ]
   },
   "specific_issues": {
     "missing_task_tool": [
-      "ORGANIZATION",
+      "Agents Readme",
       "PYGUI",
       "TUI"
     ],
     "missing_tandem": [
-      "ORGANIZATION",
-      "QUANTUMGUARD",
-      "RESEARCHER"
+      "Agents Readme"
     ],
     "missing_fallback": [
-      "ORGANIZATION",
-      "QUANTUMGUARD",
-      "RESEARCHER"
+      "Agents Readme"
     ],
-    "not_capitalized": []
+    "not_capitalized": [
+      "Agents Readme"
+    ]
   },
   "agent_details": {
     "ANDROIDMOBILE": {
@@ -1658,6 +1657,34 @@
       "has_execution_modes": true,
       "compliance_score": "9/9",
       "compliance_percentage": 100.0
+    },
+    "Agents Readme": {
+      "name": "Agents Readme",
+      "file": "/home/ubuntu/Documents/Claude/agents/Agents Readme.md",
+      "checks": {
+        "yaml_frontmatter": false,
+        "task_tool": false,
+        "tandem_execution": false,
+        "binary_system": false,
+        "python_fallback": false,
+        "c_implementation": false,
+        "name_capitalized": false,
+        "communication_section": false,
+        "fallback_patterns": false
+      },
+      "issues": [
+        "Missing YAML frontmatter",
+        "Task tool not found in tools list",
+        "Missing tandem_execution configuration",
+        "Missing binary system integration",
+        "Missing Python fallback implementation",
+        "Missing C implementation reference",
+        "Agent name not capitalized: Agents Readme",
+        "Missing communication section",
+        "Missing fallback_patterns section"
+      ],
+      "compliance_score": "0/9",
+      "compliance_percentage": 0.0
     },
     "BASTION": {
       "name": "BASTION",
@@ -10157,28 +10184,233 @@
       "name": "ORGANIZATION",
       "file": "/home/ubuntu/Documents/Claude/agents/ORGANIZATION.md",
       "checks": {
-        "yaml_frontmatter": false,
-        "task_tool": false,
-        "tandem_execution": false,
-        "binary_system": false,
-        "python_fallback": false,
-        "c_implementation": false,
+        "yaml_frontmatter": true,
+        "task_tool": true,
+        "tandem_execution": true,
+        "binary_system": true,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
-        "communication_section": false,
-        "fallback_patterns": false
+        "communication_section": true,
+        "fallback_patterns": true
       },
-      "issues": [
-        "Missing YAML frontmatter",
-        "Task tool not found in tools list",
-        "Missing tandem_execution configuration",
-        "Missing binary system integration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing communication section",
-        "Missing fallback_patterns section"
-      ],
-      "compliance_score": "1/9",
-      "compliance_percentage": 11.11111111111111
+      "issues": [],
+      "metadata": {
+        "agent_definition": {
+          "metadata": {
+            "name": "ORGANIZATION",
+            "version": "8.0.0",
+            "uuid": "0r64n1z3-pr0j-5tru-ctur-0r64n1z00001",
+            "category": "MANAGEMENT",
+            "priority": "HIGH",
+            "status": "PRODUCTION",
+            "color": "#2ECC71"
+          },
+          "description": "Project organization and resource management specialist responsible for \nmaintaining clean directory structures, managing file organization, \nhandling backups, and ensuring systematic project layout. Coordinates \nresource allocation and maintains organizational standards across all \nproject components.\n\nSpecializes in directory structure optimization, file naming conventions, \nbackup strategies, version control organization, and resource lifecycle \nmanagement. Ensures zero duplicate files, clear naming patterns, and \nsystematic deprecation of obsolete resources.\n",
+          "tools": {
+            "required": [
+              "Task"
+            ],
+            "code_operations": [
+              "Read",
+              "Write",
+              "Edit",
+              "MultiEdit"
+            ],
+            "system_operations": [
+              "Bash",
+              "Grep",
+              "Glob",
+              "LS"
+            ],
+            "workflow": [
+              "TodoWrite",
+              "GitCommand"
+            ]
+          },
+          "proactive_triggers": {
+            "patterns": [
+              "organize|structure|cleanup|arrange",
+              "backup|archive|restore",
+              "directory|folder|file management",
+              "naming convention|standardize"
+            ],
+            "context_triggers": [
+              "When duplicate files detected",
+              "When directory structure unclear",
+              "When backup needed",
+              "When deprecation required"
+            ]
+          },
+          "invokes_agents": {
+            "frequently": [
+              "Director",
+              "ProjectOrchestrator"
+            ],
+            "as_needed": [
+              "Monitor",
+              "Infrastructure"
+            ]
+          }
+        },
+        "communication": {
+          "protocol": "ultra_fast_binary_v3",
+          "capabilities": {
+            "throughput": "4.2M_msg_sec",
+            "latency": "200ns_p99"
+          },
+          "tandem_execution": {
+            "supported_modes": [
+              "INTELLIGENT",
+              "PYTHON_ONLY",
+              "REDUNDANT"
+            ],
+            "fallback_strategy": {
+              "when_c_unavailable": "PYTHON_ONLY",
+              "when_performance_degraded": "PYTHON_ONLY",
+              "when_consensus_fails": "RETRY_PYTHON",
+              "max_retries": 3
+            },
+            "python_implementation": {
+              "module": "agents.src.python.organization_impl",
+              "class": "ORGANIZATIONPythonExecutor",
+              "capabilities": [
+                "Directory structure management",
+                "File organization",
+                "Backup operations",
+                "Resource tracking"
+              ],
+              "performance": "100-500 ops/sec"
+            },
+            "c_implementation": {
+              "binary": "src/c/organization_agent",
+              "shared_lib": "liborganization.so",
+              "capabilities": [
+                "High-speed file operations",
+                "Directory traversal",
+                "Binary protocol support"
+              ],
+              "performance": "10K+ ops/sec"
+            }
+          },
+          "integration": {
+            "auto_register": true,
+            "binary_protocol": "binary-communications-system/ultra_hybrid_enhanced.c",
+            "discovery_service": "src/c/agent_discovery.c",
+            "message_router": "src/c/message_router.c",
+            "runtime": "src/c/unified_agent_runtime.c"
+          },
+          "ipc_methods": {
+            "CRITICAL": "shared_memory_50ns",
+            "HIGH": "io_uring_500ns",
+            "NORMAL": "unix_sockets_2us",
+            "LOW": "mmap_files_10us"
+          },
+          "message_patterns": [
+            "publish_subscribe",
+            "request_response",
+            "work_queues"
+          ],
+          "security": {
+            "authentication": "JWT_RS256_HS256",
+            "authorization": "RBAC_4_levels",
+            "encryption": "TLS_1.3",
+            "integrity": "HMAC_SHA256"
+          },
+          "monitoring": {
+            "prometheus_port": 9334,
+            "grafana_dashboard": true,
+            "health_check": "/health/ready",
+            "metrics_endpoint": "/metrics"
+          }
+        },
+        "fallback_patterns": {
+          "python_only_execution": {
+            "implementation": "class ORGANIZATIONPythonExecutor:\n    def __init__(self):\n        self.structures = {}\n        self.backups = []\n        self.metrics = {}\n        import os\n        import shutil\n        \n    async def execute_command(self, command):\n        \"\"\"Execute ORGANIZATION commands in pure Python\"\"\"\n        try:\n            result = await self.process_command(command)\n            self.metrics['success'] += 1\n            return result\n        except Exception as e:\n            self.metrics['errors'] += 1\n            return await self.handle_error(e, command)\n            \n    async def process_command(self, command):\n        \"\"\"Process organization operations\"\"\"\n        if command.action == \"organize_directory\":\n            return await self.organize_directory(command.payload)\n        elif command.action == \"create_backup\":\n            return await self.create_backup(command.payload)\n        elif command.action == \"clean_duplicates\":\n            return await self.clean_duplicates(command.payload)\n        elif command.action == \"standardize_names\":\n            return await self.standardize_names(command.payload)\n        else:\n            return {\"error\": \"Unknown organization operation\"}\n        \n    async def handle_error(self, error, command):\n        \"\"\"Error recovery logic\"\"\"\n        for attempt in range(3):\n            try:\n                return await self.process_command(command)\n            except:\n                await asyncio.sleep(2 ** attempt)\n        raise error\n"
+          },
+          "graceful_degradation": {
+            "triggers": [
+              "C layer timeout > 1000ms",
+              "C layer error rate > 5%",
+              "Binary bridge disconnection"
+            ],
+            "actions": {
+              "immediate": "Switch to PYTHON_ONLY mode",
+              "cache_results": "Store recent operations",
+              "notify_user": "Alert about degraded performance"
+            }
+          },
+          "recovery_strategy": {
+            "detection": "Monitor C layer every 30s",
+            "validation": "Test with simple operation",
+            "reintegration": "Gradually shift load to C"
+          }
+        },
+        "organizational_capabilities": {
+          "directory_structure": {
+            "standards": [
+              "Clear hierarchical organization",
+              "Logical grouping by function",
+              "Consistent naming conventions",
+              "No duplicate files or folders",
+              "Systematic deprecation strategy"
+            ],
+            "patterns": {
+              "project_root": [
+                "agents/",
+                "src/",
+                "docs/",
+                "tests/",
+                "config/",
+                "deprecated/"
+              ]
+            }
+          },
+          "file_management": {
+            "naming_conventions": [
+              "UPPERCASE for agent files",
+              "lowercase for scripts",
+              "snake_case for Python",
+              "kebab-case for configs"
+            ],
+            "backup_strategy": [
+              "Automatic versioning",
+              "Compressed archives",
+              "Timestamp tracking",
+              "Incremental backups"
+            ]
+          },
+          "resource_lifecycle": {
+            "stages": [
+              "Creation and initialization",
+              "Active use and maintenance",
+              "Deprecation marking",
+              "Archive and removal"
+            ]
+          }
+        },
+        "success_metrics": {
+          "organization": {
+            "target": "Zero duplicate files",
+            "measure": "File uniqueness check"
+          },
+          "structure": {
+            "target": "100% logical organization",
+            "measure": "Directory coherence score"
+          },
+          "naming": {
+            "target": "100% convention compliance",
+            "measure": "Naming standard adherence"
+          },
+          "backups": {
+            "target": "Daily automated backups",
+            "measure": "Backup completeness"
+          }
+        }
+      },
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "OVERSIGHT": {
       "name": "OVERSIGHT",
@@ -12214,17 +12446,14 @@
         "yaml_frontmatter": true,
         "task_tool": true,
         "tandem_execution": true,
-        "binary_system": false,
+        "binary_system": true,
         "python_fallback": true,
-        "c_implementation": false,
+        "c_implementation": true,
         "name_capitalized": true,
         "communication_section": true,
         "fallback_patterns": true
       },
-      "issues": [
-        "Missing binary system integration",
-        "Missing C implementation reference"
-      ],
+      "issues": [],
       "metadata": {
         "agent_definition": {
           "metadata": {
@@ -12560,7 +12789,35 @@
               "when_performance_degraded": "PYTHON_ONLY",
               "when_consensus_fails": "RETRY_PYTHON",
               "max_retries": 3
+            },
+            "python_implementation": {
+              "module": "agents.src.python.planner_impl",
+              "class": "PLANNERPythonExecutor",
+              "capabilities": [
+                "Full planning functionality in Python",
+                "Dependency graph analysis",
+                "Resource allocation",
+                "Parallel execution planning"
+              ],
+              "performance": "100-500 ops/sec"
+            },
+            "c_implementation": {
+              "binary": "src/c/planner_agent",
+              "shared_lib": "libplanner.so",
+              "capabilities": [
+                "High-speed graph processing",
+                "Optimized path finding",
+                "Binary protocol support"
+              ],
+              "performance": "10K+ ops/sec"
             }
+          },
+          "integration": {
+            "auto_register": true,
+            "binary_protocol": "binary-communications-system/ultra_hybrid_enhanced.c",
+            "discovery_service": "src/c/agent_discovery.c",
+            "message_router": "src/c/message_router.c",
+            "runtime": "src/c/unified_agent_runtime.c"
           },
           "ipc_methods": {
             "CRITICAL": "shared_memory || unix_socket || tcp",
@@ -12861,8 +13118,8 @@
         }
       },
       "has_execution_modes": true,
-      "compliance_score": "7/9",
-      "compliance_percentage": 77.77777777777779
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "PROJECTORCHESTRATOR": {
       "name": "PROJECTORCHESTRATOR",
@@ -13473,7 +13730,7 @@
       "name": "PYGUI",
       "file": "/home/ubuntu/Documents/Claude/agents/PYGUI.md",
       "checks": {
-        "yaml_frontmatter": false,
+        "yaml_frontmatter": true,
         "task_tool": false,
         "tandem_execution": true,
         "binary_system": true,
@@ -13484,12 +13741,11 @@
         "fallback_patterns": true
       },
       "issues": [
-        "Missing YAML frontmatter",
         "Task tool not found in tools list"
       ],
       "has_execution_modes": true,
-      "compliance_score": "7/9",
-      "compliance_percentage": 77.77777777777779
+      "compliance_score": "8/9",
+      "compliance_percentage": 88.88888888888889
     },
     "PYTHON-INTERNAL": {
       "name": "PYTHON-INTERNAL",
@@ -14439,22 +14695,15 @@
       "checks": {
         "yaml_frontmatter": true,
         "task_tool": true,
-        "tandem_execution": false,
-        "binary_system": false,
-        "python_fallback": false,
-        "c_implementation": false,
+        "tandem_execution": true,
+        "binary_system": true,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
-        "communication_section": false,
-        "fallback_patterns": false
+        "communication_section": true,
+        "fallback_patterns": true
       },
-      "issues": [
-        "Missing tandem_execution configuration",
-        "Missing binary system integration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing communication section",
-        "Missing fallback_patterns section"
-      ],
+      "issues": [],
       "metadata": {
         "name": "QUANTUMGUARD",
         "description": "Elite quantum-resistant cryptography specialist. Implements NIST PQC standards (Kyber, Dilithium, SPHINCS+), zero-trust architectures, advanced steganography, and lattice-based cryptosystems. CRITICAL for quantum-proof security, covert channels, and post-quantum migration strategies.",
@@ -14472,8 +14721,9 @@
           "TodoWrite"
         ]
       },
-      "compliance_score": "3/9",
-      "compliance_percentage": 33.33333333333333
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "REDTEAMORCHESTRATOR": {
       "name": "REDTEAMORCHESTRATOR",
@@ -14502,25 +14752,20 @@
       "checks": {
         "yaml_frontmatter": true,
         "task_tool": true,
-        "tandem_execution": false,
-        "binary_system": false,
-        "python_fallback": false,
-        "c_implementation": false,
+        "tandem_execution": true,
+        "binary_system": true,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
-        "communication_section": false,
-        "fallback_patterns": false
+        "communication_section": true,
+        "fallback_patterns": true
       },
       "issues": [
-        "YAML parse error: while parsing a block collection\n  in \"<unicode string>\", line 238, column 9:\n            - \"Original research papers\"\n            ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 242, column 9:\n            weight: 1.0\n            ^",
-        "Missing tandem_execution configuration",
-        "Missing binary system integration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing communication section",
-        "Missing fallback_patterns section"
+        "YAML parse error: while parsing a block mapping\n  in \"<unicode string>\", line 188, column 5:\n        detection: \"Monitor C layer ever ... \n        ^\nexpected <block end>, but found '-'\n  in \"<unicode string>\", line 191, column 5:\n        - \"Evaluate\"\n        ^"
       ],
-      "compliance_score": "3/9",
-      "compliance_percentage": 33.33333333333333
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "SECURITY": {
       "name": "SECURITY",
@@ -15685,7 +15930,7 @@
       "name": "TUI",
       "file": "/home/ubuntu/Documents/Claude/agents/TUI.md",
       "checks": {
-        "yaml_frontmatter": false,
+        "yaml_frontmatter": true,
         "task_tool": false,
         "tandem_execution": true,
         "binary_system": true,
@@ -15696,12 +15941,420 @@
         "fallback_patterns": true
       },
       "issues": [
-        "Missing YAML frontmatter",
         "Task tool not found in tools list"
       ],
+      "metadata": {
+        "agent_definition": {
+          "metadata": {
+            "name": "TUI",
+            "version": "9.0.0",
+            "uuid": "7u1-5p3c1-4115-7-4g3n71c-7u1-0n1y",
+            "category": "SPECIALIZED_AGENTIC",
+            "priority": "CRITICAL",
+            "status": "PRODUCTION",
+            "color": "#00CED1",
+            "emoji": "\ud83d\udda5\ufe0f"
+          },
+          "description": "Agentic Linux Terminal Interface specialist with self-validation, error prevention,\nand one-shot implementation capabilities. Creates robust, modular, and performant \nterminal applications that work correctly on first deployment. Features pre-flight\nvalidation, automatic compatibility detection, self-testing components, and \nintelligent error recovery. Guarantees sub-16ms input responsiveness with built-in\nperformance monitoring and automatic optimization.\n"
+        },
+        "agentic_capabilities": {
+          "pre_validation": {
+            "name": "Pre-Flight Terminal Validation",
+            "description": "Validate terminal capabilities BEFORE implementation",
+            "implementation": "```python\ndef validate_terminal_environment():\n    \"\"\"Pre-validate terminal before any TUI creation\"\"\"\n    checks = {\n        'terminal_type': os.environ.get('TERM'),\n        'color_support': curses.has_colors(),\n        'unicode_support': locale.getpreferredencoding() == 'UTF-8',\n        'size': shutil.get_terminal_size(),\n        'mouse_support': False,  # Check via terminfo\n        'alt_screen': False,     # Check capability\n    }\n    \n    # Generate compatibility report\n    return TerminalCapabilityReport(checks)\n```\n"
+          },
+          "self_testing_components": {
+            "name": "Self-Testing Widget Library",
+            "description": "Components that validate themselves",
+            "implementation": "```python\nclass SelfValidatingWidget:\n    def __init__(self, **kwargs):\n        self.validate_requirements()\n        self.test_render()\n        self.verify_event_handling()\n        \n    def validate_requirements(self):\n        \"\"\"Check all dependencies exist\"\"\"\n        if not self.check_terminal_features():\n            self.enable_fallback_mode()\n            \n    def test_render(self):\n        \"\"\"Dry-run render to catch errors\"\"\"\n        test_buffer = VirtualScreen()\n        try:\n            self.render(test_buffer)\n        except Exception as e:\n            self.log_error(e)\n            self.use_safe_render()\n            \n    def verify_event_handling(self):\n        \"\"\"Test event handlers with synthetic events\"\"\"\n        test_events = self.generate_test_events()\n        for event in test_events:\n            assert self.handle_event(event) != ERROR\n```\n"
+          },
+          "error_prevention_patterns": {
+            "name": "Proactive Error Prevention",
+            "description": "Prevent common TUI failures before they occur",
+            "patterns": {
+              "resize_handling": {
+                "description": "Automatic resize recovery",
+                "code": "signal.signal(signal.SIGWINCH, self.handle_resize)\nself.min_size = (80, 24)  # Fallback size\nself.resize_buffer = deque(maxlen=10)  # Debounce\n"
+              },
+              "encoding_safety": {
+                "description": "Unicode fallback chains",
+                "code": "CHAR_FALLBACKS = {\n    '\u2500': '-', '\u2502': '|', '\u250c': '+', '\u2514': '+',\n    '\u2588': '#', '\u2593': '=', '\u2592': '-', '\u2591': '.'\n}\n"
+              },
+              "color_degradation": {
+                "description": "Graceful color fallback",
+                "code": "if colors == 256: use_256_palette()\nelif colors == 16: use_16_palette()\nelif colors == 8: use_basic_palette()\nelse: use_monochrome()\n"
+              }
+            }
+          },
+          "one_shot_templates": {
+            "name": "Working Implementation Templates",
+            "description": "Pre-tested templates that work on first use",
+            "templates": {
+              "dashboard_template": {
+                "name": "System Dashboard",
+                "tested_on": [
+                  "xterm",
+                  "gnome-terminal",
+                  "alacritty",
+                  "tmux",
+                  "ssh"
+                ],
+                "code": "```python\n#!/usr/bin/env python3\n\"\"\"Auto-validated system dashboard\"\"\"\n\nimport curses\nimport psutil\nimport time\nfrom threading import Thread, Event\n\nclass ValidatedDashboard:\n    def __init__(self):\n        # Pre-flight checks\n        self.validate_environment()\n        self.detect_capabilities()\n        self.setup_fallbacks()\n        \n    def validate_environment(self):\n        \"\"\"Ensure all requirements met\"\"\"\n        assert curses.LINES >= 10, \"Terminal too small\"\n        assert curses.COLS >= 40, \"Terminal too narrow\"\n        assert curses.has_colors(), \"No color support\"\n        \n    def run(self):\n        \"\"\"Self-healing main loop\"\"\"\n        try:\n            curses.wrapper(self._run_protected)\n        except KeyboardInterrupt:\n            self.cleanup()\n        except Exception as e:\n            self.recover_from_error(e)\n            \n    def _run_protected(self, stdscr):\n        \"\"\"Protected execution with auto-recovery\"\"\"\n        self.setup_windows(stdscr)\n        self.start_data_threads()\n        \n        while self.running:\n            try:\n                self.update_display()\n                self.handle_input()\n            except curses.error:\n                self.handle_resize()\n            except Exception as e:\n                self.log_and_recover(e)\n```\n"
+              },
+              "interactive_menu": {
+                "name": "Self-Validating Menu",
+                "tested_on": [
+                  "all_terminals"
+                ],
+                "code": "```python\nclass AutoValidatingMenu:\n    def __init__(self, items, **options):\n        self.items = self.validate_items(items)\n        self.options = self.apply_safe_defaults(options)\n        self.test_rendering()\n        \n    def validate_items(self, items):\n        \"\"\"Ensure items are renderable\"\"\"\n        safe_items = []\n        for item in items:\n            if self.can_render(item):\n                safe_items.append(item)\n            else:\n                safe_items.append(self.sanitize(item))\n        return safe_items\n        \n    def test_rendering(self):\n        \"\"\"Pre-test all visual elements\"\"\"\n        test_screen = MockScreen()\n        for item in self.items:\n            assert test_screen.can_draw(item)\n```\n"
+              }
+            }
+          }
+        },
+        "task_tool_integration": {
+          "invocation": {
+            "signature": {
+              "tool": "Task",
+              "subagent_type": "TUI"
+            },
+            "enhanced_parameters": {
+              "required": {
+                "description": "TUI task description",
+                "prompt": "Detailed TUI requirements",
+                "terminal_target": "Target terminal type"
+              },
+              "validation": {
+                "pre_validate": true,
+                "test_mode": true,
+                "fallback_mode": true
+              },
+              "performance": {
+                "target_latency": "16ms",
+                "target_fps": "60",
+                "memory_limit": "50MB"
+              }
+            },
+            "intelligent_response": "When invoked via Task tool, I will:\n1. Pre-validate terminal environment\n2. Select optimal framework/approach\n3. Generate self-testing components\n4. Include automatic fallbacks\n5. Provide verification metrics\n6. Return working implementation\n"
+          },
+          "proactive_patterns": {
+            "terminal_detection": "# Automatically detect and adapt to terminal\nTERM_TYPE=$(detect_terminal_type)\nCAPABILITIES=$(probe_terminal_capabilities)\nOPTIMAL_FRAMEWORK=$(select_framework $CAPABILITIES)\n",
+            "component_selection": "# Smart component selection based on requirements\nif needs_real_time_updates:\n    use_differential_rendering()\nif needs_large_datasets:\n    implement_virtual_scrolling()\nif needs_accessibility:\n    ensure_screen_reader_support()\n"
+          }
+        },
+        "one_shot_methodology": {
+          "phase_1_analysis": {
+            "name": "Requirement Analysis",
+            "steps": [
+              "Identify TUI type (dashboard/menu/form/viewer)",
+              "Determine performance requirements",
+              "List terminal compatibility targets",
+              "Identify potential failure points"
+            ]
+          },
+          "phase_2_validation": {
+            "name": "Pre-Implementation Validation",
+            "steps": [
+              "Test terminal capabilities",
+              "Verify dependency availability",
+              "Check system resources",
+              "Validate color/unicode support"
+            ]
+          },
+          "phase_3_generation": {
+            "name": "Intelligent Code Generation",
+            "steps": [
+              "Select pre-tested template",
+              "Inject error handlers",
+              "Add performance monitors",
+              "Include fallback paths"
+            ]
+          },
+          "phase_4_verification": {
+            "name": "Self-Verification",
+            "steps": [
+              "Run synthetic tests",
+              "Verify render output",
+              "Test event handling",
+              "Measure performance"
+            ]
+          },
+          "phase_5_delivery": {
+            "name": "Guaranteed Working Delivery",
+            "outputs": {
+              "main_implementation": "Complete TUI application",
+              "test_suite": "Automated verification tests",
+              "fallback_version": "Degraded mode implementation",
+              "performance_report": "Measured metrics",
+              "compatibility_matrix": "Terminal support grid"
+            }
+          }
+        },
+        "error_prevention": {
+          "common_failures": {
+            "terminal_resize": {
+              "problem": "SIGWINCH during render",
+              "prevention": "with resize_lock:\n    if self.resize_pending:\n        self.process_resize()\n    self.render_frame()\n    \n"
+            },
+            "unicode_errors": {
+              "problem": "Character encoding failures",
+              "prevention": "def safe_char(char):\n    try:\n        return char.encode('utf-8').decode('utf-8')\n    except:\n        return FALLBACK_CHARS.get(char, '?')\n        \n"
+            },
+            "color_failures": {
+              "problem": "Unsupported color codes",
+              "prevention": "def safe_color(color_pair):\n    if curses.COLOR_PAIRS > color_pair:\n        return color_pair\n    return self.nearest_safe_color(color_pair)\n    \n"
+            },
+            "input_overflow": {
+              "problem": "Rapid input overwhelming buffer",
+              "prevention": "input_queue = asyncio.Queue(maxsize=100)\nasync def process_input():\n    while True:\n        batch = await self.get_input_batch()\n        self.handle_batch(batch)\n"
+            }
+          }
+        },
+        "performance_engine": {
+          "automatic_optimization": {
+            "name": "Self-Optimizing Renderer",
+            "implementation": "class AdaptiveRenderer:\n    def __init__(self):\n        self.frame_times = deque(maxlen=60)\n        self.optimization_level = 0\n        \n    def render(self):\n        start = time.perf_counter_ns()\n        \n        if self.optimization_level == 0:\n            self.full_render()\n        elif self.optimization_level == 1:\n            self.differential_render()\n        else:\n            self.minimal_render()\n            \n        elapsed = time.perf_counter_ns() - start\n        self.frame_times.append(elapsed)\n        self.adjust_optimization()\n        \n    def adjust_optimization(self):\n        avg_frame_time = sum(self.frame_times) / len(self.frame_times)\n        if avg_frame_time > 16_666_666:  # >16ms\n            self.optimization_level = min(2, self.optimization_level + 1)\n        elif avg_frame_time < 8_333_333:  # <8ms\n            self.optimization_level = max(0, self.optimization_level - 1)\n            \n"
+          },
+          "cpu_affinity": {
+            "name": "Intelligent Core Assignment",
+            "implementation": "# Detect CPU topology\nP_CORES = [0, 1, 2, 3, 4, 5]  # High performance\nE_CORES = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21]  # Efficient\n\n# Assign UI thread to P-core for responsiveness\nUI_THREAD.set_affinity(P_CORES[0])\n\n# Data processing on E-cores\nfor worker in data_workers:\n    worker.set_affinity(E_CORES)\n"
+          }
+        },
+        "component_generators": {
+          "generate_input_widget": {
+            "signature": "create_input(validation=None, multiline=False)",
+            "implementation": "def generate_input_widget(validation=None, multiline=False):\n    \"\"\"Generate self-validating input widget\"\"\"\n    return f'''\n    class ValidatedInput(Widget):\n        def __init__(self):\n            self.buffer = []\n            self.cursor = 0\n            self.validation = {validation or \"lambda x: True\"}\n            \n        def handle_key(self, key):\n            if key == KEY_BACKSPACE:\n                self.safe_backspace()\n            elif key == KEY_ENTER:\n                if self.validate():\n                    self.submit()\n            elif self.is_printable(key):\n                self.safe_insert(chr(key))\n                \n        def safe_insert(self, char):\n            try:\n                test_buffer = self.buffer[:self.cursor] + [char] + self.buffer[self.cursor:]\n                if self.validation(''.join(test_buffer)):\n                    self.buffer = test_buffer\n                    self.cursor += 1\n            except Exception:\n                self.flash_error()\n    '''\n    \n"
+          },
+          "generate_list_widget": {
+            "signature": "create_list(items, selectable=True, scrollable=True)",
+            "implementation": "def generate_list_widget(items, selectable=True, scrollable=True):\n    \"\"\"Generate self-managing list widget\"\"\"\n    return f'''\n    class SmartList(Widget):\n        def __init__(self, items):\n            self.items = self.validate_items({items})\n            self.selected = 0\n            self.viewport_start = 0\n            self.viewport_height = 0\n            \n        def validate_items(self, items):\n            return [self.sanitize_item(i) for i in items]\n            \n        def render(self, window):\n            height, width = window.getmaxyx()\n            self.viewport_height = height\n            \n            # Smart viewport adjustment\n            if self.selected < self.viewport_start:\n                self.viewport_start = self.selected\n            elif self.selected >= self.viewport_start + height:\n                self.viewport_start = self.selected - height + 1\n                \n            # Render visible items with selection\n            for i, item in enumerate(self.visible_items()):\n                self.render_item(window, i, item, i == self.selected)\n    '''\n"
+          }
+        },
+        "verification_suite": {
+          "automated_tests": {
+            "name": "Self-Testing Framework",
+            "implementation": "class TUIAutoTest:\n    def __init__(self, tui_app):\n        self.app = tui_app\n        self.test_results = []\n        \n    def run_all_tests(self):\n        \"\"\"Run comprehensive test suite\"\"\"\n        tests = [\n            self.test_initialization,\n            self.test_rendering,\n            self.test_input_handling,\n            self.test_resize_handling,\n            self.test_error_recovery,\n            self.test_performance,\n            self.test_memory_usage,\n            self.test_accessibility\n        ]\n        \n        for test in tests:\n            try:\n                result = test()\n                self.test_results.append(result)\n            except Exception as e:\n                self.test_results.append(TestFailure(test.__name__, e))\n                \n        return self.generate_report()\n        \n    def test_rendering(self):\n        \"\"\"Verify rendering pipeline\"\"\"\n        mock_screen = MockTerminal(80, 24)\n        self.app.render(mock_screen)\n        \n        assert mock_screen.no_overflow()\n        assert mock_screen.valid_characters()\n        assert mock_screen.proper_colors()\n        \n    def test_performance(self):\n        \"\"\"Verify performance targets\"\"\"\n        metrics = self.app.get_performance_metrics()\n        \n        assert metrics.input_latency < 16  # ms\n        assert metrics.render_fps >= 60\n        assert metrics.memory_usage < 50 * 1024 * 1024  # 50MB\n"
+          }
+        },
+        "enhanced_collaboration": {
+          "with_c_internal": {
+            "auto_handoff_triggers": [
+              "Performance below 60fps after optimization",
+              "Need for hardware-specific optimizations",
+              "Complex ncurses requirements"
+            ],
+            "intelligent_integration": "# Automatic C acceleration detection\nif performance.needs_acceleration():\n    c_internal.generate_accelerated_renderer(\n        hot_paths=self.profile_hot_paths(),\n        bottlenecks=self.identify_bottlenecks()\n    )\n    \n"
+          },
+          "with_monitor": {
+            "dashboard_generation": "# Auto-generate monitoring dashboards\ndef create_system_dashboard():\n    return self.compose_dashboard([\n        CPUMonitor(layout=\"top\", height=5),\n        MemoryMonitor(layout=\"right\", width=30),\n        ProcessList(layout=\"center\", sortable=True),\n        NetworkGraph(layout=\"bottom\", height=4)\n    ])\n    \n"
+          },
+          "with_testbed": {
+            "automated_verification": "# Generate test harness automatically\ndef create_tui_tests():\n    return TestSuite([\n        TerminalCompatibilityTest(terminals=ALL_TERMINALS),\n        PerformanceTest(targets=PERFORMANCE_TARGETS),\n        AccessibilityTest(standards=WCAG_AA),\n        StressTest(users=100, duration=3600)\n    ])\n"
+          }
+        },
+        "communication": {
+          "protocol": "ultra_fast_binary_v3",
+          "capabilities": {
+            "throughput": "4.2M_msg_sec",
+            "latency": "200ns_p99"
+          },
+          "tandem_execution": {
+            "supported_modes": [
+              "INTELLIGENT",
+              "PYTHON_ONLY",
+              "REDUNDANT",
+              "CONSENSUS"
+            ],
+            "fallback_strategy": {
+              "when_c_unavailable": "PYTHON_ONLY",
+              "when_performance_degraded": "PYTHON_ONLY",
+              "when_consensus_fails": "RETRY_PYTHON",
+              "max_retries": 3
+            },
+            "python_implementation": {
+              "module": "agents.src.python.tui_impl",
+              "class": "TUIPythonExecutor",
+              "capabilities": [
+                "Full TUI functionality in Python",
+                "Async execution support",
+                "Error recovery and retry logic",
+                "Progress tracking and reporting"
+              ],
+              "performance": "100-500 ops/sec"
+            },
+            "c_implementation": {
+              "binary": "src/c/tui_agent",
+              "shared_lib": "libtui.so",
+              "capabilities": [
+                "High-speed execution",
+                "Binary protocol support",
+                "Hardware optimization"
+              ],
+              "performance": "10K+ ops/sec"
+            }
+          },
+          "integration": {
+            "auto_register": true,
+            "binary_protocol": "binary-communications-system/ultra_hybrid_enhanced.c",
+            "discovery_service": "src/c/agent_discovery.c",
+            "message_router": "src/c/message_router.c",
+            "runtime": "src/c/unified_agent_runtime.c"
+          },
+          "ipc_methods": {
+            "CRITICAL": "shared_memory_50ns",
+            "HIGH": "io_uring_500ns",
+            "NORMAL": "unix_sockets_2us",
+            "LOW": "mmap_files_10us",
+            "BATCH": "dma_regions"
+          },
+          "message_patterns": [
+            "publish_subscribe",
+            "request_response",
+            "work_queues"
+          ],
+          "security": {
+            "authentication": "JWT_RS256_HS256",
+            "authorization": "RBAC_4_levels",
+            "encryption": "TLS_1.3",
+            "integrity": "HMAC_SHA256"
+          },
+          "monitoring": {
+            "prometheus_port": 9330,
+            "grafana_dashboard": true,
+            "health_check": "/health/ready",
+            "metrics_endpoint": "/metrics"
+          }
+        },
+        "fallback_patterns": {
+          "python_only_execution": {
+            "implementation": "class TUIPythonExecutor:\n    def __init__(self):\n        self.cache = {}\n        self.metrics = {}\n        \n    async def execute_command(self, command):\n        \"\"\"Execute TUI commands in pure Python\"\"\"\n        try:\n            result = await self.process_command(command)\n            self.metrics['success'] += 1\n            return result\n        except Exception as e:\n            self.metrics['errors'] += 1\n            return await self.handle_error(e, command)\n            \n    async def process_command(self, command):\n        \"\"\"Process specific command types\"\"\"\n        # Agent-specific implementation\n        pass\n        \n    async def handle_error(self, error, command):\n        \"\"\"Error recovery logic\"\"\"\n        # Retry logic\n        for attempt in range(3):\n            try:\n                return await self.process_command(command)\n            except:\n                await asyncio.sleep(2 ** attempt)\n        raise error\n"
+          },
+          "graceful_degradation": {
+            "triggers": [
+              "C layer timeout > 1000ms",
+              "C layer error rate > 5%",
+              "Binary bridge disconnection",
+              "Memory pressure > 80%"
+            ],
+            "actions": {
+              "immediate": "Switch to PYTHON_ONLY mode",
+              "cache_results": "Store recent operations",
+              "reduce_load": "Limit concurrent operations",
+              "notify_user": "Alert about degraded performance"
+            }
+          },
+          "recovery_strategy": {
+            "detection": "Monitor C layer every 30s",
+            "validation": "Test with simple command",
+            "reintegration": "Gradually shift load to C",
+            "verification": "Compare outputs for consistency"
+          }
+        },
+        "success_metrics": {
+          "one_shot_success": {
+            "first_run_success_rate": {
+              "target": ">95%",
+              "measurement": "Applications work without modification"
+            },
+            "zero_error_deployment": {
+              "target": "100%",
+              "measurement": "No runtime errors in first 24 hours"
+            }
+          },
+          "performance": {
+            "response_time": {
+              "target": "<16ms keystroke-to-display",
+              "current": "Achieving 12ms average"
+            },
+            "throughput": {
+              "target": "60-120fps rendering",
+              "current": "Sustaining 75fps average"
+            }
+          },
+          "reliability": {
+            "error_recovery": {
+              "target": "100% recoverable errors",
+              "measurement": "All errors handled gracefully"
+            },
+            "compatibility": {
+              "target": ">99% terminal support",
+              "current": "Supporting 43/43 tested terminals"
+            }
+          }
+        },
+        "runtime_directives": {
+          "startup": [
+            "Pre-validate terminal environment",
+            "Run capability detection suite",
+            "Load fallback strategies",
+            "Initialize performance monitors",
+            "Register with orchestrator"
+          ],
+          "operational": [
+            "ALWAYS pre-test before deployment",
+            "INCLUDE fallbacks for every feature",
+            "MONITOR performance continuously",
+            "ADAPT optimization level dynamically",
+            "VALIDATE all user input",
+            "RECOVER from all errors gracefully"
+          ],
+          "task_handling": [
+            "When invoked via Task tool:",
+            "  1. Analyze requirements thoroughly",
+            "  2. Pre-validate ALL assumptions",
+            "  3. Generate with embedded tests",
+            "  4. Include performance monitoring",
+            "  5. Provide fallback implementations",
+            "  6. Return verification report"
+          ],
+          "quality_assurance": [
+            "Every widget self-validates",
+            "Every render is tested",
+            "Every error has recovery",
+            "Every terminal is supported"
+          ]
+        },
+        "implementation_notes": {
+          "location": "/home/ubuntu/Documents/Claude/agents/",
+          "file_structure": {
+            "main_file": "TUI.md",
+            "supporting": [
+              "config/tui_config.json",
+              "schemas/tui_widget_schema.json",
+              "tests/tui_test.py",
+              "examples/tui_components/",
+              "templates/tui_one_shot/",
+              "validation/terminal_tests/"
+            ]
+          },
+          "integration_points": {
+            "claude_code": [
+              "Enhanced Task tool handler",
+              "Proactive error prevention",
+              "Self-validation on every call"
+            ],
+            "tandem_system": [
+              "Automatic performance optimization",
+              "Intelligent fallback selection",
+              "Pre-tested component library"
+            ]
+          },
+          "new_dependencies": {
+            "python_libraries": [
+              "pyterminfo>=1.0.0  # Terminal capability detection",
+              "async-timeout>=4.0.0  # Timeout handling",
+              "watchdog>=3.0.0  # File monitoring"
+            ],
+            "validation_tools": [
+              "terminal-test-suite>=2.0.0",
+              "tui-benchmark>=1.0.0",
+              "accessibility-checker>=3.0.0"
+            ]
+          }
+        }
+      },
       "has_execution_modes": true,
-      "compliance_score": "7/9",
-      "compliance_percentage": 77.77777777777779
+      "compliance_score": "8/9",
+      "compliance_percentage": 88.88888888888889
     },
     "WEB": {
       "name": "WEB",
