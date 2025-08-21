@@ -239,8 +239,10 @@ class TkinterBuilder:
         elif theme == 'modern':
             style.theme_use('vista' if sys.platform == 'win32' else 'clam')
 
-class PyQtBuilder:
-    """PyQt5 GUI builder"""
+# PyQt Builder - only define if PyQt is available
+if HAS_PYQT:
+    class PyQtBuilder:
+        """PyQt5 GUI builder"""
     
     def __init__(self):
         self.app = None
@@ -336,6 +338,13 @@ class PyQtBuilder:
                 else:
                     action = menu.addAction(item['label'])
                     action.triggered.connect(lambda: print(f"Menu: {item['label']}"))
+else:
+    # Placeholder PyQtBuilder when PyQt is not available
+    class PyQtBuilder:
+        def __init__(self):
+            pass
+        def create_application(self, app_config):
+            raise ImportError("PyQt5 not available")
 
 class StreamlitBuilder:
     """Streamlit web UI builder"""
