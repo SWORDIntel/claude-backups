@@ -372,6 +372,8 @@ class ProductionOrchestrator:
                 return await self._invoke_quantumguard_python(step)
             elif agent_name == "security":
                 return await self._invoke_security_python(step)
+            elif agent_name == "database":
+                return await self._invoke_database_python(step)
             else:
                 # Fallback to mock for agents without Python implementations
                 return await self._mock_agent_execution(step, agent_info)
@@ -747,6 +749,25 @@ class ProductionOrchestrator:
             }
         except ImportError:
             logger.warning("SECURITY Python implementation not found")
+            raise
+    
+    async def _invoke_database_python(self, step: CommandStep) -> Dict[str, Any]:
+        """Invoke DATABASE Python implementation"""
+        try:
+            from database_impl import DatabasePythonExecutor
+            
+            executor = DatabasePythonExecutor()
+            result = await executor.execute_command(step.action, step.payload)
+            
+            return {
+                "status": "success",
+                "agent": "database",
+                "action": step.action,
+                "result": result,
+                "execution_mode": "python_implementation"
+            }
+        except ImportError:
+            logger.warning("DATABASE Python implementation not found")
             raise
 
 

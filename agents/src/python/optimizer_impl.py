@@ -312,6 +312,9 @@ class OPTIMIZERPythonExecutor:
     """
     
     def __init__(self):
+        self.agent_name = "OPTIMIZER"
+        self.version = "9.0.0"
+        self.start_time = time.time()
         self.profiles = {}
         self.benchmarks = {}
         self.metrics = {
@@ -1366,6 +1369,42 @@ def monitor_performance(func):
             "error": error_msg,
             "diagnostics": diagnostics,
             "recovery_attempted": recovery_attempted
+        }
+    
+    def get_capabilities(self) -> List[str]:
+        """Get OPTIMIZER capabilities"""
+        return [
+            "performance_analysis",
+            "bottleneck_identification", 
+            "code_optimization",
+            "algorithm_optimization",
+            "memory_optimization",
+            "cpu_optimization",
+            "io_optimization",
+            "database_query_optimization",
+            "caching_strategies",
+            "profiling",
+            "benchmarking",
+            "load_testing",
+            "scalability_analysis",
+            "resource_monitoring",
+            "performance_reporting",
+            "optimization_planning"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get current OPTIMIZER status"""
+        uptime = time.time() - self.start_time
+        
+        return {
+            "agent": self.agent_name,
+            "version": self.version,
+            "status": "operational",
+            "uptime_seconds": uptime,
+            "metrics": self.metrics.copy(),
+            "hot_paths_identified": len(self.hot_paths),
+            "profiles_generated": self.metrics.get('profiles_generated', 0),
+            "optimization_level": "advanced"
         }
 
 class CacheAnalyzer:
