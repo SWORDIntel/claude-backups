@@ -282,6 +282,20 @@ install_python_dependencies() {
             pip3 install --user "$pkg" 2>/dev/null || true
         }
     done
+    
+    # Install agent-specific dependencies for 100% compliance
+    local agent_deps_installer="$PROJECT_ROOT/agents/src/python/install_agent_dependencies.sh"
+    if [ -f "$agent_deps_installer" ]; then
+        log "Installing agent-specific dependencies for 100% compliance..."
+        if [ -x "$agent_deps_installer" ]; then
+            "$agent_deps_installer" || warn "Some agent dependencies failed to install"
+            success "Agent dependencies installation completed"
+        else
+            warn "Agent dependency installer found but not executable"
+        fi
+    else
+        warn "Agent dependency installer not found at: $agent_deps_installer"
+    fi
 }
 
 setup_claude_wrapper() {

@@ -655,6 +655,11 @@ class MLOPSPythonExecutor:
     """
     
     def __init__(self):
+        # v9.0 compliance attributes
+        self.agent_name = "MLOPS"
+        self.version = "9.0"
+        self.start_time = datetime.now().isoformat()
+        
         self.model_registry = ModelRegistry()
         self.model_deployer = ModelDeployer()
         self.model_monitor = ModelMonitor()
@@ -1094,6 +1099,38 @@ class MLOPSPythonExecutor:
             
         except Exception as e:
             return {"error": f"Model export failed: {str(e)}"}
+
+    def get_capabilities(self) -> List[str]:
+        """Return list of MLOPS agent capabilities."""
+        return [
+            "model_training", "model_versioning", "model_deployment", 
+            "model_monitoring", "ab_testing", "drift_detection",
+            "experiment_tracking", "model_registry", "automated_retraining",
+            "performance_monitoring", "data_validation", "feature_engineering",
+            "model_comparison", "batch_inference", "real_time_serving",
+            "model_explainability", "compliance_reporting", "resource_optimization",
+            "canary_deployments", "blue_green_deployments", "model_export",
+            "pipeline_orchestration", "hyperparameter_tuning", "model_governance"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Return current MLOPS agent status."""
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "operational",
+            "start_time": self.start_time,
+            "uptime": str(datetime.now() - datetime.fromisoformat(self.start_time)).split('.')[0],
+            "registered_models": len(self.model_registry.models),
+            "deployments": len([d for d in self.model_deployer.deployments.values() if d.status == 'active']),
+            "experiments": len(self.experiment_tracker.experiments),
+            "dependencies": {
+                "joblib": True,
+                "pandas": HAS_PANDAS,
+                "sklearn": HAS_SKLEARN,
+                "mlflow": HAS_MLFLOW
+            }
+        }
 
 # Export main class
 __all__ = ['MLOPSPythonExecutor']

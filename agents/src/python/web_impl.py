@@ -561,6 +561,11 @@ class WEBPythonExecutor:
     """
     
     def __init__(self):
+        # v9.0 compliance attributes
+        self.agent_name = "WEB"
+        self.version = "9.0"
+        self.start_time = datetime.now().isoformat()
+        
         self.fastapi_builder = FastAPIBuilder() if HAS_FASTAPI else None
         self.flask_builder = FlaskBuilder() if HAS_FLASK else None
         self.template_engine = TemplateEngine()
@@ -1073,6 +1078,39 @@ if __name__ == "__main__":
     app.run(host="{config.host}", port={config.port}, debug={config.debug})
 """
         return ""
+
+    def get_capabilities(self) -> List[str]:
+        """Return list of WEB agent capabilities."""
+        return [
+            "fastapi_app_creation", "flask_app_creation", "django_app_creation",
+            "rest_api_generation", "graphql_api_generation", "websocket_support",
+            "react_component_generation", "vue_component_generation", 
+            "angular_component_generation", "html_template_generation",
+            "css_styling", "javascript_utilities", "responsive_design",
+            "authentication_setup", "database_integration", "cors_configuration",
+            "middleware_setup", "testing_endpoints", "api_documentation",
+            "frontend_build_setup", "static_file_serving", "template_rendering",
+            "form_handling", "session_management", "error_handling"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Return current WEB agent status."""
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "operational",
+            "start_time": self.start_time,
+            "uptime": str(datetime.now() - datetime.fromisoformat(self.start_time)).split('.')[0],
+            "applications_created": self.metrics.get('apps_created', 0),
+            "endpoints_created": self.metrics.get('endpoints_created', 0),
+            "components_generated": self.metrics.get('components_generated', 0),
+            "templates_rendered": self.metrics.get('templates_rendered', 0),
+            "dependencies": {
+                "fastapi": HAS_FASTAPI,
+                "flask": HAS_FLASK,
+                "django": HAS_DJANGO
+            }
+        }
 
 # Export main class
 __all__ = ['WEBPythonExecutor']

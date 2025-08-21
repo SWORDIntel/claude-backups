@@ -12,7 +12,6 @@ import json
 import os
 import sys
 import traceback
-import psutil
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -21,6 +20,13 @@ from dataclasses import dataclass, asdict, field
 from collections import deque, defaultdict
 import statistics
 import re
+
+# System monitoring libraries
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 
 # Monitoring libraries
 try:
@@ -35,6 +41,12 @@ try:
     HAS_LOGGING = True
 except ImportError:
     HAS_LOGGING = False
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 @dataclass
 class Metric:
@@ -340,9 +352,13 @@ class HealthChecker:
 class LogManager:
     """Centralized logging system"""
     
-    def __init__(self, log_dir: str = "./logs"):
+    def __init__(self, log_dir: str = None):
+        if log_dir is None:
+            # Use a temporary directory if no log directory provided
+            import tempfile
+            log_dir = tempfile.mkdtemp(prefix="monitor_logs_")
         self.log_dir = Path(log_dir)
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(exist_ok=True, mode=0o755)
         self.loggers = {}
         self.log_buffer = deque(maxlen=10000)
         self._setup_loggers()

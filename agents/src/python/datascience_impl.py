@@ -27,6 +27,11 @@ import base64
 # Core data science libraries
 try:
     import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+
+try:
     import pandas as pd
     HAS_PANDAS = True
 except ImportError:
@@ -499,6 +504,11 @@ class DATASCIENCEPythonExecutor:
     """
     
     def __init__(self):
+        # v9.0 compliance attributes
+        self.agent_name = "DATASCIENCE"
+        self.version = "9.0"
+        self.start_time = datetime.now().isoformat()
+        
         self.data_analyzer = DataAnalyzer()
         self.model_builder = ModelBuilder()
         self.statistical_analyzer = StatisticalAnalyzer()
@@ -1130,6 +1140,39 @@ class DATASCIENCEPythonExecutor:
             recommendations.append(f"{'Upward' if stats['trend'] > 0 else 'Downward'} trend detected")
             
         return recommendations
+
+    def get_capabilities(self) -> List[str]:
+        """Return list of DATASCIENCE agent capabilities."""
+        return [
+            "data_loading", "data_cleaning", "exploratory_analysis", 
+            "statistical_testing", "machine_learning", "model_evaluation",
+            "data_visualization", "correlation_analysis", "regression_analysis",
+            "classification", "clustering", "time_series_analysis",
+            "feature_engineering", "outlier_detection", "missing_value_handling",
+            "hypothesis_testing", "distribution_analysis", "dimensionality_reduction",
+            "predictive_modeling", "cross_validation", "model_comparison",
+            "automated_insights", "report_generation", "statistical_summaries"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Return current DATASCIENCE agent status."""
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "operational",
+            "start_time": self.start_time,
+            "uptime": str(datetime.now() - datetime.fromisoformat(self.start_time)).split('.')[0],
+            "datasets_loaded": len(self.datasets),
+            "analysis_results": len(self.results),
+            "metrics": self.metrics.copy(),
+            "dependencies": {
+                "pandas": HAS_PANDAS,
+                "numpy": HAS_NUMPY,
+                "sklearn": HAS_SKLEARN,
+                "plotting": HAS_PLOTTING,
+                "scipy": HAS_SCIPY
+            }
+        }
 
 # Export main class
 __all__ = ['DATASCIENCEPythonExecutor']
