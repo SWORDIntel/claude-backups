@@ -332,9 +332,18 @@ class OPTIMIZERPythonExecutor:
         self.async_profiler = AsyncProfiler()
         self.cache_analyzer = CacheAnalyzer()
         
-    async def execute_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_command(self, command_str: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute OPTIMIZER commands with enhanced capabilities"""
         try:
+            # Normalize input to command dict
+            if isinstance(command_str, str):
+                command = {
+                    'action': command_str,
+                    'payload': context or {}
+                }
+            else:
+                command = command_str
+            
             # Track command execution time
             start = time.perf_counter()
             result = await self.process_command(command)
@@ -347,7 +356,7 @@ class OPTIMIZERPythonExecutor:
             
         except Exception as e:
             self.metrics['errors'] += 1
-            return await self.handle_error(e, command)
+            return await self.handle_error(e, command if 'command' in locals() else {'action': str(command_str), 'payload': context or {}})
             
     async def process_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
         """Process optimization operations with enhanced features"""
