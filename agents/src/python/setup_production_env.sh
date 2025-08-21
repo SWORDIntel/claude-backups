@@ -47,7 +47,7 @@ check_system_requirements() {
     log "Checking system requirements for Tandem Orchestration System..."
     
     # Check Python version
-    if ! python3 --version | grep -E "3\.(9|10|11|12)" > /dev/null; then
+    if ! python3 --version | grep -E "3\.(9|1[0-9])" > /dev/null; then
         error "Python 3.9+ required. Current: $(python3 --version)"
     fi
     success "Python version check passed: $(python3 --version)"

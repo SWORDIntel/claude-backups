@@ -1,0 +1,12 @@
+Collecting numpy
+  Downloading numpy-2.3.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+Collecting asyncio
+  Downloading asyncio-4.0.0-py3-none-any.whl.metadata (994 bytes)
+Collecting aiofiles
+  Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+Collecting aiohttp
+  Downloading aiohttp-3.12.15-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
+Collecting uvloop
+  Downloading uvloop-0.21.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+Collecting pyyaml
+  Downloading PyYAML-6.0.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)

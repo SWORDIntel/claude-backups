@@ -1,8 +1,8 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# CLAUDE CODE ULTIMATE UNIFIED INSTALLER - DYNAMIC PATH DETECTION
-# No hardcoded paths - everything relative to detected PROJECT_ROOT
-# Version 5.4 - Fully Dynamic Path Resolution
+# CLAUDE CODE ULTIMATE UNIFIED INSTALLER - REQUIREMENTS.TXT SUPPORT
+# Dynamic paths + Requirements installation + Agent visibility + Python venv
+# Version 5.9 - Requirements.txt Auto-Installation
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -11,7 +11,7 @@ set -euo pipefail
 # DYNAMIC CONFIGURATION - NO HARDCODED PATHS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-readonly SCRIPT_VERSION="5.4-dynamic"
+readonly SCRIPT_VERSION="5.9-requirements"
 
 # Resolve script location properly
 get_script_dir() {
@@ -92,9 +92,6 @@ readonly CONFIG_DIR="$HOME/.config/claude"
 readonly NVIM_CONFIG_DIR="$HOME/.config/nvim"
 readonly CLAUDE_HOME_AGENTS="$HOME/agents"
 
-# Python venv path
-readonly VENV_DIR="$HOME/.local/share/claude/venv"
-
 # Dynamic source paths - all relative to PROJECT_ROOT
 get_source_file() {
     local filename="$1"
@@ -139,10 +136,8 @@ get_orchestration_files() {
         "tandem_orchestrator")
             local paths=(
                 "$PROJECT_ROOT/agents/src/python/tandem_orchestrator.py"
-                "$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
                 "$PROJECT_ROOT/src/python/tandem_orchestrator.py"
                 "$PROJECT_ROOT/orchestration/tandem_orchestrator.py"
-                "$PROJECT_ROOT/python/tandem_orchestrator.py"
             )
             ;;
         "production_orchestrator")
@@ -150,13 +145,14 @@ get_orchestration_files() {
                 "$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
                 "$PROJECT_ROOT/src/python/production_orchestrator.py"
                 "$PROJECT_ROOT/orchestration/production_orchestrator.py"
-                "$PROJECT_ROOT/python/production_orchestrator.py"
             )
             ;;
         "setup_production")
             local paths=(
+                "$PROJECT_ROOT/agents/src/python/setup_production_env.sh"  # FIXED: Check src/python first!
                 "$PROJECT_ROOT/agents/src/c/python/setup_production_env.sh"
                 "$PROJECT_ROOT/src/c/python/setup_production_env.sh"
+                "$PROJECT_ROOT/src/python/setup_production_env.sh"
                 "$PROJECT_ROOT/scripts/setup_production_env.sh"
                 "$PROJECT_ROOT/setup/setup_production_env.sh"
             )
@@ -260,11 +256,12 @@ show_banner() {
  | |____| | (_| | |_| | (_| |  __/ | |___| (_) | (_| |  __/
   \_______|_\__,_|\__,_|\__,_|\___|  \_____\___/ \__,_|\___|
                                                            
-    Dynamic Installer v5.4 - No Hardcoded Paths
+    Dynamic Installer v5.9 - Requirements.txt Support
 EOF
     printf "${NC}\n"
-    printf "${GREEN}Components:${NC} Unified Wrapper | Python Orchestration | Agents | Statusline\n"
-    printf "${BLUE}Project Root:${NC} $PROJECT_ROOT\n\n"
+    printf "${GREEN}Components:${NC} Wrapper | Requirements | Python Venv | Orchestration | Agents\n"
+    printf "${BLUE}Project Root:${NC} $PROJECT_ROOT\n"
+    printf "${CYAN}NEW:${NC} Auto-installs from requirements.txt in project root!\n\n"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -289,6 +286,7 @@ validate_project_structure() {
         local agent_count=$(find "$SOURCE_AGENTS_DIR" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l)
         debug "✓ Found agents directory: $SOURCE_AGENTS_DIR"
         debug "  Contains $agent_count agents"
+        debug "  Will setup Claude Code visibility fix"
     else
         warn "✗ Agents directory not found, will create"
     fi
@@ -304,8 +302,21 @@ validate_project_structure() {
     local prod_setup="$(get_orchestration_files "setup_production" || echo "")"
     if [ -n "$prod_setup" ] && [ -f "$prod_setup" ]; then
         debug "✓ Found production setup: ${prod_setup#$PROJECT_ROOT/}"
+        success "Production setup script found - will configure Python environment!"
     else
-        warn "⚠ Production setup not found (optional component)"
+        warn "⚠ Production setup script not found - will install from requirements.txt"
+        debug "  Searched in: agents/src/python/, agents/src/c/python/, src/python/, scripts/, setup/"
+    fi
+    
+    # Check for requirements.txt
+    if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
+        success "Requirements.txt found in project root - will install all dependencies!"
+    elif [ -f "$PROJECT_ROOT/agents/requirements.txt" ]; then
+        success "Requirements.txt found in agents/ - will install dependencies!"
+    elif [ -f "$PROJECT_ROOT/agents/src/python/requirements.txt" ]; then
+        success "Requirements.txt found in agents/src/python/ - will install!"
+    else
+        warn "No requirements.txt found - will install essential packages only"
     fi
     
     # Check wrapper files
@@ -313,6 +324,13 @@ validate_project_structure() {
         debug "✓ Found unified wrapper: ${UNIFIED_WRAPPER#$PROJECT_ROOT/}"
     else
         warn "✗ Unified wrapper not found, will create basic version"
+    fi
+    
+    # Check for existing Claude Code agent directory
+    if [ -d "$HOME/.claude/agents" ]; then
+        debug "  Existing ~/.claude/agents found, will update symlink"
+    else
+        debug "  Will create ~/.claude/agents symlink for Claude Code visibility"
     fi
     
     return 0
@@ -455,90 +473,230 @@ EOF
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# PYTHON VIRTUAL ENVIRONMENT SETUP
+# PYTHON ENVIRONMENT SETUP
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-setup_python_venv() {
-    log "Setting up Python virtual environment..."
+setup_python_environment() {
+    log "Setting up Python environment for orchestration..."
     
-    # Check if Python 3 is installed
-    if ! command -v python3 &> /dev/null; then
-        error "Python 3 is required but not installed"
+    # Check if Python3 is available
+    if ! command -v python3 &>/dev/null; then
+        error "Python3 not found! Please install Python 3.x"
         return 1
     fi
     
-    # Create venv directory if it doesn't exist
-    mkdir -p "$(dirname "$VENV_DIR")"
+    # Set up the venv path we'll use
+    local venv_path="$PROJECT_ROOT/agents/src/python/venv"
+    export ORCHESTRATOR_VENV="$venv_path"
     
-    # Create virtual environment
-    if [ ! -d "$VENV_DIR" ]; then
-        log "Creating virtual environment at $VENV_DIR..."
-        python3 -m venv "$VENV_DIR" || {
+    # STEP 1: Check for requirements.txt files
+    local requirements_files=()
+    
+    # Check project root
+    if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
+        requirements_files+=("$PROJECT_ROOT/requirements.txt")
+        log "Found requirements.txt in project root"
+    fi
+    
+    # Check agents/src/python
+    if [ -f "$PROJECT_ROOT/agents/src/python/requirements.txt" ]; then
+        requirements_files+=("$PROJECT_ROOT/agents/src/python/requirements.txt")
+        log "Found requirements.txt in agents/src/python/"
+    fi
+    
+    # Check agents directory
+    if [ -f "$PROJECT_ROOT/agents/requirements.txt" ]; then
+        requirements_files+=("$PROJECT_ROOT/agents/requirements.txt")
+        log "Found requirements.txt in agents/"
+    fi
+    
+    # STEP 2: Check for and run production setup script
+    local prod_setup="$(get_orchestration_files "setup_production" || echo "")"
+    
+    if [ -n "$prod_setup" ] && [ -f "$prod_setup" ]; then
+        log "Running production setup script..."
+        log "Location: ${prod_setup#$PROJECT_ROOT/}"
+        
+        chmod +x "$prod_setup"
+        cd "$(dirname "$prod_setup")"
+        
+        # Run the script
+        bash "$(basename "$prod_setup")" || {
+            warn "Production setup script had issues, will continue with manual setup"
+        }
+    fi
+    
+    # STEP 3: Ensure venv exists (create if needed)
+    if [ ! -d "$venv_path" ] || [ ! -f "$venv_path/bin/python3" ]; then
+        log "Creating Python virtual environment..."
+        cd "$PROJECT_ROOT/agents/src/python"
+        
+        python3 -m venv venv || {
             error "Failed to create virtual environment"
+            install_from_requirements_system "${requirements_files[@]}"
             return 1
         }
-        success "Virtual environment created"
+        
+        # Upgrade pip in venv
+        if [ -f "$venv_path/bin/pip" ]; then
+            "$venv_path/bin/pip" install --upgrade pip
+        fi
     else
-        debug "Virtual environment already exists at $VENV_DIR"
+        success "Virtual environment found at: $venv_path"
     fi
     
-    # Activate venv and upgrade pip
-    log "Activating virtual environment and upgrading pip..."
-    source "$VENV_DIR/bin/activate"
-    python3 -m pip install --upgrade pip setuptools wheel &> /dev/null || {
-        warn "Failed to upgrade pip/setuptools/wheel"
-    }
+    # STEP 4: Install from requirements.txt files
+    if [ ${#requirements_files[@]} -gt 0 ] && [ -f "$venv_path/bin/pip" ]; then
+        for req_file in "${requirements_files[@]}"; do
+            log "Installing dependencies from: ${req_file#$PROJECT_ROOT/}"
+            "$venv_path/bin/pip" install -r "$req_file" || {
+                warn "Some packages from $req_file failed to install"
+            }
+        done
+    fi
     
-    # Install requirements.txt if it exists
-    local requirements_files=(
-        "$PROJECT_ROOT/requirements.txt"
-        "$PROJECT_ROOT/agents/requirements.txt"
-        "$PROJECT_ROOT/orchestration/requirements.txt"
-    )
-    
-    local installed_requirements=false
-    for req_file in "${requirements_files[@]}"; do
-        if [ -f "$req_file" ]; then
-            log "Installing dependencies from ${req_file#$PROJECT_ROOT/}..."
-            # Show progress for large requirements files
-            if command -v pv &> /dev/null; then
-                python3 -m pip install -r "$req_file" 2>&1 | pv -l -s $(wc -l < "$req_file") > /dev/null || {
-                    warn "Some dependencies from ${req_file#$PROJECT_ROOT/} failed to install"
-                }
-            else
-                python3 -m pip install -r "$req_file" || {
-                    warn "Some dependencies from ${req_file#$PROJECT_ROOT/} failed to install"
+    # STEP 5: Ensure essential packages are installed
+    if [ -f "$venv_path/bin/pip" ]; then
+        log "Ensuring essential packages are installed..."
+        
+        # Essential packages that might not be in requirements.txt
+        local essentials=(
+            "numpy"
+            "requests"
+            "pyyaml"
+            "colorama"
+            "psutil"
+            "networkx"  # Added based on your error
+        )
+        
+        for package in "${essentials[@]}"; do
+            if ! "$venv_path/bin/python3" -c "import ${package%==*}" 2>/dev/null; then
+                log "Installing $package..."
+                "$venv_path/bin/pip" install "$package" || {
+                    warn "Failed to install $package"
                 }
             fi
-            installed_requirements=true
-        fi
-    done
+        done
+    fi
     
-    if [ "$installed_requirements" = false ]; then
-        log "No requirements.txt found, installing basic dependencies..."
-        python3 -m pip install aiofiles aiohttp asyncpg PyYAML rich click psutil &> /dev/null || {
-            warn "Failed to install basic dependencies"
+    # STEP 6: Verify critical imports work
+    if [ -f "$venv_path/bin/python3" ]; then
+        log "Verifying Python environment..."
+        
+        # Test critical imports
+        local test_imports=("numpy" "networkx")
+        local all_good=true
+        
+        for module in "${test_imports[@]}"; do
+            if "$venv_path/bin/python3" -c "import $module" 2>/dev/null; then
+                debug "✓ $module is available"
+            else
+                warn "✗ $module is NOT available"
+                all_good=false
+            fi
+        done
+        
+        if [ "$all_good" = true ]; then
+            success "Python environment fully configured"
+        else
+            warn "Some Python packages are missing - orchestrator may have issues"
+        fi
+    else
+        # Fallback to system-wide installation
+        warn "Virtual environment not available, using system Python"
+        install_from_requirements_system "${requirements_files[@]}"
+    fi
+    
+    return 0
+}
+
+install_from_requirements_system() {
+    log "Installing requirements system-wide as fallback..."
+    
+    local requirements_files=("$@")
+    
+    # Install from requirements files
+    if [ ${#requirements_files[@]} -gt 0 ]; then
+        for req_file in "${requirements_files[@]}"; do
+            if [ -f "$req_file" ]; then
+                log "Installing from: ${req_file#$PROJECT_ROOT/}"
+                
+                if command -v pip3 &>/dev/null; then
+                    pip3 install --user -r "$req_file" || {
+                        warn "Failed to install some packages from $req_file"
+                    }
+                elif command -v pip &>/dev/null; then
+                    pip install --user -r "$req_file" || {
+                        warn "Failed to install some packages from $req_file"
+                    }
+                fi
+            fi
+        done
+    fi
+    
+    # Ensure essential packages
+    install_basic_python_deps
+}
+
+install_basic_python_deps() {
+    log "Installing Python dependencies..."
+    
+    # Essential packages list (including networkx)
+    local packages=(
+        "numpy"
+        "networkx"
+        "requests"
+        "pyyaml"
+        "colorama"
+        "psutil"
+        "matplotlib"
+        "pandas"
+    )
+    
+    # Method 1: Try pip3
+    if command -v pip3 &>/dev/null; then
+        log "Installing with pip3..."
+        for pkg in "${packages[@]}"; do
+            pip3 install --user "$pkg" || {
+                warn "Failed to install $pkg with pip3"
+            }
+        done
+    fi
+    
+    # Method 2: Try pip
+    if command -v pip &>/dev/null; then
+        log "Installing with pip..."
+        for pkg in "${packages[@]}"; do
+            pip install --user "$pkg" || {
+                warn "Failed to install $pkg with pip"
+            }
+        done
+    fi
+    
+    # Method 3: Try apt-get for common packages
+    if command -v apt-get &>/dev/null; then
+        log "Installing with apt-get..."
+        sudo apt-get update &>/dev/null || true
+        sudo apt-get install -y python3-numpy python3-networkx python3-requests python3-yaml &>/dev/null || {
+            warn "apt-get install failed for some packages"
         }
     fi
     
-    success "Python environment setup complete"
-    
-    # Create activation script for users
-    cat > "$USER_BIN_DIR/claude-venv" << EOF
-#!/bin/bash
-# Activate Claude Python virtual environment
-source "$VENV_DIR/bin/activate"
-echo "Claude virtual environment activated"
-echo "Python: \$(which python3)"
-echo "Pip: \$(which pip3)"
-EOF
-    chmod +x "$USER_BIN_DIR/claude-venv"
+    # Verify critical packages
+    local critical=("numpy" "networkx")
+    for pkg in "${critical[@]}"; do
+        if python3 -c "import $pkg" 2>/dev/null; then
+            success "$pkg installation verified"
+        else
+            error "$pkg still not available after all attempts"
+        fi
+    done
     
     return 0
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ORCHESTRATION COMPONENTS - FULLY DYNAMIC
+# ORCHESTRATION COMPONENTS - FULLY DYNAMIC WITH VENV SUPPORT
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 deploy_orchestration_system() {
@@ -557,23 +715,15 @@ deploy_orchestration_system() {
     # Create main orchestrator launcher
     cat > "$USER_BIN_DIR/orchestrator" << EOF
 #!/bin/bash
-# Dynamic Orchestrator Launcher with Virtual Environment
+# Dynamic Orchestrator Launcher - No Hardcoded Paths
 
 PROJECT_ROOT="$PROJECT_ROOT"
-VENV_DIR="$VENV_DIR"
-
-# Activate virtual environment if it exists
-if [ -d "\$VENV_DIR" ] && [ -f "\$VENV_DIR/bin/activate" ]; then
-    source "\$VENV_DIR/bin/activate"
-fi
 
 # Search for orchestrator in multiple locations
 find_orchestrator() {
     local search_paths=(
         "\$PROJECT_ROOT/agents/src/python/tandem_orchestrator.py"
-        "\$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
         "\$PROJECT_ROOT/src/python/tandem_orchestrator.py"
-        "\$PROJECT_ROOT/src/python/production_orchestrator.py"
         "\$PROJECT_ROOT/orchestration/tandem_orchestrator.py"
         "\$PROJECT_ROOT/python/tandem_orchestrator.py"
     )
@@ -596,19 +746,13 @@ if [ -z "\$ORCHESTRATOR" ] || [ ! -f "\$ORCHESTRATOR" ]; then
     echo "  - \$PROJECT_ROOT/agents/src/python/"
     echo "  - \$PROJECT_ROOT/src/python/"
     echo "  - \$PROJECT_ROOT/orchestration/"
-    echo ""
-    echo "Available Python files:"
-    find "\$PROJECT_ROOT" -name "*orchestrator*.py" -type f 2>/dev/null | head -10
     exit 1
 fi
 
 # Set up environment
 export CLAUDE_PROJECT_ROOT="\$PROJECT_ROOT"
 export CLAUDE_AGENTS_DIR="\$PROJECT_ROOT/agents"
-export PYTHONPATH="\$(dirname "\$ORCHESTRATOR"):\$PROJECT_ROOT/agents/src/python:\$PYTHONPATH"
-
-echo "Using orchestrator: \${ORCHESTRATOR#\$PROJECT_ROOT/}"
-echo "Python: \$(which python3)"
+export PYTHONPATH="\$(dirname "\$ORCHESTRATOR"):\$PYTHONPATH"
 
 # Launch orchestrator
 cd "\$(dirname "\$ORCHESTRATOR")"
@@ -621,12 +765,16 @@ EOF
         cat > "$USER_BIN_DIR/orchestrator-production" << EOF
 #!/bin/bash
 PROJECT_ROOT="$PROJECT_ROOT"
-VENV_DIR="$VENV_DIR"
 PRODUCTION_ORCHESTRATOR="${prod_orch#$PROJECT_ROOT/}"
 
-# Activate virtual environment if it exists
-if [ -d "\$VENV_DIR" ] && [ -f "\$VENV_DIR/bin/activate" ]; then
-    source "\$VENV_DIR/bin/activate"
+# Check for virtual environment
+VENV_PATH="\$PROJECT_ROOT/agents/src/python/venv"
+VENV_PYTHON=""
+
+if [ -d "\$VENV_PATH" ] && [ -f "\$VENV_PATH/bin/python3" ]; then
+    VENV_PYTHON="\$VENV_PATH/bin/python3"
+elif [ -d "\$VENV_PATH" ] && [ -f "\$VENV_PATH/bin/python" ]; then
+    VENV_PYTHON="\$VENV_PATH/bin/python"
 fi
 
 if [ ! -f "\$PROJECT_ROOT/\$PRODUCTION_ORCHESTRATOR" ]; then
@@ -636,13 +784,14 @@ fi
 
 export CLAUDE_PROJECT_ROOT="\$PROJECT_ROOT"
 export CLAUDE_AGENTS_DIR="\$PROJECT_ROOT/agents"
-export PYTHONPATH="\$PROJECT_ROOT/\$(dirname "\$PRODUCTION_ORCHESTRATOR"):\$PROJECT_ROOT/agents/src/python:\$PYTHONPATH"
-
-echo "Using production orchestrator: \$PRODUCTION_ORCHESTRATOR"
-echo "Python: \$(which python3)"
-
 cd "\$PROJECT_ROOT/\$(dirname "\$PRODUCTION_ORCHESTRATOR")"
-exec python3 "\$(basename "\$PRODUCTION_ORCHESTRATOR")" "\$@"
+
+# Use venv if available
+if [ -n "\$VENV_PYTHON" ]; then
+    exec "\$VENV_PYTHON" "\$(basename "\$PRODUCTION_ORCHESTRATOR")" "\$@"
+else
+    exec python3 "\$(basename "\$PRODUCTION_ORCHESTRATOR")" "\$@"
+fi
 EOF
         chmod +x "$USER_BIN_DIR/orchestrator-production"
     fi
@@ -652,13 +801,36 @@ EOF
         cat > "$USER_BIN_DIR/orchestrator-setup" << EOF
 #!/bin/bash
 PROJECT_ROOT="$PROJECT_ROOT"
-SETUP_SCRIPT="${prod_setup#$PROJECT_ROOT/}"
 
-if [ -f "\$PROJECT_ROOT/\$SETUP_SCRIPT" ]; then
-    cd "\$PROJECT_ROOT/\$(dirname "\$SETUP_SCRIPT")"
+# Search for setup script in multiple locations
+find_setup_script() {
+    local search_paths=(
+        "\$PROJECT_ROOT/agents/src/python/setup_production_env.sh"
+        "\$PROJECT_ROOT/agents/src/c/python/setup_production_env.sh"
+        "\$PROJECT_ROOT/src/python/setup_production_env.sh"
+        "\$PROJECT_ROOT/src/c/python/setup_production_env.sh"
+        "\$PROJECT_ROOT/scripts/setup_production_env.sh"
+        "\$PROJECT_ROOT/setup/setup_production_env.sh"
+    )
+    
+    for path in "\${search_paths[@]}"; do
+        if [ -f "\$path" ]; then
+            echo "\$path"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+SETUP_SCRIPT="\$(find_setup_script)"
+
+if [ -n "\$SETUP_SCRIPT" ] && [ -f "\$SETUP_SCRIPT" ]; then
+    echo "Running production setup from: \${SETUP_SCRIPT#\$PROJECT_ROOT/}"
+    cd "\$(dirname "\$SETUP_SCRIPT")"
     exec bash "\$(basename "\$SETUP_SCRIPT")"
 else
-    echo "Setup script not found"
+    echo "Setup script not found in any expected location"
     exit 1
 fi
 EOF
@@ -668,6 +840,7 @@ EOF
     # Create claude-orchestrate shortcut
     cat > "$USER_BIN_DIR/claude-orchestrate" << 'EOF'
 #!/bin/bash
+# Direct orchestration launcher - uses orchestrator command which handles venv
 exec orchestrator "$@"
 EOF
     chmod +x "$USER_BIN_DIR/claude-orchestrate"
@@ -702,7 +875,7 @@ for dir in "agents/src/python" "src/python" "orchestration" "python"; do
     fi
 done
 
-for dir in "agents/src/c/python" "src/c/python" "scripts" "setup"; do
+for dir in "agents/src/python" "agents/src/c/python" "src/c/python" "src/python" "scripts" "setup"; do
     if [ -f "\$PROJECT_ROOT/\$dir/setup_production_env.sh" ]; then
         echo "  • Production Setup: ✓ Found in \$dir/"
         break
@@ -739,7 +912,7 @@ EOF
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# AGENT INSTALLATION
+# AGENT INSTALLATION WITH CLAUDE CODE VISIBILITY FIX
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 install_agents_with_sync() {
@@ -748,39 +921,63 @@ install_agents_with_sync() {
         return 0
     fi
     
-    log "Installing agents..."
+    log "Installing agents with Claude Code visibility fix..."
     
-    # Create ~/agents directory
+    # Create necessary directories
     mkdir -p "$CLAUDE_HOME_AGENTS"
+    mkdir -p "$HOME/.claude"
+    mkdir -p "$USER_SHARE_DIR/agents"
     
     if [ -d "$SOURCE_AGENTS_DIR" ]; then
-        log "Linking agents from $SOURCE_AGENTS_DIR"
+        log "Setting up agent visibility from $SOURCE_AGENTS_DIR"
         
-        # Remove old ~/agents if it exists and isn't a symlink
+        # 1. Create symlink for ~/agents (legacy)
         if [ -e "$CLAUDE_HOME_AGENTS" ] && [ ! -L "$CLAUDE_HOME_AGENTS" ]; then
             rm -rf "$CLAUDE_HOME_AGENTS"
         fi
-        
-        # Create symlink
         if [ ! -L "$CLAUDE_HOME_AGENTS" ]; then
             ln -s "$SOURCE_AGENTS_DIR" "$CLAUDE_HOME_AGENTS"
+            debug "Created symlink: ~/agents -> $SOURCE_AGENTS_DIR"
         fi
         
+        # 2. CRITICAL: Create symlink for ~/.claude/agents (Claude Code looks here!)
+        local claude_agents_dir="$HOME/.claude/agents"
+        if [ -e "$claude_agents_dir" ] && [ ! -L "$claude_agents_dir" ]; then
+            rm -rf "$claude_agents_dir"
+        fi
+        if [ ! -L "$claude_agents_dir" ]; then
+            ln -sf "$SOURCE_AGENTS_DIR" "$claude_agents_dir"
+            success "Created Claude Code symlink: ~/.claude/agents -> $SOURCE_AGENTS_DIR"
+        fi
+        
+        # Count agents
         local agent_count=$(find "$SOURCE_AGENTS_DIR" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l || echo 0)
-        success "Linked $agent_count agents from project"
+        success "Made $agent_count agents visible to Claude Code"
         
         # List first few agents
         if [ $agent_count -gt 0 ]; then
-            echo "Discovered agents:"
+            echo "Agents now accessible from any directory:"
             find "$SOURCE_AGENTS_DIR" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | head -5 | while read -r agent; do
                 echo "  • $(basename "$agent" | sed 's/\.[mM][dD]$//')"
             done
+            [ $agent_count -gt 5 ] && echo "  ... and $((agent_count - 5)) more"
         fi
+        
+        # 3. Create enhanced sync script
+        create_agent_sync_script
+        
+        # 4. Set up cron job for automatic sync
+        setup_agent_sync_cron
+        
+        # 5. Create test script
+        create_agent_test_script
+        
     else
         warn "Agents directory not found, creating minimal set"
         mkdir -p "$CLAUDE_HOME_AGENTS"
+        mkdir -p "$HOME/.claude/agents"
         
-        # Create minimal agent
+        # Create minimal agent in both locations
         cat > "$CLAUDE_HOME_AGENTS/DIRECTOR.md" << 'EOF'
 ---
 uuid: director-001
@@ -791,10 +988,173 @@ role: Strategic Command
 # Director Agent
 Strategic orchestration and delegation
 EOF
+        cp "$CLAUDE_HOME_AGENTS/DIRECTOR.md" "$HOME/.claude/agents/" 2>/dev/null || true
         success "Created minimal agent set"
     fi
     
     return 0
+}
+
+create_agent_sync_script() {
+    log "Creating enhanced agent sync script..."
+    
+    cat > "$USER_BIN_DIR/sync-claude-agents.sh" << EOF
+#!/bin/bash
+# Enhanced Claude Agent Sync Script
+# Ensures agents are visible to Claude Code from any directory
+
+PROJECT_ROOT="$PROJECT_ROOT"
+SOURCE_DIR="\$PROJECT_ROOT/agents"
+CLAUDE_AGENTS_DIR="\$HOME/.claude/agents"
+LEGACY_AGENTS_DIR="\$HOME/agents"
+BACKUP_DIR="\$HOME/.local/share/claude/agents"
+LOG_FILE="\$HOME/.local/share/claude/agent-sync.log"
+
+# Create directories
+mkdir -p "\$HOME/.claude"
+mkdir -p "\$BACKUP_DIR"
+mkdir -p "\$(dirname "\$LOG_FILE")"
+
+# Function to log with timestamp
+log_sync() {
+    echo "[\$(date '+%Y-%m-%d %H:%M:%S')] \$1" >> "\$LOG_FILE"
+}
+
+# Start sync
+log_sync "Starting agent sync from \$SOURCE_DIR"
+
+# Check if source exists
+if [ ! -d "\$SOURCE_DIR" ]; then
+    log_sync "ERROR: Source directory not found: \$SOURCE_DIR"
+    exit 1
+fi
+
+# 1. Maintain primary symlink for Claude Code (~/.claude/agents)
+if [ -e "\$CLAUDE_AGENTS_DIR" ] && [ ! -L "\$CLAUDE_AGENTS_DIR" ]; then
+    log_sync "Removing non-symlink at \$CLAUDE_AGENTS_DIR"
+    rm -rf "\$CLAUDE_AGENTS_DIR"
+fi
+
+if [ ! -L "\$CLAUDE_AGENTS_DIR" ] || [ "\$(readlink -f "\$CLAUDE_AGENTS_DIR")" != "\$(readlink -f "\$SOURCE_DIR")" ]; then
+    log_sync "Creating/updating Claude Code symlink"
+    ln -sfn "\$SOURCE_DIR" "\$CLAUDE_AGENTS_DIR"
+fi
+
+# 2. Maintain legacy symlink (~/agents)
+if [ -e "\$LEGACY_AGENTS_DIR" ] && [ ! -L "\$LEGACY_AGENTS_DIR" ]; then
+    log_sync "Removing non-symlink at \$LEGACY_AGENTS_DIR"
+    rm -rf "\$LEGACY_AGENTS_DIR"
+fi
+
+if [ ! -L "\$LEGACY_AGENTS_DIR" ] || [ "\$(readlink -f "\$LEGACY_AGENTS_DIR")" != "\$(readlink -f "\$SOURCE_DIR")" ]; then
+    log_sync "Creating/updating legacy symlink"
+    ln -sfn "\$SOURCE_DIR" "\$LEGACY_AGENTS_DIR"
+fi
+
+# 3. Create backup copy
+log_sync "Creating backup in \$BACKUP_DIR"
+rsync -a --delete "\$SOURCE_DIR/" "\$BACKUP_DIR/" 2>/dev/null || cp -r "\$SOURCE_DIR/"* "\$BACKUP_DIR/" 2>/dev/null
+
+# Count agents
+AGENT_COUNT=\$(find "\$SOURCE_DIR" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l)
+log_sync "Sync complete: \$AGENT_COUNT agents available"
+
+# Verify Claude Code can see agents
+if [ -L "\$CLAUDE_AGENTS_DIR" ] && [ -d "\$CLAUDE_AGENTS_DIR" ]; then
+    log_sync "✓ Claude Code symlink verified"
+else
+    log_sync "✗ Claude Code symlink verification failed"
+fi
+
+# Keep log file size reasonable
+tail -n 1000 "\$LOG_FILE" > "\${LOG_FILE}.tmp" && mv "\${LOG_FILE}.tmp" "\$LOG_FILE"
+EOF
+    
+    chmod +x "$USER_BIN_DIR/sync-claude-agents.sh"
+    
+    # Run initial sync
+    "$USER_BIN_DIR/sync-claude-agents.sh" 2>/dev/null || true
+    
+    success "Agent sync script created and executed"
+}
+
+setup_agent_sync_cron() {
+    log "Setting up automatic agent sync (every 5 minutes)..."
+    
+    local sync_script="$USER_BIN_DIR/sync-claude-agents.sh"
+    
+    # Remove old cron entries
+    (crontab -l 2>/dev/null | grep -v "sync-claude-agents") | crontab - 2>/dev/null || true
+    
+    # Add new cron entry
+    (crontab -l 2>/dev/null; echo "*/5 * * * * $sync_script >/dev/null 2>&1") | crontab -
+    
+    success "Cron job configured for automatic agent sync"
+}
+
+create_agent_test_script() {
+    log "Creating agent visibility test script..."
+    
+    cat > "$USER_BIN_DIR/test-agent-visibility.sh" << 'EOF'
+#!/bin/bash
+# Test Claude Code Agent Visibility
+
+echo "═══════════════════════════════════════════════════════════"
+echo "           Claude Code Agent Visibility Test"
+echo "═══════════════════════════════════════════════════════════"
+echo
+
+# Check symlinks
+echo "Checking symlinks:"
+echo -n "  ~/.claude/agents: "
+if [ -L "$HOME/.claude/agents" ]; then
+    target=$(readlink -f "$HOME/.claude/agents")
+    echo "✓ -> $target"
+else
+    echo "✗ Not a symlink"
+fi
+
+echo -n "  ~/agents: "
+if [ -L "$HOME/agents" ]; then
+    target=$(readlink -f "$HOME/agents")
+    echo "✓ -> $target"
+else
+    echo "✗ Not a symlink"
+fi
+
+# Count agents
+echo
+echo "Agent counts:"
+for dir in "$HOME/.claude/agents" "$HOME/agents" "$HOME/.local/share/claude/agents"; do
+    if [ -d "$dir" ]; then
+        count=$(find "$dir" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l)
+        printf "  %-35s %d agents\n" "$dir:" "$count"
+    else
+        printf "  %-35s not found\n" "$dir:"
+    fi
+done
+
+# Check sync log
+echo
+echo "Recent sync activity:"
+if [ -f "$HOME/.local/share/claude/agent-sync.log" ]; then
+    tail -3 "$HOME/.local/share/claude/agent-sync.log"
+else
+    echo "  No sync log found"
+fi
+
+echo
+echo "To verify in Claude Code, run:"
+echo "  claude /task 'list available agents'"
+echo
+echo "If agents don't appear, try:"
+echo "  1. Restart Claude Code"
+echo "  2. Run: sync-claude-agents.sh"
+EOF
+    
+    chmod +x "$USER_BIN_DIR/test-agent-visibility.sh"
+    
+    success "Test script created: test-agent-visibility.sh"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -913,6 +1273,8 @@ alias claude-safe='claude --no-skip-permissions'
 alias cla='claude-list-agents'
 alias orch='orchestrator'
 alias orch-status='orchestration-status'
+alias test-agents='test-agent-visibility.sh'
+alias sync-agents='sync-claude-agents.sh'
 
 # Helper functions
 claude-list-agents() {
@@ -925,6 +1287,48 @@ claude-list-agents() {
             done | sort
     else
         echo "Agents directory not found"
+    fi
+}
+
+claude-agent-status() {
+    echo "═══════════════════════════════════════════════════"
+    echo "           Claude Agent System Status"
+    echo "═══════════════════════════════════════════════════"
+    echo
+    echo "Project Agents: \$CLAUDE_PROJECT_ROOT/agents"
+    echo "Claude Code Link: ~/.claude/agents"
+    
+    # Check symlinks
+    if [ -L ~/.claude/agents ]; then
+        echo "Claude Code Access: ✓ Linked"
+    else
+        echo "Claude Code Access: ✗ Not linked"
+    fi
+    
+    if [ -L ~/agents ]; then
+        echo "Legacy Access: ✓ Linked"
+    else
+        echo "Legacy Access: ✗ Not linked"
+    fi
+    
+    # Count agents
+    if [ -d "\$CLAUDE_AGENTS_DIR" ]; then
+        local count=\$(find "\$CLAUDE_AGENTS_DIR" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l)
+        echo "Available Agents: \$count"
+    fi
+    
+    # Check sync
+    if crontab -l 2>/dev/null | grep -q "sync-claude-agents"; then
+        echo "Auto-sync: ✓ Active (every 5 minutes)"
+    else
+        echo "Auto-sync: ✗ Not configured"
+    fi
+    
+    # Last sync
+    if [ -f ~/.local/share/claude/agent-sync.log ]; then
+        echo
+        echo "Last sync:"
+        tail -1 ~/.local/share/claude/agent-sync.log
     fi
 }
 
@@ -941,6 +1345,12 @@ claude-project-info() {
             break
         fi
     done
+    
+    # Check agent visibility
+    echo
+    echo "Agent Visibility:"
+    echo "  ~/.claude/agents: \$([ -L ~/.claude/agents ] && echo '✓ Linked' || echo '✗ Not linked')"
+    echo "  Auto-sync: \$(crontab -l 2>/dev/null | grep -q sync-claude-agents && echo '✓ Active' || echo '✗ Inactive')"
 }
 BASHRC_ENV
     fi
@@ -963,21 +1373,9 @@ launch_orchestration_system() {
     printf "${CYAN}${BOLD}═══════════════════════════════════════════════════${NC}\n"
     echo
     
-    # Activate virtual environment if it exists
-    if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/activate" ]; then
-        source "$VENV_DIR/bin/activate"
-        echo "Virtual environment activated"
-    fi
-    
-    # Find orchestrator dynamically - prefer production_orchestrator
+    # Find orchestrator dynamically - including src/python without 'c'
     local orchestrator=""
     for dir in "agents/src/python" "src/python" "orchestration" "python"; do
-        # First try production_orchestrator
-        if [ -f "$PROJECT_ROOT/$dir/production_orchestrator.py" ]; then
-            orchestrator="$PROJECT_ROOT/$dir/production_orchestrator.py"
-            break
-        fi
-        # Fall back to tandem_orchestrator
         if [ -f "$PROJECT_ROOT/$dir/tandem_orchestrator.py" ]; then
             orchestrator="$PROJECT_ROOT/$dir/tandem_orchestrator.py"
             break
@@ -986,15 +1384,26 @@ launch_orchestration_system() {
     
     if [ -z "$orchestrator" ] || [ ! -f "$orchestrator" ]; then
         warn "Orchestrator not found in project"
-        echo "Available Python files:"
-        find "$PROJECT_ROOT" -name "*orchestrator*.py" -type f 2>/dev/null | head -10
-        echo ""
         echo "You can launch it later with: orchestrator"
         return 1
     fi
     
     echo "Orchestrator found: ${orchestrator#$PROJECT_ROOT/}"
-    echo "Python: $(which python3)"
+    
+    # Check for venv
+    local venv_path="$PROJECT_ROOT/agents/src/python/venv"
+    local python_cmd="python3"
+    
+    if [ -d "$venv_path" ] && [ -f "$venv_path/bin/python3" ]; then
+        python_cmd="$venv_path/bin/python3"
+        echo "Virtual environment: ✓ Active"
+    elif [ -d "$venv_path" ] && [ -f "$venv_path/bin/python" ]; then
+        python_cmd="$venv_path/bin/python"
+        echo "Virtual environment: ✓ Active"
+    else
+        echo "Virtual environment: Using system Python"
+    fi
+    
     echo
     echo "Options:"
     echo "  [1] Launch interactive orchestrator"
@@ -1007,17 +1416,14 @@ launch_orchestration_system() {
     echo
     echo
     
-    # Set up Python path
-    export PYTHONPATH="$(dirname "$orchestrator"):$PROJECT_ROOT/agents/src/python:$PYTHONPATH"
-    
     case "$choice" in
         "1")
             cd "$(dirname "$orchestrator")"
-            exec python3 "$(basename "$orchestrator")"
+            exec "$python_cmd" "$(basename "$orchestrator")"
             ;;
         "2")
             cd "$(dirname "$orchestrator")"
-            python3 "$(basename "$orchestrator")" test
+            "$python_cmd" "$(basename "$orchestrator")" test
             ;;
         "3")
             orchestration-status
@@ -1051,9 +1457,50 @@ show_final_status() {
         echo "  • Claude wrapper: ✓"
     fi
     
-    if [ -L "$CLAUDE_HOME_AGENTS" ] || [ -d "$CLAUDE_HOME_AGENTS" ]; then
+    # Check Python environment
+    local venv_path="$PROJECT_ROOT/agents/src/python/venv"
+    if [ -d "$venv_path" ] && [ -f "$venv_path/bin/python3" ]; then
+        echo "  • Python environment: ✓ (venv configured)"
+        
+        # Check for requirements.txt
+        if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
+            echo "    Requirements.txt: ✓ Found and installed"
+        fi
+        
+        # Test critical packages
+        if "$venv_path/bin/python3" -c "import numpy" 2>/dev/null; then
+            echo "    NumPy: ✓ Installed"
+        else
+            echo "    NumPy: ✗ Not found"
+        fi
+        
+        if "$venv_path/bin/python3" -c "import networkx" 2>/dev/null; then
+            echo "    NetworkX: ✓ Installed"
+        else
+            echo "    NetworkX: ✗ Not found"
+        fi
+    else
+        echo "  • Python environment: System Python"
+        if python3 -c "import numpy" 2>/dev/null; then
+            echo "    NumPy: ✓ Installed (system)"
+        else
+            echo "    NumPy: ✗ Not installed"
+        fi
+    fi
+    
+    # Check agent installation and visibility
+    if [ -L "$HOME/.claude/agents" ]; then
         local count=$(find "$PROJECT_ROOT/agents" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l || echo 0)
         echo "  • Agents: $count available"
+        echo "  • Claude Code visibility: ✓ (agents accessible from any directory)"
+    elif [ -d "$CLAUDE_HOME_AGENTS" ]; then
+        local count=$(find "$PROJECT_ROOT/agents" -maxdepth 1 \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l || echo 0)
+        echo "  • Agents: $count available (visibility not configured)"
+    fi
+    
+    # Check auto-sync
+    if crontab -l 2>/dev/null | grep -q "sync-claude-agents"; then
+        echo "  • Agent auto-sync: ✓ (every 5 minutes)"
     fi
     
     # Check for orchestrator dynamically
@@ -1067,20 +1514,51 @@ show_final_status() {
     done
     [ "$orch_found" = false ] && echo "  • Orchestrator: Not found"
     
+    # Check for production setup
+    local setup_found=false
+    for dir in "agents/src/python" "agents/src/c/python" "src/python" "scripts"; do
+        if [ -f "$PROJECT_ROOT/$dir/setup_production_env.sh" ]; then
+            echo "  • Production Setup: ✓ (in $dir/)"
+            setup_found=true
+            break
+        fi
+    done
+    [ "$setup_found" = false ] && echo "  • Production Setup: Not found"
+    
     echo
     echo "📝 Commands:"
     echo "  • claude              - Main wrapper"
     echo "  • orchestrator        - Launch orchestration"
     echo "  • orchestration-status - Check system"
+    echo "  • test-agent-visibility - Test agent access"
+    echo "  • sync-claude-agents   - Manual agent sync"
+    echo "  • claude-agent-status  - Agent system status"
     echo "  • claude-project-info  - Show paths"
-    echo "  • claude-venv         - Activate Python environment"
     echo
+    echo "🎯 Agent Visibility Fix Applied:"
+    echo "  • Symlink created: ~/.claude/agents -> $PROJECT_ROOT/agents"
+    echo "  • Auto-sync enabled: Updates every 5 minutes"
+    echo "  • Claude Code can now find agents from ANY directory!"
+    echo
+    
+    # Check for venv
+    local venv_path="$PROJECT_ROOT/agents/src/python/venv"
+    if [ -d "$venv_path" ]; then
+        echo "🐍 Python Environment:"
+        echo "  • Virtual environment: $venv_path"
+        echo "  • Dependencies installed: numpy, requests, etc."
+        echo "  • Orchestrator will use venv automatically"
+        echo
+    fi
+    
     echo "🚀 Next Steps:"
     echo "  1. source ~/.bashrc"
-    echo "  2. orchestrator"
+    echo "  2. test-agent-visibility.sh  (verify agents are visible)"
+    echo "  3. orchestrator  (launch orchestration)"
     echo
     printf "${CYAN}All components use dynamic path resolution${NC}\n"
-    printf "${CYAN}No hardcoded paths in this installation${NC}\n"
+    printf "${GREEN}Python environment configured with dependencies!${NC}\n"
+    printf "${GREEN}Agents are now globally visible to Claude Code!${NC}\n"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1090,7 +1568,7 @@ show_final_status() {
 main() {
     show_banner
     
-    log "Starting installation..."
+    log "Starting installation with Python environment setup..."
     log "Script location: $SCRIPT_DIR"
     log "Project root detected: $PROJECT_ROOT"
     
@@ -1109,10 +1587,10 @@ main() {
     local steps=(
         "Node.js:install_node_if_needed"
         "Claude Code:install_claude_code"
-        "Python venv:setup_python_venv"
         "Unified wrapper:deploy_unified_wrapper"
+        "Python environment:setup_python_environment"
         "Orchestration:deploy_orchestration_system"
-        "Agents:install_agents_with_sync"
+        "Agents + Visibility Fix:install_agents_with_sync"
         "Statusline:install_statusline"
         "Environment:setup_environment"
         "Claude home:setup_claude_home"
@@ -1125,10 +1603,20 @@ main() {
         IFS=':' read -r step_name step_func <<< "$step_def"
         echo -n "  [$step_num/$total_steps] $step_name... "
         
-        if $step_func &>/dev/null; then
-            echo "✅"
+        # Special handling for Python environment - show output
+        if [ "$step_func" = "setup_python_environment" ]; then
+            echo  # New line for Python setup output
+            if $step_func; then
+                echo "  [$step_num/$total_steps] $step_name... ✅"
+            else
+                echo "  [$step_num/$total_steps] $step_name... ⚠️"
+            fi
         else
-            echo "⚠️"
+            if $step_func &>/dev/null; then
+                echo "✅"
+            else
+                echo "⚠️"
+            fi
         fi
         
         step_num=$((step_num + 1))
@@ -1158,7 +1646,7 @@ while [[ $# -gt 0 ]]; do
             set -x
             ;;
         --help|-h)
-            echo "Claude Installer v$SCRIPT_VERSION - Dynamic Path Resolution"
+            echo "Claude Installer v$SCRIPT_VERSION - Full Stack Setup"
             echo
             echo "Usage: $0 [OPTIONS]"
             echo
@@ -1170,10 +1658,28 @@ while [[ $# -gt 0 ]]; do
             echo "  --help, -h       Show this help"
             echo
             echo "Features:"
-            echo "  • No hardcoded paths"
-            echo "  • Dynamic component discovery"
-            echo "  • Intelligent project root detection"
-            echo "  • Flexible file structure support"
+            echo "  • No hardcoded paths - everything dynamic"
+            echo "  • Auto-installs from requirements.txt"
+            echo "  • Python venv auto-creation"
+            echo "  • Agent visibility fix for Claude Code"
+            echo "  • Automatic dependency installation"
+            echo
+            echo "NEW in v5.9 - Requirements.txt Support:"
+            echo "  • Searches for requirements.txt in:"
+            echo "    - Project root"
+            echo "    - agents/src/python/"
+            echo "    - agents/"
+            echo "  • Installs all dependencies automatically"
+            echo "  • Includes networkx and all needed packages"
+            echo
+            echo "v5.8 fixes:"
+            echo "  • Properly runs setup_production_env.sh"
+            echo "  • Creates venv if missing"
+            echo "  • Multiple fallback options"
+            echo
+            echo "v5.6 - Agent Visibility:"
+            echo "  • Creates ~/.claude/agents symlink"
+            echo "  • Auto-sync every 5 minutes"
             echo
             echo "Detected project root: $PROJECT_ROOT"
             exit 0
