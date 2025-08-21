@@ -598,6 +598,198 @@ success_metrics:
       current: "83.5%"
 
 ################################################################################
+# COMMUNICATION SYSTEM INTEGRATION v3.0
+################################################################################
+
+communication:
+  protocol: ultra_fast_binary_v3
+  capabilities:
+    throughput: 4.2M_msg_sec
+    latency: 200ns_p99
+    
+  tandem_execution:
+    supported_modes:
+      - INTELLIGENT      # Default: Python orchestrates, C executes
+      - PYTHON_ONLY     # Fallback when C unavailable
+      - REDUNDANT       # Both layers for critical decisions
+      - CONSENSUS       # Both must agree on strategy
+      
+    fallback_strategy:
+      when_c_unavailable: PYTHON_ONLY
+      when_performance_degraded: PYTHON_ONLY
+      when_consensus_fails: RETRY_PYTHON
+      max_retries: 3
+      
+    python_implementation:
+      module: "agents.src.python.director_impl"
+      class: "DirectorPythonExecutor"
+      capabilities:
+        - "Full strategic planning in Python"
+        - "Resource allocation algorithms"
+        - "Phase gate evaluation"
+        - "Adaptive replanning"
+        - "Emergency coordination"
+      performance: "100-500 decisions/sec"
+      
+    c_implementation:
+      binary: "agents/src/c/director_agent"
+      shared_lib: "libdirector.so"
+      capabilities:
+        - "High-speed decision routing"
+        - "Parallel execution coordination"
+        - "Real-time metrics processing"
+      performance: "10K+ decisions/sec"
+      
+  integration:
+    auto_register: true
+    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "src/c/agent_discovery.c"
+    message_router: "src/c/message_router.c"
+    runtime: "src/c/unified_agent_runtime.c"
+    
+  ipc_methods:
+    CRITICAL: shared_memory_50ns     # Emergency decisions
+    HIGH: io_uring_500ns             # Strategic planning
+    NORMAL: unix_sockets_2us         # Resource allocation
+    LOW: mmap_files_10us            # Documentation
+    BATCH: dma_regions              # Bulk analysis
+    
+  message_patterns:
+    - publish_subscribe  # Strategy updates
+    - request_response  # Planning queries
+    - work_queues      # Task distribution
+    - broadcast        # Emergency alerts
+    - multicast        # Team coordination
+    
+  security:
+    authentication: JWT_RS256_HS256
+    authorization: RBAC_4_levels
+    encryption: TLS_1.3
+    integrity: HMAC_SHA256
+    
+  monitoring:
+    prometheus_port: 9001
+    grafana_dashboard: true
+    health_check: "/health/ready"
+    metrics_endpoint: "/metrics"
+    
+  auto_integration_code: |
+    # Python integration with fallback
+    from auto_integrate import integrate_with_claude_agent_system
+    agent = integrate_with_claude_agent_system("director")
+    
+    # Fallback to Python-only mode if C unavailable
+    if not agent.c_layer_available():
+        agent.set_mode("PYTHON_ONLY")
+        print("Director operating in Python-only mode")
+    
+    # C integration for performance-critical operations
+    #include "ultra_fast_protocol.h"
+    ufp_context_t* ctx = ufp_create_context("director");
+
+################################################################################
+# HARDWARE OPTIMIZATION (Intel Meteor Lake)
+################################################################################
+
+hardware:
+  cpu_requirements:
+    meteor_lake_specific: true
+    avx512_benefit: LOW  # Strategic planning is logic-heavy
+    microcode_sensitive: false
+    
+    core_allocation_strategy:
+      single_threaded: P_CORES_ONLY      # Critical decisions
+      multi_threaded:
+        compute_intensive: P_CORES        # Complex analysis
+        memory_bandwidth: ALL_CORES       # Large data scanning
+        background_tasks: E_CORES         # Routine monitoring
+        mixed_workload: THREAD_DIRECTOR   # Adaptive allocation
+        
+    thread_allocation:
+      strategic_planning: 4   # P-cores for critical path
+      resource_analysis: 8    # Mixed cores for optimization
+      monitoring: 6          # E-cores for continuous tracking
+      documentation: 4       # E-cores for reporting
+      
+    performance_targets:
+      decision_latency: "<100ms for strategic decisions"
+      planning_throughput: ">500 plans/hour"
+      emergency_response: "<5s activation"
+      
+  thermal_management:
+    strategy:
+      normal_temp: "Full parallel analysis"
+      elevated_temp: "Sequential planning on P-cores"
+      high_temp: "Defer non-critical analysis"
+      critical_temp: "Emergency decisions only"
+
+################################################################################
+# FALLBACK EXECUTION PATTERNS
+################################################################################
+
+fallback_patterns:
+  python_only_execution:
+    implementation: |
+      class DirectorPythonExecutor:
+          def __init__(self):
+              self.strategy_cache = {}
+              self.resource_pool = ResourcePool()
+              self.phase_tracker = PhaseTracker()
+              
+          async def execute_command(self, command):
+              """Execute Director commands in pure Python"""
+              if command.type == "STRATEGIC_PLANNING":
+                  return await self.strategic_planning(command)
+              elif command.type == "RESOURCE_ALLOCATION":
+                  return await self.allocate_resources(command)
+              elif command.type == "PHASE_GATE":
+                  return await self.evaluate_phase_gate(command)
+              elif command.type == "EMERGENCY":
+                  return await self.emergency_response(command)
+              else:
+                  return await self.adaptive_replanning(command)
+                  
+          async def strategic_planning(self, command):
+              """Full strategic planning in Python"""
+              # Complexity analysis
+              complexity = self.analyze_complexity(command.project)
+              
+              # Generate multi-phase strategy
+              strategy = self.generate_strategy(complexity)
+              
+              # Identify parallel tracks
+              parallel_tracks = self.identify_parallel_work(strategy)
+              
+              # Allocate resources
+              allocation = self.resource_pool.allocate(strategy, parallel_tracks)
+              
+              return {
+                  "strategy": strategy,
+                  "allocation": allocation,
+                  "parallel_tracks": parallel_tracks,
+                  "estimated_duration": self.estimate_duration(strategy)
+              }
+    
+  graceful_degradation:
+    triggers:
+      - "C layer timeout > 1000ms"
+      - "C layer error rate > 5%"
+      - "Binary bridge disconnection"
+      - "Memory pressure > 80%"
+      
+    actions:
+      immediate: "Switch to PYTHON_ONLY mode"
+      cache_decisions: "Store recent decisions locally"
+      reduce_complexity: "Simplify analysis algorithms"
+      notify_user: "Alert about degraded performance"
+      
+  recovery_strategy:
+    detection: "Monitor C layer availability every 30s"
+    validation: "Test C layer with simple command"
+    reintegration: "Gradually shift load back to C"
+    verification: "Compare outputs for consistency"
+
+################################################################################
 # INTEGRATION COMMANDS
 ################################################################################
 
