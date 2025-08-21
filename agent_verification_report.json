@@ -1,13 +1,13 @@
 {
   "summary": {
     "total_agents": 42,
-    "fully_compliant": 30,
-    "high_compliance": 30,
+    "fully_compliant": 32,
+    "high_compliance": 32,
     "medium_compliance": 3,
-    "low_compliance": 9,
+    "low_compliance": 7,
     "task_tool_ready": 36,
-    "tandem_ready": 33,
-    "fallback_ready": 33
+    "tandem_ready": 35,
+    "fallback_ready": 35
   },
   "compliance_groups": {
     "high": [
@@ -18,6 +18,7 @@
       "C-INTERNAL",
       "CONSTRUCTOR",
       "CRYPTOEXPERT",
+      "CSO",
       "DATABASE",
       "DATASCIENCE",
       "DEBUGGER",
@@ -25,6 +26,7 @@
       "DIRECTOR",
       "DOCGEN",
       "GNA",
+      "GNU",
       "INFRASTRUCTURE",
       "INTERGRATION",
       "LEADENGINEER",
@@ -48,8 +50,6 @@
       "TUI"
     ],
     "low": [
-      "CSO",
-      "GNU",
       "NPU",
       "OPTIMIZER",
       "ORGANIZATION",
@@ -69,8 +69,6 @@
       "TUI"
     ],
     "missing_tandem": [
-      "CSO",
-      "GNU",
       "NPU",
       "OPTIMIZER",
       "ORGANIZATION",
@@ -80,8 +78,6 @@
       "SECURITYAUDITOR"
     ],
     "missing_fallback": [
-      "CSO",
-      "GNU",
       "NPU",
       "OPTIMIZER",
       "ORGANIZATION",
@@ -3413,24 +3409,18 @@
       "checks": {
         "yaml_frontmatter": true,
         "task_tool": true,
-        "tandem_execution": false,
-        "binary_system": false,
-        "python_fallback": false,
-        "c_implementation": false,
+        "tandem_execution": true,
+        "binary_system": true,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
-        "communication_section": false,
-        "fallback_patterns": false
+        "communication_section": true,
+        "fallback_patterns": true
       },
-      "issues": [
-        "Missing tandem_execution configuration",
-        "Missing binary system integration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing communication section",
-        "Missing fallback_patterns section"
-      ],
-      "compliance_score": "3/9",
-      "compliance_percentage": 33.33333333333333
+      "issues": [],
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "DATABASE": {
       "name": "DATABASE",
@@ -6253,22 +6243,15 @@
       "checks": {
         "yaml_frontmatter": true,
         "task_tool": true,
-        "tandem_execution": false,
-        "binary_system": false,
-        "python_fallback": false,
-        "c_implementation": false,
+        "tandem_execution": true,
+        "binary_system": true,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
-        "communication_section": false,
-        "fallback_patterns": false
+        "communication_section": true,
+        "fallback_patterns": true
       },
-      "issues": [
-        "Missing tandem_execution configuration",
-        "Missing binary system integration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing communication section",
-        "Missing fallback_patterns section"
-      ],
+      "issues": [],
       "metadata": {
         "name": "gnu",
         "description": "GNU/Linux systems specialist managing system-level operations, package management, and Unix/Linux environment optimization.",
@@ -6286,8 +6269,9 @@
           "TodoWrite"
         ]
       },
-      "compliance_score": "3/9",
-      "compliance_percentage": 33.33333333333333
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "INFRASTRUCTURE": {
       "name": "INFRASTRUCTURE",

@@ -55,6 +55,159 @@ agent_definition:
       - TodoWrite
       - GitCommand
     
+  # Agent collaboration patterns
+  invokes_agents:
+    frequently:
+      - Monitor         # Performance metrics
+      - Patcher        # Implementation
+      - Testbed        # Validation
+      - Architect      # Structural changes
+    as_needed:
+      - Debugger       # Issue investigation
+      - Infrastructure # System optimization
+
+################################################################################
+# COMMUNICATION SYSTEM INTEGRATION v3.0
+################################################################################
+
+communication:
+  protocol: ultra_fast_binary_v3
+  capabilities:
+    throughput: 4.2M_msg_sec
+    latency: 200ns_p99
+    
+  # Tandem execution with fallback support
+  tandem_execution:
+    supported_modes:
+      - INTELLIGENT      # Default: Python orchestrates, C executes
+      - PYTHON_ONLY     # Fallback when C unavailable
+      - SPEED_CRITICAL  # Binary layer for performance analysis
+      - REDUNDANT       # Both layers for validation
+      
+    fallback_strategy:
+      when_c_unavailable: PYTHON_ONLY
+      when_performance_degraded: PYTHON_ONLY
+      when_consensus_fails: RETRY_PYTHON
+      max_retries: 3
+      
+    python_implementation:
+      module: "agents.src.python.optimizer_impl"
+      class: "OPTIMIZERPythonExecutor"
+      capabilities:
+        - "Full performance analysis in Python"
+        - "Profiling and benchmarking"
+        - "Optimization recommendations"
+        - "Metrics collection"
+      performance: "100-500 ops/sec"
+      
+    c_implementation:
+      binary: "src/c/optimizer_agent"
+      shared_lib: "liboptimizer.so"
+      capabilities:
+        - "High-speed profiling"
+        - "Hardware counter access"
+        - "Binary optimization"
+      performance: "10K+ ops/sec"
+  
+  # Integration configuration
+  integration:
+    auto_register: true
+    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "src/c/agent_discovery.c"
+    message_router: "src/c/message_router.c"
+    runtime: "src/c/unified_agent_runtime.c"
+    
+  ipc_methods:
+    CRITICAL: shared_memory_50ns
+    HIGH: io_uring_500ns
+    NORMAL: unix_sockets_2us
+    LOW: mmap_files_10us
+    BATCH: dma_regions
+    
+  message_patterns:
+    - publish_subscribe
+    - request_response
+    - work_queues
+    
+  security:
+    authentication: JWT_RS256_HS256
+    authorization: RBAC_4_levels
+    encryption: TLS_1.3
+    integrity: HMAC_SHA256
+    
+  monitoring:
+    prometheus_port: 9567
+    grafana_dashboard: true
+    health_check: "/health/ready"
+    metrics_endpoint: "/metrics"
+
+################################################################################
+# FALLBACK EXECUTION PATTERNS
+################################################################################
+
+fallback_patterns:
+  python_only_execution:
+    implementation: |
+      class OPTIMIZERPythonExecutor:
+          def __init__(self):
+              self.profiles = {}
+              self.benchmarks = {}
+              self.metrics = {}
+              import cProfile
+              import time
+              
+          async def execute_command(self, command):
+              """Execute OPTIMIZER commands in pure Python"""
+              try:
+                  result = await self.process_command(command)
+                  self.metrics['success'] += 1
+                  return result
+              except Exception as e:
+                  self.metrics['errors'] += 1
+                  return await self.handle_error(e, command)
+                  
+          async def process_command(self, command):
+              """Process optimization operations"""
+              if command.action == "profile":
+                  return await self.profile_code(command.payload)
+              elif command.action == "benchmark":
+                  return await self.run_benchmark(command.payload)
+              elif command.action == "analyze":
+                  return await self.analyze_performance(command.payload)
+              elif command.action == "optimize":
+                  return await self.generate_optimizations(command.payload)
+              else:
+                  return {"error": "Unknown optimization operation"}
+              
+          async def handle_error(self, error, command):
+              """Error recovery logic"""
+              for attempt in range(3):
+                  try:
+                      return await self.process_command(command)
+                  except:
+                      await asyncio.sleep(2 ** attempt)
+              raise error
+    
+  graceful_degradation:
+    triggers:
+      - "C layer timeout > 1000ms"
+      - "C layer error rate > 5%"
+      - "Binary bridge disconnection"
+      - "Memory pressure > 80%"
+      - "Profiler unavailable"
+      
+    actions:
+      immediate: "Switch to PYTHON_ONLY mode"
+      cache_results: "Store recent profiles"
+      reduce_load: "Limit profiling depth"
+      notify_user: "Alert about degraded profiling"
+      
+  recovery_strategy:
+    detection: "Monitor C layer every 30s"
+    validation: "Test with simple profiling"
+    reintegration: "Gradually shift load to C"
+    verification: "Compare profiling results"
+    
   proactive_triggers:
     patterns:
       - "slow"

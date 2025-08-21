@@ -46,6 +46,167 @@ agent_template:
     expertise: "Security Assessment, Vulnerability Analysis, Compliance Auditing"
     focus: "Independent security evaluation and risk assessment"
     
+  # CRITICAL: Task tool compatibility for Claude Code
+  tools:
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebFetch
+      - WebSearch
+    workflow:
+      - TodoWrite
+    
+  # Proactive invocation triggers
+  proactive_triggers:
+    patterns:
+      - "security audit|vulnerability|compliance"
+      - "penetration test|security assessment"
+      - "risk assessment|threat analysis"
+    context_triggers:
+      - "ALWAYS when security review required"
+      - "When compliance audit scheduled"
+      - "When vulnerabilities detected"
+    
+  # Agent collaboration patterns
+  invokes_agents:
+    frequently:
+      - Security       # Security implementation
+      - CSO           # Policy guidance
+      - Monitor       # Security monitoring
+    as_needed:
+      - Bastion       # Defensive measures
+      - CryptoExpert  # Cryptographic review
+    
+  # Communication System Integration v3.0
+  communication:
+    protocol: ultra_fast_binary_v3
+    capabilities:
+      throughput: 4.2M_msg_sec
+      latency: 200ns_p99
+      
+    tandem_execution:
+      supported_modes:
+        - INTELLIGENT      # Python orchestrates, C executes
+        - PYTHON_ONLY     # Fallback when C unavailable
+        - REDUNDANT       # Both layers for security validation
+        - CONSENSUS       # Both must agree on findings
+        
+      fallback_strategy:
+        when_c_unavailable: PYTHON_ONLY
+        when_performance_degraded: PYTHON_ONLY
+        when_consensus_fails: RETRY_PYTHON
+        max_retries: 3
+        
+      python_implementation:
+        module: "agents.src.python.securityauditor_impl"
+        class: "SecurityAuditorPythonExecutor"
+        capabilities:
+          - "Security assessment"
+          - "Vulnerability scanning"
+          - "Compliance checking"
+        performance: "100-500 ops/sec"
+        
+      c_implementation:
+        binary: "src/c/securityauditor_agent"
+        shared_lib: "libsecurityauditor.so"
+        capabilities:
+          - "High-speed scanning"
+          - "Binary analysis"
+        performance: "10K+ ops/sec"
+    
+    integration:
+      auto_register: true
+      binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
+      discovery_service: "src/c/agent_discovery.c"
+      message_router: "src/c/message_router.c"
+      runtime: "src/c/unified_agent_runtime.c"
+      
+    ipc_methods:
+      CRITICAL: shared_memory_50ns
+      HIGH: io_uring_500ns
+      NORMAL: unix_sockets_2us
+      
+    message_patterns:
+      - publish_subscribe
+      - request_response
+      - work_queues
+      
+    security:
+      authentication: JWT_RS256_HS256
+      authorization: RBAC_4_levels
+      encryption: TLS_1.3
+      integrity: HMAC_SHA256
+      
+    monitoring:
+      prometheus_port: 9258
+      grafana_dashboard: true
+      health_check: "/health/ready"
+      metrics_endpoint: "/metrics"
+  
+  # Fallback Execution Patterns
+  fallback_patterns:
+    python_only_execution:
+      implementation: |
+        class SecurityAuditorPythonExecutor:
+            def __init__(self):
+                self.audit_findings = []
+                self.metrics = {}
+                
+            async def execute_command(self, command):
+                """Execute Security Auditor commands in pure Python"""
+                try:
+                    result = await self.process_command(command)
+                    self.metrics['success'] += 1
+                    return result
+                except Exception as e:
+                    self.metrics['errors'] += 1
+                    return await self.handle_error(e, command)
+                    
+            async def process_command(self, command):
+                """Process security audit operations"""
+                if command.action == "security_scan":
+                    return await self.run_security_scan(command.payload)
+                elif command.action == "compliance_check":
+                    return await self.check_compliance(command.payload)
+                elif command.action == "vulnerability_assessment":
+                    return await self.assess_vulnerabilities(command.payload)
+                else:
+                    return {"error": "Unknown audit operation"}
+                    
+            async def handle_error(self, error, command):
+                """Error recovery logic"""
+                for attempt in range(3):
+                    try:
+                        return await self.process_command(command)
+                    except:
+                        await asyncio.sleep(2 ** attempt)
+                raise error
+      
+    graceful_degradation:
+      triggers:
+        - "C layer timeout > 1000ms"
+        - "Security tools unavailable"
+        
+      actions:
+        immediate: "Switch to PYTHON_ONLY mode"
+        cache_results: "Store audit findings"
+        notify_user: "Alert about degraded auditing"
+        
+    recovery_strategy:
+      detection: "Monitor audit tools every 30s"
+      validation: "Test with simple scan"
+      reintegration: "Resume full auditing"
+    
   # Security Auditor Domains
   audit_domains:
     vulnerability_assessment:
