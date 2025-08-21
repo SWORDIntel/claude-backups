@@ -1,13 +1,13 @@
 {
   "summary": {
     "total_agents": 42,
-    "fully_compliant": 29,
-    "high_compliance": 29,
+    "fully_compliant": 30,
+    "high_compliance": 30,
     "medium_compliance": 3,
-    "low_compliance": 10,
-    "task_tool_ready": 35,
-    "tandem_ready": 32,
-    "fallback_ready": 32
+    "low_compliance": 9,
+    "task_tool_ready": 36,
+    "tandem_ready": 33,
+    "fallback_ready": 33
   },
   "compliance_groups": {
     "high": [
@@ -17,6 +17,7 @@
       "BASTION",
       "C-INTERNAL",
       "CONSTRUCTOR",
+      "CRYPTOEXPERT",
       "DATABASE",
       "DATASCIENCE",
       "DEBUGGER",
@@ -47,7 +48,6 @@
       "TUI"
     ],
     "low": [
-      "CRYPTOEXPERT",
       "CSO",
       "GNU",
       "NPU",
@@ -61,7 +61,6 @@
   },
   "specific_issues": {
     "missing_task_tool": [
-      "CRYPTOEXPERT",
       "NPU",
       "ORGANIZATION",
       "PYGUI",
@@ -70,7 +69,6 @@
       "TUI"
     ],
     "missing_tandem": [
-      "CRYPTOEXPERT",
       "CSO",
       "GNU",
       "NPU",
@@ -82,7 +80,6 @@
       "SECURITYAUDITOR"
     ],
     "missing_fallback": [
-      "CRYPTOEXPERT",
       "CSO",
       "GNU",
       "NPU",
@@ -3395,25 +3392,20 @@
       "file": "/home/ubuntu/Documents/Claude/agents/CRYPTOEXPERT.md",
       "checks": {
         "yaml_frontmatter": true,
-        "task_tool": false,
-        "tandem_execution": false,
+        "task_tool": true,
+        "tandem_execution": true,
         "binary_system": true,
-        "python_fallback": false,
-        "c_implementation": false,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
         "communication_section": true,
-        "fallback_patterns": false
+        "fallback_patterns": true
       },
-      "issues": [
-        "Task tool not found in tools list",
-        "Missing tandem_execution configuration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing fallback_patterns section"
-      ],
+      "issues": [],
       "metadata": null,
-      "compliance_score": "4/9",
-      "compliance_percentage": 44.44444444444444
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "CSO": {
       "name": "CSO",
@@ -13843,6 +13835,23 @@
         "Missing communication section",
         "Missing fallback_patterns section"
       ],
+      "metadata": {
+        "name": "QUANTUMGUARD",
+        "description": "Elite quantum-resistant cryptography specialist. Implements NIST PQC standards (Kyber, Dilithium, SPHINCS+), zero-trust architectures, advanced steganography, and lattice-based cryptosystems. CRITICAL for quantum-proof security, covert channels, and post-quantum migration strategies.",
+        "color": null,
+        "tools": [
+          "Task",
+          "Read",
+          "Write",
+          "Edit",
+          "Bash",
+          "Grep",
+          "Glob",
+          "LS",
+          "WebFetch",
+          "TodoWrite"
+        ]
+      },
       "compliance_score": "3/9",
       "compliance_percentage": 33.33333333333333
     },
