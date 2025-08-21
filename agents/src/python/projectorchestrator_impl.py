@@ -731,6 +731,10 @@ class PROJECTORCHESTRATORPythonExecutor:
     """Main executor for PROJECTORCHESTRATOR agent in Python mode"""
     
     def __init__(self):
+        self.agent_name = "PROJECTORCHESTRATOR"
+        self.version = "9.0.0"
+        self.start_time = datetime.now()
+        
         self.repo_analyzer = RepositoryAnalyzer()
         self.capability_matcher = AgentCapabilityMatcher()
         self.quality_evaluator = QualityGateEvaluator()
@@ -1676,6 +1680,46 @@ class PROJECTORCHESTRATORPythonExecutor:
             'handoff_success_rate': f"{handoff_success_rate:.1f}%",
             'quality_gate_failures': self.metrics['quality_gate_failures'],
             'average_completion_time': f"{self.metrics['average_completion_time']} minutes"
+        }
+    
+    def get_capabilities(self) -> List[str]:
+        """Get PROJECTORCHESTRATOR capabilities"""
+        return [
+            "coordinate_agents",
+            "manage_workflows",
+            "track_progress",
+            "evaluate_quality",
+            "handle_handoffs",
+            "analyze_repository",
+            "match_capabilities",
+            "manage_dependencies",
+            "monitor_execution",
+            "handle_failures",
+            "optimize_workflows",
+            "orchestrate_projects",
+            "coordinate_teams",
+            "manage_resources",
+            "tactical_coordination"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get PROJECTORCHESTRATOR status"""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "healthy",
+            "uptime_seconds": uptime,
+            "metrics": self.get_metrics(),
+            "active_workflows": len(self.active_workflows),
+            "capabilities": len(self.get_capabilities()),
+            "components": {
+                "repo_analyzer": "operational",
+                "capability_matcher": "operational",
+                "quality_evaluator": "operational",
+                "progress_tracker": "operational"
+            }
         }
 
 

@@ -589,6 +589,10 @@ class PYGUIPythonExecutor:
     """
     
     def __init__(self):
+        self.agent_name = "PYGUI"
+        self.version = "9.0.0"
+        self.start_time = datetime.now()
+        
         self.tkinter_builder = TkinterBuilder() if HAS_TKINTER else None
         self.pyqt_builder = PyQtBuilder() if HAS_PYQT else None
         self.streamlit_builder = StreamlitBuilder() if HAS_STREAMLIT else None
@@ -602,7 +606,27 @@ class PYGUIPythonExecutor:
             'errors': 0
         }
         
-    async def execute_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_command(self, command_str: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Execute PYGUI commands - v9.0 signature"""
+        try:
+            # Handle both v8.x dict input and v9.0 string input for compatibility
+            if isinstance(command_str, dict):
+                command = command_str
+            else:
+                # Parse v9.0 format
+                if context:
+                    command = context
+                    command['action'] = command_str
+                else:
+                    command = {'action': command_str}
+            
+            result = await self.process_command(command)
+            return result
+        except Exception as e:
+            self.metrics['errors'] += 1
+            return {"error": str(e), "traceback": traceback.format_exc()}
+            
+    async def process_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
         """Execute PYGUI commands"""
         try:
             result = await self.process_command(command)
@@ -1043,6 +1067,51 @@ def apply_{theme}_theme():
             
         except Exception as e:
             return {"error": f"Validation failed: {str(e)}"}
+    
+    def get_capabilities(self) -> List[str]:
+        """Get PYGUI capabilities"""
+        return [
+            "create_tkinter_app",
+            "create_pyqt_app", 
+            "create_streamlit_app",
+            "design_ui",
+            "generate_code",
+            "bind_events",
+            "export_ui",
+            "load_template",
+            "validate_ui",
+            "visual_design",
+            "component_creation",
+            "layout_management",
+            "event_handling",
+            "ui_templates",
+            "cross_platform_gui"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get PYGUI status"""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "healthy",
+            "uptime_seconds": uptime,
+            "metrics": self.metrics.copy(),
+            "applications": len(self.applications),
+            "capabilities": len(self.get_capabilities()),
+            "supported_frameworks": {
+                "tkinter": HAS_TKINTER,
+                "pyqt": HAS_PYQT,
+                "streamlit": HAS_STREAMLIT
+            },
+            "components": {
+                "tkinter_builder": "operational" if HAS_TKINTER else "unavailable",
+                "pyqt_builder": "operational" if HAS_PYQT else "unavailable",
+                "streamlit_builder": "operational" if HAS_STREAMLIT else "unavailable",
+                "ui_designer": "operational"
+            }
+        }
 
 # Export main class
 __all__ = ['PYGUIPythonExecutor']

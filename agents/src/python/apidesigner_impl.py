@@ -436,6 +436,10 @@ class APIDESIGNERPythonExecutor:
     """Main executor for APIDESIGNER agent in Python mode"""
     
     def __init__(self):
+        self.agent_name = "APIDESIGNER"
+        self.version = "9.0.0"
+        self.start_time = datetime.now()
+        
         self.openapi_gen = OpenAPIGenerator()
         self.graphql_gen = GraphQLSchemaGenerator()
         self.contract_tester = APIContractTester()
@@ -1194,6 +1198,46 @@ class {api_name}Client:
             'contracts_created': self.metrics['contracts_created'],
             'mocks_generated': self.metrics['mocks_generated'],
             'validation_success_rate': f"{self.metrics['validation_success_rate']:.1f}%"
+        }
+    
+    def get_capabilities(self) -> List[str]:
+        """Get APIDESIGNER capabilities"""
+        return [
+            "design_openapi_spec",
+            "design_graphql_schema",
+            "test_api_contracts",
+            "generate_mock_services",
+            "create_rest_endpoints",
+            "implement_authentication",
+            "design_webhooks",
+            "implement_rate_limiting",
+            "api_versioning",
+            "specification_validation",
+            "contract_testing",
+            "mock_generation",
+            "endpoint_design",
+            "schema_design",
+            "security_integration"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get APIDESIGNER status"""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "healthy",
+            "uptime_seconds": uptime,
+            "metrics": self.get_metrics(),
+            "specifications": len(self.specifications),
+            "capabilities": len(self.get_capabilities()),
+            "components": {
+                "openapi_generator": "operational",
+                "graphql_generator": "operational",
+                "contract_tester": "operational",
+                "mock_generator": "operational"
+            }
         }
 
 

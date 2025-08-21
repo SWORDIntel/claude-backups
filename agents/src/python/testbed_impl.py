@@ -738,6 +738,10 @@ class TESTBEDPythonExecutor:
     """
     
     def __init__(self):
+        self.agent_name = "TESTBED"
+        self.version = "9.0.0"
+        self.start_time = datetime.now()
+        
         self.test_generator = TestGenerator()
         self.test_runner = TestRunner()
         self.coverage_analyzer = CoverageAnalyzer()
@@ -753,9 +757,20 @@ class TESTBEDPythonExecutor:
             'errors': 0
         }
         
-    async def execute_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute TESTBED commands"""
+    async def execute_command(self, command_str: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Execute TESTBED commands - v9.0 signature"""
         try:
+            # Handle both v8.x dict input and v9.0 string input for compatibility
+            if isinstance(command_str, dict):
+                command = command_str
+            else:
+                # Parse v9.0 format
+                if context:
+                    command = context
+                    command['action'] = command_str
+                else:
+                    command = {'action': command_str}
+            
             result = await self.process_command(command)
             return result
         except Exception as e:
@@ -1218,6 +1233,54 @@ def test_api_integration():
             
         except Exception as e:
             return {"error": f"Failed to generate report: {str(e)}"}
+    
+    def get_capabilities(self) -> List[str]:
+        """Get agent capabilities"""
+        return [
+            "generate_tests",
+            "run_tests", 
+            "run_coverage",
+            "run_mutation",
+            "create_suite",
+            "run_property_tests",
+            "run_performance_tests",
+            "generate_mocks",
+            "validate_tests",
+            "generate_fixtures",
+            "run_integration_tests",
+            "generate_test_report",
+            "pytest_support",
+            "unittest_support",
+            "coverage_analysis",
+            "mutation_testing",
+            "property_based_testing",
+            "performance_testing",
+            "mock_generation",
+            "test_validation",
+            "fixture_generation",
+            "integration_testing"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get agent status"""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "healthy",
+            "uptime_seconds": uptime,
+            "metrics": self.metrics.copy(),
+            "test_suites": len(self.test_suites),
+            "available_frameworks": {
+                "pytest": HAS_PYTEST,
+                "unittest": HAS_UNITTEST,
+                "coverage": HAS_COVERAGE,
+                "hypothesis": HAS_HYPOTHESIS,
+                "mutmut": HAS_MUTMUT
+            },
+            "capabilities": len(self.get_capabilities())
+        }
 
 # Export main class
 __all__ = ['TESTBEDPythonExecutor']

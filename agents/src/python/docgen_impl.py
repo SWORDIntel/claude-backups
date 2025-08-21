@@ -422,6 +422,10 @@ class DOCGENPythonExecutor:
     """Main executor for DOCGEN agent in Python mode"""
     
     def __init__(self):
+        self.agent_name = "DOCGEN"
+        self.version = "9.0.0"
+        self.start_time = datetime.now()
+        
         self.military_gen = MilitaryDocumentGenerator()
         self.api_gen = APIDocumentationGenerator()
         self.validator = DocumentationValidator()
@@ -818,6 +822,45 @@ python -c "import {project_name.lower()}; print('Success!')"
             'api_coverage': f"{self.metrics['api_coverage']:.1f}%",
             'example_success_rate': f"{self.metrics['example_success_rate']:.1f}%",
             'average_reading_ease': f"{self.metrics['average_reading_ease']:.1f}"
+        }
+    
+    def get_capabilities(self) -> List[str]:
+        """Get DOCGEN capabilities"""
+        return [
+            "generate_military_dossier",
+            "generate_api_documentation",
+            "validate_documentation",
+            "generate_architecture_docs",
+            "markdown_generation",
+            "html_generation", 
+            "pdf_export",
+            "code_analysis",
+            "coverage_analysis",
+            "readability_analysis",
+            "template_management",
+            "classification_handling",
+            "automated_examples",
+            "cross_references",
+            "documentation_validation"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get DOCGEN status"""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "healthy",
+            "uptime_seconds": uptime,
+            "metrics": self.get_metrics(),
+            "cache_size": len(self.cache),
+            "capabilities": len(self.get_capabilities()),
+            "components": {
+                "military_generator": "operational",
+                "api_generator": "operational",
+                "validator": "operational"
+            }
         }
 
 

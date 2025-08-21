@@ -816,6 +816,10 @@ class DirectorPythonExecutor:
     """Main executor for DIRECTOR agent in Python mode"""
     
     def __init__(self):
+        self.agent_name = "DIRECTOR"
+        self.version = "9.0.0"
+        self.start_time = datetime.now()
+        
         self.complexity_analyzer = ComplexityAnalyzer()
         self.resource_allocator = ResourceAllocator()
         self.phase_evaluator = PhaseGateEvaluator()
@@ -1863,6 +1867,52 @@ class DirectorPythonExecutor:
             'success_rate': f"{self.metrics['success_rate']:.1%}",
             'average_utilization': f"{self.metrics['average_utilization']:.1%}",
             'on_time_delivery_rate': f"{self.metrics['on_time_delivery_rate']:.1%}"
+        }
+    
+    def get_capabilities(self) -> List[str]:
+        """Get DIRECTOR capabilities"""
+        return [
+            "strategic_planning",
+            "resource_allocation", 
+            "phase_management",
+            "emergency_coordination",
+            "parallel_execution",
+            "risk_assessment",
+            "success_prediction",
+            "strategy_documentation",
+            "agent_team_coordination",
+            "complexity_analysis",
+            "project_optimization",
+            "executive_oversight",
+            "multi_agent_orchestration",
+            "strategic_decision_making",
+            "resource_optimization",
+            "timeline_management",
+            "quality_assurance",
+            "stakeholder_management",
+            "performance_monitoring",
+            "strategic_communications"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get DIRECTOR status"""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "healthy",
+            "uptime_seconds": uptime,
+            "metrics": self.get_metrics(),
+            "active_plans": len(self.active_plans),
+            "emergency_incidents": len(self.emergency_incidents),
+            "capabilities": len(self.get_capabilities()),
+            "resource_allocation": {
+                "complexity_analyzer": "operational",
+                "resource_allocator": "operational", 
+                "phase_evaluator": "operational",
+                "emergency_coordinator": "operational"
+            }
         }
 
 

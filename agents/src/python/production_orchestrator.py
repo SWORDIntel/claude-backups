@@ -374,6 +374,8 @@ class ProductionOrchestrator:
                 return await self._invoke_security_python(step)
             elif agent_name == "database":
                 return await self._invoke_database_python(step)
+            elif agent_name == "optimizer":
+                return await self._invoke_optimizer_python(step)
             else:
                 # Fallback to mock for agents without Python implementations
                 return await self._mock_agent_execution(step, agent_info)

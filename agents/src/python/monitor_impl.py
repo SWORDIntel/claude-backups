@@ -553,6 +553,10 @@ class MONITORPythonExecutor:
     """
     
     def __init__(self):
+        self.agent_name = "MONITOR"
+        self.version = "9.0.0"
+        self.start_time = datetime.now()
+        
         self.metrics_collector = MetricsCollector()
         self.alert_manager = AlertManager()
         self.health_checker = HealthChecker()
@@ -895,6 +899,52 @@ class MONITORPythonExecutor:
             
         except Exception as e:
             return {"error": f"Failed to generate report: {str(e)}"}
+    
+    def get_capabilities(self) -> List[str]:
+        """Get MONITOR capabilities"""
+        return [
+            "collect_metrics",
+            "create_alerts", 
+            "health_checks",
+            "log_management",
+            "system_monitoring",
+            "performance_tracking",
+            "resource_monitoring",
+            "dashboard_creation",
+            "trend_analysis",
+            "prometheus_integration",
+            "grafana_support",
+            "alert_notifications",
+            "service_discovery",
+            "metric_aggregation",
+            "real_time_monitoring"
+        ]
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get MONITOR status"""
+        uptime = (datetime.now() - self.start_time).total_seconds()
+        
+        return {
+            "agent_name": self.agent_name,
+            "version": self.version,
+            "status": "healthy",
+            "uptime_seconds": uptime,
+            "metrics": self.metrics.copy(),
+            "active_dashboards": len(self.dashboards),
+            "capabilities": len(self.get_capabilities()),
+            "components": {
+                "metrics_collector": "operational",
+                "alert_manager": "operational",
+                "health_checker": "operational", 
+                "log_manager": "operational",
+                "system_monitor": "operational"
+            },
+            "integrations": {
+                "prometheus": HAS_PROMETHEUS,
+                "psutil": HAS_PSUTIL,
+                "requests": HAS_REQUESTS
+            }
+        }
 
 # Export main class
 __all__ = ['MONITORPythonExecutor']
