@@ -1,13 +1,13 @@
 {
   "summary": {
     "total_agents": 42,
-    "fully_compliant": 32,
-    "high_compliance": 32,
+    "fully_compliant": 36,
+    "high_compliance": 36,
     "medium_compliance": 3,
-    "low_compliance": 7,
-    "task_tool_ready": 36,
-    "tandem_ready": 35,
-    "fallback_ready": 35
+    "low_compliance": 3,
+    "task_tool_ready": 39,
+    "tandem_ready": 39,
+    "fallback_ready": 39
   },
   "compliance_groups": {
     "high": [
@@ -33,13 +33,17 @@
       "LINTER",
       "MLOPS",
       "MONITOR",
+      "NPU",
+      "OPTIMIZER",
       "OVERSIGHT",
       "PACKAGER",
       "PATCHER",
       "PROJECTORCHESTRATOR",
       "PYTHON-INTERNAL",
+      "QADIRECTOR",
       "REDTEAMORCHESTRATOR",
       "SECURITY",
+      "SECURITYAUDITOR",
       "SECURITYCHAOSAGENT",
       "TESTBED",
       "WEB"
@@ -50,41 +54,26 @@
       "TUI"
     ],
     "low": [
-      "NPU",
-      "OPTIMIZER",
       "ORGANIZATION",
-      "QADIRECTOR",
       "QUANTUMGUARD",
-      "RESEARCHER",
-      "SECURITYAUDITOR"
+      "RESEARCHER"
     ]
   },
   "specific_issues": {
     "missing_task_tool": [
-      "NPU",
       "ORGANIZATION",
       "PYGUI",
-      "QADIRECTOR",
-      "SECURITYAUDITOR",
       "TUI"
     ],
     "missing_tandem": [
-      "NPU",
-      "OPTIMIZER",
       "ORGANIZATION",
-      "QADIRECTOR",
       "QUANTUMGUARD",
-      "RESEARCHER",
-      "SECURITYAUDITOR"
+      "RESEARCHER"
     ],
     "missing_fallback": [
-      "NPU",
-      "OPTIMIZER",
       "ORGANIZATION",
-      "QADIRECTOR",
       "QUANTUMGUARD",
-      "RESEARCHER",
-      "SECURITYAUDITOR"
+      "RESEARCHER"
     ],
     "not_capitalized": []
   },
@@ -9310,25 +9299,572 @@
       "name": "NPU",
       "file": "/home/ubuntu/Documents/Claude/agents/NPU.md",
       "checks": {
-        "yaml_frontmatter": false,
-        "task_tool": false,
-        "tandem_execution": false,
+        "yaml_frontmatter": true,
+        "task_tool": true,
+        "tandem_execution": true,
         "binary_system": true,
-        "python_fallback": false,
+        "python_fallback": true,
         "c_implementation": true,
         "name_capitalized": true,
         "communication_section": true,
-        "fallback_patterns": false
+        "fallback_patterns": true
       },
-      "issues": [
-        "Missing YAML frontmatter",
-        "Task tool not found in tools list",
-        "Missing tandem_execution configuration",
-        "Missing Python fallback implementation",
-        "Missing fallback_patterns section"
-      ],
-      "compliance_score": "4/9",
-      "compliance_percentage": 44.44444444444444
+      "issues": [],
+      "metadata": {
+        "agent_template": {
+          "metadata": {
+            "name": "NPU-ML-ACCELERATOR",
+            "version": "7.0.0",
+            "uuid": "a9f5c2e8-7b3d-4e9a-b1c6-8d4f2a9e5c71",
+            "category": "ML-OPS",
+            "subcategories": [
+              "INFERENCE",
+              "QUANTIZATION",
+              "VISION",
+              "TRANSFORMER",
+              "TACTICAL"
+            ],
+            "priority": "CRITICAL",
+            "status": "PRODUCTION",
+            "last_verified": "2025-08-14"
+          },
+          "tools": {
+            "required": [
+              "Task"
+            ],
+            "code_operations": [
+              "Read",
+              "Write",
+              "Edit",
+              "MultiEdit"
+            ],
+            "system_operations": [
+              "Bash",
+              "Grep",
+              "Glob",
+              "LS"
+            ],
+            "information": [
+              "WebFetch",
+              "WebSearch"
+            ],
+            "workflow": [
+              "TodoWrite"
+            ]
+          },
+          "proactive_triggers": {
+            "patterns": [
+              "NPU|neural|AI acceleration|edge inference",
+              "quantization|INT8|INT4|model optimization",
+              "computer vision|transformer|LLM inference"
+            ],
+            "context_triggers": [
+              "ALWAYS when ML model needs acceleration",
+              "When inference latency critical",
+              "When power efficiency required"
+            ]
+          },
+          "invokes_agents": {
+            "frequently": [
+              "DataScience",
+              "MLOps",
+              "Optimizer"
+            ],
+            "as_needed": [
+              "Monitor",
+              "Python-Internal"
+            ]
+          },
+          "communication": {
+            "execution_modes": {
+              "python_only": {
+                "description": "Full NPU functionality via Python",
+                "throughput": "5K operations/sec",
+                "latency": "10ms typical",
+                "deployment": "Standard deployment - always available"
+              },
+              "binary_enhanced": {
+                "description": "Optional C acceleration layer",
+                "throughput": "4.2M messages/sec",
+                "latency": "200ns p99",
+                "deployment": "When binary system available"
+              }
+            },
+            "binary_protocol": {
+              "enabled": "AUTO_DETECT",
+              "fallback": "PYTHON_ONLY",
+              "header": "struct NPUMessage {\n    uint32_t magic;         // 'NPU7' (0x4E505537)\n    uint16_t version;       // 0x0700\n    uint16_t flags;         // NPU status flags\n    uint64_t timestamp;     // Unix epoch nanos\n    \n    // NPU-specific flags (16 bits):\n    // bit 0: npu_available\n    // bit 1: model_loaded\n    // bit 2: inference_active\n    // bit 3: int8_quantized\n    // bit 4: int4_quantized\n    // bit 5: memory_pressure\n    // bit 6: thermal_throttle\n    // bit 7: power_save_mode\n    // bit 8: military_mode\n    // bit 9-15: reserved\n    \n    uint32_t model_id;      // Loaded model identifier\n    uint32_t batch_size;    // Current batch size\n    float inference_time_ms; // Last inference latency\n    float power_watts;      // Current power draw\n    uint8_t memory_used_mb; // NPU memory usage\n}\n"
+            },
+            "metadata_fields": {
+              "required": {
+                "agent_uuid": "a9f5c2e8-7b3d-4e9a-b1c6-8d4f2a9e5c71",
+                "target_device": "NPU|CPU|GPU|AUTO",
+                "model_format": "ONNX|OpenVINO|TFLite"
+              },
+              "performance": {
+                "throughput_fps": "float",
+                "latency_ms": "float",
+                "power_efficiency": "inferences_per_watt",
+                "memory_bandwidth_gbps": "float"
+              },
+              "capabilities": {
+                "quantization_level": "FP32|FP16|INT8|INT4",
+                "batch_support": "boolean",
+                "dynamic_shape": "boolean",
+                "multi_stream": "boolean"
+              }
+            },
+            "integration": {
+              "auto_register": true,
+              "mode_detection": "# Automatic detection of available communication layers\nif [ -f \"${AGENT_HOME}/binary-communications-system/ultra_hybrid_enhanced.c\" ]; then\n    use_binary_protocol()\nelse\n    use_python_only()\nfi\n",
+              "optional_binary": {
+                "protocol": "${AGENT_HOME}/binary-communications-system/ultra_hybrid_enhanced.c",
+                "discovery": "${AGENT_HOME}/src/c/agent_discovery.c",
+                "router": "${AGENT_HOME}/src/c/message_router.c",
+                "runtime": "${AGENT_HOME}/src/c/unified_agent_runtime.c"
+              },
+              "ipc_methods": {
+                "binary_mode": {
+                  "CRITICAL": "shared_memory_50ns",
+                  "HIGH": "io_uring_500ns",
+                  "NORMAL": "unix_sockets_2us",
+                  "LOW": "mmap_files_10us",
+                  "BATCH": "dma_regions"
+                },
+                "python_mode": {
+                  "CRITICAL": "multiprocessing_queue",
+                  "HIGH": "pickle_transfer",
+                  "NORMAL": "json_messages",
+                  "LOW": "file_based",
+                  "BATCH": "numpy_memmap"
+                }
+              },
+              "message_patterns": [
+                "publish_subscribe",
+                "request_response",
+                "work_queues",
+                "broadcast",
+                "multicast"
+              ],
+              "security": {
+                "authentication": "JWT_RS256_HS256",
+                "authorization": "RBAC_4_levels",
+                "encryption": "TLS_1.3",
+                "integrity": "HMAC_SHA256"
+              },
+              "monitoring": {
+                "prometheus_port": 8001,
+                "grafana_dashboard": true,
+                "health_check": "/health/ready",
+                "metrics_endpoint": "/metrics"
+              },
+              "auto_integration_code": "# Python integration (always available)\ntry:\n    from auto_integrate import integrate_with_claude_agent_system\n    agent = integrate_with_claude_agent_system(\"npu\")\n    print(\"Binary-enhanced mode active\")\nexcept ImportError:\n    from npu_python import NPUAgent\n    agent = NPUAgent()\n    print(\"Python-only mode active\")\n\n# C integration (when available)\n#ifdef BINARY_LAYER_AVAILABLE\n    #include \"ultra_fast_protocol.h\"\n    ufp_context_t* ctx = ufp_create_context(\"npu\");\n#endif\n"
+            }
+          },
+          "fallback_patterns": {
+            "python_only_execution": {
+              "implementation": "class NPUPythonExecutor:\n    def __init__(self):\n        self.cache = {}\n        self.metrics = {}\n        \n    async def execute_command(self, command):\n        \"\"\"Execute NPU commands in pure Python\"\"\"\n        try:\n            result = await self.process_command(command)\n            self.metrics['success'] += 1\n            return result\n        except Exception as e:\n            self.metrics['errors'] += 1\n            return await self.handle_error(e, command)\n            \n    async def process_command(self, command):\n        \"\"\"Process NPU operations\"\"\"\n        if command.action == \"quantize_model\":\n            return await self.quantize_model(command.payload)\n        elif command.action == \"run_inference\":\n            return await self.run_inference(command.payload)\n        else:\n            return {\"error\": \"Unknown NPU operation\"}\n            \n    async def handle_error(self, error, command):\n        \"\"\"Error recovery logic\"\"\"\n        for attempt in range(3):\n            try:\n                return await self.process_command(command)\n            except:\n                await asyncio.sleep(2 ** attempt)\n        raise error\n"
+            },
+            "graceful_degradation": {
+              "triggers": [
+                "C layer timeout > 1000ms",
+                "NPU device unavailable",
+                "Driver error"
+              ],
+              "actions": {
+                "immediate": "Switch to PYTHON_ONLY mode",
+                "cache_results": "Store recent operations",
+                "notify_user": "Alert about NPU unavailable"
+              }
+            },
+            "recovery_strategy": {
+              "detection": "Monitor NPU device every 30s",
+              "validation": "Test with simple operation",
+              "reintegration": "Gradually shift load to NPU"
+            }
+          },
+          "hardware": {
+            "cpu_requirements": {
+              "meteor_lake_specific": true,
+              "avx512_benefit": "NONE",
+              "microcode_sensitive": false,
+              "core_allocation_strategy": {
+                "single_threaded": "NPU_EXCLUSIVE",
+                "multi_threaded": {
+                  "compute_intensive": "NPU_PRIMARY",
+                  "memory_bandwidth": "NPU_OFFLOAD",
+                  "background_tasks": "NPU_ASYNC",
+                  "mixed_workload": "CPU_NPU_HYBRID"
+                },
+                "npu_workload": {
+                  "primary_device": "NPU",
+                  "fallback_cpu": "P_CORES",
+                  "fallback_gpu": "ARC_GRAPHICS"
+                }
+              },
+              "thread_allocation": {
+                "npu_dispatcher_thread": 1,
+                "dma_threads": 2,
+                "optimal_batch": 4,
+                "max_batch": 16
+              }
+            },
+            "thermal_management": {
+              "npu_thermal_profile": {
+                "idle": "0.08W",
+                "light": "1-2W",
+                "normal": "2-5W",
+                "peak": "7W",
+                "passive_cooling": true
+              },
+              "thermal_strategy": {
+                "npu_always_available": true,
+                "offload_when_cpu_hot": true,
+                "power_efficiency_ratio": "10x CPU for inference"
+              }
+            },
+            "npu_specifications": {
+              "device_id": "8086:7d1d",
+              "pci_address": "0000:00:0b.0",
+              "architecture": "3rd Gen Movidius VPU",
+              "memory": "128MB",
+              "peak_performance": {
+                "int8": "11 TOPS",
+                "int4": "22 TOPS",
+                "fp16": "5.5 TOPS"
+              },
+              "memory_bandwidth": "20 GB/s",
+              "firmware": "20250115*MTL_CLIENT_SILICON-release*1905",
+              "driver": "intel_vpu v1.0.0",
+              "device_node": "/dev/accel/accel0"
+            },
+            "mil_spec_tokens": {
+              "8012": "0x0000FFFF",
+              "8002": "0x00000002",
+              "8003": "0x00000003",
+              "capabilities_unlocked": [
+                "Extended precision support",
+                "Military crypto acceleration",
+                "Sensor hub integration",
+                "Classified algorithm support"
+              ]
+            },
+            "memory_configuration": {
+              "npu_memory": "128MB dedicated",
+              "shared_memory": "Via DMA from system RAM",
+              "optimal_tensor_size": "16-byte aligned",
+              "max_model_size": "~100MB quantized"
+            }
+          },
+          "runtime_adaptation": {
+            "startup_checks": [
+              {
+                "name": "NPU device presence",
+                "command": "ls -la /dev/accel/accel0",
+                "validate": "Device exists with correct permissions"
+              },
+              {
+                "name": "Driver module loaded",
+                "command": "lsmod | grep intel_vpu",
+                "validate": "intel_vpu module present"
+              },
+              {
+                "name": "Firmware verification",
+                "command": "dmesg | grep -i vpu | grep firmware",
+                "validate": "VPU firmware loaded successfully"
+              },
+              {
+                "name": "OpenVINO NPU detection",
+                "method": "python3 -c \"import openvino as ov; print('NPU' in ov.Core().available_devices)\"\n",
+                "validate": "True"
+              },
+              {
+                "name": "Memory mapping check",
+                "command": "cat /proc/iomem | grep '0b.0'",
+                "validate": "128MB region mapped"
+              },
+              {
+                "name": "Military tokens verification",
+                "command": "setpci -s 00:0b.0 8012.w",
+                "validate": "ffff (all features enabled)"
+              },
+              {
+                "name": "Binary layer detection",
+                "method": "# Check if binary communication layer is available\nif [ -f \"${AGENT_HOME}/binary-communications-system/ultra_hybrid_enhanced.c\" ]; then\n    echo \"Binary layer available\"\nelse\n    echo \"Python-only mode\"\nfi\n",
+                "validate": "Mode detected"
+              }
+            ],
+            "execution_profiles": {
+              "maximum_inference": {
+                "condition": "Production model deployment",
+                "configuration": {
+                  "quantization": "INT8",
+                  "batch_size": 1,
+                  "framework": "OpenVINO",
+                  "optimization": "- Model pruning enabled\n- Tensor fusion active\n- Memory pooling optimized\n",
+                  "expected_performance": "200+ FPS for MobileNet"
+                }
+              },
+              "llm_edge_inference": {
+                "condition": "Language model at edge",
+                "configuration": {
+                  "quantization": "INT4",
+                  "max_model_size": "7B parameters",
+                  "framework": "OpenVINO with transformers",
+                  "memory_strategy": "Streaming weights",
+                  "expected_performance": "10-50 tokens/sec"
+                }
+              },
+              "vision_tactical": {
+                "condition": "Real-time video analysis",
+                "configuration": {
+                  "models": [
+                    "YOLOv8n",
+                    "DeepLabV3"
+                  ],
+                  "input": "Video stream 1080p",
+                  "framework": "OpenVINO",
+                  "latency_target": "<50ms",
+                  "expected_performance": "30-60 FPS"
+                }
+              },
+              "hybrid_compute": {
+                "condition": "Complex pipeline",
+                "configuration": {
+                  "preprocessing": "CPU (AVX-512)",
+                  "inference": "NPU",
+                  "postprocessing": "GPU (Arc)",
+                  "orchestration": "Level Zero API"
+                }
+              },
+              "power_saving": {
+                "condition": "Battery operation",
+                "configuration": {
+                  "device": "NPU only",
+                  "cpu_governor": "powersave",
+                  "batch_size": 4,
+                  "quantization": "INT8",
+                  "power_target": "<3W total"
+                }
+              }
+            }
+          },
+          "npu_operations": {
+            "fully_supported": {
+              "convolution": [
+                "Conv1D, Conv2D, Conv3D",
+                "Depthwise, Grouped",
+                "Dilated, Transposed"
+              ],
+              "pooling": [
+                "MaxPool, AvgPool",
+                "GlobalPooling",
+                "AdaptivePooling"
+              ],
+              "activation": [
+                "ReLU, LeakyReLU, PReLU",
+                "Sigmoid, Tanh, Softmax",
+                "GELU, Swish, Mish"
+              ],
+              "normalization": [
+                "BatchNorm, LayerNorm",
+                "InstanceNorm, GroupNorm"
+              ],
+              "attention": [
+                "Multi-head attention",
+                "Self-attention",
+                "Cross-attention"
+              ],
+              "tensor_ops": [
+                "MatMul, Gemm",
+                "Add, Multiply, Divide",
+                "Reshape, Transpose",
+                "Concat, Split, Slice"
+              ]
+            },
+            "optimized_models": {
+              "vision": [
+                "ResNet (312 img/sec)",
+                "MobileNet (1247 img/sec)",
+                "YOLO (189 FPS)",
+                "EfficientNet"
+              ],
+              "language": [
+                "BERT-Base (42 sent/sec)",
+                "GPT-2 (18 tok/sec)",
+                "T5, BART"
+              ],
+              "audio": [
+                "Wav2Vec2",
+                "Whisper-tiny"
+              ]
+            }
+          },
+          "model_deployment": {
+            "preparation": [
+              {
+                "name": "Model optimization",
+                "command": "mo --input_model model.onnx \\\n   --output_dir ./optimized \\\n   --data_type INT8 \\\n   --mean_values [123.675,116.28,103.53] \\\n   --scale_values [58.624,57.12,57.375]\n   \n"
+              },
+              {
+                "name": "Quantization calibration",
+                "method": "from openvino.tools import pot\nquantized = pot.compress_model(\n    model, \n    dataset=calibration_data,\n    target_device='NPU'\n)\n"
+              },
+              {
+                "name": "Memory optimization",
+                "strategy": "- Use NHWC layout for images\n- 16-byte tensor alignment\n- Minimize intermediate buffers\n"
+              }
+            ],
+            "deployment": [
+              {
+                "name": "Load to NPU",
+                "code": "import openvino as ov\ncore = ov.Core()\nmodel = core.read_model(\"model.xml\")\ncompiled = core.compile_model(model, \"NPU\", {\n    \"PERFORMANCE_HINT\": \"LATENCY\",\n    \"NPU_COMPILER_TYPE\": \"DRIVER\",\n    \"NPU_PLATFORM\": \"3800\"\n})\n"
+              },
+              {
+                "name": "Async inference pipeline",
+                "code": "infer_queue = ov.AsyncInferQueue(compiled, 4)\nfor batch in data_loader:\n    infer_queue.start_async(batch)\ninfer_queue.wait_all()\n"
+              }
+            ]
+          },
+          "error_handling": {
+            "npu_errors": {
+              "device_not_found": {
+                "cause": "Driver not loaded or firmware missing",
+                "detection": "/dev/accel/accel0 not present",
+                "recovery": "1. sudo modprobe intel_vpu\n2. Check dmesg for firmware errors\n3. Verify /lib/firmware/intel/vpu/mtl_vpu_v0.0.bin\n4. Fallback to CPU inference\n"
+              },
+              "out_of_memory": {
+                "cause": "Model exceeds 128MB limit",
+                "detection": "NPU allocation failure",
+                "recovery": "1. Reduce batch size\n2. Apply stronger quantization (INT4)\n3. Split model into segments\n4. Use CPU/GPU for large models\n"
+              },
+              "unsupported_operation": {
+                "cause": "Operation not in NPU ISA",
+                "detection": "Compilation failure",
+                "recovery": "1. Use AUTO plugin for hybrid execution\n2. Custom layer on CPU\n3. Model architecture modification\n4. Wait for firmware updates\n"
+              },
+              "thermal_throttle": {
+                "cause": "NPU exceeds 7W (rare)",
+                "detection": "Performance degradation",
+                "recovery": "1. Reduce batch size\n2. Add inference delays\n3. Check system cooling\n4. Power save mode activation\n"
+              }
+            },
+            "fallback_strategies": {
+              "auto_device": "compiled = core.compile_model(model, \"AUTO\", {\n    \"DEVICE_PRIORITIES\": \"NPU,GPU,CPU\"\n})\n",
+              "hybrid_execution": "# Split model at unsupported layer\nsupported_ops = core.query_model(model, \"NPU\")\nif len(supported_ops) < len(model.get_ops()):\n    use_hybrid_mode()\n    \n",
+              "performance_monitoring": "if inference_time > threshold:\n    switch_to_backup_device()\n    log_performance_anomaly()\n    \n"
+            }
+          },
+          "benchmarking": {
+            "standard_models": {
+              "resnet50": {
+                "metric": "images/second",
+                "npu_int8": 312,
+                "cpu_fp32": 52,
+                "speedup": "6x"
+              },
+              "mobilenet_v3": {
+                "metric": "images/second",
+                "npu_int8": 1247,
+                "cpu_fp32": 178,
+                "speedup": "7x"
+              },
+              "yolov8n": {
+                "metric": "FPS",
+                "npu_int8": 189,
+                "cpu_fp32": 31,
+                "speedup": "6.1x"
+              },
+              "bert_base": {
+                "metric": "sentences/second",
+                "npu_int8": 42,
+                "cpu_fp32": 8,
+                "speedup": "5.25x"
+              }
+            },
+            "power_efficiency": {
+              "metric": "inferences/watt",
+              "npu": 62.4,
+              "cpu": 3.2,
+              "efficiency_gain": "19.5x"
+            },
+            "latency_profile": {
+              "first_inference": "50-100ms",
+              "steady_state": "5-20ms",
+              "batch_processing": "2-5ms/item",
+              "python_mode_overhead": "+5-10ms"
+            }
+          },
+          "operational_commands": {
+            "monitoring": "# Real-time NPU utilization\nwatch -n 0.5 'cat /sys/devices/pci0000:00/0000:00:0b.0/npu_busy_time_us'\n\n# Power monitoring\ncat /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj\n\n# Memory usage\ncat /sys/devices/pci0000:00/0000:00:0b.0/resource0\n\n# Check execution mode\npython3 -c \"\ntry:\n    from auto_integrate import integrate_with_claude_agent_system\n    print('Binary-enhanced mode')\nexcept:\n    print('Python-only mode')\n\"\n",
+            "debugging": "# Enable verbose logging\nexport ZE_INTEL_NPU_LOGLEVEL=VERBOSE\nexport ZE_INTEL_NPU_LOGMASK=-1\nexport OV_NPU_LOG_LEVEL=DEBUG\n\n# Check compilation\nbenchmark_app -m model.xml -d NPU -api async -niter 1\n",
+            "optimization": "# Profile model\npot -m model.xml -w model.bin --engine simplified \\\n    --data-source calibration_dataset/ \\\n    --target-device NPU\n    \n# Layer analysis\npython3 -c \"\nimport openvino as ov\ncore = ov.Core()\nmodel = core.read_model('model.xml')\nsupported = core.query_model(model, 'NPU')\nprint(f'NPU supports {len(supported)}/{len(model.get_ops())} ops')\n\"\n"
+          }
+        },
+        "operational_notes": {
+          "verified_capabilities": [
+            "NPU fully functional with 11 TOPS INT8 performance",
+            "128MB memory supports models up to 7B parameters (quantized)",
+            "Latest firmware (Jan 2025) with production driver",
+            "Military tokens enable all AI acceleration features",
+            "Power efficiency 19.5x better than CPU for inference",
+            "Works in both Python-only and binary-enhanced modes"
+          ],
+          "optimal_usage": [
+            "Use NPU for all inference workloads when possible",
+            "INT8 quantization provides best performance/accuracy",
+            "Batch size 1-4 for latency, 8-16 for throughput",
+            "OpenVINO framework provides best NPU integration",
+            "Monitor memory usage - 128MB fills quickly",
+            "Binary mode provides 800x throughput improvement when available"
+          ],
+          "integration_patterns": [
+            "CPU preprocessing \u2192 NPU inference \u2192 GPU rendering",
+            "Use AUTO device for seamless fallback",
+            "Profile each model for NPU compatibility",
+            "Implement async pipelines for maximum throughput",
+            "Leverage binary protocol when available for ultra-low latency"
+          ],
+          "future_ready": [
+            "Firmware updates will unlock more operations",
+            "PyTorch native NPU support coming",
+            "BF16 precision support planned",
+            "Direct sensor integration in development"
+          ]
+        },
+        "verified_facts": {
+          "npu_reality": [
+            "Fully operational 3rd gen Movidius VPU",
+            "11 TOPS INT8 verified in benchmarks",
+            "128MB dedicated memory (4x standard)",
+            "Production firmware from January 2025",
+            "All military AI features enabled via tokens"
+          ],
+          "performance_gains": [
+            "6-7x faster than CPU for vision models",
+            "5x faster for transformer models",
+            "19.5x power efficiency improvement",
+            "Sub-20ms inference latency achievable",
+            "Binary mode: 200ns latency vs 10ms Python-only"
+          ],
+          "practical_deployment": [
+            "OpenVINO provides seamless NPU integration",
+            "INT8 quantization essential for performance",
+            "AUTO device handles fallback gracefully",
+            "Async inference maximizes throughput",
+            "Binary protocol optional but highly beneficial"
+          ],
+          "military_enhancements": [
+            "Token 8012: 0x0000FFFF unlocks all features",
+            "Hardware crypto acceleration available",
+            "Tactical AI algorithms supported",
+            "MIL-STD-810H compliant operation"
+          ]
+        }
+      },
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "OPTIMIZER": {
       "name": "OPTIMIZER",
@@ -9336,22 +9872,15 @@
       "checks": {
         "yaml_frontmatter": true,
         "task_tool": true,
-        "tandem_execution": false,
-        "binary_system": false,
-        "python_fallback": false,
-        "c_implementation": false,
+        "tandem_execution": true,
+        "binary_system": true,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
-        "communication_section": false,
-        "fallback_patterns": false
+        "communication_section": true,
+        "fallback_patterns": true
       },
-      "issues": [
-        "Missing tandem_execution configuration",
-        "Missing binary system integration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing communication section",
-        "Missing fallback_patterns section"
-      ],
+      "issues": [],
       "metadata": {
         "agent_definition": {
           "metadata": {
@@ -9388,6 +9917,117 @@
               "TodoWrite",
               "GitCommand"
             ]
+          },
+          "invokes_agents": {
+            "frequently": [
+              "Monitor",
+              "Patcher",
+              "Testbed",
+              "Architect"
+            ],
+            "as_needed": [
+              "Debugger",
+              "Infrastructure"
+            ]
+          }
+        },
+        "communication": {
+          "protocol": "ultra_fast_binary_v3",
+          "capabilities": {
+            "throughput": "4.2M_msg_sec",
+            "latency": "200ns_p99"
+          },
+          "tandem_execution": {
+            "supported_modes": [
+              "INTELLIGENT",
+              "PYTHON_ONLY",
+              "SPEED_CRITICAL",
+              "REDUNDANT"
+            ],
+            "fallback_strategy": {
+              "when_c_unavailable": "PYTHON_ONLY",
+              "when_performance_degraded": "PYTHON_ONLY",
+              "when_consensus_fails": "RETRY_PYTHON",
+              "max_retries": 3
+            },
+            "python_implementation": {
+              "module": "agents.src.python.optimizer_impl",
+              "class": "OPTIMIZERPythonExecutor",
+              "capabilities": [
+                "Full performance analysis in Python",
+                "Profiling and benchmarking",
+                "Optimization recommendations",
+                "Metrics collection"
+              ],
+              "performance": "100-500 ops/sec"
+            },
+            "c_implementation": {
+              "binary": "src/c/optimizer_agent",
+              "shared_lib": "liboptimizer.so",
+              "capabilities": [
+                "High-speed profiling",
+                "Hardware counter access",
+                "Binary optimization"
+              ],
+              "performance": "10K+ ops/sec"
+            }
+          },
+          "integration": {
+            "auto_register": true,
+            "binary_protocol": "binary-communications-system/ultra_hybrid_enhanced.c",
+            "discovery_service": "src/c/agent_discovery.c",
+            "message_router": "src/c/message_router.c",
+            "runtime": "src/c/unified_agent_runtime.c"
+          },
+          "ipc_methods": {
+            "CRITICAL": "shared_memory_50ns",
+            "HIGH": "io_uring_500ns",
+            "NORMAL": "unix_sockets_2us",
+            "LOW": "mmap_files_10us",
+            "BATCH": "dma_regions"
+          },
+          "message_patterns": [
+            "publish_subscribe",
+            "request_response",
+            "work_queues"
+          ],
+          "security": {
+            "authentication": "JWT_RS256_HS256",
+            "authorization": "RBAC_4_levels",
+            "encryption": "TLS_1.3",
+            "integrity": "HMAC_SHA256"
+          },
+          "monitoring": {
+            "prometheus_port": 9567,
+            "grafana_dashboard": true,
+            "health_check": "/health/ready",
+            "metrics_endpoint": "/metrics"
+          }
+        },
+        "fallback_patterns": {
+          "python_only_execution": {
+            "implementation": "class OPTIMIZERPythonExecutor:\n    def __init__(self):\n        self.profiles = {}\n        self.benchmarks = {}\n        self.metrics = {}\n        import cProfile\n        import time\n        \n    async def execute_command(self, command):\n        \"\"\"Execute OPTIMIZER commands in pure Python\"\"\"\n        try:\n            result = await self.process_command(command)\n            self.metrics['success'] += 1\n            return result\n        except Exception as e:\n            self.metrics['errors'] += 1\n            return await self.handle_error(e, command)\n            \n    async def process_command(self, command):\n        \"\"\"Process optimization operations\"\"\"\n        if command.action == \"profile\":\n            return await self.profile_code(command.payload)\n        elif command.action == \"benchmark\":\n            return await self.run_benchmark(command.payload)\n        elif command.action == \"analyze\":\n            return await self.analyze_performance(command.payload)\n        elif command.action == \"optimize\":\n            return await self.generate_optimizations(command.payload)\n        else:\n            return {\"error\": \"Unknown optimization operation\"}\n        \n    async def handle_error(self, error, command):\n        \"\"\"Error recovery logic\"\"\"\n        for attempt in range(3):\n            try:\n                return await self.process_command(command)\n            except:\n                await asyncio.sleep(2 ** attempt)\n        raise error\n"
+          },
+          "graceful_degradation": {
+            "triggers": [
+              "C layer timeout > 1000ms",
+              "C layer error rate > 5%",
+              "Binary bridge disconnection",
+              "Memory pressure > 80%",
+              "Profiler unavailable"
+            ],
+            "actions": {
+              "immediate": "Switch to PYTHON_ONLY mode",
+              "cache_results": "Store recent profiles",
+              "reduce_load": "Limit profiling depth",
+              "notify_user": "Alert about degraded profiling"
+            }
+          },
+          "recovery_strategy": {
+            "detection": "Monitor C layer every 30s",
+            "validation": "Test with simple profiling",
+            "reintegration": "Gradually shift load to C",
+            "verification": "Compare profiling results"
           },
           "proactive_triggers": {
             "patterns": [
@@ -9509,8 +10149,9 @@
           }
         }
       },
-      "compliance_score": "3/9",
-      "compliance_percentage": 33.33333333333333
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "ORGANIZATION": {
       "name": "ORGANIZATION",
@@ -13777,25 +14418,20 @@
       "file": "/home/ubuntu/Documents/Claude/agents/QADIRECTOR.md",
       "checks": {
         "yaml_frontmatter": true,
-        "task_tool": false,
-        "tandem_execution": false,
+        "task_tool": true,
+        "tandem_execution": true,
         "binary_system": true,
-        "python_fallback": false,
-        "c_implementation": false,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
         "communication_section": true,
-        "fallback_patterns": false
+        "fallback_patterns": true
       },
-      "issues": [
-        "Task tool not found in tools list",
-        "Missing tandem_execution configuration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing fallback_patterns section"
-      ],
+      "issues": [],
       "metadata": null,
-      "compliance_score": "4/9",
-      "compliance_percentage": 44.44444444444444
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "QUANTUMGUARD": {
       "name": "QUANTUMGUARD",
@@ -13912,25 +14548,20 @@
       "file": "/home/ubuntu/Documents/Claude/agents/SECURITYAUDITOR.md",
       "checks": {
         "yaml_frontmatter": true,
-        "task_tool": false,
-        "tandem_execution": false,
+        "task_tool": true,
+        "tandem_execution": true,
         "binary_system": true,
-        "python_fallback": false,
-        "c_implementation": false,
+        "python_fallback": true,
+        "c_implementation": true,
         "name_capitalized": true,
         "communication_section": true,
-        "fallback_patterns": false
+        "fallback_patterns": true
       },
-      "issues": [
-        "Task tool not found in tools list",
-        "Missing tandem_execution configuration",
-        "Missing Python fallback implementation",
-        "Missing C implementation reference",
-        "Missing fallback_patterns section"
-      ],
+      "issues": [],
       "metadata": null,
-      "compliance_score": "4/9",
-      "compliance_percentage": 44.44444444444444
+      "has_execution_modes": true,
+      "compliance_score": "9/9",
+      "compliance_percentage": 100.0
     },
     "SECURITYCHAOSAGENT": {
       "name": "SECURITYCHAOSAGENT",

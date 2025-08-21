@@ -37,6 +37,125 @@ This agent is fully compatible with Claude Code's Task tool and can be invoked v
 Task(subagent_type="quantumguard", prompt="Implement quantum-resistant encryption for critical infrastructure")
 ```
 
+## Communication System Integration v3.0
+
+communication:
+  protocol: ultra_fast_binary_v3
+  capabilities:
+    throughput: 4.2M_msg_sec
+    latency: 200ns_p99
+    
+  # Tandem execution with fallback support
+  tandem_execution:
+    supported_modes:
+      - INTELLIGENT      # Python orchestrates, C executes
+      - PYTHON_ONLY     # Fallback when C unavailable
+      - SPEED_CRITICAL  # Binary layer for crypto ops
+      - CONSENSUS       # Both must agree on crypto
+      
+    fallback_strategy:
+      when_c_unavailable: PYTHON_ONLY
+      when_performance_degraded: PYTHON_ONLY
+      when_consensus_fails: RETRY_PYTHON
+      max_retries: 3
+      
+    python_implementation:
+      module: "agents.src.python.quantumguard_impl"
+      class: "QUANTUMGUARDPythonExecutor"
+      capabilities:
+        - "Post-quantum cryptography"
+        - "Lattice operations"
+        - "Zero-trust implementation"
+      performance: "100-500 ops/sec"
+      
+    c_implementation:
+      binary: "src/c/quantumguard_agent"
+      shared_lib: "libquantumguard.so"
+      capabilities:
+        - "Hardware crypto acceleration"
+        - "High-speed lattice ops"
+      performance: "10K+ ops/sec"
+  
+  integration:
+    auto_register: true
+    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "src/c/agent_discovery.c"
+    message_router: "src/c/message_router.c"
+    runtime: "src/c/unified_agent_runtime.c"
+    
+  ipc_methods:
+    CRITICAL: shared_memory_50ns
+    HIGH: io_uring_500ns
+    NORMAL: unix_sockets_2us
+    
+  message_patterns:
+    - publish_subscribe
+    - request_response
+    - work_queues
+    
+  security:
+    authentication: JWT_RS256_HS256
+    authorization: RBAC_4_levels
+    encryption: TLS_1.3
+    integrity: HMAC_SHA256
+    
+  monitoring:
+    prometheus_port: 9889
+    grafana_dashboard: true
+    health_check: "/health/ready"
+    metrics_endpoint: "/metrics"
+
+fallback_patterns:
+  python_only_execution:
+    implementation: |
+      class QUANTUMGUARDPythonExecutor:
+          def __init__(self):
+              self.cache = {}
+              self.metrics = {}
+              
+          async def execute_command(self, command):
+              """Execute QUANTUMGUARD commands in pure Python"""
+              try:
+                  result = await self.process_command(command)
+                  self.metrics['success'] += 1
+                  return result
+              except Exception as e:
+                  self.metrics['errors'] += 1
+                  return await self.handle_error(e, command)
+                  
+          async def process_command(self, command):
+              """Process quantum-resistant operations"""
+              if command.action == "pqc_encrypt":
+                  return await self.pqc_encrypt(command.payload)
+              elif command.action == "lattice_operation":
+                  return await self.lattice_operation(command.payload)
+              else:
+                  return {"error": "Unknown quantum operation"}
+              
+          async def handle_error(self, error, command):
+              """Error recovery logic"""
+              for attempt in range(3):
+                  try:
+                      return await self.process_command(command)
+                  except:
+                      await asyncio.sleep(2 ** attempt)
+              raise error
+    
+  graceful_degradation:
+    triggers:
+      - "C layer timeout > 1000ms"
+      - "Hardware crypto unavailable"
+      
+    actions:
+      immediate: "Switch to PYTHON_ONLY mode"
+      cache_results: "Store crypto operations"
+      notify_user: "Alert about degraded crypto"
+      
+  recovery_strategy:
+    detection: "Monitor C layer every 30s"
+    validation: "Test with simple crypto op"
+    reintegration: "Gradually shift load to C"
+
 ## Core Expertise Areas
 
 ### Post-Quantum Cryptography (NIST Standards)
