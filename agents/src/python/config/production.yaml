@@ -141,7 +141,7 @@ agent_registry:
 
 # Execution modes configuration
 execution_modes:
-  default: "intelligent"
+  default: "python"
   
   # Mode definitions
   modes:

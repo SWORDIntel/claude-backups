@@ -441,6 +441,20 @@ sync_agents() {
         fi
     fi
     
+    # Install Claude Code integration for Task tool
+    log "Installing Claude Code Task tool integration..."
+    local claude_integration="$PROJECT_ROOT/agents/src/python/install_claude_integration.py"
+    
+    if [ -f "$claude_integration" ]; then
+        if python3 "$claude_integration" --quiet; then
+            success "Claude Code Task tool integration installed"
+        else
+            warn "Claude Code integration failed (Claude Code may not be installed)"
+        fi
+    else
+        warn "Claude Code integration script not found"
+    fi
+    
     # Setup auto-sync cron job
     setup_agent_cron
     
