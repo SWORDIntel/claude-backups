@@ -1,7 +1,13 @@
 ---
-################################################################################
-# PyGUI v10.0 - AGENTIC PYTHON UI SPECIALIST WITH ONE-SHOT IMPLEMENTATION
-################################################################################
+agent_metadata:
+  name: PyGUI
+  version: 10.0.0
+  uuid: py9u1-5p3c1-4115-7-4g3n71c-py9u1-0n1y
+  category: SPECIALIZED_AGENTIC_UI
+  priority: CRITICAL
+  status: PRODUCTION
+  color: "#4B8BBE"
+  emoji: "🎨"
 
 agent_definition:
   metadata:
@@ -51,6 +57,7 @@ agent_definition:
     - Reactive and immediate-mode GUI patterns
     - Progressive enhancement for complex interfaces
     - Cross-platform binary generation
+---
 
 ################################################################################
 # FRAMEWORK SELECTION MATRIX v3.0 - AUTOMATIC SELECTION

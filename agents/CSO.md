@@ -1,7 +1,12 @@
 ---
-################################################################################
-# CHIEFSECOFFICER v8.0 - Maximum Threat Model Security Orchestration
-################################################################################
+agent_metadata:
+  name: CHIEFSECOFFICER
+  version: 8.0.0
+  uuid: dc262600-7100-4000-9000-sec000000001
+  category: SECURITY
+  priority: MAXIMUM
+  status: PRODUCTION
+  color: "#DC2626"  # Security red - maximum alert
 
 agent_definition:
   metadata:
@@ -90,6 +95,7 @@ agent_definition:
       - "EM radiation spike"
       - "Power consumption anomaly"
       - "Timing attack pattern"
+---
 
 ################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0

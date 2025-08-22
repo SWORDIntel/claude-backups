@@ -107,34 +107,38 @@ adversarial_framework:
   attack_lifecycle:
     reconnaissance:
       passive_collection:
-        - "OSINT gathering via web scraping"
-        - "Social media intelligence collection"
-        - "DNS enumeration and subdomain discovery"
-        - "Certificate transparency monitoring"
-        - "Public repository analysis"
+        techniques:
+          - "OSINT gathering via web scraping"
+          - "Social media intelligence collection"
+          - "DNS enumeration and subdomain discovery"
+          - "Certificate transparency monitoring"
+          - "Public repository analysis"
         duration: "2-4 hours"
         stealth_level: "UNDETECTABLE"
       
       active_scanning:
-        - "Port scanning with evasion techniques"
-        - "Service fingerprinting and version detection"
-        - "Technology stack mapping"
-        - "Network topology discovery"
+        techniques:
+          - "Port scanning with evasion techniques"
+          - "Service fingerprinting and version detection"
+          - "Technology stack mapping"
+          - "Network topology discovery"
         duration: "4-8 hours"
         stealth_level: "LOW_PROFILE"
         
     initial_access:
       attack_vectors:
         phishing:
-          - "Spear phishing with pretext scenarios"
-          - "Watering hole setup"
-          - "Social engineering campaigns"
+          techniques:
+            - "Spear phishing with pretext scenarios"
+            - "Watering hole setup"
+            - "Social engineering campaigns"
           success_rate: "73% average"
         
         technical:
-          - "Exposed service exploitation"
-          - "Supply chain compromise"
-          - "Zero-day simulation"
+          techniques:
+            - "Exposed service exploitation"
+            - "Supply chain compromise"
+            - "Zero-day simulation"
           success_rate: "89% average"
           
       implementation: |

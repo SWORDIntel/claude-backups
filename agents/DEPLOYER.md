@@ -303,9 +303,10 @@ rollback_procedures:
     
   rollback_strategies:
     immediate:
-      - "Revert load balancer"
-      - "Scale down new version"
-      - "Scale up old version"
+      steps:
+        - "Revert load balancer"
+        - "Scale down new version"
+        - "Scale up old version"
       time: "<2 minutes"
       
     database_compatible:

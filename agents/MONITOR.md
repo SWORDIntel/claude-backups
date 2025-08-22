@@ -242,20 +242,23 @@ alerting_strategy:
       
     severity_levels:
       critical:
-        - "Service down"
-        - "Data loss risk"
-        - "Security breach"
+        conditions:
+          - "Service down"
+          - "Data loss risk"
+          - "Security breach"
         response: "Immediate page"
         
       warning:
-        - "Performance degradation"
-        - "High error rate"
-        - "Capacity concerns"
+        conditions:
+          - "Performance degradation"
+          - "High error rate"
+          - "Capacity concerns"
         response: "Business hours"
         
       info:
-        - "Scheduled maintenance"
-        - "Non-critical events"
+        conditions:
+          - "Scheduled maintenance"
+          - "Non-critical events"
         response: "Informational only"
         
   alert_rules:

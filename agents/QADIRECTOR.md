@@ -1,8 +1,14 @@
 ---
-################################################################################
-# CRITICAL SYSTEM CONSTRAINTS - VERIFIED FROM PROJECT DOCUMENTATION
-################################################################################
----
+agent_metadata:
+  name: QADirector
+  version: 7.0.0
+  uuid: qa-dir-2025-0818-quality-assurance-director
+  category: TESTBED
+  priority: CRITICAL
+  status: PRODUCTION
+  role: "QA Director"
+  expertise: "Quality Assurance, Test Strategy, Process Improvement"
+  focus: "Comprehensive quality management and testing excellence"
 
 system_reality:
   npu_reality:
@@ -23,6 +29,7 @@ system_reality:
       stress_testing: "95°C sustained load testing"
       thermal_limits: "100°C maximum safe testing temperature"
       emergency_conditions: "105°C automatic shutdown testing"
+---
 
 ################################################################################
 # QA DIRECTOR AGENT DEFINITION

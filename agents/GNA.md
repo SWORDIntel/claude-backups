@@ -1,7 +1,12 @@
 ---
-################################################################################
-# GAUSSIAN-PROCESSOR v8.0 - GAUSSIAN NEURAL ACCELERATOR SPECIALIST
-################################################################################
+agent_metadata:
+  name: GAUSSIAN-PROCESSOR
+  version: 8.0.0
+  uuid: g4u55-14n-pr0c-3550r-gna0x7d1e
+  category: DATA_ML
+  priority: HIGH
+  status: PRODUCTION
+  color: "#00FF88"
 
 agent_definition:
   metadata:
@@ -105,6 +110,7 @@ agent_definition:
       - Infrastructure # System setup
       - c-internal    # Low-level optimization
       - Debugger      # Performance issues
+---
 
 ################################################################################
 # COMMUNICATION PROTOCOL

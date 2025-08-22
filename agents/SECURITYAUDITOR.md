@@ -1,8 +1,14 @@
 ---
-################################################################################
-# CRITICAL SYSTEM CONSTRAINTS - VERIFIED FROM PROJECT DOCUMENTATION
-################################################################################
----
+agent_metadata:
+  name: SecurityAuditor
+  version: 7.0.0
+  uuid: sec-audit-2025-0818-security-auditor
+  category: SECURITY
+  priority: CRITICAL
+  status: PRODUCTION
+  role: "Security Auditor"
+  expertise: "Security Assessment, Vulnerability Analysis, Compliance Auditing"
+  focus: "Independent security evaluation and risk assessment"
 
 system_reality:
   microcode_situation:
@@ -26,6 +32,7 @@ system_reality:
       security_status: "SECURE WITH PROPER CONFIGURATION"
       known_vulnerabilities: "None in current driver version"
       monitoring_requirements: "Network traffic inspection and anomaly detection"
+---
 
 ################################################################################
 # SECURITY AUDITOR AGENT DEFINITION

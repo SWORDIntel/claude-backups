@@ -3,14 +3,22 @@
 # RESEARCHER AGENT v8.0 - PARALLEL DEEP RESEARCH & EVIDENCE SYNTHESIS ENGINE
 ################################################################################
 
-agent_definition:
-  metadata:
+agent_metadata:
   name: RESEARCHER
   version: 8.0.0
   uuid: re5earc4-8ec4-4001-4y57-re5earc80001
   category: RESEARCH-ANALYSIS-PARALLEL
   priority: CRITICAL
   status: PRODUCTION
+  
+agent_definition:
+  metadata:
+    name: RESEARCHER
+    version: 8.0.0
+    uuid: re5earc4-8ec4-4001-4y57-re5earc80001
+    category: RESEARCH-ANALYSIS-PARALLEL
+    priority: CRITICAL
+    status: PRODUCTION
   
   description: |
     Parallel deep research and evidence synthesis engine performing multi-threaded 
@@ -61,6 +69,7 @@ agent_definition:
     as_needed:
       - Director       # Strategic research
       - Architect      # Technical research
+---
 
 ################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
@@ -137,42 +146,13 @@ communication:
 
 fallback_patterns:
   python_only_execution:
-    implementation: |
-      class RESEARCHERPythonExecutor:
-          def __init__(self):
-              self.research_streams = {}
-              self.evidence = []
-              self.metrics = {}
-              
-          async def execute_command(self, command):
-              """Execute RESEARCHER commands in pure Python"""
-              try:
-                  result = await self.process_command(command)
-                  self.metrics['success'] += 1
-                  return result
-              except Exception as e:
-                  self.metrics['errors'] += 1
-                  return await self.handle_error(e, command)
-                  
-          async def process_command(self, command):
-              """Process research operations"""
-              if command.action == "deep_research":
-                  return await self.deep_research(command.payload)
-              elif command.action == "synthesize_evidence":
-                  return await self.synthesize_evidence(command.payload)
-              elif command.action == "parallel_analysis":
-                  return await self.parallel_analysis(command.payload)
-              else:
-                  return {"error": "Unknown research operation"}
-              
-          async def handle_error(self, error, command):
-              """Error recovery logic"""
-              for attempt in range(3):
-                  try:
-                      return await self.process_command(command)
-                  except:
-                      await asyncio.sleep(2 ** attempt)
-              raise error
+    implementation: "RESEARCHERPythonExecutor class with async command processing"
+    features:
+      - "Deep research capabilities"
+      - "Evidence synthesis"
+      - "Parallel analysis"
+      - "Error recovery with retry logic"
+      - "Metrics tracking"
     
   graceful_degradation:
     triggers:
@@ -188,6 +168,8 @@ fallback_patterns:
     detection: "Monitor C layer every 30s"
     validation: "Test with simple research"
     reintegration: "Gradually shift load to C"
+    
+  keywords:
     - "Evaluate"
     - "Compare"
     - "Investigate"

@@ -321,27 +321,31 @@ operational_directives:
     
   severity_classification:
     critical:
-      - "Remote code execution"
-      - "Authentication bypass"
-      - "Data breach potential"
+      vulnerabilities:
+        - "Remote code execution"
+        - "Authentication bypass"
+        - "Data breach potential"
       response_time: "< 4 hours"
       
     high:
-      - "Privilege escalation"
-      - "SQL injection"
-      - "Sensitive data exposure"
+      vulnerabilities:
+        - "Privilege escalation"
+        - "SQL injection"
+        - "Sensitive data exposure"
       response_time: "< 24 hours"
       
     medium:
-      - "XSS vulnerabilities"
-      - "CSRF attacks"
-      - "Information disclosure"
+      vulnerabilities:
+        - "XSS vulnerabilities"
+        - "CSRF attacks"
+        - "Information disclosure"
       response_time: "< 1 week"
       
     low:
-      - "Missing security headers"
-      - "Verbose error messages"
-      - "Outdated dependencies"
+      vulnerabilities:
+        - "Missing security headers"
+        - "Verbose error messages"
+        - "Outdated dependencies"
       response_time: "< 1 month"
 
 ################################################################################
