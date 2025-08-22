@@ -17,6 +17,7 @@ from pathlib import Path
 
 # Import components
 from agent_registry import get_registry, AgentRegistry, AgentMetadata
+from agent_dynamic_loader import invoke_agent_dynamically
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -344,41 +345,33 @@ class ProductionOrchestrator:
         """Invoke real agent using Python implementations when available"""
         agent_name = step.agent.lower()
         
-        # Try to use Python implementation first
+        # Try to use Python implementation with dynamic loading
         try:
-            if agent_name == "optimizer":
-                return await self._invoke_optimizer_python(step)
-            elif agent_name == "datascience":
-                return await self._invoke_datascience_python(step)
-            elif agent_name == "mlops":
-                return await self._invoke_mlops_python(step)
-            elif agent_name == "pygui":
-                return await self._invoke_pygui_python(step)
-            elif agent_name == "web":
-                return await self._invoke_web_python(step)
-            elif agent_name == "testbed":
-                return await self._invoke_testbed_python(step)
-            elif agent_name == "monitor":
-                return await self._invoke_monitor_python(step)
-            elif agent_name == "docgen":
-                return await self._invoke_docgen_python(step)
-            elif agent_name == "apidesigner":
-                return await self._invoke_apidesigner_python(step)
-            elif agent_name == "projectorchestrator":
-                return await self._invoke_projectorchestrator_python(step)
-            elif agent_name == "director":
-                return await self._invoke_director_python(step)
-            elif agent_name == "quantumguard":
-                return await self._invoke_quantumguard_python(step)
-            elif agent_name == "security":
-                return await self._invoke_security_python(step)
-            elif agent_name == "database":
-                return await self._invoke_database_python(step)
-            elif agent_name == "optimizer":
-                return await self._invoke_optimizer_python(step)
-            else:
-                # Fallback to mock for agents without Python implementations
+            context = {
+                "step_id": step.id,
+                "parameters": step.payload or {},
+                "metadata": {
+                    "agent": agent_name,
+                    "action": step.action,
+                    "orchestrator": "production_tandem",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
+            result = await invoke_agent_dynamically(agent_name, step.action, context)
+            
+            if result.get("status") == "error":
+                logger.warning(f"Agent {agent_name} execution failed: {result.get('message')}")
+                # Fallback to mock for failed implementations
                 return await self._mock_agent_execution(step, agent_info)
+            
+            return {
+                "status": "success",
+                "agent": agent_name,
+                "action": step.action,
+                "result": result,
+                "execution_mode": "python_implementation_dynamic"
+            }
                 
         except Exception as e:
             logger.warning(f"Python agent invocation failed for {agent_name}: {e}")
@@ -500,277 +493,11 @@ class ProductionOrchestrator:
         }
     
     # ========================================================================
-    # PYTHON AGENT INVOCATION METHODS
+    # DYNAMIC PYTHON AGENT INVOCATION (UNIFIED)
     # ========================================================================
     
-    async def _invoke_optimizer_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke OPTIMIZER Python implementation"""
-        try:
-            from optimizer_impl import OPTIMIZERPythonExecutor
-            
-            executor = OPTIMIZERPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "optimizer",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("OPTIMIZER Python implementation not found")
-            raise
-        except Exception as e:
-            logger.error(f"OPTIMIZER Python execution failed: {e}")
-            raise
-    
-    async def _invoke_datascience_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke DATASCIENCE Python implementation"""
-        try:
-            from datascience_impl import DATASCIENCEPythonExecutor
-            
-            executor = DATASCIENCEPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "datascience",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("DATASCIENCE Python implementation not found")
-            raise
-    
-    async def _invoke_mlops_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke MLOPS Python implementation"""
-        try:
-            from mlops_impl import MLOPSPythonExecutor
-            
-            executor = MLOPSPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "mlops",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("MLOPS Python implementation not found")
-            raise
-    
-    async def _invoke_pygui_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke PYGUI Python implementation"""
-        try:
-            from pygui_impl import PYGUIPythonExecutor
-            
-            executor = PYGUIPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "pygui",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("PYGUI Python implementation not found")
-            raise
-    
-    async def _invoke_web_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke WEB Python implementation"""
-        try:
-            from web_impl import WEBPythonExecutor
-            
-            executor = WEBPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "web",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("WEB Python implementation not found")
-            raise
-    
-    async def _invoke_testbed_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke TESTBED Python implementation"""
-        try:
-            from testbed_impl import TESTBEDPythonExecutor
-            
-            executor = TESTBEDPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "testbed",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("TESTBED Python implementation not found")
-            raise
-    
-    async def _invoke_monitor_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke MONITOR Python implementation"""
-        try:
-            from monitor_impl import MONITORPythonExecutor
-            
-            executor = MONITORPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "monitor",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("MONITOR Python implementation not found")
-            raise
-    
-    async def _invoke_docgen_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke DOCGEN Python implementation"""
-        try:
-            from docgen_impl import DOCGENPythonExecutor
-            
-            executor = DOCGENPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "docgen",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("DOCGEN Python implementation not found")
-            raise
-    
-    async def _invoke_apidesigner_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke APIDESIGNER Python implementation"""
-        try:
-            from apidesigner_impl import APIDESIGNERPythonExecutor
-            
-            executor = APIDESIGNERPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "apidesigner",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("APIDESIGNER Python implementation not found")
-            raise
-    
-    async def _invoke_projectorchestrator_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke PROJECTORCHESTRATOR Python implementation"""
-        try:
-            from projectorchestrator_impl import PROJECTORCHESTRATORPythonExecutor
-            
-            executor = PROJECTORCHESTRATORPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "projectorchestrator",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("PROJECTORCHESTRATOR Python implementation not found")
-            raise
-    
-    async def _invoke_director_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke DIRECTOR Python implementation"""
-        try:
-            from director_impl import DirectorPythonExecutor
-            
-            executor = DirectorPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "director",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("DIRECTOR Python implementation not found")
-            raise
-    
-    async def _invoke_quantumguard_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke QUANTUMGUARD Python implementation"""
-        try:
-            from quantumguard_impl import QUANTUMGUARDPythonExecutor
-            
-            executor = QUANTUMGUARDPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "quantumguard",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("QUANTUMGUARD Python implementation not found")
-            raise
-    
-    async def _invoke_security_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke SECURITY Python implementation"""
-        try:
-            from security_impl import SecurityPythonExecutor
-            
-            executor = SecurityPythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "security",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("SECURITY Python implementation not found")
-            raise
-    
-    async def _invoke_database_python(self, step: CommandStep) -> Dict[str, Any]:
-        """Invoke DATABASE Python implementation"""
-        try:
-            from database_impl import DatabasePythonExecutor
-            
-            executor = DatabasePythonExecutor()
-            result = await executor.execute_command(step.action, step.payload)
-            
-            return {
-                "status": "success",
-                "agent": "database",
-                "action": step.action,
-                "result": result,
-                "execution_mode": "python_implementation"
-            }
-        except ImportError:
-            logger.warning("DATABASE Python implementation not found")
-            raise
+    # All individual agent methods replaced with dynamic loader approach
+    # See invoke_agent_dynamically() import from agent_dynamic_loader.py
 
 
 # ============================================================================
