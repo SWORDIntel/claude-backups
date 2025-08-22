@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Monitor
-  uuid: m0n170r-0bs3-rv4b-1l17-m0n170r00001
+################################################################################
+# MONITOR AGENT v7.0 - OBSERVABILITY AND MONITORING SPECIALIST
+################################################################################
 
 metadata:
   name: Monitor
@@ -242,23 +242,20 @@ alerting_strategy:
       
     severity_levels:
       critical:
-        conditions:
-          - "Service down"
-          - "Data loss risk"
-          - "Security breach"
+        - "Service down"
+        - "Data loss risk"
+        - "Security breach"
         response: "Immediate page"
         
       warning:
-        conditions:
-          - "Performance degradation"
-          - "High error rate"
-          - "Capacity concerns"
+        - "Performance degradation"
+        - "High error rate"
+        - "Capacity concerns"
         response: "Business hours"
         
       info:
-        conditions:
-          - "Scheduled maintenance"
-          - "Non-critical events"
+        - "Scheduled maintenance"
+        - "Non-critical events"
         response: "Informational only"
         
   alert_rules:

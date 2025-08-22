@@ -3,22 +3,13 @@
 # RESEARCHER AGENT v8.0 - PARALLEL DEEP RESEARCH & EVIDENCE SYNTHESIS ENGINE
 ################################################################################
 
-agent_metadata:
+metadata:
   name: RESEARCHER
   version: 8.0.0
   uuid: re5earc4-8ec4-4001-4y57-re5earc80001
   category: RESEARCH-ANALYSIS-PARALLEL
   priority: CRITICAL
   status: PRODUCTION
-  
-agent_definition:
-  metadata:
-    name: RESEARCHER
-    version: 8.0.0
-    uuid: re5earc4-8ec4-4001-4y57-re5earc80001
-    category: RESEARCH-ANALYSIS-PARALLEL
-    priority: CRITICAL
-    status: PRODUCTION
   
   description: |
     Parallel deep research and evidence synthesis engine performing multi-threaded 
@@ -46,7 +37,8 @@ agent_definition:
     - WebFetch
     - ProjectKnowledgeSearch
     - TodoWrite
-    - TodoWrite
+    - DataAnalysis
+    - ConcurrentExecution
     
   parallel_capabilities:
     max_concurrent_streams: 12
@@ -56,120 +48,6 @@ agent_definition:
     
   proactive_triggers:
     - "Research needed"
-    - "investigate|analyze|evaluate"
-    - "benchmark|compare|assess"
-    - "evidence|proof|validation"
-    
-  # Agent collaboration
-  invokes_agents:
-    frequently:
-      - WebSearch      # Information gathering
-      - DataScience    # Data analysis
-      - Monitor        # Metrics collection
-    as_needed:
-      - Director       # Strategic research
-      - Architect      # Technical research
----
-
-################################################################################
-# COMMUNICATION SYSTEM INTEGRATION v3.0
-################################################################################
-
-communication:
-  protocol: ultra_fast_binary_v3
-  capabilities:
-    throughput: 4.2M_msg_sec
-    latency: 200ns_p99
-    
-  # Tandem execution with fallback support
-  tandem_execution:
-    supported_modes:
-      - INTELLIGENT      # Python orchestrates, C executes
-      - PYTHON_ONLY     # Fallback when C unavailable
-      - PARALLEL        # Both layers for parallel research
-      
-    fallback_strategy:
-      when_c_unavailable: PYTHON_ONLY
-      when_performance_degraded: PYTHON_ONLY
-      when_consensus_fails: RETRY_PYTHON
-      max_retries: 3
-      
-    python_implementation:
-      module: "agents.src.python.researcher_impl"
-      class: "RESEARCHERPythonExecutor"
-      capabilities:
-        - "Parallel research execution"
-        - "Evidence synthesis"
-        - "Meta-analysis"
-      performance: "100-500 ops/sec"
-      
-    c_implementation:
-      binary: "src/c/researcher_agent"
-      shared_lib: "libresearcher.so"
-      capabilities:
-        - "High-speed data processing"
-        - "Parallel stream processing"
-      performance: "10K+ ops/sec"
-  
-  integration:
-    auto_register: true
-    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "src/c/agent_discovery.c"
-    message_router: "src/c/message_router.c"
-    runtime: "src/c/unified_agent_runtime.c"
-    
-  ipc_methods:
-    CRITICAL: shared_memory_50ns
-    HIGH: io_uring_500ns
-    NORMAL: unix_sockets_2us
-    
-  message_patterns:
-    - publish_subscribe
-    - request_response
-    - work_queues
-    
-  security:
-    authentication: JWT_RS256_HS256
-    authorization: RBAC_4_levels
-    encryption: TLS_1.3
-    integrity: HMAC_SHA256
-    
-  monitoring:
-    prometheus_port: 9678
-    grafana_dashboard: true
-    health_check: "/health/ready"
-    metrics_endpoint: "/metrics"
-
-################################################################################
-# FALLBACK EXECUTION PATTERNS
-################################################################################
-
-fallback_patterns:
-  python_only_execution:
-    implementation: "RESEARCHERPythonExecutor class with async command processing"
-    features:
-      - "Deep research capabilities"
-      - "Evidence synthesis"
-      - "Parallel analysis"
-      - "Error recovery with retry logic"
-      - "Metrics tracking"
-    
-  graceful_degradation:
-    triggers:
-      - "C layer timeout > 1000ms"
-      - "Research stream overload"
-      
-    actions:
-      immediate: "Switch to PYTHON_ONLY mode"
-      cache_results: "Store research findings"
-      notify_user: "Alert about degraded research"
-      
-  recovery_strategy:
-    detection: "Monitor C layer every 30s"
-    validation: "Test with simple research"
-    reintegration: "Gradually shift load to C"
-    
-  keywords:
     - "Evaluate"
     - "Compare"
     - "Investigate"

@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: CInternal
-  uuid: c1nt3rn4-c0d3-5y51-3m5-c1nt3rn410001
+################################################################################
+# C-INTERNAL v9.0 - ELITE C/C++ SYSTEMS ENGINEER
+################################################################################
 
 agent_definition:
   metadata:

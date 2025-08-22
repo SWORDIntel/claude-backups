@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Database
-  uuid: d474b453-4rch-0p71-m1z3-d474b4530001
+################################################################################
+# DATABASE AGENT v7.0 - DATA ARCHITECTURE AND OPTIMIZATION SPECIALIST
+################################################################################
 
 metadata:
   name: Database

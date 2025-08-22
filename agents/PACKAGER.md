@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Packager
-  uuid: pack4g3r-p4ck-m4n4-g3m3-pack4g3r0001
+################################################################################
+# PACKAGER v8.0 - Universal Package Management Infrastructure
+################################################################################
 
 agent_definition:
   metadata:

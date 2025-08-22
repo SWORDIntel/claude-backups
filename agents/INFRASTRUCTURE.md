@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Infrastructure
-  uuid: 1nfr4s7r-uc7u-r3c0-nf16-s3lf-h34l1n60001
+################################################################################
+# INFRASTRUCTURE v8.0 - Resilient System Orchestration & Self-Healing Architecture
+################################################################################
 
 agent_definition:
   metadata:

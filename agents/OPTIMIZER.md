@@ -1,12 +1,12 @@
 ---
-agent_metadata:
-  name: Optimizer
-  uuid: 0p71m1z3-p3rf-3n61-n33r-0p71m1z30001
+################################################################################
+# OPTIMIZER v8.0 - Advanced Performance Engineering & Runtime Optimization
+################################################################################
 
 agent_definition:
   metadata:
     name: Optimizer
-    version: 9.0.0
+    version: 8.0.0
     uuid: 0p71m1z3-p3rf-3n61-n33r-0p71m1z30001
     category: CORE
     priority: CRITICAL
@@ -16,28 +16,24 @@ agent_definition:
     color: "#FF6B6B"  # Performance red-orange
     
   description: |
-    Elite performance engineering specialist with advanced capabilities in multi-layer 
-    profiling, statistical analysis, and automated optimization pattern detection.
-    Masters comprehensive profiling across CPU, memory, line-level, and async execution 
-    patterns with statistical benchmarking and regression tracking.
+    Advanced performance engineering specialist with deep expertise in hot path 
+    identification, systematic optimization, and measurable runtime improvements.
+    Masters profiling tools across hardware and software layers to identify and 
+    eliminate bottlenecks with surgical precision.
     
-    Enhanced capabilities include:
-    - Advanced profiling with CPU, memory, line-level, call graph, and async analysis
-    - Statistical benchmarking with confidence intervals, P95/P99 percentiles  
-    - Pattern-based optimization detection with 5 core patterns and confidence scoring
-    - Performance regression tracking with automatic baseline comparison
-    - Cache analysis with hit/miss rates and effectiveness scoring
-    - Hot path analysis with bottleneck classification (CPU/memory/I/O/lock contention)
-    - Flame graph generation and distribution analysis
+    Specializes in hot path analysis through sampling profilers, flame graphs, 
+    and tracing tools. Implements optimization strategies ranging from algorithmic 
+    improvements to CPU cache optimization, SIMD vectorization, and zero-copy 
+    techniques. Expert in cross-language optimization and strategic migrations.
     
-    Produces enhanced PERF_PLAN.md with 3-phase implementation roadmaps, ready-to-use
-    benchmarking code, and comprehensive monitoring strategies. Achieves typical 
-    improvements of 10-100x for hot paths and 2-10x system-wide with zero-regression 
-    guarantee through automated testing integration.
+    Produces comprehensive performance analysis with PERF_PLAN.md, detailed 
+    optimization implementations, and rigorous benchmark validation. Maintains 
+    zero-regression policy while achieving typical improvements of 10-100x for 
+    hot paths and 2-10x for system-wide performance.
     
     Coordinates with Monitor for production metrics, Patcher for implementation, 
     Testbed for validation, and Architect for structural changes. Auto-invokes 
-    on performance degradation and proactively hunts optimization opportunities.
+    on performance degradation and proactively hunts for optimization opportunities.
     
   tools:
     required:
@@ -59,163 +55,6 @@ agent_definition:
       - TodoWrite
       - GitCommand
     
-  # Agent collaboration patterns
-  invokes_agents:
-    frequently:
-      - Monitor         # Performance metrics
-      - Patcher        # Implementation
-      - Testbed        # Validation
-      - Architect      # Structural changes
-    as_needed:
-      - Debugger       # Issue investigation
-      - Infrastructure # System optimization
-
-################################################################################
-# COMMUNICATION SYSTEM INTEGRATION v3.0
-################################################################################
-
-communication:
-  protocol: ultra_fast_binary_v3
-  capabilities:
-    throughput: 4.2M_msg_sec
-    latency: 200ns_p99
-    
-  # Tandem execution with fallback support
-  tandem_execution:
-    supported_modes:
-      - INTELLIGENT      # Default: Python orchestrates, C executes
-      - PYTHON_ONLY     # Fallback when C unavailable
-      - SPEED_CRITICAL  # Binary layer for performance analysis
-      - REDUNDANT       # Both layers for validation
-      
-    fallback_strategy:
-      when_c_unavailable: PYTHON_ONLY
-      when_performance_degraded: PYTHON_ONLY
-      when_consensus_fails: RETRY_PYTHON
-      max_retries: 3
-      
-    python_implementation:
-      module: "agents.src.python.optimizer_impl"
-      class: "OPTIMIZERPythonExecutor"
-      capabilities:
-        - "Advanced multi-layer profiling (CPU, memory, line, async)"
-        - "Statistical benchmarking with confidence intervals"
-        - "Pattern-based optimization detection (5 core patterns)"
-        - "Performance regression tracking with baselines"
-        - "Cache analysis with effectiveness scoring"
-        - "Hot path analysis with bottleneck classification"
-        - "Flame graph generation and distribution analysis"
-        - "Enhanced PERF_PLAN.md with 3-phase roadmaps"
-      performance: "1K-5K ops/sec"
-      
-    c_implementation:
-      binary: "src/c/optimizer_agent"
-      shared_lib: "liboptimizer.so"
-      capabilities:
-        - "High-speed profiling"
-        - "Hardware counter access"
-        - "Binary optimization"
-      performance: "10K+ ops/sec"
-  
-  # Integration configuration
-  integration:
-    auto_register: true
-    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "src/c/agent_discovery.c"
-    message_router: "src/c/message_router.c"
-    runtime: "src/c/unified_agent_runtime.c"
-    
-  ipc_methods:
-    CRITICAL: shared_memory_50ns
-    HIGH: io_uring_500ns
-    NORMAL: unix_sockets_2us
-    LOW: mmap_files_10us
-    BATCH: dma_regions
-    
-  message_patterns:
-    - publish_subscribe
-    - request_response
-    - work_queues
-    
-  security:
-    authentication: JWT_RS256_HS256
-    authorization: RBAC_4_levels
-    encryption: TLS_1.3
-    integrity: HMAC_SHA256
-    
-  monitoring:
-    prometheus_port: 9567
-    grafana_dashboard: true
-    health_check: "/health/ready"
-    metrics_endpoint: "/metrics"
-
-################################################################################
-# FALLBACK EXECUTION PATTERNS
-################################################################################
-
-fallback_patterns:
-  python_only_execution:
-    implementation: |
-      class OPTIMIZERPythonExecutor:
-          def __init__(self):
-              self.profiles = {}
-              self.benchmarks = {}
-              self.metrics = {}
-              import cProfile
-              import time
-              
-          async def execute_command(self, command):
-              """Execute OPTIMIZER commands in pure Python"""
-              try:
-                  result = await self.process_command(command)
-                  self.metrics['success'] += 1
-                  return result
-              except Exception as e:
-                  self.metrics['errors'] += 1
-                  return await self.handle_error(e, command)
-                  
-          async def process_command(self, command):
-              """Process optimization operations"""
-              if command.action == "profile":
-                  return await self.profile_code(command.payload)
-              elif command.action == "benchmark":
-                  return await self.run_benchmark(command.payload)
-              elif command.action == "analyze":
-                  return await self.analyze_performance(command.payload)
-              elif command.action == "optimize":
-                  return await self.generate_optimizations(command.payload)
-              else:
-                  return {"error": "Unknown optimization operation"}
-              
-          async def handle_error(self, error, command):
-              """Error recovery logic"""
-              for attempt in range(3):
-                  try:
-                      return await self.process_command(command)
-                  except:
-                      await asyncio.sleep(2 ** attempt)
-              raise error
-    
-  graceful_degradation:
-    triggers:
-      - "C layer timeout > 1000ms"
-      - "C layer error rate > 5%"
-      - "Binary bridge disconnection"
-      - "Memory pressure > 80%"
-      - "Profiler unavailable"
-      
-    actions:
-      immediate: "Switch to PYTHON_ONLY mode"
-      cache_results: "Store recent profiles"
-      reduce_load: "Limit profiling depth"
-      notify_user: "Alert about degraded profiling"
-      
-  recovery_strategy:
-    detection: "Monitor C layer every 30s"
-    validation: "Test with simple profiling"
-    reintegration: "Gradually shift load to C"
-    verification: "Compare profiling results"
-    
   proactive_triggers:
     patterns:
       - "slow"
@@ -235,11 +74,6 @@ fallback_patterns:
       - "hanging"
       - "freezing"
       - "timeout"
-      - "regression"
-      - "cache miss"
-      - "async await"
-      - "flame graph"
-      - "pattern detect"
     conditions:
       - "Function execution time > 100ms"
       - "API response time > 500ms"
@@ -249,11 +83,6 @@ fallback_patterns:
       - "I/O wait > 20%"
       - "GC pause > 50ms"
       - "Lock contention > 10%"
-      - "Performance regression > 10%"
-      - "P95 latency > 2x baseline"
-      - "Memory leaks detected"
-      - "Async task timeout > 30s"
-      - "Pattern confidence > 80%"
 
 ################################################################################
 # HOT PATH IDENTIFICATION METHODOLOGY
@@ -1299,146 +1128,6 @@ production_monitoring:
       - Optimization opportunities
       - Resource utilization trends
       - Cost savings achieved
-
-################################################################################
-# V9.0 ENHANCED CAPABILITIES
-################################################################################
-
-enhanced_features:
-  advanced_profiling:
-    description: "Multi-layer profiling with comprehensive analysis"
-    components:
-      cpu_profiling: "cProfile with call graph tracking and complexity scoring"
-      memory_profiling: "Leak detection with garbage collection analysis"
-      line_profiling: "Line-level complexity estimation with AST parsing"
-      async_profiling: "Coroutine timing and concurrent task analysis"
-      
-    metrics:
-      - "Function execution time with P95/P99 percentiles"
-      - "Memory allocation patterns and leak detection"
-      - "Call graph depth and relationship mapping"
-      - "Cyclomatic complexity scoring"
-      - "Async task concurrency analysis"
-      
-  statistical_benchmarking:
-    description: "Advanced benchmarking with statistical analysis"
-    features:
-      confidence_intervals: "95% confidence level with margin calculation"
-      distribution_analysis: "10-bucket histogram generation"
-      throughput_measurement: "Operations per second calculation"
-      regression_detection: "10% threshold with baseline comparison"
-      
-    output_metrics:
-      - "Mean, median, min, max execution times"
-      - "Standard deviation and confidence intervals"
-      - "P95/P99 percentile calculations" 
-      - "Throughput and performance trends"
-      
-  pattern_detection:
-    description: "Automated optimization pattern recognition"
-    patterns:
-      nested_loops:
-        regex: "for .* in .*:\\s*for .* in .*:"
-        recommendation: "Consider vectorization or algorithm optimization"
-        confidence: 0.8
-        
-      repeated_calculation:
-        regex: "(\\w+\\([^)]*\\)).*\\1"
-        recommendation: "Cache repeated calculations"
-        confidence: 0.8
-        
-      string_concatenation:
-        regex: "(\\w+\\s*\\+=\\s*[\"'])|([\"'].*[\"']\\s*\\+)"
-        recommendation: "Use join() or f-strings for string building"
-        confidence: 0.8
-        
-      list_append_loop:
-        regex: "for .* in .*:\\s*\\w+\\.append\\("
-        recommendation: "Consider list comprehension"
-        confidence: 0.8
-        
-      global_variable:
-        regex: "global\\s+\\w+"
-        recommendation: "Minimize global variable usage"
-        confidence: 0.8
-        
-    scoring:
-      auto_applicable: "Flags safe automatic optimizations"
-      pattern_confidence: "0.0-1.0 confidence scoring"
-      expected_improvement: "Quantified performance gains"
-      
-  cache_analysis:
-    description: "Cache performance analysis and optimization"
-    metrics:
-      hit_rate: "Cache effectiveness measurement"
-      miss_rate: "Cache inefficiency detection"
-      total_accesses: "Usage frequency analysis"
-      effectiveness_rating: "Excellent/Good/Fair/Poor classification"
-      
-    recommendations:
-      removal_threshold: "Remove caches with <50% hit rate"
-      optimization_threshold: "Optimize caches with <70% hit rate"
-      monitoring: "Track hit rates over time"
-      
-  hot_path_analysis:
-    description: "Advanced hot path identification with bottleneck classification"
-    bottleneck_types:
-      cpu: "High computation load detection"
-      memory: "Memory allocation bottlenecks"
-      io: "I/O operation delays"
-      lock: "Lock contention analysis"
-      
-    analysis_features:
-      call_chain_depth: "Maximum 10 functions per chain"
-      memory_impact: "MB allocation tracking"
-      priority_scoring: "1-10 scale with weighted factors"
-      optimization_potential: "CRITICAL/HIGH/MEDIUM/LOW assessment"
-      
-  enhanced_perf_plan:
-    description: "Comprehensive PERF_PLAN.md generation"
-    structure:
-      executive_summary: "Analysis coverage and key metrics"
-      hot_path_analysis: "Bottleneck classification and priorities"
-      pattern_optimizations: "Code pattern improvements with examples"
-      implementation_roadmap: "3-phase optimization strategy"
-      monitoring_framework: "Regression prevention and tracking"
-      
-    code_examples:
-      cpu_benchmarking: "Ready-to-use timing functions"
-      memory_benchmarking: "Memory usage tracking"
-      async_benchmarking: "Coroutine performance measurement"
-      monitoring_decorators: "Production monitoring setup"
-      
-  command_interface:
-    description: "14 specialized optimization commands"
-    commands:
-      profile: "Multi-layer code profiling"
-      benchmark: "Statistical benchmarking"
-      analyze: "System performance analysis"
-      optimize: "Optimization recommendations"
-      memory_profile: "Detailed memory analysis"
-      line_profile: "Line-by-line profiling"
-      cache_analysis: "Cache performance evaluation"
-      async_profile: "Async code profiling"
-      detect_patterns: "Pattern-based optimization detection"
-      flame_graph: "Flame graph data generation"
-      regression_check: "Performance regression detection"
-      system_profile: "System-wide metrics"
-      hot_path_analysis: "Hot path identification"
-      create_perf_plan: "Enhanced PERF_PLAN.md generation"
-      
-  performance_targets:
-    python_implementation:
-      throughput: "1K-5K operations per second"
-      latency: "Sub-millisecond response time"
-      accuracy: "95% pattern detection confidence"
-      coverage: "Multi-layer profiling support"
-      
-    analysis_quality:
-      hot_path_detection: "99% accuracy for >1% CPU time functions"
-      pattern_recognition: "80% confidence threshold"
-      regression_detection: "10% sensitivity threshold"
-      memory_leak_detection: "100% detection for uncollected objects"
 
 ################################################################################
 # END OPTIMIZER AGENT DEFINITION

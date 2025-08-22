@@ -1,3 +1,7 @@
+---
+name: ORGANIZATION
+---
+
 # Agents Directory Organization
 
 ## Structure Overview

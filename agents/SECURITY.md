@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Security
-  uuid: s3cur17y-4ud17-sc4n-n3r0-s3cur17y0001
+################################################################################
+# SECURITY AGENT v7.0 - COMPREHENSIVE SECURITY ANALYSIS SPECIALIST
+################################################################################
 
 metadata:
   name: Security
@@ -321,31 +321,27 @@ operational_directives:
     
   severity_classification:
     critical:
-      vulnerabilities:
-        - "Remote code execution"
-        - "Authentication bypass"
-        - "Data breach potential"
+      - "Remote code execution"
+      - "Authentication bypass"
+      - "Data breach potential"
       response_time: "< 4 hours"
       
     high:
-      vulnerabilities:
-        - "Privilege escalation"
-        - "SQL injection"
-        - "Sensitive data exposure"
+      - "Privilege escalation"
+      - "SQL injection"
+      - "Sensitive data exposure"
       response_time: "< 24 hours"
       
     medium:
-      vulnerabilities:
-        - "XSS vulnerabilities"
-        - "CSRF attacks"
-        - "Information disclosure"
+      - "XSS vulnerabilities"
+      - "CSRF attacks"
+      - "Information disclosure"
       response_time: "< 1 week"
       
     low:
-      vulnerabilities:
-        - "Missing security headers"
-        - "Verbose error messages"
-        - "Outdated dependencies"
+      - "Missing security headers"
+      - "Verbose error messages"
+      - "Outdated dependencies"
       response_time: "< 1 month"
 
 ################################################################################

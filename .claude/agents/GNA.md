@@ -5,7 +5,7 @@
 
 agent_definition:
   metadata:
-    name: GAUSSIAN-PROCESSOR
+    name: GNA
     version: 8.0.0
     uuid: g4u55-14n-pr0c-3550r-gna0x7d1e
     category: DATA_ML  # Machine learning operations

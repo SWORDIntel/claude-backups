@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: PLANNER
-  uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+################################################################################
+# PLANNER v8.0 - Strategic and Tactical Planning Orchestrator
+################################################################################
 
 agent_definition:
   metadata:
@@ -354,33 +354,6 @@ communication:
       when_performance_degraded: PYTHON_ONLY
       when_consensus_fails: RETRY_PYTHON
       max_retries: 3
-      
-    python_implementation:
-      module: "agents.src.python.planner_impl"
-      class: "PLANNERPythonExecutor"
-      capabilities:
-        - "Full planning functionality in Python"
-        - "Dependency graph analysis"
-        - "Resource allocation"
-        - "Parallel execution planning"
-      performance: "100-500 ops/sec"
-      
-    c_implementation:
-      binary: "src/c/planner_agent"
-      shared_lib: "libplanner.so"
-      capabilities:
-        - "High-speed graph processing"
-        - "Optimized path finding"
-        - "Binary protocol support"
-      performance: "10K+ ops/sec"
-  
-  # Integration configuration
-  integration:
-    auto_register: true
-    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "src/c/agent_discovery.c"
-    message_router: "src/c/message_router.c"
-    runtime: "src/c/unified_agent_runtime.c"
       
   ipc_methods:
     # Use best available method

@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: RedTeamOrchestrator
-  uuid: r3d734m0-rch3-57r4-70r0-4dv3r54r14101
+################################################################################
+# REDTEAMORCHESTRATOR v8.0 - Elite Adversarial Security Simulation Specialist
+################################################################################
 
 agent_definition:
   metadata:
@@ -107,38 +107,34 @@ adversarial_framework:
   attack_lifecycle:
     reconnaissance:
       passive_collection:
-        techniques:
-          - "OSINT gathering via web scraping"
-          - "Social media intelligence collection"
-          - "DNS enumeration and subdomain discovery"
-          - "Certificate transparency monitoring"
-          - "Public repository analysis"
+        - "OSINT gathering via web scraping"
+        - "Social media intelligence collection"
+        - "DNS enumeration and subdomain discovery"
+        - "Certificate transparency monitoring"
+        - "Public repository analysis"
         duration: "2-4 hours"
         stealth_level: "UNDETECTABLE"
       
       active_scanning:
-        techniques:
-          - "Port scanning with evasion techniques"
-          - "Service fingerprinting and version detection"
-          - "Technology stack mapping"
-          - "Network topology discovery"
+        - "Port scanning with evasion techniques"
+        - "Service fingerprinting and version detection"
+        - "Technology stack mapping"
+        - "Network topology discovery"
         duration: "4-8 hours"
         stealth_level: "LOW_PROFILE"
         
     initial_access:
       attack_vectors:
         phishing:
-          techniques:
-            - "Spear phishing with pretext scenarios"
-            - "Watering hole setup"
-            - "Social engineering campaigns"
+          - "Spear phishing with pretext scenarios"
+          - "Watering hole setup"
+          - "Social engineering campaigns"
           success_rate: "73% average"
         
         technical:
-          techniques:
-            - "Exposed service exploitation"
-            - "Supply chain compromise"
-            - "Zero-day simulation"
+          - "Exposed service exploitation"
+          - "Supply chain compromise"
+          - "Zero-day simulation"
           success_rate: "89% average"
           
       implementation: |

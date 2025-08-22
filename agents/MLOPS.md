@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: MLOps
-  uuid: ml0p5-m0d3-l0p5-8v00-ml0p5000001
+################################################################################
+# MLOPS v8.0 - MACHINE LEARNING OPERATIONS SPECIALIST
+################################################################################
 
 agent_definition:
   metadata:

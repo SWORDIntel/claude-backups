@@ -1,14 +1,8 @@
 ---
-agent_metadata:
-  name: CryptoExpert
-  version: 7.0.0
-  uuid: crypto-exp-2025-0818-cryptography-expert
-  category: SECURITY
-  priority: CRITICAL
-  status: PRODUCTION
-  role: "Cryptography Expert"
-  expertise: "Applied Cryptography, Cryptographic Engineering, Security Protocols"
-  focus: "Cryptographic implementation, analysis, and security validation"
+################################################################################
+# CRITICAL SYSTEM CONSTRAINTS - VERIFIED FROM PROJECT DOCUMENTATION
+################################################################################
+---
 
 system_reality:
   storage_configuration:
@@ -32,7 +26,6 @@ system_reality:
     sha_extensions: "PRESENT - Intel SHA Extensions for hashing"
     avx512_crypto: "CONDITIONAL - Only with ancient microcode (security risk)"
     rng: "RDRAND and RDSEED instructions available"
----
 
 ################################################################################
 # CRYPTO EXPERT AGENT DEFINITION
@@ -52,48 +45,6 @@ agent_template:
     role: "Cryptography Expert"
     expertise: "Applied Cryptography, Cryptographic Engineering, Security Protocols"
     focus: "Cryptographic implementation, analysis, and security validation"
-    
-  # CRITICAL: Task tool compatibility for Claude Code
-  tools:
-    required:
-      - Task  # MANDATORY for agent invocation
-    code_operations:
-      - Read
-      - Write
-      - Edit
-      - MultiEdit
-    system_operations:
-      - Bash
-      - Grep
-      - Glob
-      - LS
-    information:
-      - WebFetch
-      - WebSearch
-    workflow:
-      - TodoWrite
-    
-  # Proactive invocation triggers for Claude Code
-  proactive_triggers:
-    patterns:
-      - "crypto|encryption|decrypt|hash|signature"
-      - "certificate|PKI|TLS|SSL"
-      - "key management|key generation|key exchange"
-      - "security protocol|authentication|authorization"
-    context_triggers:
-      - "ALWAYS when Security agent is active"
-      - "ALWAYS when Bastion needs crypto operations"
-      - "When QuantumGuard requires crypto primitives"
-    
-  # Agent collaboration patterns
-  invokes_agents:
-    frequently:
-      - Security          # Security analysis
-      - Bastion          # Defensive implementation
-      - QuantumGuard     # Quantum-resistant crypto
-    as_needed:
-      - CSO              # Security policy
-      - SecurityAuditor  # Compliance validation
     
   # Cryptography Expertise Domains
   crypto_domains:
@@ -237,75 +188,26 @@ agent_template:
   communication:
     protocol: ultra_fast_binary_v3
     crypto_overlay: "MANDATORY_END_TO_END_ENCRYPTION"
-    capabilities:
-      throughput: 4.2M_msg_sec
-      latency: 200ns_p99
     
-    # Tandem execution with fallback support
-    tandem_execution:
-      supported_modes:
-        - INTELLIGENT      # Default: Python orchestrates, C executes
-        - PYTHON_ONLY     # Fallback when C unavailable
-        - REDUNDANT       # Both layers for critical crypto operations
-        - CONSENSUS       # Both must agree on crypto results
-        - SPEED_CRITICAL  # Binary layer for high-speed crypto
+    # Dual-layer execution capability
+    integration_modes:
+      primary_mode: "PYTHON_TANDEM_ORCHESTRATION"
+      binary_protocol: "${CLAUDE_AGENTS_ROOT}/binary-communications-system/ultra_hybrid_enhanced.c"
+      python_orchestrator: "${CLAUDE_AGENTS_ROOT}/src/python/production_orchestrator.py"
+      fallback_mode: "DIRECT_TASK_TOOL"
       
-      fallback_strategy:
-        when_c_unavailable: PYTHON_ONLY
-        when_performance_degraded: PYTHON_ONLY
-        when_consensus_fails: RETRY_PYTHON
-        max_retries: 3
+    operational_status:
+      python_layer: "ACTIVE"  # Currently operational
+      binary_layer: "STANDBY"  # Ready when microcode restrictions resolved
       
-      python_implementation:
-        module: "agents.src.python.cryptoexpert_impl"
-        class: "CRYPTOEXPERTPythonExecutor"
-        capabilities:
-          - "Full cryptographic operations in Python"
-          - "Hardware crypto acceleration via Python libs"
-          - "Async execution support"
-          - "Error recovery and retry logic"
-        performance: "100-500 ops/sec"
-      
-      c_implementation:
-        binary: "src/c/cryptoexpert_agent"
-        shared_lib: "libcryptoexpert.so"
-        capabilities:
-          - "High-speed crypto operations"
-          - "Hardware crypto acceleration"
-          - "Binary protocol support"
-        performance: "10K+ ops/sec"
-    
-    # Integration configuration
-    integration:
-      auto_register: true
-      binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
-      discovery_service: "src/c/agent_discovery.c"
-      message_router: "src/c/message_router.c"
-      runtime: "src/c/unified_agent_runtime.c"
-    
-    ipc_methods:
-      CRITICAL: shared_memory_50ns
-      HIGH: io_uring_500ns
-      NORMAL: unix_sockets_2us
-      LOW: mmap_files_10us
-      BATCH: dma_regions
-    
-    message_patterns:
-      - publish_subscribe
-      - request_response
-      - work_queues
-    
-    security:
-      authentication: JWT_RS256_HS256
-      authorization: RBAC_4_levels
-      encryption: TLS_1.3
-      integrity: HMAC_SHA256
-    
-    monitoring:
-      prometheus_port: 9485
-      grafana_dashboard: true
-      health_check: "/health/ready"
-      metrics_endpoint: "/metrics"
+    tandem_orchestration:
+      agent_registry: "${CLAUDE_AGENTS_ROOT}/src/python/agent_registry.py"
+      execution_modes:
+        - "INTELLIGENT: Python orchestrates crypto workflows"
+        - "SPEED_CRITICAL: Binary layer for crypto operations"
+        - "CONSENSUS: Key management requires both layers"
+        - "PYTHON_ONLY: Current default due to hardware restrictions"
+      mock_execution: "Immediate crypto functionality without C dependencies"
     
     secure_communication:
       message_encryption: "AES-256-GCM with ephemeral keys"
@@ -317,80 +219,6 @@ agent_template:
       operation_logging: "All cryptographic operations logged with HMAC"
       key_usage_tracking: "Comprehensive key usage audit trail"
       compliance_reporting: "Cryptographic compliance status reporting"
-
-################################################################################
-# FALLBACK EXECUTION PATTERNS
-################################################################################
-
-fallback_patterns:
-  python_only_execution:
-    implementation: |
-      class CRYPTOEXPERTPythonExecutor:
-          def __init__(self):
-              self.cache = {}
-              self.metrics = {}
-              import hashlib
-              import hmac
-              import secrets
-              from cryptography.hazmat.primitives import hashes
-              from cryptography.hazmat.primitives.asymmetric import rsa, padding
-              from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-              
-          async def execute_command(self, command):
-              """Execute CRYPTOEXPERT commands in pure Python"""
-              try:
-                  result = await self.process_command(command)
-                  self.metrics['success'] += 1
-                  return result
-              except Exception as e:
-                  self.metrics['errors'] += 1
-                  return await self.handle_error(e, command)
-                  
-          async def process_command(self, command):
-              """Process crypto operations"""
-              if command.action == "encrypt":
-                  return await self.encrypt_data(command.payload)
-              elif command.action == "decrypt":
-                  return await self.decrypt_data(command.payload)
-              elif command.action == "sign":
-                  return await self.sign_data(command.payload)
-              elif command.action == "verify":
-                  return await self.verify_signature(command.payload)
-              elif command.action == "generate_key":
-                  return await self.generate_key(command.payload)
-              elif command.action == "hash":
-                  return await self.hash_data(command.payload)
-              else:
-                  return {"error": "Unknown crypto operation"}
-              
-          async def handle_error(self, error, command):
-              """Error recovery logic"""
-              for attempt in range(3):
-                  try:
-                      return await self.process_command(command)
-                  except:
-                      await asyncio.sleep(2 ** attempt)
-              raise error
-    
-  graceful_degradation:
-    triggers:
-      - "C layer timeout > 1000ms"
-      - "C layer error rate > 5%"
-      - "Binary bridge disconnection"
-      - "Memory pressure > 80%"
-      - "Hardware crypto unavailable"
-      
-    actions:
-      immediate: "Switch to PYTHON_ONLY mode"
-      cache_results: "Store recent crypto operations"
-      reduce_load: "Limit concurrent crypto operations"
-      notify_user: "Alert about degraded crypto performance"
-      
-  recovery_strategy:
-    detection: "Monitor C layer every 30s"
-    validation: "Test with simple crypto operation"
-    reintegration: "Gradually shift crypto load to C"
-    verification: "Compare crypto outputs for consistency"
 
 ################################################################################
 # CRYPTOGRAPHIC OPERATIONAL NOTES

@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Constructor
-  uuid: c0n57ruc-70r0-1n17-14l1-c0n57ruc0001
+################################################################################
+# CONSTRUCTOR v8.0 - Precision Project Initialization Specialist & Orchestrator
+################################################################################
 
 agent_definition:
   metadata:

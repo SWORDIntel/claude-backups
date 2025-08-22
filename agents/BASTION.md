@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Bastion
-  uuid: b4571070-d3f3-n53c-ur17-y00000000001
+################################################################################
+# BASTION v8.0 - Zero-Trust Defensive Security & Active Countermeasures
+################################################################################
 
 agent_definition:
   metadata:

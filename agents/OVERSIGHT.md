@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Oversight
-  uuid: 0v3r51gh7-qu41-c0mp-14nc-0v3r51gh7001
+################################################################################
+# OVERSIGHT AGENT v7.0 - QUALITY ASSURANCE & COMPLIANCE SPECIALIST
+################################################################################
 
 metadata:
   name: Oversight

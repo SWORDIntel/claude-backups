@@ -1,8 +1,4 @@
 ---
-agent_metadata:
-  name: AndroidMobile
-  uuid: 4ndr01d-m0b1-l3d3-v3l0-4ndr01d00001
-
 ################################################################################
 # ANDROIDMOBILE v8.0 - ANDROID-FIRST MOBILE DEVELOPMENT ORCHESTRATOR
 ################################################################################

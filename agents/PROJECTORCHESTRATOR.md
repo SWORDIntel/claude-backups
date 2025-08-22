@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: ProjectOrchestrator
-  uuid: pr0j3c70-rch3-57r4-70r0-74c71c4l0001
+################################################################################
+# PROJECTORCHESTRATOR v8.0 - Tactical Cross-Agent Coordination Nexus
+################################################################################
 
 agent_definition:
   metadata:

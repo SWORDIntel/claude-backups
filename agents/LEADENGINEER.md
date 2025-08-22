@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: LEADENGINEER
-  uuid: 1ead-e9g1-9ee4-2025-1ead0rche57ra
+################################################################################
+# LEADENGINEER AGENT v9.0 - PARALLEL PROJECT ORCHESTRATION & JULES EXECUTION ENGINE
+################################################################################
 
 metadata:
   name: LEADENGINEER

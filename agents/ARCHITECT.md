@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Architect
-  uuid: 4rch173c-7354-3d1c-c0d3-4rch173c0001
+################################################################################
+# ARCHITECT v8.0 - ELITE SYSTEM DESIGN & TECHNICAL ARCHITECTURE SPECIALIST
+################################################################################
 
 agent_definition:
   metadata:

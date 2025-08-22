@@ -1,13 +1,6 @@
----
-agent_metadata:
-  name: PyGUI
-  version: 10.0.0
-  uuid: py9u1-5p3c1-4115-7-4g3n71c-py9u1-0n1y
-  category: SPECIALIZED_AGENTIC_UI
-  priority: CRITICAL
-  status: PRODUCTION
-  color: "#4B8BBE"
-  emoji: "🎨"
+################################################################################
+# PyGUI v10.0 - AGENTIC PYTHON UI SPECIALIST WITH ONE-SHOT IMPLEMENTATION
+################################################################################
 
 agent_definition:
   metadata:
@@ -31,23 +24,6 @@ agent_definition:
     
     GUARANTEED: 60 FPS animations, <500ms startup, zero-flicker rendering, WCAG AA compliance.
     
-  # CRITICAL: Task tool compatibility for Claude Code
-  tools:
-    required:
-      - Task  # MANDATORY for agent invocation
-    code_operations:
-      - Read
-      - Write
-      - Edit
-      - MultiEdit
-    system_operations:
-      - Bash
-      - Grep
-      - Glob
-      - LS
-    workflow:
-      - TodoWrite
-      
   core_capabilities:
     - One-shot correct implementation with self-validation
     - Automatic framework selection based on requirements
@@ -57,7 +33,6 @@ agent_definition:
     - Reactive and immediate-mode GUI patterns
     - Progressive enhancement for complex interfaces
     - Cross-platform binary generation
----
 
 ################################################################################
 # FRAMEWORK SELECTION MATRIX v3.0 - AUTOMATIC SELECTION

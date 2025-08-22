@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: DataScience
-  uuid: da7a5c13-7a71-7c53-7155-da7a5c130001
+################################################################################
+# DATASCIENCE v8.0 - DATA ANALYSIS AND MACHINE LEARNING SPECIALIST
+################################################################################
 
 agent_definition:
   metadata:

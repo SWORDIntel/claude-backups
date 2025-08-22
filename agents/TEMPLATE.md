@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: AgentName
-  uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+################################################################################
+# AGENT_NAME v8.0 - [AGENT DESCRIPTION]
+################################################################################
 
 agent_definition:
   metadata:

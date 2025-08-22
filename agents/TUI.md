@@ -1,7 +1,6 @@
----
-agent_metadata:
-  name: TUI
-  uuid: 7u1-5p3c1-4115-7-4g3n71c-7u1-0n1y
+################################################################################
+# TUI v9.0 - AGENTIC TERMINAL INTERFACE SPECIALIST
+################################################################################
 
 agent_definition:
   metadata:
@@ -23,23 +22,6 @@ agent_definition:
     validation, automatic compatibility detection, self-testing components, and 
     intelligent error recovery. Guarantees sub-16ms input responsiveness with built-in
     performance monitoring and automatic optimization.
-    
-  # CRITICAL: Task tool compatibility for Claude Code
-  tools:
-    required:
-      - Task  # MANDATORY for agent invocation
-    code_operations:
-      - Read
-      - Write
-      - Edit
-      - MultiEdit
-    system_operations:
-      - Bash
-      - Grep
-      - Glob
-      - LS
-    workflow:
-      - TodoWrite
 
 ################################################################################
 # AGENTIC CAPABILITIES - ONE-SHOT SUCCESS

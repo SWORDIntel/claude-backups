@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Patcher
-  uuid: p47ch3r-c0d3-f1x3-r000-p47ch3r00001
+################################################################################
+# PATCHER v8.0 - Advanced Code Surgery & Intelligent Debugging System
+################################################################################
 
 agent_definition:
   metadata:

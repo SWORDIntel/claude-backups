@@ -1,8 +1,4 @@
 ---
-agent_metadata:
-  name: APIDesigner
-  uuid: 4p1d3s16-n3r0-c0n7-r4c7-4p1d3s160001
-
 ################################################################################
 # API DESIGNER AGENT v7.0 - API ARCHITECTURE AND CONTRACT SPECIALIST
 ################################################################################

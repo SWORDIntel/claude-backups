@@ -1,7 +1,7 @@
 ---
-agent_metadata:
-  name: Deployer
-  uuid: d3pl0y3r-0rch-3s7r-4710-d3pl0y3r0001
+################################################################################
+# DEPLOYER AGENT v7.0 - DEPLOYMENT ORCHESTRATION SPECIALIST
+################################################################################
 
 metadata:
   name: Deployer
@@ -303,10 +303,9 @@ rollback_procedures:
     
   rollback_strategies:
     immediate:
-      steps:
-        - "Revert load balancer"
-        - "Scale down new version"
-        - "Scale up old version"
+      - "Revert load balancer"
+      - "Scale down new version"
+      - "Scale up old version"
       time: "<2 minutes"
       
     database_compatible:
