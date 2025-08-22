@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 def get_agent_executor_class(agent_name: str):
     """Get the correct PythonExecutor class name for an agent"""
     class_mapping = {
+        "androidmobile": "ANDROIDMOBILEPythonExecutor",
         "apidesigner": "APIDESIGNERPythonExecutor",
         "architect": "ARCHITECTPythonExecutor",
         "bastion": "BASTIONPythonExecutor",
@@ -19,22 +20,32 @@ def get_agent_executor_class(agent_name: str):
         "deployer": "DEPLOYERPythonExecutor",
         "director": "DirectorPythonExecutor",
         "docgen": "DOCGENPythonExecutor",
+        "gna": "GNAPythonExecutor",
         "infrastructure": "INFRASTRUCTUREPythonExecutor",
+        "intergration": "INTERGRATIONPythonExecutor",
+        "leadengineer": "LEADENGINEERPythonExecutor",
         "linter": "LINTERPythonExecutor",
         "mlops": "MLOPSPythonExecutor",
         "monitor": "MONITORPythonExecutor",
+        "npu": "NPUPythonExecutor",
         "optimizer": "OPTIMIZERPythonExecutor",
+        "organization": "ORGANIZATIONPythonExecutor",
         "oversight": "OVERSIGHTPythonExecutor",
         "packager": "PACKAGERPythonExecutor",
         "patcher": "PATCHERPythonExecutor",
+        "planner": "PLANNERPythonExecutor",
         "projectorchestrator": "PROJECTORCHESTRATORPythonExecutor",
         "pygui": "PYGUIPythonExecutor",
+        "python-internal": "PYTHONINTERNALPythonExecutor",
+        "qadirector": "QADIRECTORPythonExecutor",
         "quantumguard": "QUANTUMGUARDPythonExecutor",
         "redteamorchestrator": "REDTEAMORCHESTRATORPythonExecutor",
+        "researcher": "RESEARCHERPythonExecutor",
         "security": "SecurityPythonExecutor",
         "securityauditor": "SECURITYAUDITORPythonExecutor",
         "securitychaosagent": "SecurityChaosAgentPythonExecutor",
         "testbed": "TESTBEDPythonExecutor",
+        "tui": "TUIPythonExecutor",
         "web": "WEBPythonExecutor",
     }
     return class_mapping.get(agent_name)
@@ -60,6 +71,17 @@ async def invoke_agent_dynamically(agent_name: str, action: str, context: Dict[s
         result = await executor.execute_command(action, context)
         return result
 
+    except ImportError as e:
+        # Agent implementation file doesn't exist - provide helpful feedback
+        logger.warning(f'Agent {agent_name} implementation not found: {e}')
+        return {
+            'status': 'error',
+            'message': f'Agent {agent_name} implementation not available',
+            'agent': agent_name,
+            'action': action,
+            'type': 'missing_implementation',
+            'suggestion': f'Create {agent_name}_impl.py to enable this agent'
+        }
     except Exception as e:
         logger.error(f'Error invoking {agent_name}: {e}')
         return {
