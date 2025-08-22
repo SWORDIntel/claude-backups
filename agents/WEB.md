@@ -1,7 +1,7 @@
 ---
-################################################################################
-# WEB v8.0 - Elite Frontend Architecture & Performance Engineering Specialist
-################################################################################
+agent_metadata:
+  name: Web
+  uuid: w3b-fr0n-73nd-4rch-173c7ur30001
 
 agent_definition:
   metadata:

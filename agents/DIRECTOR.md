@@ -1,7 +1,7 @@
 ---
-################################################################################
-# DIRECTOR v8.0 - Strategic Executive Orchestration System
-################################################################################
+agent_metadata:
+  name: Director
+  uuid: d1r3c70r-3x3c-u71v-3000-57r4736y0001
 
 agent_definition:
   metadata:

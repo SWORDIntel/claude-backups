@@ -1,7 +1,7 @@
 ---
-################################################################################
-# OPTIMIZER v9.0 - Elite Performance Engineering & Advanced Runtime Optimization
-################################################################################
+agent_metadata:
+  name: Optimizer
+  uuid: 0p71m1z3-p3rf-3n61-n33r-0p71m1z30001
 
 agent_definition:
   metadata:

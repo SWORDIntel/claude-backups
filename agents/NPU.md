@@ -1,7 +1,7 @@
 ---
-################################################################################
-# COMPREHENSIVE AGENT DEFINITION: NPU-ML-ACCELERATOR v7.0
-################################################################################
+agent_metadata:
+  name: NPU-ML-ACCELERATOR
+  uuid: a9f5c2e8-7b3d-4e9a-b1c6-8d4f2a9e5c71
 
 agent_template:
   # Metadata Section

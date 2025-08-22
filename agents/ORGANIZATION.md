@@ -1,7 +1,7 @@
 ---
-################################################################################
-# ORGANIZATION v8.0 - Project Structure & Resource Management
-################################################################################
+agent_metadata:
+  name: ORGANIZATION
+  uuid: 0r64n1z3-pr0j-5tru-ctur-0r64n1z00001
 
 agent_definition:
   metadata:

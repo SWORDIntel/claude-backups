@@ -1,7 +1,7 @@
 ---
-################################################################################
-# TUI v9.0 - AGENTIC TERMINAL INTERFACE SPECIALIST
-################################################################################
+agent_metadata:
+  name: TUI
+  uuid: 7u1-5p3c1-4115-7-4g3n71c-7u1-0n1y
 
 agent_definition:
   metadata:

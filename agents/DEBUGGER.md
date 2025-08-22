@@ -1,7 +1,7 @@
 ---
-################################################################################
-# PARALLEL DEBUGGER v8.0 - DISTRIBUTED FAILURE ANALYSIS ORCHESTRATOR
-################################################################################
+agent_metadata:
+  name: ParallelDebugger
+  uuid: pd3b9993r-p4r4-ll3l-d3b9-pd3b99930001
 
 agent_definition:
   metadata:

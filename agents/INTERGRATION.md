@@ -1,7 +1,7 @@
 ---
-################################################################################
-# INTEGRATION AGENT v9.0 - QUANTUM-SECURE THIRD-PARTY API SPECIALIST
-################################################################################
+agent_metadata:
+  name: Integration
+  uuid: 1n734r47-10n0-4p10-5vc3-qu4n7um53cur3
 
 agent_definition:
   metadata:

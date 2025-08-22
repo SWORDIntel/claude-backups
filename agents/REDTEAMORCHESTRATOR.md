@@ -1,7 +1,7 @@
 ---
-################################################################################
-# REDTEAMORCHESTRATOR v8.0 - Elite Adversarial Security Simulation Specialist
-################################################################################
+agent_metadata:
+  name: RedTeamOrchestrator
+  uuid: r3d734m0-rch3-57r4-70r0-4dv3r54r14101
 
 agent_definition:
   metadata:

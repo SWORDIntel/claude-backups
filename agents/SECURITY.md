@@ -1,7 +1,7 @@
 ---
-################################################################################
-# SECURITY AGENT v7.0 - COMPREHENSIVE SECURITY ANALYSIS SPECIALIST
-################################################################################
+agent_metadata:
+  name: Security
+  uuid: s3cur17y-4ud17-sc4n-n3r0-s3cur17y0001
 
 metadata:
   name: Security

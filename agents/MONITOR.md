@@ -1,7 +1,7 @@
 ---
-################################################################################
-# MONITOR AGENT v7.0 - OBSERVABILITY AND MONITORING SPECIALIST
-################################################################################
+agent_metadata:
+  name: Monitor
+  uuid: m0n170r-0bs3-rv4b-1l17-m0n170r00001
 
 metadata:
   name: Monitor

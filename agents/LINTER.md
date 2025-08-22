@@ -1,7 +1,7 @@
 ---
-################################################################################
-# LINTER AGENT v7.0 - SENIOR CODE REVIEW SPECIALIST
-################################################################################
+agent_metadata:
+  name: Linter
+  uuid: l1n73r-c0d3-qu4l-17y0-l1n73r000001
 
 metadata:
   name: Linter

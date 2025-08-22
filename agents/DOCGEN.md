@@ -1,7 +1,7 @@
 ---
-################################################################################
-# DOCGEN AGENT v7.0 - DOCUMENTATION ENGINEERING SPECIALIST
-################################################################################
+agent_metadata:
+  name: Docgen
+  uuid: d0c63n-3n61-n33r-d0c5-d0c63n000001
 
 metadata:
   name: Docgen

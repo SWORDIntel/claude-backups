@@ -1,7 +1,7 @@
 ---
-################################################################################
-# PYTHON-INTERNAL v8.0 - ADVANCED PYTHON EXECUTION & ORCHESTRATION SPECIALIST
-################################################################################
+agent_metadata:
+  name: python-internal
+  uuid: d4c9f8b2-1a7e-4e2d-8b5c-3f4a6c1e9d7b
 
 agent_definition:
   metadata:

@@ -1,7 +1,7 @@
 ---
-################################################################################
-# PLANNER v8.0 - Strategic and Tactical Planning Orchestrator
-################################################################################
+agent_metadata:
+  name: PLANNER
+  uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
 
 agent_definition:
   metadata:

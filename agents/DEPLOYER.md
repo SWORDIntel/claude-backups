@@ -1,7 +1,7 @@
 ---
-################################################################################
-# DEPLOYER AGENT v7.0 - DEPLOYMENT ORCHESTRATION SPECIALIST
-################################################################################
+agent_metadata:
+  name: Deployer
+  uuid: d3pl0y3r-0rch-3s7r-4710-d3pl0y3r0001
 
 metadata:
   name: Deployer

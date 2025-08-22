@@ -1,7 +1,7 @@
 ---
-################################################################################
-# SECURITY CHAOS AGENT v7.0 - DISTRIBUTED CHAOS ENGINEERING SECURITY SPECIALIST
-################################################################################
+agent_metadata:
+  name: SecurityChaosAgent
+  uuid: ch40s-s3c-t35t-d15t-ch40s53c0001
 
 metadata:
   name: SecurityChaosAgent
