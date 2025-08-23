@@ -1921,6 +1921,10 @@ class UltimateClaudeCodeInterface:
 
 async def main():
     """Ultimate CLI interface with comprehensive functionality"""
+    import os
+    import sys
+    import json
+    from pathlib import Path
     
     # Set up enhanced logging
     logging.basicConfig(
@@ -1947,14 +1951,29 @@ Commands:
         """)
         return
     
-    # Database configuration
-    db_config = {
-        'host': 'localhost',
-        'port': 5432,
-        'database': 'claude_agents',
-        'user': 'postgres',
-        'password': 'your_password'
-    }
+    # Database configuration - read from environment or config file
+    db_config = None
+    
+    # Try to load from config file first
+    config_file = Path(__file__).parent.parent.parent / "config" / "database.json"
+    if config_file.exists():
+        try:
+            with open(config_file, 'r') as f:
+                db_config = json.load(f)
+                logger.info(f"Loaded database config from {config_file}")
+        except Exception as e:
+            logger.warning(f"Could not load config file {config_file}: {e}")
+    
+    # Fallback to environment variables
+    if not db_config:
+        db_config = {
+            'host': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'port': int(os.environ.get('POSTGRES_PORT', '5433')),
+            'database': os.environ.get('POSTGRES_DB', 'claude_auth'),
+            'user': os.environ.get('POSTGRES_USER', 'claude_auth'),
+            'password': os.environ.get('POSTGRES_PASSWORD', 'claude_auth_pass')
+        }
+        logger.info("Using database config from environment variables")
     
     # Initialize ultimate learning system
     learning_system = UltimatePostgreSQLLearningSystem(db_config)

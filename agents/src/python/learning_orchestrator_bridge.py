@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Import existing components
 try:
     from production_orchestrator import ProductionOrchestrator, ExecutionMode, CommandSet, CommandStep
-    from postgresql_learning_system import PostgreSQLLearningSystem, AgentTaskExecution
+    from postgresql_learning_system import UltimatePostgreSQLLearningSystem, AgentTaskExecution
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     print(f"Import warning: {e}")
@@ -289,7 +289,7 @@ class EnhancedLearningOrchestrator:
     def __init__(self, learning_strategy: LearningStrategy = LearningStrategy.ADAPTIVE):
         if IMPORTS_AVAILABLE:
             self.production_orchestrator = ProductionOrchestrator()
-            self.learning_system = PostgreSQLLearningSystem()
+            self.learning_system = UltimatePostgreSQLLearningSystem()
         else:
             self.production_orchestrator = None
             self.learning_system = None
