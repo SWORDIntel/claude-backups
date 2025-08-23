@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """
-Enhanced Agent Integration System - Meteor Lake Optimized Edition
+Enhanced Agent Integration System v2.0 - Adaptive Multi-Architecture Edition
 Provides seamless communication and coordination between all agents
-with hardware-aware scheduling and vector routing integration
+with graceful C/Python fallback and universal hardware compatibility
+
+Key Features:
+- Automatic C-mode detection with Python-only fallback
+- Universal hardware topology (not just Meteor Lake)
+- Integration with production_orchestrator.py
+- Comprehensive error handling and recovery
+- Modern Python practices with ultrathink design
 """
 
 import asyncio
@@ -10,22 +17,90 @@ import json
 import uuid
 import time
 import os
+import sys
+import platform
 import psutil
-import numpy as np
-from typing import Dict, List, Any, Optional, Callable, Tuple, Set
+import warnings
+from typing import Dict, List, Any, Optional, Callable, Tuple, Set, Union
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 from datetime import datetime, timedelta
-import networkx as nx
 from collections import defaultdict, deque
 import logging
 import pickle
 import hashlib
-import ctypes
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import multiprocessing as mp
 from functools import lru_cache, wraps
 import heapq
+
+# Optional imports with graceful fallback
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    warnings.warn("NumPy not available, using pure Python alternatives")
+    HAS_NUMPY = False
+    # Pure Python alternatives for numpy functionality
+    import random as py_random
+    import math
+    
+    class NPCompat:
+        """Pure Python numpy compatibility layer"""
+        # Alias for type hints
+        ndarray = list
+        
+        class random:
+            @staticmethod
+            def seed(val): 
+                py_random.seed(val)
+            
+            @staticmethod
+            def randn(*shape):
+                if not shape: return py_random.gauss(0, 1)
+                size = 1
+                for dim in shape: size *= dim
+                return [py_random.gauss(0, 1) for _ in range(size)]
+        
+        @staticmethod
+        def randn(*shape):
+            if not shape: return py_random.gauss(0, 1)
+            size = 1
+            for dim in shape: size *= dim
+            return [py_random.gauss(0, 1) for _ in range(size)]
+        
+        @staticmethod  
+        def dot(a, b): 
+            return sum(x*y for x,y in zip(a,b))
+        
+        class linalg:
+            @staticmethod
+            def norm(a): 
+                return math.sqrt(sum(x*x for x in a))
+        
+        @staticmethod
+        def mean(a): 
+            return sum(a) / len(a) if a else 0
+        
+        @staticmethod
+        def array(data):
+            return list(data)
+    
+    np = NPCompat()
+        
+try:
+    import networkx as nx
+    HAS_NETWORKX = True
+except ImportError:
+    warnings.warn("NetworkX not available, using simplified graph operations")
+    HAS_NETWORKX = False
+
+# Try to import production orchestrator (recent project update)
+try:
+    from production_orchestrator import ProductionOrchestrator, ExecutionMode
+    HAS_PRODUCTION_ORCHESTRATOR = True
+except ImportError:
+    HAS_PRODUCTION_ORCHESTRATOR = False
 
 # Configure logging with performance metrics
 logging.basicConfig(
@@ -74,40 +149,131 @@ class HardwareAffinity(Enum):
 
 
 @dataclass
-class MeteorLakeTopology:
-    """Meteor Lake CPU topology configuration"""
-    p_cores_ultra: List[int] = field(default_factory=lambda: [11, 14, 15, 16])
-    p_cores_standard: List[int] = field(default_factory=lambda: list(range(0, 11)))
-    e_cores: List[int] = field(default_factory=lambda: list(range(12, 20)))
-    lp_e_cores: List[int] = field(default_factory=lambda: [20, 21])
+class AdaptiveTopology:
+    """Adaptive CPU topology with Intel Meteor Lake as optimized default"""
+    p_cores_ultra: List[int] = field(default_factory=list)
+    p_cores_standard: List[int] = field(default_factory=list)
+    e_cores: List[int] = field(default_factory=list)
+    lp_e_cores: List[int] = field(default_factory=list)
+    total_cores: int = 0
+    architecture: str = ""
+    
+    def __post_init__(self):
+        """Auto-detect CPU topology with Intel Meteor Lake as optimized default"""
+        self.total_cores = psutil.cpu_count(logical=True)
+        self.architecture = self._detect_architecture()
+        
+        if self.architecture == "intel_meteor_lake":
+            # OPTIMIZED: Intel Meteor Lake topology (default for best performance)
+            self.p_cores_ultra = [11, 14, 15, 16]
+            self.p_cores_standard = list(range(0, 11))
+            self.e_cores = list(range(12, 20))
+            self.lp_e_cores = [20, 21]
+            logger.info("🚀 Intel Meteor Lake topology detected - OPTIMIZED performance mode")
+        else:
+            # GRACEFUL FALLBACK: Generic topology for other architectures
+            self._setup_generic_topology()
+            logger.info(f"Generic topology for {self.architecture} - graceful fallback mode")
+    
+    def _detect_architecture(self) -> str:
+        """Detect CPU architecture with Intel Meteor Lake priority"""
+        try:
+            # Check for Intel Meteor Lake signature (our optimal target)
+            cpu_info = platform.processor().lower()
+            
+            # Intel Meteor Lake detection (prioritized)
+            if "intel" in cpu_info and ("core ultra" in cpu_info or "155h" in cpu_info):
+                return "intel_meteor_lake"
+            elif "intel" in cpu_info and self.total_cores == 22:
+                return "intel_meteor_lake"  # Likely Meteor Lake based on core count
+            
+            # Other Intel architectures
+            elif "intel" in cpu_info:
+                return f"intel_generic_{self.total_cores}core"
+            
+            # AMD architectures  
+            elif "amd" in cpu_info:
+                return f"amd_generic_{self.total_cores}core"
+            
+            # ARM architectures
+            elif "arm" in cpu_info or "aarch64" in platform.machine():
+                return f"arm_generic_{self.total_cores}core"
+            
+            # Default fallback
+            else:
+                return f"generic_{self.total_cores}core"
+                
+        except Exception as e:
+            logger.warning(f"Architecture detection failed: {e}, using generic topology")
+            return f"generic_{self.total_cores}core"
+    
+    def _setup_generic_topology(self):
+        """Setup generic topology for non-Meteor Lake systems"""
+        # Generic topology based on core count
+        if self.total_cores >= 16:
+            # High-core systems: split into performance/efficiency tiers
+            quarter = self.total_cores // 4
+            self.p_cores_ultra = list(range(0, quarter))
+            self.p_cores_standard = list(range(quarter, quarter * 2))
+            self.e_cores = list(range(quarter * 2, quarter * 3))
+            self.lp_e_cores = list(range(quarter * 3, self.total_cores))
+        elif self.total_cores >= 8:
+            # Medium systems: split into two tiers
+            half = self.total_cores // 2
+            self.p_cores_ultra = list(range(0, 2))  # First 2 cores as ultra
+            self.p_cores_standard = list(range(2, half))
+            self.e_cores = list(range(half, self.total_cores))
+            self.lp_e_cores = []  # No LP cores on smaller systems
+        else:
+            # Small systems: all cores are standard
+            self.p_cores_ultra = []
+            self.p_cores_standard = list(range(0, self.total_cores))
+            self.e_cores = []
+            self.lp_e_cores = []
     
     def get_cores_for_priority(self, priority: Priority) -> List[int]:
-        """Get CPU cores for given priority"""
-        if priority == Priority.CRITICAL:
+        """Get CPU cores for given priority (Meteor Lake optimized, graceful fallback)"""
+        if priority == Priority.CRITICAL and self.p_cores_ultra:
             return self.p_cores_ultra
-        elif priority == Priority.HIGH:
+        elif priority == Priority.HIGH and self.p_cores_standard:
             return self.p_cores_standard
-        elif priority in [Priority.MEDIUM, Priority.LOW]:
+        elif priority in [Priority.MEDIUM, Priority.LOW] and self.e_cores:
             return self.e_cores
-        else:
+        elif self.lp_e_cores:
             return self.lp_e_cores
+        else:
+            # Fallback to any available cores
+            return self.p_cores_standard or list(range(min(4, self.total_cores)))
     
     def get_optimal_core(self, workload_type: str) -> int:
-        """Get optimal core for workload type"""
-        cpu_percent = psutil.cpu_percent(percpu=True)
-        
-        if workload_type == "compute_intensive":
-            # Find least loaded P-core
-            p_core_loads = [(cpu_percent[i], i) for i in self.p_cores_ultra + self.p_cores_standard]
-            return min(p_core_loads)[1]
-        elif workload_type == "io_intensive":
-            # Use E-cores for I/O
-            e_core_loads = [(cpu_percent[i], i) for i in self.e_cores]
-            return min(e_core_loads)[1]
-        else:
-            # Background tasks on LP E-cores
-            lp_core_loads = [(cpu_percent[i], i) for i in self.lp_e_cores]
-            return min(lp_core_loads)[1]
+        """Get optimal core for workload type with graceful fallback"""
+        try:
+            cpu_percent = psutil.cpu_percent(percpu=True)
+            
+            if workload_type == "compute_intensive":
+                # Prefer ultra P-cores, fallback to standard P-cores
+                candidates = self.p_cores_ultra + self.p_cores_standard
+                if not candidates:
+                    candidates = list(range(min(4, self.total_cores)))
+                
+                core_loads = [(cpu_percent[i] if i < len(cpu_percent) else 50, i) for i in candidates]
+                return min(core_loads)[1]
+                
+            elif workload_type == "io_intensive":
+                # Prefer E-cores, fallback to any available
+                candidates = self.e_cores or self.p_cores_standard or list(range(self.total_cores))
+                core_loads = [(cpu_percent[i] if i < len(cpu_percent) else 50, i) for i in candidates]
+                return min(core_loads)[1]
+                
+            else:
+                # Background tasks - prefer LP E-cores, fallback gracefully
+                candidates = self.lp_e_cores or self.e_cores or list(range(max(1, self.total_cores - 2), self.total_cores))
+                core_loads = [(cpu_percent[i] if i < len(cpu_percent) else 50, i) for i in candidates]
+                return min(core_loads)[1]
+                
+        except Exception as e:
+            logger.warning(f"Core selection failed: {e}, using core 0")
+            return 0
 
 
 @dataclass
@@ -194,24 +360,43 @@ class VectorRoutingEngine:
             # Create characteristic vector for each agent
             self.agent_vectors[agent] = self._create_agent_vector(agent)
     
-    def _create_agent_vector(self, agent_type: str) -> np.ndarray:
+    def _create_agent_vector(self, agent_type: str) -> Union[np.ndarray, List[float]]:
         """Create characteristic vector for agent type"""
         # Simplified: In production, use actual embeddings
-        base_vector = np.random.randn(self.dimension)
+        base_vector = np.randn(self.dimension)
         
-        # Add agent-specific characteristics
-        if "DIRECTOR" in agent_type:
-            base_vector[0:100] *= 2.0  # Strategic planning
-        elif "SECURITY" in agent_type:
-            base_vector[100:200] *= 2.0  # Security focus
-        elif "ML_OPS" in agent_type:
-            base_vector[200:300] *= 2.0  # ML operations
-        elif "DATABASE" in agent_type:
-            base_vector[300:400] *= 2.0  # Data management
-        
-        return base_vector / np.linalg.norm(base_vector)
+        if HAS_NUMPY:
+            # NumPy version with vectorized operations
+            if "DIRECTOR" in agent_type:
+                base_vector[0:100] *= 2.0  # Strategic planning
+            elif "SECURITY" in agent_type:
+                base_vector[100:200] *= 2.0  # Security focus
+            elif "ML_OPS" in agent_type:
+                base_vector[200:300] *= 2.0  # ML operations
+            elif "DATABASE" in agent_type:
+                base_vector[300:400] *= 2.0  # Data management
+            
+            return base_vector / np.linalg.norm(base_vector)
+        else:
+            # Pure Python version with list operations
+            if "DIRECTOR" in agent_type:
+                for i in range(0, min(100, len(base_vector))):
+                    base_vector[i] *= 2.0
+            elif "SECURITY" in agent_type:
+                for i in range(100, min(200, len(base_vector))):
+                    base_vector[i] *= 2.0
+            elif "ML_OPS" in agent_type:
+                for i in range(200, min(300, len(base_vector))):
+                    base_vector[i] *= 2.0
+            elif "DATABASE" in agent_type:
+                for i in range(300, min(400, len(base_vector))):
+                    base_vector[i] *= 2.0
+            
+            # Normalize vector
+            norm = np.linalg.norm(base_vector)
+            return [x / norm for x in base_vector] if norm > 0 else base_vector
     
-    def compute_message_embedding(self, message: EnhancedAgentMessage) -> np.ndarray:
+    def compute_message_embedding(self, message: EnhancedAgentMessage) -> Union[np.ndarray, List[float]]:
         """Compute vector embedding for message"""
         if message.vector_embedding is not None:
             return message.vector_embedding
@@ -219,17 +404,33 @@ class VectorRoutingEngine:
         # Hash-based pseudo-embedding (simplified)
         msg_hash = message.compute_hash()
         np.random.seed(int(msg_hash[:8], 16))
-        embedding = np.random.randn(self.dimension)
+        embedding = np.randn(self.dimension)
         
-        # Incorporate action semantics
-        if "design" in message.action.lower():
-            embedding[0:100] += 1.0
-        if "test" in message.action.lower():
-            embedding[100:200] += 1.0
-        if "deploy" in message.action.lower():
-            embedding[200:300] += 1.0
-        
-        return embedding / np.linalg.norm(embedding)
+        if HAS_NUMPY:
+            # NumPy version
+            if "design" in message.action.lower():
+                embedding[0:100] += 1.0
+            if "test" in message.action.lower():
+                embedding[100:200] += 1.0
+            if "deploy" in message.action.lower():
+                embedding[200:300] += 1.0
+            
+            return embedding / np.linalg.norm(embedding)
+        else:
+            # Pure Python version
+            if "design" in message.action.lower():
+                for i in range(0, min(100, len(embedding))):
+                    embedding[i] += 1.0
+            if "test" in message.action.lower():
+                for i in range(100, min(200, len(embedding))):
+                    embedding[i] += 1.0
+            if "deploy" in message.action.lower():
+                for i in range(200, min(300, len(embedding))):
+                    embedding[i] += 1.0
+            
+            # Normalize
+            norm = np.linalg.norm(embedding)
+            return [x / norm for x in embedding] if norm > 0 else embedding
     
     def find_best_agents(self, message: EnhancedAgentMessage, top_k: int = 3) -> List[Tuple[str, float]]:
         """Find best agents for message using vector similarity"""
@@ -454,20 +655,36 @@ class EnhancedAgentRegistry:
 
 
 class EnhancedAgentOrchestrator:
-    """Enhanced orchestration engine with hardware-aware scheduling"""
+    """Enhanced orchestration engine with adaptive hardware support and C/Python fallback"""
     
-    def __init__(self, max_workers: int = 22):  # Total Meteor Lake cores
+    def __init__(self, max_workers: Optional[int] = None, enable_c_mode: bool = True):
         self.registry = EnhancedAgentRegistry()
-        self.topology = MeteorLakeTopology()
+        self.topology = AdaptiveTopology()
         self.message_queue = asyncio.PriorityQueue()
         self.state_store = {}
         self.active_agents = {}
+        
+        # C/Python mode detection and fallback
+        self.c_mode_enabled = self._detect_c_capabilities() if enable_c_mode else False
+        self.fallback_mode = "python_only" if not self.c_mode_enabled else "hybrid"
+        
+        # Dynamic worker allocation based on detected topology
+        if max_workers is None:
+            max_workers = self.topology.total_cores
+        
+        # Initialize production orchestrator integration if available
+        self.production_orchestrator = None
+        if HAS_PRODUCTION_ORCHESTRATOR:
+            try:
+                self.production_orchestrator = ProductionOrchestrator()
+                logger.info("🔗 Production orchestrator integration enabled")
+            except Exception as e:
+                logger.warning(f"Production orchestrator integration failed: {e}")
+        
         self.dependency_graph = self._build_dependency_graph()
         
-        # Thread pools for different core types
-        self.p_core_executor = ThreadPoolExecutor(max_workers=12, thread_name_prefix="p-core")
-        self.e_core_executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="e-core")
-        self.lp_e_core_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="lp-e-core")
+        # Adaptive thread pools based on actual topology
+        self._setup_thread_pools(max_workers)
         
         # Performance monitoring
         self.execution_history = deque(maxlen=1000)
@@ -476,21 +693,137 @@ class EnhancedAgentOrchestrator:
         # Message deduplication
         self.processed_messages = set()
         self.message_cache = {}
+        
+        logger.info(f"🚀 Enhanced Agent Orchestrator initialized:")
+        logger.info(f"   • Architecture: {self.topology.architecture}")
+        logger.info(f"   • Cores: {self.topology.total_cores}")
+        logger.info(f"   • C-mode: {'enabled' if self.c_mode_enabled else 'disabled (Python fallback)'}")
+        logger.info(f"   • Production integration: {'enabled' if self.production_orchestrator else 'disabled'}")
     
-    def _build_dependency_graph(self) -> nx.DiGraph:
-        """Build enhanced dependency graph with weights"""
-        graph = nx.DiGraph()
+    def _detect_c_capabilities(self) -> bool:
+        """Detect if C-mode capabilities are available with graceful fallback"""
+        try:
+            # Test CPU affinity capability
+            if hasattr(os, 'sched_setaffinity'):
+                # Test if we can actually set affinity
+                original_affinity = os.sched_getaffinity(0)
+                test_cores = {0}  # Try to set to core 0
+                os.sched_setaffinity(0, test_cores)
+                os.sched_setaffinity(0, original_affinity)  # Restore
+                
+                # Test for Intel-specific optimizations  
+                if "intel" in self.topology.architecture:
+                    # Additional Intel-specific checks could go here
+                    logger.info("✅ Intel optimizations available")
+                
+                logger.info("✅ C-mode capabilities detected")
+                return True
+                
+        except (OSError, AttributeError, PermissionError) as e:
+            logger.info(f"⚠️  C-mode capabilities not available: {e}")
+            logger.info("🐍 Falling back to Python-only mode")
+            
+        return False
+    
+    def _setup_thread_pools(self, max_workers: int):
+        """Setup thread pools based on detected topology"""
+        # Calculate workers per pool based on actual core counts
+        p_ultra_workers = len(self.topology.p_cores_ultra) or 1
+        p_std_workers = len(self.topology.p_cores_standard) or 2  
+        e_workers = len(self.topology.e_cores) or 2
+        lp_workers = len(self.topology.lp_e_cores) or 1
         
-        for agent_id, config in self.registry.agents.items():
-            graph.add_node(agent_id, **config)
-            for dependency in config.get("dependencies", []):
-                # Add edge with weight based on typical execution time
-                weight = 1.0  # Default weight
-                if "ML_OPS" in agent_id or "ML_OPS" in dependency:
-                    weight = 2.0  # ML operations take longer
-                graph.add_edge(dependency, agent_id, weight=weight)
+        # Ensure we don't exceed max_workers
+        total_desired = p_ultra_workers + p_std_workers + e_workers + lp_workers
+        if total_desired > max_workers:
+            # Scale down proportionally
+            scale_factor = max_workers / total_desired
+            p_ultra_workers = max(1, int(p_ultra_workers * scale_factor))
+            p_std_workers = max(1, int(p_std_workers * scale_factor))
+            e_workers = max(1, int(e_workers * scale_factor))
+            lp_workers = max(1, int(lp_workers * scale_factor))
         
-        return graph
+        # Create thread pools
+        self.p_core_ultra_executor = ThreadPoolExecutor(
+            max_workers=p_ultra_workers, 
+            thread_name_prefix=f"p-ultra-{self.topology.architecture}"
+        )
+        self.p_core_executor = ThreadPoolExecutor(
+            max_workers=p_std_workers, 
+            thread_name_prefix=f"p-std-{self.topology.architecture}"
+        )
+        self.e_core_executor = ThreadPoolExecutor(
+            max_workers=e_workers, 
+            thread_name_prefix=f"e-{self.topology.architecture}"
+        )
+        self.lp_e_core_executor = ThreadPoolExecutor(
+            max_workers=lp_workers, 
+            thread_name_prefix=f"lp-{self.topology.architecture}"
+        )
+        
+        logger.info(f"Thread pools: P-Ultra({p_ultra_workers}), P-Std({p_std_workers}), E({e_workers}), LP({lp_workers})")
+    
+    def _select_executor_for_cores(self, cores: List[int], agent_id: str) -> ThreadPoolExecutor:
+        """Select appropriate thread pool executor with graceful fallback"""
+        if not cores:
+            # No specific cores assigned, use default based on agent type
+            if any(keyword in agent_id.upper() for keyword in ["DIRECTOR", "SECURITY", "ML_OPS"]):
+                return getattr(self, 'p_core_ultra_executor', self.p_core_executor)
+            elif any(keyword in agent_id.upper() for keyword in ["MONITOR", "DOCGEN", "LINTER"]):
+                return getattr(self, 'lp_e_core_executor', self.e_core_executor)
+            else:
+                return self.e_core_executor
+        
+        # Select based on first assigned core
+        first_core = cores[0]
+        
+        if first_core in self.topology.p_cores_ultra:
+            return getattr(self, 'p_core_ultra_executor', self.p_core_executor)
+        elif first_core in self.topology.p_cores_standard:
+            return self.p_core_executor
+        elif first_core in self.topology.e_cores:
+            return self.e_core_executor
+        elif first_core in self.topology.lp_e_cores:
+            return getattr(self, 'lp_e_core_executor', self.e_core_executor)
+        else:
+            # Fallback to general purpose executor
+            return self.p_core_executor
+    
+    def _build_dependency_graph(self) -> Union['nx.DiGraph', Dict[str, List[str]]]:
+        """Build enhanced dependency graph with NetworkX or fallback to dict"""
+        if HAS_NETWORKX:
+            # NetworkX implementation for advanced graph operations
+            graph = nx.DiGraph()
+            
+            for agent_id, config in self.registry.agents.items():
+                graph.add_node(agent_id, **config)
+                for dependency in config.get("dependencies", []):
+                    # Add edge with weight based on typical execution time
+                    weight = 1.0  # Default weight
+                    if "ML_OPS" in agent_id or "ML_OPS" in dependency:
+                        weight = 2.0  # ML operations take longer
+                    graph.add_edge(dependency, agent_id, weight=weight)
+            
+            return graph
+        else:
+            # Fallback to simple dictionary-based dependency tracking
+            logger.info("Using simple dependency graph (NetworkX not available)")
+            graph = {}
+            
+            for agent_id, config in self.registry.agents.items():
+                graph[agent_id] = {
+                    "dependencies": config.get("dependencies", []),
+                    "dependents": [],
+                    "config": config
+                }
+            
+            # Build reverse dependencies
+            for agent_id, data in graph.items():
+                for dep in data["dependencies"]:
+                    if dep in graph:
+                        graph[dep]["dependents"].append(agent_id)
+            
+            return graph
     
     async def execute_workflow(self, workflow: dict, trace_id: Optional[str] = None) -> dict:
         """Execute workflow with distributed tracing and optimization"""
@@ -728,23 +1061,35 @@ class EnhancedAgentOrchestrator:
     
     async def _execute_agent_with_affinity(self, workflow_id: str, agent_id: str, 
                                           step: dict, cores: List[int], trace_id: str) -> dict:
-        """Execute agent with CPU core affinity"""
+        """Execute agent with adaptive CPU core affinity and graceful fallback"""
         
-        logger.info(f"Executing agent {agent_id} on cores {cores} [trace={trace_id}]")
+        affinity_status = "no-affinity"
         
-        # Set process affinity
-        if hasattr(os, 'sched_setaffinity'):
+        # Attempt to set CPU affinity only if C-mode is enabled
+        if self.c_mode_enabled and cores:
             try:
-                os.sched_setaffinity(0, set(cores))
-            except Exception as e:
-                logger.warning(f"Could not set CPU affinity: {e}")
+                if hasattr(os, 'sched_setaffinity'):
+                    os.sched_setaffinity(0, set(cores))
+                    affinity_status = f"cores-{'-'.join(map(str, cores))}"
+                    logger.info(f"🎯 Agent {agent_id} pinned to cores {cores} [trace={trace_id}]")
+                else:
+                    logger.debug(f"CPU affinity not supported on this platform")
+                    affinity_status = "unsupported-platform"
+            except (OSError, PermissionError) as e:
+                logger.warning(f"CPU affinity failed for {agent_id}: {e}, continuing without pinning")
+                affinity_status = f"failed-{type(e).__name__}"
+        else:
+            logger.debug(f"🐍 Agent {agent_id} running in Python-only mode [trace={trace_id}]")
+            affinity_status = "python-only"
         
         # Mark agent as active
         self.active_agents[agent_id] = {
             "status": AgentStatus.RUNNING,
             "workflow_id": workflow_id,
             "started_at": datetime.now(),
-            "cores": cores
+            "cores": cores,
+            "affinity_status": affinity_status,
+            "execution_mode": "c_mode" if self.c_mode_enabled else "python_only"
         }
         
         try:
@@ -768,13 +1113,8 @@ class EnhancedAgentOrchestrator:
             # Add vector embedding for routing
             message.vector_embedding = self.registry.vector_engine.compute_message_embedding(message)
             
-            # Execute on appropriate thread pool
-            if cores[0] in self.topology.p_cores_ultra + self.topology.p_cores_standard:
-                executor = self.p_core_executor
-            elif cores[0] in self.topology.e_cores:
-                executor = self.e_core_executor
-            else:
-                executor = self.lp_e_core_executor
+            # Select appropriate thread pool with graceful fallback
+            executor = self._select_executor_for_cores(cores, agent_id)
             
             # Execute agent
             loop = asyncio.get_event_loop()
@@ -849,7 +1189,7 @@ class EnhancedAgentOrchestrator:
         }
         
         # Include results from dependencies
-        agent_config = self.registry.get_agent_config(agent_id)
+        agent_config = self.registry.agents.get(agent_id, {})
         for dependency in agent_config.get("dependencies", []):
             if dependency in self.state_store[workflow_id]["results"]:
                 context["dependencies_results"][dependency] = \
@@ -905,6 +1245,32 @@ class EnhancedAgentOrchestrator:
         
         return list(agents)
     
+    def _get_safe_cpu_usage(self) -> Dict[str, Any]:
+        """Get CPU usage with graceful fallback"""
+        try:
+            cpu_percents = psutil.cpu_percent(percpu=True)
+            
+            return {
+                "p_cores_ultra": [cpu_percents[i] for i in self.topology.p_cores_ultra 
+                                 if i < len(cpu_percents)],
+                "p_cores_standard": [cpu_percents[i] for i in self.topology.p_cores_standard 
+                                   if i < len(cpu_percents)],
+                "e_cores": [cpu_percents[i] for i in self.topology.e_cores 
+                           if i < len(cpu_percents)],
+                "lp_e_cores": [cpu_percents[i] for i in self.topology.lp_e_cores 
+                              if i < len(cpu_percents)],
+                "overall": psutil.cpu_percent()
+            }
+        except Exception as e:
+            logger.warning(f"CPU usage collection failed: {e}")
+            return {
+                "p_cores_ultra": [],
+                "p_cores_standard": [],
+                "e_cores": [],
+                "lp_e_cores": [],
+                "overall": 0.0
+            }
+    
     async def get_system_metrics(self) -> Dict[str, Any]:
         """Get comprehensive system metrics"""
         
@@ -915,13 +1281,12 @@ class EnhancedAgentOrchestrator:
             "active_agents": len([a for a in self.active_agents.values() 
                                 if a["status"] == AgentStatus.RUNNING]),
             "message_queue_size": self.message_queue.qsize(),
-            "cpu_usage": {
-                "p_cores": [psutil.cpu_percent(percpu=True)[i] 
-                          for i in self.topology.p_cores_standard + self.topology.p_cores_ultra],
-                "e_cores": [psutil.cpu_percent(percpu=True)[i] 
-                          for i in self.topology.e_cores],
-                "lp_e_cores": [psutil.cpu_percent(percpu=True)[i] 
-                             for i in self.topology.lp_e_cores]
+            "cpu_usage": self._get_safe_cpu_usage(),
+            "topology": {
+                "architecture": self.topology.architecture,
+                "total_cores": self.topology.total_cores,
+                "c_mode_enabled": self.c_mode_enabled,
+                "fallback_mode": self.fallback_mode
             },
             "memory": {
                 "total_mb": psutil.virtual_memory().total / 1024 / 1024,
@@ -1018,8 +1383,13 @@ async def main():
         # Get system metrics
         metrics = await orchestrator.get_system_metrics()
         print(f"\nSystem Metrics:")
-        print(f"CPU Usage - P-cores: {np.mean(metrics['cpu_usage']['p_cores']):.1f}%")
-        print(f"CPU Usage - E-cores: {np.mean(metrics['cpu_usage']['e_cores']):.1f}%")
+        print(f"Architecture: {metrics['topology']['architecture']}")
+        print(f"C-mode: {'enabled' if metrics['topology']['c_mode_enabled'] else 'disabled'}")
+        print(f"Overall CPU: {metrics['cpu_usage']['overall']:.1f}%")
+        if metrics['cpu_usage']['p_cores_ultra']:
+            print(f"P-cores Ultra: {np.mean(metrics['cpu_usage']['p_cores_ultra']):.1f}%")
+        if metrics['cpu_usage']['e_cores']:
+            print(f"E-cores: {np.mean(metrics['cpu_usage']['e_cores']):.1f}%")
         print(f"Memory Available: {metrics['memory']['available_mb']:.0f} MB")
         
     except Exception as e:
