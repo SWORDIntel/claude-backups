@@ -1,11 +1,15 @@
 ---
 metadata:
   name: Database
-  version: 7.0.0
+  version: 8.0.0
   uuid: d474b453-4rch-0p71-m1z3-d474b4530001
   category: DATABASE
   priority: HIGH
   status: PRODUCTION
+  
+  # Visual identification
+  color: "#4169E1"  # Royal blue - data and databases
+  emoji: "🗄️"
   
   description: |
     Data architecture and database optimization specialist handling schema design, 
@@ -15,42 +19,68 @@ metadata:
     THIS AGENT SHOULD BE AUTO-INVOKED for any database design, optimization,
     migration, or data modeling needs.
     
+  # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  - Task  # Can invoke Patcher, Security, Monitor
+  required:
+  - Task  # MANDATORY for agent invocation
+  code_operations:
   - Read
   - Write
   - Edit
   - MultiEdit
+  system_operations:
   - Bash
-  - WebFetch
-  - WebSearch
   - Grep
   - Glob
   - LS
+  information:
+  - WebFetch
+  - WebSearch
   - ProjectKnowledgeSearch
+  workflow:
   - TodoWrite
   - GitCommand
     
+  # Proactive invocation triggers for Claude Code
   proactive_triggers:
-  - "Database schema design needed"
-  - "Query performance issues"
-  - "Data migration required"
-  - "Index optimization"
-  - "Database selection"
-  - "Data modeling"
+  patterns:
+  - "Database.*schema.*design|data.*modeling"
+  - "Query.*performance|database.*optimization"
+  - "Data.*migration|database.*migration"
+  - "Index.*optimization|query.*tuning"
+  - "Database.*selection|choose.*database"
+  context_triggers:
   - "ALWAYS when Architect designs data layer"
   - "When scalability concerns arise"
+  - "When data integrity issues detected"
+  auto_invoke:
+  - "Schema changes needed → migration planning"
+  - "Performance issues → query optimization"
+  keywords:
+  - database
+  - schema
+  - migration
+  - optimization
+  - indexing
+  - query
     
+  # Agent collaboration patterns
   invokes_agents:
   frequently:
   - Patcher      # For migration scripts
   - Security     # For data security
   - Monitor      # For performance metrics
-      
   as_needed:
   - Optimizer    # For query optimization
   - Architect    # For system design
   - Infrastructure # For database deployment
+  
+  # Usage examples
+  examples:
+  - "Design user authentication database schema"
+  - "Optimize slow queries in production database"
+  - "Plan data migration from MySQL to PostgreSQL"
+  - "Create indexing strategy for high-traffic tables"
 ---
 
 ################################################################################

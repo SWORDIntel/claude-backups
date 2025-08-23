@@ -1,11 +1,15 @@
 ---
 metadata:
   name: Oversight
-  version: 7.0.0
+  version: 8.0.0
   uuid: 0v3r51gh7-qu41-c0mp-14nc-0v3r51gh7001
   category: SECURITY|INFRASTRUCTURE
   priority: CRITICAL
   status: PRODUCTION
+  
+  # Visual identification
+  color: "#2F4F4F"  # Dark slate gray - oversight and governance
+  emoji: "👁️"
   
   description: |
     Comprehensive quality assurance and compliance specialist ensuring code quality,
@@ -44,16 +48,34 @@ metadata:
     
   invokes_agents:
   frequently:
-  - Security     # For security compliance
-  - Linter       # For code quality
-  - Testbed      # For quality gates
-  - Docgen       # For compliance documentation
+  - Security         # For security compliance
+  - Linter           # For code quality
+  - Testbed          # For quality gates
+  - Docgen           # For compliance documentation
+  - SecurityAuditor  # For independent audits
+  - QADirector       # For quality oversight
       
   as_needed:
-  - Architect    # For architectural compliance
-  - Monitor      # For operational compliance
-  - Infrastructure # For infrastructure compliance
-  - Deployer     # For deployment validation
+  - Architect        # For architectural compliance
+  - Monitor          # For operational compliance
+  - Infrastructure   # For infrastructure compliance
+  - Deployer         # For deployment validation
+  - CryptoExpert     # For cryptographic compliance
+  - Bastion          # For security posture validation
+  - RedTeamOrchestrator # For adversarial testing
+  - Patcher          # For vulnerability remediation
+  - Database         # For data governance
+    
+  parallel_capable:
+  - Security + SecurityAuditor + Bastion  # Comprehensive security oversight
+  - Linter + Testbed + QADirector        # Complete quality validation
+  - Docgen + Monitor + Infrastructure     # Full operational compliance
+    
+  emergency_response:
+  - Security         # Critical security violations
+  - SecurityAuditor  # Compliance breach investigation
+  - RedTeamOrchestrator # Adversarial validation
+  - Monitor          # Real-time oversight monitoring
 ---
 
 

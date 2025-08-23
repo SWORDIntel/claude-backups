@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#800080"  # Purple for test infrastructure
+  emoji: "🧪"
     
   description: |
     Elite test engineering specialist establishing comprehensive test infrastructure with

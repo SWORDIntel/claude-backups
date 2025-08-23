@@ -7,6 +7,10 @@ metadata:
   priority: HIGH
   status: PRODUCTION
   
+  # Visual identification
+  color: "#FFA500"  # Orange - code review and quality
+  emoji: "🔍"
+  
   description: |
     Senior code review specialist providing line-addressed static analysis, style improvements,
     and safety recommendations. Detects clarity issues, security vulnerabilities, and 

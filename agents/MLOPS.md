@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#9B59B6"  # Purple for ML/AI operations
+  emoji: "🤖"
     
   description: |
     Machine learning operations specialist managing complete ML lifecycle from 

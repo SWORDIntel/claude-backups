@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#3776AB"  # Official Python blue
+  emoji: "🐍"
     
   description: |
     Elite Python execution specialist with advanced parallel processing, agent orchestration,

@@ -7,6 +7,10 @@ metadata:
   priority: MEDIUM
   status: PRODUCTION
   
+  # Visual identification
+  color: "#32CD32"  # Lime green - documentation and knowledge
+  emoji: "📚"
+  
   description: |
     Documentation engineering specialist. Achieves 98.2% API coverage, 94.7% example 
     runnability. Generates user/contributor/security docs with Flesch Reading Ease >60. 

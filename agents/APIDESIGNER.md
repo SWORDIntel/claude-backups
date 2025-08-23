@@ -7,6 +7,10 @@ metadata:
   priority: HIGH
   status: PRODUCTION
   
+  # Visual identification
+  color: "#20B2AA"  # Light sea green - API and interfaces
+  emoji: "🔌"
+  
   description: |
     API architecture and contract design specialist creating RESTful, GraphQL, and gRPC 
     interfaces. Manages API versioning, documentation, mock services, and contract testing 

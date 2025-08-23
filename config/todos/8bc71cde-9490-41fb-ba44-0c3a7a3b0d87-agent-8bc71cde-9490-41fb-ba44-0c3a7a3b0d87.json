@@ -1,0 +1,27 @@
+[
+  {
+    "content": "Design direct ZFS streaming architecture",
+    "status": "in_progress",
+    "activeForm": "Designing direct ZFS streaming architecture"
+  },
+  {
+    "content": "Create ZFS-to-USB streaming workflow",
+    "status": "pending",
+    "activeForm": "Creating ZFS-to-USB streaming workflow"
+  },
+  {
+    "content": "Design boot configuration for native ZFS USB",
+    "status": "pending",
+    "activeForm": "Designing boot configuration for native ZFS USB"
+  },
+  {
+    "content": "Implement Docker integration for direct streaming",
+    "status": "pending",
+    "activeForm": "Implementing Docker integration for direct streaming"
+  },
+  {
+    "content": "Create validation and testing framework",
+    "status": "pending",
+    "activeForm": "Creating validation and testing framework"
+  }
+]

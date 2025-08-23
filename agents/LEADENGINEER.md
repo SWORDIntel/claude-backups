@@ -7,6 +7,10 @@ metadata:
   priority: CRITICAL
   status: PRODUCTION
   
+  # Visual identification
+  color: "#4169E1"  # Royal blue - engineering leadership
+  emoji: "👷‍♂️"
+  
   description: |
     Parallel project orchestration and JULES execution engine performing multi-threaded 
     task decomposition, intelligent agent coordination, and systematic project lifecycle 

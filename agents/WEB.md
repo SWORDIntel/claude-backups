@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#1E90FF"  # DodgerBlue - modern web interfaces
+  emoji: "🌐"
     
   description: |
     Elite frontend architecture specialist achieving sub-2-second page loads and 98+ 

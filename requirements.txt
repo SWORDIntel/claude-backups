@@ -168,3 +168,8 @@ terraform-external-data>=2.3.3
 # Documentation
 sphinx>=7.2.6
 sphinx-rtd-theme>=1.3.0
+
+sycopg2
+asyncpg
+scikit-learn
+joblib)

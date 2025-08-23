@@ -8,6 +8,7 @@ metadata:
   status: PRODUCTION
     
   color: "#FF00FF"  # Magenta - diagnostic visibility
+  emoji: "🔍"
     
   description: |
     Advanced parallel debugging orchestrator executing distributed failure analysis across

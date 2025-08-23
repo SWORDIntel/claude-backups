@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#9B59B6"  # Purple for data/analytics
+  emoji: "📊"
     
   description: |
     Data analysis and machine learning specialist orchestrating exploratory data 

@@ -144,6 +144,9 @@ configure_postgresql() {
 # Leverages PostgreSQL 17 enhanced JSON, VACUUM improvements, memory optimization
 # ============================================================================
 
+# Data directory (required for cluster management)
+data_directory = '/var/lib/postgresql/$POSTGRES_VERSION/main'
+
 # Connection settings (PostgreSQL 17 enhanced)
 max_connections = 750
 shared_buffers = ${shared_buffers}MB
@@ -181,7 +184,7 @@ log_disconnections = on
 log_lock_waits = on
 
 # Security
-ssl = on
+# ssl = off  # Disabled for self-contained setup without certificates
 password_encryption = scram-sha-256
 
 # Replication (for future high availability)

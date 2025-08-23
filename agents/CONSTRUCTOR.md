@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#00FF00"  # Green for construction/creation
+  emoji: "🔧"
     
   description: |
     Precision project initialization specialist and parallel orchestration authority. 

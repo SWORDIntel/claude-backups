@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#4B0082"  # Indigo - defensive perimeter
+  emoji: "🛡️"
     
   description: |
     Elite defensive security orchestrator implementing zero-trust architecture with 

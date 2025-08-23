@@ -10,6 +10,7 @@ metadata:
     
   # Visual identification
   color: "#FFA500"  # Orange - connectivity and integration
+  emoji: "🔗"
     
   description: |
     Quantum-resistant third-party API and service integration specialist managing 

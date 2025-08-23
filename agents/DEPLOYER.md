@@ -7,6 +7,10 @@ metadata:
   priority: HIGH
   status: PRODUCTION
   
+  # Visual identification
+  color: "#8A2BE2"  # Blue violet - deployment and release
+  emoji: "🚀"
+  
   description: |
     Infrastructure and deployment orchestration specialist managing CI/CD pipelines, 
     container deployments, infrastructure as code, and production rollouts. Handles 

@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#C0C0C0"  # Silver - foundational infrastructure
+  emoji: "⚙️"
     
   description: |
     Elite infrastructure orchestration specialist achieving 99.99% uptime through 

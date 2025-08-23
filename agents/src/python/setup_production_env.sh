@@ -103,6 +103,49 @@ setup_python_environment() {
     python3 -m venv "$VENV_PATH"
     source "${VENV_PATH}/bin/activate"
     
+    # Source OpenVINO environment if available
+    OPENVINO_ENV_PATH="$HOME/openvino_ml_env"
+    if [ -d "$OPENVINO_ENV_PATH" ]; then
+        log "OpenVINO environment detected at $OPENVINO_ENV_PATH"
+        
+        # Source OpenVINO setupvars script if it exists
+        if [ -f "$OPENVINO_ENV_PATH/bin/setupvars.sh" ]; then
+            source "$OPENVINO_ENV_PATH/bin/setupvars.sh"
+            success "OpenVINO environment variables sourced"
+        elif [ -f "$OPENVINO_ENV_PATH/setupvars.sh" ]; then
+            source "$OPENVINO_ENV_PATH/setupvars.sh"
+            success "OpenVINO environment variables sourced"
+        fi
+        
+        # Check for Intel OpenVINO toolkit installation
+        if [ -d "$OPENVINO_ENV_PATH/openvino" ]; then
+            export INTEL_OPENVINO_DIR="$OPENVINO_ENV_PATH/openvino"
+            log "INTEL_OPENVINO_DIR set to $INTEL_OPENVINO_DIR"
+        fi
+        
+        # Set OpenVINO Python path if available
+        if [ -d "$OPENVINO_ENV_PATH/python" ]; then
+            export PYTHONPATH="$OPENVINO_ENV_PATH/python:${PYTHONPATH:-}"
+            log "Added OpenVINO Python path to PYTHONPATH"
+        fi
+        
+        # Check for model optimizer
+        if [ -d "$OPENVINO_ENV_PATH/deployment_tools/model_optimizer" ]; then
+            export PATH="$OPENVINO_ENV_PATH/deployment_tools/model_optimizer:$PATH"
+            log "Added Model Optimizer to PATH"
+        fi
+        
+        # Set OpenVINO specific environment variables
+        export OPENVINO_AVAILABLE=1
+        export NPU_ACCELERATION_ENABLED=1
+        log "OpenVINO integration enabled for NPU acceleration"
+    else
+        warn "OpenVINO environment not found at $OPENVINO_ENV_PATH"
+        warn "NPU acceleration will not be available"
+        export OPENVINO_AVAILABLE=0
+        export NPU_ACCELERATION_ENABLED=0
+    fi
+    
     # Upgrade pip and setuptools
     pip install --upgrade pip setuptools wheel
     
@@ -148,6 +191,26 @@ setup_python_environment() {
         flake8 \
         mypy \
         bandit
+    
+    # Install OpenVINO Python packages if OpenVINO is available
+    if [ "$OPENVINO_AVAILABLE" = "1" ]; then
+        log "Installing OpenVINO Python packages..."
+        pip install \
+            openvino \
+            openvino-dev \
+            openvino-telemetry || warn "Some OpenVINO packages may not be available"
+        
+        # Install NPU-specific packages for Intel Meteor Lake
+        log "Installing NPU acceleration packages..."
+        pip install \
+            onnx \
+            onnxruntime \
+            tensorflow \
+            torch \
+            torchvision || warn "Some ML packages installation failed"
+        
+        success "OpenVINO and NPU packages installed"
+    fi
     
     # Create requirements.txt for reproducibility
     pip freeze > "${SCRIPT_DIR}/requirements_production.txt"
@@ -230,6 +293,10 @@ Environment=ENABLE_METEOR_LAKE_OPT=${ENABLE_METEOR_LAKE_OPT:-0}
 Environment=ENABLE_AVX512=${ENABLE_AVX512:-0}
 Environment=TANDEM_LOG_LEVEL=INFO
 Environment=TANDEM_CONFIG_DIR=${SCRIPT_DIR}/config
+Environment=OPENVINO_AVAILABLE=${OPENVINO_AVAILABLE:-0}
+Environment=NPU_ACCELERATION_ENABLED=${NPU_ACCELERATION_ENABLED:-0}
+Environment=INTEL_OPENVINO_DIR=${INTEL_OPENVINO_DIR:-}
+ExecStartPre=/bin/bash -c "[ -f '$HOME/openvino_ml_env/bin/setupvars.sh' ] && source '$HOME/openvino_ml_env/bin/setupvars.sh' || true"
 ExecStartPre=${VENV_PATH}/bin/python -c "import production_orchestrator; print('Tandem Orchestrator module check: OK')"
 ExecStart=${VENV_PATH}/bin/python -m production_orchestrator --mode=production --config=${SCRIPT_DIR}/config/production.yaml
 ExecReload=/bin/kill -HUP \$MAINPID

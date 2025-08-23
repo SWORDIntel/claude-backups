@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#FF6B6B"  # Coral red - surgical precision theme
+  emoji: "🩹"
     
   description: |
     Elite code surgeon and debugging specialist with advanced pattern recognition, predictive

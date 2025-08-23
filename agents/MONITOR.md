@@ -7,6 +7,10 @@ metadata:
   priority: HIGH
   status: PRODUCTION
   
+  # Visual identification
+  color: "#FFD700"  # Gold - monitoring and observability
+  emoji: "📊"
+  
   description: |
     Observability and monitoring specialist establishing comprehensive logging, metrics, 
     tracing, and alerting infrastructure. Ensures production visibility through dashboards, 

@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#00CED1"  # Dark turquoise - coordination and flow
+  emoji: "🎭"
     
   description: |
     Tactical cross-agent synthesis and coordination layer managing active development 
@@ -79,7 +80,7 @@ metadata:
   - workflow
   - pipeline
     
-  # Agent collaboration patterns
+  # Agent collaboration patterns (ULTRA-GRATUITOUS)
   invokes_agents:
   frequently:
   - PLANNER          # Execution planning
@@ -89,15 +90,48 @@ metadata:
   - Testbed          # Testing
   - Linter           # Code quality
   - Debugger         # Issue analysis
+  - Security         # Security integration
+  - Monitor          # Performance tracking
+  - QADirector       # Quality orchestration
+  - SecurityAuditor  # Compliance validation
     
   as_needed:
   - ALL_31_AGENTS    # Complete coordination authority
+  - CryptoExpert     # Cryptographic requirements
+  - Bastion          # Security hardening
+  - RedTeamOrchestrator # Security testing
+  - Oversight        # Quality governance
+  - APIDesigner      # Interface design
+  - Database         # Data architecture
+  - Infrastructure   # System setup
+  - Deployer         # Production deployment
+  - Packager         # Distribution management
+  - Optimizer        # Performance tuning
+  - Docgen           # Documentation generation
+      
+  parallel_orchestration:
+  track_1: [Constructor, Patcher, Linter]     # Code development
+  track_2: [Security, SecurityAuditor, Bastion] # Security validation
+  track_3: [Testbed, QADirector, Debugger]   # Quality assurance
+  track_4: [Monitor, Optimizer, Infrastructure] # Performance
+  track_5: [Docgen, APIDesigner, Database]   # Documentation & Design
       
   coordination_with:
   - Director         # Receives strategic guidance
   - Monitor          # Real-time metrics
   - Security         # Quality gates
   - Deployer         # Production readiness
+      
+  emergency_protocols:
+  critical_failure:
+    - Debugger + Monitor + Security    # Immediate analysis
+    - Bastion + RedTeamOrchestrator   # Threat assessment
+    - Oversight + QADirector          # Impact evaluation
+  security_incident:
+    - Security + SecurityAuditor + CryptoExpert
+    - Bastion + RedTeamOrchestrator + Monitor
+  quality_failure:
+    - QADirector + Testbed + Linter + Oversight
 ---
 
 ################################################################################

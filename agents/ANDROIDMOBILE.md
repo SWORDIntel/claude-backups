@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#3DDC84"  # Android green - mobile development focus
+  emoji: "📱"
     
   description: |
     Android-first mobile development orchestrator specializing in native Android (Kotlin/Java) 

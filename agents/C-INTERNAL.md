@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#1E90FF"  # DodgerBlue - system-level optimization
+  emoji: "⚙️"
     
   description: |
     Elite C/C++ systems engineer with adaptive toolchain management for Dell Latitude 5450 

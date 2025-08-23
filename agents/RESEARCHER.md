@@ -7,6 +7,10 @@ metadata:
   priority: CRITICAL
   status: PRODUCTION
   
+  # Visual identification
+  color: "#708090"  # Slate gray - research and analysis
+  emoji: "🔍"
+  
   description: |
     Parallel deep research and evidence synthesis engine performing multi-threaded 
     systematic assessments across 12 simultaneous research streams. Conducts 

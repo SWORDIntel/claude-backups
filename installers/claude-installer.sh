@@ -1,7 +1,7 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# Claude Master Installer v8.0 - Professional Edition
-# Clean, robust, and fully automated installation
+# Claude Master Installer v10.0 - Complete System Edition
+# Installs everything by default: Claude, Database, Learning, Orchestration
 # ═══════════════════════════════════════════════════════════════════════════
 
 # Disable strict mode for force installation
@@ -57,7 +57,7 @@ LOG_FILE="$LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
 CLAUDE_DIR="$PROJECT_ROOT/.claude"
 
 # Installation counters
-TOTAL_STEPS=14
+TOTAL_STEPS=16
 CURRENT_STEP=0
 
 # User preferences (will be set by prompts)
@@ -94,8 +94,8 @@ print_header() {
     clear
     echo ""
     print_cyan "╔═══════════════════════════════════════════════════════════════╗"
-    print_cyan "║           Claude Master Installer v9.0                       ║"
-    print_cyan "║     Professional Agent Framework with pipx & User Choice     ║"
+    print_cyan "║           Claude Master Installer v10.0                      ║"
+    print_cyan "║    Complete System with Database & Learning Integration      ║"
     print_cyan "╚═══════════════════════════════════════════════════════════════╝"
     echo ""
     print_dim "Project: $PROJECT_ROOT"
@@ -161,38 +161,25 @@ force_copy() {
 # Get user preferences
 get_user_preferences() {
     echo ""
-    print_bold "Installation Preferences"
+    print_bold "Starting Complete Installation"
     echo "────────────────────────"
     echo ""
-    print_cyan "This installer can install Python packages using different methods:"
-    echo "  • pipx (recommended) - Isolated environments for each application"  
-    echo "  • pip --user - User-local installation"
-    echo "  • pip --break-system-packages - System-wide with override"
+    print_cyan "This installer will set up:"
+    echo "  • Claude Code with all agents"
+    echo "  • PostgreSQL database system"
+    echo "  • Agent learning system"
+    echo "  • Tandem orchestration"
+    echo "  • Hooks and automation"
     echo ""
     
-    while true; do
-        print_yellow "Allow system package modifications for comprehensive setup? (Y/N): "
-        read -n 1 -r REPLY
-        echo ""
-        case $REPLY in
-            [Yy])
-                ALLOW_SYSTEM_PACKAGES="true"
-                print_green "✓ System package modifications enabled"
-                print_dim "  Will use --break-system-packages when needed for complete installation"
-                break
-                ;;
-            [Nn])
-                ALLOW_SYSTEM_PACKAGES="false"  
-                print_yellow "⚠ Limited to user-space installations only"
-                print_dim "  Will prefer pipx and user-local installations"
-                break
-                ;;
-            *)
-                print_red "Please answer Y or N."
-                ;;
-        esac
-    done
+    # Default to comprehensive installation
+    ALLOW_SYSTEM_PACKAGES="true"
+    print_green "✓ Comprehensive installation mode enabled"
+    print_dim "  Installing all components for full functionality"
     echo ""
+    
+    # Brief pause to show what's happening
+    sleep 1
 }
 
 # Enhanced Python package installation with pipx preference
@@ -497,7 +484,165 @@ setup_precision_style() {
     show_progress
 }
 
-# 6.6. Setup tandem orchestration
+# 6.6. Setup database system
+setup_database_system() {
+    print_section "Setting up PostgreSQL Database System"
+    
+    local DB_DIR="$PROJECT_ROOT/database"
+    
+    if [[ ! -d "$DB_DIR" ]]; then
+        warning "Database directory not found at $DB_DIR"
+        show_progress
+        return
+    fi
+    
+    # Make scripts executable
+    chmod +x "$DB_DIR"/*.sh 2>/dev/null
+    chmod +x "$DB_DIR/scripts"/*.sh 2>/dev/null
+    
+    # Check if PostgreSQL is installed
+    if command -v psql >/dev/null 2>&1; then
+        local PG_VERSION=$(psql --version | grep -oE '[0-9]+' | head -1)
+        success "PostgreSQL $PG_VERSION detected"
+    else
+        warning "PostgreSQL not installed - database features will be limited"
+        info "Install with: sudo apt-get install postgresql postgresql-client"
+        show_progress
+        return
+    fi
+    
+    # Run database initialization
+    if [[ -f "$DB_DIR/initialize_complete_system.sh" ]]; then
+        info "Initializing database system..."
+        
+        # Run setup in background with output capture
+        if bash "$DB_DIR/initialize_complete_system.sh" setup 2>&1 | while read line; do
+            echo "  $line"
+        done; then
+            success "Database system initialized"
+        else
+            warning "Database initialization had some issues (non-critical)"
+        fi
+    else
+        # Fallback to basic setup
+        if [[ -f "$DB_DIR/start_local_postgres.sh" ]]; then
+            info "Starting local PostgreSQL..."
+            bash "$DB_DIR/start_local_postgres.sh" 2>&1 | head -5
+            success "Local PostgreSQL started"
+        fi
+    fi
+    
+    # Setup learning data sync
+    if [[ -f "$DB_DIR/scripts/learning_sync.sh" ]]; then
+        info "Setting up learning data sync..."
+        chmod +x "$DB_DIR/scripts/learning_sync.sh"
+        
+        # Import existing learning data if available
+        if bash "$DB_DIR/scripts/learning_sync.sh" import 2>&1 | head -5; then
+            success "Learning data sync configured"
+        fi
+        
+        # Setup git hooks for automatic sync
+        bash "$DB_DIR/scripts/learning_sync.sh" setup-hooks 2>/dev/null
+    fi
+    
+    show_progress
+}
+
+# 6.7. Setup learning system
+setup_learning_system() {
+    print_section "Setting up Agent Learning System"
+    
+    local PYTHON_DIR="$PROJECT_ROOT/agents/src/python"
+    
+    if [[ ! -d "$PYTHON_DIR" ]]; then
+        warning "Python source directory not found"
+        show_progress
+        return
+    fi
+    
+    # Check Python availability
+    if ! command -v python3 >/dev/null 2>&1; then
+        error "Python 3 not found - learning system requires Python"
+        show_progress
+        return
+    fi
+    
+    # Install Python dependencies
+    info "Installing learning system dependencies..."
+    
+    # Try different installation methods
+    local PIP_INSTALLED=false
+    
+    # Method 1: Try with --user flag
+    if python3 -m pip install --user --quiet \
+        psycopg2-binary asyncpg numpy scikit-learn joblib 2>/dev/null; then
+        PIP_INSTALLED=true
+        success "Python dependencies installed (user)"
+    # Method 2: Try with --break-system-packages if needed
+    elif python3 -m pip install --break-system-packages --quiet \
+        psycopg2-binary asyncpg numpy scikit-learn joblib 2>/dev/null; then
+        PIP_INSTALLED=true
+        success "Python dependencies installed (system)"
+    else
+        warning "Could not install all Python dependencies automatically"
+        info "You may need to install manually: psycopg2-binary asyncpg numpy scikit-learn joblib"
+    fi
+    
+    # Run learning system setup if dependencies are available
+    if [[ -f "$PYTHON_DIR/setup_learning_system.py" ]]; then
+        info "Configuring learning system..."
+        
+        # Set environment variables for database
+        export POSTGRES_DB=claude_auth
+        export POSTGRES_USER=claude_auth
+        export POSTGRES_PASSWORD=claude_auth_pass
+        export POSTGRES_HOST=localhost
+        export POSTGRES_PORT=5433
+        
+        # Try to run setup
+        if python3 "$PYTHON_DIR/setup_learning_system.py" 2>&1 | while read line; do
+            echo "  $line"
+        done; then
+            success "Learning system configured"
+        else
+            warning "Learning system setup incomplete (can be configured later)"
+        fi
+    fi
+    
+    # Create learning system launcher
+    local LAUNCHER="$PYTHON_DIR/postgresql-learning"
+    cat > "$LAUNCHER" <<'EOF'
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATABASE_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")/database"
+
+export POSTGRES_DB=claude_auth
+export POSTGRES_USER=claude_auth
+export POSTGRES_PASSWORD=claude_auth_pass
+export POSTGRES_HOST=localhost
+export POSTGRES_PORT=5433
+
+"$DATABASE_DIR/start_local_postgres.sh" >/dev/null 2>&1
+
+case "$1" in
+    setup) python3 "$SCRIPT_DIR/setup_learning_system.py" ;;
+    status) python3 "$SCRIPT_DIR/learning_cli.py" status ;;
+    *) python3 "$SCRIPT_DIR/learning_cli.py" "$@" ;;
+esac
+EOF
+    chmod +x "$LAUNCHER"
+    
+    # Create symlink for easy access
+    if [[ -d "$HOME/.local/bin" ]]; then
+        ln -sf "$LAUNCHER" "$HOME/.local/bin/claude-learning"
+        success "Learning system launcher installed (claude-learning)"
+    fi
+    
+    show_progress
+}
+
+# 6.8. Setup tandem orchestration
 setup_tandem_orchestration() {
     print_section "Setting up Tandem Orchestration"
     
@@ -544,7 +689,7 @@ setup_tandem_orchestration() {
     show_progress
 }
 
-# 6.7. Setup production environment
+# 6.9. Setup production environment
 setup_production_environment() {
     print_section "Setting Up Production Environment"
     
@@ -1022,10 +1167,13 @@ show_summary() {
     print_bold "Installed Components:"
     echo "  • Claude NPM Package"
     echo "  • Enhanced Wrapper with Auto Permission Bypass"
-    echo "  • $AGENT_COUNT Agents"
+    echo "  • $AGENT_COUNT Agents with full metadata"
+    echo "  • PostgreSQL Database System (port 5433)"
+    echo "  • Agent Learning System with ML models"
+    echo "  • Tandem Orchestration System"
     echo "  • Production Environment with 100+ Python packages"
-    echo "  • pipx + User-choice installation method"
-    echo "  • Auto-sync (5 minutes)"
+    echo "  • Hooks integration for automation"
+    echo "  • Auto-sync with GitHub (5 minutes)"
     echo ""
     
     print_bold "Available Commands:"
@@ -1034,6 +1182,8 @@ show_summary() {
     printf "  %-30s %s\n" "claude --status" "Show status"
     printf "  %-30s %s\n" "claude --list-agents" "List agents"
     printf "  %-30s %s\n" "claude --orchestrator" "Launch Python orchestrator UI"
+    printf "  %-30s %s\n" "claude-learning status" "Check learning system"
+    printf "  %-30s %s\n" "claude-learning cli dashboard" "Learning dashboard"
     printf "  %-30s %s\n" "python-orchestrator" "Direct orchestrator access"
     printf "  %-30s %s\n" "claude agent <name>" "Run specific agent"
     echo ""
@@ -1091,6 +1241,8 @@ main() {
     install_statusline
     setup_claude_directory
     setup_precision_style
+    setup_database_system
+    setup_learning_system
     setup_tandem_orchestration
     setup_production_environment
     create_wrapper

@@ -1,0 +1,22 @@
+[
+  {
+    "content": "Add hardware detection functions",
+    "status": "in_progress",
+    "activeForm": "Adding hardware detection functions"
+  },
+  {
+    "content": "Make GPU driver installation conditional",
+    "status": "pending",
+    "activeForm": "Making GPU driver installation conditional"
+  },
+  {
+    "content": "Remove unnecessary dependencies",
+    "status": "pending",
+    "activeForm": "Removing unnecessary dependencies"
+  },
+  {
+    "content": "Add hardware-specific package lists",
+    "status": "pending",
+    "activeForm": "Adding hardware-specific package lists"
+  }
+]

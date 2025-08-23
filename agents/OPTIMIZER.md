@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#FF6B6B"  # Performance red-orange
+  emoji: "⚡"
     
   description: |
     Advanced performance engineering specialist with deep expertise in hot path 

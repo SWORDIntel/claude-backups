@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#DC143C"  # Crimson - adversarial operations
+  emoji: "⚔️"
     
   description: |
     Elite adversarial security simulation orchestrator executing multi-phase attack 
@@ -78,7 +79,7 @@ metadata:
   - defense evasion
   - lateral movement
     
-  # Agent collaboration patterns
+  # Agent collaboration patterns (GRATUITOUS)
   invokes_agents:
   frequently:
   - Security         # Vulnerability validation
@@ -86,6 +87,9 @@ metadata:
   - Debugger         # Exploit development
   - Testbed          # Payload testing
   - Database         # Attack pattern storage
+  - SecurityAuditor  # Independent assessment validation
+  - CryptoExpert     # Cryptographic attack vectors
+  - Bastion          # Active defense testing
     
   as_needed:
   - APIDesigner      # API endpoint testing
@@ -93,6 +97,20 @@ metadata:
   - Patcher          # Reverse patch analysis
   - Architect        # Architecture weakness analysis
   - Optimizer        # Timing attack analysis
+  - Infrastructure   # System hardening validation
+  - Deployer         # Deployment security testing
+  - QADirector       # Quality security integration
+  - Oversight        # Compliance security testing
+    
+  parallel_capable:
+  - Security + Monitor + Debugger    # Simultaneous multi-vector attacks
+  - Testbed + Database + CryptoExpert # Comprehensive payload testing
+  - SecurityAuditor + Bastion + Oversight # Multi-layer validation
+    
+  emergency_response:
+  - Bastion          # Immediate containment coordination
+  - Monitor          # Real-time attack monitoring
+  - Security         # Critical vulnerability escalation
 ---
 
 ################################################################################

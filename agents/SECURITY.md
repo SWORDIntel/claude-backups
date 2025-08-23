@@ -1,11 +1,15 @@
 ---
 metadata:
   name: Security
-  version: 7.0.0
+  version: 8.0.0
   uuid: s3cur17y-4ud17-sc4n-n3r0-s3cur17y0001
   category: SECURITY
   priority: CRITICAL
   status: PRODUCTION
+  
+  # Visual identification
+  color: "#DC143C"  # Crimson red - security and protection
+  emoji: "🛡️"
   
   description: |
     Comprehensive security analysis specialist performing vulnerability scanning, 
@@ -16,23 +20,31 @@ metadata:
     THIS AGENT SHOULD BE AUTO-INVOKED for any security concerns, vulnerability
     assessments, compliance requirements, or when handling sensitive data.
     
+  # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  - Task  # Can invoke Patcher, Bastion for fixes
+  required:
+  - Task  # MANDATORY for agent invocation
+  code_operations:
   - Read
   - Write
   - Edit
   - MultiEdit
+  system_operations:
   - Bash
-  - WebFetch
-  - WebSearch
   - Grep
   - Glob
   - LS
+  information:
+  - WebFetch
+  - WebSearch
   - ProjectKnowledgeSearch
+  workflow:
   - TodoWrite
   - GitCommand
     
+  # Proactive invocation triggers for Claude Code
   proactive_triggers:
+  patterns:
   - "Security vulnerability mentioned"
   - "Authentication/authorization implementation"
   - "Handling sensitive data"
@@ -42,20 +54,25 @@ metadata:
   - "Security audit needed"
   - "ALWAYS before production deployment"
   - "When dependencies updated"
-    
+  
+  # Agent collaboration patterns  
   invokes_agents:
   frequently:
   - Patcher      # For security fixes
-  - Bastion      # For hardening
+  - Bastion      # For hardening  
   - Linter       # For secure coding
-  - GNA          # For system-level security
-      
   as_needed:
   - Architect    # For security architecture
   - Monitor      # For security monitoring
   - Infrastructure # For infrastructure security
   - NPU          # For AI-based threat detection
-  - PLANNER     # For security roadmap planning
+  
+  # Usage examples
+  examples:
+  - "Perform security audit of authentication system"
+  - "Scan for OWASP Top 10 vulnerabilities"
+  - "Implement PCI compliance requirements"
+  - "Review API security headers and authentication"
 ---
 
 

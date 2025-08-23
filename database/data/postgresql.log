@@ -1,0 +1,1633 @@
+2025-08-23 18:12:25.335 UTC [145853] LOG:  starting PostgreSQL 17.6 (Ubuntu 17.6-1.pgdg24.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-08-23 18:12:25.335 UTC [145853] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2025-08-23 18:12:25.335 UTC [145853] FATAL:  could not create lock file "/var/run/postgresql/.s.PGSQL.5433.lock": Permission denied
+2025-08-23 18:12:25.336 UTC [145853] LOG:  database system is shut down
+2025-08-23 18:12:44.571 UTC [145891] LOG:  starting PostgreSQL 17.6 (Ubuntu 17.6-1.pgdg24.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-08-23 18:12:44.571 UTC [145891] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2025-08-23 18:12:44.571 UTC [145891] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5433"
+2025-08-23 18:12:44.572 UTC [145894] LOG:  database system was shut down at 2025-08-23 18:09:42 UTC
+2025-08-23 18:12:44.575 UTC [145891] LOG:  database system is ready to accept connections
+2025-08-23 18:13:38.702 UTC [145970] ERROR:  functions in index predicate must be marked IMMUTABLE
+2025-08-23 18:13:38.702 UTC [145970] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_locked_until 
+	    ON users(account_locked_until) WHERE account_locked_until > NOW();
+2025-08-23 18:13:38.718 UTC [145970] ERROR:  functions in index predicate must be marked IMMUTABLE
+2025-08-23 18:13:38.718 UTC [145970] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rate_limit_blocked 
+	    ON rate_limit_events(blocked_until) WHERE blocked_until > NOW();
+2025-08-23 18:13:38.733 UTC [145970] WARNING:  there is no transaction in progress
+2025-08-23 18:14:00.168 UTC [145891] LOG:  received fast shutdown request
+2025-08-23 18:14:00.168 UTC [145891] LOG:  aborting any active transactions
+2025-08-23 18:14:00.169 UTC [145891] LOG:  background worker "logical replication launcher" (PID 145897) exited with exit code 1
+2025-08-23 18:14:00.170 UTC [145892] LOG:  shutting down
+2025-08-23 18:14:00.170 UTC [145892] LOG:  checkpoint starting: shutdown immediate
+2025-08-23 18:14:00.176 UTC [145892] LOG:  checkpoint complete: wrote 1061 buffers (6.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.001 s, total=0.007 s; sync files=405, longest=0.001 s, average=0.000 s; distance=5252 kB, estimate=5252 kB; lsn=0/1A18BA8, redo lsn=0/1A18BA8
+2025-08-23 18:14:00.180 UTC [145891] LOG:  database system is shut down
+2025-08-23 18:15:01.104 UTC [146057] LOG:  starting PostgreSQL 17.6 (Ubuntu 17.6-1.pgdg24.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-08-23 18:15:01.104 UTC [146057] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2025-08-23 18:15:01.104 UTC [146057] LOG:  listening on Unix socket "/home/ubuntu/Documents/Claude/database/data/run/.s.PGSQL.5433"
+2025-08-23 18:15:01.106 UTC [146060] LOG:  database system was shut down at 2025-08-23 18:14:00 UTC
+2025-08-23 18:15:01.108 UTC [146057] LOG:  database system is ready to accept connections
+2025-08-23 18:20:01.206 UTC [146058] LOG:  checkpoint starting: time
+2025-08-23 18:20:11.130 UTC [146058] LOG:  checkpoint complete: wrote 102 buffers (0.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=9.925 s, sync=0.001 s, total=9.925 s; sync files=24, longest=0.001 s, average=0.001 s; distance=504 kB, estimate=504 kB; lsn=0/1A96C78, redo lsn=0/1A96BE8
+2025-08-23 18:46:45.542 UTC [149248] ERROR:  relation "agent_task_executions" does not exist at character 78
+2025-08-23 18:46:45.542 UTC [149248] STATEMENT:  SELECT 
+	    'Total Executions' as metric, 
+	    COUNT(*)::TEXT as value 
+	FROM agent_task_executions
+	UNION ALL
+	SELECT 
+	    'Success Rate' as metric,
+	    ROUND(AVG(CASE WHEN success THEN 1 ELSE 0 END) * 100, 1)::TEXT || '%' as value
+	FROM agent_task_executions
+	UNION ALL
+	SELECT 
+	    'Total Agents' as metric,
+	    COUNT(*)::TEXT as value
+	FROM agent_metadata
+	UNION ALL
+	SELECT 
+	    'Learning Insights' as metric,
+	    COUNT(*)::TEXT as value
+	FROM learning_insights
+	UNION ALL
+	SELECT 
+	    'Collaboration Patterns' as metric,
+	    COUNT(*)::TEXT as value
+	FROM agent_collaboration_patterns;
+2025-08-23 18:47:27.529 UTC [149514] ERROR:  permission denied to create extension "pg_stat_statements"
+2025-08-23 18:47:27.529 UTC [149514] HINT:  Must be superuser to create this extension.
+2025-08-23 18:47:27.529 UTC [149514] STATEMENT:  -- ============================================================================
+	-- CLAUDE AGENT LEARNING SYSTEM - PostgreSQL 17 Integration
+	-- ============================================================================
+	-- Extends existing authentication database with learning capabilities
+	-- Compatible with existing schema in auth_db_setup.sql
+	-- Performance optimized for agent orchestration learning
+	-- ============================================================================
+	
+	-- Enable additional extensions for learning system
+	CREATE EXTENSION IF NOT EXISTS "pg_stat_statements"; -- Query performance analysis
+	CREATE EXTENSION IF NOT EXISTS "pg_trgm"; -- Trigram matching for text similarity
+	
+	-- ============================================================================
+	-- AGENT TASK EXECUTION TRACKING
+	-- ============================================================================
+	
+	-- Main table for tracking all agent task executions
+	CREATE TABLE IF NOT EXISTS agent_task_executions (
+	    execution_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	    task_type VARCHAR(64) NOT NULL,
+	    task_description TEXT,
+	    agents_invoked JSONB DEFAULT JSON_ARRAY(), -- PostgreSQL 17 JSON constructor
+	    execution_sequence JSONB DEFAULT JSON_ARRAY(), -- Order of agent invocation
+	    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	    duration_seconds FLOAT NOT NULL CHECK (duration_seconds >= 0),
+	    success BOOLEAN NOT NULL,
+	    error_message TEXT,
+	    error_code VARCHAR(32),
+	    user_satisfaction INTEGER CHECK (user_satisfaction BETWEEN 1 AND 10),
+	    complexity_score FLOAT DEFAULT 1.0 CHECK (complexity_score > 0),
+	    resource_metrics JSONB DEFAULT JSON_OBJECT(), -- CPU, memory, etc.
+	    context_data JSONB DEFAULT JSON_OBJECT(), -- Additional context
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    
+	    -- Integration with existing auth system
+	    user_id UUID REFERENCES users(user_id) ON DELETE SET NULL,
+	    session_id UUID REFERENCES user_sessions(session_id) ON DELETE SET NULL,
+	    
+	    -- Audit fields
+	    created_by VARCHAR(64) DEFAULT current_user,
+	    
+	    -- Performance constraints
+	    CONSTRAINT execution_time_valid CHECK (end_time > start_time),
+	    CONSTRAINT agents_not_empty CHECK (jsonb_array_length(agents_invoked) > 0)
+	);
+	
+	-- Optimized indexes for learning queries
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_type_time 
+	    ON agent_task_executions(task_type, start_time DESC);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_success_time 
+	    ON agent_task_executions(success, start_time DESC);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_user_time 
+	    ON agent_task_executions(user_id, start_time DESC) WHERE user_id IS NOT NULL;
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_agents 
+	    ON agent_task_executions USING GIN(agents_invoked);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_duration 
+	    ON agent_task_executions(duration_seconds) WHERE success = true;
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_complexity 
+	    ON agent_task_executions(complexity_score, success);
+	
+	-- ============================================================================
+	-- AGENT PERFORMANCE METRICS
+	-- ============================================================================
+	
+	-- Aggregated performance metrics for individual agents
+	CREATE TABLE IF NOT EXISTS agent_performance_metrics (
+	    agent_name VARCHAR(64) PRIMARY KEY,
+	    total_invocations BIGINT DEFAULT 0,
+	    successful_invocations BIGINT DEFAULT 0,
+	    success_rate FLOAT GENERATED ALWAYS AS (
+	        CASE WHEN total_invocations > 0 
+	        THEN successful_invocations::FLOAT / total_invocations 
+	        ELSE 0 END
+	    ) STORED,
+	    avg_duration_seconds FLOAT DEFAULT 0,
+	    min_duration_seconds FLOAT DEFAULT 0,
+	    max_duration_seconds FLOAT DEFAULT 0,
+	    p95_duration_seconds FLOAT DEFAULT 0,
+	    error_patterns JSONB DEFAULT JSON_ARRAY(), -- Common error types
+	    best_partner_agents JSONB DEFAULT JSON_ARRAY(), -- Agents that work well together
+	    specialization_scores JSONB DEFAULT JSON_OBJECT(), -- Task type specializations
+	    resource_efficiency JSONB DEFAULT JSON_OBJECT(), -- Resource usage patterns
+	    last_invocation TIMESTAMP WITH TIME ZONE,
+	    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    
+	    -- Performance tracking
+	    trend_7d FLOAT DEFAULT 0, -- 7-day success rate trend
+	    trend_30d FLOAT DEFAULT 0, -- 30-day success rate trend
+	    
+	    CONSTRAINT success_rate_valid CHECK (success_rate BETWEEN 0 AND 1),
+	    CONSTRAINT duration_stats_valid CHECK (
+	        min_duration_seconds <= avg_duration_seconds 
+	        AND avg_duration_seconds <= max_duration_seconds
+	    )
+	);
+	
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_agent_performance_success 
+	    ON agent_performance_metrics(success_rate DESC, total_invocations DESC);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_agent_performance_duration 
+	    ON agent_performance_metrics(avg_duration_seconds);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_agent_performance_updated 
+	    ON agent_performance_metrics(last_updated DESC);
+	
+	-- ============================================================================
+	-- AGENT COMBINATION PATTERNS
+	-- ============================================================================
+	
+	-- Tracks success patterns for agent combinations
+	CREATE TABLE IF NOT EXISTS agent_combination_patterns (
+	    pattern_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	    agent_combination JSONB NOT NULL, -- Sorted array of agent names
+	    combination_hash VARCHAR(64) GENERATED ALWAYS AS (
+	        encode(digest(agent_combination::text, 'sha256'), 'hex')
+	    ) STORED,
+	    task_types JSONB DEFAULT JSON_ARRAY(), -- Task types this combo works for
+	    success_count INTEGER DEFAULT 0,
+	    failure_count INTEGER DEFAULT 0,
+	    success_rate FLOAT GENERATED ALWAYS AS (
+	        CASE WHEN (success_count + failure_count) > 0 
+	        THEN success_count::FLOAT / (success_count + failure_count)
+	        ELSE 0 END
+	    ) STORED,
+	    avg_duration_seconds FLOAT DEFAULT 0,
+	    min_duration_seconds FLOAT DEFAULT 0,
+	    max_duration_seconds FLOAT DEFAULT 0,
+	    confidence_level FLOAT DEFAULT 0.0, -- Statistical confidence
+	    sample_size INTEGER GENERATED ALWAYS AS (success_count + failure_count) STORED,
+	    last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    
+	    -- Performance characteristics
+	    resource_efficiency_score FLOAT DEFAULT 0,
+	    parallel_execution_capable BOOLEAN DEFAULT FALSE,
+	    
+	    UNIQUE(combination_hash),
+	    CONSTRAINT combination_not_empty CHECK (jsonb_array_length(agent_combination) >= 2),
+	    CONSTRAINT success_rate_valid CHECK (success_rate BETWEEN 0 AND 1),
+	    CONSTRAINT confidence_valid CHECK (confidence_level BETWEEN 0 AND 1)
+	);
+	
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_success 
+	    ON agent_combination_patterns(success_rate DESC, confidence_level DESC);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_agents 
+	    ON agent_combination_patterns USING GIN(agent_combination);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_tasks 
+	    ON agent_combination_patterns USING GIN(task_types);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_sample 
+	    ON agent_combination_patterns(sample_size DESC) WHERE sample_size >= 5;
+	
+	-- ============================================================================
+	-- LEARNING INSIGHTS AND RECOMMENDATIONS
+	-- ============================================================================
+	
+	-- Stores AI-generated insights from pattern analysis
+	CREATE TABLE IF NOT EXISTS agent_learning_insights (
+	    insight_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	    insight_type VARCHAR(32) NOT NULL CHECK (
+	        insight_type IN ('optimal_combo', 'avoid_pattern', 'performance_tip', 
+	                        'resource_optimization', 'specialization', 'trend_alert',
+	                        'anomaly_detection', 'efficiency_improvement')
+	    ),
+	    confidence_score FLOAT NOT NULL CHECK (confidence_score BETWEEN 0.0 AND 1.0),
+	    title VARCHAR(256) NOT NULL,
+	    description TEXT NOT NULL,
+	    supporting_data JSONB DEFAULT JSON_OBJECT(),
+	    applicable_contexts JSONB DEFAULT JSON_ARRAY(), -- Task types or conditions
+	    impact_score FLOAT DEFAULT 0 CHECK (impact_score BETWEEN 0 AND 10),
+	    
+	    -- Validation tracking
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    last_validated TIMESTAMP WITH TIME ZONE,
+	    validation_count INTEGER DEFAULT 0,
+	    positive_validations INTEGER DEFAULT 0,
+	    validation_rate FLOAT GENERATED ALWAYS AS (
+	        CASE WHEN validation_count > 0 
+	        THEN positive_validations::FLOAT / validation_count 
+	        ELSE 0 END
+	    ) STORED,
+	    
+	    -- Lifecycle management
+	    is_active BOOLEAN DEFAULT TRUE,
+	    archived_at TIMESTAMP WITH TIME ZONE,
+	    archived_reason TEXT,
+	    
+	    -- Integration with existing system
+	    created_by_user_id UUID REFERENCES users(user_id) ON DELETE SET NULL
+	);
+	
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_type_confidence 
+	    ON agent_learning_insights(insight_type, confidence_score DESC);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_active_created 
+	    ON agent_learning_insights(is_active, created_at DESC) WHERE is_active = TRUE;
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_contexts 
+	    ON agent_learning_insights USING GIN(applicable_contexts);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_validation 
+	    ON agent_learning_insights(validation_rate DESC, validation_count DESC) 
+	    WHERE validation_count >= 3;
+	
+	-- ============================================================================
+	-- TASK TYPE ANALYSIS AND CLASSIFICATION
+	-- ============================================================================
+	
+	-- Analyze task types and their characteristics
+	CREATE TABLE IF NOT EXISTS task_type_analysis (
+	    task_type VARCHAR(64) PRIMARY KEY,
+	    total_executions BIGINT DEFAULT 0,
+	    success_rate FLOAT DEFAULT 0,
+	    avg_complexity FLOAT DEFAULT 0,
+	    avg_duration_seconds FLOAT DEFAULT 0,
+	    preferred_agents JSONB DEFAULT JSON_ARRAY(),
+	    optimal_combinations JSONB DEFAULT JSON_ARRAY(),
+	    common_failures JSONB DEFAULT JSON_ARRAY(),
+	    resource_requirements JSONB DEFAULT JSON_OBJECT(),
+	    
+	    -- Trend analysis
+	    trend_direction VARCHAR(10) CHECK (trend_direction IN ('up', 'down', 'stable', 'unknown')),
+	    trend_strength FLOAT DEFAULT 0,
+	    
+	    -- Classification
+	    difficulty_level INTEGER DEFAULT 1 CHECK (difficulty_level BETWEEN 1 AND 5),
+	    automation_potential FLOAT DEFAULT 0 CHECK (automation_potential BETWEEN 0 AND 1),
+	    
+	    last_analyzed TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+	);
+	
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_type_success 
+	    ON task_type_analysis(success_rate DESC, total_executions DESC);
+	CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_type_difficulty 
+	    ON task_type_analysis(difficulty_level, avg_duration_seconds);
+	
+	-- ============================================================================
+	-- REAL-TIME LEARNING FUNCTIONS
+	-- ============================================================================
+	
+	-- Function to update agent metrics efficiently
+	CREATE OR REPLACE FUNCTION update_agent_performance_metrics(
+	    p_agent_name VARCHAR(64),
+	    p_duration_seconds FLOAT,
+	    p_success BOOLEAN,
+	    p_task_type VARCHAR(64) DEFAULT NULL
+	)
+	RETURNS VOID
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+	    INSERT INTO agent_performance_metrics (
+	        agent_name, 
+	        total_invocations, 
+	        successful_invocations,
+	        avg_duration_seconds,
+	        min_duration_seconds,
+	        max_duration_seconds,
+	        last_invocation
+	    ) VALUES (
+	        p_agent_name,
+	        1,
+	        CASE WHEN p_success THEN 1 ELSE 0 END,
+	        p_duration_seconds,
+	        p_duration_seconds,
+	        p_duration_seconds,
+	        NOW()
+	    )
+	    ON CONFLICT (agent_name) DO UPDATE SET
+	        total_invocations = agent_performance_metrics.total_invocations + 1,
+	        successful_invocations = agent_performance_metrics.successful_invocations + 
+	            CASE WHEN p_success THEN 1 ELSE 0 END,
+	        avg_duration_seconds = (
+	            agent_performance_metrics.avg_duration_seconds * agent_performance_metrics.total_invocations + p_duration_seconds
+	        ) / (agent_performance_metrics.total_invocations + 1),
+	        min_duration_seconds = LEAST(agent_performance_metrics.min_duration_seconds, p_duration_seconds),
+	        max_duration_seconds = GREATEST(agent_performance_metrics.max_duration_seconds, p_duration_seconds),
+	        last_invocation = NOW(),
+	        last_updated = NOW();
+	END;
+	$$;
+	
+	-- Function to get optimal agent combination for a task
+	CREATE OR REPLACE FUNCTION get_optimal_agents(
+	    p_task_type VARCHAR(64),
+	    p_max_agents INTEGER DEFAULT 5,
+	    p_min_confidence FLOAT DEFAULT 0.6
+	)
+	RETURNS JSONB
+	LANGUAGE SQL
+	STABLE
+	AS $$
+	    SELECT agent_combination
+	    FROM agent_combination_patterns
+	    WHERE task_types ? p_task_type
+	        AND success_rate >= p_min_confidence
+	        AND sample_size >= 3
+	        AND jsonb_array_length(agent_combination) <= p_max_agents
+	    ORDER BY success_rate DESC, confidence_level DESC, sample_size DESC
+	    LIMIT 1;
+	$$;
+	
+	-- Function to predict task success
+	CREATE OR REPLACE FUNCTION predict_task_success(
+	    p_task_type VARCHAR(64),
+	    p_agents JSONB,
+	    p_complexity FLOAT DEFAULT 1.0
+	)
+	RETURNS TABLE (
+	    predicted_success_rate FLOAT,
+	    predicted_duration FLOAT,
+	    confidence FLOAT,
+	    recommendation TEXT
+	)
+	LANGUAGE plpgsql
+	STABLE
+	AS $$
+	DECLARE
+	    combo_hash VARCHAR(64);
+	    pattern_data RECORD;
+	    individual_avg FLOAT;
+	BEGIN
+	    -- Create hash for agent combination
+	    SELECT encode(digest((SELECT jsonb_agg(value ORDER BY value) FROM jsonb_array_elements_text(p_agents))::text, 'sha256'), 'hex') 
+	    INTO combo_hash;
+	    
+	    -- Check for exact combination match
+	    SELECT success_rate, avg_duration_seconds, confidence_level, sample_size
+	    INTO pattern_data
+	    FROM agent_combination_patterns
+	    WHERE combination_hash = combo_hash
+	        AND task_types ? p_task_type;
+	    
+	    IF FOUND AND pattern_data.sample_size >= 3 THEN
+	        -- Use exact match data
+	        RETURN QUERY SELECT 
+	            pattern_data.success_rate,
+	            pattern_data.avg_duration_seconds * p_complexity,
+	            LEAST(0.95, pattern_data.confidence_level),
+	            'Based on ' || pattern_data.sample_size || ' historical executions';
+	        RETURN;
+	    END IF;
+	    
+	    -- Fallback to individual agent analysis
+	    SELECT AVG(success_rate), AVG(avg_duration_seconds)
+	    INTO predicted_success_rate, predicted_duration
+	    FROM agent_performance_metrics
+	    WHERE agent_name = ANY(SELECT jsonb_array_elements_text(p_agents));
+	    
+	    IF predicted_success_rate IS NOT NULL THEN
+	        RETURN QUERY SELECT 
+	            COALESCE(predicted_success_rate, 0.7),
+	            COALESCE(predicted_duration * p_complexity, 30.0),
+	            0.6::FLOAT,
+	            'Based on individual agent performance';
+	        RETURN;
+	    END IF;
+	    
+	    -- Ultimate fallback
+	    RETURN QUERY SELECT 
+	        0.7::FLOAT,
+	        30.0::FLOAT,
+	        0.3::FLOAT,
+	        'Fallback estimate - no historical data';
+	END;
+	$$;
+	
+	-- ============================================================================
+	-- MATERIALIZED VIEWS FOR PERFORMANCE
+	-- ============================================================================
+	
+	-- High-performance view for learning dashboard
+	CREATE MATERIALIZED VIEW IF NOT EXISTS learning_dashboard_mv AS
+	SELECT 
+	    -- Overall statistics
+	    (SELECT COUNT(*) FROM agent_task_executions) as total_executions,
+	    (SELECT AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) FROM agent_task_executions) as overall_success_rate,
+	    (SELECT AVG(duration_seconds) FROM agent_task_executions WHERE success = true) as avg_duration,
+	    (SELECT COUNT(DISTINCT task_type) FROM agent_task_executions) as unique_task_types,
+	    (SELECT COUNT(*) FROM agent_task_executions WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	    (SELECT COUNT(*) FROM agent_task_executions WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	    
+	    -- Top performing agents
+	    (SELECT jsonb_agg(
+	        jsonb_build_object('agent', agent_name, 'success_rate', success_rate, 'invocations', total_invocations)
+	        ORDER BY success_rate DESC
+	    ) FROM (
+	        SELECT agent_name, success_rate, total_invocations
+	        FROM agent_performance_metrics 
+	        WHERE total_invocations >= 5 
+	        ORDER BY success_rate DESC 
+	        LIMIT 10
+	    ) top_agents) as top_agents,
+	    
+	    -- Recent insights count
+	    (SELECT COUNT(*) FROM agent_learning_insights WHERE is_active = true AND created_at >= NOW() - INTERVAL '7 days') as recent_insights,
+	    
+	    -- Last refresh
+	    NOW() as last_refreshed;
+	
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_dashboard_mv_refresh 
+	    ON learning_dashboard_mv(last_refreshed);
+	
+	-- ============================================================================
+	-- TRIGGERS FOR AUTOMATIC LEARNING
+	-- ============================================================================
+	
+	-- Trigger to update metrics when new execution is recorded
+	CREATE OR REPLACE FUNCTION update_learning_metrics_trigger()
+	RETURNS TRIGGER AS $$
+	DECLARE
+	    agent_name TEXT;
+	BEGIN
+	    -- Update individual agent metrics
+	    FOR agent_name IN SELECT jsonb_array_elements_text(NEW.agents_invoked) LOOP
+	        PERFORM update_agent_performance_metrics(
+	            agent_name, 
+	            NEW.duration_seconds, 
+	            NEW.success,
+	            NEW.task_type
+	        );
+	    END LOOP;
+	    
+	    -- Update combination patterns
+	    IF jsonb_array_length(NEW.agents_invoked) >= 2 THEN
+	        INSERT INTO agent_combination_patterns (
+	            agent_combination,
+	            task_types,
+	            success_count,
+	            failure_count,
+	            avg_duration_seconds,
+	            min_duration_seconds,
+	            max_duration_seconds
+	        )
+	        VALUES (
+	            (SELECT jsonb_agg(value ORDER BY value) FROM jsonb_array_elements_text(NEW.agents_invoked)),
+	            jsonb_build_array(NEW.task_type),
+	            CASE WHEN NEW.success THEN 1 ELSE 0 END,
+	            CASE WHEN NEW.success THEN 0 ELSE 1 END,
+	            NEW.duration_seconds,
+	            NEW.duration_seconds,
+	            NEW.duration_seconds
+	        )
+	        ON CONFLICT (combination_hash) DO UPDATE SET
+	            success_count = agent_combination_patterns.success_count + CASE WHEN NEW.success THEN 1 ELSE 0 END,
+	            failure_count = agent_combination_patterns.failure_count + CASE WHEN NEW.success THEN 0 ELSE 1 END,
+	            task_types = CASE 
+	                WHEN NOT (agent_combination_patterns.task_types ? NEW.task_type)
+	                THEN agent_combination_patterns.task_types || jsonb_build_array(NEW.task_type)
+	                ELSE agent_combination_patterns.task_types
+	            END,
+	            avg_duration_seconds = (
+	                agent_combination_patterns.avg_duration_seconds * 
+	                (agent_combination_patterns.success_count + agent_combination_patterns.failure_count) + 
+	                NEW.duration_seconds
+	            ) / (agent_combination_patterns.success_count + agent_combination_patterns.failure_count + 1),
+	            min_duration_seconds = LEAST(agent_combination_patterns.min_duration_seconds, NEW.duration_seconds),
+	            max_duration_seconds = GREATEST(agent_combination_patterns.max_duration_seconds, NEW.duration_seconds),
+	            last_seen = NOW();
+	    END IF;
+	    
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- Apply the trigger
+	DROP TRIGGER IF EXISTS learning_metrics_update_trigger ON agent_task_executions;
+	CREATE TRIGGER learning_metrics_update_trigger
+	    AFTER INSERT ON agent_task_executions
+	    FOR EACH ROW EXECUTE FUNCTION update_learning_metrics_trigger();
+	
+	-- Function to refresh learning materialized view
+	CREATE OR REPLACE FUNCTION refresh_learning_dashboard()
+	RETURNS VOID AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY learning_dashboard_mv;
+	END;
+	$$ LANGUAGE plpgsql;
+	
+	-- ============================================================================
+	-- SAMPLE DATA AND PERFORMANCE VALIDATION
+	-- ============================================================================
+	
+	-- Insert sample data for testing (optional - remove in production)
+	DO $$
+	BEGIN
+	    -- Only insert if no data exists
+	    IF (SELECT COUNT(*) FROM agent_task_executions) = 0 THEN
+	        -- Sample task execution
+	        INSERT INTO agent_task_executions (
+	            task_type, task_description, agents_invoked, execution_sequence,
+	            start_time, end_time, duration_seconds, success, complexity_score
+	        ) VALUES (
+	            'web_development',
+	            'Create responsive login page with authentication',
+	            '["WEB", "APIDESIGNER", "SECURITY", "TESTBED"]',
+	            '["WEB", "APIDESIGNER", "SECURITY", "TESTBED"]',
+	            NOW() - INTERVAL '2 minutes',
+	            NOW() - INTERVAL '30 seconds',
+	            90.5,
+	            true,
+	            2.5
+	        );
+	        
+	        RAISE NOTICE 'Sample learning data inserted for testing';
+	    END IF;
+	END $$;
+	
+	-- Refresh materialized view
+	SELECT refresh_learning_dashboard();
+	
+	-- ============================================================================
+	-- PERFORMANCE MONITORING AND CLEANUP
+	-- ============================================================================
+	
+	-- Function to cleanup old learning data
+	CREATE OR REPLACE FUNCTION cleanup_learning_data()
+	RETURNS TABLE (
+	    cleaned_executions INTEGER,
+	    cleaned_insights INTEGER,
+	    cleaned_patterns INTEGER
+	)
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    exec_count INTEGER;
+	    insight_count INTEGER;
+	    pattern_count INTEGER;
+	BEGIN
+	    -- Clean old executions (keep 6 months)
+	    WITH deleted AS (
+	        DELETE FROM agent_task_executions 
+	        WHERE start_time < NOW() - INTERVAL '6 months'
+	        RETURNING execution_id
+	    )
+	    SELECT COUNT(*) INTO exec_count FROM deleted;
+	    
+	    -- Archive old insights (keep active ones)
+	    WITH updated AS (
+	        UPDATE agent_learning_insights 
+	        SET is_active = false, archived_at = NOW(), archived_reason = 'auto_cleanup'
+	        WHERE created_at < NOW() - INTERVAL '3 months' 
+	            AND validation_rate < 0.3
+	            AND is_active = true
+	        RETURNING insight_id
+	    )
+	    SELECT COUNT(*) INTO insight_count FROM updated;
+	    
+	    -- Clean unused patterns (very low confidence)
+	    WITH deleted AS (
+	        DELETE FROM agent_combination_patterns
+	        WHERE last_seen < NOW() - INTERVAL '6 months'
+	            AND sample_size < 3
+	            AND success_rate < 0.3
+	        RETURNING pattern_id
+	    )
+	    SELECT COUNT(*) INTO pattern_count FROM deleted;
+	    
+	    -- Refresh materialized view
+	    PERFORM refresh_learning_dashboard();
+	    
+	    RETURN QUERY SELECT exec_count, insight_count, pattern_count;
+	END;
+	$$;
+	
+	-- ============================================================================
+	-- FINAL STATUS AND PERFORMANCE CHECK
+	-- ============================================================================
+	
+	-- Performance check view
+	CREATE OR REPLACE VIEW learning_system_status AS
+	SELECT 
+	    'Learning System Status' as component,
+	    (SELECT COUNT(*) FROM agent_task_executions) as total_executions,
+	    (SELECT COUNT(*) FROM agent_performance_metrics) as tracked_agents,
+	    (SELECT COUNT(*) FROM agent_combination_patterns WHERE sample_size >= 5) as validated_patterns,
+	    (SELECT COUNT(*) FROM agent_learning_insights WHERE is_active = true) as active_insights,
+	    pg_size_pretty(pg_total_relation_size('agent_task_executions')) as executions_table_size,
+	    pg_size_pretty(pg_database_size(current_database())) as total_database_size,
+	    'PostgreSQL 17 Compatible' as compatibility,
+	    'Ready for Production Learning' as status;
+	
+	COMMIT;
+	
+	-- Show final status
+	SELECT * FROM learning_system_status;
+2025-08-23 18:47:35.886 UTC [149535] FATAL:  password authentication failed for user "ubuntu"
+2025-08-23 18:47:35.886 UTC [149535] DETAIL:  User "ubuntu" has no password assigned.
+	Connection matched file "/home/ubuntu/Documents/Claude/database/data/postgresql/pg_hba.conf" line 119: "host    all             all             127.0.0.1/32            scram-sha-256"
+2025-08-23 18:47:35.912 UTC [149537] ERROR:  permission denied to set parameter "log_statement_stats"
+2025-08-23 18:47:35.912 UTC [149537] STATEMENT:  SET log_statement_stats = OFF;
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table users
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_username_active 
+	    ON users(username) WHERE status = 'active';
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table users
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_active 
+	    ON users(email) WHERE status = 'active';
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table users
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_last_login 
+	    ON users(last_login) WHERE status = 'active';
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table users
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_status_created 
+	    ON users(status, created_at);
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table users
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_locked_until 
+	    ON users(account_locked_until) WHERE account_locked_until > NOW();
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table user_profiles
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_profiles_user_id 
+	    ON user_profiles(user_id);
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  permission denied for table roles
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  INSERT INTO roles (role_name, description, is_system_role, role_level) VALUES
+	('admin', 'System administrator with full access', TRUE, 1),
+	('system', 'System-level operations role', TRUE, 2), 
+	('agent', 'Standard agent role', TRUE, 3),
+	('monitor', 'Monitoring and observability role', TRUE, 4),
+	('guest', 'Read-only guest access', TRUE, 5)
+	ON CONFLICT (role_name) DO NOTHING;
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table roles
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_roles_name 
+	    ON roles(role_name);
+2025-08-23 18:47:35.913 UTC [149537] ERROR:  must be owner of table roles
+2025-08-23 18:47:35.913 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_roles_system 
+	    ON roles(is_system_role, role_name);
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  permission denied for table permissions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  INSERT INTO permissions (permission_name, resource_type, resource_pattern, action, permission_value, description) VALUES
+	('read', 'all', '*', 'read', 1, 'Read permission'),
+	('write', 'all', '*', 'write', 2, 'Write permission'), 
+	('execute', 'all', '*', 'execute', 4, 'Execute permission'),
+	('admin', 'all', '*', 'admin', 8, 'Admin permission'),
+	('monitor', 'all', '*', 'monitor', 16, 'Monitor permission'),
+	('system', 'all', '*', 'system', 32, 'System permission'),
+	('agents.read', 'agent', '*', 'read', 1, 'Read agent information'),
+	('agents.write', 'agent', '*', 'write', 2, 'Modify agent configuration'),
+	('agents.execute', 'agent', '*', 'execute', 4, 'Execute agent operations'),
+	('monitoring.read', 'metrics', '*', 'read', 16, 'Read monitoring data'),
+	('users.admin', 'user', '*', 'admin', 8, 'User administration')
+	ON CONFLICT (permission_name) DO NOTHING;
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table permissions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_permissions_name 
+	    ON permissions(permission_name);
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table permissions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_permissions_resource 
+	    ON permissions(resource_type, action);
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table role_permissions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_role_permissions_role 
+	    ON role_permissions(role_id);
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table role_permissions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_role_permissions_permission 
+	    ON role_permissions(permission_id);
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table user_roles
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_user 
+	    ON user_roles(user_id);
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table user_roles
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_role 
+	    ON user_roles(role_id);
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table user_roles
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_expires 
+	    ON user_roles(expires_at) WHERE expires_at IS NOT NULL;
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table user_sessions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_user_active 
+	    ON user_sessions(user_id) WHERE is_active = TRUE;
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table user_sessions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_token 
+	    ON user_sessions(jwt_token_id) WHERE is_active = TRUE;
+2025-08-23 18:47:35.914 UTC [149537] ERROR:  must be owner of table user_sessions
+2025-08-23 18:47:35.914 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_expires 
+	    ON user_sessions(expires_at) WHERE is_active = TRUE;
+2025-08-23 18:47:35.915 UTC [149537] ERROR:  must be owner of table user_sessions
+2025-08-23 18:47:35.915 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_activity 
+	    ON user_sessions(last_activity) WHERE is_active = TRUE;
+2025-08-23 18:47:35.915 UTC [149537] ERROR:  must be owner of table user_sessions
+2025-08-23 18:47:35.915 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_ip 
+	    ON user_sessions(ip_address, created_at);
+2025-08-23 18:47:35.915 UTC [149537] ERROR:  must be owner of table api_keys
+2025-08-23 18:47:35.915 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_hash 
+	    ON api_keys(key_hash) WHERE is_active = TRUE;
+2025-08-23 18:47:35.916 UTC [149537] ERROR:  must be owner of table api_keys
+2025-08-23 18:47:35.916 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_prefix 
+	    ON api_keys(key_prefix) WHERE is_active = TRUE;
+2025-08-23 18:47:35.916 UTC [149537] ERROR:  must be owner of table api_keys
+2025-08-23 18:47:35.916 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_user 
+	    ON api_keys(user_id) WHERE is_active = TRUE;
+2025-08-23 18:47:35.916 UTC [149537] ERROR:  must be owner of table api_keys
+2025-08-23 18:47:35.916 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_expires 
+	    ON api_keys(expires_at) WHERE is_active = TRUE AND expires_at IS NOT NULL;
+2025-08-23 18:47:35.916 UTC [149537] ERROR:  must be owner of table security_events
+2025-08-23 18:47:35.916 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_timestamp 
+	    ON security_events(timestamp);
+2025-08-23 18:47:35.916 UTC [149537] ERROR:  must be owner of table security_events
+2025-08-23 18:47:35.916 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_user_time 
+	    ON security_events(user_id, timestamp);
+2025-08-23 18:47:35.917 UTC [149537] ERROR:  must be owner of table security_events
+2025-08-23 18:47:35.917 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_type_time 
+	    ON security_events(event_type, timestamp);
+2025-08-23 18:47:35.917 UTC [149537] ERROR:  must be owner of table security_events
+2025-08-23 18:47:35.917 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_severity 
+	    ON security_events(severity, timestamp);
+2025-08-23 18:47:35.918 UTC [149537] ERROR:  must be owner of table security_events
+2025-08-23 18:47:35.918 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_ip 
+	    ON security_events(ip_address, timestamp);
+2025-08-23 18:47:35.919 UTC [149537] ERROR:  must be owner of table security_events
+2025-08-23 18:47:35.919 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_risk 
+	    ON security_events(risk_score) WHERE risk_score > 50;
+2025-08-23 18:47:35.920 UTC [149537] ERROR:  must be owner of table audit_log
+2025-08-23 18:47:35.920 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_timestamp 
+	    ON audit_log(timestamp);
+2025-08-23 18:47:35.920 UTC [149537] ERROR:  must be owner of table audit_log
+2025-08-23 18:47:35.920 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_table_time 
+	    ON audit_log(table_name, timestamp);
+2025-08-23 18:47:35.921 UTC [149537] ERROR:  must be owner of table audit_log
+2025-08-23 18:47:35.921 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_user_time 
+	    ON audit_log(user_id, timestamp);
+2025-08-23 18:47:35.921 UTC [149537] ERROR:  must be owner of table audit_log
+2025-08-23 18:47:35.921 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_operation 
+	    ON audit_log(operation, timestamp);
+2025-08-23 18:47:35.922 UTC [149537] ERROR:  must be owner of table audit_log
+2025-08-23 18:47:35.922 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_risk 
+	    ON audit_log(risk_score) WHERE risk_score > 30;
+2025-08-23 18:47:35.922 UTC [149537] ERROR:  must be owner of table rate_limit_events
+2025-08-23 18:47:35.922 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rate_limit_identifier 
+	    ON rate_limit_events(identifier, identifier_type, window_start);
+2025-08-23 18:47:35.923 UTC [149537] ERROR:  must be owner of table rate_limit_events
+2025-08-23 18:47:35.923 UTC [149537] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rate_limit_blocked 
+	    ON rate_limit_events(blocked_until) WHERE blocked_until > NOW();
+2025-08-23 18:47:35.924 UTC [149537] ERROR:  must be owner of materialized view user_permissions_mv
+2025-08-23 18:47:35.924 UTC [149537] STATEMENT:  CREATE UNIQUE INDEX IF NOT EXISTS idx_user_permissions_mv_user 
+	    ON user_permissions_mv(user_id);
+2025-08-23 18:47:35.924 UTC [149537] ERROR:  must be owner of materialized view user_permissions_mv
+2025-08-23 18:47:35.924 UTC [149537] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_user_permissions_mv_username 
+	    ON user_permissions_mv(username);
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  must be owner of function authenticate_user
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION authenticate_user(
+	    p_username VARCHAR(64),
+	    p_password_hash VARCHAR(256)
+	) RETURNS TABLE (
+	    user_id UUID,
+	    username VARCHAR(64),
+	    password_hash VARCHAR(256),
+	    salt BYTEA,
+	    status VARCHAR(20),
+	    failed_attempts INTEGER,
+	    locked_until TIMESTAMP WITH TIME ZONE,
+	    roles TEXT[],
+	    permissions TEXT[],
+	    permission_bitmask BIGINT
+	) 
+	LANGUAGE SQL
+	STABLE
+	AS $$
+	    SELECT 
+	        u.user_id,
+	        u.username,
+	        u.password_hash,
+	        u.salt,
+	        u.status,
+	        u.failed_login_attempts,
+	        u.account_locked_until,
+	        COALESCE(upm.roles, '{}') as roles,
+	        COALESCE(upm.permissions, '{}') as permissions,
+	        COALESCE(upm.permission_bitmask, 0) as permission_bitmask
+	    FROM users u
+	    LEFT JOIN user_permissions_mv upm ON u.user_id = upm.user_id
+	    WHERE u.username = p_username 
+	        AND u.status = 'active'
+	        AND (u.account_locked_until IS NULL OR u.account_locked_until <= NOW());
+	$$;
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  must be owner of function validate_session
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION validate_session(
+	    p_jwt_token_id VARCHAR(64)
+	) RETURNS TABLE (
+	    session_id UUID,
+	    user_id UUID,
+	    username VARCHAR(64),
+	    expires_at TIMESTAMP WITH TIME ZONE,
+	    permissions TEXT[],
+	    permission_bitmask BIGINT
+	)
+	LANGUAGE SQL
+	STABLE  
+	AS $$
+	    SELECT 
+	        s.session_id,
+	        s.user_id,
+	        u.username,
+	        s.expires_at,
+	        COALESCE(upm.permissions, '{}') as permissions,
+	        COALESCE(upm.permission_bitmask, 0) as permission_bitmask
+	    FROM user_sessions s
+	    JOIN users u ON s.user_id = u.user_id
+	    LEFT JOIN user_permissions_mv upm ON u.user_id = upm.user_id
+	    WHERE s.jwt_token_id = p_jwt_token_id 
+	        AND s.is_active = TRUE 
+	        AND s.expires_at > NOW()
+	        AND u.status = 'active';
+	$$;
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  must be owner of function check_permission
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION check_permission(
+	    p_user_id UUID,
+	    p_resource VARCHAR(256),
+	    p_required_permission INTEGER -- Bitmask from permission_t enum
+	) RETURNS BOOLEAN
+	LANGUAGE SQL
+	STABLE
+	AS $$
+	    SELECT EXISTS(
+	        SELECT 1
+	        FROM user_permissions_mv upm
+	        WHERE upm.user_id = p_user_id
+	            AND (upm.permission_bitmask & p_required_permission) = p_required_permission
+	    );
+	$$;
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  must be owner of function refresh_user_permissions
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION refresh_user_permissions()
+	RETURNS TRIGGER AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY user_permissions_mv;
+	    RETURN NULL;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  must be owner of relation user_roles
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  DROP TRIGGER IF EXISTS refresh_user_permissions_trigger ON user_roles;
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  permission denied for table user_roles
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  CREATE TRIGGER refresh_user_permissions_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON user_roles
+	    FOR EACH STATEMENT EXECUTE FUNCTION refresh_user_permissions();
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  must be owner of relation role_permissions
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  DROP TRIGGER IF EXISTS refresh_user_permissions_role_trigger ON role_permissions;
+2025-08-23 18:47:35.925 UTC [149537] ERROR:  permission denied for table role_permissions
+2025-08-23 18:47:35.925 UTC [149537] STATEMENT:  CREATE TRIGGER refresh_user_permissions_role_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON role_permissions
+	    FOR EACH STATEMENT EXECUTE FUNCTION refresh_user_permissions();
+2025-08-23 18:47:35.926 UTC [149537] ERROR:  must be owner of function audit_trigger_func
+2025-08-23 18:47:35.926 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION audit_trigger_func()
+	RETURNS TRIGGER AS $$
+	DECLARE
+	    audit_user_id UUID;
+	    audit_session_id UUID;
+	BEGIN
+	    -- Get current user context (would be set by application)
+	    audit_user_id := current_setting('app.current_user_id', TRUE)::UUID;
+	    audit_session_id := current_setting('app.current_session_id', TRUE)::UUID;
+	    
+	    IF TG_OP = 'INSERT' THEN
+	        INSERT INTO audit_log (
+	            table_name, operation, record_id, user_id, session_id,
+	            new_values, changed_fields
+	        ) VALUES (
+	            TG_TABLE_NAME, TG_OP, NEW.user_id, audit_user_id, audit_session_id,
+	            row_to_json(NEW), ARRAY[]::TEXT[]
+	        );
+	        RETURN NEW;
+	    ELSIF TG_OP = 'UPDATE' THEN
+	        INSERT INTO audit_log (
+	            table_name, operation, record_id, user_id, session_id,
+	            old_values, new_values, changed_fields
+	        ) VALUES (
+	            TG_TABLE_NAME, TG_OP, NEW.user_id, audit_user_id, audit_session_id,
+	            row_to_json(OLD), row_to_json(NEW),
+	            (SELECT ARRAY_AGG(key) FROM jsonb_each(to_jsonb(NEW)) WHERE to_jsonb(NEW) -> key != to_jsonb(OLD) -> key)
+	        );
+	        RETURN NEW;
+	    ELSIF TG_OP = 'DELETE' THEN
+	        INSERT INTO audit_log (
+	            table_name, operation, record_id, user_id, session_id,
+	            old_values, changed_fields
+	        ) VALUES (
+	            TG_TABLE_NAME, TG_OP, OLD.user_id, audit_user_id, audit_session_id,
+	            row_to_json(OLD), ARRAY[]::TEXT[]
+	        );
+	        RETURN OLD;
+	    END IF;
+	    RETURN NULL;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-23 18:47:35.926 UTC [149537] ERROR:  must be owner of relation users
+2025-08-23 18:47:35.926 UTC [149537] STATEMENT:  DROP TRIGGER IF EXISTS audit_users_trigger ON users;
+2025-08-23 18:47:35.926 UTC [149537] ERROR:  permission denied for table users
+2025-08-23 18:47:35.926 UTC [149537] STATEMENT:  CREATE TRIGGER audit_users_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON users
+	    FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+2025-08-23 18:47:35.926 UTC [149537] ERROR:  must be owner of relation user_roles
+2025-08-23 18:47:35.926 UTC [149537] STATEMENT:  DROP TRIGGER IF EXISTS audit_user_roles_trigger ON user_roles;
+2025-08-23 18:47:35.926 UTC [149537] ERROR:  permission denied for table user_roles
+2025-08-23 18:47:35.926 UTC [149537] STATEMENT:  CREATE TRIGGER audit_user_roles_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON user_roles
+	    FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+2025-08-23 18:47:35.927 UTC [149537] ERROR:  permission denied for table roles
+2025-08-23 18:47:35.927 UTC [149537] CONTEXT:  SQL statement "SELECT role_id                    FROM roles WHERE role_name = 'admin'"
+	PL/pgSQL function inline_code_block line 17 at SQL statement
+2025-08-23 18:47:35.927 UTC [149537] STATEMENT:  DO $$
+	DECLARE
+	    admin_role_id UUID;
+	    system_role_id UUID;
+	    agent_role_id UUID;
+	    monitor_role_id UUID;
+	    guest_role_id UUID;
+	    
+	    admin_perm_id UUID;
+	    system_perm_id UUID;
+	    read_perm_id UUID;
+	    write_perm_id UUID;
+	    execute_perm_id UUID;
+	    monitor_perm_id UUID;
+	BEGIN
+	    -- Get role IDs
+	    SELECT role_id INTO admin_role_id FROM roles WHERE role_name = 'admin';
+	    SELECT role_id INTO system_role_id FROM roles WHERE role_name = 'system';  
+	    SELECT role_id INTO agent_role_id FROM roles WHERE role_name = 'agent';
+	    SELECT role_id INTO monitor_role_id FROM roles WHERE role_name = 'monitor';
+	    SELECT role_id INTO guest_role_id FROM roles WHERE role_name = 'guest';
+	    
+	    -- Get permission IDs
+	    SELECT permission_id INTO admin_perm_id FROM permissions WHERE permission_name = 'admin';
+	    SELECT permission_id INTO system_perm_id FROM permissions WHERE permission_name = 'system';
+	    SELECT permission_id INTO read_perm_id FROM permissions WHERE permission_name = 'read';
+	    SELECT permission_id INTO write_perm_id FROM permissions WHERE permission_name = 'write';
+	    SELECT permission_id INTO execute_perm_id FROM permissions WHERE permission_name = 'execute';
+	    SELECT permission_id INTO monitor_perm_id FROM permissions WHERE permission_name = 'monitor';
+	    
+	    -- Assign permissions to roles
+	    INSERT INTO role_permissions (role_id, permission_id) VALUES
+	    -- Admin gets all permissions
+	    (admin_role_id, admin_perm_id),
+	    (admin_role_id, system_perm_id),
+	    (admin_role_id, read_perm_id),
+	    (admin_role_id, write_perm_id),
+	    (admin_role_id, execute_perm_id),
+	    (admin_role_id, monitor_perm_id),
+	    
+	    -- System gets system, read, write, execute
+	    (system_role_id, system_perm_id),
+	    (system_role_id, read_perm_id),
+	    (system_role_id, write_perm_id),
+	    (system_role_id, execute_perm_id),
+	    
+	    -- Agent gets read, write, execute
+	    (agent_role_id, read_perm_id),
+	    (agent_role_id, write_perm_id),
+	    (agent_role_id, execute_perm_id),
+	    
+	    -- Monitor gets read and monitor
+	    (monitor_role_id, read_perm_id),
+	    (monitor_role_id, monitor_perm_id),
+	    
+	    -- Guest gets only read
+	    (guest_role_id, read_perm_id)
+	    
+	    ON CONFLICT (role_id, permission_id) DO NOTHING;
+	END $$;
+2025-08-23 18:47:35.927 UTC [149537] ERROR:  permission denied for table users
+2025-08-23 18:47:35.927 UTC [149537] CONTEXT:  SQL statement "SELECT user_id                    FROM users WHERE username = 'admin'"
+	PL/pgSQL function inline_code_block line 9 at SQL statement
+2025-08-23 18:47:35.927 UTC [149537] STATEMENT:  DO $$
+	DECLARE
+	    admin_user_id UUID;
+	    admin_role_id UUID;
+	    salt BYTEA;
+	    password_hash VARCHAR(256);
+	BEGIN
+	    -- Check if admin user already exists
+	    SELECT user_id INTO admin_user_id FROM users WHERE username = 'admin';
+	    
+	    IF admin_user_id IS NULL THEN
+	        -- Generate salt and hash for default admin password
+	        -- In production, this should use Argon2id from auth_security.c
+	        salt := gen_random_bytes(32);
+	        password_hash := encode(digest('admin123' || encode(salt, 'hex'), 'sha256'), 'hex');
+	        
+	        -- Create admin user
+	        INSERT INTO users (user_id, username, email, password_hash, salt, status, created_ip)
+	        VALUES (gen_random_uuid(), 'admin', 'admin@claude-agents.local', password_hash, salt, 'active', '127.0.0.1'::INET)
+	        RETURNING user_id INTO admin_user_id;
+	        
+	        -- Get admin role
+	        SELECT role_id INTO admin_role_id FROM roles WHERE role_name = 'admin';
+	        
+	        -- Assign admin role
+	        INSERT INTO user_roles (user_id, role_id) VALUES (admin_user_id, admin_role_id);
+	        
+	        -- Create user profile
+	        INSERT INTO user_profiles (user_id, display_name) VALUES (admin_user_id, 'System Administrator');
+	        
+	        RAISE NOTICE 'Default admin user created with username: admin, password: admin123';
+	        RAISE NOTICE 'SECURITY WARNING: Change the default admin password immediately!';
+	    ELSE
+	        RAISE NOTICE 'Admin user already exists, skipping creation';
+	    END IF;
+	END $$;
+2025-08-23 18:47:35.927 UTC [149537] ERROR:  permission denied for materialized view user_permissions_mv
+2025-08-23 18:47:35.927 UTC [149537] STATEMENT:  REFRESH MATERIALIZED VIEW user_permissions_mv;
+2025-08-23 18:47:35.928 UTC [149537] ERROR:  must be owner of view auth_performance_metrics
+2025-08-23 18:47:35.928 UTC [149537] STATEMENT:  CREATE OR REPLACE VIEW auth_performance_metrics AS
+	SELECT 
+	    'authentication_latency' as metric,
+	    AVG(EXTRACT(EPOCH FROM (se2.timestamp - se1.timestamp)) * 1000) as avg_ms,
+	    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (se2.timestamp - se1.timestamp)) * 1000) as p95_ms,
+	    COUNT(*) as sample_size
+	FROM security_events se1
+	JOIN security_events se2 ON se1.session_id = se2.session_id 
+	    AND se2.timestamp > se1.timestamp
+	WHERE se1.event_type = 'login_success'
+	    AND se2.event_type = 'token_issued'
+	    AND se1.timestamp >= NOW() - INTERVAL '1 hour'
+	UNION ALL
+	SELECT 
+	    'session_creation_rate' as metric,
+	    COUNT(*)::FLOAT / GREATEST(EXTRACT(EPOCH FROM (MAX(created_at) - MIN(created_at))), 1) * 60 as per_minute,
+	    NULL as p95_ms,
+	    COUNT(*) as sample_size
+	FROM user_sessions
+	WHERE created_at >= NOW() - INTERVAL '1 hour'
+	UNION ALL
+	SELECT
+	    'concurrent_sessions' as metric,
+	    COUNT(*) as current_count,
+	    NULL as p95_ms,
+	    COUNT(*) as sample_size
+	FROM user_sessions
+	WHERE is_active = TRUE AND expires_at > NOW();
+2025-08-23 18:47:35.928 UTC [149537] ERROR:  must be owner of function cleanup_expired_sessions
+2025-08-23 18:47:35.928 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
+	RETURNS INTEGER
+	LANGUAGE SQL
+	AS $$
+	    WITH deleted_sessions AS (
+	        DELETE FROM user_sessions 
+	        WHERE expires_at <= NOW() OR (is_active = FALSE AND last_activity < NOW() - INTERVAL '24 hours')
+	        RETURNING session_id
+	    )
+	    SELECT COUNT(*) FROM deleted_sessions;
+	$$;
+2025-08-23 18:47:35.928 UTC [149537] ERROR:  must be owner of function cleanup_audit_logs
+2025-08-23 18:47:35.928 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION cleanup_audit_logs()
+	RETURNS INTEGER
+	LANGUAGE SQL  
+	AS $$
+	    WITH deleted_logs AS (
+	        DELETE FROM audit_log 
+	        WHERE timestamp < NOW() - INTERVAL '90 days'
+	        RETURNING audit_id
+	    )
+	    SELECT COUNT(*) FROM deleted_logs;
+	$$;
+2025-08-23 18:47:35.928 UTC [149537] ERROR:  must be owner of function cleanup_security_events
+2025-08-23 18:47:35.928 UTC [149537] STATEMENT:  CREATE OR REPLACE FUNCTION cleanup_security_events()
+	RETURNS INTEGER
+	LANGUAGE SQL
+	AS $$
+	    WITH deleted_events AS (
+	        DELETE FROM security_events 
+	        WHERE timestamp < NOW() - INTERVAL '30 days'
+	            AND event_type IN ('login_success', 'token_issued')
+	            AND severity <= 2
+	        RETURNING event_id
+	    )
+	    SELECT COUNT(*) FROM deleted_events;
+	$$;
+2025-08-23 18:47:35.929 UTC [149537] WARNING:  there is no transaction in progress
+2025-08-23 18:48:22.098 UTC [149638] FATAL:  password authentication failed for user "ubuntu"
+2025-08-23 18:48:22.098 UTC [149638] DETAIL:  User "ubuntu" has no password assigned.
+	Connection matched file "/home/ubuntu/Documents/Claude/database/data/postgresql/pg_hba.conf" line 119: "host    all             all             127.0.0.1/32            scram-sha-256"
+2025-08-23 18:48:22.126 UTC [149640] ERROR:  permission denied to set parameter "log_statement_stats"
+2025-08-23 18:48:22.126 UTC [149640] STATEMENT:  SET log_statement_stats = OFF;
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table users
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_username_active 
+	    ON users(username) WHERE status = 'active';
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table users
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_active 
+	    ON users(email) WHERE status = 'active';
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table users
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_last_login 
+	    ON users(last_login) WHERE status = 'active';
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table users
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_status_created 
+	    ON users(status, created_at);
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table users
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_locked_until 
+	    ON users(account_locked_until) WHERE account_locked_until > NOW();
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table user_profiles
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_profiles_user_id 
+	    ON user_profiles(user_id);
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  permission denied for table roles
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  INSERT INTO roles (role_name, description, is_system_role, role_level) VALUES
+	('admin', 'System administrator with full access', TRUE, 1),
+	('system', 'System-level operations role', TRUE, 2), 
+	('agent', 'Standard agent role', TRUE, 3),
+	('monitor', 'Monitoring and observability role', TRUE, 4),
+	('guest', 'Read-only guest access', TRUE, 5)
+	ON CONFLICT (role_name) DO NOTHING;
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table roles
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_roles_name 
+	    ON roles(role_name);
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table roles
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_roles_system 
+	    ON roles(is_system_role, role_name);
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  permission denied for table permissions
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  INSERT INTO permissions (permission_name, resource_type, resource_pattern, action, permission_value, description) VALUES
+	('read', 'all', '*', 'read', 1, 'Read permission'),
+	('write', 'all', '*', 'write', 2, 'Write permission'), 
+	('execute', 'all', '*', 'execute', 4, 'Execute permission'),
+	('admin', 'all', '*', 'admin', 8, 'Admin permission'),
+	('monitor', 'all', '*', 'monitor', 16, 'Monitor permission'),
+	('system', 'all', '*', 'system', 32, 'System permission'),
+	('agents.read', 'agent', '*', 'read', 1, 'Read agent information'),
+	('agents.write', 'agent', '*', 'write', 2, 'Modify agent configuration'),
+	('agents.execute', 'agent', '*', 'execute', 4, 'Execute agent operations'),
+	('monitoring.read', 'metrics', '*', 'read', 16, 'Read monitoring data'),
+	('users.admin', 'user', '*', 'admin', 8, 'User administration')
+	ON CONFLICT (permission_name) DO NOTHING;
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table permissions
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_permissions_name 
+	    ON permissions(permission_name);
+2025-08-23 18:48:22.127 UTC [149640] ERROR:  must be owner of table permissions
+2025-08-23 18:48:22.127 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_permissions_resource 
+	    ON permissions(resource_type, action);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table role_permissions
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_role_permissions_role 
+	    ON role_permissions(role_id);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table role_permissions
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_role_permissions_permission 
+	    ON role_permissions(permission_id);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_roles
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_user 
+	    ON user_roles(user_id);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_roles
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_role 
+	    ON user_roles(role_id);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_roles
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_roles_expires 
+	    ON user_roles(expires_at) WHERE expires_at IS NOT NULL;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_sessions
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_user_active 
+	    ON user_sessions(user_id) WHERE is_active = TRUE;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_sessions
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_token 
+	    ON user_sessions(jwt_token_id) WHERE is_active = TRUE;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_sessions
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_expires 
+	    ON user_sessions(expires_at) WHERE is_active = TRUE;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_sessions
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_activity 
+	    ON user_sessions(last_activity) WHERE is_active = TRUE;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table user_sessions
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_sessions_ip 
+	    ON user_sessions(ip_address, created_at);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table api_keys
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_hash 
+	    ON api_keys(key_hash) WHERE is_active = TRUE;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table api_keys
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_prefix 
+	    ON api_keys(key_prefix) WHERE is_active = TRUE;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table api_keys
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_user 
+	    ON api_keys(user_id) WHERE is_active = TRUE;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table api_keys
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_api_keys_expires 
+	    ON api_keys(expires_at) WHERE is_active = TRUE AND expires_at IS NOT NULL;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table security_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_timestamp 
+	    ON security_events(timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table security_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_user_time 
+	    ON security_events(user_id, timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table security_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_type_time 
+	    ON security_events(event_type, timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table security_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_severity 
+	    ON security_events(severity, timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table security_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_ip 
+	    ON security_events(ip_address, timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table security_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_security_events_risk 
+	    ON security_events(risk_score) WHERE risk_score > 50;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table audit_log
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_timestamp 
+	    ON audit_log(timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table audit_log
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_table_time 
+	    ON audit_log(table_name, timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table audit_log
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_user_time 
+	    ON audit_log(user_id, timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table audit_log
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_operation 
+	    ON audit_log(operation, timestamp);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table audit_log
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_audit_log_risk 
+	    ON audit_log(risk_score) WHERE risk_score > 30;
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table rate_limit_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rate_limit_identifier 
+	    ON rate_limit_events(identifier, identifier_type, window_start);
+2025-08-23 18:48:22.128 UTC [149640] ERROR:  must be owner of table rate_limit_events
+2025-08-23 18:48:22.128 UTC [149640] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rate_limit_blocked 
+	    ON rate_limit_events(blocked_until) WHERE blocked_until > NOW();
+2025-08-23 18:48:22.129 UTC [149640] ERROR:  must be owner of materialized view user_permissions_mv
+2025-08-23 18:48:22.129 UTC [149640] STATEMENT:  CREATE UNIQUE INDEX IF NOT EXISTS idx_user_permissions_mv_user 
+	    ON user_permissions_mv(user_id);
+2025-08-23 18:48:22.129 UTC [149640] ERROR:  must be owner of materialized view user_permissions_mv
+2025-08-23 18:48:22.129 UTC [149640] STATEMENT:  CREATE INDEX IF NOT EXISTS idx_user_permissions_mv_username 
+	    ON user_permissions_mv(username);
+2025-08-23 18:48:22.129 UTC [149640] ERROR:  must be owner of function authenticate_user
+2025-08-23 18:48:22.129 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION authenticate_user(
+	    p_username VARCHAR(64),
+	    p_password_hash VARCHAR(256)
+	) RETURNS TABLE (
+	    user_id UUID,
+	    username VARCHAR(64),
+	    password_hash VARCHAR(256),
+	    salt BYTEA,
+	    status VARCHAR(20),
+	    failed_attempts INTEGER,
+	    locked_until TIMESTAMP WITH TIME ZONE,
+	    roles TEXT[],
+	    permissions TEXT[],
+	    permission_bitmask BIGINT
+	) 
+	LANGUAGE SQL
+	STABLE
+	AS $$
+	    SELECT 
+	        u.user_id,
+	        u.username,
+	        u.password_hash,
+	        u.salt,
+	        u.status,
+	        u.failed_login_attempts,
+	        u.account_locked_until,
+	        COALESCE(upm.roles, '{}') as roles,
+	        COALESCE(upm.permissions, '{}') as permissions,
+	        COALESCE(upm.permission_bitmask, 0) as permission_bitmask
+	    FROM users u
+	    LEFT JOIN user_permissions_mv upm ON u.user_id = upm.user_id
+	    WHERE u.username = p_username 
+	        AND u.status = 'active'
+	        AND (u.account_locked_until IS NULL OR u.account_locked_until <= NOW());
+	$$;
+2025-08-23 18:48:22.129 UTC [149640] ERROR:  must be owner of function validate_session
+2025-08-23 18:48:22.129 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION validate_session(
+	    p_jwt_token_id VARCHAR(64)
+	) RETURNS TABLE (
+	    session_id UUID,
+	    user_id UUID,
+	    username VARCHAR(64),
+	    expires_at TIMESTAMP WITH TIME ZONE,
+	    permissions TEXT[],
+	    permission_bitmask BIGINT
+	)
+	LANGUAGE SQL
+	STABLE  
+	AS $$
+	    SELECT 
+	        s.session_id,
+	        s.user_id,
+	        u.username,
+	        s.expires_at,
+	        COALESCE(upm.permissions, '{}') as permissions,
+	        COALESCE(upm.permission_bitmask, 0) as permission_bitmask
+	    FROM user_sessions s
+	    JOIN users u ON s.user_id = u.user_id
+	    LEFT JOIN user_permissions_mv upm ON u.user_id = upm.user_id
+	    WHERE s.jwt_token_id = p_jwt_token_id 
+	        AND s.is_active = TRUE 
+	        AND s.expires_at > NOW()
+	        AND u.status = 'active';
+	$$;
+2025-08-23 18:48:22.129 UTC [149640] ERROR:  must be owner of function check_permission
+2025-08-23 18:48:22.129 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION check_permission(
+	    p_user_id UUID,
+	    p_resource VARCHAR(256),
+	    p_required_permission INTEGER -- Bitmask from permission_t enum
+	) RETURNS BOOLEAN
+	LANGUAGE SQL
+	STABLE
+	AS $$
+	    SELECT EXISTS(
+	        SELECT 1
+	        FROM user_permissions_mv upm
+	        WHERE upm.user_id = p_user_id
+	            AND (upm.permission_bitmask & p_required_permission) = p_required_permission
+	    );
+	$$;
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  must be owner of function refresh_user_permissions
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION refresh_user_permissions()
+	RETURNS TRIGGER AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY user_permissions_mv;
+	    RETURN NULL;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  must be owner of relation user_roles
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  DROP TRIGGER IF EXISTS refresh_user_permissions_trigger ON user_roles;
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  permission denied for table user_roles
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  CREATE TRIGGER refresh_user_permissions_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON user_roles
+	    FOR EACH STATEMENT EXECUTE FUNCTION refresh_user_permissions();
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  must be owner of relation role_permissions
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  DROP TRIGGER IF EXISTS refresh_user_permissions_role_trigger ON role_permissions;
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  permission denied for table role_permissions
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  CREATE TRIGGER refresh_user_permissions_role_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON role_permissions
+	    FOR EACH STATEMENT EXECUTE FUNCTION refresh_user_permissions();
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  must be owner of function audit_trigger_func
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION audit_trigger_func()
+	RETURNS TRIGGER AS $$
+	DECLARE
+	    audit_user_id UUID;
+	    audit_session_id UUID;
+	BEGIN
+	    -- Get current user context (would be set by application)
+	    audit_user_id := current_setting('app.current_user_id', TRUE)::UUID;
+	    audit_session_id := current_setting('app.current_session_id', TRUE)::UUID;
+	    
+	    IF TG_OP = 'INSERT' THEN
+	        INSERT INTO audit_log (
+	            table_name, operation, record_id, user_id, session_id,
+	            new_values, changed_fields
+	        ) VALUES (
+	            TG_TABLE_NAME, TG_OP, NEW.user_id, audit_user_id, audit_session_id,
+	            row_to_json(NEW), ARRAY[]::TEXT[]
+	        );
+	        RETURN NEW;
+	    ELSIF TG_OP = 'UPDATE' THEN
+	        INSERT INTO audit_log (
+	            table_name, operation, record_id, user_id, session_id,
+	            old_values, new_values, changed_fields
+	        ) VALUES (
+	            TG_TABLE_NAME, TG_OP, NEW.user_id, audit_user_id, audit_session_id,
+	            row_to_json(OLD), row_to_json(NEW),
+	            (SELECT ARRAY_AGG(key) FROM jsonb_each(to_jsonb(NEW)) WHERE to_jsonb(NEW) -> key != to_jsonb(OLD) -> key)
+	        );
+	        RETURN NEW;
+	    ELSIF TG_OP = 'DELETE' THEN
+	        INSERT INTO audit_log (
+	            table_name, operation, record_id, user_id, session_id,
+	            old_values, changed_fields
+	        ) VALUES (
+	            TG_TABLE_NAME, TG_OP, OLD.user_id, audit_user_id, audit_session_id,
+	            row_to_json(OLD), ARRAY[]::TEXT[]
+	        );
+	        RETURN OLD;
+	    END IF;
+	    RETURN NULL;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  must be owner of relation users
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  DROP TRIGGER IF EXISTS audit_users_trigger ON users;
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  permission denied for table users
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  CREATE TRIGGER audit_users_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON users
+	    FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  must be owner of relation user_roles
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  DROP TRIGGER IF EXISTS audit_user_roles_trigger ON user_roles;
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  permission denied for table user_roles
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  CREATE TRIGGER audit_user_roles_trigger
+	    AFTER INSERT OR UPDATE OR DELETE ON user_roles
+	    FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
+2025-08-23 18:48:22.130 UTC [149640] ERROR:  permission denied for table roles
+2025-08-23 18:48:22.130 UTC [149640] CONTEXT:  SQL statement "SELECT role_id                    FROM roles WHERE role_name = 'admin'"
+	PL/pgSQL function inline_code_block line 17 at SQL statement
+2025-08-23 18:48:22.130 UTC [149640] STATEMENT:  DO $$
+	DECLARE
+	    admin_role_id UUID;
+	    system_role_id UUID;
+	    agent_role_id UUID;
+	    monitor_role_id UUID;
+	    guest_role_id UUID;
+	    
+	    admin_perm_id UUID;
+	    system_perm_id UUID;
+	    read_perm_id UUID;
+	    write_perm_id UUID;
+	    execute_perm_id UUID;
+	    monitor_perm_id UUID;
+	BEGIN
+	    -- Get role IDs
+	    SELECT role_id INTO admin_role_id FROM roles WHERE role_name = 'admin';
+	    SELECT role_id INTO system_role_id FROM roles WHERE role_name = 'system';  
+	    SELECT role_id INTO agent_role_id FROM roles WHERE role_name = 'agent';
+	    SELECT role_id INTO monitor_role_id FROM roles WHERE role_name = 'monitor';
+	    SELECT role_id INTO guest_role_id FROM roles WHERE role_name = 'guest';
+	    
+	    -- Get permission IDs
+	    SELECT permission_id INTO admin_perm_id FROM permissions WHERE permission_name = 'admin';
+	    SELECT permission_id INTO system_perm_id FROM permissions WHERE permission_name = 'system';
+	    SELECT permission_id INTO read_perm_id FROM permissions WHERE permission_name = 'read';
+	    SELECT permission_id INTO write_perm_id FROM permissions WHERE permission_name = 'write';
+	    SELECT permission_id INTO execute_perm_id FROM permissions WHERE permission_name = 'execute';
+	    SELECT permission_id INTO monitor_perm_id FROM permissions WHERE permission_name = 'monitor';
+	    
+	    -- Assign permissions to roles
+	    INSERT INTO role_permissions (role_id, permission_id) VALUES
+	    -- Admin gets all permissions
+	    (admin_role_id, admin_perm_id),
+	    (admin_role_id, system_perm_id),
+	    (admin_role_id, read_perm_id),
+	    (admin_role_id, write_perm_id),
+	    (admin_role_id, execute_perm_id),
+	    (admin_role_id, monitor_perm_id),
+	    
+	    -- System gets system, read, write, execute
+	    (system_role_id, system_perm_id),
+	    (system_role_id, read_perm_id),
+	    (system_role_id, write_perm_id),
+	    (system_role_id, execute_perm_id),
+	    
+	    -- Agent gets read, write, execute
+	    (agent_role_id, read_perm_id),
+	    (agent_role_id, write_perm_id),
+	    (agent_role_id, execute_perm_id),
+	    
+	    -- Monitor gets read and monitor
+	    (monitor_role_id, read_perm_id),
+	    (monitor_role_id, monitor_perm_id),
+	    
+	    -- Guest gets only read
+	    (guest_role_id, read_perm_id)
+	    
+	    ON CONFLICT (role_id, permission_id) DO NOTHING;
+	END $$;
+2025-08-23 18:48:22.131 UTC [149640] ERROR:  permission denied for table users
+2025-08-23 18:48:22.131 UTC [149640] CONTEXT:  SQL statement "SELECT user_id                    FROM users WHERE username = 'admin'"
+	PL/pgSQL function inline_code_block line 9 at SQL statement
+2025-08-23 18:48:22.131 UTC [149640] STATEMENT:  DO $$
+	DECLARE
+	    admin_user_id UUID;
+	    admin_role_id UUID;
+	    salt BYTEA;
+	    password_hash VARCHAR(256);
+	BEGIN
+	    -- Check if admin user already exists
+	    SELECT user_id INTO admin_user_id FROM users WHERE username = 'admin';
+	    
+	    IF admin_user_id IS NULL THEN
+	        -- Generate salt and hash for default admin password
+	        -- In production, this should use Argon2id from auth_security.c
+	        salt := gen_random_bytes(32);
+	        password_hash := encode(digest('admin123' || encode(salt, 'hex'), 'sha256'), 'hex');
+	        
+	        -- Create admin user
+	        INSERT INTO users (user_id, username, email, password_hash, salt, status, created_ip)
+	        VALUES (gen_random_uuid(), 'admin', 'admin@claude-agents.local', password_hash, salt, 'active', '127.0.0.1'::INET)
+	        RETURNING user_id INTO admin_user_id;
+	        
+	        -- Get admin role
+	        SELECT role_id INTO admin_role_id FROM roles WHERE role_name = 'admin';
+	        
+	        -- Assign admin role
+	        INSERT INTO user_roles (user_id, role_id) VALUES (admin_user_id, admin_role_id);
+	        
+	        -- Create user profile
+	        INSERT INTO user_profiles (user_id, display_name) VALUES (admin_user_id, 'System Administrator');
+	        
+	        RAISE NOTICE 'Default admin user created with username: admin, password: admin123';
+	        RAISE NOTICE 'SECURITY WARNING: Change the default admin password immediately!';
+	    ELSE
+	        RAISE NOTICE 'Admin user already exists, skipping creation';
+	    END IF;
+	END $$;
+2025-08-23 18:48:22.131 UTC [149640] ERROR:  permission denied for materialized view user_permissions_mv
+2025-08-23 18:48:22.131 UTC [149640] STATEMENT:  REFRESH MATERIALIZED VIEW user_permissions_mv;
+2025-08-23 18:48:22.131 UTC [149640] ERROR:  must be owner of view auth_performance_metrics
+2025-08-23 18:48:22.131 UTC [149640] STATEMENT:  CREATE OR REPLACE VIEW auth_performance_metrics AS
+	SELECT 
+	    'authentication_latency' as metric,
+	    AVG(EXTRACT(EPOCH FROM (se2.timestamp - se1.timestamp)) * 1000) as avg_ms,
+	    PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (se2.timestamp - se1.timestamp)) * 1000) as p95_ms,
+	    COUNT(*) as sample_size
+	FROM security_events se1
+	JOIN security_events se2 ON se1.session_id = se2.session_id 
+	    AND se2.timestamp > se1.timestamp
+	WHERE se1.event_type = 'login_success'
+	    AND se2.event_type = 'token_issued'
+	    AND se1.timestamp >= NOW() - INTERVAL '1 hour'
+	UNION ALL
+	SELECT 
+	    'session_creation_rate' as metric,
+	    COUNT(*)::FLOAT / GREATEST(EXTRACT(EPOCH FROM (MAX(created_at) - MIN(created_at))), 1) * 60 as per_minute,
+	    NULL as p95_ms,
+	    COUNT(*) as sample_size
+	FROM user_sessions
+	WHERE created_at >= NOW() - INTERVAL '1 hour'
+	UNION ALL
+	SELECT
+	    'concurrent_sessions' as metric,
+	    COUNT(*) as current_count,
+	    NULL as p95_ms,
+	    COUNT(*) as sample_size
+	FROM user_sessions
+	WHERE is_active = TRUE AND expires_at > NOW();
+2025-08-23 18:48:22.131 UTC [149640] ERROR:  must be owner of function cleanup_expired_sessions
+2025-08-23 18:48:22.131 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
+	RETURNS INTEGER
+	LANGUAGE SQL
+	AS $$
+	    WITH deleted_sessions AS (
+	        DELETE FROM user_sessions 
+	        WHERE expires_at <= NOW() OR (is_active = FALSE AND last_activity < NOW() - INTERVAL '24 hours')
+	        RETURNING session_id
+	    )
+	    SELECT COUNT(*) FROM deleted_sessions;
+	$$;
+2025-08-23 18:48:22.131 UTC [149640] ERROR:  must be owner of function cleanup_audit_logs
+2025-08-23 18:48:22.131 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION cleanup_audit_logs()
+	RETURNS INTEGER
+	LANGUAGE SQL  
+	AS $$
+	    WITH deleted_logs AS (
+	        DELETE FROM audit_log 
+	        WHERE timestamp < NOW() - INTERVAL '90 days'
+	        RETURNING audit_id
+	    )
+	    SELECT COUNT(*) FROM deleted_logs;
+	$$;
+2025-08-23 18:48:22.131 UTC [149640] ERROR:  must be owner of function cleanup_security_events
+2025-08-23 18:48:22.131 UTC [149640] STATEMENT:  CREATE OR REPLACE FUNCTION cleanup_security_events()
+	RETURNS INTEGER
+	LANGUAGE SQL
+	AS $$
+	    WITH deleted_events AS (
+	        DELETE FROM security_events 
+	        WHERE timestamp < NOW() - INTERVAL '30 days'
+	            AND event_type IN ('login_success', 'token_issued')
+	            AND severity <= 2
+	        RETURNING event_id
+	    )
+	    SELECT COUNT(*) FROM deleted_events;
+	$$;
+2025-08-23 18:48:22.131 UTC [149640] WARNING:  there is no transaction in progress
+2025-08-23 18:50:01.646 UTC [146058] LOG:  checkpoint starting: time
+2025-08-23 18:50:11.764 UTC [146058] LOG:  checkpoint complete: wrote 102 buffers (0.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=10.118 s, sync=0.001 s, total=10.119 s; sync files=71, longest=0.001 s, average=0.001 s; distance=450 kB, estimate=498 kB; lsn=0/1B07558, redo lsn=0/1B074C8
+2025-08-23 19:05:01.964 UTC [146058] LOG:  checkpoint starting: time
+2025-08-23 19:05:02.766 UTC [146058] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.802 s, sync=0.001 s, total=0.803 s; sync files=8, longest=0.001 s, average=0.001 s; distance=31 kB, estimate=451 kB; lsn=0/1B0F3F8, redo lsn=0/1B0F3A0
+2025-08-23 20:09:28.226 UTC [159450] ERROR:  column "ml_features" does not exist
+2025-08-23 20:09:28.226 UTC [159450] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_ml_features ON agent_task_executions USING GIN(ml_features)
+2025-08-23 20:09:28.226 UTC [159450] ERROR:  column "performance_anomaly" does not exist at character 116
+2025-08-23 20:09:28.226 UTC [159450] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_anomaly ON agent_task_executions(performance_anomaly) WHERE performance_anomaly = true
+2025-08-23 20:09:28.226 UTC [159450] ERROR:  column "predicted_success" does not exist
+2025-08-23 20:09:28.226 UTC [159450] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_prediction ON agent_task_executions(predicted_success, prediction_confidence)
+2025-08-23 20:09:28.239 UTC [159453] ERROR:  column "performance_anomaly" does not exist at character 383
+2025-08-23 20:09:28.239 UTC [159453] STATEMENT:  
+	                    SELECT 
+	                        AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as success_rate,
+	                        AVG(duration_seconds) as avg_duration,
+	                        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_seconds) as p95_duration,
+	                        COUNT(*) as execution_count,
+	                        COUNT(*) FILTER (WHERE performance_anomaly = true) as anomaly_count
+	                    FROM agent_task_executions
+	                    WHERE start_time >= NOW() - INTERVAL '1 hour'
+	                
+2025-08-23 20:09:28.240 UTC [159452] ERROR:  column "performance_anomaly" does not exist at character 604
+2025-08-23 20:09:28.240 UTC [159452] STATEMENT:  
+	                SELECT 
+	                    COUNT(*) as total_executions,
+	                    AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as overall_success_rate,
+	                    AVG(duration_seconds) as avg_duration,
+	                    COUNT(DISTINCT task_type) as unique_task_types,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	                    AVG(complexity_score) as avg_complexity,
+	                    COUNT(*) FILTER (WHERE performance_anomaly = true) as total_anomalies,
+	                    AVG(prediction_confidence) FILTER (WHERE prediction_confidence IS NOT NULL) as avg_prediction_confidence
+	                FROM agent_task_executions
+	            
+2025-08-23 20:09:43.775 UTC [159687] ERROR:  column "success_rate" does not exist at character 78
+2025-08-23 20:09:43.775 UTC [159687] STATEMENT:  
+	                SELECT 
+	                    agent_name,
+	                    success_rate,
+	                    total_invocations,
+	                    avg_duration_seconds,
+	                    cognitive_load_score
+	                FROM agent_performance_metrics
+	                WHERE total_invocations >= 3
+	                ORDER BY success_rate DESC, total_invocations DESC
+	                LIMIT 15
+	            
+2025-08-23 20:10:02.892 UTC [146058] LOG:  checkpoint starting: time
+2025-08-23 20:10:09.511 UTC [146058] LOG:  checkpoint complete: wrote 67 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=6.619 s, sync=0.001 s, total=6.619 s; sync files=59, longest=0.001 s, average=0.001 s; distance=325 kB, estimate=439 kB; lsn=0/1B60B60, redo lsn=0/1B60AD0

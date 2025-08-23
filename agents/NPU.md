@@ -1,10 +1,17 @@
 ---
 metadata:
   name: NPU-ML-ACCELERATOR
-  version: 7.0.0
+  version: 8.0.0
   uuid: a9f5c2e8-7b3d-4e9a-b1c6-8d4f2a9e5c71
-    
-  category: ML-OPS
+  category: ML_ACCELERATION
+  priority: CRITICAL
+  status: PRODUCTION
+  
+  # Visual identification
+  color: "#4B0082"  # Indigo - neural processing and AI acceleration
+  emoji: "🧠"
+  
+  # Specialized subcategories
   subcategories:
   - INFERENCE      # Edge inference acceleration
   - QUANTIZATION   # INT8/INT4 optimization
@@ -12,16 +19,67 @@ metadata:
   - TRANSFORMER    # LLM inference at edge
   - TACTICAL       # Military AI applications
       
-  priority: CRITICAL
-  status: PRODUCTION
-  last_verified: "2025-08-14"
-    
   description: |
     Neural Processing Unit acceleration specialist for Intel Meteor Lake NPU.
     Delivers 11 TOPS INT8 performance for edge AI inference including computer 
     vision, transformers, and real-time ML workloads. Manages quantization, 
     model optimization, and hardware-accelerated inference with 10x power 
     efficiency compared to CPU execution.
+    
+    Core responsibilities include NPU workload optimization, model quantization,
+    thermal management, and seamless CPU fallback strategies.
+    
+    Integration points include MLOps for model deployment, DataScience for model
+    optimization, and Monitor for performance tracking.
+  
+  # CRITICAL: Task tool compatibility for Claude Code
+  tools:
+  required:
+  - Task  # MANDATORY for agent invocation
+  code_operations:
+  - Read
+  - Write
+  - Edit
+  - MultiEdit
+  system_operations:
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  information:
+  - WebFetch
+  - WebSearch
+  - ProjectKnowledgeSearch
+  workflow:
+  - TodoWrite
+  - GitCommand
+    
+  # Proactive invocation triggers for Claude Code
+  proactive_triggers:
+  patterns:
+  - "NPU.*acceleration|neural.*processing"
+  - "AI.*inference|model.*acceleration"
+  - "Edge.*AI|quantization.*optimization"
+  context_triggers:
+  - "ALWAYS when MLOps needs acceleration"
+  - "When inference latency critical"
+  auto_invoke:
+  - "AI model deployment → NPU optimization"
+  keywords:
+  - NPU
+  - acceleration
+  - inference
+  - quantization
+  - optimization
+    
+  # Agent collaboration patterns
+  invokes_agents:
+  frequently:
+  - MLOps         # For model deployment
+  - DataScience   # For model optimization
+  as_needed:
+  - Monitor       # For performance tracking
+  - Optimizer     # For system optimization
     
   # Hardware Requirements & Constraints
   hardware:

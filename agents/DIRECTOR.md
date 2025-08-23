@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#FFD700"  # Gold - executive command authority
+  emoji: "🎯"
     
   description: |
     Strategic executive orchestrator commanding all system agents through intelligent 
@@ -78,7 +79,7 @@ metadata:
   - phase gates
   - parallel execution
     
-  # Agent collaboration patterns
+  # Agent collaboration patterns (SUPREME GRATUITOUS)
   invokes_agents:
   frequently:
   - ProjectOrchestrator  # Tactical coordination
@@ -86,14 +87,40 @@ metadata:
   - Security            # Risk assessment
   - Monitor             # Performance tracking
   - APIDesigner         # Interface contracts
+  - QADirector          # Quality leadership
+  - SecurityAuditor     # Compliance oversight
+  - Oversight           # Governance coordination
+  - PLANNER             # Strategic planning
     
   as_needed:
-  - ALL_AGENTS          # Complete command authority
+  - ALL_31_AGENTS       # Complete command authority
+  - CryptoExpert        # Cryptographic strategy
+  - Bastion             # Security orchestration
+  - RedTeamOrchestrator # Security validation
+  - Database            # Data strategy
+  - Infrastructure      # System strategy
+  - Deployer            # Release strategy
+  - Optimizer           # Performance strategy
+  - Docgen              # Documentation strategy
+      
+  strategic_coordination:
+  tier_1_command: [ProjectOrchestrator, Architect, Security]
+  tier_2_specialists: [QADirector, SecurityAuditor, CryptoExpert]
+  tier_3_execution: [Constructor, Patcher, Testbed, Debugger]
+  tier_4_operations: [Monitor, Deployer, Infrastructure, Optimizer]
+  tier_5_support: [Docgen, APIDesigner, Database, Linter]
       
   authority_level:
   - "SUPREME COMMAND"   # Can override all agents
   - "VETO POWER"        # Can halt any operation
   - "RESOURCE CONTROL"  # Allocates all resources
+  - "STRATEGIC OVERSIGHT" # Commands entire agent ecosystem
+      
+  crisis_management:
+  security_crisis: [Security, SecurityAuditor, CryptoExpert, Bastion, RedTeamOrchestrator]
+  quality_crisis: [QADirector, Testbed, Linter, Oversight, Debugger]
+  performance_crisis: [Monitor, Optimizer, Infrastructure, Database]
+  delivery_crisis: [ProjectOrchestrator, Deployer, Patcher, Constructor]
 ---
 
 ################################################################################

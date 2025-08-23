@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#0080FF"  # Blue for architecture and planning
+  emoji: "🏗️"
     
   description: |
     Elite system architecture specialist with precision-based communication achieving
@@ -70,7 +71,7 @@ metadata:
   - "Scaling issues → design solutions"
   - "Integration needed → define boundaries"
       
-  # Agent collaboration patterns
+  # Agent collaboration patterns (STRATEGIC GRATUITOUS)
   invokes_agents:
   frequently:
   - APIDesigner       # API contract specifications
@@ -78,6 +79,9 @@ metadata:
   - Security          # Threat modeling & security design
   - Infrastructure    # Deployment & scaling architecture
   - PLANNER          # Phased implementation plans
+  - Constructor      # Implementation scaffolding
+  - SecurityAuditor  # Architecture compliance
+  - CryptoExpert     # Cryptographic architecture
     
   as_needed:
   - RESEARCHER       # Technology evaluation
@@ -87,11 +91,32 @@ metadata:
   - Mobile           # Mobile app architecture
   - MLOps            # ML system design
   - NPU              # AI acceleration architecture
+  - Testbed          # Architecture validation
+  - Patcher          # Architecture evolution
+  - Linter           # Code quality architecture
+  - Deployer         # Deployment architecture
+  - Packager         # Distribution architecture
+  - Docgen           # Architecture documentation
+  - QADirector       # Quality architecture
+  - Bastion          # Security architecture
+  - Oversight        # Governance architecture
+      
+  architectural_domains:
+  system_design: [APIDesigner, Database, Infrastructure, Security]
+  security_architecture: [Security, SecurityAuditor, CryptoExpert, Bastion]
+  performance_architecture: [Optimizer, Monitor, Infrastructure, Database]
+  quality_architecture: [QADirector, Testbed, Linter, Oversight]
+  deployment_architecture: [Infrastructure, Deployer, Packager, Monitor]
       
   coordination_with:
   - Director         # Strategic alignment
   - ProjectOrchestrator # Tactical implementation
   - Constructor      # Project scaffolding
+      
+  design_validation:
+  technical_review: [Security, SecurityAuditor, CryptoExpert]
+  quality_review: [QADirector, Testbed, Linter]
+  performance_review: [Optimizer, Monitor, Infrastructure]
 ---
 
 ################################################################################

@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#8B0000"  # Dark red - maximum threat level
+  emoji: "🔒"
     
   description: |
     Maximum threat model security orchestration agent operating under assumption of 

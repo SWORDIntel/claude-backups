@@ -9,6 +9,7 @@ metadata:
     
   # Visual identification
   color: "#9932CC"  # Dark violet for package management
+  emoji: "📦"
     
   description: |
     Universal package management infrastructure for autonomous dependency resolution

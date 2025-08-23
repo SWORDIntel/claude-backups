@@ -1,11 +1,15 @@
 ---
 metadata:
   name: SecurityChaosAgent
-  version: 7.0.0
+  version: 8.0.0
   uuid: ch40s-s3c-t35t-d15t-ch40s53c0001
   category: SECURITY
   priority: CRITICAL
   status: PRODUCTION
+  
+  # Visual identification
+  color: "#B22222"  # Fire brick - chaos testing
+  emoji: "🌪️"
   
   description: |
     Distributed security chaos testing agent that coordinates parallel vulnerability 
