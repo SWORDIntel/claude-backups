@@ -55,7 +55,7 @@ try:
     
     # Import minimal required components
     from ENHANCED_AGENT_INTEGRATION import Priority, AgentStatus
-    from tandem_orchestrator import ExecutionMode, CommandSet, CommandStep, CommandType
+    from production_orchestrator import ExecutionMode, CommandSet, CommandStep, CommandType
     print("✅ Imported basic enums and classes")
     
     # Create a simple command set

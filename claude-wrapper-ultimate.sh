@@ -555,6 +555,18 @@ main() {
             cat "$QUICK_ACCESS_FILE" | grep -v '^#'
             exit 0
             ;;
+        --orchestrator)
+            # Launch Python orchestrator UI
+            local launcher_path="$CLAUDE_PROJECT_ROOT/agents/src/python/python-orchestrator-launcher.sh"
+            if [[ -f "$launcher_path" ]]; then
+                echo -e "${CYAN}${ROCKET} Launching Python Orchestrator UI...${NC}"
+                exec bash "$launcher_path"
+            else
+                echo -e "${RED}Python orchestrator launcher not found${NC}"
+                echo "Expected at: $launcher_path"
+                exit 1
+            fi
+            ;;
         --help)
             echo -e "${CYAN}${BOLD}Claude Ultimate Wrapper v10.0${NC}"
             echo
@@ -570,6 +582,7 @@ main() {
             echo "  --metrics        Show detailed metrics"
             echo "  --patterns       Show pattern configuration"
             echo "  --quick-access   Show quick access commands"
+            echo "  --orchestrator   Launch Python orchestrator UI"
             echo "  --safe           Run without permission bypass"
             echo
             echo "Quick Access:"

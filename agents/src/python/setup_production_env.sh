@@ -230,8 +230,8 @@ Environment=ENABLE_METEOR_LAKE_OPT=${ENABLE_METEOR_LAKE_OPT:-0}
 Environment=ENABLE_AVX512=${ENABLE_AVX512:-0}
 Environment=TANDEM_LOG_LEVEL=INFO
 Environment=TANDEM_CONFIG_DIR=${SCRIPT_DIR}/config
-ExecStartPre=${VENV_PATH}/bin/python -c "import tandem_orchestrator; print('Tandem Orchestrator module check: OK')"
-ExecStart=${VENV_PATH}/bin/python -m tandem_orchestrator --mode=production --config=${SCRIPT_DIR}/config/production.yaml
+ExecStartPre=${VENV_PATH}/bin/python -c "import production_orchestrator; print('Tandem Orchestrator module check: OK')"
+ExecStart=${VENV_PATH}/bin/python -m production_orchestrator --mode=production --config=${SCRIPT_DIR}/config/production.yaml
 ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=mixed
 KillSignal=SIGTERM
@@ -295,7 +295,7 @@ handlers:
     class: logging.handlers.RotatingFileHandler
     level: DEBUG
     formatter: detailed
-    filename: ${LOG_DIR}/tandem_orchestrator.log
+    filename: ${LOG_DIR}/production_orchestrator.log
     maxBytes: 52428800  # 50MB
     backupCount: 10
   
@@ -316,7 +316,7 @@ handlers:
     backupCount: 10
 
 loggers:
-  tandem_orchestrator:
+  production_orchestrator:
     level: DEBUG
     handlers: [console, file]
     propagate: false
@@ -338,7 +338,7 @@ EOF
     
     # Set appropriate permissions
     chmod 755 "$LOG_DIR"
-    touch "${LOG_DIR}/tandem_orchestrator.log" "${LOG_DIR}/metrics.log" "${LOG_DIR}/errors.log"
+    touch "${LOG_DIR}/production_orchestrator.log" "${LOG_DIR}/metrics.log" "${LOG_DIR}/errors.log"
     chmod 644 "${LOG_DIR}"/*.log
     
     success "Logging configuration complete"
@@ -392,7 +392,7 @@ EOF
     # Create alerting rules
     cat > "${MONITORING_DIR}/orchestrator_rules.yml" << EOF
 groups:
-  - name: tandem_orchestrator
+  - name: production_orchestrator
     rules:
       - alert: OrchestratorDown
         expr: up{job="tandem-orchestrator"} == 0
@@ -599,7 +599,7 @@ class SystemHealthChecker:
         try:
             # Check if orchestrator process is running
             orchestrator_running = any(
-                'tandem_orchestrator' in p.name().lower() 
+                'production_orchestrator' in p.name().lower() 
                 for p in psutil.process_iter(['name', 'cmdline'])
             )
             

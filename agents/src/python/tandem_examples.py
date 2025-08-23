@@ -10,10 +10,13 @@ import logging
 from pathlib import Path
 
 # Import the enhanced orchestrator
-from tandem_orchestrator import (
-    TandemOrchestrator, CommandSet, CommandStep, CommandType, 
+from production_orchestrator import (
+    ProductionOrchestrator, CommandSet, CommandStep, CommandType, 
     ExecutionMode, Priority, StandardWorkflows
 )
+
+# Backward compatibility
+TandemOrchestrator = ProductionOrchestrator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

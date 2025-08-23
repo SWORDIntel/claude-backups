@@ -372,6 +372,7 @@ setup_precision_style() {
 setup_tandem_orchestration() {
     print_section "Setting up Tandem Orchestration"
     
+    # Run the tandem setup script
     if [[ -f "$PROJECT_ROOT/scripts/setup-tandem-for-claude.sh" ]]; then
         info "Running tandem orchestration setup..."
         bash "$PROJECT_ROOT/scripts/setup-tandem-for-claude.sh" 2>&1 | while read line; do
@@ -380,6 +381,35 @@ setup_tandem_orchestration() {
         success "Tandem orchestration configured"
     else
         warning "Tandem orchestration setup script not found"
+    fi
+    
+    # Setup Python orchestrator launcher
+    local LAUNCHER_PATH="$PROJECT_ROOT/agents/src/python/python-orchestrator-launcher.sh"
+    if [[ -f "$LAUNCHER_PATH" ]]; then
+        info "Setting up Python orchestrator launcher..."
+        
+        # Make it executable
+        chmod +x "$LAUNCHER_PATH"
+        
+        # Create a symlink in bin directory for easy access
+        if [[ ! -d "$HOME/.local/bin" ]]; then
+            mkdir -p "$HOME/.local/bin"
+        fi
+        
+        ln -sf "$LAUNCHER_PATH" "$HOME/.local/bin/python-orchestrator"
+        
+        # Test the launcher in validation mode
+        if "$LAUNCHER_PATH" --validate >/dev/null 2>&1; then
+            success "Python orchestrator launcher validated"
+        else
+            warning "Python orchestrator launcher validation failed (non-critical)"
+        fi
+        
+        # Add to wrapper for integrated access
+        success "Python orchestrator launcher installed"
+        info "Access via: python-orchestrator or claude --orchestrator"
+    else
+        warning "Python orchestrator launcher not found"
     fi
     
     show_progress
@@ -769,10 +799,12 @@ show_summary() {
     echo ""
     
     print_bold "Available Commands:"
-    printf "  %-30s %s\n" "claude" "Run Claude (auto permission bypass)"
+    printf "  %-30s %s\n" "claude" "Run Claude (auto permission bypass + orchestration)"
     printf "  %-30s %s\n" "claude --safe" "Run Claude without permission bypass"
     printf "  %-30s %s\n" "claude --status" "Show status"
     printf "  %-30s %s\n" "claude --list-agents" "List agents"
+    printf "  %-30s %s\n" "claude --orchestrator" "Launch Python orchestrator UI"
+    printf "  %-30s %s\n" "python-orchestrator" "Direct orchestrator access"
     printf "  %-30s %s\n" "claude agent <name>" "Run specific agent"
     echo ""
     

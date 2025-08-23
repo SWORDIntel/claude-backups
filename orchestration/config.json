@@ -5,7 +5,7 @@
   "venv_dir": "/home/ubuntu/.local/share/claude/venv",
   "orchestrators": {
     "production": "/home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py",
-    "tandem": "/home/ubuntu/Documents/Claude/agents/src/python/tandem_orchestrator.py"
+    "tandem": "/home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py"
   },
   "execution_modes": [
     "INTELLIGENT",

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 async def test_basic_import():
     """Test that we can import the orchestrator"""
     try:
-        from tandem_orchestrator import TandemOrchestrator, ExecutionMode, Priority
+        from production_orchestrator import TandemOrchestrator, ExecutionMode, Priority
         logger.info("✅ Successfully imported TandemOrchestrator")
         return TandemOrchestrator, ExecutionMode, Priority
     except Exception as e:
@@ -81,7 +81,7 @@ async def test_execution_modes():
         
         logger.info("⚡ Testing execution modes...")
         
-        from tandem_orchestrator import CommandSet, CommandStep, CommandType
+        from production_orchestrator import CommandSet, CommandStep, CommandType
         
         # Test intelligent mode
         test_command = CommandSet(

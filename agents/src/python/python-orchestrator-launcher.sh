@@ -13,7 +13,7 @@ set -euo pipefail
 # ============================================================================
 
 # Version and metadata
-readonly LAUNCHER_VERSION="2.0.1"
+readonly LAUNCHER_VERSION="2.0.2"
 readonly LAUNCHER_BUILD="$(date +%Y%m%d_%H%M%S)"
 readonly MIN_PYTHON_VERSION="3.8"
 readonly REQUIRED_PACKAGES=("asyncio" "dataclasses" "pathlib" "yaml" "logging")
@@ -41,35 +41,12 @@ readonly ICON_MONITOR="📊"
 readonly ICON_SECURITY="🔒"
 readonly ICON_HEALTH="💚"
 
-# Dynamic path detection
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(find_project_root)"
-AGENTS_DIR="$PROJECT_ROOT/agents"
-PYTHON_DIR="$AGENTS_DIR/src/python"
-CONFIG_DIR="$HOME/.config/python-tandem-orchestrator"
-CACHE_DIR="$HOME/.cache/python-tandem-orchestrator"
-LOG_DIR="$HOME/.local/share/python-tandem-orchestrator/logs"
-
-# Runtime files
-MARKER_FILE="$CACHE_DIR/.orchestration_active"
-PID_FILE="$CACHE_DIR/orchestrator.pid"
-HEALTH_FILE="$CACHE_DIR/health_status.json"
-METRICS_FILE="$CACHE_DIR/metrics.json"
-CONFIG_FILE="$CONFIG_DIR/launcher.conf"
-SESSION_LOG="$LOG_DIR/session_$(date +%Y%m%d_%H%M%S).log"
-
-# Performance monitoring
-MONITORING_ENABLED=true
-HEALTH_CHECK_INTERVAL=30
-METRICS_RETENTION_DAYS=7
-MAX_LOG_SIZE_MB=100
-
 # ============================================================================
-# INTELLIGENT PROJECT ROOT DETECTION
+# INTELLIGENT PROJECT ROOT DETECTION (Must be defined before use)
 # ============================================================================
 
 find_project_root() {
-    local current_dir="$SCRIPT_DIR"
+    local current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local max_depth=5
     local depth=0
     
@@ -100,8 +77,35 @@ find_project_root() {
     done
     
     # Default fallback
-    echo "$HOME/.local/share/claude"
+    echo "$HOME/Documents/Claude"
 }
+
+# Dynamic path detection
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(find_project_root)"
+AGENTS_DIR="$PROJECT_ROOT/agents"
+PYTHON_DIR="$AGENTS_DIR/src/python"
+CONFIG_DIR="$HOME/.config/python-tandem-orchestrator"
+CACHE_DIR="$HOME/.cache/python-tandem-orchestrator"
+LOG_DIR="$HOME/.local/share/python-tandem-orchestrator/logs"
+
+# Runtime files
+MARKER_FILE="$CACHE_DIR/.orchestration_active"
+PID_FILE="$CACHE_DIR/orchestrator.pid"
+HEALTH_FILE="$CACHE_DIR/health_status.json"
+METRICS_FILE="$CACHE_DIR/metrics.json"
+CONFIG_FILE="$CONFIG_DIR/launcher.conf"
+SESSION_LOG="$LOG_DIR/session_$(date +%Y%m%d_%H%M%S).log"
+
+# Performance monitoring
+MONITORING_ENABLED=true
+HEALTH_CHECK_INTERVAL=30
+METRICS_RETENTION_DAYS=7
+MAX_LOG_SIZE_MB=100
+
+# ============================================================================
+# ENHANCED LOGGING SYSTEM (Function already defined above)
+# ============================================================================
 
 # ============================================================================
 # ENHANCED LOGGING SYSTEM
@@ -237,9 +241,9 @@ validate_orchestrator_files() {
     log_message "INFO" "Validating orchestrator files..."
     
     local required_files=(
-        "tandem_orchestrator.py:Core orchestration engine"
         "production_orchestrator.py:Production orchestrator"
         "agent_registry.py:Agent discovery system"
+        "test_tandem_system.py:Test suite"
     )
     
     local missing_files=0
@@ -498,7 +502,7 @@ show_system_dashboard() {
     
     if [ -f "$METRICS_FILE" ]; then
         # Parse and display metrics using Python
-        python3 << 'EOF'
+        python3 - "$METRICS_FILE" << 'EOF'
 import json
 import sys
 from datetime import datetime
@@ -544,7 +548,7 @@ try:
     
 except Exception as e:
     print(f"❌ Error reading metrics: {e}")
-EOF "$METRICS_FILE"
+EOF
     else
         echo -e "${YELLOW}${ICON_WARNING} No metrics available yet${NC}"
     fi
@@ -653,10 +657,10 @@ run_performance_test() {
 import asyncio
 import sys
 sys.path.append('.')
-from tandem_orchestrator import TandemOrchestrator
+from production_orchestrator import ProductionOrchestrator
 
 async def test():
-    orchestrator = TandemOrchestrator()
+    orchestrator = ProductionOrchestrator()
     return await orchestrator.initialize()
 
 result = asyncio.run(test())
@@ -683,10 +687,11 @@ sys.exit(0 if result else 1)
 import asyncio
 import sys
 sys.path.append('.')
-from tandem_orchestrator import TandemOrchestrator, StandardWorkflows
+from production_orchestrator import ProductionOrchestrator
+from test_tandem_system import StandardWorkflows
 
 async def test():
-    orchestrator = TandemOrchestrator()
+    orchestrator = ProductionOrchestrator()
     await orchestrator.initialize()
     workflow = StandardWorkflows.create_document_generation_workflow()
     result = await orchestrator.execute_command_set(workflow)
@@ -768,11 +773,12 @@ show_enhanced_menu() {
                 cd "$PYTHON_DIR"
                 python3 -c "
 import asyncio
-from tandem_orchestrator import TandemOrchestrator, StandardWorkflows
+from production_orchestrator import ProductionOrchestrator
+from test_tandem_system import StandardWorkflows
 
 async def demo():
     print('🚀 Initializing orchestrator...')
-    orchestrator = TandemOrchestrator()
+    orchestrator = ProductionOrchestrator()
     await orchestrator.initialize()
     
     print('📋 Running document generation workflow...')
@@ -805,12 +811,13 @@ asyncio.run(demo())
             python3 -c "
 import asyncio
 import json
-from tandem_orchestrator import TandemOrchestrator, StandardWorkflows
+from production_orchestrator import ProductionOrchestrator
+from test_tandem_system import StandardWorkflows
 
 async def interactive():
     print('🎯 Interactive Python Orchestrator')
     print('='*50)
-    orchestrator = TandemOrchestrator()
+    orchestrator = ProductionOrchestrator()
     await orchestrator.initialize()
     
     commands = {
@@ -1020,9 +1027,15 @@ case "${1:-}" in
         run_comprehensive_validation
         ;;
     "validate"|"--validate")
+        # Disable trap for validation mode
+        trap - SIGINT SIGTERM EXIT
         setup_logging
         load_configuration
-        run_comprehensive_validation
+        if run_comprehensive_validation; then
+            exit 0
+        else
+            exit 1
+        fi
         ;;
     "dashboard"|"--dashboard")
         setup_logging
