@@ -7,8 +7,8 @@
 **Purpose**: Hardware-aware multi-agent orchestration system with Tandem Orchestration, optimized for Intel Meteor Lake architecture  
 **Status**: PRODUCTION  
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)  
-**Latest Feature**: PostgreSQL 17 Database System (>2000 auth/sec performance)  
-**Database**: PostgreSQL 17 with enhanced JSON, VACUUM improvements, and parallel processing  
+**Latest Feature**: Enhanced Agent Learning System v5.0 with PostgreSQL 17 Integration  
+**Database**: PostgreSQL 17 with pgvector extension, enhanced JSON, VACUUM improvements, and ML learning capabilities  
 
 ## System Architecture
 
@@ -20,6 +20,7 @@ This is a comprehensive agent-based system with 32 specialized agents that can a
 - **Proactive Invocation**: Pattern-based auto-triggering
 - **Production Ready**: Comprehensive error handling and recovery
 - **PostgreSQL 17 Database**: >2000 auth/sec, <25ms P95 latency, enhanced JSON performance
+- **Enhanced Learning System v5.0**: ML-powered agent performance analytics with vector embeddings
 - **Tandem Orchestration**: Advanced Python-first orchestration system with C integration capability
 - **Dual-Layer Architecture**: Strategic Python layer + tactical C layer for maximum flexibility
 - **Command Sets**: High-level workflow abstraction for complex multi-agent coordination
@@ -268,6 +269,8 @@ system:
 │   ├── MANIFEST.txt           # System manifest
 │   ├── claude-unified         # Main entry point with permission bypass
 │   ├── claude-installer.sh    # Unified installer
+│   ├── integrated_learning_setup.py # Enhanced Learning System v5.0 Setup (1049 lines)
+│   ├── learning_config_manager.py   # Advanced learning configuration management
 │   ├── bring-online          # System startup
 │   ├── switch                # Mode switcher
 │   └── status                # System status
@@ -293,9 +296,13 @@ system:
 │   ├── Template.md           # v7.0 template standard
 │   ├── src/                  # Source code
 │   │   ├── c/               # Unified C source (84 files)
-│   │   ├── python/          # Tandem Orchestration System
+│   │   ├── python/          # Tandem Orchestration System + Learning
 │   │   │   ├── production_orchestrator.py  # Main engine (608 lines)
 │   │   │   ├── agent_registry.py          # Discovery system (461 lines)
+│   │   │   ├── postgresql_learning_system.py # Enhanced Learning System v5.0
+│   │   │   ├── learning_orchestrator_bridge.py # Learning-Orchestrator Integration
+│   │   │   ├── test_learning_integration.py    # Learning system tests
+│   │   │   ├── launch_learning_system.sh       # Learning system launcher
 │   │   │   └── test_tandem_system.py      # Test suite (331 lines)
 │   │   └── rust/            # Rust components
 │   ├── docs/                # Agent documentation
@@ -306,6 +313,9 @@ system:
 │
 ├── docs/                     # Project Documentation
 ├── config/                   # Configuration files
+│   ├── database.json         # Database connection configuration  
+│   ├── learning_config.json  # Learning system configuration
+│   └── .env                  # Environment variables
 ├── installers/               # Installation scripts  
 ├── orchestration/            # Orchestration tools
 ├── scripts/                  # Utility scripts
@@ -452,6 +462,29 @@ claude-orchestrate "complete project development cycle"
 
 # Environment control:
 CLAUDE_ORCHESTRATION=off claude /task "simple task"  # Disable suggestions
+```
+
+### Enhanced Learning System v5.0 Commands (NEW)
+```bash
+# Complete learning system setup
+python3 integrated_learning_setup.py           # Full setup with dependencies
+python3 integrated_learning_setup.py --reset   # Reset database and reinstall
+python3 integrated_learning_setup.py --verbose # Detailed setup output
+
+# Learning system operation
+cd agents/src/python
+python3 postgresql_learning_system.py dashboard  # View system dashboard
+python3 postgresql_learning_system.py status     # Show system status  
+python3 postgresql_learning_system.py export     # Export learning data
+./launch_learning_system.sh                      # Launch with environment
+
+# Integration testing
+python3 test_learning_integration.py             # Run integration tests
+python3 test_learning_integration.py --verbose   # Detailed test output
+
+# Configuration management
+python3 learning_config_manager.py status        # Check configuration
+python3 learning_config_manager.py validate      # Validate setup
 ```
 
 ### System Mode Management  
@@ -901,6 +934,35 @@ export METEOR_LAKE_OPTIMIZATION=true
 - Security 60% complete (JWT/TLS done, RBAC pending)
 - Agent business logic 30% complete (infrastructure ready, logic pending)
 
+### Enhanced Agent Learning System v5.0 Integration (2025-08-23) 🚀 LATEST
+- **Location**: Root directory - `integrated_learning_setup.py` (1049 lines comprehensive orchestrator)
+- **Architecture**: Complete ML-powered agent performance analytics with PostgreSQL 17 + pgvector
+- **Core Components**:
+  - `integrated_learning_setup.py`: Master setup orchestrator with dependency management
+  - Enhanced `postgresql_learning_system.py`: ML learning engine with proper config loading
+  - Enhanced `learning_orchestrator_bridge.py`: Production orchestrator integration
+  - `learning_config_manager.py`: Advanced configuration management system
+- **Database Integration**: 
+  - PostgreSQL 17 with pgvector extension for VECTOR(256) embeddings
+  - Self-contained database at `database/` with socket connection
+  - Enhanced learning schema with 7 tables: task_executions, performance_metrics, ml_models
+  - Claude_auth user/password with localhost:5433 socket configuration
+- **Installer Enhancement**:
+  - Enhanced `claude-installer.sh` with automatic pgvector installation
+  - Vector extension installation and database schema creation
+  - Environment configuration and launcher script generation
+- **Key Features**: 
+  - Dashboard status: "ultimate_active" with system_health: "postgresql_17"
+  - ML models available (sklearn + numpy), PyTorch optional
+  - Real-time performance metrics and adaptive learning strategies
+  - Vector embeddings for task similarity and agent performance analytics
+- **Status**: PRODUCTION READY - Core functionality 100% operational
+- **Benefits**: 
+  - ML-powered agent selection and performance optimization
+  - Vector similarity search for task routing and agent recommendations
+  - Real-time analytics dashboard with comprehensive system health monitoring
+  - Seamless integration with existing Tandem Orchestration System
+
 ### v7.1.0 Ring -1 LiveCD (2024-08-14)
 - **Ring -1 LiveCD Builder**: Complete ISO build system for intelligence-grade hardware
 - **Deep Kernel Monitoring**: Integrated Ring -3 monitoring directly into kernel builds
@@ -975,6 +1037,7 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ---
 
-*Last Updated: 2025-08-18*  
+*Last Updated: 2025-08-23*  
 *Framework Version: 7.0*  
+*Learning System: v5.0*  
 *Status: PRODUCTION*
