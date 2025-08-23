@@ -21,12 +21,15 @@ metadata:
   - Write
   - Edit
   - MultiEdit
+  - Bash
   - WebFetch
+  - WebSearch
   - Grep
   - Glob
   - LS
   - ProjectKnowledgeSearch
   - TodoWrite
+  - GitCommand
     
   proactive_triggers:
   - "API design or specification needed"

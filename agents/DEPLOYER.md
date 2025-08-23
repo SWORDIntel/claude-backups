@@ -23,11 +23,13 @@ metadata:
   - MultiEdit
   - Bash
   - WebFetch
+  - WebSearch
   - Grep
   - Glob
   - LS
   - ProjectKnowledgeSearch
   - TodoWrite
+  - GitCommand
     
   proactive_triggers:
   - "Deployment or release mentioned"

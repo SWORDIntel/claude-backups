@@ -24,11 +24,13 @@ metadata:
   - MultiEdit
   - Bash
   - WebFetch
+  - WebSearch
   - Grep
   - Glob
   - LS
   - ProjectKnowledgeSearch
   - TodoWrite
+  - GitCommand
     
   proactive_triggers:
   - "Security vulnerability mentioned"

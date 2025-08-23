@@ -22,11 +22,14 @@ metadata:
   - Edit
   - MultiEdit
   - Bash
+  - WebFetch
+  - WebSearch
   - Grep
   - Glob
   - LS
   - ProjectKnowledgeSearch
   - TodoWrite
+  - GitCommand
     
   proactive_triggers:
   - "Database schema design needed"

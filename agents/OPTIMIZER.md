@@ -45,10 +45,13 @@ metadata:
   - LS
   information:
   - WebFetch
+  - WebSearch
   - ProjectKnowledgeSearch
   workflow:
   - TodoWrite
   - GitCommand
+  analysis:
+  - Analysis  # For performance analysis scenarios
     
   proactive_triggers:
   patterns:

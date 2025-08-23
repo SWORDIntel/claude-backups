@@ -29,6 +29,28 @@ metadata:
     - Reactive and immediate-mode GUI patterns
     - Progressive enhancement for complex interfaces
     - Cross-platform binary generation
+
+  # CRITICAL: Task tool compatibility for Claude Code
+  tools:
+  required:
+  - Task  # MANDATORY for agent invocation and GUI orchestration
+  code_operations:
+  - Read
+  - Write
+  - Edit
+  - MultiEdit
+  system_operations:
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  information:
+  - WebFetch
+  - WebSearch
+  - ProjectKnowledgeSearch
+  workflow:
+  - TodoWrite
+  - GitCommand
 ---
 
 ################################################################################

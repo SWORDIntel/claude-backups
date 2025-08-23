@@ -23,11 +23,13 @@ metadata:
   - MultiEdit
   - Bash
   - WebFetch
+  - WebSearch
   - Grep
   - Glob
   - LS
   - ProjectKnowledgeSearch
   - TodoWrite
+  - GitCommand
     
   proactive_triggers:
   - "Monitoring or observability mentioned"

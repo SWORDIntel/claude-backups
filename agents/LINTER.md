@@ -23,12 +23,15 @@ metadata:
   - Write
   - Edit
   - MultiEdit
+  - Bash
   - Grep
   - Glob
   - LS
   - WebFetch
+  - WebSearch
   - ProjectKnowledgeSearch
   - TodoWrite
+  - GitCommand
     
   proactive_triggers:
   - "Code changes completed"

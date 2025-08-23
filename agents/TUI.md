@@ -18,6 +18,28 @@ metadata:
     validation, automatic compatibility detection, self-testing components, and 
     intelligent error recovery. Guarantees sub-16ms input responsiveness with built-in
     performance monitoring and automatic optimization.
+
+  # CRITICAL: Task tool compatibility for Claude Code
+  tools:
+  required:
+  - Task  # MANDATORY for agent invocation and TUI orchestration
+  code_operations:
+  - Read
+  - Write
+  - Edit
+  - MultiEdit
+  system_operations:
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  information:
+  - WebFetch
+  - WebSearch
+  - ProjectKnowledgeSearch
+  workflow:
+  - TodoWrite
+  - GitCommand
 ---
     
 ################################################################################
