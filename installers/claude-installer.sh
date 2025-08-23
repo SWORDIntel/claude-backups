@@ -434,14 +434,27 @@ setup_production_environment() {
             return
         }
         
-        # Run setup with output capture
-        if bash "./setup_production_env.sh" --auto 2>&1 | while read line; do
-            echo "  $line"
-        done; then
+        # Run setup with output capture and proper exit status handling
+        local temp_output=$(mktemp)
+        local exit_status=0
+        
+        if bash "./setup_production_env.sh" --auto > "$temp_output" 2>&1; then
+            # Show output with indentation
+            while read line; do
+                echo "  $line"
+            done < "$temp_output"
             success "Production environment setup completed"
         else
-            warning "Production environment setup had some issues (non-critical)"
+            exit_status=$?
+            # Show output with indentation even on failure
+            while read line; do
+                echo "  $line"
+            done < "$temp_output"
+            warning "Production environment setup had some issues (exit code: $exit_status, non-critical)"
         fi
+        
+        # Clean up temp file
+        rm -f "$temp_output"
         
         # Return to project root
         cd "$PROJECT_ROOT" || true
@@ -491,12 +504,29 @@ setup_production_environment() {
             warning "Virtual environment not found, installing to system Python"
             
             if command -v pip3 &>/dev/null; then
-                pip3 install -r "$REQUIREMENTS_FILE" --user 2>&1 | while read line; do
+                # Try regular pip install first, then with --break-system-packages for newer pip
+                if pip3 install -r "$REQUIREMENTS_FILE" --user 2>&1 | while read line; do
                     if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
                         echo "  ✓ $line"
+                    elif [[ "$line" == *"externally-managed-environment"* ]]; then
+                        echo "  ! Modern pip detected, retrying with --break-system-packages"
+                        return 1
                     fi
-                done
-                success "Requirements installed to user Python environment"
+                done; then
+                    success "Requirements installed to user Python environment"
+                else
+                    # Retry with --break-system-packages for newer pip versions
+                    info "Retrying with --break-system-packages flag..."
+                    if pip3 install -r "$REQUIREMENTS_FILE" --user --break-system-packages 2>&1 | while read line; do
+                        if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
+                            echo "  ✓ $line"
+                        fi
+                    done; then
+                        success "Requirements installed to user Python environment (with --break-system-packages)"
+                    else
+                        warning "Failed to install requirements to user Python environment"
+                    fi
+                fi
             else
                 warning "pip3 not found, skipping requirements installation"
             fi
@@ -673,13 +703,24 @@ case "$1" in
             exit 1
         fi
         
-        # Find agent file
+        # Find agent file (case-insensitive)
         AGENT_FILE=""
+        AGENT_UPPER="${AGENT_NAME^^}"
+        AGENT_LOWER="${AGENT_NAME,,}"
+        
         for pattern in \
             "$CLAUDE_AGENTS_DIR/${AGENT_NAME}.md" \
             "$CLAUDE_AGENTS_DIR/${AGENT_NAME}.MD" \
+            "$CLAUDE_AGENTS_DIR/${AGENT_UPPER}.md" \
+            "$CLAUDE_AGENTS_DIR/${AGENT_UPPER}.MD" \
+            "$CLAUDE_AGENTS_DIR/${AGENT_LOWER}.md" \
+            "$CLAUDE_AGENTS_DIR/${AGENT_LOWER}.MD" \
             "$CLAUDE_AGENTS_DIR"/*/"${AGENT_NAME}.md" \
-            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_NAME}.MD"; do
+            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_NAME}.MD" \
+            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_UPPER}.md" \
+            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_UPPER}.MD" \
+            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_LOWER}.md" \
+            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_LOWER}.MD"; do
             for file in $pattern; do
                 if [[ -f "$file" ]]; then
                     AGENT_FILE="$file"
@@ -711,6 +752,17 @@ case "$1" in
         exec "$CLAUDE_BINARY" "$@"
         ;;
         
+    --orchestrator)
+        # Launch Python orchestrator UI
+        ORCHESTRATOR_LAUNCHER="$HOME/.local/bin/python-orchestrator"
+        if [[ -f "$ORCHESTRATOR_LAUNCHER" ]]; then
+            exec "$ORCHESTRATOR_LAUNCHER"
+        else
+            echo "Python orchestrator not found. Please run installer to set it up."
+            exit 1
+        fi
+        ;;
+        
     --help|-h)
         echo "Claude Master System with Auto Permission Bypass"
         echo "================================================"
@@ -719,6 +771,7 @@ case "$1" in
         echo "  claude --safe [args]    - Run Claude without permission bypass"
         echo "  claude --status         - Show status"
         echo "  claude --list-agents    - List agents"
+        echo "  claude --orchestrator   - Launch Python orchestrator UI"
         echo "  claude agent <n> [args] - Run agent"
         echo ""
         echo "Environment:"
