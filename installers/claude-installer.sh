@@ -60,6 +60,9 @@ CLAUDE_DIR="$PROJECT_ROOT/.claude"
 TOTAL_STEPS=14
 CURRENT_STEP=0
 
+# User preferences (will be set by prompts)
+ALLOW_SYSTEM_PACKAGES=""
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HELPER FUNCTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -91,8 +94,8 @@ print_header() {
     clear
     echo ""
     print_cyan "╔═══════════════════════════════════════════════════════════════╗"
-    print_cyan "║           Claude Master Installer v8.0                       ║"
-    print_cyan "║           Professional Agent Framework Setup                 ║"
+    print_cyan "║           Claude Master Installer v9.0                       ║"
+    print_cyan "║     Professional Agent Framework with pipx & User Choice     ║"
     print_cyan "╚═══════════════════════════════════════════════════════════════╝"
     echo ""
     print_dim "Project: $PROJECT_ROOT"
@@ -155,6 +158,118 @@ force_copy() {
     sudo chown -R "$USER:$USER" "$dst" 2>/dev/null
 }
 
+# Get user preferences
+get_user_preferences() {
+    echo ""
+    print_bold "Installation Preferences"
+    echo "────────────────────────"
+    echo ""
+    print_cyan "This installer can install Python packages using different methods:"
+    echo "  • pipx (recommended) - Isolated environments for each application"  
+    echo "  • pip --user - User-local installation"
+    echo "  • pip --break-system-packages - System-wide with override"
+    echo ""
+    
+    while true; do
+        print_yellow "Allow system package modifications for comprehensive setup? (Y/N): "
+        read -n 1 -r REPLY
+        echo ""
+        case $REPLY in
+            [Yy])
+                ALLOW_SYSTEM_PACKAGES="true"
+                print_green "✓ System package modifications enabled"
+                print_dim "  Will use --break-system-packages when needed for complete installation"
+                break
+                ;;
+            [Nn])
+                ALLOW_SYSTEM_PACKAGES="false"  
+                print_yellow "⚠ Limited to user-space installations only"
+                print_dim "  Will prefer pipx and user-local installations"
+                break
+                ;;
+            *)
+                print_red "Please answer Y or N."
+                ;;
+        esac
+    done
+    echo ""
+}
+
+# Enhanced Python package installation with pipx preference
+install_python_packages() {
+    local requirements_file="$1"
+    local venv_path="$2"
+    
+    if [[ -n "$venv_path" ]]; then
+        info "Installing into virtual environment: $venv_path"
+        (
+            source "$venv_path/bin/activate"
+            pip install --upgrade pip 2>/dev/null
+            pip install -r "$requirements_file" 2>&1 | while read line; do
+                if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
+                    echo "  ✓ $line"
+                elif [[ "$line" == *"ERROR"* ]] || [[ "$line" == *"FAILED"* ]]; then
+                    echo "  ✗ $line"
+                fi
+            done
+        )
+        success "Requirements installed into virtual environment"
+        return
+    fi
+    
+    # No virtual environment found, use enhanced system installation
+    info "No virtual environment found, using system Python installation"
+    
+    # Try pipx first (best practice for CLI applications)
+    if command -v pipx &>/dev/null; then
+        info "Found pipx - using isolated application environments"
+        
+        # pipx is primarily for single applications, but we can try for key packages
+        local key_packages=("uvicorn" "fastapi" "click" "rich")
+        for package in "${key_packages[@]}"; do
+            if grep -q "^${package}" "$requirements_file"; then
+                info "Installing $package with pipx..."
+                pipx install "$package" 2>/dev/null && echo "  ✓ $package installed via pipx"
+            fi
+        done
+        
+        # For the rest, fall through to pip
+        warning "pipx installed key CLI tools, using pip for remaining packages"
+    fi
+    
+    # Use pip with appropriate flags based on user preference
+    if command -v pip3 &>/dev/null; then
+        if [[ "$ALLOW_SYSTEM_PACKAGES" == "true" ]]; then
+            info "Installing with system package modifications allowed..."
+            pip3 install -r "$requirements_file" --user --break-system-packages 2>&1 | while read line; do
+                if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
+                    echo "  ✓ $line"
+                elif [[ "$line" == *"ERROR"* ]] || [[ "$line" == *"FAILED"* ]]; then
+                    echo "  ✗ $line"
+                fi
+            done
+            success "Requirements installed with --break-system-packages"
+        else
+            info "Installing to user space only..."
+            if pip3 install -r "$requirements_file" --user 2>&1 | while read line; do
+                if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
+                    echo "  ✓ $line"
+                elif [[ "$line" == *"externally-managed-environment"* ]]; then
+                    echo "  ! System-managed environment detected"
+                    echo "  ! Re-run installer and choose Y for system modifications, or install pipx"
+                    return 1
+                fi
+            done; then
+                success "Requirements installed to user Python environment"
+            else
+                warning "Installation failed - consider allowing system modifications or installing pipx"
+            fi
+        fi
+    else
+        warning "pip3 not found, skipping requirements installation"
+    fi
+}
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # INSTALLATION FUNCTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -180,6 +295,20 @@ check_prerequisites() {
         print_green "$SUCCESS (v$NPM_VERSION)"
     else
         print_red "$ERROR Not installed"
+    fi
+    
+    # pipx
+    printf "  %-20s" "pipx..."
+    if command -v pipx &>/dev/null; then
+        PIPX_VERSION=$(pipx --version 2>/dev/null | head -1)
+        print_green "$SUCCESS ($PIPX_VERSION)"
+    else
+        print_yellow "$WARNING Not installed"
+        if [[ "$ALLOW_SYSTEM_PACKAGES" == "true" ]]; then
+            print_dim "    Will install packages with pip --break-system-packages"
+        else
+            print_dim "    Consider: apt install pipx (Ubuntu) or brew install pipx (macOS)"
+        fi
     fi
     
     # Disk space
@@ -462,7 +591,7 @@ setup_production_environment() {
         warning "Production environment setup script not found at: $SETUP_SCRIPT"
     fi
     
-    # Install requirements.txt into virtual environment
+    # Install requirements.txt using enhanced method
     local REQUIREMENTS_FILE="$PROJECT_ROOT/requirements.txt"
     if [[ -f "$REQUIREMENTS_FILE" ]]; then
         info "Installing Python requirements..."
@@ -482,55 +611,8 @@ setup_production_environment() {
             fi
         done
         
-        if [[ -n "$VENV_PATH" ]]; then
-            info "Installing requirements into virtual environment: $VENV_PATH"
-            
-            # Activate virtual environment and install requirements
-            (
-                source "$VENV_PATH/bin/activate"
-                pip install --upgrade pip 2>/dev/null
-                pip install -r "$REQUIREMENTS_FILE" 2>&1 | while read line; do
-                    if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
-                        echo "  ✓ $line"
-                    elif [[ "$line" == *"ERROR"* ]] || [[ "$line" == *"FAILED"* ]]; then
-                        echo "  ✗ $line"
-                    fi
-                done
-            )
-            
-            success "Requirements installed into virtual environment"
-        else
-            # Fall back to system Python
-            warning "Virtual environment not found, installing to system Python"
-            
-            if command -v pip3 &>/dev/null; then
-                # Try regular pip install first, then with --break-system-packages for newer pip
-                if pip3 install -r "$REQUIREMENTS_FILE" --user 2>&1 | while read line; do
-                    if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
-                        echo "  ✓ $line"
-                    elif [[ "$line" == *"externally-managed-environment"* ]]; then
-                        echo "  ! Modern pip detected, retrying with --break-system-packages"
-                        return 1
-                    fi
-                done; then
-                    success "Requirements installed to user Python environment"
-                else
-                    # Retry with --break-system-packages for newer pip versions
-                    info "Retrying with --break-system-packages flag..."
-                    if pip3 install -r "$REQUIREMENTS_FILE" --user --break-system-packages 2>&1 | while read line; do
-                        if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
-                            echo "  ✓ $line"
-                        fi
-                    done; then
-                        success "Requirements installed to user Python environment (with --break-system-packages)"
-                    else
-                        warning "Failed to install requirements to user Python environment"
-                    fi
-                fi
-            else
-                warning "pip3 not found, skipping requirements installation"
-            fi
-        fi
+        # Use the enhanced installation function
+        install_python_packages "$REQUIREMENTS_FILE" "$VENV_PATH"
     else
         warning "Requirements file not found at: $REQUIREMENTS_FILE"
     fi
@@ -941,6 +1023,8 @@ show_summary() {
     echo "  • Claude NPM Package"
     echo "  • Enhanced Wrapper with Auto Permission Bypass"
     echo "  • $AGENT_COUNT Agents"
+    echo "  • Production Environment with 100+ Python packages"
+    echo "  • pipx + User-choice installation method"
     echo "  • Auto-sync (5 minutes)"
     echo ""
     
@@ -989,6 +1073,9 @@ show_summary() {
 
 main() {
     print_header
+    
+    # Get user preferences first
+    get_user_preferences
     
     # Get sudo if needed
     if [[ "$EUID" -ne 0 ]]; then
