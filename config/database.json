@@ -1,0 +1,7 @@
+{
+  "host": "/home/ubuntu/Documents/Claude/database/data/run",
+  "port": 5433,
+  "database": "claude_auth",
+  "user": "claude_auth",
+  "password": "claude_auth_pass"
+}

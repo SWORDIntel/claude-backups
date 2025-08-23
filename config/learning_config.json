@@ -1,0 +1,22 @@
+{
+  "learning_mode": "adaptive",
+  "optimization_objective": "balanced",
+  "auto_retrain_threshold": 50,
+  "alert_thresholds": {
+    "success_rate_min": 0.7,
+    "duration_p95_max": 120,
+    "error_rate_max": 0.2
+  },
+  "exploration_budget": 0.2,
+  "learning_rate": 0.1,
+  "confidence_threshold": 0.7,
+  "model_update_frequency": 3600,
+  "monitoring_interval": 60,
+  "features": {
+    "ml_models_enabled": true,
+    "deep_learning_available": false,
+    "real_time_monitoring": true,
+    "auto_optimization": true,
+    "postgresql_17_features": true
+  }
+}
