@@ -57,7 +57,7 @@ LOG_FILE="$LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
 CLAUDE_DIR="$PROJECT_ROOT/.claude"
 
 # Installation counters
-TOTAL_STEPS=13
+TOTAL_STEPS=14
 CURRENT_STEP=0
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -415,7 +415,100 @@ setup_tandem_orchestration() {
     show_progress
 }
 
-# 6.7. Validate agent files
+# 6.7. Setup production environment
+setup_production_environment() {
+    print_section "Setting Up Production Environment"
+    
+    # Check if production environment setup script exists
+    local SETUP_SCRIPT="$PROJECT_ROOT/agents/src/python/setup_production_env.sh"
+    if [[ -f "$SETUP_SCRIPT" ]]; then
+        info "Running production environment setup..."
+        
+        # Make script executable
+        chmod +x "$SETUP_SCRIPT"
+        
+        # Run the setup script in the correct directory
+        cd "$PROJECT_ROOT/agents/src/python" || {
+            warning "Could not change to agents/src/python directory"
+            show_progress
+            return
+        }
+        
+        # Run setup with output capture
+        if bash "./setup_production_env.sh" --auto 2>&1 | while read line; do
+            echo "  $line"
+        done; then
+            success "Production environment setup completed"
+        else
+            warning "Production environment setup had some issues (non-critical)"
+        fi
+        
+        # Return to project root
+        cd "$PROJECT_ROOT" || true
+    else
+        warning "Production environment setup script not found at: $SETUP_SCRIPT"
+    fi
+    
+    # Install requirements.txt into virtual environment
+    local REQUIREMENTS_FILE="$PROJECT_ROOT/requirements.txt"
+    if [[ -f "$REQUIREMENTS_FILE" ]]; then
+        info "Installing Python requirements..."
+        
+        # Try to find the virtual environment created by setup_production_env.sh
+        local VENV_PATHS=(
+            "$HOME/.local/share/claude-agents/venv"
+            "$PROJECT_ROOT/agents/src/python/venv"
+            "$PROJECT_ROOT/venv"
+        )
+        
+        local VENV_PATH=""
+        for path in "${VENV_PATHS[@]}"; do
+            if [[ -d "$path" && -f "$path/bin/activate" ]]; then
+                VENV_PATH="$path"
+                break
+            fi
+        done
+        
+        if [[ -n "$VENV_PATH" ]]; then
+            info "Installing requirements into virtual environment: $VENV_PATH"
+            
+            # Activate virtual environment and install requirements
+            (
+                source "$VENV_PATH/bin/activate"
+                pip install --upgrade pip 2>/dev/null
+                pip install -r "$REQUIREMENTS_FILE" 2>&1 | while read line; do
+                    if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
+                        echo "  ✓ $line"
+                    elif [[ "$line" == *"ERROR"* ]] || [[ "$line" == *"FAILED"* ]]; then
+                        echo "  ✗ $line"
+                    fi
+                done
+            )
+            
+            success "Requirements installed into virtual environment"
+        else
+            # Fall back to system Python
+            warning "Virtual environment not found, installing to system Python"
+            
+            if command -v pip3 &>/dev/null; then
+                pip3 install -r "$REQUIREMENTS_FILE" --user 2>&1 | while read line; do
+                    if [[ "$line" == *"Successfully installed"* ]] || [[ "$line" == *"Requirement already satisfied"* ]]; then
+                        echo "  ✓ $line"
+                    fi
+                done
+                success "Requirements installed to user Python environment"
+            else
+                warning "pip3 not found, skipping requirements installation"
+            fi
+        fi
+    else
+        warning "Requirements file not found at: $REQUIREMENTS_FILE"
+    fi
+    
+    show_progress
+}
+
+# 6.8. Validate agent files
 validate_agents() {
     print_section "Validating Agent Files"
     
@@ -859,6 +952,7 @@ main() {
     setup_claude_directory
     setup_precision_style
     setup_tandem_orchestration
+    setup_production_environment
     create_wrapper
     setup_sync
     setup_environment
