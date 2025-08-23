@@ -1,158 +1,180 @@
 #!/usr/bin/env python3
-# Create: claude_hook_manager.py
+# Create: claude_code_hook_adapter.py
+
+"""
+This adapter allows Claude Code to directly trigger Python hooks
+through the /hooks command interface
+"""
 
 import os
+import sys
 import json
-import subprocess
+import time
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Any, Optional
 
-class ClaudeHookManager:
-    """Manage hooks for Claude Code integration"""
+class ClaudeCodeHookAdapter:
+    """
+    Adapter for Claude Code /hooks command
+    Maps Claude Code hook triggers to Python hook system
+    """
+    
+    # Claude Code sets these environment variables
+    CLAUDE_ENV_VARS = [
+        'CLAUDE_TASK_ID',
+        'CLAUDE_AGENT_NAME', 
+        'CLAUDE_TASK_CONTEXT',
+        'CLAUDE_EDITED_FILES',
+        'CLAUDE_CURRENT_FILE'
+    ]
     
     def __init__(self):
-        self.claude_home = Path.home() / '.claude'
-        self.hooks_dir = self.claude_home / 'hooks'
-        self.config_file = self.hooks_dir / 'config.json'
+        self.context = self._extract_claude_context()
+        self.hook_dir = Path.home() / '.claude' / 'hooks'
         
-    def register_with_claude(self):
-        """Register hooks with Claude Code"""
+    def _extract_claude_context(self) -> Dict[str, Any]:
+        """Extract context from Claude Code environment"""
         
-        # Create Claude Code hook registration file
-        registration = {
-            "hook_provider": "claude-agent-framework",
-            "version": "7.0.0",
+        context = {
+            'timestamp': time.time(),
+            'claude_code_version': os.environ.get('CLAUDE_VERSION', 'unknown')
+        }
+        
+        # Extract all Claude-specific environment variables
+        for var in self.CLAUDE_ENV_VARS:
+            if var in os.environ:
+                context[var.lower()] = os.environ[var]
+        
+        # Try to get current working directory and files
+        context['cwd'] = os.getcwd()
+        
+        # If Claude provides edited files list
+        if 'CLAUDE_EDITED_FILES' in os.environ:
+            files = os.environ['CLAUDE_EDITED_FILES'].split(',')
+            context['edited_files'] = files
+            
+            # Read file contents if they exist
+            context['file_contents'] = {}
+            for file in files:
+                if Path(file).exists():
+                    with open(file) as f:
+                        context['file_contents'][file] = f.read()
+        
+        return context
+    
+    def trigger_hook(self, hook_phase: str) -> Dict[str, Any]:
+        """
+        Trigger a hook phase when called by Claude Code
+        
+        This is what Claude Code calls via /hooks command
+        """
+        
+        # Map Claude Code hook names to our phases
+        phase_map = {
+            'pre-task': 'pre_task',
+            'pre_task': 'pre_task',
+            'post-edit': 'post_edit',
+            'post_edit': 'post_edit',
+            'post-task': 'post_task',
+            'post_task': 'post_task'
+        }
+        
+        internal_phase = phase_map.get(hook_phase, hook_phase)
+        
+        # Import and execute our hook system
+        from agent_hooks import AgentHookSystem
+        from hooks.pre_task_hooks import PreTaskHooks
+        from hooks.post_edit_hooks import PostEditHooks
+        from hooks.post_task_hooks import PostTaskHooks
+        
+        hook_system = AgentHookSystem()
+        
+        # Register appropriate hooks based on phase
+        if internal_phase == 'pre_task':
+            hook_system.register_hook('pre_task', 'validate', PreTaskHooks.validate_prompt, 10)
+            hook_system.register_hook('pre_task', 'setup', PreTaskHooks.setup_environment, 20)
+            hook_system.register_hook('pre_task', 'deps', PreTaskHooks.check_dependencies, 30)
+            
+        elif internal_phase == 'post_edit':
+            hook_system.register_hook('post_edit', 'extract', PostEditHooks.extract_code_blocks, 10)
+            hook_system.register_hook('post_edit', 'cache', PostEditHooks.save_to_cache, 20)
+            hook_system.register_hook('post_edit', 'validate', PostEditHooks.validate_output, 30)
+            
+        elif internal_phase == 'post_task':
+            hook_system.register_hook('post_task', 'cleanup', PostTaskHooks.cleanup_environment, 10)
+            hook_system.register_hook('post_task', 'report', PostTaskHooks.generate_report, 20)
+            hook_system.register_hook('post_task', 'archive', PostTaskHooks.archive_artifacts, 30)
+        
+        # Execute hooks with Claude context
+        result = hook_system.execute_hooks(internal_phase, self.context)
+        
+        # Return result to Claude Code
+        return {
+            'phase': hook_phase,
+            'success': True,
+            'context': self.context,
+            'result': result,
+            'timestamp': time.time()
+        }
+    
+    def register_as_claude_hook(self):
+        """Register this adapter as a Claude Code hook handler"""
+        
+        # Create wrapper script that Claude Code can call
+        wrapper_script = self.hook_dir / 'claude_hook_wrapper.sh'
+        
+        wrapper_content = f'''#!/bin/bash
+# Claude Code Hook Wrapper
+# This script is called by Claude Code /hooks command
+
+HOOK_PHASE="$1"
+CONTEXT_FILE="$2"
+
+# Export Claude context
+export CLAUDE_HOOK_PHASE="$HOOK_PHASE"
+export CLAUDE_CONTEXT_FILE="$CONTEXT_FILE"
+
+# Call Python adapter
+python3 {__file__} --trigger "$HOOK_PHASE"
+'''
+        
+        wrapper_script.parent.mkdir(parents=True, exist_ok=True)
+        wrapper_script.write_text(wrapper_content)
+        wrapper_script.chmod(0o755)
+        
+        print(f"✅ Registered hook wrapper at: {wrapper_script}")
+        
+        # Create .claude-hooks file for Claude Code to discover
+        claude_hooks_file = Path.home() / '.claude-hooks'
+        
+        hooks_config = {
+            "version": "1.0",
+            "provider": "claude-agent-framework",
             "hooks": {
-                "/hooks/pre-task": {
-                    "handler": str(self.hooks_dir / "pre-task" / "validate_and_setup.sh"),
-                    "description": "Validate and prepare task execution"
-                },
-                "/hooks/post-edit": {
-                    "handler": str(self.hooks_dir / "post-edit" / "process_changes.sh"),
-                    "description": "Process code changes and extract artifacts"
-                },
-                "/hooks/post-task": {
-                    "handler": str(self.hooks_dir / "post-task" / "cleanup_and_report.sh"),
-                    "description": "Cleanup and generate reports"
-                }
+                "pre-task": str(wrapper_script) + " pre-task",
+                "post-edit": str(wrapper_script) + " post-edit",
+                "post-task": str(wrapper_script) + " post-task"
             }
         }
         
-        # Write to Claude Code's expected location
-        claude_registry = self.claude_home / 'hook_registry.json'
-        with open(claude_registry, 'w') as f:
-            json.dump(registration, f, indent=2)
+        with open(claude_hooks_file, 'w') as f:
+            json.dump(hooks_config, f, indent=2)
         
-        print(f"✅ Registered hooks with Claude Code at {claude_registry}")
-        
-    def test_hook(self, phase: str, test_context: Dict = None):
-        """Test a specific hook phase"""
-        
-        if test_context is None:
-            test_context = {
-                "task": "Test task",
-                "agent": "test_agent",
-                "timestamp": "2024-01-01T00:00:00"
-            }
-        
-        context_file = Path(f'/tmp/test_context_{phase}.json')
-        with open(context_file, 'w') as f:
-            json.dump(test_context, f)
-        
-        # Run the hook
-        hook_script = self.hooks_dir / phase / f"{phase.replace('-', '_')}.sh"
-        if hook_script.exists():
-            result = subprocess.run(
-                [str(hook_script), str(context_file)],
-                capture_output=True,
-                text=True
-            )
-            
-            print(f"Hook Output:\n{result.stdout}")
-            if result.stderr:
-                print(f"Hook Errors:\n{result.stderr}")
-            
-            return result.returncode == 0
-        else:
-            print(f"❌ Hook script not found: {hook_script}")
-            return False
-    
-    def list_hooks(self):
-        """List all registered hooks"""
-        
-        if self.config_file.exists():
-            with open(self.config_file) as f:
-                config = json.load(f)
-            
-            print("\n📌 Registered Claude Code Hooks:\n")
-            for phase, phase_config in config.get('hooks', {}).items():
-                status = "✅ Enabled" if phase_config.get('enabled', False) else "❌ Disabled"
-                print(f"  {phase}: {status}")
-                
-                for script in phase_config.get('scripts', []):
-                    print(f"    - {script['name']}")
-                    print(f"      Path: {script['path']}")
-                    print(f"      Required: {script.get('required', False)}")
-                    print(f"      Timeout: {script.get('timeout', 30)}s")
-    
-    def enable_hook(self, phase: str):
-        """Enable a specific hook phase"""
-        
-        if self.config_file.exists():
-            with open(self.config_file) as f:
-                config = json.load(f)
-        else:
-            config = {"hooks": {}}
-        
-        if phase in config.get('hooks', {}):
-            config['hooks'][phase]['enabled'] = True
-            
-            with open(self.config_file, 'w') as f:
-                json.dump(config, f, indent=2)
-            
-            print(f"✅ Enabled {phase} hook")
-        else:
-            print(f"❌ Hook phase {phase} not found")
-    
-    def disable_hook(self, phase: str):
-        """Disable a specific hook phase"""
-        
-        if self.config_file.exists():
-            with open(self.config_file) as f:
-                config = json.load(f)
-            
-            if phase in config.get('hooks', {}):
-                config['hooks'][phase]['enabled'] = False
-                
-                with open(self.config_file, 'w') as f:
-                    json.dump(config, f, indent=2)
-                
-                print(f"✅ Disabled {phase} hook")
+        print(f"✅ Created Claude hooks config at: {claude_hooks_file}")
 
 if __name__ == "__main__":
-    import sys
+    import argparse
     
-    manager = ClaudeHookManager()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--trigger', help='Trigger a hook phase')
+    parser.add_argument('--register', action='store_true', help='Register with Claude Code')
     
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        
-        if command == "register":
-            manager.register_with_claude()
-        elif command == "list":
-            manager.list_hooks()
-        elif command == "test" and len(sys.argv) > 2:
-            phase = sys.argv[2]
-            manager.test_hook(phase)
-        elif command == "enable" and len(sys.argv) > 2:
-            phase = sys.argv[2]
-            manager.enable_hook(phase)
-        elif command == "disable" and len(sys.argv) > 2:
-            phase = sys.argv[2]
-            manager.disable_hook(phase)
-        else:
-            print("Usage: claude_hook_manager.py [register|list|test|enable|disable] [phase]")
-    else:
-        # Interactive mode
-        manager.register_with_claude()
-        manager.list_hooks()
+    args = parser.parse_args()
+    
+    adapter = ClaudeCodeHookAdapter()
+    
+    if args.register:
+        adapter.register_as_claude_hook()
+    elif args.trigger:
+        result = adapter.trigger_hook(args.trigger)
+        print(json.dumps(result, indent=2))

@@ -1,5 +1,5 @@
 {
-    "timestamp": "2025-08-22T09:41:29Z",
+    "timestamp": "2025-08-22T17:00:34Z",
     "version": "1.0.0",
     "description": "Claude Agent Framework Python Dependencies",
     "dependencies": {
@@ -14,7 +14,7 @@
         "APIDESIGNER": ["openapi-spec-validator", "flask-restx", "graphene"],
         "OPTIMIZER": ["cython", "numba", "line-profiler", "memory-profiler"]
     },
-    "python_version": "Python 3.13.3",
+    "python_version": "Python 3.12.3",
     "install_location": "/home/ubuntu/Documents/Claude/agents/src/python",
-    "virtual_env": "/home/ubuntu/Documents/Claude/agents/src/python/venv_production"
+    "virtual_env": "/home/ubuntu/.local/share/claude/venv"
 }

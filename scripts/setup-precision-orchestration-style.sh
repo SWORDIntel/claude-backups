@@ -21,10 +21,26 @@ readonly NC='\033[0m'
 # Configuration - FIXED PATHS FOR CLAUDE-CODE
 readonly STYLE_NAME="precision-orchestration"  # Note: claude uses hyphen
 readonly VERSION="7.0.1"
-readonly CONFIG_DIR="${HOME}/.claude/output-styles"  # Claude's expected directory
+
+# Detect project root and use .claude directory if available
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ "$SCRIPT_DIR" == */scripts ]]; then
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+    PROJECT_ROOT="$SCRIPT_DIR"
+fi
+
+# Use project .claude if exists, otherwise use home directory
+if [[ -d "$PROJECT_ROOT/.claude" ]]; then
+    readonly CONFIG_DIR="${PROJECT_ROOT}/.claude/output-styles"
+    readonly BACKUP_DIR="${PROJECT_ROOT}/.claude/backups"
+else
+    readonly CONFIG_DIR="${HOME}/.claude/output-styles"
+    readonly BACKUP_DIR="${HOME}/.claude/backups"
+fi
+
 readonly CONFIG_FILE="${CONFIG_DIR}/${STYLE_NAME}.md"  # .md extension expected
 readonly TEMP_FILE="/tmp/${STYLE_NAME}_${RANDOM}.yaml"
-readonly BACKUP_DIR="${HOME}/.claude/backups"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HELPER FUNCTIONS
@@ -312,7 +328,8 @@ install_configuration() {
     for dir in \
         "$HOME/.config/claude-code/output-styles" \
         "$HOME/.config/claude/output-styles" \
-        "$HOME/Documents/Claude/agents/config/output-styles"; do
+        "$PROJECT_ROOT/.claude/config/output-styles" \
+        "$PROJECT_ROOT/agents/config/output-styles"; do
         if [ -d "$(dirname "$dir")" ]; then
             mkdir -p "$dir" 2>/dev/null || true
             # Create both .md and .yaml versions

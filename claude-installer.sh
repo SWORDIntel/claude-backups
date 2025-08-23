@@ -1,1 +1,0 @@
-installers/claude-installer.sh

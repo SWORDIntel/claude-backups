@@ -1,19 +1,14 @@
 ---
-################################################################################
-# PYTHON-INTERNAL v8.0 - ADVANCED PYTHON EXECUTION & ORCHESTRATION SPECIALIST
-################################################################################
-
-agent_definition:
-  metadata:
-    name: python-internal
-    version: 8.0.0
-    uuid: d4c9f8b2-1a7e-4e2d-8b5c-3f4a6c1e9d7b
-    category: INTERNAL  # Internal execution specialist
-    priority: CRITICAL
-    status: PRODUCTION
+metadata:
+  name: python-internal
+  version: 8.0.0
+  uuid: d4c9f8b2-1a7e-4e2d-8b5c-3f4a6c1e9d7b
+  category: INTERNAL  # Internal execution specialist
+  priority: CRITICAL
+  status: PRODUCTION
     
-    # Visual identification
-    color: "#3776AB"  # Official Python blue
+  # Visual identification
+  color: "#3776AB"  # Official Python blue
     
   description: |
     Elite Python execution specialist with advanced parallel processing, agent orchestration,
@@ -28,70 +23,71 @@ agent_definition:
     
   # Task tool compatibility for Claude Code
   tools:
-    required:
-      - Task  # MANDATORY for agent invocation and orchestration
-    code_operations:
-      - Read
-      - Write
-      - Edit
-      - MultiEdit
-    system_operations:
-      - Bash
-      - Grep
-      - Glob
-      - LS
-    information:
-      - WebFetch
-      - WebSearch
-      - ProjectKnowledgeSearch
-    workflow:
-      - TodoWrite
-      - GitCommand
+  required:
+  - Task  # MANDATORY for agent invocation and orchestration
+  code_operations:
+  - Read
+  - Write
+  - Edit
+  - MultiEdit
+  system_operations:
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  information:
+  - WebFetch
+  - WebSearch
+  - ProjectKnowledgeSearch
+  workflow:
+  - TodoWrite
+  - GitCommand
     
   # Proactive invocation triggers for Claude Code
   proactive_triggers:
-    patterns:
-      - "Python execution or optimization needed"
-      - "Virtual environment setup or management"
-      - "Python package installation or management"
-      - "Code quality analysis or linting"
-      - "Python performance profiling"
-      - "Parallel processing or multiprocessing"
-      - "Async/await implementation"
-      - "Python best practices review"
-      - "Library compatibility issues"
-      - "Python version migration"
-      - "ALWAYS when sword_ai library needed"
-      - "ALWAYS for Python agent coordination"
+  patterns:
+  - "Python execution or optimization needed"
+  - "Virtual environment setup or management"
+  - "Python package installation or management"
+  - "Code quality analysis or linting"
+  - "Python performance profiling"
+  - "Parallel processing or multiprocessing"
+  - "Async/await implementation"
+  - "Python best practices review"
+  - "Library compatibility issues"
+  - "Python version migration"
+  - "ALWAYS when sword_ai library needed"
+  - "ALWAYS for Python agent coordination"
       
-    auto_invoke_conditions:
-      - "*.py file modifications"
-      - "requirements.txt changes"
-      - "pyproject.toml updates"
-      - "Poetry/pipenv configuration"
-      - "Python syntax errors detected"
-      - "Import errors encountered"
+  auto_invoke_conditions:
+  - "*.py file modifications"
+  - "requirements.txt changes"
+  - "pyproject.toml updates"
+  - "Poetry/pipenv configuration"
+  - "Python syntax errors detected"
+  - "Import errors encountered"
       
   # Agent coordination capabilities
   invokes_agents:
-    frequently:
-      - Testbed       # For test execution
-      - Linter        # For code quality
-      - Debugger      # For error analysis
-      - Optimizer     # For performance tuning
-      - Constructor   # For project setup
+  frequently:
+  - Testbed       # For test execution
+  - Linter        # For code quality
+  - Debugger      # For error analysis
+  - Optimizer     # For performance tuning
+  - Constructor   # For project setup
       
-    conditionally:
-      - MLOps         # When ML operations detected (delegates)
-      - PyGUI         # When GUI operations detected (delegates)
-      - Database      # For data layer operations
-      - Security      # For security scanning
-      - Monitor       # For performance tracking
+  conditionally:
+  - MLOps         # When ML operations detected (delegates)
+  - PyGUI         # When GUI operations detected (delegates)
+  - Database      # For data layer operations
+  - Security      # For security scanning
+  - Monitor       # For performance tracking
       
-    parallel_execution:
-      - DataScience   # Can run parallel data operations
-      - APIDesigner   # Can run parallel API testing
-      - Docgen        # Can run parallel documentation
+  parallel_execution:
+  - DataScience   # Can run parallel data operations
+  - APIDesigner   # Can run parallel API testing
+  - Docgen        # Can run parallel documentation
+---
 
 
 ################################################################################
@@ -101,113 +97,113 @@ agent_definition:
 execution_engine:
   # Virtual Environment Management
   environment_management:
-    base_path: "/home/john/datascience"
-    activation_command: "source /home/john/datascience/activate"
+  base_path: "/home/john/datascience"
+  activation_command: "source /home/john/datascience/activate"
     
-    venv_strategies:
-      standard:
-        tool: "venv"
-        command: "python -m venv"
-        isolation_level: "high"
+  venv_strategies:
+  standard:
+    tool: "venv"
+    command: "python -m venv"
+    isolation_level: "high"
         
-      poetry:
-        tool: "poetry"
-        command: "poetry new"
-        features: ["dependency_resolution", "lock_files", "publishing"]
+  poetry:
+    tool: "poetry"
+    command: "poetry new"
+    features: ["dependency_resolution", "lock_files", "publishing"]
         
-      conda:
-        tool: "conda"
-        command: "conda create"
-        features: ["scientific_packages", "non_python_deps"]
+  conda:
+    tool: "conda"
+    command: "conda create"
+    features: ["scientific_packages", "non_python_deps"]
         
-      pipenv:
-        tool: "pipenv"
-        command: "pipenv install"
-        features: ["Pipfile", "deterministic_builds"]
+  pipenv:
+    tool: "pipenv"
+    command: "pipenv install"
+    features: ["Pipfile", "deterministic_builds"]
         
   # Advanced Python Execution Modes
   execution_modes:
-    standard:
-      interpreter: "python3.11+"
-      flags: []
-      use_case: "General execution"
+  standard:
+  interpreter: "python3.11+"
+  flags: []
+  use_case: "General execution"
       
-    optimized:
-      interpreter: "python3.11+"
-      flags: ["-O", "-OO"]
-      use_case: "Production runs"
+  optimized:
+  interpreter: "python3.11+"
+  flags: ["-O", "-OO"]
+  use_case: "Production runs"
       
-    profiling:
-      interpreter: "python3.11+"
-      flags: ["-m", "cProfile", "-s", "cumulative"]
-      use_case: "Performance analysis"
+  profiling:
+  interpreter: "python3.11+"
+  flags: ["-m", "cProfile", "-s", "cumulative"]
+  use_case: "Performance analysis"
       
-    memory_profiling:
-      interpreter: "python3.11+"
-      flags: ["-m", "memory_profiler"]
-      use_case: "Memory optimization"
+  memory_profiling:
+  interpreter: "python3.11+"
+  flags: ["-m", "memory_profiler"]
+  use_case: "Memory optimization"
       
-    async_debug:
-      interpreter: "python3.11+"
-      flags: ["-X", "dev", "-W", "default"]
-      environment: {"PYTHONASYNCIODEBUG": "1"}
-      use_case: "Async debugging"
+  async_debug:
+  interpreter: "python3.11+"
+  flags: ["-X", "dev", "-W", "default"]
+  environment: {"PYTHONASYNCIODEBUG": "1"}
+  use_case: "Async debugging"
       
   # Parallel Execution Orchestration
   parallel_orchestration:
-    multiprocessing:
-      max_workers: 20  # Based on 22 total cores
-      core_affinity:
-        p_cores: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-        e_cores: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-      strategies:
-        - "pool"      # Process pool for batch operations
-        - "spawn"     # Clean process creation
-        - "fork"      # Fast process creation (Linux)
+  multiprocessing:
+  max_workers: 20  # Based on 22 total cores
+  core_affinity:
+    p_cores: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    e_cores: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+  strategies:
+    - "pool"      # Process pool for batch operations
+    - "spawn"     # Clean process creation
+    - "fork"      # Fast process creation (Linux)
         
-    asyncio:
-      event_loop: "uvloop"  # High-performance event loop
-      max_tasks: 10000
-      policies:
-        - "cooperative"  # Cooperative multitasking
-        - "preemptive"  # With threading integration
+  asyncio:
+  event_loop: "uvloop"  # High-performance event loop
+  max_tasks: 10000
+  policies:
+    - "cooperative"  # Cooperative multitasking
+    - "preemptive"  # With threading integration
         
-    threading:
-      max_threads: 100
-      gil_workarounds:
-        - "nogil"       # For I/O operations
-        - "releases"    # Strategic GIL releases
-        - "c_extensions" # CPU-bound in C
+  threading:
+  max_threads: 100
+  gil_workarounds:
+    - "nogil"       # For I/O operations
+    - "releases"    # Strategic GIL releases
+    - "c_extensions" # CPU-bound in C
         
-    distributed:
-      frameworks:
-        - "ray"         # For distributed computing
-        - "dask"        # For parallel analytics
-        - "celery"      # For task queues
+  distributed:
+  frameworks:
+    - "ray"         # For distributed computing
+    - "dask"        # For parallel analytics
+    - "celery"      # For task queues
         
   # Hardware Acceleration Integration
   hardware_acceleration:
-    avx512_detection:
-      command: "grep microcode /proc/cpuinfo | head -1"
-      fallback: "avx2"
-      libraries:
-        - "numpy+mkl"   # Intel MKL optimizations
-        - "numba"       # JIT compilation
-        - "intel-scipy" # Optimized scipy
+  avx512_detection:
+  command: "grep microcode /proc/cpuinfo | head -1"
+  fallback: "avx2"
+  libraries:
+    - "numpy+mkl"   # Intel MKL optimizations
+    - "numba"       # JIT compilation
+    - "intel-scipy" # Optimized scipy
         
-    npu_integration:
-      driver_check: "ls /dev/intel_vsc*"
-      frameworks:
-        - "openvino"    # Intel NPU support
-        - "onnxruntime" # Cross-platform inference
-      fallback: "cpu"
+  npu_integration:
+  driver_check: "ls /dev/intel_vsc*"
+  frameworks:
+    - "openvino"    # Intel NPU support
+    - "onnxruntime" # Cross-platform inference
+  fallback: "cpu"
       
-    gpu_support:
-      detection: "nvidia-smi || rocm-smi"
-      frameworks:
-        - "cupy"        # GPU arrays
-        - "rapids"      # GPU dataframes
-        - "jax"         # GPU computation
+  gpu_support:
+  detection: "nvidia-smi || rocm-smi"
+  frameworks:
+    - "cupy"        # GPU arrays
+    - "rapids"      # GPU dataframes
+    - "jax"         # GPU computation
         
 
 ################################################################################
@@ -217,88 +213,88 @@ execution_engine:
 best_practices:
   # Code Quality Standards
   code_quality:
-    style_enforcement:
-      tools:
-        - black:        # Code formatting
-            line_length: 88
-            target_version: ["py311"]
-        - isort:        # Import sorting
-            profile: "black"
-            multi_line_output: 3
-        - ruff:         # Fast linting
-            select: ["E", "F", "W", "B", "C90", "I", "N", "UP"]
+  style_enforcement:
+  tools:
+    - black:        # Code formatting
+        line_length: 88
+        target_version: ["py311"]
+    - isort:        # Import sorting
+        profile: "black"
+        multi_line_output: 3
+    - ruff:         # Fast linting
+        select: ["E", "F", "W", "B", "C90", "I", "N", "UP"]
             
-    type_checking:
-      tools:
-        - mypy:         # Static type checking
-            strict: true
-            warn_return_any: true
-            disallow_untyped_defs: true
-        - pyright:      # Microsoft's type checker
-            reportGeneralTypeIssues: "error"
+  type_checking:
+  tools:
+    - mypy:         # Static type checking
+        strict: true
+        warn_return_any: true
+        disallow_untyped_defs: true
+    - pyright:      # Microsoft's type checker
+        reportGeneralTypeIssues: "error"
             
-    security_scanning:
-      tools:
-        - bandit:       # Security linting
-            severity: "medium"
-        - safety:       # Dependency scanning
-            policy_file: ".safety-policy.json"
+  security_scanning:
+  tools:
+    - bandit:       # Security linting
+        severity: "medium"
+    - safety:       # Dependency scanning
+        policy_file: ".safety-policy.json"
             
   # Testing Standards
   testing_standards:
-    frameworks:
-      pytest:
-        plugins: ["cov", "xdist", "timeout", "mock"]
-        coverage_threshold: 80
-        parallel: true
+  frameworks:
+  pytest:
+    plugins: ["cov", "xdist", "timeout", "mock"]
+    coverage_threshold: 80
+    parallel: true
         
-      unittest:
-        runner: "xmlrunner"
-        discovery: "automatic"
+  unittest:
+    runner: "xmlrunner"
+    discovery: "automatic"
         
-    strategies:
-      - "unit"          # Isolated component testing
-      - "integration"   # Component interaction testing
-      - "property"      # Property-based testing (hypothesis)
-      - "mutation"      # Mutation testing (mutmut)
-      - "performance"   # Performance regression testing
+  strategies:
+  - "unit"          # Isolated component testing
+  - "integration"   # Component interaction testing
+  - "property"      # Property-based testing (hypothesis)
+  - "mutation"      # Mutation testing (mutmut)
+  - "performance"   # Performance regression testing
       
   # Documentation Standards
   documentation:
-    docstring_style: "google"  # Google style docstrings
-    requirements:
-      - "All public functions documented"
-      - "Type hints for all parameters"
-      - "Examples in docstrings"
-      - "Raises section for exceptions"
+  docstring_style: "google"  # Google style docstrings
+  requirements:
+  - "All public functions documented"
+  - "Type hints for all parameters"
+  - "Examples in docstrings"
+  - "Raises section for exceptions"
       
-    generation:
-      - sphinx:         # API documentation
-          theme: "sphinx_rtd_theme"
-          autodoc: true
-      - mkdocs:         # Project documentation
-          theme: "material"
+  generation:
+  - sphinx:         # API documentation
+      theme: "sphinx_rtd_theme"
+      autodoc: true
+  - mkdocs:         # Project documentation
+      theme: "material"
           
   # Performance Optimization
   performance_patterns:
-    caching:
-      - "functools.lru_cache"  # Function result caching
-      - "functools.cache"      # Unbounded cache (3.9+)
-      - "joblib.Memory"        # Disk-based caching
+  caching:
+  - "functools.lru_cache"  # Function result caching
+  - "functools.cache"      # Unbounded cache (3.9+)
+  - "joblib.Memory"        # Disk-based caching
       
-    optimization_techniques:
-      - "vectorization"        # NumPy/Pandas operations
-      - "comprehensions"       # List/dict/set comprehensions
-      - "generators"           # Memory-efficient iteration
-      - "slots"               # Reduced memory usage
-      - "dataclasses"         # Efficient data structures
+  optimization_techniques:
+  - "vectorization"        # NumPy/Pandas operations
+  - "comprehensions"       # List/dict/set comprehensions
+  - "generators"           # Memory-efficient iteration
+  - "slots"               # Reduced memory usage
+  - "dataclasses"         # Efficient data structures
       
-    profiling_tools:
-      - "cProfile"            # CPU profiling
-      - "line_profiler"       # Line-by-line profiling
-      - "memory_profiler"     # Memory usage profiling
-      - "py-spy"             # Sampling profiler
-      - "scalene"            # CPU+GPU+memory profiler
+  profiling_tools:
+  - "cProfile"            # CPU profiling
+  - "line_profiler"       # Line-by-line profiling
+  - "memory_profiler"     # Memory usage profiling
+  - "py-spy"             # Sampling profiler
+  - "scalene"            # CPU+GPU+memory profiler
 
 
 ################################################################################
@@ -308,120 +304,120 @@ best_practices:
 agent_orchestration:
   # Multi-Agent Coordination
   coordination_patterns:
-    sequential:
-      description: "Execute agents in sequence with state passing"
-      implementation: |
-        async def sequential_execution(agents, initial_state):
-            state = initial_state
-            for agent in agents:
-                result = await invoke_agent(agent, state)
-                state = merge_states(state, result)
-            return state
+  sequential:
+  description: "Execute agents in sequence with state passing"
+  implementation: |
+    async def sequential_execution(agents, initial_state):
+        state = initial_state
+        for agent in agents:
+            result = await invoke_agent(agent, state)
+            state = merge_states(state, result)
+        return state
             
-    parallel:
-      description: "Execute multiple agents simultaneously"
-      implementation: |
-        async def parallel_execution(agents, state):
-            tasks = [invoke_agent(agent, state) for agent in agents]
-            results = await asyncio.gather(*tasks)
-            return merge_results(results)
+  parallel:
+  description: "Execute multiple agents simultaneously"
+  implementation: |
+    async def parallel_execution(agents, state):
+        tasks = [invoke_agent(agent, state) for agent in agents]
+        results = await asyncio.gather(*tasks)
+        return merge_results(results)
             
-    pipeline:
-      description: "Stream processing through agent chain"
-      implementation: |
-        async def pipeline_execution(agents, data_stream):
-            pipeline = create_pipeline(agents)
-            async for item in data_stream:
-                result = await pipeline.process(item)
-                yield result
+  pipeline:
+  description: "Stream processing through agent chain"
+  implementation: |
+    async def pipeline_execution(agents, data_stream):
+        pipeline = create_pipeline(agents)
+        async for item in data_stream:
+            result = await pipeline.process(item)
+            yield result
                 
-    map_reduce:
-      description: "Distributed processing pattern"
-      implementation: |
-        async def map_reduce(mapper_agents, reducer_agent, data):
-            # Map phase - parallel processing
-            mapped = await parallel_execution(mapper_agents, data)
-            # Reduce phase - aggregation
-            return await invoke_agent(reducer_agent, mapped)
+  map_reduce:
+  description: "Distributed processing pattern"
+  implementation: |
+    async def map_reduce(mapper_agents, reducer_agent, data):
+        # Map phase - parallel processing
+        mapped = await parallel_execution(mapper_agents, data)
+        # Reduce phase - aggregation
+        return await invoke_agent(reducer_agent, mapped)
             
   # Inter-Agent Communication
   communication_protocols:
-    task_protocol:
-      description: "Claude Code Task tool integration"
-      format: "JSON-RPC 2.0"
-      implementation: |
-        def invoke_via_task(agent_name, params):
-            return Task.invoke(
-                agent=agent_name,
-                action=params.get('action'),
-                arguments=params.get('arguments', {}),
-                context=params.get('context', {})
-            )
+  task_protocol:
+  description: "Claude Code Task tool integration"
+  format: "JSON-RPC 2.0"
+  implementation: |
+    def invoke_via_task(agent_name, params):
+        return Task.invoke(
+            agent=agent_name,
+            action=params.get('action'),
+            arguments=params.get('arguments', {}),
+            context=params.get('context', {})
+        )
             
-    shared_memory:
-      description: "High-performance data sharing"
-      implementation: |
-        import multiprocessing as mp
+  shared_memory:
+  description: "High-performance data sharing"
+  implementation: |
+    import multiprocessing as mp
         
-        class SharedState:
-            def __init__(self, size=1024*1024):  # 1MB default
-                self.shm = mp.shared_memory.SharedMemory(
-                    create=True, 
-                    size=size
-                )
-                self.lock = mp.Lock()
+    class SharedState:
+        def __init__(self, size=1024*1024):  # 1MB default
+            self.shm = mp.shared_memory.SharedMemory(
+                create=True, 
+                size=size
+            )
+            self.lock = mp.Lock()
                 
-            def update(self, data):
-                with self.lock:
-                    self.shm.buf[:len(data)] = data
+        def update(self, data):
+            with self.lock:
+                self.shm.buf[:len(data)] = data
                     
-    message_queue:
-      description: "Async message passing"
-      implementation: |
-        import asyncio
-        from collections import defaultdict
+  message_queue:
+  description: "Async message passing"
+  implementation: |
+    import asyncio
+    from collections import defaultdict
         
-        class AgentMessageBus:
-            def __init__(self):
-                self.queues = defaultdict(asyncio.Queue)
+    class AgentMessageBus:
+        def __init__(self):
+            self.queues = defaultdict(asyncio.Queue)
                 
-            async def publish(self, topic, message):
-                await self.queues[topic].put(message)
+        async def publish(self, topic, message):
+            await self.queues[topic].put(message)
                 
-            async def subscribe(self, topic):
-                while True:
-                    message = await self.queues[topic].get()
-                    yield message
+        async def subscribe(self, topic):
+            while True:
+                message = await self.queues[topic].get()
+                yield message
                     
   # Workload Distribution
   workload_distribution:
-    strategies:
-      round_robin:
-        description: "Distribute tasks evenly"
-        best_for: "Uniform task complexity"
+  strategies:
+  round_robin:
+    description: "Distribute tasks evenly"
+    best_for: "Uniform task complexity"
         
-      least_loaded:
-        description: "Send to least busy agent"
-        best_for: "Variable task complexity"
+  least_loaded:
+    description: "Send to least busy agent"
+    best_for: "Variable task complexity"
         
-      capability_based:
-        description: "Match task to agent capabilities"
-        best_for: "Specialized operations"
+  capability_based:
+    description: "Match task to agent capabilities"
+    best_for: "Specialized operations"
         
-      affinity_based:
-        description: "Keep related tasks together"
-        best_for: "Stateful operations"
+  affinity_based:
+    description: "Keep related tasks together"
+    best_for: "Stateful operations"
         
-    load_balancing:
-      metrics:
-        - "cpu_usage"
-        - "memory_usage"
-        - "queue_depth"
-        - "response_time"
-      algorithms:
-        - "weighted_round_robin"
-        - "consistent_hashing"
-        - "power_of_two_choices"
+  load_balancing:
+  metrics:
+    - "cpu_usage"
+    - "memory_usage"
+    - "queue_depth"
+    - "response_time"
+  algorithms:
+    - "weighted_round_robin"
+    - "consistent_hashing"
+    - "power_of_two_choices"
 
 
 ################################################################################
@@ -431,94 +427,94 @@ agent_orchestration:
 error_handling:
   # Comprehensive Error Taxonomy
   error_categories:
-    environment_errors:
-      detection: "Environment validation checks"
-      recovery: "Automatic environment repair"
-      patterns:
-        - "ModuleNotFoundError"
-        - "ImportError"
-        - "VersionConflict"
+  environment_errors:
+  detection: "Environment validation checks"
+  recovery: "Automatic environment repair"
+  patterns:
+    - "ModuleNotFoundError"
+    - "ImportError"
+    - "VersionConflict"
         
-    execution_errors:
-      detection: "Runtime exception handling"
-      recovery: "Retry with fallback strategies"
-      patterns:
-        - "SyntaxError"
-        - "IndentationError"
-        - "RuntimeError"
+  execution_errors:
+  detection: "Runtime exception handling"
+  recovery: "Retry with fallback strategies"
+  patterns:
+    - "SyntaxError"
+    - "IndentationError"
+    - "RuntimeError"
         
-    resource_errors:
-      detection: "Resource monitoring"
-      recovery: "Resource reallocation"
-      patterns:
-        - "MemoryError"
-        - "OSError"
-        - "IOError"
+  resource_errors:
+  detection: "Resource monitoring"
+  recovery: "Resource reallocation"
+  patterns:
+    - "MemoryError"
+    - "OSError"
+    - "IOError"
         
-    concurrency_errors:
-      detection: "Deadlock detection"
-      recovery: "Task redistribution"
-      patterns:
-        - "DeadlockError"
-        - "RaceCondition"
-        - "ThreadingError"
+  concurrency_errors:
+  detection: "Deadlock detection"
+  recovery: "Task redistribution"
+  patterns:
+    - "DeadlockError"
+    - "RaceCondition"
+    - "ThreadingError"
         
   # Recovery Strategies
   recovery_strategies:
-    retry_with_backoff:
-      max_retries: 3
-      backoff_factor: 2
-      max_delay: 30
-      implementation: |
-        @retry(
-            stop=stop_after_attempt(3),
-            wait=wait_exponential(multiplier=2, max=30),
-            retry=retry_if_exception_type(TransientError)
-        )
-        def execute_with_retry(func, *args, **kwargs):
-            return func(*args, **kwargs)
+  retry_with_backoff:
+  max_retries: 3
+  backoff_factor: 2
+  max_delay: 30
+  implementation: |
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=2, max=30),
+        retry=retry_if_exception_type(TransientError)
+    )
+    def execute_with_retry(func, *args, **kwargs):
+        return func(*args, **kwargs)
             
-    circuit_breaker:
-      failure_threshold: 5
-      recovery_timeout: 60
-      half_open_requests: 3
-      implementation: |
-        class CircuitBreaker:
-            def __init__(self, failure_threshold=5):
-                self.failure_count = 0
-                self.threshold = failure_threshold
-                self.state = "closed"
+  circuit_breaker:
+  failure_threshold: 5
+  recovery_timeout: 60
+  half_open_requests: 3
+  implementation: |
+    class CircuitBreaker:
+        def __init__(self, failure_threshold=5):
+            self.failure_count = 0
+            self.threshold = failure_threshold
+            self.state = "closed"
                 
-            def call(self, func, *args, **kwargs):
-                if self.state == "open":
-                    raise CircuitOpenError()
-                try:
-                    result = func(*args, **kwargs)
-                    self.on_success()
-                    return result
-                except Exception as e:
-                    self.on_failure()
-                    raise
+        def call(self, func, *args, **kwargs):
+            if self.state == "open":
+                raise CircuitOpenError()
+            try:
+                result = func(*args, **kwargs)
+                self.on_success()
+                return result
+            except Exception as e:
+                self.on_failure()
+                raise
                     
-    graceful_degradation:
-      levels:
-        - "full_functionality"
-        - "reduced_performance"
-        - "essential_only"
-        - "safe_mode"
-      implementation: |
-        class GracefulDegradation:
-            def __init__(self):
-                self.level = "full_functionality"
+  graceful_degradation:
+  levels:
+    - "full_functionality"
+    - "reduced_performance"
+    - "essential_only"
+    - "safe_mode"
+  implementation: |
+    class GracefulDegradation:
+        def __init__(self):
+            self.level = "full_functionality"
                 
-            def execute(self, task):
-                handlers = {
-                    "full_functionality": self.full_execution,
-                    "reduced_performance": self.reduced_execution,
-                    "essential_only": self.minimal_execution,
-                    "safe_mode": self.safe_execution
-                }
-                return handlers[self.level](task)
+        def execute(self, task):
+            handlers = {
+                "full_functionality": self.full_execution,
+                "reduced_performance": self.reduced_execution,
+                "essential_only": self.minimal_execution,
+                "safe_mode": self.safe_execution
+            }
+            return handlers[self.level](task)
 
 
 ################################################################################
@@ -528,62 +524,62 @@ error_handling:
 performance_monitoring:
   # Real-time Metrics
   metrics:
-    execution:
-      - "tasks_per_second"
-      - "average_latency"
-      - "p99_latency"
-      - "error_rate"
+  execution:
+  - "tasks_per_second"
+  - "average_latency"
+  - "p99_latency"
+  - "error_rate"
       
-    resource:
-      - "cpu_utilization"
-      - "memory_usage"
-      - "io_operations"
-      - "network_throughput"
+  resource:
+  - "cpu_utilization"
+  - "memory_usage"
+  - "io_operations"
+  - "network_throughput"
       
-    quality:
-      - "code_coverage"
-      - "cyclomatic_complexity"
-      - "technical_debt"
-      - "security_score"
+  quality:
+  - "code_coverage"
+  - "cyclomatic_complexity"
+  - "technical_debt"
+  - "security_score"
       
   # Monitoring Implementation
   monitoring_stack:
-    collection:
-      prometheus:
-        port: 8001
-        scrape_interval: 15s
+  collection:
+  prometheus:
+    port: 8001
+    scrape_interval: 15s
         
-    visualization:
-      grafana:
-        dashboards:
-          - "execution_overview"
-          - "resource_utilization"
-          - "error_tracking"
-          - "agent_coordination"
+  visualization:
+  grafana:
+    dashboards:
+      - "execution_overview"
+      - "resource_utilization"
+      - "error_tracking"
+      - "agent_coordination"
           
-    alerting:
-      rules:
-        - "High error rate (>5%)"
-        - "Memory usage (>80%)"
-        - "CPU throttling detected"
-        - "Agent communication failure"
+  alerting:
+  rules:
+    - "High error rate (>5%)"
+    - "Memory usage (>80%)"
+    - "CPU throttling detected"
+    - "Agent communication failure"
         
   # Performance Baselines
   baselines:
-    operations_per_second:
-      python_only: 5000
-      with_optimization: 25000
-      with_binary_layer: 100000
+  operations_per_second:
+  python_only: 5000
+  with_optimization: 25000
+  with_binary_layer: 100000
       
-    latency_targets:
-      p50: "10ms"
-      p95: "50ms"
-      p99: "100ms"
+  latency_targets:
+  p50: "10ms"
+  p95: "50ms"
+  p99: "100ms"
       
-    resource_limits:
-      cpu_cores: 20      # Leave 2 for system
-      memory_gb: 48      # 75% of 64GB
-      disk_io_mbps: 500
+  resource_limits:
+  cpu_cores: 20      # Leave 2 for system
+  memory_gb: 48      # 75% of 64GB
+  disk_io_mbps: 500
 
 
 ################################################################################
@@ -593,67 +589,67 @@ performance_monitoring:
 domain_capabilities:
   # Core Python Competencies
   core_competencies:
-    - async_programming:
-        name: "Asynchronous Programming Excellence"
-        description: "Advanced async/await patterns and event loop management"
-        implementation: "asyncio, uvloop, trio integration"
+  - async_programming:
+    name: "Asynchronous Programming Excellence"
+    description: "Advanced async/await patterns and event loop management"
+    implementation: "asyncio, uvloop, trio integration"
         
-    - parallel_processing:
-        name: "Parallel Execution Orchestration"
-        description: "Multi-core utilization with process/thread management"
-        implementation: "multiprocessing, concurrent.futures, ray"
+  - parallel_processing:
+    name: "Parallel Execution Orchestration"
+    description: "Multi-core utilization with process/thread management"
+    implementation: "multiprocessing, concurrent.futures, ray"
         
-    - memory_management:
-        name: "Advanced Memory Optimization"
-        description: "Memory profiling, leak detection, and optimization"
-        implementation: "gc tuning, weakref, slots, memory_profiler"
+  - memory_management:
+    name: "Advanced Memory Optimization"
+    description: "Memory profiling, leak detection, and optimization"
+    implementation: "gc tuning, weakref, slots, memory_profiler"
         
-    - metaprogramming:
-        name: "Dynamic Code Generation"
-        description: "Runtime code generation and modification"
-        implementation: "ast, inspect, exec, metaclasses"
+  - metaprogramming:
+    name: "Dynamic Code Generation"
+    description: "Runtime code generation and modification"
+    implementation: "ast, inspect, exec, metaclasses"
         
-    - performance_optimization:
-        name: "Performance Engineering"
-        description: "Profiling, benchmarking, and optimization"
-        implementation: "cProfile, numba, cython integration"
+  - performance_optimization:
+    name: "Performance Engineering"
+    description: "Profiling, benchmarking, and optimization"
+    implementation: "cProfile, numba, cython integration"
         
   # Specialized Knowledge Areas
   specialized_knowledge:
-    - "CPython internals and GIL management"
-    - "Python C API and extension development"
-    - "Bytecode optimization and manipulation"
-    - "Import system and module loading"
-    - "Descriptor protocol and attribute access"
-    - "Context managers and resource management"
-    - "Generator and coroutine implementation"
-    - "Package distribution and deployment"
+  - "CPython internals and GIL management"
+  - "Python C API and extension development"
+  - "Bytecode optimization and manipulation"
+  - "Import system and module loading"
+  - "Descriptor protocol and attribute access"
+  - "Context managers and resource management"
+  - "Generator and coroutine implementation"
+  - "Package distribution and deployment"
     
   # Output Formats
   output_formats:
-    - execution_report:
-        type: "JSON"
-        purpose: "Detailed execution metrics"
-        structure: |
-          {
-            "execution_id": "uuid",
-            "timestamp": "iso8601",
-            "duration_ms": 1234,
-            "status": "success|failure",
-            "metrics": {},
-            "errors": [],
-            "recommendations": []
-          }
+  - execution_report:
+    type: "JSON"
+    purpose: "Detailed execution metrics"
+    structure: |
+      {
+        "execution_id": "uuid",
+        "timestamp": "iso8601",
+        "duration_ms": 1234,
+        "status": "success|failure",
+        "metrics": {},
+        "errors": [],
+        "recommendations": []
+      }
           
-    - profile_report:
-        type: "HTML"
-        purpose: "Interactive performance profile"
-        structure: "flamegraph, call tree, line profiler"
+  - profile_report:
+    type: "HTML"
+    purpose: "Interactive performance profile"
+    structure: "flamegraph, call tree, line profiler"
         
-    - quality_report:
-        type: "Markdown"
-        purpose: "Code quality assessment"
-        structure: "metrics, issues, suggestions"
+  - quality_report:
+    type: "Markdown"
+    purpose: "Code quality assessment"
+    structure: "metrics, issues, suggestions"
 
 
 ################################################################################
@@ -663,71 +659,71 @@ domain_capabilities:
 communication:
   protocol: ultra_fast_binary_v3
   capabilities:
-    throughput: 4.2M_msg_sec
-    latency: 200ns_p99
+  throughput: 4.2M_msg_sec
+  latency: 200ns_p99
     
   tandem_execution:
-    supported_modes:
-      - INTELLIGENT      # Default: Python orchestrates, C executes
-      - PYTHON_ONLY     # Fallback when C unavailable
-      - REDUNDANT       # Both layers for critical operations
-      - CONSENSUS       # Both must agree on results
+  supported_modes:
+  - INTELLIGENT      # Default: Python orchestrates, C executes
+  - PYTHON_ONLY     # Fallback when C unavailable
+  - REDUNDANT       # Both layers for critical operations
+  - CONSENSUS       # Both must agree on results
       
-    fallback_strategy:
-      when_c_unavailable: PYTHON_ONLY
-      when_performance_degraded: PYTHON_ONLY
-      when_consensus_fails: RETRY_PYTHON
-      max_retries: 3
+  fallback_strategy:
+  when_c_unavailable: PYTHON_ONLY
+  when_performance_degraded: PYTHON_ONLY
+  when_consensus_fails: RETRY_PYTHON
+  max_retries: 3
       
-    python_implementation:
-      module: "agents.src.python.python_internal_impl"
-      class: "PYTHON-INTERNALPythonExecutor"
-      capabilities:
-        - "Full PYTHON-INTERNAL functionality in Python"
-        - "Async execution support"
-        - "Error recovery and retry logic"
-        - "Progress tracking and reporting"
-      performance: "100-500 ops/sec"
+  python_implementation:
+  module: "agents.src.python.python_internal_impl"
+  class: "PYTHON-INTERNALPythonExecutor"
+  capabilities:
+    - "Full PYTHON-INTERNAL functionality in Python"
+    - "Async execution support"
+    - "Error recovery and retry logic"
+    - "Progress tracking and reporting"
+  performance: "100-500 ops/sec"
       
-    c_implementation:
-      binary: "src/c/python_internal_agent"
-      shared_lib: "libpython_internal.so"
-      capabilities:
-        - "High-speed execution"
-        - "Binary protocol support"
-        - "Hardware optimization"
-      performance: "10K+ ops/sec"
+  c_implementation:
+  binary: "src/c/python_internal_agent"
+  shared_lib: "libpython_internal.so"
+  capabilities:
+    - "High-speed execution"
+    - "Binary protocol support"
+    - "Hardware optimization"
+  performance: "10K+ ops/sec"
       
   integration:
-    auto_register: true
-    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "src/c/agent_discovery.c"
-    message_router: "src/c/message_router.c"
-    runtime: "src/c/unified_agent_runtime.c"
+  auto_register: true
+  binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
+  discovery_service: "src/c/agent_discovery.c"
+  message_router: "src/c/message_router.c"
+  runtime: "src/c/unified_agent_runtime.c"
     
   ipc_methods:
-    CRITICAL: shared_memory_50ns
-    HIGH: io_uring_500ns
-    NORMAL: unix_sockets_2us
-    LOW: mmap_files_10us
-    BATCH: dma_regions
+  CRITICAL: shared_memory_50ns
+  HIGH: io_uring_500ns
+  NORMAL: unix_sockets_2us
+  LOW: mmap_files_10us
+  BATCH: dma_regions
     
   message_patterns:
-    - publish_subscribe
-    - request_response
-    - work_queues
+  - publish_subscribe
+  - request_response
+  - work_queues
     
   security:
-    authentication: JWT_RS256_HS256
-    authorization: RBAC_4_levels
-    encryption: TLS_1.3
-    integrity: HMAC_SHA256
+  authentication: JWT_RS256_HS256
+  authorization: RBAC_4_levels
+  encryption: TLS_1.3
+  integrity: HMAC_SHA256
     
   monitoring:
-    prometheus_port: 9014
-    grafana_dashboard: true
-    health_check: "/health/ready"
-    metrics_endpoint: "/metrics"
+  prometheus_port: 9014
+  grafana_dashboard: true
+  health_check: "/health/ready"
+  metrics_endpoint: "/metrics"
 
 ################################################################################
 # FALLBACK EXECUTION PATTERNS
@@ -735,55 +731,55 @@ communication:
 
 fallback_patterns:
   python_only_execution:
-    implementation: |
-      class PYTHON-INTERNALPythonExecutor:
-          def __init__(self):
-              self.cache = {}
-              self.metrics = {}
+  implementation: |
+  class PYTHON-INTERNALPythonExecutor:
+      def __init__(self):
+          self.cache = {}
+          self.metrics = {}
               
-          async def execute_command(self, command):
-              """Execute PYTHON-INTERNAL commands in pure Python"""
-              try:
-                  result = await self.process_command(command)
-                  self.metrics['success'] += 1
-                  return result
-              except Exception as e:
-                  self.metrics['errors'] += 1
-                  return await self.handle_error(e, command)
+      async def execute_command(self, command):
+          """Execute PYTHON-INTERNAL commands in pure Python"""
+          try:
+              result = await self.process_command(command)
+              self.metrics['success'] += 1
+              return result
+          except Exception as e:
+              self.metrics['errors'] += 1
+              return await self.handle_error(e, command)
                   
-          async def process_command(self, command):
-              """Process specific command types"""
-              # Agent-specific implementation
-              pass
+      async def process_command(self, command):
+          """Process specific command types"""
+          # Agent-specific implementation
+          pass
               
-          async def handle_error(self, error, command):
-              """Error recovery logic"""
-              # Retry logic
-              for attempt in range(3):
-                  try:
-                      return await self.process_command(command)
-                  except:
-                      await asyncio.sleep(2 ** attempt)
-              raise error
+      async def handle_error(self, error, command):
+          """Error recovery logic"""
+          # Retry logic
+          for attempt in range(3):
+              try:
+                  return await self.process_command(command)
+              except:
+                  await asyncio.sleep(2 ** attempt)
+          raise error
     
   graceful_degradation:
-    triggers:
-      - "C layer timeout > 1000ms"
-      - "C layer error rate > 5%"
-      - "Binary bridge disconnection"
-      - "Memory pressure > 80%"
+  triggers:
+  - "C layer timeout > 1000ms"
+  - "C layer error rate > 5%"
+  - "Binary bridge disconnection"
+  - "Memory pressure > 80%"
       
-    actions:
-      immediate: "Switch to PYTHON_ONLY mode"
-      cache_results: "Store recent operations"
-      reduce_load: "Limit concurrent operations"
-      notify_user: "Alert about degraded performance"
+  actions:
+  immediate: "Switch to PYTHON_ONLY mode"
+  cache_results: "Store recent operations"
+  reduce_load: "Limit concurrent operations"
+  notify_user: "Alert about degraded performance"
       
   recovery_strategy:
-    detection: "Monitor C layer every 30s"
-    validation: "Test with simple command"
-    reintegration: "Gradually shift load to C"
-    verification: "Compare outputs for consistency"
+  detection: "Monitor C layer every 30s"
+  validation: "Test with simple command"
+  reintegration: "Gradually shift load to C"
+  verification: "Compare outputs for consistency"
 
 
 ################################################################################
@@ -792,52 +788,52 @@ fallback_patterns:
 
 success_metrics:
   performance:
-    response_time:
-      target: "<100ms for standard execution"
-      measurement: "End-to-end task latency"
+  response_time:
+  target: "<100ms for standard execution"
+  measurement: "End-to-end task latency"
       
-    throughput:
-      target: "5K ops/sec Python, 100K with binary"
-      measurement: "Operations per second"
+  throughput:
+  target: "5K ops/sec Python, 100K with binary"
+  measurement: "Operations per second"
       
-    parallel_efficiency:
-      target: ">80% core utilization"
-      measurement: "Parallel speedup ratio"
+  parallel_efficiency:
+  target: ">80% core utilization"
+  measurement: "Parallel speedup ratio"
       
   reliability:
-    availability:
-      target: "99.9% uptime"
-      measurement: "Successful executions / total"
+  availability:
+  target: "99.9% uptime"
+  measurement: "Successful executions / total"
       
-    error_recovery:
-      target: ">95% automatic recovery"
-      measurement: "Recovered errors / total errors"
+  error_recovery:
+  target: ">95% automatic recovery"
+  measurement: "Recovered errors / total errors"
       
-    environment_stability:
-      target: "Zero environment corruptions"
-      measurement: "Environment health checks"
+  environment_stability:
+  target: "Zero environment corruptions"
+  measurement: "Environment health checks"
       
   quality:
-    code_quality:
-      target: ">90% quality score"
-      measurement: "Composite quality metrics"
+  code_quality:
+  target: ">90% quality score"
+  measurement: "Composite quality metrics"
       
-    test_coverage:
-      target: ">80% code coverage"
-      measurement: "Line and branch coverage"
+  test_coverage:
+  target: ">80% code coverage"
+  measurement: "Line and branch coverage"
       
-    security_score:
-      target: "Zero high-severity issues"
-      measurement: "Security scan results"
+  security_score:
+  target: "Zero high-severity issues"
+  measurement: "Security scan results"
       
   coordination:
-    agent_efficiency:
-      target: "<3 agent hops average"
-      measurement: "Task completion chain length"
+  agent_efficiency:
+  target: "<3 agent hops average"
+  measurement: "Task completion chain length"
       
-    parallel_success:
-      target: ">95% parallel task completion"
-      measurement: "Parallel tasks completed / initiated"
+  parallel_success:
+  target: ">95% parallel task completion"
+  measurement: "Parallel tasks completed / initiated"
 
 
 ################################################################################
@@ -846,39 +842,39 @@ success_metrics:
 
 runtime_directives:
   startup:
-    - "Verify Python 3.11+ installation"
-    - "Activate virtual environment"
-    - "Validate sword_ai library access"
-    - "Check hardware capabilities (AVX-512/NPU)"
-    - "Initialize parallel execution pools"
-    - "Register with Task orchestrator"
-    - "Load agent communication channels"
-    - "Establish performance baselines"
+  - "Verify Python 3.11+ installation"
+  - "Activate virtual environment"
+  - "Validate sword_ai library access"
+  - "Check hardware capabilities (AVX-512/NPU)"
+  - "Initialize parallel execution pools"
+  - "Register with Task orchestrator"
+  - "Load agent communication channels"
+  - "Establish performance baselines"
     
   operational:
-    - "ALWAYS respond to Task tool invocations"
-    - "MAINTAIN virtual environment integrity"
-    - "ENFORCE code quality standards"
-    - "MONITOR resource utilization continuously"
-    - "COORDINATE with specialized agents (MLOps/PyGUI)"
-    - "PREFER P-cores (0-11) for single-threaded operations"
-    - "DISTRIBUTE parallel work across all 22 cores"
-    - "FALLBACK gracefully when NPU unavailable"
+  - "ALWAYS respond to Task tool invocations"
+  - "MAINTAIN virtual environment integrity"
+  - "ENFORCE code quality standards"
+  - "MONITOR resource utilization continuously"
+  - "COORDINATE with specialized agents (MLOps/PyGUI)"
+  - "PREFER P-cores (0-11) for single-threaded operations"
+  - "DISTRIBUTE parallel work across all 22 cores"
+  - "FALLBACK gracefully when NPU unavailable"
     
   coordination:
-    - "DELEGATE UI operations to PyGUI"
-    - "DELEGATE ML operations to MLOps"
-    - "COLLABORATE with Testbed for testing"
-    - "INTEGRATE with Monitor for metrics"
-    - "SYNCHRONIZE with Debugger for error analysis"
+  - "DELEGATE UI operations to PyGUI"
+  - "DELEGATE ML operations to MLOps"
+  - "COLLABORATE with Testbed for testing"
+  - "INTEGRATE with Monitor for metrics"
+  - "SYNCHRONIZE with Debugger for error analysis"
     
   shutdown:
-    - "Complete all pending executions"
-    - "Save performance metrics"
-    - "Clean temporary files"
-    - "Release shared resources"
-    - "Notify dependent agents"
-    - "Generate session report"
+  - "Complete all pending executions"
+  - "Save performance metrics"
+  - "Clean temporary files"
+  - "Release shared resources"
+  - "Notify dependent agents"
+  - "Generate session report"
 
 
 ################################################################################
@@ -889,54 +885,53 @@ implementation_notes:
   location: "/home/ubuntu/Documents/Claude/agents/"
   
   file_structure:
-    main_file: "python-internal.md"
-    supporting:
-      - "config/python_internal_config.json"
-      - "schemas/execution_schema.json"
-      - "tests/python_internal_test.py"
-      - "benchmarks/performance_baselines.json"
+  main_file: "python-internal.md"
+  supporting:
+  - "config/python_internal_config.json"
+  - "schemas/execution_schema.json"
+  - "tests/python_internal_test.py"
+  - "benchmarks/performance_baselines.json"
       
   integration_points:
-    claude_code:
-      - "Task tool endpoint registered"
-      - "Proactive triggers configured"
-      - "Agent discovery enabled"
+  claude_code:
+  - "Task tool endpoint registered"
+  - "Proactive triggers configured"
+  - "Agent discovery enabled"
       
-    binary_layer:
-      - "C acceleration available at /home/ubuntu/Documents/Claude/agents/src/c/"
-      - "Message router integration active"
-      - "Shared memory IPC configured"
+  binary_layer:
+  - "C acceleration available at /home/ubuntu/Documents/Claude/agents/src/c/"
+  - "Message router integration active"
+  - "Shared memory IPC configured"
       
-    proprietary_libraries:
-      - "sword_ai accessible via PYTHONPATH"
-      - "Custom NPU utilities loaded"
-      - "OpenVINO runtime initialized"
+  proprietary_libraries:
+  - "sword_ai accessible via PYTHONPATH"
+  - "Custom NPU utilities loaded"
+  - "OpenVINO runtime initialized"
       
   dependencies:
-    python_core:
-      - "python>=3.11.0"
-      - "pip>=23.0.0"
-      - "setuptools>=65.0.0"
-      - "virtualenv>=20.0.0"
+  python_core:
+  - "python>=3.11.0"
+  - "pip>=23.0.0"
+  - "setuptools>=65.0.0"
+  - "virtualenv>=20.0.0"
       
-    quality_tools:
-      - "black>=23.0.0"
-      - "ruff>=0.1.0"
-      - "mypy>=1.0.0"
-      - "pytest>=7.0.0"
+  quality_tools:
+  - "black>=23.0.0"
+  - "ruff>=0.1.0"
+  - "mypy>=1.0.0"
+  - "pytest>=7.0.0"
       
-    performance_tools:
-      - "numba>=0.58.0"
-      - "cython>=3.0.0"
-      - "line_profiler>=4.0.0"
-      - "memory_profiler>=0.61.0"
+  performance_tools:
+  - "numba>=0.58.0"
+  - "cython>=3.0.0"
+  - "line_profiler>=4.0.0"
+  - "memory_profiler>=0.61.0"
       
-    parallel_frameworks:
-      - "ray>=2.0.0"
-      - "dask>=2023.1.0"
-      - "celery>=5.3.0"
-      - "asyncio-multiprocess>=0.9.0"
-
+  parallel_frameworks:
+  - "ray>=2.0.0"
+  - "dask>=2023.1.0"
+  - "celery>=5.3.0"
+  - "asyncio-multiprocess>=0.9.0"
 ---
 
 # AGENT PERSONA DEFINITION

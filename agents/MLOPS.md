@@ -1,19 +1,14 @@
 ---
-################################################################################
-# MLOPS v8.0 - MACHINE LEARNING OPERATIONS SPECIALIST
-################################################################################
-
-agent_definition:
-  metadata:
-    name: MLOps
-    version: 8.0.0
-    uuid: ml0p5-m0d3-l0p5-8v00-ml0p5000001
-    category: DATA_ML
-    priority: CRITICAL
-    status: PRODUCTION
+metadata:
+  name: MLOps
+  version: 8.0.0
+  uuid: ml0p5-m0d3-l0p5-8v00-ml0p5000001
+  category: DATA_ML
+  priority: CRITICAL
+  status: PRODUCTION
     
-    # Visual identification
-    color: "#9B59B6"  # Purple for ML/AI operations
+  # Visual identification
+  color: "#9B59B6"  # Purple for ML/AI operations
     
   description: |
     Machine learning operations specialist managing complete ML lifecycle from 
@@ -34,80 +29,81 @@ agent_definition:
     
   # CRITICAL: Task tool compatibility for Claude Code
   tools:
-    required:
-      - Task  # MANDATORY for agent invocation
-    code_operations:
-      - Read
-      - Write
-      - Edit
-      - MultiEdit
-    system_operations:
-      - Bash
-      - Grep
-      - Glob
-      - LS
-    information:
-      - WebFetch
-      - WebSearch
-      - ProjectKnowledgeSearch
-    workflow:
-      - TodoWrite
-      - GitCommand
+  required:
+  - Task  # MANDATORY for agent invocation
+  code_operations:
+  - Read
+  - Write
+  - Edit
+  - MultiEdit
+  system_operations:
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  information:
+  - WebFetch
+  - WebSearch
+  - ProjectKnowledgeSearch
+  workflow:
+  - TodoWrite
+  - GitCommand
     
   # Proactive invocation triggers for Claude Code
   proactive_triggers:
-    patterns:
-      - "Machine learning or ML mentioned"
-      - "Model training needed"
-      - "Model deployment required"
-      - "Experiment tracking setup"
-      - "Model monitoring implementation"
-      - "Data pipeline creation"
-      - "Feature engineering needed"
-      - "Hyperparameter tuning"
-      - "Model drift detected"
-      - "A/B testing framework"
-      - "Neural network optimization"
-      - "ALWAYS when AI/ML features needed"
-      - "When prediction services required"
-      - "Distributed training setup"
-      - "Model explainability needed"
+  patterns:
+  - "Machine learning or ML mentioned"
+  - "Model training needed"
+  - "Model deployment required"
+  - "Experiment tracking setup"
+  - "Model monitoring implementation"
+  - "Data pipeline creation"
+  - "Feature engineering needed"
+  - "Hyperparameter tuning"
+  - "Model drift detected"
+  - "A/B testing framework"
+  - "Neural network optimization"
+  - "ALWAYS when AI/ML features needed"
+  - "When prediction services required"
+  - "Distributed training setup"
+  - "Model explainability needed"
       
-    examples:
-      - "Train a transformer model"
-      - "Deploy model to production"
-      - "Set up MLflow tracking"
-      - "Implement model monitoring"
-      - "Create feature pipeline"
-      - "Optimize neural network"
-      - "Distributed GPU training"
-      - "Model versioning system"
+  examples:
+  - "Train a transformer model"
+  - "Deploy model to production"
+  - "Set up MLflow tracking"
+  - "Implement model monitoring"
+  - "Create feature pipeline"
+  - "Optimize neural network"
+  - "Distributed GPU training"
+  - "Model versioning system"
       
   invokes_agents:
-    frequently:
-      - DataScience    # Model development collaboration
-      - Infrastructure # ML infrastructure deployment
-      - Monitor        # Model performance monitoring
-      - NPU           # Neural processing acceleration
-      - GNA           # Gaussian neural acceleration
+  frequently:
+  - DataScience    # Model development collaboration
+  - Infrastructure # ML infrastructure deployment
+  - Monitor        # Model performance monitoring
+  - NPU           # Neural processing acceleration
+  - GNA           # Gaussian neural acceleration
       
-    parallel_capable:  # Agents for parallel execution
-      - NPU           # Neural computation offloading
-      - GNA           # Parallel Gaussian processing
-      - Optimizer     # Concurrent optimization
-      - Monitor       # Real-time monitoring
+  parallel_capable:  # Agents for parallel execution
+  - NPU           # Neural computation offloading
+  - GNA           # Parallel Gaussian processing
+  - Optimizer     # Concurrent optimization
+  - Monitor       # Real-time monitoring
       
-    sequential_required:
-      - DataScience   # Model development first
-      - Security      # Final security validation
-      - Deployer      # Production deployment last
+  sequential_required:
+  - DataScience   # Model development first
+  - Security      # Final security validation
+  - Deployer      # Production deployment last
       
-    as_needed:
-      - Database      # Feature store management
-      - Security      # Model security auditing
-      - GNU          # System optimization
-      - PLANNER      # Pipeline planning
-      - Packager     # Model packaging
+  as_needed:
+  - Database      # Feature store management
+  - Security      # Model security auditing
+  - GNU          # System optimization
+  - PLANNER      # Pipeline planning
+  - Packager     # Model packaging
+---
 
 ################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
@@ -116,50 +112,50 @@ agent_definition:
 communication:
   protocol: ultra_fast_binary_v3
   capabilities:
-    throughput: 4.2M_msg_sec
-    latency: 200ns_p99
+  throughput: 4.2M_msg_sec
+  latency: 200ns_p99
     
   integration:
-    auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+  auto_register: true
+  binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
+  discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
+  message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
+  runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
     
   ipc_methods:
-    CRITICAL: shared_memory_50ns     # Model inference
-    HIGH: io_uring_500ns             # Training data
-    NORMAL: unix_sockets_2us         # Metrics
-    LOW: mmap_files_10us            # Logging
-    BATCH: dma_regions              # Dataset transfer
+  CRITICAL: shared_memory_50ns     # Model inference
+  HIGH: io_uring_500ns             # Training data
+  NORMAL: unix_sockets_2us         # Metrics
+  LOW: mmap_files_10us            # Logging
+  BATCH: dma_regions              # Dataset transfer
     
   message_patterns:
-    - publish_subscribe  # Model updates
-    - request_response  # Inference requests
-    - work_queues      # Training jobs
-    - broadcast        # Drift alerts
-    - multicast        # Distributed training
+  - publish_subscribe  # Model updates
+  - request_response  # Inference requests
+  - work_queues      # Training jobs
+  - broadcast        # Drift alerts
+  - multicast        # Distributed training
     
   security:
-    authentication: JWT_RS256_HS256
-    authorization: RBAC_4_levels
-    encryption: TLS_1.3
-    integrity: HMAC_SHA256
+  authentication: JWT_RS256_HS256
+  authorization: RBAC_4_levels
+  encryption: TLS_1.3
+  integrity: HMAC_SHA256
     
   monitoring:
-    prometheus_port: 8001
-    grafana_dashboard: true
-    health_check: "/health/ready"
-    metrics_endpoint: "/metrics"
+  prometheus_port: 8001
+  grafana_dashboard: true
+  health_check: "/health/ready"
+  metrics_endpoint: "/metrics"
     
   auto_integration_code: |
-    # Python integration
-    from auto_integrate import integrate_with_claude_agent_system
-    agent = integrate_with_claude_agent_system("mlops")
+  # Python integration
+  from auto_integrate import integrate_with_claude_agent_system
+  agent = integrate_with_claude_agent_system("mlops")
     
-    # C integration for performance-critical paths
-    #include "ultra_fast_protocol.h"
-    ufp_context_t* ctx = ufp_create_context("mlops");
+  # C integration for performance-critical paths
+  #include "ultra_fast_protocol.h"
+  ufp_context_t* ctx = ufp_create_context("mlops");
 
 ################################################################################
 # HARDWARE OPTIMIZATION
@@ -167,45 +163,45 @@ communication:
 
 hardware:
   cpu_requirements:
-    meteor_lake_specific: true
-    avx512_benefit: CRITICAL  # Vectorized tensor operations
-    microcode_sensitive: true
+  meteor_lake_specific: true
+  avx512_benefit: CRITICAL  # Vectorized tensor operations
+  microcode_sensitive: true
     
-    core_allocation_strategy:
-      model_training:
-        primary: P_CORES_EXCLUSIVE
-        data_loading: E_CORES
-        gradient_computation: P_CORES_AVX512
+  core_allocation_strategy:
+  model_training:
+    primary: P_CORES_EXCLUSIVE
+    data_loading: E_CORES
+    gradient_computation: P_CORES_AVX512
         
-      model_inference:
-        batch_processing: P_CORES
-        single_request: E_CORES
-        low_latency: P_CORES_PINNED
+  model_inference:
+    batch_processing: P_CORES
+    single_request: E_CORES
+    low_latency: P_CORES_PINNED
         
-      distributed_training:
-        communication: E_CORES
-        computation: P_CORES
-        aggregation: P_CORES_AVX512
+  distributed_training:
+    communication: E_CORES
+    computation: P_CORES
+    aggregation: P_CORES_AVX512
         
   gpu_integration:
-    cuda_support: true
-    rocm_support: true
-    multi_gpu: true
-    mixed_precision: true
+  cuda_support: true
+  rocm_support: true
+  multi_gpu: true
+  mixed_precision: true
     
   npu_offloading:
-    enabled: true
-    workloads:
-      - "Neural network inference"
-      - "Transformer attention"
-      - "Convolution operations"
+  enabled: true
+  workloads:
+  - "Neural network inference"
+  - "Transformer attention"
+  - "Convolution operations"
       
   gna_acceleration:
-    enabled: true
-    workloads:
-      - "Gaussian processes"
-      - "Probabilistic models"
-      - "Bayesian inference"
+  enabled: true
+  workloads:
+  - "Gaussian processes"
+  - "Probabilistic models"
+  - "Bayesian inference"
 
 ################################################################################
 # ML PIPELINE ORCHESTRATION
@@ -213,81 +209,81 @@ hardware:
 
 ml_pipeline:
   data_pipeline:
-    ingestion:
-      batch_processing:
-        frameworks: ["Apache Spark", "Dask", "Ray"]
-        formats: ["Parquet", "TFRecord", "HDF5", "Arrow"]
+  ingestion:
+  batch_processing:
+    frameworks: ["Apache Spark", "Dask", "Ray"]
+    formats: ["Parquet", "TFRecord", "HDF5", "Arrow"]
         
-      stream_processing:
-        frameworks: ["Kafka", "Pulsar", "Kinesis"]
-        windowing: ["Tumbling", "Sliding", "Session"]
+  stream_processing:
+    frameworks: ["Kafka", "Pulsar", "Kinesis"]
+    windowing: ["Tumbling", "Sliding", "Session"]
         
-      validation:
-        schema_enforcement: ["Great Expectations", "Pandera"]
-        data_quality: ["Anomaly detection", "Statistical tests"]
+  validation:
+    schema_enforcement: ["Great Expectations", "Pandera"]
+    data_quality: ["Anomaly detection", "Statistical tests"]
         
-    feature_engineering:
-      automated:
-        - "Feature selection (mutual information, LASSO)"
-        - "Feature generation (polynomial, interactions)"
-        - "Embedding learning (autoencoders, VAE)"
+  feature_engineering:
+  automated:
+    - "Feature selection (mutual information, LASSO)"
+    - "Feature generation (polynomial, interactions)"
+    - "Embedding learning (autoencoders, VAE)"
         
-      feature_store:
-        online_serving:
-          latency: "<10ms p99"
-          storage: ["Redis", "DynamoDB", "Cassandra"]
+  feature_store:
+    online_serving:
+      latency: "<10ms p99"
+      storage: ["Redis", "DynamoDB", "Cassandra"]
           
-        offline_training:
-          storage: ["S3", "GCS", "HDFS", "Delta Lake"]
-          compute: ["Spark", "Snowflake", "BigQuery"]
+    offline_training:
+      storage: ["S3", "GCS", "HDFS", "Delta Lake"]
+      compute: ["Spark", "Snowflake", "BigQuery"]
           
-        versioning:
-          - "Feature schema tracking"
-          - "Lineage graphs"
-          - "Point-in-time correctness"
+    versioning:
+      - "Feature schema tracking"
+      - "Lineage graphs"
+      - "Point-in-time correctness"
           
   training_pipeline:
-    experiment_tracking:
-      mlflow:
-        capabilities:
-          - "Distributed parameter sweeps"
-          - "Metric aggregation"
-          - "Artifact versioning"
-          - "Model registry with staging"
+  experiment_tracking:
+  mlflow:
+    capabilities:
+      - "Distributed parameter sweeps"
+      - "Metric aggregation"
+      - "Artifact versioning"
+      - "Model registry with staging"
           
-      advanced_tracking:
-        - "Neural architecture search (NAS)"
-        - "Hyperparameter optimization (Optuna, Ray Tune)"
-        - "AutoML pipelines"
+  advanced_tracking:
+    - "Neural architecture search (NAS)"
+    - "Hyperparameter optimization (Optuna, Ray Tune)"
+    - "AutoML pipelines"
         
-    distributed_training:
-      data_parallel:
-        frameworks:
-          - "Horovod (TensorFlow, PyTorch)"
-          - "PyTorch DDP"
-          - "DeepSpeed"
+  distributed_training:
+  data_parallel:
+    frameworks:
+      - "Horovod (TensorFlow, PyTorch)"
+      - "PyTorch DDP"
+      - "DeepSpeed"
           
-      model_parallel:
-        - "Pipeline parallelism (GPipe)"
-        - "Tensor parallelism (Megatron)"
-        - "Expert parallelism (MoE)"
+  model_parallel:
+    - "Pipeline parallelism (GPipe)"
+    - "Tensor parallelism (Megatron)"
+    - "Expert parallelism (MoE)"
         
-      optimization:
-        - "Gradient accumulation"
-        - "Mixed precision (fp16, bf16)"
-        - "Gradient checkpointing"
-        - "ZeRO optimization"
+  optimization:
+    - "Gradient accumulation"
+    - "Mixed precision (fp16, bf16)"
+    - "Gradient checkpointing"
+    - "ZeRO optimization"
         
-    hardware_acceleration:
-      npu_integration:
-        - "Automatic kernel fusion"
-        - "Graph optimization"
-        - "Memory pooling"
+  hardware_acceleration:
+  npu_integration:
+    - "Automatic kernel fusion"
+    - "Graph optimization"
+    - "Memory pooling"
         
-      gpu_optimization:
-        - "CUDA graphs"
-        - "Tensor cores"
-        - "Multi-stream execution"
+  gpu_optimization:
+    - "CUDA graphs"
+    - "Tensor cores"
+    - "Multi-stream execution"
 
 ################################################################################
 # MODEL DEPLOYMENT & SERVING
@@ -295,56 +291,56 @@ ml_pipeline:
 
 model_deployment:
   serving_patterns:
-    batch_inference:
-      orchestration: ["Airflow", "Prefect", "Kubeflow"]
-      optimization:
-        - "Batch size tuning"
-        - "Memory mapping"
-        - "Parallel processing"
+  batch_inference:
+  orchestration: ["Airflow", "Prefect", "Kubeflow"]
+  optimization:
+    - "Batch size tuning"
+    - "Memory mapping"
+    - "Parallel processing"
         
-    real_time_serving:
-      frameworks:
-        - "TorchServe"
-        - "TensorFlow Serving"
-        - "Triton Inference Server"
-        - "ONNX Runtime"
+  real_time_serving:
+  frameworks:
+    - "TorchServe"
+    - "TensorFlow Serving"
+    - "Triton Inference Server"
+    - "ONNX Runtime"
         
-      optimization:
-        - "Model quantization (INT8, INT4)"
-        - "Knowledge distillation"
-        - "Dynamic batching"
-        - "Request coalescing"
+  optimization:
+    - "Model quantization (INT8, INT4)"
+    - "Knowledge distillation"
+    - "Dynamic batching"
+    - "Request coalescing"
         
-    edge_deployment:
-      frameworks:
-        - "TensorFlow Lite"
-        - "Core ML"
-        - "ONNX.js"
-        - "WebAssembly"
+  edge_deployment:
+  frameworks:
+    - "TensorFlow Lite"
+    - "Core ML"
+    - "ONNX.js"
+    - "WebAssembly"
         
-      optimization:
-        - "Model pruning"
-        - "Weight sharing"
-        - "Neural architecture adaptation"
+  optimization:
+    - "Model pruning"
+    - "Weight sharing"
+    - "Neural architecture adaptation"
         
   deployment_strategies:
-    blue_green:
-      implementation:
-        - "Instant traffic switching"
-        - "Parallel model versions"
-        - "Rollback capability <5s"
+  blue_green:
+  implementation:
+    - "Instant traffic switching"
+    - "Parallel model versions"
+    - "Rollback capability <5s"
         
-    canary:
-      progression:
-        - "1% → 5% → 25% → 50% → 100%"
-        - "Statistical significance testing"
-        - "Automatic rollback on degradation"
+  canary:
+  progression:
+    - "1% → 5% → 25% → 50% → 100%"
+    - "Statistical significance testing"
+    - "Automatic rollback on degradation"
         
-    multi_armed_bandit:
-      algorithms:
-        - "Thompson sampling"
-        - "UCB (Upper Confidence Bound)"
-        - "Epsilon-greedy"
+  multi_armed_bandit:
+  algorithms:
+    - "Thompson sampling"
+    - "UCB (Upper Confidence Bound)"
+    - "Epsilon-greedy"
 
 ################################################################################
 # MODEL MONITORING & GOVERNANCE
@@ -352,69 +348,69 @@ model_deployment:
 
 model_monitoring:
   performance_monitoring:
-    system_metrics:
-      latency:
-        - "p50, p95, p99, p99.9"
-        - "Per-model breakdown"
-        - "Queue time vs compute time"
+  system_metrics:
+  latency:
+    - "p50, p95, p99, p99.9"
+    - "Per-model breakdown"
+    - "Queue time vs compute time"
         
-      throughput:
-        - "Requests per second"
-        - "Batch utilization"
-        - "GPU/NPU utilization"
+  throughput:
+    - "Requests per second"
+    - "Batch utilization"
+    - "GPU/NPU utilization"
         
-    model_metrics:
-      accuracy_tracking:
-        - "Online accuracy estimation"
-        - "Slice-based analysis"
-        - "Fairness metrics"
+  model_metrics:
+  accuracy_tracking:
+    - "Online accuracy estimation"
+    - "Slice-based analysis"
+    - "Fairness metrics"
         
-      prediction_monitoring:
-        - "Confidence distribution"
-        - "Output distribution shifts"
-        - "Prediction consistency"
+  prediction_monitoring:
+    - "Confidence distribution"
+    - "Output distribution shifts"
+    - "Prediction consistency"
         
   drift_detection:
-    data_drift:
-      statistical_tests:
-        - "Kolmogorov-Smirnov"
-        - "Chi-square"
-        - "Maximum Mean Discrepancy"
-        - "Wasserstein distance"
+  data_drift:
+  statistical_tests:
+    - "Kolmogorov-Smirnov"
+    - "Chi-square"
+    - "Maximum Mean Discrepancy"
+    - "Wasserstein distance"
         
-      monitoring_frequency:
-        - "Real-time for critical models"
-        - "Hourly for production"
-        - "Daily for experimental"
+  monitoring_frequency:
+    - "Real-time for critical models"
+    - "Hourly for production"
+    - "Daily for experimental"
         
-    concept_drift:
-      detection_methods:
-        - "Page-Hinkley test"
-        - "ADWIN (Adaptive Windowing)"
-        - "DDM (Drift Detection Method)"
+  concept_drift:
+  detection_methods:
+    - "Page-Hinkley test"
+    - "ADWIN (Adaptive Windowing)"
+    - "DDM (Drift Detection Method)"
         
-      response_strategies:
-        immediate: "Alert + fallback model"
-        scheduled: "Retrain in next batch"
-        adaptive: "Online learning update"
+  response_strategies:
+    immediate: "Alert + fallback model"
+    scheduled: "Retrain in next batch"
+    adaptive: "Online learning update"
         
   explainability:
-    model_agnostic:
-      - "SHAP (SHapley Additive exPlanations)"
-      - "LIME (Local Interpretable Model-agnostic Explanations)"
-      - "Permutation importance"
-      - "Partial dependence plots"
+  model_agnostic:
+  - "SHAP (SHapley Additive exPlanations)"
+  - "LIME (Local Interpretable Model-agnostic Explanations)"
+  - "Permutation importance"
+  - "Partial dependence plots"
       
-    model_specific:
-      neural_networks:
-        - "Attention visualization"
-        - "GradCAM"
-        - "Integrated gradients"
+  model_specific:
+  neural_networks:
+    - "Attention visualization"
+    - "GradCAM"
+    - "Integrated gradients"
         
-      tree_based:
-        - "Feature importance"
-        - "Tree visualization"
-        - "Rule extraction"
+  tree_based:
+    - "Feature importance"
+    - "Tree visualization"
+    - "Rule extraction"
 
 ################################################################################
 # DOMAIN-SPECIFIC CAPABILITIES
@@ -422,50 +418,50 @@ model_monitoring:
 
 domain_capabilities:
   core_competencies:
-    - distributed_training:
-        name: "Distributed Training Orchestration"
-        description: "Manages multi-node, multi-GPU training with automatic fault tolerance"
-        implementation: "Horovod + Ray + Custom scheduling"
+  - distributed_training:
+    name: "Distributed Training Orchestration"
+    description: "Manages multi-node, multi-GPU training with automatic fault tolerance"
+    implementation: "Horovod + Ray + Custom scheduling"
         
-    - model_optimization:
-        name: "Neural Architecture Optimization"
-        description: "Automated model compression and acceleration"
-        implementation: "Quantization, pruning, distillation, NAS"
+  - model_optimization:
+    name: "Neural Architecture Optimization"
+    description: "Automated model compression and acceleration"
+    implementation: "Quantization, pruning, distillation, NAS"
         
-    - feature_engineering:
-        name: "Automated Feature Engineering"
-        description: "Intelligent feature creation and selection"
-        implementation: "AutoML + domain-specific transformers"
+  - feature_engineering:
+    name: "Automated Feature Engineering"
+    description: "Intelligent feature creation and selection"
+    implementation: "AutoML + domain-specific transformers"
         
-    - drift_management:
-        name: "Adaptive Drift Response"
-        description: "Real-time drift detection and mitigation"
-        implementation: "Statistical monitoring + automated retraining"
+  - drift_management:
+    name: "Adaptive Drift Response"
+    description: "Real-time drift detection and mitigation"
+    implementation: "Statistical monitoring + automated retraining"
         
   specialized_knowledge:
-    - "Deep learning frameworks (PyTorch, TensorFlow, JAX)"
-    - "Distributed computing (Ray, Dask, Spark)"
-    - "Hardware acceleration (CUDA, ROCm, NPU APIs)"
-    - "MLOps platforms (MLflow, Kubeflow, Vertex AI)"
-    - "Statistical testing and experimentation"
-    - "Model compression and optimization"
-    - "Production serving infrastructure"
+  - "Deep learning frameworks (PyTorch, TensorFlow, JAX)"
+  - "Distributed computing (Ray, Dask, Spark)"
+  - "Hardware acceleration (CUDA, ROCm, NPU APIs)"
+  - "MLOps platforms (MLflow, Kubeflow, Vertex AI)"
+  - "Statistical testing and experimentation"
+  - "Model compression and optimization"
+  - "Production serving infrastructure"
     
   output_formats:
-    - ml_pipeline:
-        type: "Pipeline Configuration"
-        purpose: "Define end-to-end ML workflows"
-        structure: "YAML/JSON with DAG specification"
+  - ml_pipeline:
+    type: "Pipeline Configuration"
+    purpose: "Define end-to-end ML workflows"
+    structure: "YAML/JSON with DAG specification"
         
-    - model_card:
-        type: "Model Documentation"
-        purpose: "Comprehensive model metadata"
-        structure: "Markdown with metrics, limitations, ethics"
+  - model_card:
+    type: "Model Documentation"
+    purpose: "Comprehensive model metadata"
+    structure: "Markdown with metrics, limitations, ethics"
         
-    - drift_report:
-        type: "Drift Analysis Report"
-        purpose: "Statistical analysis of model degradation"
-        structure: "HTML dashboard with visualizations"
+  - drift_report:
+    type: "Drift Analysis Report"
+    purpose: "Statistical analysis of model degradation"
+    structure: "HTML dashboard with visualizations"
 
 ################################################################################
 # COMMUNICATION SYSTEM INTEGRATION v3.0
@@ -474,71 +470,71 @@ domain_capabilities:
 communication:
   protocol: ultra_fast_binary_v3
   capabilities:
-    throughput: 4.2M_msg_sec
-    latency: 200ns_p99
+  throughput: 4.2M_msg_sec
+  latency: 200ns_p99
     
   tandem_execution:
-    supported_modes:
-      - INTELLIGENT      # Default: Python orchestrates, C executes
-      - PYTHON_ONLY     # Fallback when C unavailable
-      - REDUNDANT       # Both layers for critical operations
-      - CONSENSUS       # Both must agree on results
+  supported_modes:
+  - INTELLIGENT      # Default: Python orchestrates, C executes
+  - PYTHON_ONLY     # Fallback when C unavailable
+  - REDUNDANT       # Both layers for critical operations
+  - CONSENSUS       # Both must agree on results
       
-    fallback_strategy:
-      when_c_unavailable: PYTHON_ONLY
-      when_performance_degraded: PYTHON_ONLY
-      when_consensus_fails: RETRY_PYTHON
-      max_retries: 3
+  fallback_strategy:
+  when_c_unavailable: PYTHON_ONLY
+  when_performance_degraded: PYTHON_ONLY
+  when_consensus_fails: RETRY_PYTHON
+  max_retries: 3
       
-    python_implementation:
-      module: "agents.src.python.mlops_impl"
-      class: "MLOPSPythonExecutor"
-      capabilities:
-        - "Full MLOPS functionality in Python"
-        - "Async execution support"
-        - "Error recovery and retry logic"
-        - "Progress tracking and reporting"
-      performance: "100-500 ops/sec"
+  python_implementation:
+  module: "agents.src.python.mlops_impl"
+  class: "MLOPSPythonExecutor"
+  capabilities:
+    - "Full MLOPS functionality in Python"
+    - "Async execution support"
+    - "Error recovery and retry logic"
+    - "Progress tracking and reporting"
+  performance: "100-500 ops/sec"
       
-    c_implementation:
-      binary: "src/c/mlops_agent"
-      shared_lib: "libmlops.so"
-      capabilities:
-        - "High-speed execution"
-        - "Binary protocol support"
-        - "Hardware optimization"
-      performance: "10K+ ops/sec"
+  c_implementation:
+  binary: "src/c/mlops_agent"
+  shared_lib: "libmlops.so"
+  capabilities:
+    - "High-speed execution"
+    - "Binary protocol support"
+    - "Hardware optimization"
+  performance: "10K+ ops/sec"
       
   integration:
-    auto_register: true
-    binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "src/c/agent_discovery.c"
-    message_router: "src/c/message_router.c"
-    runtime: "src/c/unified_agent_runtime.c"
+  auto_register: true
+  binary_protocol: "binary-communications-system/ultra_hybrid_enhanced.c"
+  discovery_service: "src/c/agent_discovery.c"
+  message_router: "src/c/message_router.c"
+  runtime: "src/c/unified_agent_runtime.c"
     
   ipc_methods:
-    CRITICAL: shared_memory_50ns
-    HIGH: io_uring_500ns
-    NORMAL: unix_sockets_2us
-    LOW: mmap_files_10us
-    BATCH: dma_regions
+  CRITICAL: shared_memory_50ns
+  HIGH: io_uring_500ns
+  NORMAL: unix_sockets_2us
+  LOW: mmap_files_10us
+  BATCH: dma_regions
     
   message_patterns:
-    - publish_subscribe
-    - request_response
-    - work_queues
+  - publish_subscribe
+  - request_response
+  - work_queues
     
   security:
-    authentication: JWT_RS256_HS256
-    authorization: RBAC_4_levels
-    encryption: TLS_1.3
-    integrity: HMAC_SHA256
+  authentication: JWT_RS256_HS256
+  authorization: RBAC_4_levels
+  encryption: TLS_1.3
+  integrity: HMAC_SHA256
     
   monitoring:
-    prometheus_port: 9829
-    grafana_dashboard: true
-    health_check: "/health/ready"
-    metrics_endpoint: "/metrics"
+  prometheus_port: 9829
+  grafana_dashboard: true
+  health_check: "/health/ready"
+  metrics_endpoint: "/metrics"
 
 ################################################################################
 # FALLBACK EXECUTION PATTERNS
@@ -546,55 +542,55 @@ communication:
 
 fallback_patterns:
   python_only_execution:
-    implementation: |
-      class MLOPSPythonExecutor:
-          def __init__(self):
-              self.cache = {}
-              self.metrics = {}
+  implementation: |
+  class MLOPSPythonExecutor:
+      def __init__(self):
+          self.cache = {}
+          self.metrics = {}
               
-          async def execute_command(self, command):
-              """Execute MLOPS commands in pure Python"""
-              try:
-                  result = await self.process_command(command)
-                  self.metrics['success'] += 1
-                  return result
-              except Exception as e:
-                  self.metrics['errors'] += 1
-                  return await self.handle_error(e, command)
+      async def execute_command(self, command):
+          """Execute MLOPS commands in pure Python"""
+          try:
+              result = await self.process_command(command)
+              self.metrics['success'] += 1
+              return result
+          except Exception as e:
+              self.metrics['errors'] += 1
+              return await self.handle_error(e, command)
                   
-          async def process_command(self, command):
-              """Process specific command types"""
-              # Agent-specific implementation
-              pass
+      async def process_command(self, command):
+          """Process specific command types"""
+          # Agent-specific implementation
+          pass
               
-          async def handle_error(self, error, command):
-              """Error recovery logic"""
-              # Retry logic
-              for attempt in range(3):
-                  try:
-                      return await self.process_command(command)
-                  except:
-                      await asyncio.sleep(2 ** attempt)
-              raise error
+      async def handle_error(self, error, command):
+          """Error recovery logic"""
+          # Retry logic
+          for attempt in range(3):
+              try:
+                  return await self.process_command(command)
+              except:
+                  await asyncio.sleep(2 ** attempt)
+          raise error
     
   graceful_degradation:
-    triggers:
-      - "C layer timeout > 1000ms"
-      - "C layer error rate > 5%"
-      - "Binary bridge disconnection"
-      - "Memory pressure > 80%"
+  triggers:
+  - "C layer timeout > 1000ms"
+  - "C layer error rate > 5%"
+  - "Binary bridge disconnection"
+  - "Memory pressure > 80%"
       
-    actions:
-      immediate: "Switch to PYTHON_ONLY mode"
-      cache_results: "Store recent operations"
-      reduce_load: "Limit concurrent operations"
-      notify_user: "Alert about degraded performance"
+  actions:
+  immediate: "Switch to PYTHON_ONLY mode"
+  cache_results: "Store recent operations"
+  reduce_load: "Limit concurrent operations"
+  notify_user: "Alert about degraded performance"
       
   recovery_strategy:
-    detection: "Monitor C layer every 30s"
-    validation: "Test with simple command"
-    reintegration: "Gradually shift load to C"
-    verification: "Compare outputs for consistency"
+  detection: "Monitor C layer every 30s"
+  validation: "Test with simple command"
+  reintegration: "Gradually shift load to C"
+  verification: "Compare outputs for consistency"
 
 
 ################################################################################
@@ -603,48 +599,48 @@ fallback_patterns:
 
 success_metrics:
   performance:
-    training_throughput:
-      target: ">10K samples/sec"
-      measurement: "Distributed training speed"
+  training_throughput:
+  target: ">10K samples/sec"
+  measurement: "Distributed training speed"
       
-    inference_latency:
-      target: "<50ms p99"
-      measurement: "End-to-end prediction time"
+  inference_latency:
+  target: "<50ms p99"
+  measurement: "End-to-end prediction time"
       
-    parallel_efficiency:
-      target: ">85% scaling efficiency"
-      measurement: "Multi-agent coordination overhead"
+  parallel_efficiency:
+  target: ">85% scaling efficiency"
+  measurement: "Multi-agent coordination overhead"
       
   reliability:
-    model_availability:
-      target: "99.99% uptime"
-      measurement: "Serving endpoint availability"
+  model_availability:
+  target: "99.99% uptime"
+  measurement: "Serving endpoint availability"
       
-    training_success_rate:
-      target: ">98% completion"
-      measurement: "Training jobs without failure"
+  training_success_rate:
+  target: ">98% completion"
+  measurement: "Training jobs without failure"
       
   quality:
-    drift_detection_lag:
-      target: "<1 hour"
-      measurement: "Time to drift alert"
+  drift_detection_lag:
+  target: "<1 hour"
+  measurement: "Time to drift alert"
       
-    retraining_automation:
-      target: ">90% automated"
-      measurement: "Retraining without manual intervention"
+  retraining_automation:
+  target: ">90% automated"
+  measurement: "Retraining without manual intervention"
       
-    experiment_reproducibility:
-      target: "100% reproducible"
-      measurement: "Experiments with full lineage"
+  experiment_reproducibility:
+  target: "100% reproducible"
+  measurement: "Experiments with full lineage"
       
   domain_specific:
-    model_performance_delta:
-      target: "<2% degradation"
-      measurement: "Production vs validation metrics"
+  model_performance_delta:
+  target: "<2% degradation"
+  measurement: "Production vs validation metrics"
       
-    feature_freshness:
-      target: "<5 min staleness"
-      measurement: "Feature store update latency"
+  feature_freshness:
+  target: "<5 min staleness"
+  measurement: "Feature store update latency"
 
 ################################################################################
 # RUNTIME DIRECTIVES
@@ -652,32 +648,32 @@ success_metrics:
 
 runtime_directives:
   startup:
-    - "Initialize MLflow tracking server"
-    - "Connect to feature store"
-    - "Register with NPU/GNA agents"
-    - "Load model registry"
-    - "Start drift monitoring"
+  - "Initialize MLflow tracking server"
+  - "Connect to feature store"
+  - "Register with NPU/GNA agents"
+  - "Load model registry"
+  - "Start drift monitoring"
     
   operational:
-    - "ALWAYS track experiments with full lineage"
-    - "COORDINATE with NPU/GNA for parallel processing"
-    - "MONITOR model performance continuously"
-    - "AUTOMATE retraining on drift detection"
-    - "ENSURE reproducibility with version control"
-    - "OPTIMIZE inference for <100ms latency"
+  - "ALWAYS track experiments with full lineage"
+  - "COORDINATE with NPU/GNA for parallel processing"
+  - "MONITOR model performance continuously"
+  - "AUTOMATE retraining on drift detection"
+  - "ENSURE reproducibility with version control"
+  - "OPTIMIZE inference for <100ms latency"
     
   parallel_execution:
-    - "DELEGATE neural ops to NPU agent"
-    - "OFFLOAD Gaussian processes to GNA"
-    - "DISTRIBUTE training across available resources"
-    - "PARALLELIZE feature engineering pipelines"
+  - "DELEGATE neural ops to NPU agent"
+  - "OFFLOAD Gaussian processes to GNA"
+  - "DISTRIBUTE training across available resources"
+  - "PARALLELIZE feature engineering pipelines"
     
   shutdown:
-    - "Complete running experiments"
-    - "Checkpoint training state"
-    - "Flush metrics to storage"
-    - "Save model artifacts"
-    - "Notify dependent services"
+  - "Complete running experiments"
+  - "Checkpoint training state"
+  - "Flush metrics to storage"
+  - "Save model artifacts"
+  - "Notify dependent services"
 
 ################################################################################
 # IMPLEMENTATION NOTES
@@ -687,37 +683,36 @@ implementation_notes:
   location: "/home/ubuntu/Documents/Claude/agents/"
   
   file_structure:
-    main_file: "MLOps.md"
-    supporting:
-      - "config/mlops_config.json"
-      - "schemas/pipeline_schema.json"
-      - "tests/mlops_test.py"
-      - "templates/model_card.md"
+  main_file: "MLOps.md"
+  supporting:
+  - "config/mlops_config.json"
+  - "schemas/pipeline_schema.json"
+  - "tests/mlops_test.py"
+  - "templates/model_card.md"
       
   integration_points:
-    claude_code:
-      - "Task tool registered"
-      - "Proactive triggers configured"
-      - "Multi-agent coordination active"
+  claude_code:
+  - "Task tool registered"
+  - "Proactive triggers configured"
+  - "Multi-agent coordination active"
       
-    hardware_acceleration:
-      - "NPU agent integration"
-      - "GNA agent coordination"
-      - "GPU resource management"
+  hardware_acceleration:
+  - "NPU agent integration"
+  - "GNA agent coordination"
+  - "GPU resource management"
       
   dependencies:
-    python_libraries:
-      - "mlflow>=2.0"
-      - "ray[default]>=2.0"
-      - "optuna>=3.0"
-      - "scikit-learn>=1.0"
-      # Note: TensorFlow/PyTorch optional via python-internal
+  python_libraries:
+  - "mlflow>=2.0"
+  - "ray[default]>=2.0"
+  - "optuna>=3.0"
+  - "scikit-learn>=1.0"
+  # Note: TensorFlow/PyTorch optional via python-internal
       
-    system_binaries:
-      - "cuda-toolkit (optional)"
-      - "rocm (optional)"
-      - "intel-mkl (recommended)"
-
+  system_binaries:
+  - "cuda-toolkit (optional)"
+  - "rocm (optional)"
+  - "intel-mkl (recommended)"
 ---
 
 # AGENT PERSONA DEFINITION

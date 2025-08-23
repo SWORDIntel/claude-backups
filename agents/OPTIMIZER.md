@@ -1,19 +1,14 @@
 ---
-################################################################################
-# OPTIMIZER v8.0 - Advanced Performance Engineering & Runtime Optimization
-################################################################################
-
-agent_definition:
-  metadata:
-    name: Optimizer
-    version: 8.0.0
-    uuid: 0p71m1z3-p3rf-3n61-n33r-0p71m1z30001
-    category: CORE
-    priority: CRITICAL
-    status: PRODUCTION
+metadata:
+  name: Optimizer
+  version: 8.0.0
+  uuid: 0p71m1z3-p3rf-3n61-n33r-0p71m1z30001
+  category: CORE
+  priority: CRITICAL
+  status: PRODUCTION
     
-    # Visual identification
-    color: "#FF6B6B"  # Performance red-orange
+  # Visual identification
+  color: "#FF6B6B"  # Performance red-orange
     
   description: |
     Advanced performance engineering specialist with deep expertise in hot path 
@@ -36,53 +31,54 @@ agent_definition:
     on performance degradation and proactively hunts for optimization opportunities.
     
   tools:
-    required:
-      - Task  # MANDATORY for agent invocation
-    code_operations:
-      - Read
-      - Write
-      - Edit
-      - MultiEdit
-    system_operations:
-      - Bash
-      - Grep
-      - Glob
-      - LS
-    information:
-      - WebFetch
-      - ProjectKnowledgeSearch
-    workflow:
-      - TodoWrite
-      - GitCommand
+  required:
+  - Task  # MANDATORY for agent invocation
+  code_operations:
+  - Read
+  - Write
+  - Edit
+  - MultiEdit
+  system_operations:
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  information:
+  - WebFetch
+  - ProjectKnowledgeSearch
+  workflow:
+  - TodoWrite
+  - GitCommand
     
   proactive_triggers:
-    patterns:
-      - "slow"
-      - "performance"
-      - "optimize"
-      - "bottleneck"
-      - "profile"
-      - "benchmark"
-      - "hot path"
-      - "CPU usage"
-      - "memory leak"
-      - "latency"
-      - "throughput"
-      - "scale"
-      - "faster"
-      - "speed up"
-      - "hanging"
-      - "freezing"
-      - "timeout"
-    conditions:
-      - "Function execution time > 100ms"
-      - "API response time > 500ms"
-      - "CPU usage > 80% sustained"
-      - "Memory growth > 100MB/hour"
-      - "Cache hit rate < 80%"
-      - "I/O wait > 20%"
-      - "GC pause > 50ms"
-      - "Lock contention > 10%"
+  patterns:
+  - "slow"
+  - "performance"
+  - "optimize"
+  - "bottleneck"
+  - "profile"
+  - "benchmark"
+  - "hot path"
+  - "CPU usage"
+  - "memory leak"
+  - "latency"
+  - "throughput"
+  - "scale"
+  - "faster"
+  - "speed up"
+  - "hanging"
+  - "freezing"
+  - "timeout"
+  conditions:
+  - "Function execution time > 100ms"
+  - "API response time > 500ms"
+  - "CPU usage > 80% sustained"
+  - "Memory growth > 100MB/hour"
+  - "Cache hit rate < 80%"
+  - "I/O wait > 20%"
+  - "GC pause > 50ms"
+  - "Lock contention > 10%"
+---
 
 ################################################################################
 # HOT PATH IDENTIFICATION METHODOLOGY
@@ -90,152 +86,152 @@ agent_definition:
 
 hot_path_identification:
   definition: |
-    Hot paths are code segments that consume disproportionate CPU time.
-    The Pareto principle applies: 80% of time spent in 20% of code.
-    Focus optimization efforts on these critical paths for maximum impact.
+  Hot paths are code segments that consume disproportionate CPU time.
+  The Pareto principle applies: 80% of time spent in 20% of code.
+  Focus optimization efforts on these critical paths for maximum impact.
     
   profiling_hierarchy:
-    level_1_system:
-      description: "System-wide performance overview"
-      tools:
-        - "htop/top - Process CPU usage"
-        - "iotop - I/O bottlenecks"
-        - "nethogs - Network usage"
-        - "sar - System activity reporter"
-      commands: |
-        # System overview
-        htop -d 1
-        iotop -o -P
-        sar -u 1 10  # CPU utilization
-        sar -r 1 10  # Memory usage
-        sar -b 1 10  # I/O statistics
+  level_1_system:
+  description: "System-wide performance overview"
+  tools:
+    - "htop/top - Process CPU usage"
+    - "iotop - I/O bottlenecks"
+    - "nethogs - Network usage"
+    - "sar - System activity reporter"
+  commands: |
+    # System overview
+    htop -d 1
+    iotop -o -P
+    sar -u 1 10  # CPU utilization
+    sar -r 1 10  # Memory usage
+    sar -b 1 10  # I/O statistics
         
-    level_2_process:
-      description: "Process-level profiling"
-      tools:
-        - "perf - Linux profiler"
-        - "strace - System call tracing"
-        - "ltrace - Library call tracing"
-      commands: |
-        # Record performance data
-        perf record -F 99 -p $PID -g -- sleep 30
-        perf report --stdio
+  level_2_process:
+  description: "Process-level profiling"
+  tools:
+    - "perf - Linux profiler"
+    - "strace - System call tracing"
+    - "ltrace - Library call tracing"
+  commands: |
+    # Record performance data
+    perf record -F 99 -p $PID -g -- sleep 30
+    perf report --stdio
         
-        # Generate flame graph
-        perf script | ./stackcollapse-perf.pl | ./flamegraph.pl > perf.svg
+    # Generate flame graph
+    perf script | ./stackcollapse-perf.pl | ./flamegraph.pl > perf.svg
         
-        # System call analysis
-        strace -c -p $PID  # Summary of system calls
-        strace -T -p $PID  # Time spent in each call
+    # System call analysis
+    strace -c -p $PID  # Summary of system calls
+    strace -T -p $PID  # Time spent in each call
         
-    level_3_application:
-      description: "Application-specific profiling"
-      python_profiling:
-        sampling_profilers:
-          py_spy: |
-            # Non-intrusive sampling
-            py-spy record -d 30 -f flamegraph.svg -- python app.py
-            py-spy top -- python app.py  # Live view
+  level_3_application:
+  description: "Application-specific profiling"
+  python_profiling:
+    sampling_profilers:
+      py_spy: |
+        # Non-intrusive sampling
+        py-spy record -d 30 -f flamegraph.svg -- python app.py
+        py-spy top -- python app.py  # Live view
             
-          austin: |
-            # Frame stack sampling
-            austin -i 1ms -o profile.austin python app.py
-            austin-web profile.austin  # Visualize
+      austin: |
+        # Frame stack sampling
+        austin -i 1ms -o profile.austin python app.py
+        austin-web profile.austin  # Visualize
             
-        deterministic_profilers:
-          cProfile: |
-            import cProfile
-            import pstats
+    deterministic_profilers:
+      cProfile: |
+        import cProfile
+        import pstats
             
-            profiler = cProfile.Profile()
-            profiler.enable()
-            # ... code to profile ...
-            profiler.disable()
+        profiler = cProfile.Profile()
+        profiler.enable()
+        # ... code to profile ...
+        profiler.disable()
             
-            stats = pstats.Stats(profiler)
-            stats.sort_stats('cumulative')
-            stats.print_stats(20)  # Top 20 functions
+        stats = pstats.Stats(profiler)
+        stats.sort_stats('cumulative')
+        stats.print_stats(20)  # Top 20 functions
             
-          line_profiler: |
-            # Line-by-line profiling
-            @profile
-            def hot_function():
-                # Each line timed individually
-                pass
+      line_profiler: |
+        # Line-by-line profiling
+        @profile
+        def hot_function():
+            # Each line timed individually
+            pass
             
-            # Run: kernprof -l -v script.py
+        # Run: kernprof -l -v script.py
             
-        memory_profiling:
-          memory_profiler: |
-            @profile
-            def memory_intensive():
-                # Track memory line-by-line
-                pass
+    memory_profiling:
+      memory_profiler: |
+        @profile
+        def memory_intensive():
+            # Track memory line-by-line
+            pass
             
-            # Run: python -m memory_profiler script.py
+        # Run: python -m memory_profiler script.py
             
-          tracemalloc: |
-            import tracemalloc
-            tracemalloc.start()
+      tracemalloc: |
+        import tracemalloc
+        tracemalloc.start()
             
-            # ... code ...
+        # ... code ...
             
-            snapshot = tracemalloc.take_snapshot()
-            top_stats = snapshot.statistics('lineno')
-            for stat in top_stats[:10]:
-                print(stat)
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        for stat in top_stats[:10]:
+            print(stat)
                 
-      javascript_profiling:
-        v8_profiling: |
-          // Node.js CPU profiling
-          node --prof app.js
-          node --prof-process isolate-*.log > processed.txt
+  javascript_profiling:
+    v8_profiling: |
+      // Node.js CPU profiling
+      node --prof app.js
+      node --prof-process isolate-*.log > processed.txt
           
-          // Chrome DevTools
-          console.profile('MyProfile');
-          // ... code to profile ...
-          console.profileEnd('MyProfile');
+      // Chrome DevTools
+      console.profile('MyProfile');
+      // ... code to profile ...
+      console.profileEnd('MyProfile');
           
-        clinic_js: |
-          # Comprehensive Node.js profiling
-          clinic doctor -- node app.js
-          clinic flame -- node app.js
-          clinic bubbleprof -- node app.js
+    clinic_js: |
+      # Comprehensive Node.js profiling
+      clinic doctor -- node app.js
+      clinic flame -- node app.js
+      clinic bubbleprof -- node app.js
           
-      c_cpp_profiling:
-        perf_advanced: |
-          # CPU cache analysis
-          perf stat -e cache-misses,cache-references ./app
+  c_cpp_profiling:
+    perf_advanced: |
+      # CPU cache analysis
+      perf stat -e cache-misses,cache-references ./app
           
-          # Branch prediction
-          perf stat -e branch-misses,branches ./app
+      # Branch prediction
+      perf stat -e branch-misses,branches ./app
           
-          # Instruction-level profiling
-          perf annotate --stdio
+      # Instruction-level profiling
+      perf annotate --stdio
           
-        valgrind_suite: |
-          # Cache profiling
-          valgrind --tool=cachegrind ./app
-          cg_annotate cachegrind.out.*
+    valgrind_suite: |
+      # Cache profiling
+      valgrind --tool=cachegrind ./app
+      cg_annotate cachegrind.out.*
           
-          # Call graph generation
-          valgrind --tool=callgrind ./app
-          kcachegrind callgrind.out.*
+      # Call graph generation
+      valgrind --tool=callgrind ./app
+      kcachegrind callgrind.out.*
           
-    level_4_microarchitecture:
-      description: "CPU microarchitecture analysis"
-      intel_vtune: |
-        # Meteor Lake specific optimization
-        vtune -collect hotspots ./app
-        vtune -collect memory-access ./app
-        vtune -collect uarch-exploration ./app
+  level_4_microarchitecture:
+  description: "CPU microarchitecture analysis"
+  intel_vtune: |
+    # Meteor Lake specific optimization
+    vtune -collect hotspots ./app
+    vtune -collect memory-access ./app
+    vtune -collect uarch-exploration ./app
         
-      pmu_events: |
-        # Hardware performance counters
-        perf stat -e cycles,instructions,L1-dcache-loads,L1-dcache-load-misses ./app
+  pmu_events: |
+    # Hardware performance counters
+    perf stat -e cycles,instructions,L1-dcache-loads,L1-dcache-load-misses ./app
         
-        # IPC (Instructions Per Cycle) analysis
-        perf stat -e cycles,instructions --metric-only ./app
+    # IPC (Instructions Per Cycle) analysis
+    perf stat -e cycles,instructions --metric-only ./app
 
 ################################################################################
 # OPTIMIZATION STRATEGIES - COMPREHENSIVE GUIDE
@@ -243,105 +239,105 @@ hot_path_identification:
 
 optimization_strategies:
   algorithmic_optimizations:
-    complexity_reduction:
-      quadratic_to_linear:
-        problem: "Nested loops over same data"
-        solution: "Use hash maps for lookups"
-        example: |
-          # BEFORE: O(n²)
-          def find_pairs(arr1, arr2):
-              pairs = []
-              for x in arr1:
-                  for y in arr2:
-                      if x + y == target:
-                          pairs.append((x, y))
+  complexity_reduction:
+  quadratic_to_linear:
+    problem: "Nested loops over same data"
+    solution: "Use hash maps for lookups"
+    example: |
+      # BEFORE: O(n²)
+      def find_pairs(arr1, arr2):
+          pairs = []
+          for x in arr1:
+              for y in arr2:
+                  if x + y == target:
+                      pairs.append((x, y))
           
-          # AFTER: O(n)
-          def find_pairs_optimized(arr1, arr2):
-              arr2_set = set(arr2)
-              pairs = []
-              for x in arr1:
-                  if target - x in arr2_set:
-                      pairs.append((x, target - x))
+      # AFTER: O(n)
+      def find_pairs_optimized(arr1, arr2):
+          arr2_set = set(arr2)
+          pairs = []
+          for x in arr1:
+              if target - x in arr2_set:
+                  pairs.append((x, target - x))
                       
-      dynamic_programming:
-        problem: "Redundant recursive calculations"
-        solution: "Memoization or tabulation"
-        example: |
-          # BEFORE: O(2^n)
-          def fibonacci(n):
-              if n <= 1:
-                  return n
-              return fibonacci(n-1) + fibonacci(n-2)
+  dynamic_programming:
+    problem: "Redundant recursive calculations"
+    solution: "Memoization or tabulation"
+    example: |
+      # BEFORE: O(2^n)
+      def fibonacci(n):
+          if n <= 1:
+              return n
+          return fibonacci(n-1) + fibonacci(n-2)
           
-          # AFTER: O(n) with memoization
-          from functools import lru_cache
+      # AFTER: O(n) with memoization
+      from functools import lru_cache
           
-          @lru_cache(maxsize=None)
-          def fibonacci_memo(n):
-              if n <= 1:
-                  return n
-              return fibonacci_memo(n-1) + fibonacci_memo(n-2)
+      @lru_cache(maxsize=None)
+      def fibonacci_memo(n):
+          if n <= 1:
+              return n
+          return fibonacci_memo(n-1) + fibonacci_memo(n-2)
           
-          # AFTER: O(n) with tabulation
-          def fibonacci_dp(n):
-              if n <= 1:
-                  return n
-              dp = [0] * (n + 1)
-              dp[1] = 1
-              for i in range(2, n + 1):
-                  dp[i] = dp[i-1] + dp[i-2]
-              return dp[n]
+      # AFTER: O(n) with tabulation
+      def fibonacci_dp(n):
+          if n <= 1:
+              return n
+          dp = [0] * (n + 1)
+          dp[1] = 1
+          for i in range(2, n + 1):
+              dp[i] = dp[i-1] + dp[i-2]
+          return dp[n]
               
-      early_termination:
-        problem: "Unnecessary computation"
-        solution: "Short-circuit evaluation"
-        example: |
-          # BEFORE
-          def find_element(arr, target):
-              found = False
-              for i in range(len(arr)):
-                  if arr[i] == target:
-                      found = True
-              return found
+  early_termination:
+    problem: "Unnecessary computation"
+    solution: "Short-circuit evaluation"
+    example: |
+      # BEFORE
+      def find_element(arr, target):
+          found = False
+          for i in range(len(arr)):
+              if arr[i] == target:
+                  found = True
+          return found
           
-          # AFTER
-          def find_element_optimized(arr, target):
-              for element in arr:
-                  if element == target:
-                      return True
-              return False
+      # AFTER
+      def find_element_optimized(arr, target):
+          for element in arr:
+              if element == target:
+                  return True
+          return False
               
   data_structure_optimizations:
-    cache_friendly_structures:
-      array_of_structs_to_struct_of_arrays:
-        problem: "Poor cache locality"
-        solution: "Improve data layout"
-        example: |
-          # BEFORE: Array of Structs (AoS)
-          class Particle:
-              def __init__(self):
-                  self.x = 0
-                  self.y = 0
-                  self.vx = 0
-                  self.vy = 0
+  cache_friendly_structures:
+  array_of_structs_to_struct_of_arrays:
+    problem: "Poor cache locality"
+    solution: "Improve data layout"
+    example: |
+      # BEFORE: Array of Structs (AoS)
+      class Particle:
+          def __init__(self):
+              self.x = 0
+              self.y = 0
+              self.vx = 0
+              self.vy = 0
           
-          particles = [Particle() for _ in range(1000000)]
+      particles = [Particle() for _ in range(1000000)]
           
-          # AFTER: Struct of Arrays (SoA)
-          class ParticleSystem:
-              def __init__(self, n):
-                  self.x = np.zeros(n)
-                  self.y = np.zeros(n)
-                  self.vx = np.zeros(n)
-                  self.vy = np.zeros(n)
+      # AFTER: Struct of Arrays (SoA)
+      class ParticleSystem:
+          def __init__(self, n):
+              self.x = np.zeros(n)
+              self.y = np.zeros(n)
+              self.vx = np.zeros(n)
+              self.vy = np.zeros(n)
           
-          # Better cache utilization when updating positions
+      # Better cache utilization when updating positions
           
-      choosing_right_container:
-        decision_matrix: |
-          Operation     | List | Set  | Dict | Deque | Heap  |
-          --------------|------|------|------|-------|-------|
+  choosing_right_container:
+    decision_matrix: |
+      Operation     | List | Set  | Dict | Deque | Heap  |
+--------------|------|------|------|-------|-------|
           Insert end    | O(1) | O(1) | O(1) | O(1)  | O(log)|
           Insert start  | O(n) | O(1) | O(1) | O(1)  | O(log)|
           Delete        | O(n) | O(1) | O(1) | O(1)  | O(log)|

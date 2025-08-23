@@ -1,0 +1,17 @@
+{
+  "project_root": "/home/ubuntu/Documents/Claude",
+  "agents_dir": "/home/ubuntu/Documents/Claude/agents",
+  "python_path": "/home/ubuntu/Documents/Claude/agents/src/python",
+  "venv_dir": "/home/ubuntu/.local/share/claude/venv",
+  "orchestrators": {
+    "production": "/home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py",
+    "tandem": "/home/ubuntu/Documents/Claude/agents/src/python/tandem_orchestrator.py"
+  },
+  "execution_modes": [
+    "INTELLIGENT",
+    "REDUNDANT",
+    "CONSENSUS",
+    "SPEED_CRITICAL",
+    "PYTHON_ONLY"
+  ]
+}

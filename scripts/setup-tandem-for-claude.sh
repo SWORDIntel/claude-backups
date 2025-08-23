@@ -9,8 +9,21 @@
 set -euo pipefail
 
 # Configuration
-PROJECT_ROOT="/home/siducer/Documents/Claude"
-CLAUDE_DIR="$HOME/.claude"
+# Detect project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ "$SCRIPT_DIR" == */scripts ]]; then
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+    PROJECT_ROOT="$SCRIPT_DIR"
+fi
+
+# Use project .claude if exists, otherwise use home directory
+if [[ -d "$PROJECT_ROOT/.claude" ]]; then
+    CLAUDE_DIR="$PROJECT_ROOT/.claude"
+else
+    CLAUDE_DIR="$HOME/.claude"
+fi
+
 VENV_DIR="$HOME/.local/share/claude/venv"
 
 echo "Setting up Tandem Orchestration for Claude Code..."
@@ -18,11 +31,22 @@ echo "=============================================="
 
 # 1. Ensure agents are linked (required for orchestration)
 echo "1. Checking agent symlink..."
-if [ ! -L "$CLAUDE_DIR/agents" ]; then
-    ln -sf "$PROJECT_ROOT/agents" "$CLAUDE_DIR/agents"
-    echo "   ✓ Created agents symlink"
+if [[ "$CLAUDE_DIR" == "$PROJECT_ROOT/.claude" ]]; then
+    # Using project .claude - symlinks should already exist from installer
+    if [ -L "$CLAUDE_DIR/agents" ]; then
+        echo "   ✓ Agents symlink exists (project .claude)"
+    else
+        ln -sf "../agents" "$CLAUDE_DIR/agents"
+        echo "   ✓ Created agents symlink"
+    fi
 else
-    echo "   ✓ Agents symlink exists"
+    # Using home .claude - create absolute symlink
+    if [ ! -L "$CLAUDE_DIR/agents" ]; then
+        ln -sf "$PROJECT_ROOT/agents" "$CLAUDE_DIR/agents"
+        echo "   ✓ Created agents symlink"
+    else
+        echo "   ✓ Agents symlink exists"
+    fi
 fi
 
 # 2. Create orchestration directory in .claude

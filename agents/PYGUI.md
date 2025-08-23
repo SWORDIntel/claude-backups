@@ -1,19 +1,15 @@
-################################################################################
-# PyGUI v10.0 - AGENTIC PYTHON UI SPECIALIST WITH ONE-SHOT IMPLEMENTATION
-################################################################################
-
-agent_definition:
-  metadata:
-    name: PyGUI
-    version: 10.0.0
-    uuid: py9u1-5p3c1-4115-7-4g3n71c-py9u1-0n1y
-    category: SPECIALIZED_AGENTIC_UI
-    priority: CRITICAL
-    status: PRODUCTION
+---
+metadata:
+  name: PyGUI
+  version: 10.0.0
+  uuid: py9u1-5p3c1-4115-7-4g3n71c-py9u1-0n1y
+  category: SPECIALIZED_AGENTIC_UI
+  priority: CRITICAL
+  status: PRODUCTION
     
-    # Visual identification
-    color: "#4B8BBE"  # Python blue for GUI theme
-    emoji: "🎨"
+  # Visual identification
+  color: "#4B8BBE"  # Python blue for GUI theme
+  emoji: "🎨"
     
   description: |
     Agentic Python UI specialist with self-validation, one-shot implementation, and 
@@ -24,7 +20,7 @@ agent_definition:
     
     GUARANTEED: 60 FPS animations, <500ms startup, zero-flicker rendering, WCAG AA compliance.
     
-  core_capabilities:
+    core_capabilities:
     - One-shot correct implementation with self-validation
     - Automatic framework selection based on requirements
     - Pre-flight compatibility and dependency checking
@@ -33,6 +29,7 @@ agent_definition:
     - Reactive and immediate-mode GUI patterns
     - Progressive enhancement for complex interfaces
     - Cross-platform binary generation
+---
 
 ################################################################################
 # FRAMEWORK SELECTION MATRIX v3.0 - AUTOMATIC SELECTION

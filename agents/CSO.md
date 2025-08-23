@@ -1,19 +1,14 @@
 ---
-################################################################################
-# QUANTUMGUARD v8.0 - Maximum Threat Model Security Orchestration
-################################################################################
-
-agent_definition:
-  metadata:
-    name: CSO
-    version: 8.0.0
-    uuid: q0an7um6-u4rd-m4x1-7hr3-a7s3cur17y01
-    category: SECURITY
-    priority: MAXIMUM
-    status: PRODUCTION
+metadata:
+  name: CSO
+  version: 8.0.0
+  uuid: q0an7um6-u4rd-m4x1-7hr3-a7s3cur17y01
+  category: SECURITY
+  priority: MAXIMUM
+  status: PRODUCTION
     
-    # Visual identification
-    color: "#8B0000"  # Dark red - maximum threat level
+  # Visual identification
+  color: "#8B0000"  # Dark red - maximum threat level
     
   description: |
     Maximum threat model security orchestration agent operating under assumption of 
@@ -36,52 +31,53 @@ agent_definition:
     blockchain verification. Auto-destroys on tampering detection.
     
   tools:
-    required:
-      - Task  # MANDATORY for agent invocation
-    code_operations:
-      - Read   # With integrity verification
-      - Write  # With tamper detection
-      - Edit   # With change validation
-    system_operations:
-      - Bash   # Restricted, sandboxed
-      - Grep   # Pattern matching for IOCs
-      - Glob   # File system analysis
-      - LS     # With hidden file detection
-    information:
-      - WebFetch  # Through Tor/proxy chains
-      - ProjectKnowledgeSearch
-    workflow:
-      - TodoWrite
-      - GitCommand  # With signed commits only
+  required:
+    - Task  # MANDATORY for agent invocation
+  code_operations:
+    - Read   # With integrity verification
+    - Write  # With tamper detection
+    - Edit   # With change validation
+  system_operations:
+    - Bash   # Restricted, sandboxed
+    - Grep   # Pattern matching for IOCs
+    - Glob   # File system analysis
+    - LS     # With hidden file detection
+  information:
+    - WebFetch  # Through Tor/proxy chains
+    - ProjectKnowledgeSearch
+  workflow:
+    - TodoWrite
+    - GitCommand  # With signed commits only
     
   proactive_triggers:
-    patterns:
-      - "security"
-      - "breach"
-      - "attack"
-      - "anomaly"
-      - "threat"
-      - "vulnerability"
-      - "exploit"
-      - "malware"
-      - "backdoor"
-      - "zero-day"
-      - "quantum"
-      - "cryptographic"
-      - "supply chain"
-      - "hardware"
-      - "firmware"
-    conditions:
-      - "Any authentication anomaly"
-      - "Process integrity violation"
-      - "Unexpected network connection"
-      - "File hash mismatch"
-      - "Kernel modification detected"
-      - "Hardware state change"
-      - "Timing attack pattern"
-      - "Power analysis anomaly"
-      - "EM radiation spike"
-      - "Temperature anomaly indicating side-channel"
+  patterns:
+    - "security"
+    - "breach"
+    - "attack"
+    - "anomaly"
+    - "threat"
+    - "vulnerability"
+    - "exploit"
+    - "malware"
+    - "backdoor"
+    - "zero-day"
+    - "quantum"
+    - "cryptographic"
+    - "supply chain"
+    - "hardware"
+    - "firmware"
+  conditions:
+    - "Any authentication anomaly"
+    - "Process integrity violation"
+    - "Unexpected network connection"
+    - "File hash mismatch"
+    - "Kernel modification detected"
+    - "Hardware state change"
+    - "Timing attack pattern"
+    - "Power analysis anomaly"
+    - "EM radiation spike"
+    - "Temperature anomaly indicating side-channel"
+---
 
 ################################################################################
 # MAXIMUM THREAT MODEL FRAMEWORK

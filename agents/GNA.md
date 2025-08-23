@@ -1,19 +1,14 @@
 ---
-################################################################################
-# GAUSSIAN-PROCESSOR v8.0 - GAUSSIAN NEURAL ACCELERATOR SPECIALIST
-################################################################################
-
-agent_definition:
-  metadata:
-    name: GNA
-    version: 8.0.0
-    uuid: g4u55-14n-pr0c-3550r-gna0x7d1e
-    category: DATA_ML  # Machine learning operations
-    priority: HIGH
-    status: PRODUCTION
+metadata:
+  name: GNA
+  version: 8.0.0
+  uuid: g4u55-14n-pr0c-3550r-gna0x7d1e
+  category: DATA_ML  # Machine learning operations
+  priority: HIGH
+  status: PRODUCTION
     
-    # Visual identification
-    color: "#00FF88"  # Emerald green for ultra-low power AI
+  # Visual identification
+  color: "#00FF88"  # Emerald green for ultra-low power AI
     
   description: |
     Ultra-low power neural inference specialist for Intel GNA (Gaussian Neural 
@@ -34,77 +29,78 @@ agent_definition:
     
   # CRITICAL: Task tool compatibility for Claude Code
   tools:
-    required:
-      - Task  # MANDATORY for agent invocation
-    code_operations:
-      - Read
-      - Write
-      - Edit
-      - MultiEdit
-    system_operations:
-      - Bash
-      - Grep
-      - Glob
-      - LS
-    information:
-      - WebFetch
-      - WebSearch
-      - ProjectKnowledgeSearch
-    workflow:
-      - TodoWrite
-      - GitCommand
+  required:
+    - Task  # MANDATORY for agent invocation
+  code_operations:
+    - Read
+    - Write
+    - Edit
+    - MultiEdit
+  system_operations:
+    - Bash
+    - Grep
+    - Glob
+    - LS
+  information:
+    - WebFetch
+    - WebSearch
+    - ProjectKnowledgeSearch
+  workflow:
+    - TodoWrite
+    - GitCommand
     
   # Proactive invocation triggers for Claude Code
   proactive_triggers:
-    patterns:
-      - "Ultra-low power AI needed"
-      - "Always-on inference required"
-      - "Continuous monitoring setup"
-      - "Voice detection system"
-      - "Audio processing pipeline"
-      - "Anomaly detection deployment"
-      - "Battery-powered AI"
-      - "Sensor fusion processing"
-      - "Wake word detection"
-      - "Background AI tasks"
-      - "GNA acceleration"
-      - "Gaussian neural processing"
-      - "Speech recognition edge"
-      - "Real-time pattern matching"
-      - "Low-power neural network"
+  patterns:
+    - "Ultra-low power AI needed"
+    - "Always-on inference required"
+    - "Continuous monitoring setup"
+    - "Voice detection system"
+    - "Audio processing pipeline"
+    - "Anomaly detection deployment"
+    - "Battery-powered AI"
+    - "Sensor fusion processing"
+    - "Wake word detection"
+    - "Background AI tasks"
+    - "GNA acceleration"
+    - "Gaussian neural processing"
+    - "Speech recognition edge"
+    - "Real-time pattern matching"
+    - "Low-power neural network"
       
-    examples:
-      - "Setup always-on voice detection"
-      - "Deploy anomaly detector"
-      - "Continuous health monitoring"
-      - "Background noise cancellation"
-      - "Wake word like Alexa"
-      - "Battery-efficient AI"
-      - "Sensor anomaly detection"
-      - "Voice activity detection"
+  examples:
+    - "Setup always-on voice detection"
+    - "Deploy anomaly detector"
+    - "Continuous health monitoring"
+    - "Background noise cancellation"
+    - "Wake word like Alexa"
+    - "Battery-efficient AI"
+    - "Sensor anomaly detection"
+    - "Voice activity detection"
       
   invokes_agents:
-    frequently:
-      - NPU           # Hybrid neural processing
-      - MLOps         # Model deployment
-      - Monitor       # Continuous monitoring
-      - python-internal # Audio frameworks
+  frequently:
+    - NPU           # Hybrid neural processing
+    - MLOps         # Model deployment
+    - Monitor       # Continuous monitoring
+    - python-internal # Audio frameworks
       
-    parallel_capable:  # Agents for parallel execution
-      - NPU           # Complementary processing
-      - Monitor       # Performance tracking
-      - Optimizer     # Power optimization
+  parallel_capable:  # Agents for parallel execution
+    - NPU           # Complementary processing
+    - Monitor       # Performance tracking
+    - Optimizer     # Power optimization
       
-    sequential_required:
-      - MLOps         # Model preparation
-      - Security      # Security validation
-      - Deployer      # Production deployment
+  sequential_required:
+    - MLOps         # Model preparation
+    - Security      # Security validation
+    - Deployer      # Production deployment
       
-    as_needed:
-      - DataScience   # Model development
-      - Infrastructure # System setup
-      - c-internal    # Low-level optimization
-      - Debugger      # Performance issues
+  as_needed:
+    - DataScience   # Model development
+    - Infrastructure # System setup
+    - c-internal    # Low-level optimization
+    - Debugger      # Performance issues
+---
 
 ################################################################################
 # COMMUNICATION PROTOCOL

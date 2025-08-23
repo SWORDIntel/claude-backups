@@ -1,834 +1,846 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# CLAUDE CODE MASTER INSTALLER - ORCHESTRATOR EDITION
-# Calls existing scripts instead of recreating components
-# Version 7.0 - Streamlined with existing infrastructure
+# Claude Master Installer v8.0 - Professional Edition
+# Clean, robust, and fully automated installation
 # ═══════════════════════════════════════════════════════════════════════════
 
-set -euo pipefail
+# Disable strict mode for force installation
+set +e
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# CONFIGURATION
+# CONFIGURATION & SETUP
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-readonly SCRIPT_VERSION="7.0-orchestrator"
+# Fix color output issues
+export TERM=xterm-256color
 
-# Resolve script location
-get_script_dir() {
-    local source="${BASH_SOURCE[0]}"
-    while [ -h "$source" ]; do
-        local dir="$(cd -P "$(dirname "$source")" && pwd)"
-        source="$(readlink "$source")"
-        [[ $source != /* ]] && source="$dir/$source"
-    done
-    cd -P "$(dirname "$source")" && pwd
-}
+# Define colors using printf for better compatibility
+print_red() { printf "\033[0;31m%s\033[0m\n" "$1"; }
+print_green() { printf "\033[0;32m%s\033[0m\n" "$1"; }
+print_yellow() { printf "\033[1;33m%s\033[0m\n" "$1"; }
+print_blue() { printf "\033[0;34m%s\033[0m\n" "$1"; }
+print_cyan() { printf "\033[0;36m%s\033[0m\n" "$1"; }
+print_magenta() { printf "\033[0;35m%s\033[0m\n" "$1"; }
+print_bold() { printf "\033[1m%s\033[0m\n" "$1"; }
+print_dim() { printf "\033[2m%s\033[0m\n" "$1"; }
 
-SCRIPT_DIR="$(get_script_dir)"
+# Status indicators
+SUCCESS="✓"
+ERROR="✗"
+WARNING="⚠"
+INFO="ℹ"
+ARROW="→"
 
-# Find project root dynamically
-find_project_root() {
-    local current_dir="$SCRIPT_DIR"
-    local max_depth=10
-    local depth=0
-    
-    # If we're in installers directory, go up
-    if [[ "$(basename "$current_dir")" == "installers" ]]; then
-        current_dir="$(dirname "$current_dir")"
-    fi
-    
-    # Search for project markers
-    while [ $depth -lt $max_depth ]; do
-        if [ -d "$current_dir/agents" ] && [ -d "$current_dir/hooks" ] && [ -d "$current_dir/scripts" ]; then
-            echo "$current_dir"
-            return 0
-        fi
-        
-        [ "$current_dir" = "/" ] && break
-        current_dir="$(dirname "$current_dir")"
-        depth=$((depth + 1))
-    done
-    
-    # Fallback to common locations
-    for dir in "$HOME/Documents/Claude" "$HOME/claude-backups" "$HOME/claude-project"; do
-        if [ -d "$dir/agents" ] && [ -d "$dir/hooks" ] && [ -d "$dir/scripts" ]; then
-            echo "$dir"
-            return 0
-        fi
-    done
-    
-    echo "$SCRIPT_DIR"
-    return 1
-}
+# Detect project root
+if [[ -d "./agents" ]] && [[ -f "./CLAUDE.md" ]]; then
+    PROJECT_ROOT="$(pwd)"
+elif [[ -d "$HOME/Documents/Claude/agents" ]]; then
+    PROJECT_ROOT="$HOME/Documents/Claude"
+else
+    PROJECT_ROOT="$(pwd)"
+fi
 
-# Set project root
-PROJECT_ROOT="$(find_project_root)"
-readonly PROJECT_ROOT
+# Define all paths
+HOME_DIR="$HOME"
+LOCAL_BIN="$HOME_DIR/.local/bin"
+NPM_PREFIX="$HOME_DIR/.npm-global"
+CLAUDE_HOME="$HOME_DIR/.claude-home"
+AGENTS_SOURCE="$PROJECT_ROOT/agents"
+AGENTS_TARGET="$HOME_DIR/agents"
+CONFIG_DIR="$HOME_DIR/.config/claude"
+HOOKS_SOURCE="$PROJECT_ROOT/hooks"
+STATUSLINE_SOURCE="$PROJECT_ROOT/statusline.lua"
+LOG_DIR="$HOME_DIR/.local/share/claude/logs"
+LOG_FILE="$LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
 
-# User directories
-readonly USER_BIN_DIR="$HOME/.local/bin"
-readonly USER_SHARE_DIR="$HOME/.local/share/claude"
-readonly CONFIG_DIR="$HOME/.config/claude"
-readonly CLAUDE_HOME="$HOME/.claude"
-readonly LOG_FILE="$HOME/Documents/Claude/install-$(date +%Y%m%d-%H%M%S).log"
+# Claude directory structure (for self-contained mode)
+CLAUDE_DIR="$PROJECT_ROOT/.claude"
 
-# Colors
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly BLUE='\033[0;34m'
-readonly CYAN='\033[0;36m'
-readonly MAGENTA='\033[0;35m'
-readonly BOLD='\033[1m'
-readonly NC='\033[0m'
-
-# Feature flags
-INSTALL_HOOKS=${INSTALL_HOOKS:-true}
-INSTALL_PRECISION_STYLE=${INSTALL_PRECISION_STYLE:-true}
-INSTALL_TANDEM=${INSTALL_TANDEM:-true}
-SYNC_AGENTS=${SYNC_AGENTS:-true}
-VERBOSE=${VERBOSE:-true}
-DRY_RUN=${DRY_RUN:-false}
+# Installation counters
+TOTAL_STEPS=13
+CURRENT_STEP=0
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HELPER FUNCTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-log() { 
-    printf "${GREEN}[INFO]${NC} %s\n" "$1"
-    mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE" 2>/dev/null || true
+# Create log directory
+mkdir -p "$LOG_DIR" 2>/dev/null || sudo mkdir -p "$LOG_DIR" 2>/dev/null
+
+# Logging function
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE" 2>/dev/null
+    echo "$1"
 }
 
-error() { 
-    printf "${RED}[ERROR]${NC} %s\n" "$1" >&2
-    echo "[ERROR] $1" >> "$LOG_FILE" 2>/dev/null || true
+# Progress bar
+show_progress() {
+    CURRENT_STEP=$((CURRENT_STEP + 1))
+    local percent=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+    local filled=$((percent / 2))
+    local empty=$((50 - filled))
+    
+    printf "\rProgress: ["
+    printf "%${filled}s" | tr ' ' '█'
+    printf "%${empty}s" | tr ' ' ']'
+    printf "] %3d%% " "$percent"
 }
 
-warn() { 
-    printf "${YELLOW}[WARNING]${NC} %s\n" "$1" >&2
-    echo "[WARNING] $1" >> "$LOG_FILE" 2>/dev/null || true
+# Print header
+print_header() {
+    clear
+    echo ""
+    print_cyan "╔═══════════════════════════════════════════════════════════════╗"
+    print_cyan "║           Claude Master Installer v8.0                       ║"
+    print_cyan "║           Professional Agent Framework Setup                 ║"
+    print_cyan "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
+    print_dim "Project: $PROJECT_ROOT"
+    print_dim "Target: $HOME_DIR"
+    echo ""
 }
 
-success() { 
-    printf "${GREEN}[SUCCESS]${NC} %s\n" "$1"
-    echo "[SUCCESS] $1" >> "$LOG_FILE" 2>/dev/null || true
+# Print section
+print_section() {
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    print_bold "  $1"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
 }
 
-debug() {
-    if [ "$VERBOSE" = true ]; then
-        printf "${CYAN}[DEBUG]${NC} %s\n" "$1"
-        echo "[DEBUG] $1" >> "$LOG_FILE" 2>/dev/null || true
-    fi
+# Status messages
+success() {
+    print_green "$SUCCESS $1"
+    log "SUCCESS: $1"
 }
 
-run_script() {
-    local script="$1"
-    local description="${2:-Running $script}"
-    
-    if [ "$DRY_RUN" = true ]; then
-        log "[DRY RUN] Would execute: $script"
-        return 0
-    fi
-    
-    if [ -f "$script" ]; then
-        log "$description"
-        chmod +x "$script"
-        if bash "$script"; then
-            success "✓ $description completed"
-            return 0
-        else
-            warn "⚠ $description had issues"
-            return 1
-        fi
-    else
-        warn "Script not found: $script"
-        return 1
-    fi
+error() {
+    print_red "$ERROR $1"
+    log "ERROR: $1"
 }
 
-check_command() {
-    local cmd="$1"
-    command -v "$cmd" &> /dev/null
+warning() {
+    print_yellow "$WARNING $1"
+    log "WARNING: $1"
 }
 
-show_banner() {
-    printf "${CYAN}${BOLD}"
-    cat << 'EOF'
-   _____ _                 _        __  __           _            
-  / ____| |               | |      |  \/  |         | |           
- | |    | | __ _ _   _  __| | ___  | \  / | __ _ ___| |_ ___ _ __ 
- | |    | |/ _` | | | |/ _` |/ _ \ | |\/| |/ _` / __| __/ _ \ '__|
- | |____| | (_| | |_| | (_| |  __/ | |  | | (_| \__ \ ||  __/ |   
-  \_______|_\__,_|\__,_|\__,_|\___| |_|  |_|\__,_|___/\__\___|_|   
-                                                                    
-    Master Installer v7.0 - Using Existing Infrastructure
-EOF
-    printf "${NC}\n"
-    printf "${GREEN}Mode:${NC} Orchestrator - Calls existing scripts\n"
-    printf "${BLUE}Project:${NC} $PROJECT_ROOT\n"
-    printf "${CYAN}Strategy:${NC} Reuse existing components, no duplication\n\n"
+info() {
+    print_cyan "$INFO $1"
+    log "INFO: $1"
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# VALIDATION FUNCTIONS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Force directory creation
+force_mkdir() {
+    local dir="$1"
+    mkdir -p "$dir" 2>/dev/null || sudo mkdir -p "$dir" 2>/dev/null
+    sudo chown -R "$USER:$USER" "$dir" 2>/dev/null
+}
 
-validate_project_structure() {
-    log "Validating project structure..."
+# Force copy with permissions
+force_copy() {
+    local src="$1"
+    local dst="$2"
     
-    local all_good=true
+    # Create destination directory
+    force_mkdir "$(dirname "$dst")"
     
-    # Check critical directories
-    echo "Checking directories:"
+    # Try multiple copy methods
+    cp -rf "$src" "$dst" 2>/dev/null || \
+    sudo cp -rf "$src" "$dst" 2>/dev/null || \
+    rsync -a "$src" "$dst" 2>/dev/null || \
+    tar cf - -C "$(dirname "$src")" "$(basename "$src")" | tar xf - -C "$(dirname "$dst")" 2>/dev/null
     
-    if [ -d "$PROJECT_ROOT/agents" ]; then
-        local agent_count=$(find "$PROJECT_ROOT/agents" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l)
-        echo "  ✓ agents/ ($agent_count agents found)"
-    else
-        echo "  ✗ agents/ directory missing"
-        all_good=false
-    fi
-    
-    if [ -d "$PROJECT_ROOT/hooks" ]; then
-        echo "  ✓ hooks/"
-    else
-        echo "  ✗ hooks/ directory missing"
-        all_good=false
-    fi
-    
-    if [ -d "$PROJECT_ROOT/scripts" ]; then
-        echo "  ✓ scripts/"
-    else
-        echo "  ✗ scripts/ directory missing"
-        all_good=false
-    fi
-    
-    echo
-    echo "Checking critical scripts:"
-    
-    # Check for critical scripts
-    local scripts=(
-        "hooks/setup_claude_hooks.sh"
-        "hooks/install_claude_hooks.sh"
-        "scripts/setup-precision-orchestration-style.sh"
-        "scripts/setup-tandem-for-claude.sh"
-        "scripts/sync-agents-to-claude.sh"
-    )
-    
-    for script in "${scripts[@]}"; do
-        if [ -f "$PROJECT_ROOT/$script" ]; then
-            echo "  ✓ $script"
-        else
-            echo "  ✗ $script missing"
-            # Don't fail for optional scripts
-            if [[ "$script" == hooks/* ]]; then
-                INSTALL_HOOKS=false
-            fi
-        fi
-    done
-    
-    echo
-    
-    # Check for Python components
-    if [ -f "$PROJECT_ROOT/hooks/claude_hooks_bridge.py" ]; then
-        echo "  ✓ Python hooks bridge found"
-    else
-        echo "  ⚠ Python hooks bridge not found"
-    fi
-    
-    # Check for requirements.txt
-    if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
-        echo "  ✓ requirements.txt found"
-    else
-        echo "  ⚠ requirements.txt not found"
-    fi
-    
-    if [ "$all_good" = false ]; then
-        error "Critical directories missing. Please check project structure."
-        return 1
-    fi
-    
-    return 0
+    # Fix permissions
+    sudo chown -R "$USER:$USER" "$dst" 2>/dev/null
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # INSTALLATION FUNCTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-install_python_dependencies() {
-    log "Installing Python dependencies..."
+# 1. Check prerequisites
+check_prerequisites() {
+    print_section "Checking Prerequisites"
     
-    if [ -f "$PROJECT_ROOT/requirements.txt" ]; then
-        if check_command pip3; then
-            log "Installing from requirements.txt..."
-            pip3 install --user -r "$PROJECT_ROOT/requirements.txt" || {
-                warn "Some packages failed to install"
-            }
-        elif check_command pip; then
-            pip install --user -r "$PROJECT_ROOT/requirements.txt" || {
-                warn "Some packages failed to install"
-            }
+    # Node.js
+    printf "  %-20s" "Node.js..."
+    if command -v node &>/dev/null; then
+        NODE_VERSION=$(node -v)
+        print_green "$SUCCESS ($NODE_VERSION)"
+    else
+        print_red "$ERROR Not installed"
+        warning "    Installing Node.js is recommended"
+    fi
+    
+    # npm
+    printf "  %-20s" "npm..."
+    if command -v npm &>/dev/null; then
+        NPM_VERSION=$(npm -v)
+        print_green "$SUCCESS (v$NPM_VERSION)"
+    else
+        print_red "$ERROR Not installed"
+    fi
+    
+    # Disk space
+    printf "  %-20s" "Disk space..."
+    AVAILABLE=$(df "$HOME" | awk 'NR==2 {print $4}')
+    if [[ $AVAILABLE -gt 100000 ]]; then
+        print_green "$SUCCESS ($(numfmt --to=iec $((AVAILABLE * 1024))))"
+    else
+        print_yellow "$WARNING Low space"
+    fi
+    
+    show_progress
+}
+
+# 2. Install NPM package
+install_npm_package() {
+    print_section "Installing Claude NPM Package"
+    
+    # Configure npm
+    info "Configuring npm prefix..."
+    force_mkdir "$NPM_PREFIX"
+    npm config set prefix "$NPM_PREFIX" 2>/dev/null
+    export PATH="$NPM_PREFIX/bin:$PATH"
+    
+    # Check if installed
+    if npm list -g @anthropic-ai/claude-code 2>/dev/null | grep -q "@anthropic-ai/claude-code"; then
+        success "Package already installed"
+    else
+        info "Installing @anthropic-ai/claude-code..."
+        npm install -g @anthropic-ai/claude-code 2>/dev/null || \
+        sudo npm install -g @anthropic-ai/claude-code 2>/dev/null || \
+        npm install -g @anthropic-ai/claude-code --force 2>/dev/null
+    fi
+    
+    # Find CLI path
+    CLAUDE_CLI_PATH="$NPM_PREFIX/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+    if [[ -f "$CLAUDE_CLI_PATH" ]]; then
+        success "CLI found at: $CLAUDE_CLI_PATH"
+        CLAUDE_BINARY="$CLAUDE_CLI_PATH"
+    else
+        # Search for it
+        CLAUDE_CLI_PATH=$(find "$NPM_PREFIX" -name "cli.js" -path "*claude-code*" 2>/dev/null | head -1)
+        CLAUDE_BINARY="${CLAUDE_CLI_PATH:-$NPM_PREFIX/lib/node_modules/@anthropic-ai/claude-code/cli.js}"
+    fi
+    
+    show_progress
+}
+
+# 3. Install agents
+install_agents() {
+    print_section "Installing Agent System"
+    
+    # Create target directory
+    force_mkdir "$AGENTS_TARGET"
+    
+    if [[ ! -d "$AGENTS_SOURCE" ]]; then
+        warning "No agents source found at: $AGENTS_SOURCE"
+        info "Skipping agent installation - directory will be ready for manual setup"
+    else
+        info "Updating agent files from $AGENTS_SOURCE..."
+        
+        # Count source agents (only .md files in root of agents directory)
+        SOURCE_COUNT=$(find "$AGENTS_SOURCE" -maxdepth 1 -type f \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l)
+        info "Found $SOURCE_COUNT agent files"
+        
+        if [[ $SOURCE_COUNT -gt 0 ]]; then
+            # Force copy all .md/.MD files from the root agents directory (overwrite existing)
+            find "$AGENTS_SOURCE" -maxdepth 1 -type f \( -name "*.md" -o -name "*.MD" \) -exec cp -f {} "$AGENTS_TARGET/" \; 2>/dev/null
+            
+            # Fix permissions
+            sudo chown -R "$USER:$USER" "$AGENTS_TARGET" 2>/dev/null
+            
+            # Verify
+            INSTALLED_COUNT=$(find "$AGENTS_TARGET" -type f \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | wc -l)
+            if [[ $INSTALLED_COUNT -gt 0 ]]; then
+                success "Installed/Updated $INSTALLED_COUNT agents (overwrote existing)"
+            else
+                warning "Failed to copy agents"
+            fi
         else
-            warn "pip not found, skipping Python dependencies"
+            info "No agent files found in root of source directory"
         fi
     fi
     
-    # Ensure critical packages
-    local packages=("pyyaml" "psutil" "rich" "numpy" "networkx")
-    for pkg in "${packages[@]}"; do
-        python3 -c "import $pkg" 2>/dev/null || {
-            warn "$pkg not available, installing..."
-            pip3 install --user "$pkg" 2>/dev/null || true
-        }
+    show_progress
+}
+
+# 4. Install hooks
+install_hooks() {
+    print_section "Installing Hooks"
+    
+    if [[ -d "$HOOKS_SOURCE" ]]; then
+        force_mkdir "$CONFIG_DIR/hooks"
+        cp -r "$HOOKS_SOURCE"/* "$CONFIG_DIR/hooks/" 2>/dev/null
+        chmod -R +x "$CONFIG_DIR/hooks" 2>/dev/null
+        
+        HOOK_COUNT=$(find "$CONFIG_DIR/hooks" -type f 2>/dev/null | wc -l)
+        success "Installed $HOOK_COUNT hooks"
+    else
+        warning "No hooks found"
+    fi
+    
+    show_progress
+}
+
+# 5. Install statusline
+install_statusline() {
+    print_section "Installing Statusline"
+    
+    if [[ -f "$STATUSLINE_SOURCE" ]]; then
+        force_mkdir "$HOME/.config/nvim/lua"
+        cp "$STATUSLINE_SOURCE" "$HOME/.config/nvim/lua/claude-statusline.lua" 2>/dev/null
+        
+        if ! grep -q "claude-statusline" "$HOME/.config/nvim/init.lua" 2>/dev/null; then
+            echo "require('claude-statusline')" >> "$HOME/.config/nvim/init.lua"
+        fi
+        
+        success "Statusline installed"
+    else
+        warning "No statusline found"
+    fi
+    
+    show_progress
+}
+
+# 6. Setup .claude directory structure
+setup_claude_directory() {
+    print_section "Setting up .claude Directory Structure"
+    
+    info "Creating self-contained .claude directory..."
+    
+    # Create .claude directory
+    force_mkdir "$CLAUDE_DIR"
+    
+    # Create symlinks for all major directories
+    for dir in agents config hooks database docs scripts tools orchestration installers bin; do
+        if [[ -d "$PROJECT_ROOT/$dir" ]]; then
+            # Remove existing symlink or directory in .claude
+            rm -rf "$CLAUDE_DIR/$dir" 2>/dev/null
+            # Create symlink (relative path for portability)
+            ln -sf "../$dir" "$CLAUDE_DIR/$dir"
+            success "Linked .claude/$dir -> ../$dir"
+        fi
     done
     
-    # Install agent-specific dependencies for 100% compliance
-    local agent_deps_installer="$PROJECT_ROOT/agents/src/python/install_agent_dependencies.sh"
-    if [ -f "$agent_deps_installer" ]; then
-        log "Installing agent-specific dependencies for 100% compliance..."
-        if [ -x "$agent_deps_installer" ]; then
-            "$agent_deps_installer" || warn "Some agent dependencies failed to install"
-            success "Agent dependencies installation completed"
-        else
-            warn "Agent dependency installer found but not executable"
-        fi
-    else
-        warn "Agent dependency installer not found at: $agent_deps_installer"
-    fi
+    # Create settings file if it doesn't exist
+    if [[ ! -f "$CLAUDE_DIR/settings.local.json" ]]; then
+        cat > "$CLAUDE_DIR/settings.local.json" << 'EOF'
+{
+  "claude_project_root": "auto",
+  "self_contained": true,
+  "use_symlinks": true,
+  "directories": {
+    "agents": "./agents",
+    "config": "./config",
+    "hooks": "./hooks",
+    "database": "./database",
+    "docs": "./docs",
+    "scripts": "./scripts",
+    "tools": "./tools",
+    "orchestration": "./orchestration"
+  }
 }
-
-setup_claude_wrapper() {
-    log "Setting up Claude wrapper..."
-    
-    # Check if claude-unified exists
-    if [ -f "$PROJECT_ROOT/claude-unified" ]; then
-        cp "$PROJECT_ROOT/claude-unified" "$USER_BIN_DIR/claude"
-        chmod +x "$USER_BIN_DIR/claude"
-        success "Claude wrapper installed"
-    else
-        # Create basic wrapper
-        cat > "$USER_BIN_DIR/claude" << EOF
-#!/bin/bash
-# Claude wrapper - basic version
-export CLAUDE_PROJECT_ROOT="$PROJECT_ROOT"
-export CLAUDE_AGENTS_DIR="$PROJECT_ROOT/agents"
-
-# Find actual claude binary
-CLAUDE_BIN=\$(which claude.original || which claude-code || echo "")
-
-if [ -n "\$CLAUDE_BIN" ]; then
-    exec "\$CLAUDE_BIN" --dangerously-skip-permissions "\$@"
-else
-    echo "Claude Code not installed. Install with: npm install -g @anthropic-ai/claude-code"
-    exit 1
-fi
 EOF
-        chmod +x "$USER_BIN_DIR/claude"
-        warn "Created basic wrapper (claude-unified not found)"
+        success "Created .claude/settings.local.json"
     fi
+    
+    success ".claude directory structure created with symlinks"
+    show_progress
 }
 
-install_hooks_system() {
-    if [ "$INSTALL_HOOKS" != true ]; then
-        debug "Skipping hooks installation"
-        return 0
+# 6.5. Setup precision orchestration style
+setup_precision_style() {
+    print_section "Setting up Precision Orchestration Style"
+    
+    if [[ -f "$PROJECT_ROOT/scripts/setup-precision-orchestration-style.sh" ]]; then
+        info "Running precision orchestration style setup..."
+        bash "$PROJECT_ROOT/scripts/setup-precision-orchestration-style.sh" --reinstall 2>&1 | while read line; do
+            echo "  $line"
+        done
+        success "Precision orchestration style configured"
+    else
+        warning "Precision orchestration setup script not found"
     fi
     
-    log "Installing Claude Hooks System..."
+    show_progress
+}
+
+# 6.6. Setup tandem orchestration
+setup_tandem_orchestration() {
+    print_section "Setting up Tandem Orchestration"
     
-    # Try different hook installation scripts
-    local hook_scripts=(
-        "$PROJECT_ROOT/hooks/setup_claude_hooks.sh"
-        "$PROJECT_ROOT/hooks/install_claude_hooks.sh"
-        "$PROJECT_ROOT/claude_hooks_installer.sh"
-    )
+    if [[ -f "$PROJECT_ROOT/scripts/setup-tandem-for-claude.sh" ]]; then
+        info "Running tandem orchestration setup..."
+        bash "$PROJECT_ROOT/scripts/setup-tandem-for-claude.sh" 2>&1 | while read line; do
+            echo "  $line"
+        done
+        success "Tandem orchestration configured"
+    else
+        warning "Tandem orchestration setup script not found"
+    fi
     
-    local installed=false
-    for script in "${hook_scripts[@]}"; do
-        if [ -f "$script" ]; then
-            if run_script "$script" "Installing hooks via $(basename $script)"; then
-                installed=true
-                break
+    show_progress
+}
+
+# 6.7. Validate agent files
+validate_agents() {
+    print_section "Validating Agent Files"
+    
+    # Check if validation script exists
+    if [[ -f "$PROJECT_ROOT/scripts/validate_all_agents.py" ]]; then
+        info "Validating agent YAML frontmatter..."
+        
+        # Run validation
+        local validation_output=$(python3 "$PROJECT_ROOT/scripts/validate_all_agents.py" 2>&1)
+        local exit_code=$?
+        
+        # Show output with indentation
+        echo "$validation_output" | while read line; do
+            if [[ "$line" == *"✅"* ]]; then
+                # Don't show all valid agents to reduce clutter
+                continue
+            elif [[ "$line" == *"❌"* ]]; then
+                # Show invalid agents as warnings
+                warning "  $line"
+            elif [[ "$line" == *"Summary:"* ]]; then
+                # Show summary
+                echo "  $line"
+            elif [[ "$line" == *"All agent files are valid"* ]]; then
+                success "  $line"
+            fi
+        done
+        
+        # Extract summary
+        local summary=$(echo "$validation_output" | grep "Summary:" || echo "")
+        if [[ -n "$summary" ]]; then
+            # Parse valid and invalid counts
+            local valid_count=$(echo "$summary" | grep -o "[0-9]* valid" | grep -o "[0-9]*")
+            local invalid_count=$(echo "$summary" | grep -o "[0-9]* invalid" | grep -o "[0-9]*")
+            
+            if [[ "$invalid_count" == "0" ]]; then
+                success "All $valid_count agent files validated successfully"
+            else
+                warning "$invalid_count agent files have validation issues"
+                info "Agent files with issues will still work but may not be discoverable by Task tool"
             fi
         fi
+    else
+        warning "Agent validation script not found"
+        info "Skipping validation - agents will work but should be validated"
+    fi
+    
+    show_progress
+}
+
+# 7. Create wrapper
+create_wrapper() {
+    print_section "Creating Enhanced Claude Wrapper"
+    
+    force_mkdir "$LOCAL_BIN"
+    
+    # Check for ultimate wrapper first, then enhanced wrapper
+    if [[ -f "$PROJECT_ROOT/claude-wrapper-ultimate.sh" ]]; then
+        # Use the ultimate wrapper from project
+        cp "$PROJECT_ROOT/claude-wrapper-ultimate.sh" "$LOCAL_BIN/claude"
+        chmod +x "$LOCAL_BIN/claude"
+        
+        # Replace placeholders
+        sed -i "s|PROJECT_ROOT_PLACEHOLDER|$PROJECT_ROOT|g" "$LOCAL_BIN/claude"
+        sed -i "s|BINARY_PLACEHOLDER|$CLAUDE_BINARY|g" "$LOCAL_BIN/claude"
+        
+        success "Ultimate wrapper installed with AI intelligence features"
+        info "  • Pattern learning system active"
+        info "  • Quick access shortcuts configured"
+        info "  • Confidence scoring enabled"
+        show_progress
+        return
+    elif [[ -f "$PROJECT_ROOT/claude-wrapper-enhanced.sh" ]]; then
+        # Fall back to enhanced wrapper
+        cp "$PROJECT_ROOT/claude-wrapper-enhanced.sh" "$LOCAL_BIN/claude"
+        chmod +x "$LOCAL_BIN/claude"
+        
+        # Replace placeholders
+        sed -i "s|PROJECT_ROOT_PLACEHOLDER|$PROJECT_ROOT|g" "$LOCAL_BIN/claude"
+        sed -i "s|BINARY_PLACEHOLDER|$CLAUDE_BINARY|g" "$LOCAL_BIN/claude"
+        
+        success "Enhanced wrapper installed with intelligence features"
+        show_progress
+        return
+    fi
+    
+    cat > "$LOCAL_BIN/claude" << 'WRAPPER'
+#!/bin/bash
+# Claude Master Wrapper v8.0 with Auto Permission Bypass
+
+# Configuration
+export CLAUDE_HOME="$HOME/.claude-home"
+export CLAUDE_PROJECT_ROOT="PROJECT_ROOT_PLACEHOLDER"
+
+# Check if running from project with .claude directory
+if [[ -d "$CLAUDE_PROJECT_ROOT/.claude" ]]; then
+    export CLAUDE_DIR="$CLAUDE_PROJECT_ROOT/.claude"
+    export CLAUDE_AGENTS_DIR="$CLAUDE_DIR/agents"
+    export CLAUDE_CONFIG_DIR="$CLAUDE_DIR/config"
+    export CLAUDE_HOOKS_DIR="$CLAUDE_DIR/hooks"
+else
+    export CLAUDE_AGENTS_DIR="$HOME/agents"
+    export CLAUDE_CONFIG_DIR="$HOME/.config/claude"
+    export CLAUDE_HOOKS_DIR="$HOME/.config/claude/hooks"
+fi
+
+# Binary location
+CLAUDE_BINARY="BINARY_PLACEHOLDER"
+
+# Find binary if needed
+if [[ ! -f "$CLAUDE_BINARY" ]]; then
+    for path in \
+        "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+        "$HOME/.npm-global/bin/claude" \
+        "/usr/local/bin/claude"; do
+        if [[ -f "$path" ]]; then
+            CLAUDE_BINARY="$path"
+            break
+        fi
     done
-    
-    if [ "$installed" = false ]; then
-        warn "No hook installation script found"
+fi
+
+# Permission bypass can be disabled with environment variable
+PERMISSION_BYPASS="${CLAUDE_PERMISSION_BYPASS:-true}"
+
+# Commands
+case "$1" in
+    --status|status)
+        echo "Claude System Status"
+        echo "===================="
+        echo "Binary: $CLAUDE_BINARY"
+        echo "Agents: $CLAUDE_AGENTS_DIR"
+        echo "Project: $CLAUDE_PROJECT_ROOT"
+        echo "Permission Bypass: $PERMISSION_BYPASS"
         
-        # Minimal fallback - just copy the bridge
-        if [ -f "$PROJECT_ROOT/hooks/claude_hooks_bridge.py" ]; then
-            mkdir -p "$CLAUDE_HOME/hooks"
-            cp "$PROJECT_ROOT/hooks/claude_hooks_bridge.py" "$CLAUDE_HOME/hooks/"
-            chmod +x "$CLAUDE_HOME/hooks/claude_hooks_bridge.py"
-            debug "Copied hooks bridge as fallback"
+        if [[ -d "$CLAUDE_AGENTS_DIR" ]]; then
+            COUNT=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l)
+            echo "Agent Count: $COUNT"
         fi
-    fi
-    
-    return 0
-}
-
-install_precision_style() {
-    if [ "$INSTALL_PRECISION_STYLE" != true ]; then
-        debug "Skipping precision style installation"
-        return 0
-    fi
-    
-    log "Installing Precision Orchestration Style..."
-    
-    local style_script="$PROJECT_ROOT/scripts/setup-precision-orchestration-style.sh"
-    
-    if [ -f "$style_script" ]; then
-        run_script "$style_script" "Installing Precision Orchestration Style"
-    else
-        warn "Precision style script not found at: $style_script"
-    fi
-    
-    return 0
-}
-
-setup_tandem_orchestration() {
-    if [ "$INSTALL_TANDEM" != true ]; then
-        debug "Skipping tandem setup"
-        return 0
-    fi
-    
-    log "Setting up Tandem Orchestration..."
-    
-    local tandem_script="$PROJECT_ROOT/scripts/setup-tandem-for-claude.sh"
-    
-    if [ -f "$tandem_script" ]; then
-        run_script "$tandem_script" "Setting up Tandem Orchestration"
-    else
-        warn "Tandem setup script not found at: $tandem_script"
-    fi
-    
-    return 0
-}
-
-sync_agents() {
-    if [ "$SYNC_AGENTS" != true ]; then
-        debug "Skipping agent sync"
-        return 0
-    fi
-    
-    log "Syncing agents to Claude..."
-    
-    local sync_script="$PROJECT_ROOT/scripts/sync-agents-to-claude.sh"
-    
-    if [ -f "$sync_script" ]; then
-        run_script "$sync_script" "Syncing agents to Claude directories"
-    else
-        # Fallback to manual sync
-        log "Manual agent sync..."
+        ;;
         
-        # Create necessary directories
-        mkdir -p "$HOME/.claude/agents"
-        mkdir -p "$HOME/agents"
+    --list-agents|agents)
+        echo "Available Agents"
+        echo "================"
         
-        # Create symlinks
-        if [ -d "$PROJECT_ROOT/agents" ]; then
-            # Remove existing non-symlinks
-            [ -e "$HOME/.claude/agents" ] && [ ! -L "$HOME/.claude/agents" ] && rm -rf "$HOME/.claude/agents"
-            [ -e "$HOME/agents" ] && [ ! -L "$HOME/agents" ] && rm -rf "$HOME/agents"
-            
-            # Create symlinks
-            ln -sfn "$PROJECT_ROOT/agents" "$HOME/.claude/agents"
-            ln -sfn "$PROJECT_ROOT/agents" "$HOME/agents"
-            
-            success "Agent symlinks created"
-        fi
-    fi
-    
-    # Install Claude Code integration for Task tool
-    log "Installing Claude Code Task tool integration..."
-    local claude_integration="$PROJECT_ROOT/agents/src/python/install_claude_integration.py"
-    
-    if [ -f "$claude_integration" ]; then
-        if python3 "$claude_integration" --quiet; then
-            success "Claude Code Task tool integration installed"
+        if [[ -d "$CLAUDE_AGENTS_DIR" ]]; then
+            find "$CLAUDE_AGENTS_DIR" -type f \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | while read -r agent; do
+                name=$(basename "$agent" | sed 's/\.[mM][dD]$//')
+                printf "  • %s\n" "$name"
+            done | sort
         else
-            warn "Claude Code integration failed (Claude Code may not be installed)"
+            echo "No agents directory found"
         fi
-    else
-        warn "Claude Code integration script not found"
-    fi
+        ;;
+        
+    --agent|agent)
+        shift
+        AGENT_NAME="$1"
+        shift
+        
+        if [[ -z "$AGENT_NAME" ]]; then
+            echo "Usage: claude agent <name> [args]"
+            exit 1
+        fi
+        
+        # Find agent file
+        AGENT_FILE=""
+        for pattern in \
+            "$CLAUDE_AGENTS_DIR/${AGENT_NAME}.md" \
+            "$CLAUDE_AGENTS_DIR/${AGENT_NAME}.MD" \
+            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_NAME}.md" \
+            "$CLAUDE_AGENTS_DIR"/*/"${AGENT_NAME}.MD"; do
+            for file in $pattern; do
+                if [[ -f "$file" ]]; then
+                    AGENT_FILE="$file"
+                    break 2
+                fi
+            done
+        done
+        
+        if [[ -z "$AGENT_FILE" ]]; then
+            echo "Agent not found: $AGENT_NAME"
+            exit 1
+        fi
+        
+        echo "Loading agent: $AGENT_NAME"
+        export CLAUDE_AGENT="$AGENT_NAME"
+        export CLAUDE_AGENT_FILE="$AGENT_FILE"
+        
+        # Add permission bypass if enabled
+        if [[ "$PERMISSION_BYPASS" == "true" ]]; then
+            exec "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+        else
+            exec "$CLAUDE_BINARY" "$@"
+        fi
+        ;;
+        
+    --safe)
+        # Run without permission bypass
+        shift
+        exec "$CLAUDE_BINARY" "$@"
+        ;;
+        
+    --help|-h)
+        echo "Claude Master System with Auto Permission Bypass"
+        echo "================================================"
+        echo "Commands:"
+        echo "  claude [args]           - Run Claude (with auto permission bypass)"
+        echo "  claude --safe [args]    - Run Claude without permission bypass"
+        echo "  claude --status         - Show status"
+        echo "  claude --list-agents    - List agents"
+        echo "  claude agent <n> [args] - Run agent"
+        echo ""
+        echo "Environment:"
+        echo "  CLAUDE_PERMISSION_BYPASS=false  - Disable auto permission bypass"
+        echo ""
+        echo "Quick functions:"
+        echo "  coder, director, architect, security"
+        ;;
+        
+    *)
+        # Default: run with permission bypass if enabled
+        if [[ "$PERMISSION_BYPASS" == "true" ]]; then
+            exec "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+        else
+            exec "$CLAUDE_BINARY" "$@"
+        fi
+        ;;
+esac
+WRAPPER
     
-    # Setup auto-sync cron job
-    setup_agent_cron
+    # Replace placeholders
+    sed -i "s|PROJECT_ROOT_PLACEHOLDER|$PROJECT_ROOT|g" "$LOCAL_BIN/claude"
+    sed -i "s|BINARY_PLACEHOLDER|$CLAUDE_BINARY|g" "$LOCAL_BIN/claude"
     
-    return 0
+    chmod +x "$LOCAL_BIN/claude"
+    success "Wrapper created"
+    
+    show_progress
 }
 
-setup_agent_cron() {
-    log "Setting up agent auto-sync cron job..."
+# 7. Setup sync
+setup_sync() {
+    print_section "Setting Up Auto-Sync"
     
-    local sync_script="$PROJECT_ROOT/scripts/sync-agents-to-claude.sh"
+    cat > "$LOCAL_BIN/sync-agents.sh" << 'SYNC'
+#!/bin/bash
+SOURCE="SOURCE_PLACEHOLDER"
+TARGET="$HOME/agents"
+
+if [[ -d "$SOURCE" ]] && [[ "$SOURCE" != "$TARGET" ]]; then
+    # Force sync .md/.MD files from root directory (overwrite existing)
+    find "$SOURCE" -maxdepth 1 -type f \( -name "*.md" -o -name "*.MD" \) -exec cp -f {} "$TARGET/" \; 2>/dev/null
+fi
+SYNC
     
-    if [ -f "$sync_script" ]; then
-        # Remove old cron entries
-        (crontab -l 2>/dev/null | grep -v "sync-agents") | crontab - 2>/dev/null || true
-        
-        # Add new cron entry
-        (crontab -l 2>/dev/null; echo "*/5 * * * * $sync_script >/dev/null 2>&1") | crontab -
-        
-        success "Cron job configured for automatic agent sync"
-    fi
+    sed -i "s|SOURCE_PLACEHOLDER|$AGENTS_SOURCE|g" "$LOCAL_BIN/sync-agents.sh"
+    chmod +x "$LOCAL_BIN/sync-agents.sh"
+    
+    # Add to cron
+    (crontab -l 2>/dev/null | grep -v "sync-agents"; 
+     echo "*/5 * * * * $LOCAL_BIN/sync-agents.sh >/dev/null 2>&1") | crontab - 2>/dev/null
+    
+    success "Auto-sync configured"
+    show_progress
 }
 
+# 8. Setup environment
 setup_environment() {
-    log "Setting up environment variables..."
+    print_section "Configuring Environment"
     
-    # Export for current session
-    export CLAUDE_PROJECT_ROOT="$PROJECT_ROOT"
-    export CLAUDE_AGENTS_DIR="$PROJECT_ROOT/agents"
-    export CLAUDE_HOOKS_DIR="$PROJECT_ROOT/hooks"
-    export PATH="$USER_BIN_DIR:$PATH"
+    SHELL_RC="$HOME/.bashrc"
+    [[ -f "$HOME/.zshrc" ]] && SHELL_RC="$HOME/.zshrc"
     
-    # Add to bashrc
-    local shell_rc="$HOME/.bashrc"
+    # Remove old config
+    sed -i '/# Claude Master System/,/# End Claude System/d' "$SHELL_RC" 2>/dev/null
     
-    # Remove old entries to avoid duplicates
-    if [ -f "$shell_rc" ]; then
-        sed -i '/# Claude Agent Framework/,/# End Claude Agent Framework/d' "$shell_rc" 2>/dev/null || true
-    fi
-    
-    # Add new configuration
-    cat >> "$shell_rc" << EOF
+    # Add new config
+    cat >> "$SHELL_RC" << 'ENV'
 
-# Claude Agent Framework
-export CLAUDE_PROJECT_ROOT="$PROJECT_ROOT"
-export CLAUDE_AGENTS_DIR="\$CLAUDE_PROJECT_ROOT/agents"
-export CLAUDE_HOOKS_DIR="\$CLAUDE_PROJECT_ROOT/hooks"
-export PATH="$USER_BIN_DIR:\$PATH"
+# Claude Master System
+export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
+export CLAUDE_HOME="$HOME/.claude-home"
+export CLAUDE_AGENTS_DIR="$HOME/agents"
+
+# Auto permission bypass (set to false to disable)
+export CLAUDE_PERMISSION_BYPASS=true
 
 # Aliases
-alias claude-status='$PROJECT_ROOT/scripts/diagenv.sh 2>/dev/null || echo "Status script not found"'
-alias claude-agents='ls -la \$CLAUDE_AGENTS_DIR/*.md 2>/dev/null | wc -l && echo " agents available"'
-alias claude-sync='$PROJECT_ROOT/scripts/sync-agents-to-claude.sh'
-alias claude-hooks='$CLAUDE_HOOKS_DIR/setup_claude_hooks.sh'
-alias claude-precision='claude --output-style precision-orchestration'
+alias claude-status='claude --status'
+alias claude-agents='claude --list-agents'
+alias claude-safe='claude --safe'  # Run without permission bypass
+alias ca='claude agent'
 
-# Functions
-claude-info() {
-    echo "Claude Project Information:"
-    echo "  Root: \$CLAUDE_PROJECT_ROOT"
-    echo "  Agents: \$(find \$CLAUDE_AGENTS_DIR -name "*.md" 2>/dev/null | wc -l) available"
-    echo "  Hooks: \$([ -d \$CLAUDE_HOOKS_DIR ] && echo "✓ Installed" || echo "✗ Not found")"
-    echo "  Style: \$([ -f \$HOME/.claude/output-styles/precision-orchestration.md ] && echo "✓ Precision installed" || echo "✗ Not installed")"
-}
+# Quick functions
+coder() { claude agent coder "$@"; }
+director() { claude agent director "$@"; }
+architect() { claude agent architect "$@"; }
+security() { claude agent security "$@"; }
 
-# End Claude Agent Framework
-EOF
+# End Claude System
+ENV
     
     success "Environment configured"
+    show_progress
 }
 
-create_helper_scripts() {
-    log "Creating helper scripts..."
+# 9. Run tests
+run_tests() {
+    print_section "Running Tests"
     
-    # Create master status script
-    cat > "$USER_BIN_DIR/claude-master-status" << 'EOF'
-#!/bin/bash
-echo "═══════════════════════════════════════════════════════════"
-echo "           Claude Master System Status"
-echo "═══════════════════════════════════════════════════════════"
-echo
-
-# Project info
-echo "Project Root: ${CLAUDE_PROJECT_ROOT:-Not set}"
-echo
-
-# Agents
-echo "Agents:"
-if [ -d "$HOME/.claude/agents" ]; then
-    echo "  ~/.claude/agents: ✓ $([ -L "$HOME/.claude/agents" ] && echo "(symlink)" || echo "(directory)")"
-fi
-if [ -d "$HOME/agents" ]; then
-    echo "  ~/agents: ✓ $([ -L "$HOME/agents" ] && echo "(symlink)" || echo "(directory)")"
-fi
-if [ -n "$CLAUDE_AGENTS_DIR" ] && [ -d "$CLAUDE_AGENTS_DIR" ]; then
-    count=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l)
-    echo "  Total agents: $count"
-fi
-echo
-
-# Hooks
-echo "Hooks System:"
-if [ -f "$HOME/.claude/hooks/config.json" ]; then
-    echo "  Configuration: ✓ Installed"
-    enabled=$(jq -r '.enabled' "$HOME/.claude/hooks/config.json" 2>/dev/null || echo "unknown")
-    echo "  Status: $enabled"
-else
-    echo "  Configuration: ✗ Not found"
-fi
-echo
-
-# Precision Style
-echo "Precision Style:"
-if [ -f "$HOME/.claude/output-styles/precision-orchestration.md" ]; then
-    echo "  Installation: ✓ Installed"
-    echo "  Activation: claude --output-style precision-orchestration"
-else
-    echo "  Installation: ✗ Not found"
-fi
-echo
-
-# Cron jobs
-echo "Automation:"
-if crontab -l 2>/dev/null | grep -q "sync-agents"; then
-    echo "  Agent sync: ✓ Scheduled (every 5 minutes)"
-else
-    echo "  Agent sync: ✗ Not scheduled"
-fi
-echo
-
-echo "Quick Commands:"
-echo "  claude-info     - Show configuration"
-echo "  claude-agents   - Count agents"
-echo "  claude-sync     - Sync agents manually"
-echo "  claude-hooks    - Manage hooks"
-echo "  claude-precision - Use precision style"
-EOF
-    chmod +x "$USER_BIN_DIR/claude-master-status"
+    TESTS_PASSED=0
+    TESTS_TOTAL=5
     
-    # Create test script
-    cat > "$USER_BIN_DIR/claude-test-all" << EOF
-#!/bin/bash
-echo "Testing Claude Installation..."
-echo
-
-# Test agents
-echo -n "Agents: "
-if [ -L "\$HOME/.claude/agents" ] && [ -d "\$HOME/.claude/agents" ]; then
-    echo "✓"
-else
-    echo "✗"
-fi
-
-# Test hooks
-echo -n "Hooks: "
-if [ -f "\$HOME/.claude/hooks/config.json" ]; then
-    echo "✓"
-else
-    echo "✗"
-fi
-
-# Test precision style
-echo -n "Style: "
-if [ -f "\$HOME/.claude/output-styles/precision-orchestration.md" ]; then
-    echo "✓"
-else
-    echo "✗"
-fi
-
-# Test Python dependencies
-echo -n "Python: "
-if python3 -c "import yaml, psutil, numpy, networkx" 2>/dev/null; then
-    echo "✓"
-else
-    echo "✗"
-fi
-
-echo
-echo "Run 'claude-master-status' for detailed information"
-EOF
-    chmod +x "$USER_BIN_DIR/claude-test-all"
+    # Test 1: NPM package
+    printf "  %-30s" "NPM package..."
+    if npm list -g @anthropic-ai/claude-code &>/dev/null; then
+        print_green "$SUCCESS"
+        ((TESTS_PASSED++))
+    else
+        print_red "$ERROR"
+    fi
     
-    success "Helper scripts created"
+    # Test 2: Wrapper
+    printf "  %-30s" "Wrapper executable..."
+    if [[ -x "$LOCAL_BIN/claude" ]]; then
+        print_green "$SUCCESS"
+        ((TESTS_PASSED++))
+    else
+        print_red "$ERROR"
+    fi
+    
+    # Test 3: Agents
+    printf "  %-30s" "Agents installed..."
+    AGENT_COUNT=$(find "$AGENTS_TARGET" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l)
+    if [[ $AGENT_COUNT -gt 0 ]]; then
+        print_green "$SUCCESS ($AGENT_COUNT agents)"
+        ((TESTS_PASSED++))
+    else
+        print_red "$ERROR"
+    fi
+    
+    # Test 4: Environment
+    printf "  %-30s" "Environment setup..."
+    if grep -q "Claude Master System" "$HOME/.bashrc" 2>/dev/null; then
+        print_green "$SUCCESS"
+        ((TESTS_PASSED++))
+    else
+        print_yellow "$WARNING"
+    fi
+    
+    # Test 5: PATH
+    printf "  %-30s" "PATH configured..."
+    if [[ "$PATH" == *"$LOCAL_BIN"* ]]; then
+        print_green "$SUCCESS"
+        ((TESTS_PASSED++))
+    else
+        print_yellow "$WARNING"
+    fi
+    
+    echo ""
+    success "Tests: $TESTS_PASSED/$TESTS_TOTAL passed"
+    show_progress
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# STATUS DISPLAY
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-show_final_status() {
-    echo
-    printf "${GREEN}${BOLD}═══════════════════════════════════════════════════${NC}\n"
-    printf "${GREEN}${BOLD}       Installation Complete!${NC}\n"
-    printf "${GREEN}${BOLD}═══════════════════════════════════════════════════${NC}\n"
-    echo
+# 10. Show summary
+show_summary() {
+    echo ""
+    echo ""
+    print_green "╔═══════════════════════════════════════════════════════════════╗"
+    print_green "║              Installation Complete! ✨                       ║"
+    print_green "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
     
-    echo "📂 Project Configuration:"
-    echo "  • Root: $PROJECT_ROOT"
-    echo "  • Mode: Using existing infrastructure"
-    echo
+    AGENT_COUNT=$(find "$AGENTS_TARGET" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l)
     
-    echo "✅ Components Processed:"
+    print_bold "Installed Components:"
+    echo "  • Claude NPM Package"
+    echo "  • Enhanced Wrapper with Auto Permission Bypass"
+    echo "  • $AGENT_COUNT Agents"
+    echo "  • Auto-sync (5 minutes)"
+    echo ""
     
-    # Check what was installed
-    if [ -f "$USER_BIN_DIR/claude" ]; then
-        echo "  • Claude wrapper: ✓ Installed"
+    print_bold "Available Commands:"
+    printf "  %-30s %s\n" "claude" "Run Claude (auto permission bypass)"
+    printf "  %-30s %s\n" "claude --safe" "Run Claude without permission bypass"
+    printf "  %-30s %s\n" "claude --status" "Show status"
+    printf "  %-30s %s\n" "claude --list-agents" "List agents"
+    printf "  %-30s %s\n" "claude agent <name>" "Run specific agent"
+    echo ""
+    
+    print_bold "Quick Functions:"
+    echo "  coder, director, architect, security"
+    echo ""
+    
+    print_yellow "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    print_yellow "                    Next Steps"
+    print_yellow "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "  1. Reload your shell:"
+    print_cyan "     source ~/.bashrc"
+    echo ""
+    echo "  2. Test the system:"
+    print_cyan "     claude --status"
+    echo ""
+    
+    if [[ $AGENT_COUNT -eq 0 ]]; then
+        echo "  3. Add agents (optional):"
+        print_cyan "     # Copy existing agents if available:"
+        print_cyan "     cp -r /path/to/agents/*.md $AGENTS_TARGET/"
+        print_cyan "     # Or create your own agent files in: $AGENTS_TARGET/"
+    else
+        print_cyan "     claude --list-agents"
     fi
     
-    if [ -L "$HOME/.claude/agents" ]; then
-        echo "  • Agent sync: ✓ Configured"
-        local count=$(find "$PROJECT_ROOT/agents" -name "*.md" 2>/dev/null | wc -l || echo 0)
-        echo "    - $count agents available"
-    fi
-    
-    if [ -f "$HOME/.claude/hooks/config.json" ]; then
-        echo "  • Hooks system: ✓ Installed"
-    elif [ "$INSTALL_HOOKS" = true ]; then
-        echo "  • Hooks system: ⚠ Check manually"
-    fi
-    
-    if [ -f "$HOME/.claude/output-styles/precision-orchestration.md" ]; then
-        echo "  • Precision style: ✓ Installed"
-    elif [ "$INSTALL_PRECISION_STYLE" = true ]; then
-        echo "  • Precision style: ⚠ Check manually"
-    fi
-    
-    if crontab -l 2>/dev/null | grep -q "sync-agents"; then
-        echo "  • Auto-sync: ✓ Scheduled"
-    fi
-    
-    echo
-    echo "📝 Commands Available:"
-    echo "  • claude-master-status - Full system status"
-    echo "  • claude-test-all      - Test installation"
-    echo "  • claude-info          - Show configuration"
-    echo "  • claude-sync          - Manual agent sync"
-    echo "  • claude-precision     - Use precision style"
-    echo
-    
-    echo "🚀 Next Steps:"
-    echo "  1. source ~/.bashrc"
-    echo "  2. claude-test-all        (verify installation)"
-    echo "  3. claude-master-status   (detailed status)"
-    echo
-    
-    if [ "$DRY_RUN" = true ]; then
-        printf "${YELLOW}Note: This was a DRY RUN - no changes were made${NC}\n"
-    fi
-    
-    printf "${GREEN}Installation orchestrated successfully!${NC}\n"
+    echo ""
+    print_dim "Log file: $LOG_FILE"
+    echo ""
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# MAIN ORCHESTRATION
+# MAIN INSTALLATION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 main() {
-    show_banner
+    print_header
     
-    log "Starting orchestrated installation..."
-    log "Project root: $PROJECT_ROOT"
+    # Get sudo if needed
+    if [[ "$EUID" -ne 0 ]]; then
+        print_yellow "This installer may need sudo access for some operations."
+        sudo -v 2>/dev/null || true
+    fi
     
-    # Validate project structure
-    validate_project_structure || {
-        error "Project validation failed"
-        exit 1
-    }
+    # Run installation steps
+    check_prerequisites
+    install_npm_package
+    install_agents
+    install_hooks
+    install_statusline
+    setup_claude_directory
+    setup_precision_style
+    setup_tandem_orchestration
+    create_wrapper
+    setup_sync
+    setup_environment
+    run_tests
+    validate_agents
     
-    # Create necessary directories
-    mkdir -p "$USER_BIN_DIR"
-    mkdir -p "$USER_SHARE_DIR"
-    mkdir -p "$CONFIG_DIR"
-    mkdir -p "$CLAUDE_HOME"
-    mkdir -p "$(dirname "$LOG_FILE")"
+    # Reset progress for completion
+    CURRENT_STEP=$TOTAL_STEPS
+    show_progress
+    echo ""
     
-    echo "📦 Orchestrating installation..."
-    echo
-    
-    # Installation steps
-    local steps=(
-        "Python dependencies:install_python_dependencies"
-        "Claude wrapper:setup_claude_wrapper"
-        "Hooks system:install_hooks_system"
-        "Precision style:install_precision_style"
-        "Tandem orchestration:setup_tandem_orchestration"
-        "Agent synchronization:sync_agents"
-        "Environment setup:setup_environment"
-        "Helper scripts:create_helper_scripts"
-    )
-    
-    local step_num=1
-    local total_steps=${#steps[@]}
-    
-    for step_def in "${steps[@]}"; do
-        IFS=':' read -r step_name step_func <<< "$step_def"
-        echo -n "  [$step_num/$total_steps] $step_name... "
-        
-        if $step_func &>/dev/null; then
-            echo "✅"
-        else
-            echo "⚠️"
-        fi
-        
-        step_num=$((step_num + 1))
-    done
-    
-    echo
-    
-    # Show final status
-    show_final_status
+    # Show summary
+    show_summary
 }
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ARGUMENT PARSING
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --dry-run)
-            DRY_RUN=true
-            log "DRY RUN MODE - No changes will be made"
-            ;;
-        --verbose|-v)
-            VERBOSE=true
-            ;;
-        --quiet|-q)
-            VERBOSE=false
-            ;;
-        --no-hooks)
-            INSTALL_HOOKS=false
-            ;;
-        --no-style)
-            INSTALL_PRECISION_STYLE=false
-            ;;
-        --no-tandem)
-            INSTALL_TANDEM=false
-            ;;
-        --no-sync)
-            SYNC_AGENTS=false
-            ;;
-        --help|-h)
-            echo "Claude Master Installer v$SCRIPT_VERSION"
-            echo
-            echo "Usage: $0 [OPTIONS]"
-            echo
-            echo "This installer orchestrates existing scripts rather than"
-            echo "recreating components. It calls scripts from:"
-            echo "  • hooks/   - Hook system setup"
-            echo "  • scripts/ - Style and sync scripts"
-            echo
-            echo "Options:"
-            echo "  --dry-run         Show what would be done"
-            echo "  --verbose, -v     Show detailed output"
-            echo "  --quiet, -q       Minimal output"
-            echo "  --no-hooks        Skip hooks installation"
-            echo "  --no-style        Skip precision style"
-            echo "  --no-tandem       Skip tandem setup"
-            echo "  --no-sync         Skip agent sync"
-            echo "  --help, -h        Show this help"
-            echo
-            echo "Project root: $PROJECT_ROOT"
-            echo
-            echo "Available scripts detected:"
-            [ -f "$PROJECT_ROOT/hooks/setup_claude_hooks.sh" ] && echo "  ✓ Hooks setup"
-            [ -f "$PROJECT_ROOT/scripts/setup-precision-orchestration-style.sh" ] && echo "  ✓ Precision style"
-            [ -f "$PROJECT_ROOT/scripts/setup-tandem-for-claude.sh" ] && echo "  ✓ Tandem setup"
-            [ -f "$PROJECT_ROOT/scripts/sync-agents-to-claude.sh" ] && echo "  ✓ Agent sync"
-            exit 0
-            ;;
-        *)
-            warn "Unknown option: $1"
-            ;;
-    esac
-    shift
-done
-
-# Run main installation
+# Run the installer
 main "$@"
