@@ -7,7 +7,7 @@
 **Purpose**: Hardware-aware multi-agent orchestration system with Tandem Orchestration, optimized for Intel Meteor Lake architecture  
 **Status**: PRODUCTION  
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)  
-**Latest Feature**: Enhanced Agent Learning System v5.0 with PostgreSQL 17 Integration  
+**Latest Feature**: Global CLAUDE.md Auto-Invocation Integration with Enhanced Agent Learning System v5.0  
 **Database**: PostgreSQL 17 with pgvector extension, enhanced JSON, VACUUM improvements, and ML learning capabilities  
 **Agent Count**: 57 specialized agents (was 32) - Major expansion complete
 
@@ -25,6 +25,7 @@ This is a comprehensive agent-based system with **57 specialized agents** that c
 - **Tandem Orchestration**: Advanced Python-first orchestration system with C integration capability
 - **Dual-Layer Architecture**: Strategic Python layer + tactical C layer for maximum flexibility
 - **Command Sets**: High-level workflow abstraction for complex multi-agent coordination
+- **Global CLAUDE.md**: Comprehensive auto-invocation guide with 15k+ words of agent patterns
 - **Professional Organization**: Clean directory structure with database/, agents/, docs/, orchestration/
 
 ## Agent Ecosystem (57 Agents)
@@ -931,7 +932,32 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ## Recent Updates
 
-### PostgreSQL 17 Database System (2025-08-19) 🚀 LATEST
+### Global CLAUDE.md Auto-Invocation Integration (2025-08-24) 🚀 LATEST
+- **Location**: Root directory - Comprehensive agent auto-invocation guide
+- **Architecture**: Complete integration into claude-installer.sh with universal deployment
+- **Core Features**:
+  - **15,000+ word guide**: Detailed auto-invocation patterns for all 57 specialized agents
+  - **Universal installation**: Automatically deployed in all installation modes (full, quick, custom)
+  - **Embedded content**: Self-contained installation with comprehensive fallback content
+  - **Agent coordination patterns**: Complete keyword detection and routing rules
+- **Auto-Invocation Capabilities**:
+  - **21 immediate triggers**: Multi-step tasks, security keywords, performance optimization
+  - **57 agent patterns**: Specialized invocation rules for each agent category
+  - **Parallel execution support**: Advanced compound workflows with dependency resolution
+  - **Context-aware routing**: Intelligent agent selection based on task complexity
+- **Installation Integration**: 
+  - Enhanced `claude-installer.sh` with `install_global_claude_md()` function
+  - Automatic deployment in both full and quick installation modes
+  - Installation summary documentation with clear feature description
+  - Source file priority with comprehensive embedded fallback
+- **Status**: PRODUCTION READY - Complete auto-invocation guide deployment
+- **Benefits**: 
+  - **Zero configuration**: Automatic installation provides immediate agent access patterns
+  - **Comprehensive coverage**: All 57 agents with detailed invocation keywords and coordination
+  - **Universal compatibility**: Works across all installation types and user environments
+  - **Enhanced productivity**: Intelligent agent routing reduces manual coordination overhead
+
+### PostgreSQL 17 Database System (2025-08-19) 🚀
 - **Location**: `database/` directory - Complete PostgreSQL 17 upgrade
 - **Performance Revolution**: 2x authentication throughput improvement
 - **Core Enhancements**:
@@ -1265,7 +1291,8 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 *Last Updated: 2025-08-24*  
 *Framework Version: 7.0*  
-*Agent Count: 60 (was 32)*  
+*Agent Count: 57 specialized agents*  
+*Global CLAUDE.md: Auto-invocation integration complete*  
 *Global Agents Bridge: v10.0*  
 *Learning System: v5.0*  
-*Status: PRODUCTION - Full agent ecosystem accessible via claude-agent command*
+*Status: PRODUCTION - Complete auto-invocation guide with 15k+ word agent coordination patterns*

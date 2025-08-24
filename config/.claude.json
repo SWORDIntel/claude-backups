@@ -251,6 +251,10 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "revert this wrong repo",
+          "pastedContents": {}
+        },
+        {
           "display": "git push",
           "pastedContents": {}
         },
