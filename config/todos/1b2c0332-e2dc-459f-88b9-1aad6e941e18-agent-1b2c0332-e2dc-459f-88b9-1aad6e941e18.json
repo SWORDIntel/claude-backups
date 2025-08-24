@@ -1,22 +1,37 @@
 [
   {
-    "content": "Fix chroot execution issue",
+    "content": "Fix repository configuration in chroot environment",
     "status": "completed",
-    "activeForm": "Fixed chroot execution - now using proper /usr/sbin/chroot path"
+    "activeForm": "Fixed repository configuration in chroot environment"
   },
   {
-    "content": "Fix package repository update inside chroot",
+    "content": "Test improved build with DNS and locale fixes",
+    "status": "completed",
+    "activeForm": "Successfully tested improved build with DNS and locale fixes"
+  },
+  {
+    "content": "Fix Python module import errors",
+    "status": "completed",
+    "activeForm": "Fixed Python module import errors"
+  },
+  {
+    "content": "Run complete LiveCD build successfully",
+    "status": "completed",
+    "activeForm": "Successfully running complete LiveCD build"
+  },
+  {
+    "content": "Monitor build progress to completion",
     "status": "in_progress",
-    "activeForm": "Fixing package repository update inside chroot"
+    "activeForm": "Monitoring build progress to completion"
   },
   {
-    "content": "Complete vmdb2 test build",
+    "content": "Execute all 12 LiveCD modules sequentially",
     "status": "pending",
-    "activeForm": "Complete vmdb2 test build"
+    "activeForm": "Ready to execute all 12 LiveCD modules sequentially"
   },
   {
-    "content": "Create final ISO image",
+    "content": "Create final ISO image from completed build",
     "status": "pending",
-    "activeForm": "Create final ISO image"
+    "activeForm": "Ready to create final ISO image from completed build"
   }
 ]
