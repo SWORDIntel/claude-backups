@@ -755,9 +755,9 @@ class UltimatePostgreSQLLearningSystem:
         self.db_config = db_config or {
             'host': 'localhost',
             'port': 5432,
-            'database': 'claude_agents',
-            'user': 'postgres',
-            'password': 'your_password'
+            'database': 'claude_learning_db',
+            'user': 'claude_auth',
+            'password': 'claude_auth'
         }
         
         # Core components
