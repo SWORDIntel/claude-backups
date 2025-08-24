@@ -330,6 +330,7 @@ class PythonFallbackHandler:
             await asyncio.sleep(0.2)
             return {
                 "agent": "director",
+                "status": "completed",
                 "strategic_plan": f"Strategic plan for: {task}",
                 "phases": ["analysis", "design", "implementation", "validation"],
                 "timeline": "2-4 weeks",
@@ -364,6 +365,7 @@ class PythonFallbackHandler:
             await asyncio.sleep(0.1)
             return {
                 "agent": "security",
+                "status": "completed",
                 "analysis": "security assessment",
                 "vulnerabilities": [],
                 "recommendations": ["enable TLS", "add authentication", "implement RBAC"]

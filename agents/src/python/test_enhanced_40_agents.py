@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Comprehensive Test Script for All 40 Agents with Enhanced Registry
+Comprehensive Test Script for All 55+ Agents with Enhanced Registry
 Tests the complete agent ecosystem with Python fallback support
+Updated for the expanded agent collection with specializations
 """
 
 import asyncio

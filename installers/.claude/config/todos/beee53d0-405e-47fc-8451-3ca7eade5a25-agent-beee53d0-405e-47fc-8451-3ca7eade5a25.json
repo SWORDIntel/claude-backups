@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "content": "Test system with psyops agent",
+    "status": "completed",
+    "activeForm": "Testing system with psyops agent"
+  },
+  {
+    "content": "Commit and push integrated system",
+    "status": "in_progress",
+    "activeForm": "Committing and pushing integrated system"
+  }
+]
