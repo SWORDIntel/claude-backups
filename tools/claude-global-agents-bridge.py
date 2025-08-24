@@ -64,19 +64,26 @@ class SystemCapability:
     def _check_c_layer(self) -> Dict[str, Any]:
         """Check if C binary layer is running"""
         try:
-            # Check for agent_bridge process
-            result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
-            c_available = 'agent_bridge' in result.stdout or 'ultra_hybrid' in result.stdout
+            # Check for actual C binary processes (not Python scripts with similar names)
+            result = subprocess.run(['ps', 'auxww'], capture_output=True, text=True)
+            # Look for actual binary processes, not Python scripts
+            lines = result.stdout.split('\n')
+            c_processes = [line for line in lines if ('agent_bridge' in line or 'ultra_hybrid' in line) and 'python' not in line]
+            c_available = len(c_processes) > 0
             
-            # Check for binary file using relative path
+            # Check for compiled binary file
             agents_root = Path(os.environ.get('CLAUDE_AGENTS_ROOT', os.getcwd()))
             binary_path = agents_root / 'binary-communications-system' / 'ultra_hybrid_enhanced'
-            binary_exists = binary_path.exists()
+            binary_exists = binary_path.exists() and binary_path.is_file() and not str(binary_path).endswith('.c')
+            
+            # C bridge should only be available if we have AVX-512 support
+            avx512_available = self._check_avx512()
             
             return {
-                'available': c_available,
+                'available': c_available and avx512_available,
                 'process_running': c_available,
                 'binary_exists': binary_exists,
+                'avx512_required': not avx512_available,
                 'status_file': Path('/tmp/binary_bridge_status').exists()
             }
         except:
