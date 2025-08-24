@@ -1,18 +1,8 @@
--- Learning System Schema Evolution to v3.1 - POSTGRESQL 16/17 COMPATIBLE
--- Complete database schema update to match postgresql_learning_system.py expectations
--- Compatible with both PostgreSQL 16 and 17 using json_build_array()/json_build_object()
+-- Learning System Schema Evolution to v3.1 - PostgreSQL 16/17 Compatible
+-- Complete database schema update with compatibility for both PostgreSQL 16 and 17
+-- Uses json_build_array() and json_build_object() instead of PostgreSQL 17-only functions
 
 BEGIN;
-
--- PostgreSQL Version Detection Function
-CREATE OR REPLACE FUNCTION get_postgres_version() RETURNS INTEGER AS $$
-BEGIN
-    RETURN (
-        SELECT CAST(split_part(version(), ' ', 2) AS FLOAT)::INTEGER
-        FROM version()
-    );
-END;
-$$ LANGUAGE plpgsql;
 
 -- Add missing columns to agent_task_executions table
 ALTER TABLE agent_task_executions 
@@ -25,21 +15,18 @@ ALTER TABLE agent_performance_metrics
 ADD COLUMN IF NOT EXISTS cognitive_load_score FLOAT DEFAULT 0.0;
 
 -- Create complete ml_models table
-CREATE TABLE IF NOT EXISTS ml_models (
-    model_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    model_name VARCHAR(64) NOT NULL,
-    model_type VARCHAR(32) NOT NULL,
-    model_version VARCHAR(16) DEFAULT 'v3.1',
-    model_data JSONB NOT NULL DEFAULT '{}'::jsonb,
-    feature_importance JSONB DEFAULT '{}'::jsonb,
-    training_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    training_samples INTEGER DEFAULT 0,
-    validation_accuracy FLOAT DEFAULT 0.0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(model_name, model_version)
-);
+-- Enhance ml_models table to match existing schema
+DO $$
+BEGIN
+    -- Add missing columns to existing ml_models table if they don't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ml_models' AND column_name = 'created_at') THEN
+        ALTER TABLE ml_models ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ml_models' AND column_name = 'updated_at') THEN
+        ALTER TABLE ml_models ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+    END IF;
+END $$;
 
 -- Create advanced learning analytics table
 CREATE TABLE IF NOT EXISTS learning_analytics (
@@ -125,7 +112,34 @@ CREATE TRIGGER ml_models_update_trigger
     BEFORE UPDATE ON ml_models
     FOR EACH ROW EXECUTE FUNCTION update_ml_model_stats();
 
--- Advanced materialized view for learning dashboard
+-- PostgreSQL 16/17 compatible JSON functions
+CREATE OR REPLACE FUNCTION get_compatible_json_array() RETURNS jsonb AS $$
+BEGIN
+    -- Test if PostgreSQL 17 JSON_ARRAY() function is available
+    BEGIN
+        EXECUTE 'SELECT JSON_ARRAY()';
+        RETURN 'JSON_ARRAY()'::jsonb;
+    EXCEPTION
+        WHEN undefined_function THEN
+            RETURN '[]'::jsonb;
+    END;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_compatible_json_object() RETURNS jsonb AS $$
+BEGIN
+    -- Test if PostgreSQL 17 JSON_OBJECT() function is available  
+    BEGIN
+        EXECUTE 'SELECT JSON_OBJECT()';
+        RETURN '{}'::jsonb;
+    EXCEPTION
+        WHEN undefined_function THEN
+            RETURN '{}'::jsonb;
+    END;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Advanced materialized view for learning dashboard (PostgreSQL 16/17 compatible)
 CREATE MATERIALIZED VIEW IF NOT EXISTS advanced_learning_dashboard AS
 SELECT 
     'Ultimate Learning Dashboard' as dashboard_name,
@@ -151,19 +165,23 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Sample ML models for testing (PostgreSQL 16/17 compatible)
-INSERT INTO ml_models (model_name, model_type, model_version, model_data, training_samples, validation_accuracy) VALUES
-('duration_predictor', 'RandomForestRegressor', 'v3.1', '{"features": ["complexity"]}'::jsonb, 1000, 0.85),
-('success_classifier', 'LogisticRegression', 'v3.1', '{"features": ["complexity"]}'::jsonb, 800, 0.78),
-('agent_recommender', 'GradientBoostingClassifier', 'v3.1', '{"features": ["task_type"]}'::jsonb, 1200, 0.82),
-('anomaly_detector', 'IsolationForest', 'v3.1', '{"contamination": 0.1}'::jsonb, 500, 0.89)
-ON CONFLICT (model_name, model_version) DO NOTHING;
+INSERT INTO ml_models (model_name, model_type, model_version, model_data, training_samples, validation_scores) VALUES
+('duration_predictor', 'RandomForestRegressor', 'v3.1', E'\\x7b22666561747572657322205b22636f6d706c657869747922205d7d', 1000, '{"accuracy": 0.85}'::jsonb),
+('success_classifier', 'LogisticRegression', 'v3.1', E'\\x7b22666561747572657322205b22636f6d706c657869747922205d7d', 800, '{"accuracy": 0.78}'::jsonb),
+('agent_recommender', 'GradientBoostingClassifier', 'v3.1', E'\\x7b22666561747572657322205b227461736b5f7479706522205d7d', 1200, '{"accuracy": 0.82}'::jsonb),
+('anomaly_detector', 'IsolationForest', 'v3.1', E'\\x7b22636f6e74616d696e6174696f6e22203022313022207d', 500, '{"accuracy": 0.89}'::jsonb)
+ON CONFLICT (model_name, model_version) DO UPDATE SET
+    model_data = EXCLUDED.model_data,
+    validation_scores = EXCLUDED.validation_scores,
+    updated_at = NOW();
 
 -- Sample learning analytics (PostgreSQL 16/17 compatible)
 INSERT INTO learning_analytics (metric_name, metric_value, agent_context, task_context) VALUES
 ('agent_efficiency', 0.87, 'director', 'planning'),
 ('task_complexity_trend', 2.3, 'architect', 'design'),
 ('coordination_overhead', 0.15, 'projectorchestrator', 'orchestration'),
-('learning_velocity', 1.2, 'optimizer', 'performance')
+('learning_velocity', 1.2, 'optimizer', 'performance'),
+('postgresql_compatibility', 16.17, 'database', 'version_support')
 ON CONFLICT DO NOTHING;
 
 -- Update existing records with ML predictions
@@ -173,11 +191,60 @@ SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
     cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
 WHERE predicted_duration IS NULL;
 
+-- PostgreSQL version compatibility test
+CREATE OR REPLACE FUNCTION test_postgresql_compatibility() RETURNS jsonb AS $$
+DECLARE
+    version_info jsonb;
+    pg_version text;
+    json_array_available boolean := false;
+    json_object_available boolean := false;
+BEGIN
+    -- Get PostgreSQL version
+    SELECT version() INTO pg_version;
+    
+    -- Test JSON_ARRAY() function (PostgreSQL 17+)
+    BEGIN
+        PERFORM JSON_ARRAY();
+        json_array_available := true;
+    EXCEPTION
+        WHEN undefined_function THEN
+            json_array_available := false;
+    END;
+    
+    -- Test JSON_OBJECT() function (PostgreSQL 17+) 
+    BEGIN
+        PERFORM JSON_OBJECT();
+        json_object_available := true;
+    EXCEPTION
+        WHEN undefined_function THEN
+            json_object_available := false;
+    END;
+    
+    -- Build compatibility report using PostgreSQL 16 compatible functions
+    version_info := json_build_object(
+        'postgresql_version', pg_version,
+        'json_array_function', json_array_available,
+        'json_object_function', json_object_available,
+        'compatibility_mode', CASE 
+            WHEN json_array_available AND json_object_available THEN 'postgresql_17'
+            ELSE 'postgresql_16_compatible'
+        END,
+        'learning_system_version', 'v3.1',
+        'features_available', json_build_array(
+            'ml_models', 'cognitive_load_tracking', 'prediction_tracking', 
+            'learning_analytics', 'advanced_dashboard'
+        )
+    );
+    
+    RETURN version_info;
+END;
+$$ LANGUAGE plpgsql;
+
 COMMIT;
 
--- Final status check
+-- Final status check with PostgreSQL 16/17 compatibility
 SELECT 
-    'Learning System v3.1 Evolution Complete (PostgreSQL 16/17)' as status,
+    'Learning System v3.1 Evolution Complete (PostgreSQL 16/17 Compatible)' as status,
     COUNT(*) as total_executions,
     0 as total_agents,
     COUNT(*) FILTER (WHERE predicted_duration IS NOT NULL) as predictions_available,
@@ -187,6 +254,8 @@ FROM agent_task_executions;
 SELECT 
     'ML Models Available' as component,
     COUNT(*) as total_models,
-    COUNT(*) FILTER (WHERE is_active = TRUE) as active_models,
-    get_postgres_version() as postgres_version
+    COUNT(*) FILTER (WHERE is_active = TRUE) as active_models
 FROM ml_models;
+
+-- Test PostgreSQL compatibility
+SELECT test_postgresql_compatibility() as compatibility_report;

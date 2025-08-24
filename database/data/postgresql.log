@@ -3115,3 +3115,106 @@
 2025-08-24 20:25:52.541 UTC [30464] LOG:  checkpoint complete: wrote 79 buffers (0.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=7.815 s, sync=0.001 s, total=7.815 s; sync files=59, longest=0.001 s, average=0.000 s; distance=187 kB, estimate=2314 kB; lsn=0/1F2C790, redo lsn=0/1F2C758
 2025-08-24 20:50:45.042 UTC [30464] LOG:  checkpoint starting: time
 2025-08-24 20:50:50.766 UTC [30464] LOG:  checkpoint complete: wrote 58 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=5.724 s, sync=0.001 s, total=5.724 s; sync files=33, longest=0.001 s, average=0.001 s; distance=265 kB, estimate=2109 kB; lsn=0/1F6ECE0, redo lsn=0/1F6ECA8
+2025-08-24 22:06:59.370 UTC [354569] FATAL:  database "ubuntu" does not exist
+2025-08-24 22:07:08.564 UTC [354674] ERROR:  function test_postgresql_compatibility() does not exist at character 8
+2025-08-24 22:07:08.564 UTC [354674] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2025-08-24 22:07:08.564 UTC [354674] STATEMENT:  SELECT test_postgresql_compatibility()
+2025-08-24 22:07:48.027 UTC [354858] ERROR:  function test_postgresql_compatibility() does not exist at character 8
+2025-08-24 22:07:48.027 UTC [354858] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2025-08-24 22:07:48.027 UTC [354858] STATEMENT:  SELECT test_postgresql_compatibility()
+2025-08-24 22:07:48.134 UTC [354859] LOG:  unexpected EOF on client connection with an open transaction
+2025-08-24 22:08:00.963 UTC [354958] FATAL:  database "ubuntu" does not exist
+2025-08-24 22:08:03.047 UTC [354961] ERROR:  role "claude_auth" already exists
+2025-08-24 22:08:03.047 UTC [354961] STATEMENT:  CREATE USER claude_auth WITH PASSWORD 'claude_auth_pass';
+2025-08-24 22:08:03.047 UTC [354961] ERROR:  database "claude_auth" already exists
+2025-08-24 22:08:03.047 UTC [354961] STATEMENT:  CREATE DATABASE claude_auth OWNER claude_auth;
+2025-08-24 22:08:03.149 UTC [354963] ERROR:  functions in index predicate must be marked IMMUTABLE
+2025-08-24 22:08:03.149 UTC [354963] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_locked_until 
+	    ON users(account_locked_until) WHERE account_locked_until > NOW();
+2025-08-24 22:08:03.197 UTC [354963] ERROR:  functions in index predicate must be marked IMMUTABLE
+2025-08-24 22:08:03.197 UTC [354963] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rate_limit_blocked 
+	    ON rate_limit_events(blocked_until) WHERE blocked_until > NOW();
+2025-08-24 22:08:03.304 UTC [354963] WARNING:  there is no transaction in progress
+2025-08-24 22:08:03.391 UTC [354965] ERROR:  permission denied to create extension "pg_stat_statements"
+2025-08-24 22:08:03.391 UTC [354965] HINT:  Must be superuser to create this extension.
+2025-08-24 22:08:03.391 UTC [354965] STATEMENT:  CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+2025-08-24 22:08:03.433 UTC [354965] WARNING:  there is no transaction in progress
+2025-08-24 22:08:03.573 UTC [354967] ERROR:  column "validation_accuracy" of relation "ml_models" does not exist at character 93
+2025-08-24 22:08:03.573 UTC [354967] STATEMENT:  INSERT INTO ml_models (model_name, model_type, model_version, model_data, training_samples, validation_accuracy) VALUES
+	('duration_predictor', 'RandomForestRegressor', 'v3.1', '{"features": ["complexity"], "compatibility": "pg16_17"}'::jsonb, 1000, 0.85),
+	('success_classifier', 'LogisticRegression', 'v3.1', '{"features": ["complexity"], "compatibility": "pg16_17"}'::jsonb, 800, 0.78),
+	('agent_recommender', 'GradientBoostingClassifier', 'v3.1', '{"features": ["task_type"], "compatibility": "pg16_17"}'::jsonb, 1200, 0.82),
+	('anomaly_detector', 'IsolationForest', 'v3.1', '{"contamination": "0.1", "compatibility": "pg16_17"}'::jsonb, 500, 0.89)
+	ON CONFLICT (model_name, model_version) DO UPDATE SET
+	    model_data = EXCLUDED.model_data,
+	    validation_accuracy = EXCLUDED.validation_accuracy,
+	    updated_at = NOW();
+2025-08-24 22:08:03.573 UTC [354967] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 22:08:03.573 UTC [354967] STATEMENT:  INSERT INTO learning_analytics (metric_name, metric_value, agent_context, task_context) VALUES
+	('agent_efficiency', 0.87, 'director', 'planning'),
+	('task_complexity_trend', 2.3, 'architect', 'design'),
+	('coordination_overhead', 0.15, 'projectorchestrator', 'orchestration'),
+	('learning_velocity', 1.2, 'optimizer', 'performance'),
+	('postgresql_compatibility', 16.17, 'database', 'version_support')
+	ON CONFLICT DO NOTHING;
+2025-08-24 22:08:03.573 UTC [354967] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 22:08:03.573 UTC [354967] STATEMENT:  UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
+	WHERE predicted_duration IS NULL;
+2025-08-24 22:08:03.573 UTC [354967] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 22:08:03.573 UTC [354967] STATEMENT:  CREATE OR REPLACE FUNCTION test_postgresql_compatibility() RETURNS jsonb AS $$
+	DECLARE
+	    version_info jsonb;
+	    pg_version text;
+	    json_array_available boolean := false;
+	    json_object_available boolean := false;
+	BEGIN
+	    -- Get PostgreSQL version
+	    SELECT version() INTO pg_version;
+	    
+	    -- Test JSON_ARRAY() function (PostgreSQL 17+)
+	    BEGIN
+	        PERFORM JSON_ARRAY();
+	        json_array_available := true;
+	    EXCEPTION
+	        WHEN undefined_function THEN
+	            json_array_available := false;
+	    END;
+	    
+	    -- Test JSON_OBJECT() function (PostgreSQL 17+) 
+	    BEGIN
+	        PERFORM JSON_OBJECT();
+	        json_object_available := true;
+	    EXCEPTION
+	        WHEN undefined_function THEN
+	            json_object_available := false;
+	    END;
+	    
+	    -- Build compatibility report using PostgreSQL 16 compatible functions
+	    version_info := json_build_object(
+	        'postgresql_version', pg_version,
+	        'json_array_function', json_array_available,
+	        'json_object_function', json_object_available,
+	        'compatibility_mode', CASE 
+	            WHEN json_array_available AND json_object_available THEN 'postgresql_17'
+	            ELSE 'postgresql_16_compatible'
+	        END,
+	        'learning_system_version', 'v3.1',
+	        'features_available', json_build_array(
+	            'ml_models', 'cognitive_load_tracking', 'prediction_tracking', 
+	            'learning_analytics', 'advanced_dashboard'
+	        )
+	    );
+	    
+	    RETURN version_info;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-24 22:08:03.579 UTC [354967] ERROR:  function test_postgresql_compatibility() does not exist at character 8
+2025-08-24 22:08:03.579 UTC [354967] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2025-08-24 22:08:03.579 UTC [354967] STATEMENT:  SELECT test_postgresql_compatibility() as compatibility_report;
+2025-08-24 22:10:47.105 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 22:10:49.272 UTC [355560] FATAL:  database "ubuntu" does not exist
+2025-08-24 22:11:04.472 UTC [30464] LOG:  checkpoint complete: wrote 174 buffers (1.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=17.364 s, sync=0.001 s, total=17.367 s; sync files=73, longest=0.001 s, average=0.001 s; distance=879 kB, estimate=1986 kB; lsn=0/204AC58, redo lsn=0/204AC20
+2025-08-24 22:11:22.380 UTC [355655] FATAL:  database "ubuntu" does not exist
