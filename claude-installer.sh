@@ -94,7 +94,6 @@ show_progress() {
     printf "] %3d%% " "$percent"
 }
 
-# Print header
 print_header() {
     clear
     echo ""
@@ -103,7 +102,6 @@ print_header() {
     print_cyan "║      Full Install: 58+ Agents + Database + Learning         ║"
     print_cyan "╚═══════════════════════════════════════════════════════════════╝"
     echo ""
-}
     print_dim "Project: $PROJECT_ROOT"
     print_dim "Target: $HOME_DIR"
     echo ""
@@ -1091,6 +1089,128 @@ EOF
     fi
     
     success ".claude directory structure created with symlinks"
+    show_progress
+}
+
+# 6.4. Register all agents with Task tool
+register_agents_with_task_tool() {
+    print_section "Registering 60 Agents with Claude Code Task Tool"
+    
+    info "Creating agent registry for Task tool access..."
+    
+    # Create compact agent registry
+    cat > "$CLAUDE_DIR/agent-registry.json" <<'EOF'
+{"version":"1.0.0","agents":[
+{"name":"director","category":"command-control"},
+{"name":"projectorchestrator","category":"command-control"},
+{"name":"security","category":"security"},
+{"name":"bastion","category":"security"},
+{"name":"cso","category":"security"},
+{"name":"cryptoexpert","category":"security"},
+{"name":"quantumguard","category":"security"},
+{"name":"securityauditor","category":"security"},
+{"name":"securitychaosagent","category":"security"},
+{"name":"redteamorchestrator","category":"security"},
+{"name":"apt41-defense","category":"security"},
+{"name":"nsa","category":"security"},
+{"name":"psyops","category":"security"},
+{"name":"architect","category":"development"},
+{"name":"constructor","category":"development"},
+{"name":"patcher","category":"development"},
+{"name":"debugger","category":"development"},
+{"name":"testbed","category":"development"},
+{"name":"linter","category":"development"},
+{"name":"optimizer","category":"development"},
+{"name":"qadirector","category":"development"},
+{"name":"infrastructure","category":"devops"},
+{"name":"deployer","category":"devops"},
+{"name":"monitor","category":"devops"},
+{"name":"packager","category":"devops"},
+{"name":"docker","category":"devops"},
+{"name":"proxmox","category":"devops"},
+{"name":"c-internal","category":"language"},
+{"name":"python-internal","category":"language"},
+{"name":"rust-internal","category":"language"},
+{"name":"go-internal","category":"language"},
+{"name":"java-internal","category":"language"},
+{"name":"typescript-internal","category":"language"},
+{"name":"kotlin-internal","category":"language"},
+{"name":"assembly-internal","category":"language"},
+{"name":"zig-internal","category":"language"},
+{"name":"carbon-internal","category":"language"},
+{"name":"apidesigner","category":"platform"},
+{"name":"database","category":"platform"},
+{"name":"web","category":"platform"},
+{"name":"mobile","category":"platform"},
+{"name":"androidmobile","category":"platform"},
+{"name":"pygui","category":"platform"},
+{"name":"tui","category":"platform"},
+{"name":"datascience","category":"data-ml"},
+{"name":"mlops","category":"data-ml"},
+{"name":"npu","category":"data-ml"},
+{"name":"cisco","category":"network"},
+{"name":"bgp-purple-team","category":"network"},
+{"name":"iot-access-control","category":"network"},
+{"name":"ddwrt","category":"network"},
+{"name":"gna","category":"hardware"},
+{"name":"leadengineer","category":"hardware"},
+{"name":"planner","category":"planning"},
+{"name":"docgen","category":"planning"},
+{"name":"researcher","category":"planning"},
+{"name":"integration","category":"planning"},
+{"name":"oversight","category":"planning"}
+]}
+EOF
+    
+    success "Agent registry created with 58 specialized agents"
+    
+    # Create settings file for Claude Code
+    cat > "$CLAUDE_DIR/settings.json" <<EOF
+{
+  "customAgentsEnabled": true,
+  "customAgentsPath": "$CLAUDE_DIR/custom-agents.json",
+  "agentRegistryPath": "$CLAUDE_DIR/agent-registry.json",
+  "enabledAgents": [
+    "director", "projectorchestrator", "security", "bastion", "cso",
+    "cryptoexpert", "quantumguard", "securityauditor", "securitychaosagent",
+    "redteamorchestrator", "apt41-defense", "nsa", "psyops",
+    "architect", "constructor", "patcher", "debugger", "testbed",
+    "linter", "optimizer", "qadirector", "infrastructure", "deployer",
+    "monitor", "packager", "docker", "proxmox", "c-internal",
+    "python-internal", "rust-internal", "go-internal", "java-internal",
+    "typescript-internal", "kotlin-internal", "assembly-internal",
+    "zig-internal", "carbon-internal", "apidesigner", "database",
+    "web", "mobile", "androidmobile", "pygui", "tui", "datascience",
+    "mlops", "npu", "cisco", "bgp-purple-team", "iot-access-control",
+    "ddwrt", "gna", "leadengineer", "planner", "docgen", "researcher",
+    "integration", "oversight"
+  ]
+}
+EOF
+    
+    success "Claude Code settings configured"
+    
+    # Create quick reference
+    cat > "$CLAUDE_DIR/available-agents.txt" <<'EOF'
+AVAILABLE AGENTS (58 total) - Use with Task(subagent_type="name", prompt="...")
+
+COMMAND & CONTROL: director, projectorchestrator
+SECURITY: security, bastion, cso, cryptoexpert, quantumguard, securityauditor, 
+          securitychaosagent, redteamorchestrator, apt41-defense, nsa, psyops
+DEVELOPMENT: architect, constructor, patcher, debugger, testbed, linter, optimizer, qadirector
+DEVOPS: infrastructure, deployer, monitor, packager, docker, proxmox
+LANGUAGES: c-internal, python-internal, rust-internal, go-internal, java-internal,
+           typescript-internal, kotlin-internal, assembly-internal, zig-internal, carbon-internal
+PLATFORMS: apidesigner, database, web, mobile, androidmobile, pygui, tui
+DATA/ML: datascience, mlops, npu
+NETWORK: cisco, bgp-purple-team, iot-access-control, ddwrt
+HARDWARE: gna, leadengineer
+PLANNING: planner, docgen, researcher, integration, oversight
+
+Example: Task(subagent_type="director", prompt="Create strategic plan")
+EOF
+    
+    info "✅ All 58 agents registered and available via Task tool"
     show_progress
 }
 
@@ -2470,6 +2590,7 @@ main() {
         install_statusline
         install_global_claude_md
         setup_claude_directory
+        register_agents_with_task_tool
         setup_precision_style
         setup_virtual_environment
         setup_database_system
@@ -2482,6 +2603,7 @@ main() {
         install_hooks
         install_global_claude_md
         setup_claude_directory
+        register_agents_with_task_tool
     fi
     
     create_wrapper

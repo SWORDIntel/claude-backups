@@ -7,6 +7,25 @@ LOG_FILE="$SCRIPT_DIR/data/postgresql.log"
 SOCKET_DIR="$SCRIPT_DIR/data/run"
 PG_PORT=5433  # Local PostgreSQL port
 
+# Auto-detect PostgreSQL version
+if [ -d "/usr/lib/postgresql/17/bin" ]; then
+    PG_BIN="/usr/lib/postgresql/17/bin"
+    echo "🔍 Using PostgreSQL 17"
+elif [ -d "/usr/lib/postgresql/16/bin" ]; then
+    PG_BIN="/usr/lib/postgresql/16/bin"
+    echo "🔍 Using PostgreSQL 16"
+elif [ -d "/usr/lib/postgresql/15/bin" ]; then
+    PG_BIN="/usr/lib/postgresql/15/bin"
+    echo "🔍 Using PostgreSQL 15"
+elif [ -d "/usr/lib/postgresql/14/bin" ]; then
+    PG_BIN="/usr/lib/postgresql/14/bin"
+    echo "🔍 Using PostgreSQL 14"
+else
+    echo "❌ No PostgreSQL installation found in /usr/lib/postgresql/"
+    echo "💡 Please install PostgreSQL with: sudo apt-get install postgresql postgresql-client"
+    exit 1
+fi
+
 # Function to check if local PostgreSQL is running
 check_postgresql_running() {
     # Check if local PostgreSQL data directory exists
@@ -26,14 +45,24 @@ check_postgresql_running() {
 initialize_postgresql() {
     if [ ! -d "$DATA_DIR" ]; then
         echo "🔧 Initializing local PostgreSQL database..."
-        /usr/lib/postgresql/17/bin/initdb -D "$DATA_DIR" --auth-local trust --auth-host scram-sha-256 --no-instructions
+        "$PG_BIN/initdb" -D "$DATA_DIR" --auth-local trust --auth-host trust --no-instructions
         if [ $? -eq 0 ]; then
             echo "✅ PostgreSQL initialized successfully"
+            
+            # Create socket directory if it doesn't exist
+            mkdir -p "$SOCKET_DIR"
+            
+            # Configure PostgreSQL to use custom socket directory
+            echo "unix_socket_directories = '$SOCKET_DIR'" >> "$DATA_DIR/postgresql.conf"
+            echo "port = $PG_PORT" >> "$DATA_DIR/postgresql.conf"
         else
             echo "❌ Failed to initialize PostgreSQL"
             return 1
         fi
     fi
+    
+    # Always ensure socket directory exists
+    mkdir -p "$SOCKET_DIR"
     return 0
 }
 
@@ -41,7 +70,7 @@ initialize_postgresql() {
 start_postgresql() {
     if ! check_postgresql_running; then
         echo "🚀 Starting local PostgreSQL..."
-        /usr/lib/postgresql/17/bin/pg_ctl -D "$DATA_DIR" -l "$LOG_FILE" -o "-p $PG_PORT" start
+        "$PG_BIN/pg_ctl" -D "$DATA_DIR" -l "$LOG_FILE" -o "-p $PG_PORT" start
         sleep 2
         if check_postgresql_running; then
             echo "✅ PostgreSQL started on port $PG_PORT"
@@ -61,16 +90,19 @@ case "$1" in
         ;;
     "stop")
         echo "🛑 Stopping local PostgreSQL..."
-        /usr/lib/postgresql/17/bin/pg_ctl -D "$DATA_DIR" stop
+        "$PG_BIN/pg_ctl" -D "$DATA_DIR" stop
         ;;
     "setup")
         echo "🗄️  Setting up local PostgreSQL authentication database..."
         initialize_postgresql
         start_postgresql
         
-        # Create database and user
+        # Wait a moment for PostgreSQL to be fully ready
+        sleep 2
+        
+        # Create database and user (using localhost connection with trust auth)
         echo "📦 Creating database and user..."
-        psql -h "$SOCKET_DIR" -p $PG_PORT -U ubuntu -d postgres <<EOF
+        psql -h localhost -p $PG_PORT -U ubuntu -d postgres <<EOF
 CREATE USER claude_auth WITH PASSWORD 'claude_auth_pass';
 CREATE DATABASE claude_auth OWNER claude_auth;
 GRANT ALL PRIVILEGES ON DATABASE claude_auth TO claude_auth;
@@ -79,7 +111,7 @@ EOF
         # Run SQL setup if exists
         if [ -f "$SCRIPT_DIR/sql/auth_db_setup.sql" ]; then
             echo "🔨 Running database schema setup..."
-            psql -h "$SOCKET_DIR" -p $PG_PORT -U ubuntu -d claude_auth -f "$SCRIPT_DIR/sql/auth_db_setup.sql"
+            psql -h localhost -p $PG_PORT -U ubuntu -d claude_auth -f "$SCRIPT_DIR/sql/auth_db_setup.sql"
             echo "✅ Database setup complete"
         else
             echo "⚠️  SQL setup file not found: $SCRIPT_DIR/sql/auth_db_setup.sql"
@@ -106,7 +138,7 @@ EOF
             echo "  ✅ Data directory: $DATA_DIR"
             if check_postgresql_running; then
                 echo "  ✅ PostgreSQL: RUNNING on port $PG_PORT"
-                psql -h "$SOCKET_DIR" -p $PG_PORT -U ubuntu -d postgres -c "SELECT version();" 2>/dev/null | grep PostgreSQL || echo "  ❌ Unable to connect"
+                psql -h localhost -p $PG_PORT -U ubuntu -d postgres -c "SELECT version();" 2>/dev/null | grep PostgreSQL || echo "  ❌ Unable to connect"
             else
                 echo "  ⏸️  PostgreSQL: STOPPED"
                 echo "  💡 Run '$0 start' to start PostgreSQL"
@@ -129,7 +161,7 @@ EOF
             start_postgresql
         fi
         echo "Connecting to local PostgreSQL..."
-        psql -h "$SOCKET_DIR" -p $PG_PORT -U ubuntu -d postgres
+        psql -h localhost -p $PG_PORT -U ubuntu -d postgres
         ;;
     *)
         echo "Usage: $0 {start|stop|setup|test|redis|status|psql}"

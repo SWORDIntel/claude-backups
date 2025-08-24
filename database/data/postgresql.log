@@ -1633,3 +1633,28 @@
 2025-08-23 20:10:09.511 UTC [146058] LOG:  checkpoint complete: wrote 67 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=6.619 s, sync=0.001 s, total=6.619 s; sync files=59, longest=0.001 s, average=0.001 s; distance=325 kB, estimate=439 kB; lsn=0/1B60B60, redo lsn=0/1B60AD0
 2025-08-24 01:41:36.720 UTC [209540] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
 2025-08-24 01:41:36.720 UTC [209540] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-24 17:13:18.836 UTC [25587] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 17:13:18.836 UTC [25587] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-24 17:14:14.373 UTC [26130] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 17:14:14.373 UTC [26130] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-24 17:16:12.970 UTC [27629] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 17:16:12.970 UTC [27629] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-24 17:24:40.339 UTC [29701] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 17:24:40.339 UTC [29701] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-24 17:25:08.345 UTC [29949] FATAL:  database files are incompatible with server
+2025-08-24 17:25:08.345 UTC [29949] DETAIL:  The data directory was initialized by PostgreSQL version 17, which is not compatible with this version 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1).
+2025-08-24 17:25:21.825 UTC [30202] FATAL:  database files are incompatible with server
+2025-08-24 17:25:21.825 UTC [30202] DETAIL:  The data directory was initialized by PostgreSQL version 17, which is not compatible with this version 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1).
+2025-08-24 17:25:41.560 UTC [30463] LOG:  starting PostgreSQL 16.9 (Ubuntu 16.9-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-08-24 17:25:41.560 UTC [30463] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2025-08-24 17:25:41.560 UTC [30463] LOG:  listening on Unix socket "/home/ubuntu/Documents/claude-backups/database/data/run/.s.PGSQL.5433"
+2025-08-24 17:25:41.562 UTC [30466] LOG:  database system was shut down at 2025-08-24 17:25:41 UTC
+2025-08-24 17:25:41.564 UTC [30463] LOG:  database system is ready to accept connections
+2025-08-24 17:25:43.674 UTC [30474] FATAL:  database "ubuntu" does not exist
+2025-08-24 17:25:45.696 UTC [30482] FATAL:  role "postgres" does not exist
+2025-08-24 17:25:45.716 UTC [30484] FATAL:  role "postgres" does not exist
+2025-08-24 17:26:23.666 UTC [30560] FATAL:  database "ubuntu" does not exist
+2025-08-24 17:26:37.158 UTC [30627] ERROR:  CREATE DATABASE cannot run inside a transaction block
+2025-08-24 17:26:37.158 UTC [30627] STATEMENT:  CREATE DATABASE claude_auth; CREATE USER claude_auth WITH PASSWORD 'claude_auth_pass'; GRANT ALL PRIVILEGES ON DATABASE claude_auth TO claude_auth;
+2025-08-24 17:30:41.662 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 17:32:19.300 UTC [30464] LOG:  checkpoint complete: wrote 979 buffers (6.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=97.638 s, sync=0.001 s, total=97.639 s; sync files=317, longest=0.001 s, average=0.000 s; distance=4562 kB, estimate=4562 kB; lsn=0/1971258, redo lsn=0/1971220

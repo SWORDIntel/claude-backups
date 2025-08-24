@@ -1,0 +1,16 @@
+AVAILABLE AGENTS (58 total) - Use with Task(subagent_type="name", prompt="...")
+
+COMMAND & CONTROL: director, projectorchestrator
+SECURITY: security, bastion, cso, cryptoexpert, quantumguard, securityauditor, 
+          securitychaosagent, redteamorchestrator, apt41-defense, nsa, psyops
+DEVELOPMENT: architect, constructor, patcher, debugger, testbed, linter, optimizer, qadirector
+DEVOPS: infrastructure, deployer, monitor, packager, docker, proxmox
+LANGUAGES: c-internal, python-internal, rust-internal, go-internal, java-internal,
+           typescript-internal, kotlin-internal, assembly-internal, zig-internal, carbon-internal
+PLATFORMS: apidesigner, database, web, mobile, androidmobile, pygui, tui
+DATA/ML: datascience, mlops, npu
+NETWORK: cisco, bgp-purple-team, iot-access-control, ddwrt
+HARDWARE: gna, leadengineer
+PLANNING: planner, docgen, researcher, integration, oversight
+
+Example: Task(subagent_type="director", prompt="Create strategic plan")

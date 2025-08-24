@@ -1,1 +1,1 @@
-/usr/lib/postgresql/17/bin/postgres "-D" "/home/ubuntu/Documents/Claude/database/data/postgresql" "-p" "5433"
+/usr/lib/postgresql/16/bin/postgres "-D" "/home/ubuntu/Documents/claude-backups/database/data/postgresql" "-p" "5433"

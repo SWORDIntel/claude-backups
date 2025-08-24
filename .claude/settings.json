@@ -1,0 +1,20 @@
+{
+  "customAgentsEnabled": true,
+  "customAgentsPath": "/home/ubuntu/Documents/claude-backups/.claude/custom-agents.json",
+  "agentRegistryPath": "/home/ubuntu/Documents/claude-backups/.claude/agent-registry.json",
+  "enabledAgents": [
+    "director", "projectorchestrator", "security", "bastion", "cso",
+    "cryptoexpert", "quantumguard", "securityauditor", "securitychaosagent",
+    "redteamorchestrator", "apt41-defense", "nsa", "psyops",
+    "architect", "constructor", "patcher", "debugger", "testbed",
+    "linter", "optimizer", "qadirector", "infrastructure", "deployer",
+    "monitor", "packager", "docker", "proxmox", "c-internal",
+    "python-internal", "rust-internal", "go-internal", "java-internal",
+    "typescript-internal", "kotlin-internal", "assembly-internal",
+    "zig-internal", "carbon-internal", "apidesigner", "database",
+    "web", "mobile", "androidmobile", "pygui", "tui", "datascience",
+    "mlops", "npu", "cisco", "bgp-purple-team", "iot-access-control",
+    "ddwrt", "gna", "leadengineer", "planner", "docgen", "researcher",
+    "integration", "oversight"
+  ]
+}
