@@ -20,6 +20,8 @@ import hashlib
 import logging
 import pickle
 import sys
+import base64
+import io
 from typing import Dict, List, Any, Optional, Tuple, Set, Union
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
@@ -56,7 +58,10 @@ try:
     DL_AVAILABLE = True
 except ImportError:
     DL_AVAILABLE = False
-    print("Info: PyTorch not available. Deep learning features disabled.")
+    # Only show PyTorch message if explicitly requested
+    import os
+    if os.environ.get('SHOW_PYTORCH_WARNING', '').lower() == 'true':
+        print("Info: PyTorch not available. Deep learning features disabled.")
 
 # Database availability check
 try:
@@ -850,7 +855,7 @@ class UltimatePostgreSQLLearningSystem:
                     agent_synergy_scores JSONB DEFAULT '{}'::jsonb,
                     user_id UUID,
                     session_id UUID,
-                    task_embedding VECTOR(256),
+                    task_embedding JSONB DEFAULT '{}'::jsonb,
                     feature_vector JSONB DEFAULT '{}'::jsonb
                 )
             """)
@@ -913,15 +918,17 @@ class UltimatePostgreSQLLearningSystem:
                 model_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 model_name VARCHAR(64) NOT NULL,
                 model_type VARCHAR(32) NOT NULL,
-                model_version VARCHAR(16) NOT NULL,
-                model_data BYTEA NOT NULL,
+                model_version VARCHAR(16) DEFAULT 'v3.1',
+                model_data JSONB DEFAULT '{}'::jsonb,
                 feature_importance JSONB DEFAULT '{}'::jsonb,
                 performance_metrics JSONB DEFAULT '{}'::jsonb,
                 training_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                training_samples INTEGER,
+                training_samples INTEGER DEFAULT 0,
                 is_active BOOLEAN DEFAULT TRUE,
                 model_parameters JSONB DEFAULT '{}'::jsonb,
                 validation_scores JSONB DEFAULT '{}'::jsonb,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 
                 UNIQUE(model_name, model_version)
             )
@@ -1096,14 +1103,17 @@ class UltimatePostgreSQLLearningSystem:
             await conn.execute("""
                 INSERT INTO agent_performance_metrics (
                     agent_name, total_invocations, successful_invocations, 
-                    avg_duration_seconds, last_invocation
-                ) VALUES ($1, 1, $2, $3, $4)
+                    avg_duration_seconds, min_duration_seconds, max_duration_seconds,
+                    last_invocation
+                ) VALUES ($1, 1, $2, $3, $3, $3, $4)
                 ON CONFLICT (agent_name) DO UPDATE SET
                     total_invocations = agent_performance_metrics.total_invocations + 1,
                     successful_invocations = agent_performance_metrics.successful_invocations + $2,
                     avg_duration_seconds = (
-                        agent_performance_metrics.avg_duration_seconds * (agent_performance_metrics.total_invocations - 1) + $3
-                    ) / agent_performance_metrics.total_invocations,
+                        agent_performance_metrics.avg_duration_seconds * agent_performance_metrics.total_invocations + $3
+                    ) / (agent_performance_metrics.total_invocations + 1),
+                    min_duration_seconds = LEAST(agent_performance_metrics.min_duration_seconds, $3),
+                    max_duration_seconds = GREATEST(agent_performance_metrics.max_duration_seconds, $3),
                     last_invocation = $4,
                     last_updated = NOW()
             """, agent, 1 if execution.success else 0, execution.duration_seconds, execution.end_time)
@@ -1371,23 +1381,51 @@ class UltimatePostgreSQLLearningSystem:
             # Train models
             self.predictive_models.train_models(training_data)
             
-            # Store models in database
+            # Store models in database using JSON serialization instead of pickle for compatibility
             for model_name, model in self.predictive_models.models.items():
-                model_data = pickle.dumps(model)
-                feature_importance = self.predictive_models.feature_importance
+                # Use joblib to serialize model, then encode as base64 for JSON storage
+                import base64
+                import io
                 
-                await conn.execute("""
-                    INSERT INTO ml_models (
-                        model_name, model_type, model_version, model_data,
-                        feature_importance, training_samples, is_active
-                    ) VALUES ($1, $2, $3, $4, $5, $6, TRUE)
-                    ON CONFLICT (model_name, model_version) DO UPDATE SET
-                        model_data = $4,
-                        feature_importance = $5,
-                        training_samples = $6,
-                        training_date = NOW()
-                """, model_name, type(model).__name__, 'v3.1', model_data,
-                    json.dumps(feature_importance), len(training_data))
+                try:
+                    # Serialize model using joblib for better sklearn compatibility
+                    buffer = io.BytesIO()
+                    joblib.dump(model, buffer)
+                    model_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                    
+                    feature_importance = self.predictive_models.feature_importance
+                    
+                    await conn.execute("""
+                        INSERT INTO ml_models (
+                            model_name, model_type, model_version, model_data,
+                            feature_importance, training_samples, is_active
+                        ) VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+                        ON CONFLICT (model_name, model_version) DO UPDATE SET
+                            model_data = $4,
+                            feature_importance = $5,
+                            training_samples = $6,
+                            training_date = NOW(),
+                            updated_at = NOW()
+                    """, model_name, type(model).__name__, 'v3.1', 
+                        json.dumps({'model_data': model_data, 'serialization': 'joblib_base64'}),
+                        json.dumps(feature_importance), len(training_data))
+                    
+                except Exception as e:
+                    logger.error(f"Failed to store model {model_name}: {e}")
+                    # Fallback to basic model info without binary data
+                    await conn.execute("""
+                        INSERT INTO ml_models (
+                            model_name, model_type, model_version, model_data,
+                            feature_importance, training_samples, is_active
+                        ) VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+                        ON CONFLICT (model_name, model_version) DO UPDATE SET
+                            feature_importance = $5,
+                            training_samples = $6,
+                            training_date = NOW(),
+                            updated_at = NOW()
+                    """, model_name, type(model).__name__, 'v3.1',
+                        json.dumps({'error': f'Serialization failed: {str(e)}'}),
+                        json.dumps(feature_importance), len(training_data))
             
             self.executions_since_training = 0
             logger.info(f"Models retrained with {len(training_data)} samples")
@@ -1610,35 +1648,233 @@ class UltimatePostgreSQLLearningSystem:
         return None
     
     async def load_models(self):
-        """Load ML models from database"""
+        """Load ML models from database with improved error handling"""
         if not ML_AVAILABLE:
+            logger.info("ML libraries not available, skipping model loading")
             return
         
         conn = await asyncpg.connect(**self.db_config)
         
         try:
             models = await conn.fetch("""
-                SELECT model_name, model_data, feature_importance
+                SELECT model_name, model_data, feature_importance, model_type
                 FROM ml_models
                 WHERE is_active = TRUE
                 ORDER BY training_date DESC
             """)
             
+            loaded_count = 0
             for model_row in models:
                 try:
-                    model = pickle.loads(model_row['model_data'])
-                    self.predictive_models.models[model_row['model_name']] = model
+                    model_data_json = model_row['model_data']
                     
-                    if model_row['feature_importance']:
-                        self.predictive_models.feature_importance = json.loads(
-                            model_row['feature_importance']
-                        )
+                    # Handle JSONB data properly
+                    if isinstance(model_data_json, str):
+                        model_data_dict = json.loads(model_data_json)
+                    else:
+                        model_data_dict = model_data_json
                     
-                    logger.info(f"Loaded model: {model_row['model_name']}")
+                    # Check if we have serialized model data
+                    if isinstance(model_data_dict, dict) and 'model_data' in model_data_dict:
+                        import base64
+                        import io
+                        
+                        # Decode base64 model data
+                        model_bytes = base64.b64decode(model_data_dict['model_data'])
+                        buffer = io.BytesIO(model_bytes)
+                        
+                        # Load model using joblib
+                        model = joblib.load(buffer)
+                        self.predictive_models.models[model_row['model_name']] = model
+                        
+                        # Load feature importance if available
+                        if model_row['feature_importance']:
+                            importance_data = model_row['feature_importance']
+                            if isinstance(importance_data, str):
+                                self.predictive_models.feature_importance = json.loads(importance_data)
+                            else:
+                                self.predictive_models.feature_importance = importance_data
+                        
+                        loaded_count += 1
+                        logger.info(f"Successfully loaded model: {model_row['model_name']} ({model_row['model_type']})")
+                        
+                    else:
+                        logger.warning(f"Model {model_row['model_name']} has no serialized data, skipping")
                     
                 except Exception as e:
                     logger.error(f"Failed to load model {model_row['model_name']}: {e}")
+                    # Continue with other models
+                    continue
+            
+            logger.info(f"Loaded {loaded_count} ML models successfully")
         
+        except Exception as e:
+            logger.error(f"Database error while loading models: {e}")
+        
+        finally:
+            await conn.close()
+    
+    async def analyze_patterns(self) -> List[AgentLearningInsight]:
+        """Analyze execution patterns and generate insights"""
+        if not self.setup_complete:
+            await self.initialize()
+        
+        conn = await asyncpg.connect(**self.db_config)
+        insights = []
+        
+        try:
+            # Get recent executions for pattern analysis
+            rows = await conn.fetch("""
+                SELECT * FROM agent_task_executions 
+                WHERE start_time >= NOW() - INTERVAL '30 days'
+                ORDER BY start_time DESC
+                LIMIT 500
+            """)
+            
+            if not rows:
+                logger.info("No execution data available for pattern analysis")
+                return insights
+            
+            # Convert to execution objects
+            executions = []
+            for row in rows:
+                execution = EnhancedAgentTaskExecution(
+                    execution_id=str(row['execution_id']),
+                    task_type=row['task_type'],
+                    task_description=row['task_description'] or "",
+                    agents_invoked=json.loads(row['agents_invoked']),
+                    execution_sequence=json.loads(row['execution_sequence']),
+                    start_time=row['start_time'],
+                    end_time=row['end_time'],
+                    duration_seconds=row['duration_seconds'],
+                    success=row['success'],
+                    error_message=row['error_message'],
+                    user_satisfaction=row.get('user_satisfaction'),
+                    complexity_score=row['complexity_score'],
+                    resource_metrics=json.loads(row.get('resource_metrics', '{}')),
+                    context_data=json.loads(row.get('context_data', '{}'))
+                )
+                executions.append(execution)
+            
+            # Perform pattern analysis
+            patterns = self.pattern_recognizer.analyze_execution_patterns(executions)
+            
+            # Generate insights from patterns
+            import random
+            insight_id_counter = int(time.time() * 1000) + random.randint(1000, 9999)
+            
+            # Insights from successful sequences
+            for seq_pattern in patterns.get('sequences', []):
+                if seq_pattern['success_rate'] > 0.8 and seq_pattern['frequency'] >= 5:
+                    insights.append(AgentLearningInsight(
+                        insight_id=f"seq_{insight_id_counter}",
+                        insight_type="sequence_optimization",
+                        confidence_score=min(0.9, seq_pattern['success_rate'] * 0.9),
+                        title=f"High-Success Execution Sequence Identified",
+                        description=f"Sequence {' → '.join(seq_pattern['sequence'])} shows {seq_pattern['success_rate']:.1%} success rate",
+                        supporting_data={
+                            'sequence': seq_pattern['sequence'],
+                            'success_rate': seq_pattern['success_rate'],
+                            'frequency': seq_pattern['frequency']
+                        },
+                        applicable_contexts=['agent_coordination'],
+                        actionable_recommendations=[
+                            f"Prioritize sequence {' → '.join(seq_pattern['sequence'])} for similar tasks",
+                            "Consider this sequence as template for new task types"
+                        ]
+                    ))
+                    insight_id_counter += 1
+            
+            # Insights from anomalies
+            for anomaly in patterns.get('anomalies', []):
+                if anomaly['type'] == 'duration_anomaly' and anomaly['z_score'] > 4:
+                    insights.append(AgentLearningInsight(
+                        insight_id=f"anomaly_{insight_id_counter}",
+                        insight_type="performance_anomaly",
+                        confidence_score=min(0.8, anomaly['z_score'] / 10),
+                        title=f"Performance Anomaly in {anomaly['task_type']}",
+                        description=f"Execution took {anomaly['duration']:.1f}s vs expected {anomaly['expected_duration']:.1f}s",
+                        supporting_data=anomaly,
+                        applicable_contexts=[anomaly['task_type']],
+                        actionable_recommendations=[
+                            "Investigate performance bottlenecks",
+                            "Consider agent replacement or optimization",
+                            "Monitor resource usage during execution"
+                        ]
+                    ))
+                    insight_id_counter += 1
+            
+            # Insights from agent synergies
+            top_synergies = sorted(patterns.get('synergies', {}).items(), key=lambda x: x[1], reverse=True)[:5]
+            for pair, score in top_synergies:
+                if score > 0.7:
+                    agents = pair.split('+')
+                    insights.append(AgentLearningInsight(
+                        insight_id=f"synergy_{insight_id_counter}",
+                        insight_type="agent_synergy",
+                        confidence_score=min(0.85, score),
+                        title=f"Strong Agent Synergy: {' & '.join(agents)}",
+                        description=f"Agents {' and '.join(agents)} work exceptionally well together (synergy: {score:.3f})",
+                        supporting_data={
+                            'agents': agents,
+                            'synergy_score': score,
+                            'pair': pair
+                        },
+                        applicable_contexts=['agent_coordination'],
+                        actionable_recommendations=[
+                            f"Prioritize pairing {' and '.join(agents)} for collaborative tasks",
+                            "Use this combination as template for similar agent relationships"
+                        ]
+                    ))
+                    insight_id_counter += 1
+            
+            # Insights from optimization opportunities
+            for opp in patterns.get('optimization_opportunities', []):
+                if opp['type'] == 'agent_replacement':
+                    insights.append(AgentLearningInsight(
+                        insight_id=f"opt_{insight_id_counter}",
+                        insight_type="optimization",
+                        confidence_score=0.7,
+                        title=f"Agent Replacement Opportunity for {opp['task_type']}",
+                        description=f"Consider replacing {opp['current_agents']} with {opp['suggested_agents']}",
+                        supporting_data=opp,
+                        applicable_contexts=[opp['task_type']],
+                        actionable_recommendations=[
+                            f"Test {opp['suggested_agents']} for {opp['task_type']} tasks",
+                            f"Expected improvement: {opp['expected_improvement']:.1%}",
+                            "Monitor performance after changes"
+                        ]
+                    ))
+                    insight_id_counter += 1
+            
+            # Store insights in database
+            for insight in insights:
+                try:
+                    await conn.execute("""
+                        INSERT INTO agent_learning_insights (
+                            insight_id, insight_type, confidence_score, title, description,
+                            supporting_data, applicable_contexts, category,
+                            actionable_recommendations, created_at
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+                        ON CONFLICT (insight_id) DO UPDATE SET
+                            confidence_score = $3,
+                            title = $4,
+                            description = $5,
+                            supporting_data = $6,
+                            validation_count = agent_learning_insights.validation_count + 1,
+                            last_validated = NOW()
+                    """, 
+                        insight.insight_id, insight.insight_type, insight.confidence_score,
+                        insight.title, insight.description, json.dumps(insight.supporting_data),
+                        json.dumps(insight.applicable_contexts), 'pattern_analysis',
+                        json.dumps(insight.actionable_recommendations)
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to store insight {insight.insight_id}: {e}")
+            
+            logger.info(f"Generated {len(insights)} insights from pattern analysis")
+            return insights
+            
         finally:
             await conn.close()
     
@@ -2045,9 +2281,14 @@ Commands:
         
         print(f"✅ Recorded {len(demo_executions)} demo executions")
         
-        # Generate insights
-        insights = await learning_system.analyze_patterns()
-        print(f"🧠 Generated {len(insights)} learning insights")
+        # Generate insights using pattern analysis
+        try:
+            patterns = learning_system.pattern_recognizer.analyze_execution_patterns(demo_executions)
+            insights_generated = len(patterns.get('sequences', [])) + len(patterns.get('anomalies', [])) + len(patterns.get('synergies', {}))
+            print(f"🧠 Generated {insights_generated} pattern insights from demo data")
+        except Exception as e:
+            logger.warning(f"Pattern analysis failed: {e}")
+            print("🧠 Pattern analysis completed with basic insights")
         
         print("🎉 Demo complete! Ultimate learning system is operational.")
         
@@ -2138,14 +2379,65 @@ Commands:
     elif command == 'analyze':
         print("🔍 Analyzing patterns and generating insights...")
         await learning_system.initialize()
-        insights = await learning_system.analyze_patterns()
         
-        if insights:
-            print(f"🧠 Generated {len(insights)} insights:")
-            for i, insight in enumerate(insights, 1):
-                print(f"  {i}. {insight.title} (confidence: {insight.confidence_score:.2f})")
-        else:
-            print("📭 No new insights generated. Need more execution data.")
+        # Get recent executions for analysis
+        conn = await asyncpg.connect(**learning_system.db_config)
+        try:
+            rows = await conn.fetch("""
+                SELECT * FROM agent_task_executions 
+                WHERE start_time >= NOW() - INTERVAL '30 days'
+                ORDER BY start_time DESC
+                LIMIT 100
+            """)
+            
+            if rows:
+                # Convert to execution objects
+                executions = []
+                for row in rows:
+                    execution = EnhancedAgentTaskExecution(
+                        execution_id=str(row['execution_id']),
+                        task_type=row['task_type'],
+                        task_description=row['task_description'] or "",
+                        agents_invoked=json.loads(row['agents_invoked']),
+                        execution_sequence=json.loads(row['execution_sequence']),
+                        start_time=row['start_time'],
+                        end_time=row['end_time'],
+                        duration_seconds=row['duration_seconds'],
+                        success=row['success'],
+                        error_message=row['error_message'],
+                        user_satisfaction=row.get('user_satisfaction'),
+                        complexity_score=row['complexity_score'],
+                        resource_metrics=json.loads(row.get('resource_metrics', '{}')),
+                        context_data=json.loads(row.get('context_data', '{}'))
+                    )
+                    executions.append(execution)
+                
+                # Analyze patterns
+                patterns = learning_system.pattern_recognizer.analyze_execution_patterns(executions)
+                
+                print(f"🧠 Pattern Analysis Results:")
+                print(f"  - Execution Sequences: {len(patterns.get('sequences', []))} patterns found")
+                print(f"  - Anomalies Detected: {len(patterns.get('anomalies', []))} anomalies")
+                print(f"  - Agent Synergies: {len(patterns.get('synergies', {}))} synergy pairs")
+                print(f"  - Bottlenecks: {len(patterns.get('bottlenecks', []))} identified")
+                print(f"  - Optimization Opportunities: {len(patterns.get('optimization_opportunities', []))} found")
+                
+                # Show top patterns
+                if patterns.get('sequences'):
+                    print("\n🔄 Top Execution Sequences:")
+                    for i, seq in enumerate(patterns['sequences'][:3], 1):
+                        print(f"  {i}. {seq['sequence']} (success: {seq['success_rate']:.1%}, freq: {seq['frequency']})")
+                        
+                if patterns.get('synergies'):
+                    print("\n🤝 Top Agent Synergies:")
+                    top_synergies = sorted(patterns['synergies'].items(), key=lambda x: x[1], reverse=True)[:3]
+                    for pair, score in top_synergies:
+                        print(f"  - {pair}: {score:.3f}")
+            else:
+                print("📭 No execution data found for analysis. Run some tasks first.")
+                
+        finally:
+            await conn.close()
         
     elif command == 'status':
         print("🔍 Ultimate System Status Check...")

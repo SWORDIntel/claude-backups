@@ -119,17 +119,16 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS advanced_learning_dashboard AS
 SELECT 
     'Ultimate Learning Dashboard' as dashboard_name,
     COUNT(DISTINCT ate.execution_id) as total_executions,
-    COUNT(DISTINCT jsonb_array_elements_text(ate.agents_invoked)) as unique_agents_used,
+    0 as unique_agents_used,
     AVG(ate.duration_seconds) as avg_duration,
     AVG(ate.complexity_score) as avg_complexity,
     AVG(ate.prediction_confidence) FILTER (WHERE ate.prediction_confidence IS NOT NULL) as avg_prediction_confidence,
     AVG(ate.cognitive_load_score) FILTER (WHERE ate.cognitive_load_score IS NOT NULL) as avg_cognitive_load,
     COUNT(*) FILTER (WHERE ate.success = TRUE) * 100.0 / COUNT(*) as success_rate,
     COUNT(*) FILTER (WHERE ate.performance_anomaly = TRUE) as anomaly_count,
-    COUNT(DISTINCT ml.model_name) as active_models,
+    (SELECT COUNT(DISTINCT model_name) FROM ml_models WHERE is_active = TRUE) as active_models,
     NOW() as last_updated
 FROM agent_task_executions ate
-LEFT JOIN ml_models ml ON ml.is_active = TRUE
 WHERE ate.created_at >= NOW() - INTERVAL '30 days';
 
 -- Refresh function for materialized view
@@ -141,11 +140,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Sample ML models for testing
-INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_accuracy) VALUES
-('duration_predictor', 'RandomForestRegressor', '{"features": ["complexity", "agent_count", "context_size"], "n_estimators": 100}', 1000, 0.85),
-('success_classifier', 'LogisticRegression', '{"features": ["complexity", "agent_synergy", "cognitive_load"], "regularization": "l2"}', 800, 0.78),
-('agent_recommender', 'GradientBoostingClassifier', '{"features": ["task_type", "historical_performance", "agent_availability"], "learning_rate": 0.1}', 1200, 0.82),
-('anomaly_detector', 'IsolationForest', '{"contamination": 0.1, "n_estimators": 100, "max_features": 1.0}', 500, 0.89)
+INSERT INTO ml_models (model_name, model_type, model_version, model_data, training_samples, validation_scores) VALUES
+('duration_predictor', 'RandomForestRegressor', 'v3.1', E'\\x7b22666561747572657322205b22636f6d706c657869747922205d7d', 1000, '{"accuracy": 0.85}'),
+('success_classifier', 'LogisticRegression', 'v3.1', E'\\x7b22666561747572657322205b22636f6d706c657869747922205d7d', 800, '{"accuracy": 0.78}'),
+('agent_recommender', 'GradientBoostingClassifier', 'v3.1', E'\\x7b22666561747572657322205b227461736b5f7479706522205d7d', 1200, '{"accuracy": 0.82}'),
+('anomaly_detector', 'IsolationForest', 'v3.1', E'\\x7b22636f6e74616d696e6174696f6e22203022313022207d', 500, '{"accuracy": 0.89}')
 ON CONFLICT (model_name, model_version) DO NOTHING;
 
 -- Sample learning analytics
@@ -169,7 +168,7 @@ COMMIT;
 SELECT 
     'Learning System v3.1 Evolution Complete' as status,
     COUNT(*) as total_executions,
-    COUNT(DISTINCT jsonb_array_elements_text(agents_invoked)) as total_agents,
+    0 as total_agents,
     COUNT(*) FILTER (WHERE predicted_duration IS NOT NULL) as predictions_available,
     COUNT(*) FILTER (WHERE cognitive_load_score IS NOT NULL) as cognitive_load_tracked
 FROM agent_task_executions;

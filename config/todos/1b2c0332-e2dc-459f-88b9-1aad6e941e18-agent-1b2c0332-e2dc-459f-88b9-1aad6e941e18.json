@@ -1,23 +1,18 @@
 [
   {
-    "content": "Fix exec run_python function calls",
+    "content": "Fix chroot execution issue",
     "status": "completed",
-    "activeForm": "Fixed exec run_python function calls"
+    "activeForm": "Fixed chroot execution - now using proper /usr/sbin/chroot path"
   },
   {
-    "content": "Fix PYTHONPATH export issues",
-    "status": "completed",
-    "activeForm": "Fixed PYTHONPATH export issues"
+    "content": "Fix package repository update inside chroot",
+    "status": "in_progress",
+    "activeForm": "Fixing package repository update inside chroot"
   },
   {
-    "content": "Test ultrathink script functionality",
-    "status": "completed",
-    "activeForm": "Tested ultrathink script functionality"
-  },
-  {
-    "content": "Ready for LiveCD build execution",
+    "content": "Complete vmdb2 test build",
     "status": "pending",
-    "activeForm": "Ready for LiveCD build execution"
+    "activeForm": "Complete vmdb2 test build"
   },
   {
     "content": "Create final ISO image",

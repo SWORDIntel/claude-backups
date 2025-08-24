@@ -2583,3 +2583,533 @@
 2025-08-24 19:40:42.933 UTC [30464] LOG:  checkpoint starting: time
 2025-08-24 19:40:49.849 UTC [30464] LOG:  checkpoint complete: wrote 70 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=6.915 s, sync=0.001 s, total=6.916 s; sync files=66, longest=0.001 s, average=0.001 s; distance=365 kB, estimate=3671 kB; lsn=0/1D54B28, redo lsn=0/1D54AF0
 2025-08-24 19:43:45.609 UTC [280685] FATAL:  database "ubuntu" does not exist
+2025-08-24 19:59:43.207 UTC [298860] FATAL:  database "ubuntu" does not exist
+2025-08-24 19:59:48.944 UTC [298954] ERROR:  column "cognitive_load_score" does not exist at character 193
+2025-08-24 19:59:48.944 UTC [298954] STATEMENT:  
+	                SELECT 
+	                    agent_name,
+	                    success_rate,
+	                    total_invocations,
+	                    avg_duration_seconds,
+	                    cognitive_load_score
+	                FROM agent_performance_metrics
+	                WHERE total_invocations >= 3
+	                ORDER BY success_rate DESC, total_invocations DESC
+	                LIMIT 15
+	            
+2025-08-24 19:59:53.878 UTC [299005] ERROR:  aggregate function calls cannot contain set-returning function calls at character 209
+2025-08-24 19:59:53.878 UTC [299005] HINT:  You might be able to move the set-returning function into a LATERAL FROM item.
+2025-08-24 19:59:53.878 UTC [299005] STATEMENT:  CREATE MATERIALIZED VIEW IF NOT EXISTS advanced_learning_dashboard AS
+	SELECT 
+	    'Ultimate Learning Dashboard' as dashboard_name,
+	    COUNT(DISTINCT ate.execution_id) as total_executions,
+	    COUNT(DISTINCT jsonb_array_elements_text(ate.agents_invoked)) as unique_agents_used,
+	    AVG(ate.duration_seconds) as avg_duration,
+	    AVG(ate.complexity_score) as avg_complexity,
+	    AVG(ate.prediction_confidence) FILTER (WHERE ate.prediction_confidence IS NOT NULL) as avg_prediction_confidence,
+	    AVG(ate.cognitive_load_score) FILTER (WHERE ate.cognitive_load_score IS NOT NULL) as avg_cognitive_load,
+	    COUNT(*) FILTER (WHERE ate.success = TRUE) * 100.0 / COUNT(*) as success_rate,
+	    COUNT(*) FILTER (WHERE ate.performance_anomaly = TRUE) as anomaly_count,
+	    COUNT(DISTINCT ml.model_name) as active_models,
+	    NOW() as last_updated
+	FROM agent_task_executions ate
+	LEFT JOIN ml_models ml ON ml.is_active = TRUE
+	WHERE ate.created_at >= NOW() - INTERVAL '30 days';
+2025-08-24 19:59:53.879 UTC [299005] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:59:53.879 UTC [299005] STATEMENT:  CREATE OR REPLACE FUNCTION refresh_advanced_learning_dashboard() 
+	RETURNS void AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY advanced_learning_dashboard;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-24 19:59:53.879 UTC [299005] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:59:53.879 UTC [299005] STATEMENT:  INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_accuracy) VALUES
+	('duration_predictor', 'RandomForestRegressor', '{"features": ["complexity", "agent_count", "context_size"], "n_estimators": 100}', 1000, 0.85),
+	('success_classifier', 'LogisticRegression', '{"features": ["complexity", "agent_synergy", "cognitive_load"], "regularization": "l2"}', 800, 0.78),
+	('agent_recommender', 'GradientBoostingClassifier', '{"features": ["task_type", "historical_performance", "agent_availability"], "learning_rate": 0.1}', 1200, 0.82),
+	('anomaly_detector', 'IsolationForest', '{"contamination": 0.1, "n_estimators": 100, "max_features": 1.0}', 500, 0.89)
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+2025-08-24 19:59:53.879 UTC [299005] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:59:53.879 UTC [299005] STATEMENT:  INSERT INTO learning_analytics (metric_name, metric_value, agent_context, task_context) VALUES
+	('agent_efficiency', 0.87, 'director', 'planning'),
+	('task_complexity_trend', 2.3, 'architect', 'design'),
+	('coordination_overhead', 0.15, 'projectorchestrator', 'orchestration'),
+	('learning_velocity', 1.2, 'optimizer', 'performance')
+	ON CONFLICT DO NOTHING;
+2025-08-24 19:59:53.879 UTC [299005] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:59:53.879 UTC [299005] STATEMENT:  UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
+	WHERE predicted_duration IS NULL;
+2025-08-24 19:59:53.879 UTC [299005] ERROR:  aggregate function calls cannot contain set-returning function calls at character 119
+2025-08-24 19:59:53.879 UTC [299005] HINT:  You might be able to move the set-returning function into a LATERAL FROM item.
+2025-08-24 19:59:53.879 UTC [299005] STATEMENT:  SELECT 
+	    'Learning System v3.1 Evolution Complete' as status,
+	    COUNT(*) as total_executions,
+	    COUNT(DISTINCT jsonb_array_elements_text(agents_invoked)) as total_agents,
+	    COUNT(*) FILTER (WHERE predicted_duration IS NOT NULL) as predictions_available,
+	    COUNT(*) FILTER (WHERE cognitive_load_score IS NOT NULL) as cognitive_load_tracked
+	FROM agent_task_executions;
+2025-08-24 20:00:22.957 UTC [299141] ERROR:  column "ac.unique_agents_used" must appear in the GROUP BY clause or be used in an aggregate function at character 461
+2025-08-24 20:00:22.957 UTC [299141] STATEMENT:  CREATE MATERIALIZED VIEW IF NOT EXISTS advanced_learning_dashboard AS
+	WITH agent_counts AS (
+	    SELECT COUNT(DISTINCT agent_name) as unique_agents_used
+	    FROM agent_task_executions ate
+	    CROSS JOIN LATERAL jsonb_array_elements_text(ate.agents_invoked) AS agent_name
+	    WHERE ate.created_at >= NOW() - INTERVAL '30 days'
+	)
+	SELECT 
+	    'Ultimate Learning Dashboard' as dashboard_name,
+	    COUNT(DISTINCT ate.execution_id) as total_executions,
+	    COALESCE(ac.unique_agents_used, 0) as unique_agents_used,
+	    AVG(ate.duration_seconds) as avg_duration,
+	    AVG(ate.complexity_score) as avg_complexity,
+	    AVG(ate.prediction_confidence) FILTER (WHERE ate.prediction_confidence IS NOT NULL) as avg_prediction_confidence,
+	    AVG(ate.cognitive_load_score) FILTER (WHERE ate.cognitive_load_score IS NOT NULL) as avg_cognitive_load,
+	    COUNT(*) FILTER (WHERE ate.success = TRUE) * 100.0 / COUNT(*) as success_rate,
+	    COUNT(*) FILTER (WHERE ate.performance_anomaly = TRUE) as anomaly_count,
+	    COUNT(DISTINCT ml.model_name) as active_models,
+	    NOW() as last_updated
+	FROM agent_task_executions ate
+	LEFT JOIN ml_models ml ON ml.is_active = TRUE
+	CROSS JOIN agent_counts ac
+	WHERE ate.created_at >= NOW() - INTERVAL '30 days';
+2025-08-24 20:00:22.957 UTC [299141] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:00:22.957 UTC [299141] STATEMENT:  CREATE OR REPLACE FUNCTION refresh_advanced_learning_dashboard() 
+	RETURNS void AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY advanced_learning_dashboard;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-24 20:00:22.957 UTC [299141] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:00:22.957 UTC [299141] STATEMENT:  INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_accuracy) VALUES
+	('duration_predictor', 'RandomForestRegressor', '{"features": ["complexity", "agent_count", "context_size"], "n_estimators": 100}', 1000, 0.85),
+	('success_classifier', 'LogisticRegression', '{"features": ["complexity", "agent_synergy", "cognitive_load"], "regularization": "l2"}', 800, 0.78),
+	('agent_recommender', 'GradientBoostingClassifier', '{"features": ["task_type", "historical_performance", "agent_availability"], "learning_rate": 0.1}', 1200, 0.82),
+	('anomaly_detector', 'IsolationForest', '{"contamination": 0.1, "n_estimators": 100, "max_features": 1.0}', 500, 0.89)
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+2025-08-24 20:00:22.958 UTC [299141] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:00:22.958 UTC [299141] STATEMENT:  INSERT INTO learning_analytics (metric_name, metric_value, agent_context, task_context) VALUES
+	('agent_efficiency', 0.87, 'director', 'planning'),
+	('task_complexity_trend', 2.3, 'architect', 'design'),
+	('coordination_overhead', 0.15, 'projectorchestrator', 'orchestration'),
+	('learning_velocity', 1.2, 'optimizer', 'performance')
+	ON CONFLICT DO NOTHING;
+2025-08-24 20:00:22.958 UTC [299141] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:00:22.958 UTC [299141] STATEMENT:  UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
+	WHERE predicted_duration IS NULL;
+2025-08-24 20:00:22.958 UTC [299141] ERROR:  column "ac.total_agents" must appear in the GROUP BY clause or be used in an aggregate function at character 302
+2025-08-24 20:00:22.958 UTC [299141] STATEMENT:  WITH agent_counts AS (
+	    SELECT COUNT(DISTINCT agent_name) as total_agents
+	    FROM agent_task_executions
+	    CROSS JOIN LATERAL jsonb_array_elements_text(agents_invoked) AS agent_name
+	)
+	SELECT 
+	    'Learning System v3.1 Evolution Complete' as status,
+	    COUNT(*) as total_executions,
+	    COALESCE(ac.total_agents, 0) as total_agents,
+	    COUNT(*) FILTER (WHERE predicted_duration IS NOT NULL) as predictions_available,
+	    COUNT(*) FILTER (WHERE cognitive_load_score IS NOT NULL) as cognitive_load_tracked
+	FROM agent_task_executions
+	CROSS JOIN agent_counts ac;
+2025-08-24 20:00:42.723 UTC [299242] ERROR:  column "validation_accuracy" of relation "ml_models" does not exist at character 78
+2025-08-24 20:00:42.723 UTC [299242] STATEMENT:  INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_accuracy) VALUES
+	('duration_predictor', 'RandomForestRegressor', '{"features": ["complexity", "agent_count", "context_size"], "n_estimators": 100}', 1000, 0.85),
+	('success_classifier', 'LogisticRegression', '{"features": ["complexity", "agent_synergy", "cognitive_load"], "regularization": "l2"}', 800, 0.78),
+	('agent_recommender', 'GradientBoostingClassifier', '{"features": ["task_type", "historical_performance", "agent_availability"], "learning_rate": 0.1}', 1200, 0.82),
+	('anomaly_detector', 'IsolationForest', '{"contamination": 0.1, "n_estimators": 100, "max_features": 1.0}', 500, 0.89)
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+2025-08-24 20:00:42.723 UTC [299242] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:00:42.723 UTC [299242] STATEMENT:  INSERT INTO learning_analytics (metric_name, metric_value, agent_context, task_context) VALUES
+	('agent_efficiency', 0.87, 'director', 'planning'),
+	('task_complexity_trend', 2.3, 'architect', 'design'),
+	('coordination_overhead', 0.15, 'projectorchestrator', 'orchestration'),
+	('learning_velocity', 1.2, 'optimizer', 'performance')
+	ON CONFLICT DO NOTHING;
+2025-08-24 20:00:42.723 UTC [299242] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:00:42.723 UTC [299242] STATEMENT:  UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
+	WHERE predicted_duration IS NULL;
+2025-08-24 20:00:43.163 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 20:00:52.086 UTC [30464] LOG:  checkpoint complete: wrote 90 buffers (0.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=8.923 s, sync=0.001 s, total=8.924 s; sync files=122, longest=0.001 s, average=0.001 s; distance=596 kB, estimate=3363 kB; lsn=0/1DE9B98, redo lsn=0/1DE9B60
+2025-08-24 20:01:21.187 UTC [299412] ERROR:  null value in column "model_version" of relation "ml_models" violates not-null constraint
+2025-08-24 20:01:21.187 UTC [299412] DETAIL:  Failing row contains (0883e6fa-34ee-4c26-9f14-f9c378045f32, duration_predictor, RandomForestRegressor, null, \x7b22666561747572657322205b22636f6d706c657869747922205d7d, {}, {}, 2025-08-24 20:01:21.178789+00, 1000, t, {}, {"accuracy": 0.85}).
+2025-08-24 20:01:21.187 UTC [299412] STATEMENT:  INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_scores) VALUES
+	('duration_predictor', 'RandomForestRegressor', E'\\x7b22666561747572657322205b22636f6d706c657869747922205d7d', 1000, '{"accuracy": 0.85}'),
+	('success_classifier', 'LogisticRegression', E'\\x7b22666561747572657322205b22636f6d706c657869747922205d7d', 800, '{"accuracy": 0.78}'),
+	('agent_recommender', 'GradientBoostingClassifier', E'\\x7b22666561747572657322205b227461736b5f7479706522205d7d', 1200, '{"accuracy": 0.82}'),
+	('anomaly_detector', 'IsolationForest', E'\\x7b22636f6e74616d696e6174696f6e22203022313022207d', 500, '{"accuracy": 0.89}')
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+2025-08-24 20:01:21.188 UTC [299412] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:01:21.188 UTC [299412] STATEMENT:  INSERT INTO learning_analytics (metric_name, metric_value, agent_context, task_context) VALUES
+	('agent_efficiency', 0.87, 'director', 'planning'),
+	('task_complexity_trend', 2.3, 'architect', 'design'),
+	('coordination_overhead', 0.15, 'projectorchestrator', 'orchestration'),
+	('learning_velocity', 1.2, 'optimizer', 'performance')
+	ON CONFLICT DO NOTHING;
+2025-08-24 20:01:21.188 UTC [299412] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:01:21.188 UTC [299412] STATEMENT:  UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
+	WHERE predicted_duration IS NULL;
+2025-08-24 20:01:40.679 UTC [299759] ERROR:  column "category" does not exist at character 177
+2025-08-24 20:01:40.679 UTC [299759] STATEMENT:  
+	                SELECT 
+	                    insight_type,
+	                    title,
+	                    confidence_score,
+	                    created_at,
+	                    category
+	                FROM agent_learning_insights
+	                WHERE is_active = true
+	                ORDER BY created_at DESC
+	                LIMIT 10
+	            
+2025-08-24 20:05:43.186 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 20:05:54.907 UTC [30464] LOG:  checkpoint complete: wrote 118 buffers (0.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=11.721 s, sync=0.001 s, total=11.722 s; sync files=104, longest=0.001 s, average=0.001 s; distance=610 kB, estimate=3088 kB; lsn=0/1E826B0, redo lsn=0/1E82678
+2025-08-24 20:15:11.996 UTC [301961] ERROR:  CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+2025-08-24 20:15:11.996 UTC [301961] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_category 
+	    ON agent_learning_insights(category, created_at DESC);
+2025-08-24 20:15:11.996 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.996 UTC [301961] STATEMENT:  ALTER TABLE agent_learning_insights 
+	ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 1 CHECK (priority BETWEEN 1 AND 5),
+	ADD COLUMN IF NOT EXISTS source VARCHAR(32) DEFAULT 'system',
+	ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT JSON_ARRAY();
+2025-08-24 20:15:11.996 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.996 UTC [301961] STATEMENT:  ALTER TABLE learning_analytics
+	ADD COLUMN IF NOT EXISTS category VARCHAR(64),
+	ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 1,
+	ADD COLUMN IF NOT EXISTS dimension VARCHAR(64);
+2025-08-24 20:15:11.997 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.997 UTC [301961] STATEMENT:  UPDATE learning_analytics 
+	SET category = CASE 
+	    WHEN metric_name LIKE '%efficiency%' THEN 'performance'
+	    WHEN metric_name LIKE '%complexity%' THEN 'analysis'
+	    WHEN metric_name LIKE '%coordination%' THEN 'orchestration'
+	    WHEN metric_name LIKE '%velocity%' THEN 'learning'
+	    ELSE 'metrics'
+	END,
+	dimension = CASE
+	    WHEN metric_name LIKE '%trend%' THEN 'temporal'
+	    WHEN metric_name LIKE '%overhead%' THEN 'resource'
+	    WHEN metric_name LIKE '%score%' THEN 'quality'
+	    ELSE 'general'
+	END
+	WHERE category IS NULL;
+2025-08-24 20:15:11.997 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.997 UTC [301961] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_analytics_category 
+	    ON learning_analytics(category, computation_date DESC);
+2025-08-24 20:15:11.997 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.997 UTC [301961] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_analytics_dimension 
+	    ON learning_analytics(dimension, metric_name);
+2025-08-24 20:15:11.997 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.997 UTC [301961] STATEMENT:  CREATE OR REPLACE VIEW learning_insights_with_categories AS
+	SELECT 
+	    insight_id,
+	    insight_type,
+	    category,
+	    title,
+	    confidence_score,
+	    description,
+	    supporting_data,
+	    applicable_contexts,
+	    impact_score,
+	    priority,
+	    source,
+	    tags,
+	    created_at,
+	    last_validated,
+	    validation_count,
+	    positive_validations,
+	    validation_rate,
+	    is_active,
+	    archived_at,
+	    archived_reason,
+	    created_by_user_id,
+	    -- Computed fields for enhanced querying
+	    CASE 
+	        WHEN validation_count >= 5 AND validation_rate >= 0.8 THEN 'high_confidence'
+	        WHEN validation_count >= 3 AND validation_rate >= 0.6 THEN 'medium_confidence'
+	        WHEN validation_count >= 1 THEN 'low_confidence'
+	        ELSE 'unvalidated'
+	    END as confidence_level,
+	    CASE 
+	        WHEN impact_score >= 8 THEN 'critical'
+	        WHEN impact_score >= 5 THEN 'important'
+	        WHEN impact_score >= 2 THEN 'moderate'
+	        ELSE 'minor'
+	    END as impact_level
+	FROM agent_learning_insights
+	WHERE is_active = true;
+2025-08-24 20:15:11.998 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.998 UTC [301961] STATEMENT:  CREATE OR REPLACE FUNCTION get_insights_with_category(
+	    p_category VARCHAR(64) DEFAULT NULL,
+	    p_limit INTEGER DEFAULT 10
+	)
+	RETURNS TABLE (
+	    insight_type VARCHAR(32),
+	    title VARCHAR(256),
+	    confidence_score FLOAT,
+	    created_at TIMESTAMP WITH TIME ZONE,
+	    category VARCHAR(64),
+	    priority INTEGER,
+	    impact_level TEXT
+	)
+	LANGUAGE SQL
+	STABLE
+	AS $$
+	    SELECT 
+	        ali.insight_type,
+	        ali.title,
+	        ali.confidence_score,
+	        ali.created_at,
+	        ali.category,
+	        ali.priority,
+	        CASE 
+	            WHEN ali.impact_score >= 8 THEN 'critical'
+	            WHEN ali.impact_score >= 5 THEN 'important'
+	            WHEN ali.impact_score >= 2 THEN 'moderate'
+	            ELSE 'minor'
+	        END as impact_level
+	    FROM agent_learning_insights ali
+	    WHERE ali.is_active = true
+	        AND (p_category IS NULL OR ali.category = p_category)
+	    ORDER BY ali.created_at DESC, ali.confidence_score DESC
+	    LIMIT p_limit;
+	$$;
+2025-08-24 20:15:11.998 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.998 UTC [301961] STATEMENT:  DROP MATERIALIZED VIEW IF EXISTS learning_dashboard_mv CASCADE;
+2025-08-24 20:15:11.998 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.998 UTC [301961] STATEMENT:  CREATE MATERIALIZED VIEW learning_dashboard_mv AS
+	SELECT 
+	    -- Overall statistics
+	    (SELECT COUNT(*) FROM agent_task_executions) as total_executions,
+	    (SELECT AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) FROM agent_task_executions) as overall_success_rate,
+	    (SELECT AVG(duration_seconds) FROM agent_task_executions WHERE success = true) as avg_duration,
+	    (SELECT COUNT(DISTINCT task_type) FROM agent_task_executions) as unique_task_types,
+	    (SELECT COUNT(*) FROM agent_task_executions WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	    (SELECT COUNT(*) FROM agent_task_executions WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	    
+	    -- Top performing agents
+	    (SELECT jsonb_agg(
+	        jsonb_build_object('agent', agent_name, 'success_rate', success_rate, 'invocations', total_invocations)
+	        ORDER BY success_rate DESC
+	    ) FROM (
+	        SELECT agent_name, success_rate, total_invocations
+	        FROM agent_performance_metrics 
+	        WHERE total_invocations >= 5 
+	        ORDER BY success_rate DESC 
+	        LIMIT 10
+	    ) top_agents) as top_agents,
+	    
+	    -- Categorized insights count
+	    (SELECT jsonb_object_agg(
+	        COALESCE(category, 'uncategorized'), 
+	        category_count
+	    ) FROM (
+	        SELECT category, COUNT(*) as category_count
+	        FROM agent_learning_insights 
+	        WHERE is_active = true AND created_at >= NOW() - INTERVAL '7 days'
+	        GROUP BY category
+	    ) cat_insights) as insights_by_category,
+	    
+	    -- Recent insights count
+	    (SELECT COUNT(*) FROM agent_learning_insights WHERE is_active = true AND created_at >= NOW() - INTERVAL '7 days') as recent_insights,
+	    
+	    -- Last refresh
+	    NOW() as last_refreshed;
+2025-08-24 20:15:11.998 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.998 UTC [301961] STATEMENT:  CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_dashboard_mv_refresh 
+	    ON learning_dashboard_mv(last_refreshed);
+2025-08-24 20:15:11.998 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.998 UTC [301961] STATEMENT:  CREATE OR REPLACE FUNCTION refresh_learning_dashboard()
+	RETURNS VOID AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY learning_dashboard_mv;
+	    -- Log the refresh for monitoring
+	    INSERT INTO learning_analytics (metric_name, metric_value, metric_metadata, agent_context, task_context, category)
+	    VALUES ('dashboard_refresh', 1.0, '{"refresh_time": "' || NOW()::text || '"}', 'system', 'dashboard', 'metrics');
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-24 20:15:11.998 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.998 UTC [301961] STATEMENT:  INSERT INTO agent_learning_insights (
+	    insight_type, category, title, description, confidence_score, 
+	    impact_score, priority, source, tags
+	) VALUES 
+	(
+	    'optimal_combo', 'coordination', 
+	    'Web + API + Security trio shows 95% success rate',
+	    'The combination of WEB, APIDESIGNER, and SECURITY agents consistently delivers successful results for web development tasks.',
+	    0.95, 8, 1, 'ml_analysis', 
+	    '["high_success", "web_development", "trio"]'::jsonb
+	),
+	(
+	    'performance_tip', 'performance',
+	    'Parallel execution reduces duration by 40%',
+	    'Tasks using parallel agent execution complete 40% faster on average while maintaining quality.',
+	    0.87, 7, 2, 'performance_analysis',
+	    '["parallel", "optimization", "time_saving"]'::jsonb
+	)
+	ON CONFLICT DO NOTHING;
+2025-08-24 20:15:11.998 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.998 UTC [301961] STATEMENT:  CREATE OR REPLACE FUNCTION validate_learning_schema()
+	RETURNS TABLE (
+	    table_name TEXT,
+	    missing_columns TEXT[],
+	    status TEXT
+	)
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    missing_cols TEXT[];
+	BEGIN
+	    -- Check agent_learning_insights
+	    SELECT ARRAY_AGG(col) INTO missing_cols
+	    FROM (VALUES ('category'), ('priority'), ('source'), ('tags')) AS expected(col)
+	    WHERE NOT EXISTS (
+	        SELECT 1 FROM information_schema.columns 
+	        WHERE table_name = 'agent_learning_insights' 
+	        AND column_name = expected.col
+	    );
+	    
+	    RETURN QUERY SELECT 
+	        'agent_learning_insights'::TEXT,
+	        COALESCE(missing_cols, ARRAY[]::TEXT[]),
+	        CASE WHEN array_length(missing_cols, 1) IS NULL THEN 'OK' ELSE 'MISSING_COLUMNS' END;
+	    
+	    -- Check learning_analytics  
+	    SELECT ARRAY_AGG(col) INTO missing_cols
+	    FROM (VALUES ('category'), ('priority'), ('dimension')) AS expected(col)
+	    WHERE NOT EXISTS (
+	        SELECT 1 FROM information_schema.columns 
+	        WHERE table_name = 'learning_analytics'
+	        AND column_name = expected.col
+	    );
+	    
+	    RETURN QUERY SELECT 
+	        'learning_analytics'::TEXT,
+	        COALESCE(missing_cols, ARRAY[]::TEXT[]),
+	        CASE WHEN array_length(missing_cols, 1) IS NULL THEN 'OK' ELSE 'MISSING_COLUMNS' END;
+	        
+	END;
+	$$;
+2025-08-24 20:15:11.999 UTC [301961] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 20:15:11.999 UTC [301961] STATEMENT:  SELECT refresh_learning_dashboard();
+2025-08-24 20:15:11.999 UTC [301961] ERROR:  function validate_learning_schema() does not exist at character 15
+2025-08-24 20:15:11.999 UTC [301961] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2025-08-24 20:15:11.999 UTC [301961] STATEMENT:  SELECT * FROM validate_learning_schema();
+2025-08-24 20:15:11.999 UTC [301961] ERROR:  column "category" does not exist at character 78
+2025-08-24 20:15:11.999 UTC [301961] STATEMENT:  SELECT 
+	    'Sample insights with categories' as info,
+	    insight_type,
+	    category,
+	    title,
+	    confidence_score,
+	    priority
+	FROM agent_learning_insights 
+	WHERE category IS NOT NULL 
+	LIMIT 5;
+2025-08-24 20:15:11.999 UTC [301961] ERROR:  column "category" does not exist at character 78
+2025-08-24 20:15:11.999 UTC [301961] STATEMENT:  SELECT 
+	    'Sample analytics with categories' as info,
+	    metric_name,
+	    category,
+	    dimension,
+	    agent_context
+	FROM learning_analytics
+	WHERE category IS NOT NULL
+	LIMIT 5;
+2025-08-24 20:15:44.107 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 20:15:45.710 UTC [30464] LOG:  checkpoint complete: wrote 17 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.604 s, sync=0.001 s, total=1.604 s; sync files=16, longest=0.001 s, average=0.001 s; distance=71 kB, estimate=2786 kB; lsn=0/1E94530, redo lsn=0/1E944F8
+2025-08-24 20:15:47.329 UTC [302018] ERROR:  syntax error at or near "NOT" at character 55
+2025-08-24 20:15:47.329 UTC [302018] STATEMENT:  ALTER TABLE agent_learning_insights
+	ADD CONSTRAINT IF NOT EXISTS check_category_values CHECK (
+	    category IN ('coordination', 'anti_pattern', 'performance', 'resource', 
+	                'agent_specialty', 'trend_analysis', 'anomaly', 'efficiency', 'general')
+	);
+2025-08-24 20:15:47.330 UTC [302018] ERROR:  syntax error at or near "NOT" at character 55
+2025-08-24 20:15:47.330 UTC [302018] STATEMENT:  ALTER TABLE agent_learning_insights
+	ADD CONSTRAINT IF NOT EXISTS check_priority_range CHECK (priority BETWEEN 1 AND 5);
+2025-08-24 20:15:52.884 UTC [302074] ERROR:  column reference "table_name" is ambiguous at character 212
+2025-08-24 20:15:52.884 UTC [302074] DETAIL:  It could refer to either a PL/pgSQL variable or a table column.
+2025-08-24 20:15:52.884 UTC [302074] QUERY:  SELECT ARRAY_AGG(col)                       FROM (VALUES ('category'), ('priority'), ('source'), ('tags')) AS expected(col)
+	    WHERE NOT EXISTS (
+	        SELECT 1 FROM information_schema.columns 
+	        WHERE table_name = 'agent_learning_insights' 
+	        AND column_name = expected.col
+	    )
+2025-08-24 20:15:52.884 UTC [302074] CONTEXT:  PL/pgSQL function validate_learning_schema() line 6 at SQL statement
+2025-08-24 20:15:52.884 UTC [302074] STATEMENT:  SELECT * FROM validate_learning_schema();
+2025-08-24 20:20:44.810 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 20:20:53.626 UTC [30464] LOG:  checkpoint complete: wrote 89 buffers (0.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=8.816 s, sync=0.001 s, total=8.817 s; sync files=55, longest=0.001 s, average=0.001 s; distance=421 kB, estimate=2550 kB; lsn=0/1EFDB68, redo lsn=0/1EFDB30
+2025-08-24 20:22:42.046 UTC [314958] ERROR:  column "feature_vector" of relation "agent_task_executions" does not exist at character 548
+2025-08-24 20:22:42.046 UTC [314958] STATEMENT:  
+	                INSERT INTO agent_task_executions (
+	                    execution_id, task_type, task_description, agents_invoked, 
+	                    execution_sequence, start_time, end_time, duration_seconds, 
+	                    success, error_message, user_satisfaction, complexity_score, 
+	                    resource_metrics, context_data, user_id, session_id,
+	                    predicted_success, predicted_duration, prediction_confidence,
+	                    performance_anomaly, ml_features, agent_synergy_scores,
+	                    feature_vector
+	                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 
+	                         $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+	            
+2025-08-24 20:23:56.472 UTC [315615] ERROR:  insert or update on table "agent_task_executions" violates foreign key constraint "agent_task_executions_user_id_fkey"
+2025-08-24 20:23:56.472 UTC [315615] DETAIL:  Key (user_id)=(3868e24a-69cf-4270-b40d-136b1cad9a01) is not present in table "users".
+2025-08-24 20:23:56.472 UTC [315615] STATEMENT:  
+	                INSERT INTO agent_task_executions (
+	                    execution_id, task_type, task_description, agents_invoked, 
+	                    execution_sequence, start_time, end_time, duration_seconds, 
+	                    success, error_message, user_satisfaction, complexity_score, 
+	                    resource_metrics, context_data, user_id, session_id,
+	                    predicted_success, predicted_duration, prediction_confidence,
+	                    performance_anomaly, ml_features, agent_synergy_scores,
+	                    feature_vector
+	                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 
+	                         $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+	            
+2025-08-24 20:24:10.325 UTC [315770] ERROR:  new row for relation "agent_performance_metrics" violates check constraint "duration_stats_valid"
+2025-08-24 20:24:10.325 UTC [315770] DETAIL:  Failing row contains (WEB, 1, 1, 1, 45.2, 0, 0, 0, [], [], {}, {}, 2025-08-24 20:24:10.318229+00, 2025-08-24 20:24:10.325579+00, 0, 0, {}, f, 0).
+2025-08-24 20:24:10.325 UTC [315770] STATEMENT:  
+	                INSERT INTO agent_performance_metrics (
+	                    agent_name, total_invocations, successful_invocations, 
+	                    avg_duration_seconds, last_invocation
+	                ) VALUES ($1, 1, $2, $3, $4)
+	                ON CONFLICT (agent_name) DO UPDATE SET
+	                    total_invocations = agent_performance_metrics.total_invocations + 1,
+	                    successful_invocations = agent_performance_metrics.successful_invocations + $2,
+	                    avg_duration_seconds = (
+	                        agent_performance_metrics.avg_duration_seconds * (agent_performance_metrics.total_invocations - 1) + $3
+	                    ) / agent_performance_metrics.total_invocations,
+	                    last_invocation = $4,
+	                    last_updated = NOW()
+	            
+2025-08-24 20:25:09.882 UTC [316145] ERROR:  new row for relation "agent_performance_metrics" violates check constraint "duration_stats_valid"
+2025-08-24 20:25:09.882 UTC [316145] DETAIL:  Failing row contains (DATABASE, 3, 3, 1, 45.20000000000001, 45.2, 45.2, 0, [], [], {}, {}, 2025-08-24 20:25:09.874983+00, 2025-08-24 20:25:09.882871+00, 0, 0, {}, f, 0).
+2025-08-24 20:25:09.882 UTC [316145] STATEMENT:  
+	                INSERT INTO agent_performance_metrics (
+	                    agent_name, total_invocations, successful_invocations, 
+	                    avg_duration_seconds, min_duration_seconds, max_duration_seconds,
+	                    last_invocation
+	                ) VALUES ($1, 1, $2, $3, $3, $3, $4)
+	                ON CONFLICT (agent_name) DO UPDATE SET
+	                    total_invocations = agent_performance_metrics.total_invocations + 1,
+	                    successful_invocations = agent_performance_metrics.successful_invocations + $2,
+	                    avg_duration_seconds = (
+	                        agent_performance_metrics.avg_duration_seconds * agent_performance_metrics.total_invocations + $3
+	                    ) / (agent_performance_metrics.total_invocations + 1),
+	                    min_duration_seconds = LEAST(agent_performance_metrics.min_duration_seconds, $3),
+	                    max_duration_seconds = GREATEST(agent_performance_metrics.max_duration_seconds, $3),
+	                    last_invocation = $4,
+	                    last_updated = NOW()
+	            
+2025-08-24 20:25:44.726 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 20:25:52.541 UTC [30464] LOG:  checkpoint complete: wrote 79 buffers (0.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=7.815 s, sync=0.001 s, total=7.815 s; sync files=59, longest=0.001 s, average=0.000 s; distance=187 kB, estimate=2314 kB; lsn=0/1F2C790, redo lsn=0/1F2C758
