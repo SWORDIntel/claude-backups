@@ -126,13 +126,17 @@ EOF
             echo "⚠️  Learning system schema not found: $SCRIPT_DIR/sql/learning_system_schema.sql"
         fi
         
-        # Run learning system v3.1 evolution if exists
-        if [ -f "$SCRIPT_DIR/sql/learning_system_evolution_v31.sql" ]; then
-            echo "🚀 Evolving learning system to v3.1 (ML features)..."
+        # Run learning system v3.1 evolution if exists (PostgreSQL 16/17 compatible)
+        if [ -f "$SCRIPT_DIR/sql/learning_system_evolution_v31_pg16_compatible.sql" ]; then
+            echo "🚀 Evolving learning system to v3.1 (ML features) - PostgreSQL 16/17 compatible..."
+            psql -h localhost -p $PG_PORT -U claude_auth -d claude_auth -f "$SCRIPT_DIR/sql/learning_system_evolution_v31_pg16_compatible.sql"
+            echo "✅ Learning system v3.1 evolution complete (PostgreSQL 16/17 compatible)"
+        elif [ -f "$SCRIPT_DIR/sql/learning_system_evolution_v31.sql" ]; then
+            echo "🚀 Evolving learning system to v3.1 (ML features) - legacy version..."
             psql -h localhost -p $PG_PORT -U claude_auth -d claude_auth -f "$SCRIPT_DIR/sql/learning_system_evolution_v31.sql"
-            echo "✅ Learning system v3.1 evolution complete"
+            echo "✅ Learning system v3.1 evolution complete (legacy)"
         else
-            echo "⚠️  Learning system v3.1 evolution not found: $SCRIPT_DIR/sql/learning_system_evolution_v31.sql"
+            echo "⚠️  Learning system v3.1 evolution not found in $SCRIPT_DIR/sql/"
         fi
         
         echo "🎯 Database setup complete with full ML learning capabilities"
@@ -158,7 +162,19 @@ EOF
             echo "  ✅ Data directory: $DATA_DIR"
             if check_postgresql_running; then
                 echo "  ✅ PostgreSQL: RUNNING on port $PG_PORT"
-                psql -h localhost -p $PG_PORT -U ubuntu -d postgres -c "SELECT version();" 2>/dev/null | grep PostgreSQL || echo "  ❌ Unable to connect"
+                PG_VERSION=$(psql -h localhost -p $PG_PORT -U ubuntu -d postgres -t -c "SELECT version();" 2>/dev/null | grep PostgreSQL | head -1)
+                if [ -n "$PG_VERSION" ]; then
+                    echo "  📊 Version: $PG_VERSION"
+                    # Check for PostgreSQL 17 features
+                    JSON_ARRAY_TEST=$(psql -h localhost -p $PG_PORT -U ubuntu -d postgres -t -c "SELECT JSON_ARRAY() IS NOT NULL;" 2>/dev/null || echo "FAILED")
+                    if [[ "$JSON_ARRAY_TEST" == *"t"* ]]; then
+                        echo "  🚀 PostgreSQL 17 JSON functions: AVAILABLE"
+                    else
+                        echo "  📦 PostgreSQL 16 compatibility mode: ACTIVE"
+                    fi
+                else
+                    echo "  ❌ Unable to connect"
+                fi
             else
                 echo "  ⏸️  PostgreSQL: STOPPED"
                 echo "  💡 Run '$0 start' to start PostgreSQL"
