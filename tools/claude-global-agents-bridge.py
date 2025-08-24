@@ -85,7 +85,7 @@ class SystemCapability:
     def _check_tandem(self) -> Dict[str, Any]:
         """Check if Tandem orchestrator is available"""
         agents_root = Path(os.environ.get('CLAUDE_AGENTS_ROOT', os.getcwd()))
-        tandem_path = agents_root / 'src' / 'python' / 'tandem_orchestrator.py'
+        tandem_path = agents_root / 'src' / 'python' / 'production_orchestrator.py'
         orchestrator_path = agents_root / 'src' / 'python' / 'production_orchestrator.py'
         
         return {
@@ -135,7 +135,7 @@ class GlobalAgentCoordinator:
         
         # Component paths (relative to agents_dir)
         self.orchestrator_path = self.agents_dir / 'src' / 'python' / 'production_orchestrator.py'
-        self.tandem_path = self.agents_dir / 'src' / 'python' / 'tandem_orchestrator.py'
+        self.tandem_path = self.agents_dir / 'src' / 'python' / 'production_orchestrator.py'
         self.c_bridge_path = self.agents_dir / 'binary-communications-system' / 'ultra_hybrid_enhanced'
         
         # System state

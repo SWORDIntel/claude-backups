@@ -82,7 +82,7 @@ class SystemCapability:
     
     def _check_tandem(self) -> Dict[str, Any]:
         """Check if Tandem orchestrator is available"""
-        tandem_path = Path("/home/ubuntu/Documents/claude-backups/agents/src/python/tandem_orchestrator.py")
+        tandem_path = Path("/home/ubuntu/Documents/claude-backups/agents/src/python/production_orchestrator.py")
         orchestrator_path = Path("/home/ubuntu/Documents/claude-backups/agents/src/python/production_orchestrator.py")
         
         return {
@@ -131,7 +131,7 @@ class GlobalAgentCoordinator:
         
         # Component paths
         self.orchestrator_path = self.agents_dir / 'src' / 'python' / 'production_orchestrator.py'
-        self.tandem_path = self.agents_dir / 'src' / 'python' / 'tandem_orchestrator.py'
+        self.tandem_path = self.agents_dir / 'src' / 'python' / 'production_orchestrator.py'
         self.c_bridge_path = self.agents_dir / 'binary-communications-system' / 'ultra_hybrid_enhanced'
         
         # System state
