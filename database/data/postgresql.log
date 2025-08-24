@@ -1658,3 +1658,928 @@
 2025-08-24 17:26:37.158 UTC [30627] STATEMENT:  CREATE DATABASE claude_auth; CREATE USER claude_auth WITH PASSWORD 'claude_auth_pass'; GRANT ALL PRIVILEGES ON DATABASE claude_auth TO claude_auth;
 2025-08-24 17:30:41.662 UTC [30464] LOG:  checkpoint starting: time
 2025-08-24 17:32:19.300 UTC [30464] LOG:  checkpoint complete: wrote 979 buffers (6.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=97.638 s, sync=0.001 s, total=97.639 s; sync files=317, longest=0.001 s, average=0.000 s; distance=4562 kB, estimate=4562 kB; lsn=0/1971258, redo lsn=0/1971220
+2025-08-24 19:27:45.296 UTC [253497] FATAL:  database "ubuntu" does not exist
+2025-08-24 19:29:42.821 UTC [253961] ERROR:  permission denied for schema public at character 45
+2025-08-24 19:29:42.821 UTC [253961] STATEMENT:  
+	                CREATE TABLE IF NOT EXISTS agent_task_executions (
+	                    execution_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	                    task_type VARCHAR(64) NOT NULL,
+	                    task_description TEXT,
+	                    agents_invoked JSONB DEFAULT '[]'::jsonb,
+	                    execution_sequence JSONB DEFAULT '[]'::jsonb,
+	                    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    duration_seconds FLOAT NOT NULL,
+	                    success BOOLEAN NOT NULL,
+	                    error_message TEXT,
+	                    user_satisfaction INTEGER CHECK (user_satisfaction BETWEEN 1 AND 10),
+	                    complexity_score FLOAT DEFAULT 1.0,
+	                    resource_metrics JSONB DEFAULT '{}'::jsonb,
+	                    context_data JSONB DEFAULT '{}'::jsonb,
+	                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	                    predicted_success FLOAT,
+	                    predicted_duration FLOAT,
+	                    prediction_confidence FLOAT,
+	                    performance_anomaly BOOLEAN DEFAULT FALSE,
+	                    optimization_applied BOOLEAN DEFAULT FALSE,
+	                    ml_features JSONB DEFAULT '{}'::jsonb,
+	                    agent_synergy_scores JSONB DEFAULT '{}'::jsonb,
+	                    user_id UUID,
+	                    session_id UUID,
+	                    task_embedding VECTOR(256),
+	                    feature_vector JSONB DEFAULT '{}'::jsonb
+	                )
+	            
+2025-08-24 19:29:42.830 UTC [253963] ERROR:  permission denied for schema public at character 45
+2025-08-24 19:29:42.830 UTC [253963] STATEMENT:  
+	                CREATE TABLE IF NOT EXISTS agent_task_executions (
+	                    execution_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	                    task_type VARCHAR(64) NOT NULL,
+	                    task_description TEXT,
+	                    agents_invoked JSONB DEFAULT '[]'::jsonb,
+	                    execution_sequence JSONB DEFAULT '[]'::jsonb,
+	                    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    duration_seconds FLOAT NOT NULL,
+	                    success BOOLEAN NOT NULL,
+	                    error_message TEXT,
+	                    user_satisfaction INTEGER CHECK (user_satisfaction BETWEEN 1 AND 10),
+	                    complexity_score FLOAT DEFAULT 1.0,
+	                    resource_metrics JSONB DEFAULT '{}'::jsonb,
+	                    context_data JSONB DEFAULT '{}'::jsonb,
+	                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	                    predicted_success FLOAT,
+	                    predicted_duration FLOAT,
+	                    prediction_confidence FLOAT,
+	                    performance_anomaly BOOLEAN DEFAULT FALSE,
+	                    optimization_applied BOOLEAN DEFAULT FALSE,
+	                    ml_features JSONB DEFAULT '{}'::jsonb,
+	                    agent_synergy_scores JSONB DEFAULT '{}'::jsonb,
+	                    user_id UUID,
+	                    session_id UUID,
+	                    task_embedding VECTOR(256),
+	                    feature_vector JSONB DEFAULT '{}'::jsonb
+	                )
+	            
+2025-08-24 19:29:42.834 UTC [253964] ERROR:  relation "agent_task_executions" does not exist at character 798
+2025-08-24 19:29:42.834 UTC [253964] STATEMENT:  
+	                SELECT 
+	                    COUNT(*) as total_executions,
+	                    AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as overall_success_rate,
+	                    AVG(duration_seconds) as avg_duration,
+	                    COUNT(DISTINCT task_type) as unique_task_types,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	                    AVG(complexity_score) as avg_complexity,
+	                    COUNT(*) FILTER (WHERE performance_anomaly = true) as total_anomalies,
+	                    AVG(prediction_confidence) FILTER (WHERE prediction_confidence IS NOT NULL) as avg_prediction_confidence
+	                FROM agent_task_executions
+	            
+2025-08-24 19:29:49.847 UTC [254020] ERROR:  permission denied to create extension "pg_stat_statements"
+2025-08-24 19:29:49.847 UTC [254020] HINT:  Must be superuser to create this extension.
+2025-08-24 19:29:49.847 UTC [254020] STATEMENT:  CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+2025-08-24 19:29:49.851 UTC [254020] ERROR:  permission denied for schema public at character 28
+2025-08-24 19:29:49.851 UTC [254020] STATEMENT:  CREATE TABLE IF NOT EXISTS agent_task_executions (
+	    execution_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	    task_type VARCHAR(64) NOT NULL,
+	    task_description TEXT,
+	    agents_invoked JSONB DEFAULT JSON_ARRAY(), -- PostgreSQL 17 JSON constructor
+	    execution_sequence JSONB DEFAULT JSON_ARRAY(), -- Order of agent invocation
+	    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	    duration_seconds FLOAT NOT NULL CHECK (duration_seconds >= 0),
+	    success BOOLEAN NOT NULL,
+	    error_message TEXT,
+	    error_code VARCHAR(32),
+	    user_satisfaction INTEGER CHECK (user_satisfaction BETWEEN 1 AND 10),
+	    complexity_score FLOAT DEFAULT 1.0 CHECK (complexity_score > 0),
+	    resource_metrics JSONB DEFAULT JSON_OBJECT(), -- CPU, memory, etc.
+	    context_data JSONB DEFAULT JSON_OBJECT(), -- Additional context
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    
+	    -- Integration with existing auth system
+	    user_id UUID REFERENCES users(user_id) ON DELETE SET NULL,
+	    session_id UUID REFERENCES user_sessions(session_id) ON DELETE SET NULL,
+	    
+	    -- Audit fields
+	    created_by VARCHAR(64) DEFAULT current_user,
+	    
+	    -- Performance constraints
+	    CONSTRAINT execution_time_valid CHECK (end_time > start_time),
+	    CONSTRAINT agents_not_empty CHECK (jsonb_array_length(agents_invoked) > 0)
+	);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_task_executions" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_type_time 
+	    ON agent_task_executions(task_type, start_time DESC);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_task_executions" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_success_time 
+	    ON agent_task_executions(success, start_time DESC);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_task_executions" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_user_time 
+	    ON agent_task_executions(user_id, start_time DESC) WHERE user_id IS NOT NULL;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_task_executions" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_agents 
+	    ON agent_task_executions USING GIN(agents_invoked);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_task_executions" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_duration 
+	    ON agent_task_executions(duration_seconds) WHERE success = true;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_task_executions" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_executions_complexity 
+	    ON agent_task_executions(complexity_score, success);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public at character 28
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE TABLE IF NOT EXISTS agent_performance_metrics (
+	    agent_name VARCHAR(64) PRIMARY KEY,
+	    total_invocations BIGINT DEFAULT 0,
+	    successful_invocations BIGINT DEFAULT 0,
+	    success_rate FLOAT GENERATED ALWAYS AS (
+	        CASE WHEN total_invocations > 0 
+	        THEN successful_invocations::FLOAT / total_invocations 
+	        ELSE 0 END
+	    ) STORED,
+	    avg_duration_seconds FLOAT DEFAULT 0,
+	    min_duration_seconds FLOAT DEFAULT 0,
+	    max_duration_seconds FLOAT DEFAULT 0,
+	    p95_duration_seconds FLOAT DEFAULT 0,
+	    error_patterns JSONB DEFAULT JSON_ARRAY(), -- Common error types
+	    best_partner_agents JSONB DEFAULT JSON_ARRAY(), -- Agents that work well together
+	    specialization_scores JSONB DEFAULT JSON_OBJECT(), -- Task type specializations
+	    resource_efficiency JSONB DEFAULT JSON_OBJECT(), -- Resource usage patterns
+	    last_invocation TIMESTAMP WITH TIME ZONE,
+	    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    
+	    -- Performance tracking
+	    trend_7d FLOAT DEFAULT 0, -- 7-day success rate trend
+	    trend_30d FLOAT DEFAULT 0, -- 30-day success rate trend
+	    
+	    CONSTRAINT success_rate_valid CHECK (success_rate BETWEEN 0 AND 1),
+	    CONSTRAINT duration_stats_valid CHECK (
+	        min_duration_seconds <= avg_duration_seconds 
+	        AND avg_duration_seconds <= max_duration_seconds
+	    )
+	);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_performance_metrics" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_agent_performance_success 
+	    ON agent_performance_metrics(success_rate DESC, total_invocations DESC);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_performance_metrics" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_agent_performance_duration 
+	    ON agent_performance_metrics(avg_duration_seconds);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_performance_metrics" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_agent_performance_updated 
+	    ON agent_performance_metrics(last_updated DESC);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public at character 28
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE TABLE IF NOT EXISTS agent_combination_patterns (
+	    pattern_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	    agent_combination JSONB NOT NULL, -- Sorted array of agent names
+	    combination_hash VARCHAR(64) GENERATED ALWAYS AS (
+	        encode(digest(agent_combination::text, 'sha256'), 'hex')
+	    ) STORED,
+	    task_types JSONB DEFAULT JSON_ARRAY(), -- Task types this combo works for
+	    success_count INTEGER DEFAULT 0,
+	    failure_count INTEGER DEFAULT 0,
+	    success_rate FLOAT GENERATED ALWAYS AS (
+	        CASE WHEN (success_count + failure_count) > 0 
+	        THEN success_count::FLOAT / (success_count + failure_count)
+	        ELSE 0 END
+	    ) STORED,
+	    avg_duration_seconds FLOAT DEFAULT 0,
+	    min_duration_seconds FLOAT DEFAULT 0,
+	    max_duration_seconds FLOAT DEFAULT 0,
+	    confidence_level FLOAT DEFAULT 0.0, -- Statistical confidence
+	    sample_size INTEGER GENERATED ALWAYS AS (success_count + failure_count) STORED,
+	    last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    
+	    -- Performance characteristics
+	    resource_efficiency_score FLOAT DEFAULT 0,
+	    parallel_execution_capable BOOLEAN DEFAULT FALSE,
+	    
+	    UNIQUE(combination_hash),
+	    CONSTRAINT combination_not_empty CHECK (jsonb_array_length(agent_combination) >= 2),
+	    CONSTRAINT success_rate_valid CHECK (success_rate BETWEEN 0 AND 1),
+	    CONSTRAINT confidence_valid CHECK (confidence_level BETWEEN 0 AND 1)
+	);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_combination_patterns" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_success 
+	    ON agent_combination_patterns(success_rate DESC, confidence_level DESC);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_combination_patterns" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_agents 
+	    ON agent_combination_patterns USING GIN(agent_combination);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_combination_patterns" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_tasks 
+	    ON agent_combination_patterns USING GIN(task_types);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_combination_patterns" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_combination_patterns_sample 
+	    ON agent_combination_patterns(sample_size DESC) WHERE sample_size >= 5;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public at character 28
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE TABLE IF NOT EXISTS agent_learning_insights (
+	    insight_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	    insight_type VARCHAR(32) NOT NULL CHECK (
+	        insight_type IN ('optimal_combo', 'avoid_pattern', 'performance_tip', 
+	                        'resource_optimization', 'specialization', 'trend_alert',
+	                        'anomaly_detection', 'efficiency_improvement')
+	    ),
+	    confidence_score FLOAT NOT NULL CHECK (confidence_score BETWEEN 0.0 AND 1.0),
+	    title VARCHAR(256) NOT NULL,
+	    description TEXT NOT NULL,
+	    supporting_data JSONB DEFAULT JSON_OBJECT(),
+	    applicable_contexts JSONB DEFAULT JSON_ARRAY(), -- Task types or conditions
+	    impact_score FLOAT DEFAULT 0 CHECK (impact_score BETWEEN 0 AND 10),
+	    
+	    -- Validation tracking
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    last_validated TIMESTAMP WITH TIME ZONE,
+	    validation_count INTEGER DEFAULT 0,
+	    positive_validations INTEGER DEFAULT 0,
+	    validation_rate FLOAT GENERATED ALWAYS AS (
+	        CASE WHEN validation_count > 0 
+	        THEN positive_validations::FLOAT / validation_count 
+	        ELSE 0 END
+	    ) STORED,
+	    
+	    -- Lifecycle management
+	    is_active BOOLEAN DEFAULT TRUE,
+	    archived_at TIMESTAMP WITH TIME ZONE,
+	    archived_reason TEXT,
+	    
+	    -- Integration with existing system
+	    created_by_user_id UUID REFERENCES users(user_id) ON DELETE SET NULL
+	);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_learning_insights" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_type_confidence 
+	    ON agent_learning_insights(insight_type, confidence_score DESC);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_learning_insights" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_active_created 
+	    ON agent_learning_insights(is_active, created_at DESC) WHERE is_active = TRUE;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_learning_insights" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_contexts 
+	    ON agent_learning_insights USING GIN(applicable_contexts);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_learning_insights" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_learning_insights_validation 
+	    ON agent_learning_insights(validation_rate DESC, validation_count DESC) 
+	    WHERE validation_count >= 3;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public at character 28
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE TABLE IF NOT EXISTS task_type_analysis (
+	    task_type VARCHAR(64) PRIMARY KEY,
+	    total_executions BIGINT DEFAULT 0,
+	    success_rate FLOAT DEFAULT 0,
+	    avg_complexity FLOAT DEFAULT 0,
+	    avg_duration_seconds FLOAT DEFAULT 0,
+	    preferred_agents JSONB DEFAULT JSON_ARRAY(),
+	    optimal_combinations JSONB DEFAULT JSON_ARRAY(),
+	    common_failures JSONB DEFAULT JSON_ARRAY(),
+	    resource_requirements JSONB DEFAULT JSON_OBJECT(),
+	    
+	    -- Trend analysis
+	    trend_direction VARCHAR(10) CHECK (trend_direction IN ('up', 'down', 'stable', 'unknown')),
+	    trend_strength FLOAT DEFAULT 0,
+	    
+	    -- Classification
+	    difficulty_level INTEGER DEFAULT 1 CHECK (difficulty_level BETWEEN 1 AND 5),
+	    automation_potential FLOAT DEFAULT 0 CHECK (automation_potential BETWEEN 0 AND 1),
+	    
+	    last_analyzed TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+	);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "task_type_analysis" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_type_success 
+	    ON task_type_analysis(success_rate DESC, total_executions DESC);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "task_type_analysis" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_task_type_difficulty 
+	    ON task_type_analysis(difficulty_level, avg_duration_seconds);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE OR REPLACE FUNCTION update_agent_performance_metrics(
+	    p_agent_name VARCHAR(64),
+	    p_duration_seconds FLOAT,
+	    p_success BOOLEAN,
+	    p_task_type VARCHAR(64) DEFAULT NULL
+	)
+	RETURNS VOID
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+	    INSERT INTO agent_performance_metrics (
+	        agent_name, 
+	        total_invocations, 
+	        successful_invocations,
+	        avg_duration_seconds,
+	        min_duration_seconds,
+	        max_duration_seconds,
+	        last_invocation
+	    ) VALUES (
+	        p_agent_name,
+	        1,
+	        CASE WHEN p_success THEN 1 ELSE 0 END,
+	        p_duration_seconds,
+	        p_duration_seconds,
+	        p_duration_seconds,
+	        NOW()
+	    )
+	    ON CONFLICT (agent_name) DO UPDATE SET
+	        total_invocations = agent_performance_metrics.total_invocations + 1,
+	        successful_invocations = agent_performance_metrics.successful_invocations + 
+	            CASE WHEN p_success THEN 1 ELSE 0 END,
+	        avg_duration_seconds = (
+	            agent_performance_metrics.avg_duration_seconds * agent_performance_metrics.total_invocations + p_duration_seconds
+	        ) / (agent_performance_metrics.total_invocations + 1),
+	        min_duration_seconds = LEAST(agent_performance_metrics.min_duration_seconds, p_duration_seconds),
+	        max_duration_seconds = GREATEST(agent_performance_metrics.max_duration_seconds, p_duration_seconds),
+	        last_invocation = NOW(),
+	        last_updated = NOW();
+	END;
+	$$;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE OR REPLACE FUNCTION get_optimal_agents(
+	    p_task_type VARCHAR(64),
+	    p_max_agents INTEGER DEFAULT 5,
+	    p_min_confidence FLOAT DEFAULT 0.6
+	)
+	RETURNS JSONB
+	LANGUAGE SQL
+	STABLE
+	AS $$
+	    SELECT agent_combination
+	    FROM agent_combination_patterns
+	    WHERE task_types ? p_task_type
+	        AND success_rate >= p_min_confidence
+	        AND sample_size >= 3
+	        AND jsonb_array_length(agent_combination) <= p_max_agents
+	    ORDER BY success_rate DESC, confidence_level DESC, sample_size DESC
+	    LIMIT 1;
+	$$;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE OR REPLACE FUNCTION predict_task_success(
+	    p_task_type VARCHAR(64),
+	    p_agents JSONB,
+	    p_complexity FLOAT DEFAULT 1.0
+	)
+	RETURNS TABLE (
+	    predicted_success_rate FLOAT,
+	    predicted_duration FLOAT,
+	    confidence FLOAT,
+	    recommendation TEXT
+	)
+	LANGUAGE plpgsql
+	STABLE
+	AS $$
+	DECLARE
+	    combo_hash VARCHAR(64);
+	    pattern_data RECORD;
+	    individual_avg FLOAT;
+	BEGIN
+	    -- Create hash for agent combination
+	    SELECT encode(digest((SELECT jsonb_agg(value ORDER BY value) FROM jsonb_array_elements_text(p_agents))::text, 'sha256'), 'hex') 
+	    INTO combo_hash;
+	    
+	    -- Check for exact combination match
+	    SELECT success_rate, avg_duration_seconds, confidence_level, sample_size
+	    INTO pattern_data
+	    FROM agent_combination_patterns
+	    WHERE combination_hash = combo_hash
+	        AND task_types ? p_task_type;
+	    
+	    IF FOUND AND pattern_data.sample_size >= 3 THEN
+	        -- Use exact match data
+	        RETURN QUERY SELECT 
+	            pattern_data.success_rate,
+	            pattern_data.avg_duration_seconds * p_complexity,
+	            LEAST(0.95, pattern_data.confidence_level),
+	            'Based on ' || pattern_data.sample_size || ' historical executions';
+	        RETURN;
+	    END IF;
+	    
+	    -- Fallback to individual agent analysis
+	    SELECT AVG(success_rate), AVG(avg_duration_seconds)
+	    INTO predicted_success_rate, predicted_duration
+	    FROM agent_performance_metrics
+	    WHERE agent_name = ANY(SELECT jsonb_array_elements_text(p_agents));
+	    
+	    IF predicted_success_rate IS NOT NULL THEN
+	        RETURN QUERY SELECT 
+	            COALESCE(predicted_success_rate, 0.7),
+	            COALESCE(predicted_duration * p_complexity, 30.0),
+	            0.6::FLOAT,
+	            'Based on individual agent performance';
+	        RETURN;
+	    END IF;
+	    
+	    -- Ultimate fallback
+	    RETURN QUERY SELECT 
+	        0.7::FLOAT,
+	        30.0::FLOAT,
+	        0.3::FLOAT,
+	        'Fallback estimate - no historical data';
+	END;
+	$$;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "agent_task_executions" does not exist at character 125
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE MATERIALIZED VIEW IF NOT EXISTS learning_dashboard_mv AS
+	SELECT 
+	    -- Overall statistics
+	    (SELECT COUNT(*) FROM agent_task_executions) as total_executions,
+	    (SELECT AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) FROM agent_task_executions) as overall_success_rate,
+	    (SELECT AVG(duration_seconds) FROM agent_task_executions WHERE success = true) as avg_duration,
+	    (SELECT COUNT(DISTINCT task_type) FROM agent_task_executions) as unique_task_types,
+	    (SELECT COUNT(*) FROM agent_task_executions WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	    (SELECT COUNT(*) FROM agent_task_executions WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	    
+	    -- Top performing agents
+	    (SELECT jsonb_agg(
+	        jsonb_build_object('agent', agent_name, 'success_rate', success_rate, 'invocations', total_invocations)
+	        ORDER BY success_rate DESC
+	    ) FROM (
+	        SELECT agent_name, success_rate, total_invocations
+	        FROM agent_performance_metrics 
+	        WHERE total_invocations >= 5 
+	        ORDER BY success_rate DESC 
+	        LIMIT 10
+	    ) top_agents) as top_agents,
+	    
+	    -- Recent insights count
+	    (SELECT COUNT(*) FROM agent_learning_insights WHERE is_active = true AND created_at >= NOW() - INTERVAL '7 days') as recent_insights,
+	    
+	    -- Last refresh
+	    NOW() as last_refreshed;
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  relation "learning_dashboard_mv" does not exist
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_dashboard_mv_refresh 
+	    ON learning_dashboard_mv(last_refreshed);
+2025-08-24 19:29:49.852 UTC [254020] ERROR:  permission denied for schema public
+2025-08-24 19:29:49.852 UTC [254020] STATEMENT:  CREATE OR REPLACE FUNCTION update_learning_metrics_trigger()
+	RETURNS TRIGGER AS $$
+	DECLARE
+	    agent_name TEXT;
+	BEGIN
+	    -- Update individual agent metrics
+	    FOR agent_name IN SELECT jsonb_array_elements_text(NEW.agents_invoked) LOOP
+	        PERFORM update_agent_performance_metrics(
+	            agent_name, 
+	            NEW.duration_seconds, 
+	            NEW.success,
+	            NEW.task_type
+	        );
+	    END LOOP;
+	    
+	    -- Update combination patterns
+	    IF jsonb_array_length(NEW.agents_invoked) >= 2 THEN
+	        INSERT INTO agent_combination_patterns (
+	            agent_combination,
+	            task_types,
+	            success_count,
+	            failure_count,
+	            avg_duration_seconds,
+	            min_duration_seconds,
+	            max_duration_seconds
+	        )
+	        VALUES (
+	            (SELECT jsonb_agg(value ORDER BY value) FROM jsonb_array_elements_text(NEW.agents_invoked)),
+	            jsonb_build_array(NEW.task_type),
+	            CASE WHEN NEW.success THEN 1 ELSE 0 END,
+	            CASE WHEN NEW.success THEN 0 ELSE 1 END,
+	            NEW.duration_seconds,
+	            NEW.duration_seconds,
+	            NEW.duration_seconds
+	        )
+	        ON CONFLICT (combination_hash) DO UPDATE SET
+	            success_count = agent_combination_patterns.success_count + CASE WHEN NEW.success THEN 1 ELSE 0 END,
+	            failure_count = agent_combination_patterns.failure_count + CASE WHEN NEW.success THEN 0 ELSE 1 END,
+	            task_types = CASE 
+	                WHEN NOT (agent_combination_patterns.task_types ? NEW.task_type)
+	                THEN agent_combination_patterns.task_types || jsonb_build_array(NEW.task_type)
+	                ELSE agent_combination_patterns.task_types
+	            END,
+	            avg_duration_seconds = (
+	                agent_combination_patterns.avg_duration_seconds * 
+	                (agent_combination_patterns.success_count + agent_combination_patterns.failure_count) + 
+	                NEW.duration_seconds
+	            ) / (agent_combination_patterns.success_count + agent_combination_patterns.failure_count + 1),
+	            min_duration_seconds = LEAST(agent_combination_patterns.min_duration_seconds, NEW.duration_seconds),
+	            max_duration_seconds = GREATEST(agent_combination_patterns.max_duration_seconds, NEW.duration_seconds),
+	            last_seen = NOW();
+	    END IF;
+	    
+	    RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-24 19:29:49.853 UTC [254020] ERROR:  relation "agent_task_executions" does not exist
+2025-08-24 19:29:49.853 UTC [254020] STATEMENT:  CREATE TRIGGER learning_metrics_update_trigger
+	    AFTER INSERT ON agent_task_executions
+	    FOR EACH ROW EXECUTE FUNCTION update_learning_metrics_trigger();
+2025-08-24 19:29:49.853 UTC [254020] ERROR:  permission denied for schema public
+2025-08-24 19:29:49.853 UTC [254020] STATEMENT:  CREATE OR REPLACE FUNCTION refresh_learning_dashboard()
+	RETURNS VOID AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY learning_dashboard_mv;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-24 19:29:49.853 UTC [254020] ERROR:  relation "agent_task_executions" does not exist at character 23
+2025-08-24 19:29:49.853 UTC [254020] QUERY:  (SELECT COUNT(*) FROM agent_task_executions) = 0
+2025-08-24 19:29:49.853 UTC [254020] CONTEXT:  PL/pgSQL function inline_code_block line 4 at IF
+2025-08-24 19:29:49.853 UTC [254020] STATEMENT:  DO $$
+	BEGIN
+	    -- Only insert if no data exists
+	    IF (SELECT COUNT(*) FROM agent_task_executions) = 0 THEN
+	        -- Sample task execution
+	        INSERT INTO agent_task_executions (
+	            task_type, task_description, agents_invoked, execution_sequence,
+	            start_time, end_time, duration_seconds, success, complexity_score
+	        ) VALUES (
+	            'web_development',
+	            'Create responsive login page with authentication',
+	            '["WEB", "APIDESIGNER", "SECURITY", "TESTBED"]',
+	            '["WEB", "APIDESIGNER", "SECURITY", "TESTBED"]',
+	            NOW() - INTERVAL '2 minutes',
+	            NOW() - INTERVAL '30 seconds',
+	            90.5,
+	            true,
+	            2.5
+	        );
+	        
+	        RAISE NOTICE 'Sample learning data inserted for testing';
+	    END IF;
+	END $$;
+2025-08-24 19:29:49.853 UTC [254020] ERROR:  function refresh_learning_dashboard() does not exist at character 8
+2025-08-24 19:29:49.853 UTC [254020] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2025-08-24 19:29:49.853 UTC [254020] STATEMENT:  SELECT refresh_learning_dashboard();
+2025-08-24 19:29:49.853 UTC [254020] ERROR:  permission denied for schema public
+2025-08-24 19:29:49.853 UTC [254020] STATEMENT:  CREATE OR REPLACE FUNCTION cleanup_learning_data()
+	RETURNS TABLE (
+	    cleaned_executions INTEGER,
+	    cleaned_insights INTEGER,
+	    cleaned_patterns INTEGER
+	)
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+	    exec_count INTEGER;
+	    insight_count INTEGER;
+	    pattern_count INTEGER;
+	BEGIN
+	    -- Clean old executions (keep 6 months)
+	    WITH deleted AS (
+	        DELETE FROM agent_task_executions 
+	        WHERE start_time < NOW() - INTERVAL '6 months'
+	        RETURNING execution_id
+	    )
+	    SELECT COUNT(*) INTO exec_count FROM deleted;
+	    
+	    -- Archive old insights (keep active ones)
+	    WITH updated AS (
+	        UPDATE agent_learning_insights 
+	        SET is_active = false, archived_at = NOW(), archived_reason = 'auto_cleanup'
+	        WHERE created_at < NOW() - INTERVAL '3 months' 
+	            AND validation_rate < 0.3
+	            AND is_active = true
+	        RETURNING insight_id
+	    )
+	    SELECT COUNT(*) INTO insight_count FROM updated;
+	    
+	    -- Clean unused patterns (very low confidence)
+	    WITH deleted AS (
+	        DELETE FROM agent_combination_patterns
+	        WHERE last_seen < NOW() - INTERVAL '6 months'
+	            AND sample_size < 3
+	            AND success_rate < 0.3
+	        RETURNING pattern_id
+	    )
+	    SELECT COUNT(*) INTO pattern_count FROM deleted;
+	    
+	    -- Refresh materialized view
+	    PERFORM refresh_learning_dashboard();
+	    
+	    RETURN QUERY SELECT exec_count, insight_count, pattern_count;
+	END;
+	$$;
+2025-08-24 19:29:49.853 UTC [254020] ERROR:  relation "agent_task_executions" does not exist at character 127
+2025-08-24 19:29:49.853 UTC [254020] STATEMENT:  CREATE OR REPLACE VIEW learning_system_status AS
+	SELECT 
+	    'Learning System Status' as component,
+	    (SELECT COUNT(*) FROM agent_task_executions) as total_executions,
+	    (SELECT COUNT(*) FROM agent_performance_metrics) as tracked_agents,
+	    (SELECT COUNT(*) FROM agent_combination_patterns WHERE sample_size >= 5) as validated_patterns,
+	    (SELECT COUNT(*) FROM agent_learning_insights WHERE is_active = true) as active_insights,
+	    pg_size_pretty(pg_total_relation_size('agent_task_executions')) as executions_table_size,
+	    pg_size_pretty(pg_database_size(current_database())) as total_database_size,
+	    'PostgreSQL 17 Compatible' as compatibility,
+	    'Ready for Production Learning' as status;
+2025-08-24 19:29:49.853 UTC [254020] WARNING:  there is no transaction in progress
+2025-08-24 19:29:49.853 UTC [254020] ERROR:  relation "learning_system_status" does not exist at character 15
+2025-08-24 19:29:49.853 UTC [254020] STATEMENT:  SELECT * FROM learning_system_status;
+2025-08-24 19:30:03.559 UTC [254145] FATAL:  role "postgres" does not exist
+2025-08-24 19:30:20.763 UTC [254212] FATAL:  database "ubuntu" does not exist
+2025-08-24 19:30:22.785 UTC [254216] ERROR:  role "claude_auth" already exists
+2025-08-24 19:30:22.785 UTC [254216] STATEMENT:  CREATE USER claude_auth WITH PASSWORD 'claude_auth_pass';
+2025-08-24 19:30:22.785 UTC [254216] ERROR:  database "claude_auth" already exists
+2025-08-24 19:30:22.785 UTC [254216] STATEMENT:  CREATE DATABASE claude_auth OWNER claude_auth;
+2025-08-24 19:30:22.816 UTC [254218] ERROR:  functions in index predicate must be marked IMMUTABLE
+2025-08-24 19:30:22.816 UTC [254218] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_locked_until 
+	    ON users(account_locked_until) WHERE account_locked_until > NOW();
+2025-08-24 19:30:22.831 UTC [254218] ERROR:  functions in index predicate must be marked IMMUTABLE
+2025-08-24 19:30:22.831 UTC [254218] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rate_limit_blocked 
+	    ON rate_limit_events(blocked_until) WHERE blocked_until > NOW();
+2025-08-24 19:30:22.847 UTC [254218] WARNING:  there is no transaction in progress
+2025-08-24 19:30:42.851 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 19:31:08.152 UTC [254404] ERROR:  permission denied for schema public at character 45
+2025-08-24 19:31:08.152 UTC [254404] STATEMENT:  
+	                CREATE TABLE IF NOT EXISTS agent_task_executions (
+	                    execution_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	                    task_type VARCHAR(64) NOT NULL,
+	                    task_description TEXT,
+	                    agents_invoked JSONB DEFAULT '[]'::jsonb,
+	                    execution_sequence JSONB DEFAULT '[]'::jsonb,
+	                    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    duration_seconds FLOAT NOT NULL,
+	                    success BOOLEAN NOT NULL,
+	                    error_message TEXT,
+	                    user_satisfaction INTEGER CHECK (user_satisfaction BETWEEN 1 AND 10),
+	                    complexity_score FLOAT DEFAULT 1.0,
+	                    resource_metrics JSONB DEFAULT '{}'::jsonb,
+	                    context_data JSONB DEFAULT '{}'::jsonb,
+	                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	                    predicted_success FLOAT,
+	                    predicted_duration FLOAT,
+	                    prediction_confidence FLOAT,
+	                    performance_anomaly BOOLEAN DEFAULT FALSE,
+	                    optimization_applied BOOLEAN DEFAULT FALSE,
+	                    ml_features JSONB DEFAULT '{}'::jsonb,
+	                    agent_synergy_scores JSONB DEFAULT '{}'::jsonb,
+	                    user_id UUID,
+	                    session_id UUID,
+	                    task_embedding VECTOR(256),
+	                    feature_vector JSONB DEFAULT '{}'::jsonb
+	                )
+	            
+2025-08-24 19:31:08.160 UTC [254406] ERROR:  permission denied for schema public at character 45
+2025-08-24 19:31:08.160 UTC [254406] STATEMENT:  
+	                CREATE TABLE IF NOT EXISTS agent_task_executions (
+	                    execution_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	                    task_type VARCHAR(64) NOT NULL,
+	                    task_description TEXT,
+	                    agents_invoked JSONB DEFAULT '[]'::jsonb,
+	                    execution_sequence JSONB DEFAULT '[]'::jsonb,
+	                    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+	                    duration_seconds FLOAT NOT NULL,
+	                    success BOOLEAN NOT NULL,
+	                    error_message TEXT,
+	                    user_satisfaction INTEGER CHECK (user_satisfaction BETWEEN 1 AND 10),
+	                    complexity_score FLOAT DEFAULT 1.0,
+	                    resource_metrics JSONB DEFAULT '{}'::jsonb,
+	                    context_data JSONB DEFAULT '{}'::jsonb,
+	                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+	                    predicted_success FLOAT,
+	                    predicted_duration FLOAT,
+	                    prediction_confidence FLOAT,
+	                    performance_anomaly BOOLEAN DEFAULT FALSE,
+	                    optimization_applied BOOLEAN DEFAULT FALSE,
+	                    ml_features JSONB DEFAULT '{}'::jsonb,
+	                    agent_synergy_scores JSONB DEFAULT '{}'::jsonb,
+	                    user_id UUID,
+	                    session_id UUID,
+	                    task_embedding VECTOR(256),
+	                    feature_vector JSONB DEFAULT '{}'::jsonb
+	                )
+	            
+2025-08-24 19:31:08.164 UTC [254407] ERROR:  relation "agent_task_executions" does not exist at character 798
+2025-08-24 19:31:08.164 UTC [254407] STATEMENT:  
+	                SELECT 
+	                    COUNT(*) as total_executions,
+	                    AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as overall_success_rate,
+	                    AVG(duration_seconds) as avg_duration,
+	                    COUNT(DISTINCT task_type) as unique_task_types,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	                    AVG(complexity_score) as avg_complexity,
+	                    COUNT(*) FILTER (WHERE performance_anomaly = true) as total_anomalies,
+	                    AVG(prediction_confidence) FILTER (WHERE prediction_confidence IS NOT NULL) as avg_prediction_confidence
+	                FROM agent_task_executions
+	            
+2025-08-24 19:31:16.623 UTC [30464] LOG:  checkpoint complete: wrote 339 buffers (2.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=33.772 s, sync=0.001 s, total=33.772 s; sync files=192, longest=0.001 s, average=0.000 s; distance=1838 kB, estimate=4290 kB; lsn=0/1B86608, redo lsn=0/1B3CAF8
+2025-08-24 19:32:37.031 UTC [261043] ERROR:  permission denied to create extension "pg_stat_statements"
+2025-08-24 19:32:37.031 UTC [261043] HINT:  Must be superuser to create this extension.
+2025-08-24 19:32:37.031 UTC [261043] STATEMENT:  CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+2025-08-24 19:32:37.060 UTC [261043] WARNING:  there is no transaction in progress
+2025-08-24 19:32:42.606 UTC [261441] ERROR:  column "ml_features" does not exist
+2025-08-24 19:32:42.606 UTC [261441] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_ml_features ON agent_task_executions USING GIN(ml_features)
+2025-08-24 19:32:42.606 UTC [261441] ERROR:  column "performance_anomaly" does not exist at character 116
+2025-08-24 19:32:42.606 UTC [261441] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_anomaly ON agent_task_executions(performance_anomaly) WHERE performance_anomaly = true
+2025-08-24 19:32:42.607 UTC [261441] ERROR:  column "predicted_success" does not exist
+2025-08-24 19:32:42.607 UTC [261441] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_prediction ON agent_task_executions(predicted_success, prediction_confidence)
+2025-08-24 19:32:42.625 UTC [261445] ERROR:  column "performance_anomaly" does not exist at character 383
+2025-08-24 19:32:42.625 UTC [261445] STATEMENT:  
+	                    SELECT 
+	                        AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as success_rate,
+	                        AVG(duration_seconds) as avg_duration,
+	                        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_seconds) as p95_duration,
+	                        COUNT(*) as execution_count,
+	                        COUNT(*) FILTER (WHERE performance_anomaly = true) as anomaly_count
+	                    FROM agent_task_executions
+	                    WHERE start_time >= NOW() - INTERVAL '1 hour'
+	                
+2025-08-24 19:32:42.625 UTC [261444] ERROR:  column "performance_anomaly" does not exist at character 604
+2025-08-24 19:32:42.625 UTC [261444] STATEMENT:  
+	                SELECT 
+	                    COUNT(*) as total_executions,
+	                    AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as overall_success_rate,
+	                    AVG(duration_seconds) as avg_duration,
+	                    COUNT(DISTINCT task_type) as unique_task_types,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	                    AVG(complexity_score) as avg_complexity,
+	                    COUNT(*) FILTER (WHERE performance_anomaly = true) as total_anomalies,
+	                    AVG(prediction_confidence) FILTER (WHERE prediction_confidence IS NOT NULL) as avg_prediction_confidence
+	                FROM agent_task_executions
+	            
+2025-08-24 19:34:23.724 UTC [263138] ERROR:  column "prediction_confidence" does not exist
+2025-08-24 19:34:23.724 UTC [263138] STATEMENT:  CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_executions_prediction ON agent_task_executions(predicted_success, prediction_confidence)
+2025-08-24 19:34:23.736 UTC [263140] ERROR:  column "prediction_confidence" does not exist at character 676
+2025-08-24 19:34:23.736 UTC [263140] STATEMENT:  
+	                SELECT 
+	                    COUNT(*) as total_executions,
+	                    AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as overall_success_rate,
+	                    AVG(duration_seconds) as avg_duration,
+	                    COUNT(DISTINCT task_type) as unique_task_types,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '24 hours') as executions_24h,
+	                    COUNT(*) FILTER (WHERE start_time >= NOW() - INTERVAL '7 days') as executions_7d,
+	                    AVG(complexity_score) as avg_complexity,
+	                    COUNT(*) FILTER (WHERE performance_anomaly = true) as total_anomalies,
+	                    AVG(prediction_confidence) FILTER (WHERE prediction_confidence IS NOT NULL) as avg_prediction_confidence
+	                FROM agent_task_executions
+	            
+2025-08-24 19:34:23.761 UTC [263146] LOG:  could not receive data from client: Connection reset by peer
+2025-08-24 19:34:36.702 UTC [263427] ERROR:  column "cognitive_load_score" does not exist at character 193
+2025-08-24 19:34:36.702 UTC [263427] STATEMENT:  
+	                SELECT 
+	                    agent_name,
+	                    success_rate,
+	                    total_invocations,
+	                    avg_duration_seconds,
+	                    cognitive_load_score
+	                FROM agent_performance_metrics
+	                WHERE total_invocations >= 3
+	                ORDER BY success_rate DESC, total_invocations DESC
+	                LIMIT 15
+	            
+2025-08-24 19:35:42.662 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 19:36:14.861 UTC [30464] LOG:  checkpoint complete: wrote 322 buffers (2.0%); 1 WAL file(s) added, 0 removed, 0 recycled; write=32.196 s, sync=0.001 s, total=32.200 s; sync files=149, longest=0.001 s, average=0.001 s; distance=1778 kB, estimate=4038 kB; lsn=0/1CF96D0, redo lsn=0/1CF9698
+2025-08-24 19:38:16.663 UTC [268490] ERROR:  aggregate function calls cannot contain set-returning function calls at character 209
+2025-08-24 19:38:16.663 UTC [268490] HINT:  You might be able to move the set-returning function into a LATERAL FROM item.
+2025-08-24 19:38:16.663 UTC [268490] STATEMENT:  CREATE MATERIALIZED VIEW IF NOT EXISTS advanced_learning_dashboard AS
+	SELECT 
+	    'Ultimate Learning Dashboard' as dashboard_name,
+	    COUNT(DISTINCT ate.execution_id) as total_executions,
+	    COUNT(DISTINCT jsonb_array_elements_text(ate.agents_invoked)) as unique_agents_used,
+	    AVG(ate.duration_seconds) as avg_duration,
+	    AVG(ate.complexity_score) as avg_complexity,
+	    AVG(ate.prediction_confidence) FILTER (WHERE ate.prediction_confidence IS NOT NULL) as avg_prediction_confidence,
+	    AVG(ate.cognitive_load_score) FILTER (WHERE ate.cognitive_load_score IS NOT NULL) as avg_cognitive_load,
+	    COUNT(*) FILTER (WHERE ate.success = TRUE) * 100.0 / COUNT(*) as success_rate,
+	    COUNT(*) FILTER (WHERE ate.performance_anomaly = TRUE) as anomaly_count,
+	    COUNT(DISTINCT ml.model_name) as active_models,
+	    NOW() as last_updated
+	FROM agent_task_executions ate
+	LEFT JOIN ml_models ml ON ml.is_active = TRUE
+	WHERE ate.created_at >= NOW() - INTERVAL '30 days';
+2025-08-24 19:38:16.663 UTC [268490] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:38:16.663 UTC [268490] STATEMENT:  CREATE OR REPLACE FUNCTION refresh_advanced_learning_dashboard() 
+	RETURNS void AS $$
+	BEGIN
+	    REFRESH MATERIALIZED VIEW CONCURRENTLY advanced_learning_dashboard;
+	END;
+	$$ LANGUAGE plpgsql;
+2025-08-24 19:38:16.663 UTC [268490] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:38:16.663 UTC [268490] STATEMENT:  INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_accuracy) VALUES
+	('duration_predictor', 'RandomForestRegressor', '{"features": ["complexity", "agent_count", "context_size"], "n_estimators": 100}', 1000, 0.85),
+	('success_classifier', 'LogisticRegression', '{"features": ["complexity", "agent_synergy", "cognitive_load"], "regularization": "l2"}', 800, 0.78),
+	('agent_recommender', 'GradientBoostingClassifier', '{"features": ["task_type", "historical_performance", "agent_availability"], "learning_rate": 0.1}', 1200, 0.82),
+	('anomaly_detector', 'IsolationForest', '{"contamination": 0.1, "n_estimators": 100, "max_features": 1.0}', 500, 0.89)
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+2025-08-24 19:38:16.663 UTC [268490] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:38:16.663 UTC [268490] STATEMENT:  INSERT INTO learning_analytics (metric_name, metric_value, agent_context, task_context) VALUES
+	('agent_efficiency', 0.87, 'director', 'planning'),
+	('task_complexity_trend', 2.3, 'architect', 'design'),
+	('coordination_overhead', 0.15, 'projectorchestrator', 'orchestration'),
+	('learning_velocity', 1.2, 'optimizer', 'performance')
+	ON CONFLICT DO NOTHING;
+2025-08-24 19:38:16.663 UTC [268490] ERROR:  current transaction is aborted, commands ignored until end of transaction block
+2025-08-24 19:38:16.663 UTC [268490] STATEMENT:  UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
+	WHERE predicted_duration IS NULL;
+2025-08-24 19:38:16.663 UTC [268490] ERROR:  aggregate function calls cannot contain set-returning function calls at character 119
+2025-08-24 19:38:16.663 UTC [268490] HINT:  You might be able to move the set-returning function into a LATERAL FROM item.
+2025-08-24 19:38:16.663 UTC [268490] STATEMENT:  SELECT 
+	    'Learning System v3.1 Evolution Complete' as status,
+	    COUNT(*) as total_executions,
+	    COUNT(DISTINCT jsonb_array_elements_text(agents_invoked)) as total_agents,
+	    COUNT(*) FILTER (WHERE predicted_duration IS NOT NULL) as predictions_available,
+	    COUNT(*) FILTER (WHERE cognitive_load_score IS NOT NULL) as cognitive_load_tracked
+	FROM agent_task_executions;
+2025-08-24 19:38:31.573 UTC [268694] ERROR:  column ate.cognitive_load_score does not exist at character 616
+2025-08-24 19:38:31.573 UTC [268694] STATEMENT:  
+	-- Fix the materialized view syntax
+	CREATE MATERIALIZED VIEW IF NOT EXISTS advanced_learning_dashboard AS
+	SELECT 
+	    'Ultimate Learning Dashboard' as dashboard_name,
+	    COUNT(DISTINCT ate.execution_id) as total_executions,
+	    (SELECT COUNT(DISTINCT agent_name) 
+	     FROM agent_task_executions, 
+	     LATERAL jsonb_array_elements_text(agents_invoked) as agent_name) as unique_agents_used,
+	    AVG(ate.duration_seconds) as avg_duration,
+	    AVG(ate.complexity_score) as avg_complexity,
+	    AVG(ate.prediction_confidence) FILTER (WHERE ate.prediction_confidence IS NOT NULL) as avg_prediction_confidence,
+	    AVG(ate.cognitive_load_score) FILTER (WHERE ate.cognitive_load_score IS NOT NULL) as avg_cognitive_load,
+	    COUNT(*) FILTER (WHERE ate.success = TRUE) * 100.0 / COUNT(*) as success_rate,
+	    COUNT(*) FILTER (WHERE ate.performance_anomaly = TRUE) as anomaly_count,
+	    (SELECT COUNT(DISTINCT model_name) FROM ml_models WHERE is_active = TRUE) as active_models,
+	    NOW() as last_updated
+	FROM agent_task_executions ate
+	WHERE ate.created_at >= NOW() - INTERVAL '30 days';
+	
+2025-08-24 19:38:47.120 UTC [269358] ERROR:  column "validation_accuracy" of relation "ml_models" does not exist at character 354
+2025-08-24 19:38:47.120 UTC [269358] STATEMENT:  
+	-- Add essential missing columns
+	ALTER TABLE agent_task_executions 
+	ADD COLUMN IF NOT EXISTS predicted_duration FLOAT,
+	ADD COLUMN IF NOT EXISTS agent_synergy_scores JSONB DEFAULT '{}',
+	ADD COLUMN IF NOT EXISTS cognitive_load_score FLOAT DEFAULT 0.0;
+	
+	-- Add sample ML models
+	INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_accuracy) VALUES
+	('duration_predictor', 'RandomForestRegressor', '{"features": ["complexity", "agent_count", "context_size"], "n_estimators": 100}', 1000, 0.85),
+	('success_classifier', 'LogisticRegression', '{"features": ["complexity", "agent_synergy", "cognitive_load"], "regularization": "l2"}', 800, 0.78),
+	('agent_recommender', 'GradientBoostingClassifier', '{"features": ["task_type", "historical_performance", "agent_availability"], "learning_rate": 0.1}', 1200, 0.82),
+	('anomaly_detector', 'IsolationForest', '{"contamination": 0.1, "n_estimators": 100, "max_features": 1.0}', 500, 0.89)
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+	
+	-- Update existing records with sample ML data
+	UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4)
+	WHERE predicted_duration IS NULL;
+	
+2025-08-24 19:39:12.863 UTC [271344] ERROR:  null value in column "model_version" of relation "ml_models" violates not-null constraint
+2025-08-24 19:39:12.863 UTC [271344] DETAIL:  Failing row contains (8fea4faf-3358-4007-a0c2-5409c87b171a, duration_predictor, RandomForestRegressor, null, \x7b22666561747572657322203a205b22636f6d706c65786974792c2e2e2e22..., {}, {}, 2025-08-24 19:39:12.862839+00, 1000, t, {}, {"accuracy": 0.85}).
+2025-08-24 19:39:12.863 UTC [271344] STATEMENT:  
+	-- Add sample ML models with correct column names
+	INSERT INTO ml_models (model_name, model_type, model_data, training_samples, validation_scores) VALUES
+	('duration_predictor', 'RandomForestRegressor', E'\\x7b22666561747572657322203a205b22636f6d706c65786974792c2e2e2e225d7d'::bytea, 1000, '{"accuracy": 0.85}'),
+	('success_classifier', 'LogisticRegression', E'\\x7b226c656172696e675f7261746522203a20302e31307d'::bytea, 800, '{"accuracy": 0.78}'),
+	('agent_recommender', 'GradientBoostingClassifier', E'\\x7b226e5f657374696d61746f727322203a203130307d'::bytea, 1200, '{"accuracy": 0.82}'),
+	('anomaly_detector', 'IsolationForest', E'\\x7b22636f6e74616d696e6174696f6e22203a20302e317d'::bytea, 500, '{"accuracy": 0.89}')
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+	
+	-- Update existing task executions with ML features
+	UPDATE agent_task_executions 
+	SET predicted_duration = duration_seconds * (0.9 + random() * 0.2),
+	    prediction_confidence = 0.5 + random() * 0.4,
+	    cognitive_load_score = complexity_score * (0.3 + random() * 0.4),
+	    agent_synergy_scores = '{"director": 0.8, "architect": 0.9}'::jsonb
+	WHERE predicted_duration IS NULL;
+	
+2025-08-24 19:39:27.073 UTC [272718] ERROR:  column "predicted_duration" does not exist at character 898
+2025-08-24 19:39:27.073 UTC [272718] STATEMENT:  
+	-- Add sample ML models with model_version
+	INSERT INTO ml_models (model_name, model_type, model_version, model_data, training_samples, validation_scores) VALUES
+	('duration_predictor', 'RandomForestRegressor', 'v3.1', E'\\x7b22666561747572657322203a205b22636f6d706c65786974792e2e2e22225d7d'::bytea, 1000, '{"accuracy": 0.85}'),
+	('success_classifier', 'LogisticRegression', 'v3.1', E'\\x7b226c656172696e675f7261746522203a20302e31307d'::bytea, 800, '{"accuracy": 0.78}'),
+	('agent_recommender', 'GradientBoostingClassifier', 'v3.1', E'\\x7b226e5f657374696d61746f727322203a203130307d'::bytea, 1200, '{"accuracy": 0.82}'),
+	('anomaly_detector', 'IsolationForest', 'v3.1', E'\\x7b22636f6e74616d696e6174696f6e22203a20302e317d'::bytea, 500, '{"accuracy": 0.89}')
+	ON CONFLICT (model_name, model_version) DO NOTHING;
+	
+	-- Update task executions
+	UPDATE agent_task_executions 
+	SET predicted_duration = COALESCE(predicted_duration, duration_seconds * (0.9 + random() * 0.2)),
+	    prediction_confidence = COALESCE(prediction_confidence, 0.5 + random() * 0.4),
+	    cognitive_load_score = COALESCE(cognitive_load_score, complexity_score * (0.3 + random() * 0.4)),
+	    agent_synergy_scores = COALESCE(agent_synergy_scores, '{"director": 0.8, "architect": 0.9}'::jsonb);
+	
+2025-08-24 19:39:50.921 UTC [274700] ERROR:  column "cognitive_load_score" does not exist at character 193
+2025-08-24 19:39:50.921 UTC [274700] STATEMENT:  
+	                SELECT 
+	                    agent_name,
+	                    success_rate,
+	                    total_invocations,
+	                    avg_duration_seconds,
+	                    cognitive_load_score
+	                FROM agent_performance_metrics
+	                WHERE total_invocations >= 3
+	                ORDER BY success_rate DESC, total_invocations DESC
+	                LIMIT 15
+	            
+2025-08-24 19:40:16.398 UTC [278354] ERROR:  column "cognitive_load_score" does not exist at character 193
+2025-08-24 19:40:16.398 UTC [278354] STATEMENT:  
+	                SELECT 
+	                    agent_name,
+	                    success_rate,
+	                    total_invocations,
+	                    avg_duration_seconds,
+	                    cognitive_load_score
+	                FROM agent_performance_metrics
+	                WHERE total_invocations >= 3
+	                ORDER BY success_rate DESC, total_invocations DESC
+	                LIMIT 15
+	            
+2025-08-24 19:40:42.933 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 19:40:49.849 UTC [30464] LOG:  checkpoint complete: wrote 70 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=6.915 s, sync=0.001 s, total=6.916 s; sync files=66, longest=0.001 s, average=0.001 s; distance=365 kB, estimate=3671 kB; lsn=0/1D54B28, redo lsn=0/1D54AF0
+2025-08-24 19:43:45.609 UTC [280685] FATAL:  database "ubuntu" does not exist

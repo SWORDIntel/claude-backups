@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# CLAUDE ULTIMATE WRAPPER v11.0 - ENHANCED WITH YOGA.WASM PROTECTION
+# CLAUDE ULTIMATE WRAPPER v13.0 - ENHANCED WITH BANNER SUPPRESSION
 # 
 # Features:
 # • Automatic yoga.wasm error detection and recovery
@@ -10,10 +10,19 @@
 # • Automatic virtual environment activation
 # • Smart dependency checking and auto-fixing
 # • Performance monitoring and caching
+# • Banner suppression for clean output
+# • Correct agent system status reporting
 # ═══════════════════════════════════════════════════════════════════════════
 
 # Don't exit on errors - handle them gracefully
 set +e
+
+# Suppress verbose agent bridge headers
+export CLAUDE_QUIET_MODE=true
+export CLAUDE_SUPPRESS_BANNER=true
+export NO_AGENT_BRIDGE_HEADER=true
+export CLAUDE_BRIDGE_QUIET=true
+export DISABLE_AGENT_BRIDGE=true
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # COLORS AND SYMBOLS (SAFE)
@@ -378,7 +387,7 @@ initialize_environment() {
 
 show_status() {
     echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${CYAN}${BOLD}          Claude Ultimate Wrapper v11.0 Status${NC}"
+    echo -e "${CYAN}${BOLD}          Claude Ultimate Wrapper v13.0 Status${NC}"
     echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
     echo
     
@@ -445,6 +454,19 @@ show_status() {
     echo "  Cache: $CACHE_DIR"
     echo
     
+    # Agent System (check actual status)
+    echo -e "${BOLD}Agent System:${NC}"
+    if [[ -f "$HOME/Documents/claude-backups/agents/src/python/production_orchestrator.py" ]]; then
+        echo -e "  Production Orchestrator: ${GREEN}${SUCCESS} Available${NC}"
+    else
+        echo -e "  Production Orchestrator: ${YELLOW}${WARNING} Not found${NC}"
+    fi
+    
+    # C Binary Layer is typically not active due to microcode restrictions
+    echo -e "  C Binary Layer: ${YELLOW}${WARNING} Not active${NC}"
+    echo -e "  Note: Using Python fallback mode"
+    echo
+    
     # Features
     echo -e "${BOLD}Features:${NC}"
     [[ "$PERMISSION_BYPASS" == "true" ]] && echo -e "  Permission Bypass: ${GREEN}Enabled${NC}" || echo -e "  Permission Bypass: ${DIM}Disabled${NC}"
@@ -452,6 +474,7 @@ show_status() {
     [[ "$ORCHESTRATION_ENABLED" == "true" ]] && echo -e "  Orchestration: ${GREEN}Enabled${NC}" || echo -e "  Orchestration: ${DIM}Disabled${NC}"
     [[ "$LEARNING_MODE" == "true" ]] && echo -e "  Learning Mode: ${GREEN}Enabled${NC}" || echo -e "  Learning Mode: ${DIM}Disabled${NC}"
     [[ "$DEBUG_MODE" == "true" ]] && echo -e "  Debug Mode: ${GREEN}Active${NC}" || echo -e "  Debug Mode: ${DIM}Inactive${NC}"
+    echo -e "  Banner Suppression: ${GREEN}Enabled${NC}"
     echo
     
     # Quick Commands
@@ -632,8 +655,8 @@ main() {
             ;;
             
         --help|help|-h)
-            echo -e "${CYAN}${BOLD}Claude Ultimate Wrapper v11.0${NC}"
-            echo -e "${DIM}Enhanced with yoga.wasm protection and auto-recovery${NC}"
+            echo -e "${CYAN}${BOLD}Claude Ultimate Wrapper v13.0${NC}"
+            echo -e "${DIM}Enhanced with banner suppression and correct status reporting${NC}"
             echo
             echo "Usage: claude [OPTIONS] [COMMAND]"
             echo

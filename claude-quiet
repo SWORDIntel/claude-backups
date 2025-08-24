@@ -1,0 +1,38 @@
+#!/bin/bash
+# Claude Quiet Wrapper - Completely suppresses agent bridge headers
+# This wrapper ensures clean output from claude command
+
+# Find the actual claude binary
+CLAUDE_BIN=""
+for path in \
+    "$(npm root -g 2>/dev/null)/@anthropic-ai/claude-code/cli.js" \
+    "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+    "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"; do
+    if [[ -f "$path" ]]; then
+        CLAUDE_BIN="$path"
+        break
+    fi
+done
+
+if [[ -z "$CLAUDE_BIN" ]]; then
+    echo "Error: Claude not found. Install with: npm install -g @anthropic-ai/claude-code" >&2
+    exit 1
+fi
+
+# Set environment to prevent yoga.wasm issues
+export NODE_OPTIONS="--no-warnings --max-old-space-size=4096"
+export CLAUDE_NO_YOGA=1
+export YOGA_DISABLE=1
+
+# Add permission bypass if not using --safe
+if [[ "$1" != "--safe" ]] && [[ "${CLAUDE_PERMISSION_BYPASS:-true}" == "true" ]]; then
+    set -- "--dangerously-skip-permissions" "$@"
+else
+    # Remove --safe flag if present
+    if [[ "$1" == "--safe" ]]; then
+        shift
+    fi
+fi
+
+# Execute claude directly with node
+exec node "$CLAUDE_BIN" "$@" 2>&1

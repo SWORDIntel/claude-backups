@@ -1,0 +1,27 @@
+[
+  {
+    "content": "Invoke strategic planning agents (Director + ProjectOrchestrator)",
+    "status": "completed",
+    "activeForm": "Strategic planning complete"
+  },
+  {
+    "content": "Invoke architecture and design agents",
+    "status": "completed",
+    "activeForm": "Architecture design complete"
+  },
+  {
+    "content": "Invoke core development agents for implementation",
+    "status": "completed",
+    "activeForm": "Core development complete"
+  },
+  {
+    "content": "Invoke infrastructure and systems agents",
+    "status": "completed",
+    "activeForm": "Infrastructure systems complete"
+  },
+  {
+    "content": "Invoke optimization and validation agents",
+    "status": "in_progress",
+    "activeForm": "Invoking optimization agents"
+  }
+]

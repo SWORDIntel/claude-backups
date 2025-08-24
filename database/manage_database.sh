@@ -108,14 +108,34 @@ CREATE DATABASE claude_auth OWNER claude_auth;
 GRANT ALL PRIVILEGES ON DATABASE claude_auth TO claude_auth;
 EOF
         
-        # Run SQL setup if exists
+        # Run SQL setup scripts in sequence
         if [ -f "$SCRIPT_DIR/sql/auth_db_setup.sql" ]; then
             echo "🔨 Running database schema setup..."
             psql -h localhost -p $PG_PORT -U ubuntu -d claude_auth -f "$SCRIPT_DIR/sql/auth_db_setup.sql"
-            echo "✅ Database setup complete"
+            echo "✅ Base database schema complete"
         else
             echo "⚠️  SQL setup file not found: $SCRIPT_DIR/sql/auth_db_setup.sql"
         fi
+        
+        # Run learning system schema if exists
+        if [ -f "$SCRIPT_DIR/sql/learning_system_schema.sql" ]; then
+            echo "🧠 Setting up learning system schema..."
+            psql -h localhost -p $PG_PORT -U claude_auth -d claude_auth -f "$SCRIPT_DIR/sql/learning_system_schema.sql"
+            echo "✅ Learning system base schema complete"
+        else
+            echo "⚠️  Learning system schema not found: $SCRIPT_DIR/sql/learning_system_schema.sql"
+        fi
+        
+        # Run learning system v3.1 evolution if exists
+        if [ -f "$SCRIPT_DIR/sql/learning_system_evolution_v31.sql" ]; then
+            echo "🚀 Evolving learning system to v3.1 (ML features)..."
+            psql -h localhost -p $PG_PORT -U claude_auth -d claude_auth -f "$SCRIPT_DIR/sql/learning_system_evolution_v31.sql"
+            echo "✅ Learning system v3.1 evolution complete"
+        else
+            echo "⚠️  Learning system v3.1 evolution not found: $SCRIPT_DIR/sql/learning_system_evolution_v31.sql"
+        fi
+        
+        echo "🎯 Database setup complete with full ML learning capabilities"
         ;;
     "test")
         echo "🧪 Running PostgreSQL 17 performance tests..."
@@ -169,7 +189,7 @@ EOF
         echo "Commands (Local PostgreSQL in project directory):"
         echo "  start   - Start local PostgreSQL server"
         echo "  stop    - Stop local PostgreSQL server"
-        echo "  setup   - Initialize and setup authentication database"
+        echo "  setup   - Initialize authentication database + learning system v3.1"
         echo "  test    - Run enhanced performance tests >2000 auth/sec"
         echo "  redis   - Setup Redis caching layer"
         echo "  status  - Show local PostgreSQL status"

@@ -1,0 +1,27 @@
+[
+  {
+    "content": "Monitor full ZFS LiveCD build progress",
+    "status": "completed",
+    "activeForm": "Monitoring full ZFS LiveCD build progress"
+  },
+  {
+    "content": "Complete base system creation with Debian Trixie",
+    "status": "completed",
+    "activeForm": "Creating base system with Debian Trixie - downloading packages"
+  },
+  {
+    "content": "Fix package installation errors",
+    "status": "in_progress",
+    "activeForm": "Fixing package name issues for Debian Trixie"
+  },
+  {
+    "content": "Install all LiveCD modules and packages",
+    "status": "pending",
+    "activeForm": "Installing LiveCD modules and packages"
+  },
+  {
+    "content": "Create final ISO image",
+    "status": "pending",
+    "activeForm": "Creating final ISO image"
+  }
+]
