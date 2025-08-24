@@ -3113,3 +3113,5 @@
 	            
 2025-08-24 20:25:44.726 UTC [30464] LOG:  checkpoint starting: time
 2025-08-24 20:25:52.541 UTC [30464] LOG:  checkpoint complete: wrote 79 buffers (0.5%); 0 WAL file(s) added, 0 removed, 0 recycled; write=7.815 s, sync=0.001 s, total=7.815 s; sync files=59, longest=0.001 s, average=0.000 s; distance=187 kB, estimate=2314 kB; lsn=0/1F2C790, redo lsn=0/1F2C758
+2025-08-24 20:50:45.042 UTC [30464] LOG:  checkpoint starting: time
+2025-08-24 20:50:50.766 UTC [30464] LOG:  checkpoint complete: wrote 58 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=5.724 s, sync=0.001 s, total=5.724 s; sync files=33, longest=0.001 s, average=0.001 s; distance=265 kB, estimate=2109 kB; lsn=0/1F6ECE0, redo lsn=0/1F6ECA8
