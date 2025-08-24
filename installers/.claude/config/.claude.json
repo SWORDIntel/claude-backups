@@ -1,0 +1,157 @@
+{
+  "numStartups": 1,
+  "installMethod": "unknown",
+  "autoUpdates": true,
+  "verbose": true,
+  "tipsHistory": {
+    "new-user-warmup": 1,
+    "memory-command": 1,
+    "theme-command": 1,
+    "status-line": 1,
+    "prompt-queue": 1,
+    "enter-to-steer-in-relatime": 1,
+    "todo-list": 1,
+    "# for memory": 1,
+    "install-github-app": 1,
+    "drag-and-drop-images": 1,
+    "double-esc": 1,
+    "continue": 1,
+    "shift-tab": 1
+  },
+  "promptQueueUseCount": 1,
+  "firstStartTime": "2025-08-23T22:50:24.713Z",
+  "userID": "c2bcd6c216083d719015599f00c7b8092b5d7ec6ceddf0e1c462a1666aea9282",
+  "projects": {
+    "/home/ubuntu/Documents/claude-backups": {
+      "allowedTools": [],
+      "history": [
+        {
+          "display": "git push",
+          "pastedContents": {}
+        },
+        {
+          "display": "Add # AGENT PERSONA\n## Core Identity\n## Expertise Domains\n## Operational Excellence\n\n## Communication Principles to the end of the template",
+          "pastedContents": {}
+        },
+        {
+          "display": "Merge all into the most comprehensive TEMPLATE.md",
+          "pastedContents": {}
+        },
+        {
+          "display": "Why do we have template.md and standardized template.md",
+          "pastedContents": {}
+        },
+        {
+          "display": "  - 35 agents successfully loaded (some parsing issues with templates)\nthis needs to be fixed",
+          "pastedContents": {}
+        },
+        {
+          "display": "what tests failed",
+          "pastedContents": {}
+        },
+        {
+          "display": "read the file",
+          "pastedContents": {}
+        },
+        {
+          "display": "I have enhanced the agent_registry.py with the following intergrate it into the full system: [Pasted text #1 +103 lines]",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "You're absolutely right! Let me enhance the agent registry with **Python fallback** support and correct it for **all 40 agents**. I'll update it to include the complete fallback mechanisms from the existing bridge system.## 🎉 **Enhanced with Python Fallback for All 40 Agents!**\n\nI've significantly enhanced the agent registry system with:\n\n### **✅ Complete Python Fallback System**\n- **Automatic Fallback**: When binary protocol unavailable, seamlessly switches to Python\n- **Bridge Integration**: Connects with existing `claude_agent_bridge.py` \n- **All 40 Agents Supported**: Full fallback implementations for every agent\n- **Zero Downtime**: System always works, even without binary protocol\n\n### **🔄 Fallback Hierarchy**\n1. **Binary Protocol** (4.2M msg/sec) - Primary when available\n2. **Claude Agent Bridge** - Uses existing Python bridge if loaded\n3. **Built-in Fallbacks** - Generic Python implementations always available\n\n### **📊 All 40 Agents Organized**\n\n**8 Agent Clusters:**\n- **Management** (4): Director, ProjectOrchestrator, Planner, Oversight\n- **Architecture** (3): Architect, APIDesigner, Database\n- **Development** (8): Constructor, Patcher, Debugger, Testbed, Linter, Optimizer, Packager, DocGen\n- **Security** (3): Security, Bastion, SecurityChaosAgent\n- **Infrastructure** (4): Infrastructure, Deployer, Monitor, GNU\n- **UI/UX** (4): Web, Mobile, PyGUI, TUI\n- **Data & AI** (4): DataScience, MLOps, NPU, Researcher\n- **Language Specialists** (10): C, Python, JS, Rust, Go, Java, Swift, Kotlin, Scala, Ruby internals\n\n### **🐍 Python Fallback Features**\n\n```python\n# Automatic fallback when binary unavailable\nresult = await registry.task_interface.invoke_agent_via_task(\n    \"director\",\n    \"Create strategic plan\",\n    context={\"priority\": \"high\"}\n)\n# Works whether binary is active or not!\n\n# Direct Python invocation\nfallback_result = await registry.task_interface.python_fallback.invoke_python_agent(\n    \"security\",\n    \"Audit my infrastructure\",\n    context={}\n)\n```\n\n### **💪 Resilience Features**\n\n- **Graceful Degradation**: Binary → Bridge → Fallback\n- **No Dependencies**: Works even if bridge files missing\n- **Performance Monitoring**: Tracks which mode is active\n- **Automatic Recovery**: Retries binary connection periodically\n- **Context Preservation**: Maintains state across fallback modes\n\n### **📈 Performance Modes**\n\n| Mode | Throughput | Latency | Availability |\n|------|------------|---------|--------------|\n| **Binary Protocol** | 4.2M msg/sec | 200ns | When compiled |\n| **Python Bridge** | 50-100/sec | 100ms | When imported |\n| **Built-in Fallback** | 10-50/sec | 100-200ms | Always |\n\n### **🔧 Usage Examples**\n\n```python\n# Initialize with automatic fallback\nregistry = get_enhanced_registry()\nawait registry.initialize()\n\n# Check fallback status\nif registry.binary_interface.connected:\n    print(\"✅ Binary protocol active (maximum performance)\")\nelse:\n    print(\"⚠️ Using Python fallback (guaranteed availability)\")\n\n# Find best agent (works in all modes)\nbest = registry.find_best_agent_for_task(\"optimize my database\")\n\n# Orchestrate complex tasks (automatic mode selection)\nresult = await orchestrate_task(\n    \"Build, test, and deploy microservice\",\n    context={\"env\": \"production\"}\n)\n\n# Direct fallback invocation\nfallback = PythonFallbackHandler()\nresult = await fallback.invoke_python_agent(\n    \"mlops\",\n    \"Deploy ML model\",\n    {\"model\": \"transformer\"}\n)\n```\n\n### **🎯 Key Benefits**\n\n1. **Always Works**: No dependency on binary compilation\n2. **Progressive Enhancement**: Uses best available mode\n3. **Complete Coverage**: All 40 agents have fallback implementations\n4. **Seamless Integration**: Works with existing claude_agent_bridge.py\n5. **Production Ready**: Handles failures gracefully\n6. **Development Friendly**: Can run without setup/compilation\n7. **Context Aware**: Maintains state across execution modes\n\nThe system now provides **complete reliability** with Python fallback for all 40 agents while maintaining the ability to leverage the ultra-fast binary protocol when available. This ensures the agent system is **always operational** regardless of the deployment environment or compilation status!"
+            }
+          }
+        },
+        {
+          "display": "Make it activate by default",
+          "pastedContents": {}
+        },
+        {
+          "display": "Why did the instaler not do it",
+          "pastedContents": {}
+        },
+        {
+          "display": "/output-style ",
+          "pastedContents": {}
+        },
+        {
+          "display": "Where is the output style launcher",
+          "pastedContents": {}
+        },
+        {
+          "display": "/output-style ",
+          "pastedContents": {}
+        },
+        {
+          "display": "/config ",
+          "pastedContents": {}
+        },
+        {
+          "display": "  ./claude-installer.sh --full\nshould be default",
+          "pastedContents": {}
+        },
+        {
+          "display": "make sure to add it in the right place",
+          "pastedContents": {}
+        },
+        {
+          "display": " 725 +              'category': 'GENERAL'  # Could be enhanced with \n           + actual categories\n we HAVE CATEGORIES",
+          "pastedContents": {}
+        },
+        {
+          "display": "ultrathink fix the tandem orchestration system fully and intergrate it inti the installer",
+          "pastedContents": {}
+        },
+        {
+          "display": "    ❌ Multi-agent workflow failed: 'ProductionOrchestrator' object has no\n    attribute 'execute_workflow'\n",
+          "pastedContents": {}
+        },
+        {
+          "display": "Bring the python system online",
+          "pastedContents": {}
+        },
+        {
+          "display": "are they all bilt into the system",
+          "pastedContents": {}
+        },
+        {
+          "display": "Should be 40+",
+          "pastedContents": {}
+        },
+        {
+          "display": "task tool invocable agents",
+          "pastedContents": {}
+        },
+        {
+          "display": "agents available",
+          "pastedContents": {}
+        }
+      ],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": false,
+      "projectOnboardingSeenCount": 12,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false
+    }
+  },
+  "oauthAccount": {
+    "accountUuid": "73a9a4f3-3d28-4f48-a25f-965eb942bb6f",
+    "emailAddress": "intel@swordintelligence.airforce",
+    "organizationUuid": "2cfbac83-d660-4b03-84ba-5429a8e65662",
+    "organizationRole": "admin",
+    "workspaceRole": null,
+    "organizationName": "intel@swordintelligence.airforce's Organization"
+  },
+  "claudeCodeFirstTokenDate": "2025-06-24T08:25:48.694410Z",
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "1.0.89",
+  "bypassPermissionsModeAccepted": true,
+  "hasOpusPlanDefault": false,
+  "subscriptionNoticeCount": 0,
+  "hasAvailableSubscription": false,
+  "fallbackAvailableWarningThreshold": 0.5
+}

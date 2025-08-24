@@ -4,7 +4,7 @@ metadata:
   version: 8.0.0
   uuid: q0an7um6-u4rd-m4x1-7hr3-a7s3cur17y01
   category: SECURITY
-  priority: MAXIMUM
+  priority: CRITICAL
   status: PRODUCTION
     
   # Visual identification

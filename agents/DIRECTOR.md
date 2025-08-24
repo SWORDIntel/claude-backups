@@ -4,7 +4,7 @@ metadata:
   version: 8.0.0
   uuid: d1r3c70r-3x3c-u71v-3000-57r4736y0001
   category: STRATEGIC
-  priority: MAXIMUM
+  priority: CRITICAL
   status: PRODUCTION
     
   # Visual identification

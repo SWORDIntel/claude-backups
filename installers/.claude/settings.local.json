@@ -1,0 +1,15 @@
+{
+  "claude_project_root": "auto",
+  "self_contained": true,
+  "use_symlinks": true,
+  "directories": {
+    "agents": "./agents",
+    "config": "./config",
+    "hooks": "./hooks",
+    "database": "./database",
+    "docs": "./docs",
+    "scripts": "./scripts",
+    "tools": "./tools",
+    "orchestration": "./orchestration"
+  }
+}

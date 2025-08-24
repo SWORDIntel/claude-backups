@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-08-23T23:32:55.130527",
+  "tests_passed": 7,
+  "tests_failed": 1,
+  "agents_found": 41,
+  "agents_missing": [
+    "gointernal",
+    "debugger",
+    "rubyinternal",
+    "jsinternal",
+    "mobile",
+    "npu",
+    "rustinternal",
+    "javainternal",
+    "pythoninternal",
+    "gnu",
+    "swiftinternal",
+    "scalainternal",
+    "kotlininternal"
+  ],
+  "python_fallback_active": true,
+  "binary_protocol_active": false,
+  "detailed_results": {}
+}

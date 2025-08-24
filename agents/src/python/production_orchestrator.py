@@ -8,6 +8,7 @@ Immediate Python-first functionality with C layer integration capability
 
 import asyncio
 import json
+import os
 import time
 import hashlib
 import logging
@@ -21,17 +22,31 @@ import multiprocessing as mp
 
 # Import components with fallback
 try:
-    from agent_registry import get_registry, AgentRegistry, AgentMetadata
+    from agent_registry import (
+        EnhancedAgentRegistry, 
+        get_enhanced_registry, 
+        initialize_enhanced_registry,
+        AgentMetadata,
+        AgentPriority,
+        AgentStatus as AgentStatusEnum
+    )
     from agent_dynamic_loader import invoke_agent_dynamically
     REGISTRY_AVAILABLE = True
+    ENHANCED_REGISTRY = True
 except ImportError:
-    REGISTRY_AVAILABLE = False
-    class AgentRegistry:
-        """Fallback registry"""
-        def __init__(self):
-            self.agents = {}
-        def register_agent(self, name, config):
-            self.agents[name] = config
+    try:
+        from agent_registry import get_registry, AgentRegistry, AgentMetadata
+        ENHANCED_REGISTRY = False
+        REGISTRY_AVAILABLE = True
+    except ImportError:
+        REGISTRY_AVAILABLE = False
+        ENHANCED_REGISTRY = False
+        class AgentRegistry:
+            """Fallback registry"""
+            def __init__(self):
+                self.agents = {}
+            def register_agent(self, name, config):
+                self.agents[name] = config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -205,10 +220,24 @@ class ProductionOrchestrator:
     async def initialize(self) -> bool:
         """Initialize the orchestrator with all components"""
         try:
-            logger.info("Initializing Production Orchestrator...")
+            logger.info("Initializing Production Orchestrator with Enhanced Registry...")
             
-            # Initialize agent registry
-            if REGISTRY_AVAILABLE:
+            # Initialize agent registry with enhanced version if available
+            if ENHANCED_REGISTRY:
+                logger.info("Using Enhanced Agent Registry with Python fallback")
+                self.registry = get_enhanced_registry()
+                success = await self.registry.initialize()
+                if success:
+                    # Get discovered agents from enhanced registry
+                    for agent_name in self.registry.agents:
+                        self.discovered_agents.add(agent_name)
+                        self.agent_status[agent_name] = AgentStatus.IDLE
+                    logger.info(f"Enhanced registry loaded {len(self.discovered_agents)} agents")
+                else:
+                    logger.warning("Enhanced registry initialization failed, using fallback discovery")
+                    await self._discover_agents()
+            elif REGISTRY_AVAILABLE:
+                logger.info("Using standard agent registry")
                 self.registry = get_registry()
                 await self._discover_agents()
             else:
@@ -234,13 +263,28 @@ class ProductionOrchestrator:
     async def _discover_agents(self) -> None:
         """Discover available agents from registry"""
         try:
-            agents_dir = Path.cwd() / "agents"
-            if not agents_dir.exists():
-                agents_dir = Path.home() / "Documents" / "Claude" / "agents"
+            # Check environment variable first
+            agents_root = os.environ.get('CLAUDE_AGENTS_ROOT')
+            if agents_root:
+                agents_dir = Path(agents_root)
+            else:
+                # Try common locations
+                agents_dir = Path.cwd() / "agents"
+                if not agents_dir.exists():
+                    agents_dir = Path.home() / "Documents" / "Claude" / "agents"
+                if not agents_dir.exists():
+                    agents_dir = Path.home() / "Documents" / "claude-backups" / "agents"
+            
+            # Initialize registry if available
+            if REGISTRY_AVAILABLE:
+                if not self.registry:
+                    self.registry = AgentRegistry()
+                self.registry.agents_dir = str(agents_dir)
+                await self.registry._discover_agents()
             
             for agent_file in agents_dir.glob("*.md"):
                 agent_name = agent_file.stem.lower()
-                if agent_name not in ['template', 'readme', 'where_i_am']:
+                if agent_name not in ['template', 'readme', 'where_i_am', 'standardized_template']:
                     self.discovered_agents.add(agent_name)
                     self.agent_status[agent_name] = AgentStatus.IDLE
                     
@@ -498,10 +542,18 @@ class ProductionOrchestrator:
             raise
     
     async def _execute_agent_action(self, agent: str, action: str, params: Dict) -> Any:
-        """Execute an agent action"""
+        """Execute an agent action with enhanced fallback support"""
         try:
-            if REGISTRY_AVAILABLE and agent in self.discovered_agents:
-                # Use dynamic loader if available
+            # Try enhanced registry first with Python fallback
+            if ENHANCED_REGISTRY and hasattr(self.registry, 'task_interface'):
+                # Use enhanced registry's task interface with automatic fallback
+                task = f"{action}: {params}" if params else action
+                result = await self.registry.task_interface.invoke_agent_via_task(
+                    agent, task, params
+                )
+                return result
+            elif REGISTRY_AVAILABLE and agent in self.discovered_agents:
+                # Use standard dynamic loader if available
                 result = await asyncio.to_thread(
                     invoke_agent_dynamically,
                     agent, action, params
@@ -655,6 +707,98 @@ class ProductionOrchestrator:
                 'e_cores': len(self.hardware_topology.e_cores),
                 'lp_e_cores': len(self.hardware_topology.lp_e_cores)
             }
+        }
+    
+    async def execute_workflow(self, workflow_steps: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Execute a simple workflow from a list of steps
+        
+        Args:
+            workflow_steps: List of dicts with 'agent' and 'action' keys
+            
+        Returns:
+            Dict with execution results
+        """
+        # Convert workflow steps to CommandStep objects
+        command_steps = []
+        for step in workflow_steps:
+            command_step = CommandStep(
+                agent=step['agent'],
+                action=step['action'],
+                params=step.get('parameters', {}),
+                timeout=step.get('timeout', 30.0)
+            )
+            command_steps.append(command_step)
+        
+        # Create a command set
+        command_set = CommandSet(
+            name=f"workflow_{int(time.time())}",
+            description=f"Multi-agent workflow with {len(command_steps)} steps",
+            steps=command_steps,
+            mode=ExecutionMode.SEQUENTIAL,  # Default to sequential
+            priority=Priority.MEDIUM
+        )
+        
+        # Execute using the existing command set infrastructure
+        return await self.execute_command_set(command_set)
+    
+    def list_available_agents(self) -> List[str]:
+        """List all available agents
+        
+        Returns:
+            List of agent names
+        """
+        return sorted(list(self.discovered_agents))
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get current system status
+        
+        Returns:
+            Dict with system status information
+        """
+        return {
+            'initialized': self.is_initialized,
+            'uptime_seconds': time.time() - self.start_time if hasattr(self, 'start_time') else 0,
+            'discovered_agents': len(self.discovered_agents),
+            'active_commands': len(self.active_commands),
+            'c_layer_available': self.c_layer_available,
+            'python_msgs_processed': self.python_msgs_processed,
+            'c_msgs_processed': self.c_msgs_processed,
+            'fallback_count': self.fallback_count,
+            'agent_status': {name: str(status) for name, status in self.agent_status.items()},
+            'command_history_size': len(self.command_history),
+            'hardware_topology': {
+                'total_cores': self.hardware_topology.total_cores,
+                'p_cores_ultra': len(self.hardware_topology.p_cores_ultra),
+                'p_cores_standard': len(self.hardware_topology.p_cores_standard),
+                'e_cores': len(self.hardware_topology.e_cores),
+                'lp_e_cores': len(self.hardware_topology.lp_e_cores)
+            }
+        }
+    
+    def get_agent_info(self, agent_name: str) -> Dict[str, Any]:
+        """Get information about a specific agent
+        
+        Args:
+            agent_name: Name of the agent
+            
+        Returns:
+            Dict with agent information
+        """
+        if agent_name not in self.discovered_agents:
+            return {'error': f'Agent {agent_name} not found'}
+        
+        # Get category from registry if available
+        category = 'GENERAL'
+        if REGISTRY_AVAILABLE and self.registry and hasattr(self.registry, 'agents'):
+            agent_metadata = self.registry.agents.get(agent_name)
+            if agent_metadata and hasattr(agent_metadata, 'category'):
+                category = agent_metadata.category
+        
+        return {
+            'name': agent_name,
+            'status': str(self.agent_status.get(agent_name, AgentStatus.OFFLINE)),
+            'available': agent_name in self.discovered_agents,
+            'category': category
         }
 
 # ============================================================================
