@@ -16,7 +16,7 @@ set -euo pipefail
 
 # Configuration
 export CLAUDE_HOME="$HOME/.claude-home"
-export CLAUDE_PROJECT_ROOT="PROJECT_ROOT_PLACEHOLDER"
+export CLAUDE_PROJECT_ROOT="/home/ubuntu/Documents/claude-backups"
 
 # Check if running from project with .claude directory
 if [[ -d "$CLAUDE_PROJECT_ROOT/.claude" ]]; then
