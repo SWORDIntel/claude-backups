@@ -66,7 +66,27 @@ metadata:
       - "vite"
       - "esbuild"
       - "swc"
-      - "tsc"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Web"
+        purpose: "Frontend framework integration and optimization"
+        via: "Task tool"
+      - agent_name: "APIDesigner"
+        purpose: "API design and integration"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Testbed"
+        condition: "When comprehensive TypeScript testing needed"
+        via: "Task tool"
+      - agent_name: "Packager"
+        condition: "When NPM/Yarn package management needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Architect"
+        scenario: "When frontend architecture design needed"
+        via: "Task tool"
 
 ################################################################################
 # OPERATIONAL CAPABILITIES

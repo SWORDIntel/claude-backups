@@ -55,13 +55,18 @@ LOG_FILE="$LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
 
 # Claude directory structure (for self-contained mode)
 CLAUDE_DIR="$PROJECT_ROOT/.claude"
+VENV_DIR="$HOME_DIR/.local/share/claude/venv"
+DATABASE_DIR="$PROJECT_ROOT/database"
+ENABLE_NATURAL_INVOCATION="$PROJECT_ROOT/enable-natural-invocation.sh"
 
 # Installation counters
-TOTAL_STEPS=16
+TOTAL_STEPS=22
 CURRENT_STEP=0
 
 # User preferences (will be set by prompts)
 ALLOW_SYSTEM_PACKAGES=""
+INSTALL_DATABASE="yes"
+SETUP_VENV="yes"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # HELPER FUNCTIONS
@@ -95,9 +100,10 @@ print_header() {
     echo ""
     print_cyan "╔═══════════════════════════════════════════════════════════════╗"
     print_cyan "║           Claude Master Installer v10.0                      ║"
-    print_cyan "║         Default: Full Install (57 Agents + Tools)           ║"
+    print_cyan "║      Full Install: 58+ Agents + Database + Learning         ║"
     print_cyan "╚═══════════════════════════════════════════════════════════════╝"
     echo ""
+}
     print_dim "Project: $PROJECT_ROOT"
     print_dim "Target: $HOME_DIR"
     echo ""
@@ -410,6 +416,600 @@ install_agents() {
     show_progress
 }
 
+# 3.5. Install Global CLAUDE.md (Agent Auto-Invocation Guide)
+install_global_claude_md() {
+    print_section "Installing Global CLAUDE.md (Agent Auto-Invocation Guide)"
+    
+    local claude_md_source="$PROJECT_ROOT/claude.md.txt"
+    local claude_md_target="$HOME_DIR/CLAUDE.md"
+    
+    # Create the comprehensive agent auto-invocation guide content
+    local claude_md_content='# CLAUDE.MD - Global Agent Auto-Invocation Guide
+# Claude Portable Agent Framework v7.0 - Auto-Invocation Patterns
+
+## 🎯 AGENT AUTO-INVOCATION QUICK REFERENCE
+
+This document defines when Claude should automatically invoke each of the 57 specialized agents based on keywords, patterns, and context. Use Task tool with these agents when their trigger conditions are met.
+
+---
+
+## 🚨 IMMEDIATE AUTO-INVOCATION TRIGGERS (ALWAYS INVOKE)
+
+### Multi-Step Tasks → Director + ProjectOrchestrator
+**ALWAYS invoke both when:**
+- User requests multiple related tasks
+- Complex project initialization
+- Strategic planning needed
+- "Create X with Y and Z" patterns
+
+### Parallel Execution Keywords → Multiple Agents
+**Keywords:** parallel, concurrent, simultaneously, at the same time, together
+**Action:** Execute identified agents IN PARALLEL with PARALLEL execution mode
+
+### Security Keywords → Security Team
+**Keywords:** security, breach, attack, vulnerability, exploit, malware, threat
+**Invoke:** CSO, Security, SecurityAuditor, Bastion (based on specific need)
+
+### Performance Keywords → Optimizer + Monitor
+**Keywords:** slow, optimize, performance, speed, latency, bottleneck, cache
+**Invoke:** Optimizer (analysis) + Monitor (metrics) + LeadEngineer (hardware optimization)
+
+---
+
+## 📂 COMMAND & CONTROL AGENTS (2)
+
+### DIRECTOR
+**Auto-invoke when:**
+- Strategic decisions needed
+- Project initialization
+- Multi-agent coordination required
+- Keywords: strategy, plan, roadmap, project, initiative, vision
+- Patterns: "Create a plan for...", "Design strategy for...", "Initialize project..."
+
+### PROJECTORCHESTRATOR  
+**Auto-invoke when:**
+- Tactical coordination needed
+- Multi-step task execution
+- Workflow management required
+- Keywords: coordinate, orchestrate, workflow, pipeline, sequence
+- Patterns: "Execute workflow...", "Coordinate agents...", "Manage pipeline..."
+
+---
+
+## 🛡️ SECURITY SPECIALISTS (11)
+
+### SECURITY
+**Auto-invoke when:**
+- General security concerns
+- Vulnerability assessment needed
+- Keywords: secure, vulnerability, threat, risk, audit, compliance
+- Patterns: "Security audit of...", "Check for vulnerabilities...", "Secure this..."
+
+### BASTION
+**Auto-invoke when:**
+- Perimeter defense needed
+- Access control required
+- Keywords: firewall, perimeter, access control, DMZ, ingress, egress
+- Patterns: "Protect perimeter...", "Control access to...", "Harden entry points..."
+
+### SECURITYCHAOSAGENT
+**Auto-invoke when:**
+- Chaos testing required
+- Resilience testing needed
+- Keywords: chaos, resilience, fault injection, distributed testing
+- Patterns: "Test resilience...", "Chaos engineering for...", "Fault tolerance..."
+
+### SECURITYAUDITOR
+**Auto-invoke when:**
+- Comprehensive audit needed
+- Compliance checking required
+- Keywords: audit, compliance, SOC2, HIPAA, GDPR, PCI
+- Patterns: "Audit compliance...", "Security assessment...", "Compliance check..."
+
+### CSO (Chief Security Officer)
+**Auto-invoke when:**
+- Strategic security decisions
+- Executive security reporting
+- Keywords: governance, policy, compliance, risk management
+- Patterns: "Security policy for...", "Risk assessment...", "Executive security..."
+
+### CRYPTOEXPERT
+**Auto-invoke when:**
+- Encryption/cryptography needed
+- Key management required
+- Keywords: encrypt, decrypt, cryptography, keys, certificates, PKI, TLS
+- Patterns: "Encrypt data...", "Implement cryptography...", "Key management..."
+
+### QUANTUMGUARD
+**Auto-invoke when:**
+- Quantum threats mentioned
+- Post-quantum crypto needed
+- Keywords: quantum, post-quantum, lattice, kyber, dilithium, quantum-resistant
+- Patterns: "Quantum-resistant...", "Post-quantum security...", "Quantum threat..."
+
+### REDTEAMORCHESTRATOR
+**Auto-invoke when:**
+- Penetration testing needed
+- Adversarial testing required
+- Keywords: pentest, red team, penetration, adversarial, offensive
+- Patterns: "Penetration test...", "Red team exercise...", "Test defenses..."
+
+### APT41-DEFENSE
+**Auto-invoke when:**
+- APT threats detected
+- Nation-state defense needed
+- Keywords: APT, nation-state, advanced persistent threat, supply chain attack
+- Patterns: "APT defense...", "Nation-state protection...", "Supply chain security..."
+
+### NSA (Allied Intel TTP)
+**Auto-invoke when:**
+- Intelligence operations mentioned
+- Five Eyes/NATO context
+- Keywords: intelligence, SIGINT, five eyes, nato, attribution, collection
+- Patterns: "Intelligence gathering...", "Attribution analysis...", "SIGINT operations..."
+
+### PSYOPS
+**Auto-invoke when:**
+- Information warfare context
+- Influence operations mentioned
+- Keywords: psyops, influence, narrative, perception, information warfare
+- Patterns: "Counter-narrative...", "Influence campaign...", "Information warfare..."
+
+---
+
+## 🔧 CORE DEVELOPMENT (8)
+
+### ARCHITECT
+**Auto-invoke when:**
+- System design needed
+- Architecture decisions required
+- Keywords: architecture, design, structure, pattern, framework, blueprint
+- Patterns: "Design architecture...", "System design for...", "Architecture pattern..."
+
+### CONSTRUCTOR
+**Auto-invoke when:**
+- Project initialization
+- Scaffolding needed
+- Keywords: initialize, create, scaffold, bootstrap, setup, boilerplate
+- Patterns: "Create new project...", "Initialize application...", "Setup environment..."
+
+### PATCHER
+**Auto-invoke when:**
+- Bug fixes needed
+- Code repairs required
+- Keywords: fix, bug, patch, repair, debug, error, broken
+- Patterns: "Fix bug in...", "Patch issue...", "Repair broken..."
+
+### DEBUGGER
+**Auto-invoke when:**
+- Deep debugging needed
+- Root cause analysis
+- Keywords: debug, trace, investigate, analyze, breakpoint, stack trace
+- Patterns: "Debug issue...", "Find root cause...", "Trace execution..."
+
+### TESTBED
+**Auto-invoke when:**
+- Testing required
+- Test suite creation
+- Keywords: test, unit test, integration test, coverage, TDD, BDD
+- Patterns: "Write tests for...", "Test coverage...", "Test suite..."
+
+### LINTER
+**Auto-invoke when:**
+- Code review needed
+- Style checking required
+- Keywords: lint, review, style, format, standards, clean code
+- Patterns: "Review code...", "Check style...", "Lint files..."
+
+### OPTIMIZER
+**Auto-invoke when:**
+- Performance issues
+- Optimization needed
+- Keywords: slow, optimize, performance, bottleneck, profile, benchmark
+- Patterns: "Optimize performance...", "Speed up...", "Profile code..."
+
+### QADIRECTOR
+**Auto-invoke when:**
+- QA strategy needed
+- Quality assurance required
+- Keywords: QA, quality, testing strategy, test plan, validation
+- Patterns: "QA strategy...", "Quality plan...", "Test planning..."
+
+---
+
+## 🏗️ INFRASTRUCTURE & DEVOPS (6)
+
+### INFRASTRUCTURE
+**Auto-invoke when:**
+- System setup needed
+- Infrastructure configuration
+- Keywords: infrastructure, server, cloud, AWS, Azure, GCP, terraform
+- Patterns: "Setup infrastructure...", "Configure servers...", "Cloud deployment..."
+
+### DEPLOYER
+**Auto-invoke when:**
+- Deployment needed
+- Release management
+- Keywords: deploy, release, rollout, CI/CD, pipeline, production
+- Patterns: "Deploy to production...", "Release version...", "Setup CI/CD..."
+
+### MONITOR
+**Auto-invoke when:**
+- Monitoring setup needed
+- Observability required
+- Keywords: monitor, metrics, logs, traces, observability, alerting
+- Patterns: "Setup monitoring...", "Add metrics...", "Configure alerts..."
+
+### PACKAGER
+**Auto-invoke when:**
+- Package creation needed
+- Distribution required
+- Keywords: package, bundle, distribute, npm, pip, docker, container
+- Patterns: "Package application...", "Create distribution...", "Bundle assets..."
+
+### DOCKER
+**Auto-invoke when:**
+- Containerization needed
+- Docker operations
+- Keywords: docker, container, kubernetes, k8s, compose, swarm
+- Patterns: "Containerize app...", "Docker setup...", "Kubernetes deployment..."
+
+### PROXMOX
+**Auto-invoke when:**
+- Virtualization needed
+- VM management
+- Keywords: proxmox, VM, virtual machine, virtualization, hypervisor
+- Patterns: "Create VM...", "Virtualization setup...", "Proxmox configuration..."
+
+---
+
+## 💻 LANGUAGE-SPECIFIC DEVELOPMENT (8)
+
+### C-INTERNAL
+**Auto-invoke when:**
+- C/C++ development
+- Systems programming
+- Keywords: C, C++, gcc, compilation, native, vectorization, AVX512
+- Patterns: "C++ implementation...", "Native code...", "System programming..."
+
+### PYTHON-INTERNAL
+**Auto-invoke when:**
+- Python development
+- Python environment management
+- Keywords: python, pip, venv, pandas, numpy, Django, Flask
+- Patterns: "Python script...", "Django app...", "Python automation..."
+
+### RUST-INTERNAL
+**Auto-invoke when:**
+- Rust development
+- Memory-safe systems code
+- Keywords: rust, cargo, unsafe, lifetime, borrow, trait, async, tokio
+- Patterns: "Rust implementation...", "Memory-safe code...", "Rust service..."
+
+### GO-INTERNAL
+**Auto-invoke when:**
+- Go development
+- Concurrent programming
+- Keywords: golang, go, goroutine, channel, context, microservice
+- Patterns: "Go service...", "Concurrent implementation...", "Go API..."
+
+### JAVA-INTERNAL
+**Auto-invoke when:**
+- Java development
+- Enterprise applications
+- Keywords: java, spring, springboot, JVM, maven, gradle, hibernate
+- Patterns: "Java application...", "Spring Boot service...", "Enterprise Java..."
+
+### TYPESCRIPT-INTERNAL
+**Auto-invoke when:**
+- TypeScript/JavaScript development
+- Frontend development
+- Keywords: typescript, javascript, node, react, angular, vue, webpack
+- Patterns: "TypeScript app...", "React component...", "Node service..."
+
+### KOTLIN-INTERNAL
+**Auto-invoke when:**
+- Kotlin development
+- Android development
+- Keywords: kotlin, android, coroutines, jetpack compose, KMM
+- Patterns: "Kotlin app...", "Android application...", "Kotlin multiplatform..."
+
+### ASSEMBLY-INTERNAL
+**Auto-invoke when:**
+- Assembly programming
+- Low-level optimization
+- Keywords: assembly, asm, x86, ARM, SIMD, registers, opcodes
+- Patterns: "Assembly optimization...", "Low-level code...", "CPU instructions..."
+
+---
+
+## 🎨 SPECIALIZED PLATFORMS (7)
+
+### APIDESIGNER
+**Auto-invoke when:**
+- API design needed
+- REST/GraphQL/gRPC
+- Keywords: API, REST, GraphQL, gRPC, OpenAPI, swagger, endpoint
+- Patterns: "Design API...", "REST endpoints...", "API specification..."
+
+### DATABASE
+**Auto-invoke when:**
+- Database design/optimization
+- Data architecture
+- Keywords: SQL, PostgreSQL, MySQL, MongoDB, database, schema, query
+- Patterns: "Database design...", "SQL optimization...", "Schema creation..."
+
+### WEB
+**Auto-invoke when:**
+- Web development
+- Frontend frameworks
+- Keywords: React, Vue, Angular, frontend, webpage, browser, HTML, CSS
+- Patterns: "Web application...", "Frontend development...", "Website creation..."
+
+### MOBILE
+**Auto-invoke when:**
+- Mobile development (iOS/Android)
+- Cross-platform mobile
+- Keywords: iOS, Android, React Native, mobile app, smartphone, tablet
+- Patterns: "Mobile app...", "iOS/Android development...", "Cross-platform app..."
+
+### ANDROIDMOBILE
+**Auto-invoke when:**
+- Android-specific development
+- Android optimization
+- Keywords: Android, Kotlin, Java, Play Store, APK, Android Studio
+- Patterns: "Android app...", "Play Store submission...", "Android optimization..."
+
+### PYGUI
+**Auto-invoke when:**
+- Python GUI development
+- Desktop applications
+- Keywords: tkinter, PyQt, Streamlit, Kivy, wxPython, Python GUI
+- Patterns: "Python GUI...", "Desktop application...", "Streamlit dashboard..."
+
+### TUI
+**Auto-invoke when:**
+- Terminal UI development
+- Console interfaces
+- Keywords: terminal, console, CLI, ncurses, text interface, TUI
+- Patterns: "Terminal interface...", "Console app...", "CLI tool..."
+
+---
+
+## 📊 DATA & ML (3)
+
+### DATASCIENCE
+**Auto-invoke when:**
+- Data analysis needed
+- ML model development
+- Keywords: data science, machine learning, AI, model, training, analysis
+- Patterns: "Analyze data...", "Train model...", "Data visualization..."
+
+### MLOPS
+**Auto-invoke when:**
+- ML pipeline setup
+- Model deployment
+- Keywords: MLOps, pipeline, model deployment, training pipeline, MLflow
+- Patterns: "ML pipeline...", "Deploy model...", "MLOps setup..."
+
+### NPU
+**Auto-invoke when:**
+- Neural processing optimization
+- AI acceleration
+- Keywords: NPU, neural processor, AI acceleration, inference optimization
+- Patterns: "NPU optimization...", "AI acceleration...", "Neural processing..."
+
+---
+
+## 🌐 NETWORK & SYSTEMS (4)
+
+### CISCO
+**Auto-invoke when:**
+- Cisco configuration
+- Network setup
+- Keywords: Cisco, router, switch, VLAN, BGP, OSPF, network config
+- Patterns: "Configure Cisco...", "Network setup...", "Router configuration..."
+
+### BGP-PURPLE-TEAM
+**Auto-invoke when:**
+- BGP security/configuration
+- Routing security
+- Keywords: BGP, routing, AS, peering, route hijacking, RPKI
+- Patterns: "BGP configuration...", "Routing security...", "AS peering..."
+
+### IOT-ACCESS-CONTROL
+**Auto-invoke when:**
+- IoT security/management
+- Device access control
+- Keywords: IoT, embedded, device management, MQTT, CoAP, Zigbee
+- Patterns: "IoT security...", "Device management...", "Embedded systems..."
+
+### DDWRT
+**Auto-invoke when:**
+- Router firmware
+- DD-WRT configuration
+- Keywords: DD-WRT, router firmware, OpenWRT, Tomato, custom firmware
+- Patterns: "Router firmware...", "DD-WRT setup...", "Custom router..."
+
+---
+
+## ⚡ HARDWARE & ACCELERATION (2)
+
+### GNA
+**Auto-invoke when:**
+- Gaussian Neural Accelerator
+- Audio/speech processing
+- Keywords: GNA, Gaussian, audio processing, speech recognition
+- Patterns: "GNA optimization...", "Audio acceleration...", "Speech processing..."
+
+### LEADENGINEER
+**Auto-invoke when:**
+- Hardware-software integration
+- System-level optimization
+- Keywords: hardware integration, thermal, P-cores, E-cores, AVX-512
+- Patterns: "Hardware optimization...", "System integration...", "CPU optimization..."
+
+---
+
+## 📋 PLANNING & DOCUMENTATION (4)
+
+### PLANNER
+**Auto-invoke when:**
+- Strategic planning
+- Project roadmaps
+- Keywords: plan, strategy, roadmap, timeline, milestone, project
+- Patterns: "Create plan...", "Project roadmap...", "Strategic planning..."
+
+### DOCGEN
+**Auto-invoke when:**
+- Documentation needed
+- Technical writing
+- Keywords: document, docs, README, manual, guide, documentation
+- Patterns: "Generate docs...", "Write documentation...", "Create README..."
+
+### RESEARCHER
+**Auto-invoke when:**
+- Technology research
+- Evaluation needed
+- Keywords: research, investigate, analyze, evaluate, study, explore
+- Patterns: "Research technology...", "Evaluate options...", "Technology analysis..."
+
+### STATUSLINE-INTEGRATION
+**Auto-invoke when:**
+- Dev environment setup
+- IDE integration
+- Keywords: statusline, neovim, vim, IDE, editor, development environment
+- Patterns: "Setup statusline...", "IDE configuration...", "Editor integration..."
+
+---
+
+## 🔍 QUALITY & OVERSIGHT (2)
+
+### OVERSIGHT
+**Auto-invoke when:**
+- Quality assurance
+- Compliance checking
+- Keywords: oversight, quality, compliance, standards, governance
+- Patterns: "Quality oversight...", "Compliance check...", "Standards verification..."
+
+### INTEGRATION
+**Auto-invoke when:**
+- System integration
+- Component coordination
+- Keywords: integration, coordinate, connect, interface, bridge
+- Patterns: "System integration...", "Component coordination...", "Interface design..."
+
+---
+
+## 🎯 COMPOUND AUTO-INVOCATION PATTERNS
+
+### "Security Audit" → Multiple Agents (PARALLEL)
+- CSO (governance)
+- SecurityAuditor (technical audit)
+- Security (vulnerability assessment)
+- Monitor (metrics collection)
+
+### "Full Stack Application" → Multiple Agents
+- Architect (design)
+- Web (frontend)
+- APIDesigner (API)
+- Database (data layer)
+- Infrastructure (deployment)
+
+### "Performance Optimization" → Multiple Agents
+- Optimizer (analysis)
+- Monitor (metrics)
+- LeadEngineer (hardware)
+- Relevant language agent (code optimization)
+
+### "Mobile App Development" → Multiple Agents
+- Mobile or AndroidMobile (platform)
+- APIDesigner (backend)
+- Database (data)
+- Testbed (testing)
+
+### "Microservices Architecture" → Multiple Agents
+- Architect (design)
+- APIDesigner (contracts)
+- Go-Internal or Java-Internal (implementation)
+- Docker (containerization)
+- Infrastructure (orchestration)
+
+### "Machine Learning Pipeline" → Multiple Agents
+- DataScience (model development)
+- MLOps (pipeline)
+- NPU (acceleration)
+- Monitor (metrics)
+
+---
+
+## 🚀 EXECUTION MODES
+
+When invoking multiple agents, use these execution modes:
+
+### PARALLEL
+- Use when: Tasks have no dependencies
+- Example: Security audit components can run simultaneously
+
+### SEQUENTIAL
+- Use when: Tasks depend on previous results
+- Example: Design → Implementation → Testing
+
+### REDUNDANT
+- Use when: Critical operations need verification
+- Example: Security operations, financial calculations
+
+### CONSENSUS
+- Use when: Multiple validations needed
+- Example: Architecture decisions, security assessments
+
+---
+
+## 📌 CRITICAL RULES
+
+1. **ALWAYS use Task tool** for agent invocation
+2. **ALWAYS invoke Director + ProjectOrchestrator** for multi-step tasks
+3. **PREFER parallel execution** when tasks are independent
+4. **CHAIN agents** based on their invokes_agents relationships
+5. **MONITOR hardware** when using C-Internal or Assembly-Internal
+6. **VALIDATE security** with Security team for any sensitive operations
+7. **DOCUMENT decisions** with Docgen after major implementations
+
+---
+
+*Last Updated: 2025-08-24*
+*Framework Version: 7.0*
+*Total Agents: 57*
+*Status: PRODUCTION READY - Installed by claude-installer.sh*'
+    
+    # Check if source file exists, otherwise create content directly
+    if [[ -f "$claude_md_source" ]]; then
+        info "Found existing CLAUDE.md source file, copying..."
+        cp "$claude_md_source" "$claude_md_target" 2>/dev/null
+    else
+        info "Creating comprehensive Global CLAUDE.md from embedded content..."
+        echo "$claude_md_content" > "$claude_md_target" 2>/dev/null
+    fi
+    
+    # Fix permissions
+    chmod 644 "$claude_md_target" 2>/dev/null
+    sudo chown "$USER:$USER" "$claude_md_target" 2>/dev/null
+    
+    # Verify installation
+    if [[ -f "$claude_md_target" ]]; then
+        local line_count=$(wc -l < "$claude_md_target" 2>/dev/null || echo "0")
+        success "Installed Global CLAUDE.md ($line_count lines) - Agent Auto-Invocation Guide"
+        info "Location: $claude_md_target"
+        info "Contains: 57 agent invocation patterns, keywords, and coordination rules"
+        print_dim "  This file tells Claude when to automatically invoke each specialized agent"
+        print_dim "  Based on keywords, patterns, and context in user requests"
+    else
+        error "Failed to install Global CLAUDE.md"
+    fi
+    
+    show_progress
+}
+
 # 4. Install hooks
 install_hooks() {
     print_section "Installing Hooks"
@@ -562,6 +1162,88 @@ EOF
     show_progress
 }
 
+# 6.5.1 Setup virtual environment
+setup_virtual_environment() {
+    print_section "Setting Up Python Virtual Environment"
+    
+    if [[ "$SETUP_VENV" != "yes" ]]; then
+        info "Skipping virtual environment setup (user preference)"
+        show_progress
+        return
+    fi
+    
+    info "Creating virtual environment at: $VENV_DIR"
+    force_mkdir "$(dirname "$VENV_DIR")"
+    
+    # Create virtual environment
+    if command -v python3 &>/dev/null; then
+        python3 -m venv "$VENV_DIR" 2>/dev/null || {
+            warning "Failed to create virtual environment - trying with --system-site-packages"
+            python3 -m venv --system-site-packages "$VENV_DIR" 2>/dev/null || {
+                error "Failed to create virtual environment"
+                show_progress
+                return
+            }
+        }
+        success "Virtual environment created at $VENV_DIR"
+        
+        # Upgrade pip in venv
+        info "Upgrading pip in virtual environment..."
+        "$VENV_DIR/bin/pip" install --upgrade pip setuptools wheel 2>/dev/null
+        
+        # Install requirements if file exists
+        if [[ -f "$PROJECT_ROOT/requirements.txt" ]]; then
+            info "Installing requirements.txt into virtual environment..."
+            "$VENV_DIR/bin/pip" install -r "$PROJECT_ROOT/requirements.txt" 2>&1 | while read line; do
+                if [[ "$line" == *"Successfully installed"* ]]; then
+                    echo "  ✓ Packages installed"
+                elif [[ "$line" == *"ERROR"* ]]; then
+                    echo "  ✗ $line"
+                fi
+            done
+            success "Requirements installed in virtual environment"
+        fi
+        
+        # Create activation helper script
+        local ACTIVATE_SCRIPT="$LOCAL_BIN/activate-claude-venv"
+        cat > "$ACTIVATE_SCRIPT" << EOF
+#!/bin/bash
+# Activate Claude virtual environment
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+    source "$VENV_DIR/bin/activate"
+    echo "Claude virtual environment activated"
+    echo "Python: \$(which python3)"
+    echo "Pip: \$(which pip)"
+else
+    echo "Virtual environment not found at $VENV_DIR"
+    exit 1
+fi
+EOF
+        chmod +x "$ACTIVATE_SCRIPT"
+        success "Created activation helper: activate-claude-venv"
+        
+        # Add to shell RC file
+        local SHELL_RC=""
+        if [[ -f "$HOME/.bashrc" ]]; then
+            SHELL_RC="$HOME/.bashrc"
+        elif [[ -f "$HOME/.zshrc" ]]; then
+            SHELL_RC="$HOME/.zshrc"
+        fi
+        
+        if [[ -n "$SHELL_RC" ]] && ! grep -q "CLAUDE_VENV" "$SHELL_RC"; then
+            echo "" >> "$SHELL_RC"
+            echo "# Claude virtual environment (added by installer)" >> "$SHELL_RC"
+            echo "export CLAUDE_VENV='$VENV_DIR'" >> "$SHELL_RC"
+            echo "alias claude-venv='source $VENV_DIR/bin/activate'" >> "$SHELL_RC"
+            success "Added venv alias to shell configuration"
+        fi
+    else
+        error "Python 3 not found - cannot create virtual environment"
+    fi
+    
+    show_progress
+}
+
 # 6.6. Setup database system
 setup_database_system() {
     print_section "Setting up PostgreSQL Database System"
@@ -583,10 +1265,54 @@ setup_database_system() {
         local PG_VERSION=$(psql --version | grep -oE '[0-9]+' | head -1)
         success "PostgreSQL $PG_VERSION detected"
     else
-        warning "PostgreSQL not installed - database features will be limited"
-        info "Install with: sudo apt-get install postgresql postgresql-client"
-        show_progress
-        return
+        if [[ "$ALLOW_SYSTEM_PACKAGES" == "true" ]]; then
+            info "Installing PostgreSQL and Redis..."
+            sudo apt-get update 2>/dev/null
+            sudo apt-get install -y postgresql postgresql-client redis-server 2>/dev/null || {
+                warning "Failed to install PostgreSQL/Redis - continuing without database"
+                show_progress
+                return
+            }
+            success "PostgreSQL and Redis installed"
+        else
+            warning "PostgreSQL not installed - database features will be limited"
+            info "Install with: sudo apt-get install postgresql postgresql-client redis-server"
+            show_progress
+            return
+        fi
+    fi
+    
+    # Setup database using manage_database.sh
+    if [[ -f "$DB_DIR/manage_database.sh" ]]; then
+        info "Setting up Claude authentication database..."
+        cd "$DB_DIR" || return
+        
+        # Initialize and setup database
+        bash ./manage_database.sh setup 2>&1 | while read line; do
+            echo "  $line"
+        done
+        
+        # Test database connection
+        bash ./manage_database.sh test 2>&1 | head -20 | while read line; do
+            echo "  $line"
+        done
+        
+        cd "$PROJECT_ROOT" || true
+        success "Database system initialized"
+    fi
+    
+    # Setup Redis caching layer
+    if [[ -f "$DB_DIR/python/auth_redis_setup.py" ]]; then
+        info "Setting up Redis caching layer..."
+        if [[ -n "$VENV_DIR" ]] && [[ -f "$VENV_DIR/bin/python" ]]; then
+            "$VENV_DIR/bin/python" "$DB_DIR/python/auth_redis_setup.py" 2>/dev/null && \
+                success "Redis caching layer configured" || \
+                warning "Redis setup had issues - will retry on first use"
+        else
+            python3 "$DB_DIR/python/auth_redis_setup.py" 2>/dev/null && \
+                success "Redis caching layer configured" || \
+                warning "Redis setup had issues - will retry on first use"
+        fi
     fi
     
     # Run database initialization
@@ -878,6 +1604,71 @@ EOF
     
     success "Tandem Orchestration System v2.0 configured"
     info "41 agents with full category support ready for Task tool invocation"
+    
+    show_progress
+}
+
+# 6.8.5 Setup natural invocation hook
+setup_natural_invocation() {
+    print_section "Setting Up Natural Agent Invocation"
+    
+    # Check if enable script exists
+    if [[ ! -f "$ENABLE_NATURAL_INVOCATION" ]]; then
+        warning "Natural invocation script not found at: $ENABLE_NATURAL_INVOCATION"
+        show_progress
+        return
+    fi
+    
+    info "Enabling natural language agent invocation..."
+    
+    # Make script executable
+    chmod +x "$ENABLE_NATURAL_INVOCATION"
+    
+    # Run the enable script
+    bash "$ENABLE_NATURAL_INVOCATION" 2>&1 | while read line; do
+        echo "  $line"
+    done
+    
+    # Verify hooks.json was created/updated
+    if [[ -f "$CONFIG_DIR/hooks.json" ]]; then
+        # Check if natural invocation is enabled in hooks.json
+        if grep -q '"natural_invocation"' "$CONFIG_DIR/hooks.json" 2>/dev/null; then
+            success "Natural invocation hook configured in hooks.json"
+        fi
+    fi
+    
+    # Copy hook files if they exist
+    if [[ -d "$PROJECT_ROOT/hooks" ]]; then
+        info "Installing hook files..."
+        force_mkdir "$CONFIG_DIR/hooks"
+        
+        # Copy specific natural invocation hooks
+        for hook_file in natural-invocation-hook.py agent-invocation-patterns.yaml; do
+            if [[ -f "$PROJECT_ROOT/hooks/$hook_file" ]]; then
+                cp "$PROJECT_ROOT/hooks/$hook_file" "$CONFIG_DIR/hooks/" 2>/dev/null
+                chmod +x "$CONFIG_DIR/hooks/$hook_file" 2>/dev/null
+                success "Installed $hook_file"
+            fi
+        done
+    fi
+    
+    # Copy fuzzy matcher tool (check both tools and hooks directories)
+    if [[ -f "$PROJECT_ROOT/tools/claude-fuzzy-agent-matcher.py" ]]; then
+        force_mkdir "$CONFIG_DIR/tools"
+        cp "$PROJECT_ROOT/tools/claude-fuzzy-agent-matcher.py" "$CONFIG_DIR/tools/" 2>/dev/null
+        chmod +x "$CONFIG_DIR/tools/claude-fuzzy-agent-matcher.py" 2>/dev/null
+        success "Installed fuzzy agent matcher tool from tools/"
+    elif [[ -f "$PROJECT_ROOT/hooks/claude-fuzzy-agent-matcher.py" ]]; then
+        force_mkdir "$CONFIG_DIR/tools"
+        cp "$PROJECT_ROOT/hooks/claude-fuzzy-agent-matcher.py" "$CONFIG_DIR/tools/" 2>/dev/null
+        chmod +x "$CONFIG_DIR/tools/claude-fuzzy-agent-matcher.py" 2>/dev/null
+        success "Installed fuzzy agent matcher tool from hooks/"
+    fi
+    
+    success "Natural agent invocation system enabled"
+    info "  • 58+ agents available via natural language"
+    info "  • Fuzzy matching and semantic understanding active"
+    info "  • Workflow detection for complex tasks"
     
     show_progress
 }
@@ -1521,6 +2312,7 @@ show_summary() {
     echo "  • Claude NPM Package"
     print_green "  • Enhanced Wrapper with Always-On Permission Bypass"
     echo "  • $AGENT_COUNT Agents with full metadata and categories"
+    print_green "  • Global CLAUDE.md (Auto-invocation guide for 57 specialized agents)"
     print_green "  • Global Agents Bridge v10.0 (60 agents via claude-agent command)"
     print_green "  • Agent Activation System v10.0 (Enhanced CLI interface)"
     echo "  • PostgreSQL Database System (port 5433)"
@@ -1676,15 +2468,19 @@ main() {
     if [[ "$INSTALLATION_MODE" == "full" ]] || [[ "$INSTALLATION_MODE" == "custom" ]]; then
         install_hooks
         install_statusline
+        install_global_claude_md
         setup_claude_directory
         setup_precision_style
+        setup_virtual_environment
         setup_database_system
         setup_learning_system
         setup_tandem_orchestration
+        setup_natural_invocation
         setup_production_environment
     elif [[ "$INSTALLATION_MODE" == "quick" ]]; then
         info "Quick mode: Skipping advanced features"
         install_hooks
+        install_global_claude_md
         setup_claude_directory
     fi
     

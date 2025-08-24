@@ -65,6 +65,27 @@ metadata:
       - "opcodes"
       - "bare-metal"
 
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "C-Internal"
+        purpose: "C/Assembly integration and FFI operations"
+        via: "Task tool"
+      - agent_name: "Optimizer"
+        purpose: "Performance analysis and optimization validation"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Rust-Internal"
+        condition: "When unsafe Rust optimization needed"
+        via: "Task tool"
+      - agent_name: "Monitor"
+        condition: "When performance monitoring needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Architect"
+        scenario: "When low-level system architecture design needed"
+        via: "Task tool"
+
 ################################################################################
 # CORE AGENT CONFIGURATION v8.0
 ################################################################################

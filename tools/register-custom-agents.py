@@ -3,6 +3,8 @@
 Claude Global Agents Bridge v10.0 - Enhanced Registration System
 Unified coordination between Task tool, Tandem orchestrator, and C-system
 Provides seamless agent discovery, invocation, and performance optimization
+
+FIXED VERSION: No absolute paths - uses relative paths and environment variables
 """
 
 import os
@@ -21,12 +23,107 @@ from enum import Enum
 import glob
 import re
 
+# ==============================================================================
+# PATH CONFIGURATION - No absolute paths!
+# ==============================================================================
+
+def get_project_root() -> Path:
+    """
+    Find the project root by looking for key directories and files.
+    Searches upward from current location or script location.
+    """
+    # Start from script location
+    search_start = Path(__file__).resolve().parent
+    
+    # Also check current working directory
+    cwd = Path.cwd()
+    
+    # Look for project markers
+    markers = [
+        'agents',  # agents directory
+        'README.md',  # Root readme
+        'src',  # Source directory
+        '.git',  # Git repository
+        'binary-communications-system',  # Binary system directory
+    ]
+    
+    # Search from script location upward
+    current = search_start
+    for _ in range(5):  # Max 5 levels up
+        # Check if this looks like project root
+        found_markers = sum(1 for marker in markers if (current / marker).exists())
+        if found_markers >= 2:  # At least 2 markers found
+            return current
+        
+        # Check if agents dir exists here
+        if (current / 'agents').exists() and (current / 'agents').is_dir():
+            return current
+            
+        parent = current.parent
+        if parent == current:  # Reached filesystem root
+            break
+        current = parent
+    
+    # Try from cwd
+    current = cwd
+    for _ in range(5):
+        found_markers = sum(1 for marker in markers if (current / marker).exists())
+        if found_markers >= 2:
+            return current
+        
+        if (current / 'agents').exists() and (current / 'agents').is_dir():
+            return current
+            
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+    
+    # Default to current directory if nothing found
+    print("⚠️ Could not auto-detect project root, using current directory")
+    return cwd
+
+
+def get_agents_directory() -> Path:
+    """Get the agents directory path from environment or auto-detect."""
+    # 1. Check environment variable
+    if os.environ.get('CLAUDE_AGENTS_ROOT'):
+        agents_dir = Path(os.environ['CLAUDE_AGENTS_ROOT'])
+        if agents_dir.exists():
+            return agents_dir
+    
+    # 2. Check common relative paths
+    project_root = get_project_root()
+    
+    # Common paths to check
+    possible_paths = [
+        project_root / 'agents',
+        project_root / 'claude-backups' / 'agents',
+        project_root / 'Documents' / 'claude-backups' / 'agents',
+        project_root / 'Documents' / 'Claude' / 'agents',
+    ]
+    
+    for path in possible_paths:
+        if path.exists() and path.is_dir():
+            return path
+    
+    # 3. Ask user if we can't find it
+    print("⚠️ Could not find agents directory automatically")
+    print("Please set CLAUDE_AGENTS_ROOT environment variable or ensure agents/ exists")
+    
+    # Default to expected location
+    default_path = project_root / 'agents'
+    print(f"Using default: {default_path}")
+    return default_path
+
+
 # Execution modes matching Tandem system
 class ExecutionMode(Enum):
     INTELLIGENT = "INTELLIGENT"      # Python orchestrates, C executes when available
     PYTHON_ONLY = "PYTHON_ONLY"      # Pure Python execution
     SPEED_CRITICAL = "SPEED_CRITICAL"  # C layer for maximum speed
     REDUNDANT = "REDUNDANT"          # Both layers for critical ops
+
 
 class SystemCapability:
     """Detect and track system capabilities"""
@@ -70,8 +167,9 @@ class SystemCapability:
             c_processes = [line for line in lines if ('agent_bridge' in line or 'ultra_hybrid' in line) and 'python' not in line]
             c_available = len(c_processes) > 0
             
-            # Check for compiled binary file
-            binary_path = Path("/home/ubuntu/Documents/claude-backups/agents/binary-communications-system/ultra_hybrid_enhanced")
+            # Check for compiled binary file (relative path)
+            agents_dir = get_agents_directory()
+            binary_path = agents_dir / "binary-communications-system" / "ultra_hybrid_enhanced"
             binary_exists = binary_path.exists() and binary_path.is_file() and not str(binary_path).endswith('.c')
             
             # C bridge should only be available if we have AVX-512 support
@@ -89,8 +187,9 @@ class SystemCapability:
     
     def _check_tandem(self) -> Dict[str, Any]:
         """Check if Tandem orchestrator is available"""
-        tandem_path = Path("/home/ubuntu/Documents/claude-backups/agents/src/python/production_orchestrator.py")
-        orchestrator_path = Path("/home/ubuntu/Documents/claude-backups/agents/src/python/production_orchestrator.py")
+        agents_dir = get_agents_directory()
+        tandem_path = agents_dir / "src" / "python" / "production_orchestrator.py"
+        orchestrator_path = agents_dir / "src" / "python" / "production_orchestrator.py"
         
         return {
             'available': tandem_path.exists() and orchestrator_path.exists(),
@@ -99,11 +198,43 @@ class SystemCapability:
         }
     
     def _check_avx512(self) -> bool:
-        """Check for AVX-512 support"""
+        """Check for AVX-512 support via microcode version"""
         try:
+            # Check microcode version - AVX-512 available if microcode < 0x20
             cpuinfo = Path('/proc/cpuinfo').read_text()
-            return 'avx512' in cpuinfo.lower()
-        except:
+            
+            # Look for microcode line
+            for line in cpuinfo.split('\n'):
+                if 'microcode' in line.lower():
+                    # Extract microcode value
+                    # Format is usually "microcode : 0x1a" or similar
+                    parts = line.split(':')
+                    if len(parts) >= 2:
+                        microcode_str = parts[1].strip()
+                        
+                        # Parse hex value
+                        if microcode_str.startswith('0x'):
+                            microcode_val = int(microcode_str, 16)
+                        else:
+                            microcode_val = int(microcode_str)
+                        
+                        # AVX-512 is supported if microcode < 0x20 (32 decimal)
+                        return microcode_val < 0x20
+            
+            # If no microcode found, check alternative method
+            # Some systems report it differently
+            try:
+                with open('/sys/devices/system/cpu/cpu0/microcode/version', 'r') as f:
+                    microcode_val = int(f.read().strip(), 16)
+                    return microcode_val < 0x20
+            except:
+                pass
+            
+            # Fallback: assume no AVX-512 if we can't determine microcode
+            return False
+            
+        except Exception as e:
+            print(f"  ⚠️ Could not check AVX-512 support: {e}")
             return False
     
     def _check_thermal(self) -> Dict[str, Any]:
@@ -120,6 +251,7 @@ class SystemCapability:
         except:
             return {'state': 'UNKNOWN', 'sensors_available': False}
 
+
 class GlobalAgentCoordinator:
     """
     Global coordination system for all agents
@@ -127,16 +259,21 @@ class GlobalAgentCoordinator:
     """
     
     def __init__(self):
-        # Base paths
-        self.agents_dir = Path("/home/ubuntu/Documents/claude-backups/agents")
+        # Base paths - use relative paths
+        self.agents_dir = get_agents_directory()
+        self.project_root = get_project_root()
+        
+        # Configuration directories
         self.claude_config_dir = Path.home() / ".config" / "claude"
         self.claude_config_dir.mkdir(parents=True, exist_ok=True)
         
         # Cache and configuration
-        self.cache_file = Path.home() / '.cache' / 'claude-agents' / 'agent_cache.json'
-        self.config_file = Path.home() / '.cache' / 'claude-agents' / 'coordination_config.json'
+        self.cache_dir = Path.home() / '.cache' / 'claude-agents'
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_file = self.cache_dir / 'agent_cache.json'
+        self.config_file = self.cache_dir / 'coordination_config.json'
         
-        # Component paths
+        # Component paths (relative to agents_dir)
         self.orchestrator_path = self.agents_dir / 'src' / 'python' / 'production_orchestrator.py'
         self.tandem_path = self.agents_dir / 'src' / 'python' / 'production_orchestrator.py'
         self.c_bridge_path = self.agents_dir / 'binary-communications-system' / 'ultra_hybrid_enhanced'
@@ -163,18 +300,22 @@ class GlobalAgentCoordinator:
         print("🚀 Initializing Claude Global Agents Bridge v10.0")
         print("=" * 60)
         
+        # Display detected paths
+        print(f"📁 Project root: {self.project_root}")
+        print(f"📁 Agents directory: {self.agents_dir}")
+        
         # Set environment variable
         os.environ['CLAUDE_AGENTS_ROOT'] = str(self.agents_dir)
         
         # Check system capabilities
-        print("🔍 Checking system capabilities...")
+        print("\n🔍 Checking system capabilities...")
         caps = self.capabilities.check_capabilities()
         self._display_capabilities(caps)
         
         # Discover agents
         print("\n📡 Discovering agents...")
         self.agents = self.scan_for_agents()
-        print(f"✓ Found {len(self.agents)} agents")
+        print(f"✔ Found {len(self.agents)} agents")
         
         # Initialize components
         print("\n🔧 Initializing components...")
@@ -188,13 +329,13 @@ class GlobalAgentCoordinator:
     
     def _display_capabilities(self, caps: Dict[str, Any]):
         """Display system capabilities"""
-        print(f"  • Task Tool: ✓ Available (Primary interface)")
-        print(f"  • Tandem Orchestrator: {'✓' if caps['tandem']['available'] else '✗'} "
+        print(f"  • Task Tool: ✔ Available (Primary interface)")
+        print(f"  • Tandem Orchestrator: {'✔' if caps['tandem']['available'] else '✗'} "
               f"{'Available' if caps['tandem']['available'] else 'Not found'}")
-        print(f"  • C Binary Layer: {'✓' if caps['c_layer']['available'] else '✗'} "
+        print(f"  • C Binary Layer: {'✔' if caps['c_layer']['available'] else '✗'} "
               f"{'Running' if caps['c_layer']['available'] else 'Offline (Python fallback)'}")
-        print(f"  • AVX-512: {'✓' if caps['avx512'] else '✗'} "
-              f"{'Supported' if caps['avx512'] else 'Not available'}")
+        print(f"  • AVX-512: {'✔' if caps['avx512'] else '✗'} "
+              f"{'Supported (microcode < 0x20)' if caps['avx512'] else 'Not available (microcode >= 0x20)'}")
         print(f"  • CPU Cores: {caps['cpu_cores']} (P+E cores)")
         print(f"  • Thermal State: {caps['thermal']['state']}")
     
@@ -223,7 +364,7 @@ class GlobalAgentCoordinator:
         print("  • Creating global launcher...")
         self._create_global_launcher()
         
-        print(f"\n  ✓ Initialized: {', '.join(components_initialized)}")
+        print(f"\n  ✔ Initialized: {', '.join(components_initialized)}")
     
     def scan_for_agents(self) -> Dict[str, Any]:
         """Scan all agent .md files and extract metadata"""
@@ -321,9 +462,29 @@ class GlobalAgentCoordinator:
 import sys
 import os
 import json
+from pathlib import Path
 
-os.environ['CLAUDE_AGENTS_ROOT'] = '{self.agents_dir}'
-sys.path.insert(0, '{self.agents_dir.parent}')
+# Auto-detect agents root
+def find_agents_root():
+    # Check environment first
+    if os.environ.get('CLAUDE_AGENTS_ROOT'):
+        return Path(os.environ['CLAUDE_AGENTS_ROOT'])
+    
+    # Search from script location
+    current = Path(__file__).resolve().parent
+    for _ in range(5):
+        if (current / 'agents').exists():
+            return current / 'agents'
+        current = current.parent
+        if current == current.parent:
+            break
+    
+    # Default
+    return Path.home() / 'Documents' / 'claude-backups' / 'agents'
+
+AGENTS_ROOT = find_agents_root()
+os.environ['CLAUDE_AGENTS_ROOT'] = str(AGENTS_ROOT)
+sys.path.insert(0, str(AGENTS_ROOT.parent))
 
 from register_custom_agents_v10 import GlobalAgentCoordinator, ExecutionMode
 
@@ -352,559 +513,3 @@ if __name__ == "__main__":
 '''
         wrapper_file.write_text(wrapper_content)
         wrapper_file.chmod(0o755)
-    
-    def _create_task_extension(self) -> str:
-        """Create extension code to inject agents into Task tool"""
-        agents = self.agents
-        
-        extension = '''# Claude Code Task Tool Extension for Project Agents
-# Auto-generated by Claude Global Agents Bridge v10.0
-
-"""
-This extension makes all project agents available to Claude's Task tool.
-Supports intelligent routing between Python, C binary, and Tandem layers.
-"""
-
-import os
-import sys
-import subprocess
-from typing import Dict, Any
-
-# Registry of available project agents
-PROJECT_AGENTS = {
-'''
-        
-        # Add each agent
-        for agent_id, agent_info in agents.items():
-            extension += f"    '{agent_id}': {{\n"
-            extension += f"        'name': '{agent_info['name']}',\n"
-            extension += f"        'description': '{agent_info['description']}',\n"
-            extension += f"        'priority': '{agent_info['priority']}',\n"
-            extension += f"        'execution_modes': {agent_info['execution_modes']},\n"
-            extension += f"        'tools': {agent_info['tools']}\n"
-            extension += f"    }},\n"
-            
-        extension += '''
-}
-
-def invoke_project_agent(agent_type: str, prompt: str, mode: str = 'INTELLIGENT') -> Dict[str, Any]:
-    """Invoke a project agent through the unified bridge"""
-    
-    agent_type = agent_type.lower().replace('_', '-')
-    
-    if agent_type not in PROJECT_AGENTS:
-        return {
-            'error': f"Agent '{agent_type}' not found",
-            'available': list(PROJECT_AGENTS.keys())
-        }
-    
-    agent = PROJECT_AGENTS[agent_type]
-    
-    # Execute through claude-agent command
-    try:
-        cmd = ['claude-agent', agent_type, prompt, '--mode', mode]
-        
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=300
-        )
-        
-        return {
-            'success': result.returncode == 0,
-            'output': result.stdout,
-            'error': result.stderr if result.returncode != 0 else None,
-            'agent': agent['name'],
-            'execution_mode': mode
-        }
-    except subprocess.TimeoutExpired:
-        return {
-            'error': 'Agent execution timed out',
-            'agent': agent['name']
-        }
-    except Exception as e:
-        return {
-            'error': str(e),
-            'agent': agent['name']
-        }
-
-# Register with Claude's Task system
-def register_agents():
-    """Register all project agents with Claude"""
-    try:
-        # This would integrate with actual Claude Code module
-        import claude_code
-        for agent_id in PROJECT_AGENTS:
-            claude_code.register_agent(agent_id, invoke_project_agent)
-    except:
-        pass  # Silently fail if Claude Code module not available
-
-# Auto-register on import
-if __name__ != "__main__":
-    register_agents()
-'''
-        
-        return extension
-    
-    def _initialize_tandem(self):
-        """Initialize Tandem orchestrator connection"""
-        # Create Tandem configuration
-        tandem_config = {
-            "agents_root": str(self.agents_dir),
-            "execution_modes": ["INTELLIGENT", "PYTHON_ONLY", "SPEED_CRITICAL", "REDUNDANT"],
-            "default_mode": "INTELLIGENT",
-            "c_bridge_path": str(self.c_bridge_path) if self.c_bridge_path.exists() else None,
-            "performance_targets": {
-                "python_throughput": 5000,  # msg/sec
-                "c_throughput": 100000,      # msg/sec
-                "latency_p99": 0.002         # 2ms
-            }
-        }
-        
-        config_path = self.agents_dir.parent / 'config' / 'tandem_config.json'
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_path.write_text(json.dumps(tandem_config, indent=2))
-    
-    def _connect_c_bridge(self):
-        """Connect to C binary bridge if available"""
-        # Check if bridge is running
-        status_file = Path('/tmp/binary_bridge_status')
-        if status_file.exists():
-            try:
-                status = json.loads(status_file.read_text())
-                print(f"    Connected to C bridge PID: {status.get('pid')}")
-            except:
-                pass
-        
-        # Create IPC configuration
-        ipc_config = {
-            "methods": {
-                "CRITICAL": "shared_memory_50ns",
-                "HIGH": "io_uring_500ns",
-                "NORMAL": "unix_sockets_2us",
-                "LOW": "mmap_files_10us"
-            },
-            "buffer_size": 1048576,  # 1MB
-            "ring_buffer_slots": 1024
-        }
-        
-        ipc_path = self.agents_dir.parent / 'config' / 'ipc_config.json'
-        ipc_path.parent.mkdir(parents=True, exist_ok=True)
-        ipc_path.write_text(json.dumps(ipc_config, indent=2))
-    
-    def _create_global_launcher(self):
-        """Create global launcher script for easy access"""
-        launcher_file = Path.home() / '.local' / 'bin' / 'claude-agent'
-        launcher_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        launcher_content = f'''#!/bin/bash
-# Claude Agent Global Launcher v10.0
-export CLAUDE_AGENTS_ROOT="{self.agents_dir}"
-export PYTHONPATH="{self.agents_dir}/src/python:$PYTHONPATH"
-
-BRIDGE_SCRIPT="{Path(__file__).resolve()}"
-
-if [ "$1" = "list" ] || [ -z "$1" ]; then
-    python3 "$BRIDGE_SCRIPT" --list
-    exit 0
-fi
-
-if [ "$1" = "status" ]; then
-    python3 "$BRIDGE_SCRIPT" --status
-    exit 0
-fi
-
-if [ "$1" = "install" ]; then
-    python3 "$BRIDGE_SCRIPT" --install
-    exit 0
-fi
-
-# Invoke agent
-python3 "$BRIDGE_SCRIPT" --invoke "$@"
-'''
-        
-        launcher_file.write_text(launcher_content)
-        launcher_file.chmod(0o755)
-    
-    def invoke_agent(self, agent_name: str, prompt: str, mode: ExecutionMode = ExecutionMode.INTELLIGENT) -> Dict[str, Any]:
-        """
-        Invoke an agent with intelligent routing between Task tool, Tandem, and C-system
-        """
-        agent_name = agent_name.lower()
-        
-        if agent_name not in self.agents:
-            return {
-                "success": False,
-                "error": f"Agent {agent_name} not found. Available: {list(self.agents.keys())[:10]}..."
-            }
-        
-        agent = self.agents[agent_name]
-        start_time = time.time()
-        
-        # Record invocation
-        self.metrics['agent_invocations'][agent_name] = self.metrics['agent_invocations'].get(agent_name, 0) + 1
-        
-        # Determine execution path based on mode and capabilities
-        execution_path = self._determine_execution_path(mode)
-        
-        # Execute based on path
-        if execution_path == "C_BRIDGE":
-            result = self._invoke_via_c_bridge(agent_name, prompt)
-            self.execution_stats['c'] += 1
-        elif execution_path == "TANDEM":
-            result = self._invoke_via_tandem(agent_name, prompt, mode)
-            self.execution_stats['tandem'] += 1
-        elif execution_path == "TASK_TOOL":
-            result = self._invoke_via_task_tool(agent_name, prompt)
-            self.execution_stats['task'] += 1
-        else:  # PYTHON_DIRECT
-            result = self._invoke_via_python(agent_name, prompt)
-            self.execution_stats['python'] += 1
-        
-        # Record metrics
-        response_time = time.time() - start_time
-        self.metrics['avg_response_time'].append(response_time)
-        
-        result['execution_time'] = response_time
-        result['execution_path'] = execution_path
-        
-        return result
-    
-    def _determine_execution_path(self, mode: ExecutionMode) -> str:
-        """Determine the best execution path based on mode and capabilities"""
-        if mode == ExecutionMode.SPEED_CRITICAL:
-            if self.capabilities.c_layer_available:
-                return "C_BRIDGE"
-            elif self.capabilities.tandem_available:
-                return "TANDEM"
-                
-        elif mode == ExecutionMode.REDUNDANT:
-            if self.capabilities.tandem_available:
-                return "TANDEM"
-                
-        elif mode == ExecutionMode.INTELLIGENT:
-            if self.capabilities.tandem_available:
-                return "TANDEM"
-            elif self.capabilities.task_tool_available:
-                return "TASK_TOOL"
-        
-        # Fallback to best available
-        if self.capabilities.task_tool_available:
-            return "TASK_TOOL"
-        
-        return "PYTHON_DIRECT"
-    
-    def _invoke_via_task_tool(self, agent_name: str, prompt: str) -> Dict[str, Any]:
-        """Invoke agent through Task tool (Claude Code compatible)"""
-        try:
-            # For now, fall back to subprocess invocation
-            return self._invoke_via_python(agent_name, prompt)
-            
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-    
-    def _invoke_via_tandem(self, agent_name: str, prompt: str, mode: ExecutionMode) -> Dict[str, Any]:
-        """Invoke agent through Tandem orchestrator"""
-        try:
-            cmd = [
-                sys.executable,
-                str(self.tandem_path),
-                "--agent", agent_name,
-                "--prompt", prompt,
-                "--mode", mode.value
-            ]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            
-            return {
-                "success": result.returncode == 0,
-                "output": result.stdout,
-                "error": result.stderr if result.returncode != 0 else None,
-                "execution_path": "TANDEM"
-            }
-            
-        except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Tandem execution timed out"}
-        except Exception as e:
-            # Fall back to Python on Tandem failure
-            return self._invoke_via_python(agent_name, prompt)
-    
-    def _invoke_via_c_bridge(self, agent_name: str, prompt: str) -> Dict[str, Any]:
-        """Invoke agent through C binary bridge for maximum performance"""
-        try:
-            # For now, fall back to Python
-            # Full implementation would use shared memory IPC
-            return self._invoke_via_python(agent_name, prompt)
-            
-        except Exception as e:
-            return self._invoke_via_python(agent_name, prompt)
-    
-    def _invoke_via_python(self, agent_name: str, prompt: str) -> Dict[str, Any]:
-        """Direct Python invocation (fallback)"""
-        try:
-            # Try production orchestrator first
-            if self.orchestrator_path.exists():
-                cmd = [
-                    sys.executable,
-                    str(self.orchestrator_path),
-                    "--agent", agent_name,
-                    "--prompt", prompt
-                ]
-            else:
-                # Fallback to simple echo for testing
-                return {
-                    "success": True,
-                    "output": f"[{agent_name.upper()}] Processing: {prompt}",
-                    "execution_path": "PYTHON_DIRECT"
-                }
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            
-            return {
-                "success": result.returncode == 0,
-                "output": result.stdout,
-                "error": result.stderr if result.returncode != 0 else None,
-                "execution_path": "PYTHON_DIRECT"
-            }
-            
-        except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Python execution timed out"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-    
-    def _save_configuration(self):
-        """Save current configuration and discovered agents"""
-        self.cache_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        config = {
-            "version": "10.0.0",
-            "timestamp": datetime.now().isoformat(),
-            "agents_root": str(self.agents_dir),
-            "agents": self.agents,
-            "capabilities": {
-                "task_tool": True,
-                "tandem": self.capabilities.tandem_available,
-                "c_bridge": self.capabilities.c_layer_available,
-                "avx512": self.capabilities.avx512_available
-            },
-            "execution_stats": self.execution_stats,
-            "metrics": {
-                "avg_response_time": sum(self.metrics['avg_response_time']) / len(self.metrics['avg_response_time']) if self.metrics['avg_response_time'] else 0,
-                "total_invocations": sum(self.metrics['agent_invocations'].values())
-            }
-        }
-        
-        self.cache_file.write_text(json.dumps(config, indent=2))
-        self.config_file.write_text(json.dumps(config, indent=2))
-        
-        # Also create legacy registry for compatibility
-        registry = {
-            'version': '10.0.0',
-            'custom_agents': {},
-            'agent_mappings': {}
-        }
-        
-        for agent_id, agent_info in self.agents.items():
-            registry['custom_agents'][agent_id] = {
-                'type': agent_id,
-                'name': agent_info['name'],
-                'description': agent_info['description'],
-                'tools': agent_info['tools'],
-                'source': 'project',
-                'implementation': 'unified',
-                'endpoint': f"claude-agent {agent_id}"
-            }
-            
-            registry['agent_mappings'][agent_info['name'].lower()] = agent_id
-            registry['agent_mappings'][agent_info['name']] = agent_id
-        
-        registry_file = self.claude_config_dir / "project-agents.json"
-        registry_file.write_text(json.dumps(registry, indent=2))
-    
-    def get_status(self) -> Dict[str, Any]:
-        """Get current system status"""
-        caps = self.capabilities.check_capabilities()
-        
-        return {
-            "system": "Claude Global Agents Bridge v10.0",
-            "agents_discovered": len(self.agents),
-            "capabilities": caps,
-            "execution_stats": self.execution_stats,
-            "performance": {
-                "avg_response_time": sum(self.metrics['avg_response_time']) / len(self.metrics['avg_response_time']) if self.metrics['avg_response_time'] else 0,
-                "throughput_estimate": self._estimate_throughput()
-            },
-            "ready": True
-        }
-    
-    def _estimate_throughput(self) -> str:
-        """Estimate current throughput capability"""
-        if self.capabilities.c_layer_available:
-            return "100K+ msg/sec (C bridge active)"
-        elif self.capabilities.tandem_available:
-            return "10-50K msg/sec (Tandem orchestration)"
-        else:
-            return "5K msg/sec (Python baseline)"
-    
-    def monitor_agents(self, interval: int = 30):
-        """Monitor for agent changes in background"""
-        self.monitoring = True
-        print(f"\n👁️ Starting agent monitoring (checking every {interval}s)...")
-        
-        while self.monitoring:
-            try:
-                # Re-scan agents
-                new_agents = self.scan_for_agents()
-                
-                # Check for changes
-                if new_agents != self.agents:
-                    added = set(new_agents.keys()) - set(self.agents.keys())
-                    removed = set(self.agents.keys()) - set(new_agents.keys())
-                    
-                    if added or removed:
-                        print(f"\n🔄 Agent changes detected at {datetime.now().strftime('%H:%M:%S')}")
-                        if added:
-                            print(f"  ➕ Added: {', '.join(added)}")
-                        if removed:
-                            print(f"  ➖ Removed: {', '.join(removed)}")
-                        
-                        # Update agents
-                        self.agents = new_agents
-                        
-                        # Reinitialize components
-                        self._initialize_components()
-                        self._save_configuration()
-                        
-                        print("  ✅ Registry updated")
-                
-                # Check system capabilities
-                caps = self.capabilities.check_capabilities()
-                
-                # Sleep until next check
-                time.sleep(interval)
-                
-            except KeyboardInterrupt:
-                break
-            except Exception as e:
-                print(f"  ⚠ Monitor error: {e}")
-                time.sleep(interval)
-        
-        print("\n👁️ Agent monitoring stopped")
-    
-    def start_monitoring(self, interval: int = 30):
-        """Start background monitoring thread"""
-        if self.monitor_thread and self.monitor_thread.is_alive():
-            print("⚠️ Monitoring already active")
-            return
-        
-        self.monitor_thread = threading.Thread(
-            target=self.monitor_agents,
-            args=(interval,),
-            daemon=True
-        )
-        self.monitor_thread.start()
-        
-        print(f"✅ Background monitoring started (interval: {interval}s)")
-    
-    def stop_monitoring(self):
-        """Stop background monitoring"""
-        self.monitoring = False
-        if self.monitor_thread:
-            self.monitor_thread.join(timeout=5)
-        print("✅ Monitoring stopped")
-
-
-def main():
-    """Main entry point"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='Claude Global Agents Bridge v10.0')
-    parser.add_argument('--list', action='store_true', help='List available agents')
-    parser.add_argument('--status', action='store_true', help='Show system status')
-    parser.add_argument('--install', action='store_true', help='Install global integration')
-    parser.add_argument('--monitor', action='store_true', help='Run with continuous monitoring')
-    parser.add_argument('--daemon', action='store_true', help='Run monitoring as background daemon')
-    parser.add_argument('--check', action='store_true', help='Check for new agents without updating')
-    parser.add_argument('--invoke', nargs='+', help='Invoke an agent')
-    
-    args = parser.parse_args()
-    
-    coordinator = GlobalAgentCoordinator()
-    
-    if args.install:
-        coordinator.initialize()
-        print("\n🎉 Installation complete!")
-        print("\n📌 To activate agents:")
-        print("  source ~/.config/claude/activate-agents.sh")
-        print("\n📌 Usage in Claude:")
-        print('  Task(subagent_type="director", prompt="plan the project")')
-        print('  Task(subagent_type="optimizer", prompt="optimize this code")')
-        
-    elif args.list:
-        coordinator.initialize()
-        print("\n📋 Available Agents:")
-        for agent_id, info in sorted(coordinator.agents.items()):
-            modes = ', '.join(info['execution_modes'])
-            print(f"  • {info['name']:<20} - {info['description'][:50]}...")
-            print(f"    Priority: {info['priority']}, Modes: {modes}")
-            
-    elif args.status:
-        coordinator.initialize()
-        status = coordinator.get_status()
-        print("\n📊 System Status:")
-        print(json.dumps(status, indent=2))
-        
-    elif args.monitor:
-        coordinator.initialize()
-        try:
-            coordinator.monitor_agents(interval=30)
-        except KeyboardInterrupt:
-            print("\n\nStopping agent monitor...")
-            
-    elif args.daemon:
-        coordinator.initialize()
-        coordinator.start_monitoring(interval=30)
-        
-        print("\n📌 Agent monitor running in background")
-        print("  Registry will auto-update when agents are added/removed")
-        print("  Press Ctrl+C to stop")
-        
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            coordinator.stop_monitoring()
-            
-    elif args.check:
-        coordinator.initialize()
-        print("\n🔍 Checking for agent changes...")
-        # Implementation would compare current vs cached agents
-        print("✅ Check complete")
-        
-    elif args.invoke:
-        if len(args.invoke) < 2:
-            print("Usage: --invoke <agent-name> <prompt>")
-            sys.exit(1)
-            
-        coordinator.initialize()
-        agent_name = args.invoke[0]
-        prompt = " ".join(args.invoke[1:])
-        
-        result = coordinator.invoke_agent(agent_name, prompt)
-        
-        if result.get('success'):
-            print(result['output'])
-        else:
-            print(f"Error: {result.get('error')}", file=sys.stderr)
-            sys.exit(1)
-    
-    else:
-        # Default: single installation
-        coordinator.initialize()
-        print("\n✅ Agent registration complete!")
-        print("\nUse --help for more options")
-
-
-if __name__ == "__main__":
-    main()

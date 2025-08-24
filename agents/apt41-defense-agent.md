@@ -73,6 +73,30 @@ metadata:
       - "Persistence mechanism created"
       - "Lateral movement detected"
       - "Cobalt Strike beacon identified"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "QuantumGuard"
+        purpose: "Nation-state defense and quantum-resistant security"
+        via: "Task tool"
+      - agent_name: "Security"
+        purpose: "Vulnerability assessment and threat analysis"
+        via: "Task tool"
+      - agent_name: "Bastion"
+        purpose: "Perimeter defense and access control"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Monitor"
+        condition: "When behavioral analytics and SIEM integration needed"
+        via: "Task tool"
+      - agent_name: "RedTeamOrchestrator"
+        condition: "When adversarial testing against APT41 TTPs needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "CSO"
+        scenario: "When executive reporting and strategic decisions needed"
+        via: "Task tool"
 ---
 
 ################################################################################
