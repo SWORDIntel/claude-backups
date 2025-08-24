@@ -78,6 +78,27 @@ metadata:
       - "embedded"
       - "no_std"
 
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "C-Internal"
+        purpose: "FFI operations and low-level system integration"
+        via: "Task tool"
+      - agent_name: "Optimizer"
+        purpose: "Performance optimization and profiling"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Python-Internal"
+        condition: "When PyO3 bindings needed"
+        via: "Task tool"
+      - agent_name: "Testbed"
+        condition: "When comprehensive testing needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Architect"
+        scenario: "When system architecture design needed"
+        via: "Task tool"
+
 ################################################################################
 # CORE FUNCTIONALITY
 ################################################################################

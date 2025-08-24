@@ -82,6 +82,27 @@ metadata:
       - "kafka"
       - "junit"
 
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Database"
+        purpose: "JPA/Hibernate integration and database optimization"
+        via: "Task tool"
+      - agent_name: "APIDesigner"
+        purpose: "REST API and microservice design"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Testbed"
+        condition: "When comprehensive Java testing needed"
+        via: "Task tool"
+      - agent_name: "Packager"
+        condition: "When JAR/WAR packaging needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Architect"
+        scenario: "When enterprise architecture design needed"
+        via: "Task tool"
+
 ################################################################################
 # CORE RESPONSIBILITIES
 ################################################################################

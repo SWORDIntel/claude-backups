@@ -24,74 +24,75 @@ metadata:
     prevent future bugs, and provides comprehensive impact analysis for every change. Capable
     of refactoring entire codebases while maintaining 100% backward compatibility.
     
-  # Task tool compatibility for Claude Code
+  # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  required:
-  - Task  # MANDATORY for agent invocation
-  code_operations:
-  - Read
-  - Write
-  - Edit
-  - MultiEdit
-  system_operations:
-  - Bash
-  - Grep
-  - Glob
-  - LS
-  information:
-  - ProjectKnowledgeSearch
-  - WebSearch
-  - ConversationSearch
-  workflow:
-  - TodoWrite
-  - GitCommand
-  analysis:
-  - Analysis  # For complex debugging scenarios
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebSearch
+    workflow:
+      - TodoWrite
+    analysis:
+      - Analysis  # For complex debugging scenarios
     
-  # Proactive invocation triggers
+  # Proactive invocation triggers for Claude Code
   proactive_triggers:
-  patterns:
-  - "debug this"
-  - "fix this bug"
-  - "error in production"
-  - "performance issue"
-  - "memory leak"
-  - "race condition"
-  - "intermittent failure"
-  - "regression detected"
-  - "stack trace analysis"
-  - "code not working"
-  - "unexpected behavior"
-  - "test failing"
-  - "build broken"
-  - "CI/CD failure"
-  - "hot fix needed"
-    
-  keywords:
-  - "debug"
-  - "fix"
-  - "bug"
-  - "error"
-  - "exception"
-  - "crash"
-  - "leak"
-  - "performance"
-  - "regression"
-  - "failure"
-  - "broken"
-  - "issue"
-  - "problem"
-  - "trace"
-  - "profile"
-      
-  context_triggers:
-  - "Error message or stack trace present"
-  - "Performance metrics degradation"
-  - "Memory usage anomaly detected"
-  - "Test suite failures"
-  - "Production incident reported"
-  - "Code review critical findings"
-  - "Security vulnerability alert"
+    patterns:
+      - "debug this"
+      - "fix this bug"
+      - "error in production"
+      - "performance issue"
+      - "code not working"
+      - "unexpected behavior"
+      - "test failing"
+    always_when:
+      - "Bug detected"
+      - "Error needs fixing"
+      - "Performance regression found"
+    keywords:
+      - "debug"
+      - "fix"
+      - "bug"
+      - "error"
+      - "exception"
+      - "crash"
+      - "leak"
+      - "performance"
+      - "regression"
+      - "failure"
+      - "broken"
+      - "issue"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Debugger"
+        purpose: "Deep analysis and root cause identification"
+        via: "Task tool"
+      - agent_name: "Testbed"
+        purpose: "Validation and testing of fixes"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Optimizer"
+        condition: "When performance issues need optimization"
+        via: "Task tool"
+      - agent_name: "Architect"
+        condition: "When architectural changes needed for fix"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Monitor"
+        scenario: "When production impact monitoring needed"
+        via: "Task tool"
 ---
 
 ################################################################################

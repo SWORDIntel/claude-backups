@@ -1631,3 +1631,5 @@
 	            
 2025-08-23 20:10:02.892 UTC [146058] LOG:  checkpoint starting: time
 2025-08-23 20:10:09.511 UTC [146058] LOG:  checkpoint complete: wrote 67 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=6.619 s, sync=0.001 s, total=6.619 s; sync files=59, longest=0.001 s, average=0.001 s; distance=325 kB, estimate=439 kB; lsn=0/1B60B60, redo lsn=0/1B60AD0
+2025-08-24 01:41:36.720 UTC [209540] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 01:41:36.720 UTC [209540] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).

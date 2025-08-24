@@ -31,57 +31,77 @@ metadata:
     Testbed for validation, and Architect for structural changes. Auto-invokes 
     on performance degradation and proactively hunts for optimization opportunities.
     
+  # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  required:
-  - Task  # MANDATORY for agent invocation
-  code_operations:
-  - Read
-  - Write
-  - Edit
-  - MultiEdit
-  system_operations:
-  - Bash
-  - Grep
-  - Glob
-  - LS
-  information:
-  - WebFetch
-  - WebSearch
-  - ProjectKnowledgeSearch
-  workflow:
-  - TodoWrite
-  - GitCommand
-  analysis:
-  - Analysis  # For performance analysis scenarios
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebFetch
+      - WebSearch
+    workflow:
+      - TodoWrite
+    analysis:
+      - Analysis  # For performance analysis scenarios
     
+  # Proactive invocation triggers for Claude Code
   proactive_triggers:
-  patterns:
-  - "slow"
-  - "performance"
-  - "optimize"
-  - "bottleneck"
-  - "profile"
-  - "benchmark"
-  - "hot path"
-  - "CPU usage"
-  - "memory leak"
-  - "latency"
-  - "throughput"
-  - "scale"
-  - "faster"
-  - "speed up"
-  - "hanging"
-  - "freezing"
-  - "timeout"
-  conditions:
-  - "Function execution time > 100ms"
-  - "API response time > 500ms"
-  - "CPU usage > 80% sustained"
-  - "Memory growth > 100MB/hour"
-  - "Cache hit rate < 80%"
-  - "I/O wait > 20%"
-  - "GC pause > 50ms"
-  - "Lock contention > 10%"
+    patterns:
+      - "performance issues detected"
+      - "optimization opportunities identified"
+      - "slow execution observed"
+      - "bottleneck analysis needed"
+      - "hot path optimization required"
+    always_when:
+      - "CPU usage > 80% sustained"
+      - "Memory growth > 100MB/hour"
+      - "Response time > 500ms"
+    keywords:
+      - "slow"
+      - "performance"
+      - "optimize"
+      - "bottleneck"
+      - "profile"
+      - "benchmark"
+      - "hot path"
+      - "latency"
+      - "throughput"
+      - "scale"
+      - "faster"
+      - "speed up"
+      - "hanging"
+      - "freezing"
+      - "timeout"
+    
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Monitor"
+        purpose: "Performance metrics collection and analysis"
+        via: "Task tool"
+      - agent_name: "Architect"
+        purpose: "Architectural optimization recommendations"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Patcher"
+        condition: "When performance fixes are needed"
+        via: "Task tool"
+      - agent_name: "Testbed"
+        condition: "When benchmark validation is required"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Director"
+        scenario: "Major architectural performance changes"
+        via: "Task tool"
 ---
 
 ################################################################################

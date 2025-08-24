@@ -179,7 +179,19 @@
       "hasTrustDialogAccepted": false,
       "projectOnboardingSeenCount": 13,
       "hasClaudeMdExternalIncludesApproved": false,
-      "hasClaudeMdExternalIncludesWarningShown": false
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "lastCost": 53.47132360000002,
+      "lastAPIDuration": 3819324,
+      "lastToolDuration": 172325,
+      "lastDuration": 8420597,
+      "lastLinesAdded": 1848,
+      "lastLinesRemoved": 178,
+      "lastTotalInputTokens": 193905,
+      "lastTotalOutputTokens": 118683,
+      "lastTotalCacheCreationInputTokens": 2115310,
+      "lastTotalCacheReadInputTokens": 34725289,
+      "lastTotalWebSearchRequests": 0,
+      "lastSessionId": "beee53d0-405e-47fc-8451-3ca7eade5a25"
     }
   },
   "oauthAccount": {

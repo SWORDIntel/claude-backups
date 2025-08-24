@@ -79,6 +79,27 @@ metadata:
       - "flow"
       - "multiplatform"
 
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "AndroidMobile"
+        purpose: "Android development and optimization"
+        via: "Task tool"
+      - agent_name: "Java-Internal"
+        purpose: "JVM interoperability and integration"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "APIDesigner"
+        condition: "When REST API development with Ktor needed"
+        via: "Task tool"
+      - agent_name: "Database"
+        condition: "When database integration needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Architect"
+        scenario: "When multiplatform architecture design needed"
+        via: "Task tool"
+
 ################################################################################
 # CORE AGENT INTERFACE
 ################################################################################

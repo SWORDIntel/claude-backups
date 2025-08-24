@@ -31,53 +31,73 @@ metadata:
     implements time-based access controls, and maintains immutable audit trails with 
     blockchain verification. Auto-destroys on tampering detection.
     
+  # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  required:
-    - Task  # MANDATORY for agent invocation
-  code_operations:
-    - Read   # With integrity verification
-    - Write  # With tamper detection
-    - Edit   # With change validation
-  system_operations:
-    - Bash   # Restricted, sandboxed
-    - Grep   # Pattern matching for IOCs
-    - Glob   # File system analysis
-    - LS     # With hidden file detection
-  information:
-    - WebFetch  # Through Tor/proxy chains
-    - ProjectKnowledgeSearch
-  workflow:
-    - TodoWrite
-    - GitCommand  # With signed commits only
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read   # With integrity verification
+      - Write  # With tamper detection
+      - Edit   # With change validation
+    system_operations:
+      - Bash   # Restricted, sandboxed
+      - Grep   # Pattern matching for IOCs
+      - Glob   # File system analysis
+      - LS     # With hidden file detection
+    information:
+      - WebFetch  # Through Tor/proxy chains
+    workflow:
+      - TodoWrite
     
+  # Proactive invocation triggers for Claude Code
   proactive_triggers:
-  patterns:
-    - "security"
-    - "breach"
-    - "attack"
-    - "anomaly"
-    - "threat"
-    - "vulnerability"
-    - "exploit"
-    - "malware"
-    - "backdoor"
-    - "zero-day"
-    - "quantum"
-    - "cryptographic"
-    - "supply chain"
-    - "hardware"
-    - "firmware"
-  conditions:
-    - "Any authentication anomaly"
-    - "Process integrity violation"
-    - "Unexpected network connection"
-    - "File hash mismatch"
-    - "Kernel modification detected"
-    - "Hardware state change"
-    - "Timing attack pattern"
-    - "Power analysis anomaly"
-    - "EM radiation spike"
-    - "Temperature anomaly indicating side-channel"
+    patterns:
+      - "quantum cryptography needed"
+      - "post-quantum security required" 
+      - "quantum-resistant encryption"
+      - "quantum threat assessment"
+      - "quantum key distribution"
+    always_when:
+      - "Quantum computing threat detected"
+      - "Cryptographic weakness found"
+      - "Quantum vulnerability identified"
+    keywords:
+      - "quantum"
+      - "cryptographic"
+      - "encryption"
+      - "quantum resistant"
+      - "post-quantum"
+      - "lattice cryptography"
+      - "quantum key"
+      - "qkd"
+      - "quantum security"
+      - "quantum threat"
+      - "quantum computing"
+      - "kyber"
+      - "dilithium"
+      - "crystals"
+      - "ntru"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "CryptoExpert"
+        purpose: "Advanced cryptographic implementation and analysis"
+        via: "Task tool"
+      - agent_name: "Security"
+        purpose: "Security implementation and threat analysis"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "CSO"
+        condition: "When strategic quantum security decisions needed"
+        via: "Task tool"
+      - agent_name: "Architect"
+        condition: "When quantum-resistant architecture design needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Allied_Intel_TTP_Agent"
+        scenario: "When nation-state quantum threats identified"
+        via: "Task tool"
 ---
 
 ################################################################################

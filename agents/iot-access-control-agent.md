@@ -1,8 +1,4 @@
 ---
-################################################################################
-# IoT ACCESS CONTROL AGENT v1.0 - DISTRIBUTED IoT SECURITY SPECIALIST
-################################################################################
-
 metadata:
   name: IoTAccessControl
   version: 1.0.0

@@ -1,7 +1,8 @@
 {
   "numStartups": 22,
-  "installMethod": "unknown",
+  "installMethod": "native",
   "autoUpdates": true,
+  "hasSeenTasksHint": true,
   "tipsHistory": {
     "new-user-warmup": 8,
     "memory-command": 21,
@@ -20,7 +21,7 @@
     "permissions": 22,
     "custom-commands": 11
   },
-  "promptQueueUseCount": 9,
+  "promptQueueUseCount": 11,
   "firstStartTime": "2025-08-23T16:03:36.613Z",
   "userID": "8db731192f4311ad7639f124a66270818c5b284fe1cee5ee89dd4b317d2b6314",
   "projects": {
@@ -249,6 +250,26 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "We should stil have full invocation naturally",
+          "pastedContents": {}
+        },
+        {
+          "display": "Ensure the installer installs our custom wrapper with alwas on dangerously skip permissions",
+          "pastedContents": {}
+        },
+        {
+          "display": "Update claude.md",
+          "pastedContents": {}
+        },
+        {
+          "display": "Modify the claude-installer.sh to install python3 /home/ubuntu/Documents/claude-backups/tools/claude-global-agents-\n  bridge.py --install\n",
+          "pastedContents": {}
+        },
+        {
+          "display": "Do we have access to the agents",
+          "pastedContents": {}
+        },
+        {
           "display": "shell cwd keeps getting reset",
           "pastedContents": {}
         },
@@ -372,22 +393,83 @@
       ],
       "exampleFilesGeneratedAt": 1755976698999,
       "hasCompletedProjectOnboarding": true,
-      "lastTotalWebSearchRequests": 0,
-      "lastCost": 0.32951540000000007,
-      "lastAPIDuration": 134069,
-      "lastToolDuration": 95,
-      "lastDuration": 1248705,
-      "lastLinesAdded": 2,
-      "lastLinesRemoved": 1,
-      "lastTotalInputTokens": 2358,
-      "lastTotalOutputTokens": 4032,
-      "lastTotalCacheCreationInputTokens": 35754,
-      "lastTotalCacheReadInputTokens": 447847,
-      "lastSessionId": "78b51334-619f-451e-ab26-6f48c699413a"
+      "lastTotalWebSearchRequests": 0
     },
     "/home/ubuntu/Documents/claude-backups": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "List all 54",
+          "pastedContents": {}
+        },
+        {
+          "display": "to be clear it shouldnt be active right now due to no avx512",
+          "pastedContents": {}
+        },
+        {
+          "display": "the c bridge is active?",
+          "pastedContents": {}
+        },
+        {
+          "display": "No we renamed tandem into production_orchestrator.py  in /home/ubuntu/Documents/claude-backups/agents/src/python",
+          "pastedContents": {}
+        },
+        {
+          "display": "   ○ Tandem Orchestrator: Not found\n",
+          "pastedContents": {}
+        },
+        {
+          "display": "So launching claude from any dir should give me access to all agents?",
+          "pastedContents": {}
+        },
+        {
+          "display": "git push it",
+          "pastedContents": {}
+        },
+        {
+          "display": "./claude-installer.sh --full should be default",
+          "pastedContents": {}
+        },
+        {
+          "display": "fix the path issues",
+          "pastedContents": {}
+        },
+        {
+          "display": "tools/register-custom-agents.py is where that missing script is i just renamed it inline with everything else",
+          "pastedContents": {}
+        },
+        {
+          "display": "ultrathink intelligently place adnd use ti based on its documentation",
+          "pastedContents": {}
+        },
+        {
+          "display": "Ive installed activate-agents in config as per [Pasted text #1 +300 lines] intergrate it with installer",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "# Claude Global Agents Bridge v10.0 - Implementation Guide\n\n## 🚀 Overview\n\nThe Claude Global Agents Bridge v10.0 is a unified coordination system that seamlessly integrates all project agents with Claude Code's Task tool while providing intelligent routing between multiple execution layers for optimal performance.\n\n## 🎯 Key Features\n\n### 1. **Multi-Layer Execution**\n- **Task Tool Integration**: Direct integration with Claude Code's Task() function\n- **Tandem Orchestration**: Python strategic planning + C tactical execution\n- **C Binary Bridge**: Ultra-high-performance execution (100K+ msg/sec)\n- **Python Fallback**: Always-available baseline execution (5K msg/sec)\n\n### 2. **Execution Modes**\n- **INTELLIGENT**: Automatic selection of best execution path\n- **PYTHON_ONLY**: Pure Python execution for compatibility\n- **SPEED_CRITICAL**: Maximum performance via C layer\n- **REDUNDANT**: Both layers for critical operations\n\n### 3. **System Capabilities Detection**\n- Automatic detection of available components\n- AVX-512 instruction set support\n- Thermal state monitoring\n- Dynamic performance optimization\n\n### 4. **Agent Discovery & Management**\n- Automatic discovery of all `.md` agent files\n- Real-time monitoring for new/removed agents\n- Priority-based execution routing\n- Tool capability extraction\n\n## 📦 Installation\n\n### Step 1: Install the Enhanced Registration System\n\n```bash\n# Download the updated registration script\ncd /home/ubuntu/Documents/Claude\nwget <updated-script-url> -O register-custom-agents-v10.py\n\n# Make it executable\nchmod +x register-custom-agents-v10.py\n\n# Install the agent system\npython3 register-custom-agents-v10.py --install\n```\n\n### Step 2: Activate the Agent System\n\n```bash\n# Source the activation script\nsource ~/.config/claude/activate-agents.sh\n\n# Or add to your shell profile for permanent activation\necho \"source ~/.config/claude/activate-agents.sh\" >> ~/.bashrc\n```\n\n## 🎮 Usage\n\n### Command Line Interface\n\n```bash\n# List all available agents\nclaude-agents\n\n# Check system status\nclaude-status\n\n# Invoke an agent directly\nclaude-invoke director \"Create a project plan for a web application\"\n\n# Get agent information\nclaude-info optimizer\n\n# Show performance metrics\nclaude-metrics\n\n# Test the system\nclaude-test\n```\n\n### Using in Claude Code\n\n```python\n# Direct Task tool invocation\nTask(subagent_type=\"director\", prompt=\"Plan the architecture\")\nTask(subagent_type=\"optimizer\", prompt=\"Optimize this code for performance\")\nTask(subagent_type=\"security\", prompt=\"Audit for vulnerabilities\")\n\n# With execution mode specification\nTask(\n    subagent_type=\"cryptoexpert\",\n    prompt=\"Implement AES encryption\",\n    mode=\"SPEED_CRITICAL\"  # Use C layer for crypto operations\n)\n```\n\n### Python Integration\n\n```python\nfrom register_custom_agents_v10 import GlobalAgentCoordinator, ExecutionMode\n\n# Initialize the coordinator\ncoordinator = GlobalAgentCoordinator()\ncoordinator.initialize()\n\n# Invoke an agent\nresult = coordinator.invoke_agent(\n    agent_name=\"optimizer\",\n    prompt=\"Optimize database queries\",\n    mode=ExecutionMode.INTELLIGENT\n)\n\nif result['success']:\n    print(result['output'])\n    print(f\"Execution path: {result['execution_path']}\")\n    print(f\"Response time: {result['execution_time']}s\")\n```\n\n## 🔍 Monitoring & Maintenance\n\n### Real-time Monitoring\n\n```bash\n# Start foreground monitoring\nclaude-monitor\n\n# Start background daemon\nclaude-daemon\n\n# Check for agent changes\npython3 register-custom-agents-v10.py --check\n```\n\n### Performance Optimization\n\nThe system automatically selects the best execution path based on:\n- System capabilities (C bridge, Tandem, AVX-512)\n- Thermal state (throttles under high temperature)\n- Agent priority (CRITICAL, HIGH, NORMAL)\n- Execution mode (INTELLIGENT, SPEED_CRITICAL, etc.)\n\n## 📊 Performance Characteristics\n\n| Execution Path | Throughput | Latency (p99) | Use Case |\n|---------------|------------|---------------|----------|\n| C Binary Bridge | 100K+ msg/sec | 200ns | High-frequency operations |\n| Tandem Orchestration | 10-50K msg/sec | 2ms | Complex coordination |\n| Task Tool | 5-10K msg/sec | 10ms | Standard operations |\n| Python Direct | 5K msg/sec | 20ms | Fallback/compatibility |\n\n## 🏗️ Architecture\n\n```\n┌─────────────────────────────────────────────┐\n│           Claude Code (Task Tool)           │\n└─────────────────┬───────────────────────────┘\n                  │\n┌─────────────────▼───────────────────────────┐\n│      Global Agent Coordinator (v10.0)       │\n│  • Agent Discovery & Registry               │\n│  • Intelligent Routing Logic                │\n│  • Performance Monitoring                   │\n└──────┬──────────┬──────────┬────────────────┘\n       │          │          │\n┌──────▼────┐ ┌──▼───┐ ┌────▼────┐\n│  Tandem   │ │  C   │ │ Python  │\n│Orchestrator│ │Bridge│ │ Direct  │\n└───────────┘ └──────┘ └─────────┘\n```\n\n## 🛠️ Troubleshooting\n\n### C Binary Layer Not Available\n```bash\n# Check if binary exists\nls -la /home/ubuntu/Documents/Claude/agents/binary-communications-system/\n\n# Check if process is running\nps aux | grep agent_bridge\n\n# Fallback to Python mode\nexport CLAUDE_EXECUTION_MODE=PYTHON_ONLY\n```\n\n### Tandem Orchestrator Issues\n```bash\n# Verify orchestrator files\nls -la /home/ubuntu/Documents/Claude/agents/src/python/\n\n# Test orchestrator directly\npython3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --test\n```\n\n### Agent Not Found\n```bash\n# Rescan and update registry\nclaude-install\n\n# Check agent file exists\nls /home/ubuntu/Documents/Claude/agents/*.md\n\n# View registry\ncat ~/.config/claude/project-agents.json | jq\n```\n\n## 🔄 Updates & Compatibility\n\n### Backward Compatibility\n- Maintains legacy `project-agents.json` format\n- Supports original Task tool invocation patterns\n- Falls back gracefully when components unavailable\n\n### Future Enhancements\n- GPU acceleration for ML agents\n- NPU integration for AI operations\n- Distributed agent execution\n- Cloud-native deployment options\n\n## 📝 Configuration\n\n### Environment Variables\n```bash\n# Execution mode preference\nexport CLAUDE_EXECUTION_MODE=INTELLIGENT  # or PYTHON_ONLY, SPEED_CRITICAL, REDUNDANT\n\n# Feature flags\nexport CLAUDE_TANDEM_ENABLED=true\nexport CLAUDE_C_BRIDGE_ENABLED=true\nexport CLAUDE_MONITORING_ENABLED=true\n\n# Performance tuning\nexport CLAUDE_MAX_WORKERS=8\nexport CLAUDE_TIMEOUT=300\n```\n\n### Configuration Files\n- `~/.config/claude/project-agents.json` - Agent registry\n- `~/.config/claude/task_extension.py` - Task tool extension\n- `~/.cache/claude-agents/coordination_config.json` - System configuration\n- `~/Documents/Claude/agents/config/tandem_config.json` - Tandem settings\n- `~/Documents/Claude/agents/config/ipc_config.json` - IPC configuration\n\n## 💡 Best Practices\n\n1. **Use INTELLIGENT mode by default** - Let the system choose the best path\n2. **Monitor thermal state** - System auto-throttles under high temperature\n3. **Batch operations** - Group related agent invocations for efficiency\n4. **Enable monitoring** - Detect and adapt to agent changes automatically\n5. **Check metrics regularly** - Identify performance bottlenecks\n\n## 🤝 Contributing\n\nTo add a new agent:\n1. Create an `.md` file in `/home/ubuntu/Documents/Claude/agents/`\n2. Include YAML frontmatter with metadata\n3. Specify supported execution modes\n4. Run `claude-install` to update registry\n\n## 📚 Additional Resources\n\n- [Agent Template](agents/Template.md)\n- [Tandem Orchestration Guide](docs/tandem-orchestration.md)\n- [C Binary Bridge Documentation](agents/binary-communications-system/README.md)\n- [Performance Tuning Guide](docs/performance-tuning.md)\n\n## 🎉 Quick Start Example\n\n```bash\n# 1. Install and activate\npython3 register-custom-agents-v10.py --install\nsource ~/.config/claude/activate-agents.sh\n\n# 2. Test the system\nclaude-test\n\n# 3. List available agents\nclaude-agents\n\n# 4. Invoke your first agent\nclaude-invoke director \"Create a REST API project structure\"\n\n# 5. Monitor performance\nclaude-metrics\n```\n\n## 📞 Support\n\nFor issues or questions:\n- Check system status: `claude-status`\n- Run diagnostics: `claude-test`\n- View logs: `tail -f ~/.cache/claude-agents/*.log`\n- Monitor in real-time: `claude-monitor`\n\n---\n\n**Version**: 10.0.0  \n**Last Updated**: 2024  \n**Compatibility**: Claude Code 1.0+  \n**Performance**: 5K-100K+ msg/sec (mode dependent)"
+            }
+          }
+        },
+        {
+          "display": "JUst ...prevent the script doing this or instead incorporate th stage of doing so from the main installer of installing the custom wrapper with Gets overwritten (expected behavior)",
+          "pastedContents": {}
+        },
+        {
+          "display": "Fix the script to not overwrite our wrapper ",
+          "pastedContents": {}
+        },
+        {
+          "display": "[Pasted text #1 +29 lines] it overwrote out custom wrapper and found none",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "🚀 Initializing Claude Global Agents Bridge v10.0\n============================================================\n🔍 Checking system capabilities...\n  • Task Tool: ✓ Available (Primary interface)\n  • Tandem Orchestrator: ✗ Not found\n  • C Binary Layer: ✓ Running\n  • AVX-512: ✗ Not available\n  • CPU Cores: 22 (P+E cores)\n  • Thermal State: CRITICAL\n\n📡 Discovering agents...\n✓ Found 0 agents\n\n🔧 Initializing components...\n  • Setting up Task tool integration...\n  • Connecting to C binary layer...\n  ✓ Initialized: Task tool, C binary layer\n\n✅ Coordination system ready!\n\n✅ Global launcher created: /home/ubuntu/.local/bin/claude-agent\n\n📌 Usage:\n  • List agents: claude-agent list\n  • System status: claude-agent status\n  • Run agent: claude-agent <agent-name> <prompt>\n  • Install/update: claude-agent install\n\n🎉 Installation complete!\n[I"
+            }
+          }
+        },
         {
           "display": "Update claude.md with our now larger agent collection,the learning system too",
           "pastedContents": {}
@@ -414,7 +496,18 @@
         "README.md"
       ],
       "exampleFilesGeneratedAt": 1755997198141,
-      "hasCompletedProjectOnboarding": true
+      "hasCompletedProjectOnboarding": true,
+      "lastCost": 8.508552800000004,
+      "lastAPIDuration": 1681322,
+      "lastToolDuration": 96624,
+      "lastDuration": 3900306,
+      "lastLinesAdded": 459,
+      "lastLinesRemoved": 176,
+      "lastTotalInputTokens": 104073,
+      "lastTotalOutputTokens": 55415,
+      "lastTotalCacheCreationInputTokens": 501504,
+      "lastTotalCacheReadInputTokens": 19234214,
+      "lastSessionId": "69d6710c-4ed8-485a-b8ff-cd0b4eac729c"
     },
     "/home/ubuntu/Documents": {
       "allowedTools": [],
@@ -439,6 +532,18 @@
       "lastTotalCacheCreationInputTokens": 0,
       "lastTotalCacheReadInputTokens": 0,
       "lastSessionId": "9a7a1935-fb03-44f6-9af7-7c90350f59cf"
+    },
+    "/tmp": {
+      "allowedTools": [],
+      "history": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": false,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false
     }
   },
   "oauthAccount": {

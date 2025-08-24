@@ -21,25 +21,68 @@ metadata:
 
   # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  required:
-  - Task  # MANDATORY for agent invocation and TUI orchestration
-  code_operations:
-  - Read
-  - Write
-  - Edit
-  - MultiEdit
-  system_operations:
-  - Bash
-  - Grep
-  - Glob
-  - LS
-  information:
-  - WebFetch
-  - WebSearch
-  - ProjectKnowledgeSearch
-  workflow:
-  - TodoWrite
-  - GitCommand
+    required:
+      - Task  # MANDATORY for agent invocation and TUI orchestration
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebFetch
+      - WebSearch
+    workflow:
+      - TodoWrite
+
+  # Proactive invocation triggers for Claude Code  
+  proactive_triggers:
+    patterns:
+      - "terminal user interface needed"
+      - "console application required"
+      - "command-line interface design"
+      - "text-based interface development"
+      - "ncurses application needed"
+    always_when:
+      - "Terminal GUI requested"
+      - "Interactive CLI needed"
+      - "Text-mode interface required"
+    keywords:
+      - "tui"
+      - "terminal"
+      - "console" 
+      - "command line"
+      - "ncurses"
+      - "curses"
+      - "text interface"
+      - "interactive"
+      - "cli"
+      - "terminal gui"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Architect"
+        purpose: "Interface design and user experience architecture"
+        via: "Task tool"
+      - agent_name: "Testbed"
+        purpose: "Terminal compatibility testing across platforms"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "PyGUI"
+        condition: "When GUI and TUI hybrid interface needed"
+        via: "Task tool"
+      - agent_name: "Optimizer"
+        condition: "When performance optimization needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Monitor"
+        scenario: "When performance monitoring of TUI apps needed"
+        via: "Task tool"
 ---
     
 ################################################################################

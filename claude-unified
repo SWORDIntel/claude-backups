@@ -41,14 +41,14 @@ QUICK_ACCESS_FILE="$CACHE_DIR/quick_access.txt"
 mkdir -p "$CACHE_DIR"
 
 # Binary location
-CLAUDE_BINARY="/home/ubuntu/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+CLAUDE_BINARY="BINARY_PLACEHOLDER"
 
 # Orchestration paths
 ORCHESTRATOR_PATH="$CLAUDE_PROJECT_ROOT/agents/src/python/production_orchestrator.py"
 TANDEM_ORCHESTRATOR="$CLAUDE_PROJECT_ROOT/agents/src/python/tandem_orchestrator.py"
 
 # Feature flags
-PERMISSION_BYPASS="true"  # Always enabled for enhanced functionality
+PERMISSION_BYPASS="${CLAUDE_PERMISSION_BYPASS:-true}"
 ORCHESTRATION_ENABLED="${CLAUDE_ORCHESTRATION:-true}"
 AUTO_SUGGEST="${CLAUDE_AUTO_SUGGEST:-true}"
 LEARNING_MODE="${CLAUDE_LEARNING:-true}"
@@ -532,26 +532,6 @@ main() {
     
     # Handle special commands
     case "${1:-}" in
-        list)
-            # Use global bridge for agent listing
-            local bridge_script="$CLAUDE_PROJECT_ROOT/tools/claude-global-agents-bridge.py"
-            if [[ -f "$bridge_script" ]]; then
-                python3 "$bridge_script" --list
-            else
-                echo "Agent bridge not found - use: claude-agent install"
-            fi
-            exit 0
-            ;;
-        status)
-            # Use global bridge for system status
-            local bridge_script="$CLAUDE_PROJECT_ROOT/tools/claude-global-agents-bridge.py"
-            if [[ -f "$bridge_script" ]]; then
-                python3 "$bridge_script" --status
-            else
-                show_status
-            fi
-            exit 0
-            ;;
         --status|--unified-status)
             show_status
             exit 0
@@ -654,15 +634,6 @@ main() {
             fi
             ;;
         *)
-            # Check if this is a direct agent invocation
-            local bridge_script="$CLAUDE_PROJECT_ROOT/tools/claude-global-agents-bridge.py"
-            if [[ -f "$bridge_script" ]] && [[ $# -ge 2 ]] && [[ "$1" != "/"* ]] && [[ "$1" != "-"* ]]; then
-                # Looks like: claude-agent <agent-name> <prompt>
-                echo -e "${CYAN}${ROCKET} Invoking agent: $1${NC}"
-                python3 "$bridge_script" --invoke "$@"
-                exit $?
-            fi
-            
             # Default execution
             update_metrics "direct" "0"
             if [[ "$PERMISSION_BYPASS" == "true" ]]; then

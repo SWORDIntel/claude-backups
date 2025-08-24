@@ -32,25 +32,70 @@ metadata:
 
   # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  required:
-  - Task  # MANDATORY for agent invocation and GUI orchestration
-  code_operations:
-  - Read
-  - Write
-  - Edit
-  - MultiEdit
-  system_operations:
-  - Bash
-  - Grep
-  - Glob
-  - LS
-  information:
-  - WebFetch
-  - WebSearch
-  - ProjectKnowledgeSearch
-  workflow:
-  - TodoWrite
-  - GitCommand
+    required:
+      - Task  # MANDATORY for agent invocation and GUI orchestration
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebFetch
+      - WebSearch
+    workflow:
+      - TodoWrite
+
+  # Proactive invocation triggers for Claude Code  
+  proactive_triggers:
+    patterns:
+      - "Python GUI application needed"
+      - "Desktop interface development"
+      - "Tkinter, PyQt, or other Python GUI framework"
+      - "Interactive desktop application"
+      - "Data visualization interface"
+    always_when:
+      - "Desktop GUI requested"
+      - "Python interface needed"
+      - "Interactive visualization required"
+    keywords:
+      - "gui"
+      - "desktop"
+      - "interface"
+      - "tkinter"
+      - "pyqt"
+      - "wxpython"
+      - "kivy"
+      - "streamlit"
+      - "gradio"
+      - "dearpygui"
+      - "python gui"
+      - "desktop app"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Architect"
+        purpose: "UI/UX design and application architecture"
+        via: "Task tool"
+      - agent_name: "Python-Internal"
+        purpose: "Python environment and dependency management"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "TUI"
+        condition: "When hybrid GUI/TUI interface needed"
+        via: "Task tool"
+      - agent_name: "Testbed"
+        condition: "When cross-platform testing needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Packager"
+        scenario: "When application packaging/distribution needed"
+        via: "Task tool"
 ---
 
 ################################################################################

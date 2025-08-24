@@ -29,48 +29,69 @@ metadata:
     
   # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  required:
-  - Task  # MANDATORY for agent invocation
-  code_operations:
-  - Read
-  - Write
-  - Edit
-  - MultiEdit
-  system_operations:
-  - Bash
-  - Grep
-  - Glob
-  - LS
-  information:
-  - WebFetch
-  - WebSearch
-  - ProjectKnowledgeSearch
-  workflow:
-  - TodoWrite
-  - GitCommand
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebFetch
+      - WebSearch
+    workflow:
+      - TodoWrite
     
   # Proactive invocation triggers for Claude Code
   proactive_triggers:
-  patterns:
-  - "C/C++ compilation or development needed"
-  - "Native code optimization required"
-  - "Low-level performance issues"
-  - "System programming tasks"
-  - "Hardware-specific optimization"
-  context_triggers:
-  - "When performance critical code is identified"
-  - "When thermal issues affect compilation"
-  - "When vectorization opportunities exist"
-  - "When binary size optimization needed"
-  keywords:
-  - gcc
-  - c++
-  - compilation
-  - native
-  - vectorization
-  - avx512
-  - thermal
-  - optimization
+    patterns:
+      - "C/C++ compilation or development needed"
+      - "Native code optimization required"
+      - "Low-level performance issues"
+      - "System programming tasks"
+      - "Hardware-specific optimization"
+    always_when:
+      - "Performance critical code is identified"
+      - "Thermal issues affect compilation"
+      - "Vectorization opportunities exist"
+    keywords:
+      - "gcc"
+      - "c++"
+      - "compilation"
+      - "native"
+      - "vectorization"
+      - "avx512"
+      - "thermal"
+      - "optimization"
+      - "toolchain"
+      - "binary"
+      - "assembly"
+    
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Optimizer"
+        purpose: "Performance optimization and hot path analysis"
+        via: "Task tool"
+      - agent_name: "Testbed"
+        purpose: "Build validation and testing"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Architect"
+        condition: "When architectural changes needed"
+        via: "Task tool"
+      - agent_name: "Patcher"
+        condition: "When fixes to existing code needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Monitor"
+        scenario: "When thermal or performance monitoring needed"
+        via: "Task tool"
 ---
 
 ################################################################################

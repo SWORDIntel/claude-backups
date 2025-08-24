@@ -30,53 +30,78 @@ metadata:
     implements time-based access controls, and maintains immutable audit trails with 
     blockchain verification. Auto-destroys on tampering detection.
     
+  # CRITICAL: Task tool compatibility for Claude Code
   tools:
-  required:
-    - Task  # MANDATORY for agent invocation
-  code_operations:
-    - Read   # With integrity verification
-    - Write  # With tamper detection
-    - Edit   # With change validation
-  system_operations:
-    - Bash   # Restricted, sandboxed
-    - Grep   # Pattern matching for IOCs
-    - Glob   # File system analysis
-    - LS     # With hidden file detection
-  information:
-    - WebFetch  # Through Tor/proxy chains
-    - ProjectKnowledgeSearch
-  workflow:
-    - TodoWrite
-    - GitCommand  # With signed commits only
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read   # With integrity verification
+      - Write  # With tamper detection
+      - Edit   # With change validation
+    system_operations:
+      - Bash   # Restricted, sandboxed
+      - Grep   # Pattern matching for IOCs
+      - Glob   # File system analysis
+      - LS     # With hidden file detection
+    information:
+      - WebFetch  # Through Tor/proxy chains
+    workflow:
+      - TodoWrite
     
+  # Proactive invocation triggers for Claude Code
   proactive_triggers:
-  patterns:
-    - "security"
-    - "breach"
-    - "attack"
-    - "anomaly"
-    - "threat"
-    - "vulnerability"
-    - "exploit"
-    - "malware"
-    - "backdoor"
-    - "zero-day"
-    - "quantum"
-    - "cryptographic"
-    - "supply chain"
-    - "hardware"
-    - "firmware"
-  conditions:
-    - "Any authentication anomaly"
-    - "Process integrity violation"
-    - "Unexpected network connection"
-    - "File hash mismatch"
-    - "Kernel modification detected"
-    - "Hardware state change"
-    - "Timing attack pattern"
-    - "Power analysis anomaly"
-    - "EM radiation spike"
-    - "Temperature anomaly indicating side-channel"
+    patterns:
+      - "security threat detected"
+      - "compliance violation found"
+      - "security audit required"
+      - "vulnerability assessment needed"
+      - "security policy enforcement"
+    always_when:
+      - "Any authentication anomaly"
+      - "Process integrity violation"
+      - "Unexpected network connection"
+      - "Security breach detected"
+    keywords:
+      - "security"
+      - "breach"
+      - "attack"
+      - "anomaly"
+      - "threat"
+      - "vulnerability"
+      - "exploit"
+      - "malware"
+      - "backdoor"
+      - "zero-day"
+      - "quantum"
+      - "cryptographic"
+      - "compliance"
+      - "audit"
+      - "governance"
+      - "risk"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Security"
+        purpose: "Technical security implementation and analysis"
+        via: "Task tool"
+      - agent_name: "SecurityAuditor" 
+        purpose: "Comprehensive security audits and assessments"
+        via: "Task tool"
+      - agent_name: "QuantumGuard"
+        purpose: "Quantum-resistant cryptography implementation"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Bastion"
+        condition: "When perimeter defense coordination needed"
+        via: "Task tool"
+      - agent_name: "RedTeamOrchestrator"
+        condition: "When adversarial testing required"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Director"
+        scenario: "Strategic security decisions and executive reporting"
+        via: "Task tool"
 ---
 
 ################################################################################

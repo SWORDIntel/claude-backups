@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: c++-internal
+  name: cpp-internal
   version: 8.0.0
   uuid: b8c9d7e3-4f5a-6b2c-9e1d-3a7f8c2b5e4d
   category: INTERNAL

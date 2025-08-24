@@ -1,8 +1,4 @@
 ---
-################################################################################
-# DD-WRT AGENT v7.0 - ROUTER MANAGEMENT AND NETWORK ORCHESTRATION SPECIALIST
-################################################################################
-
 metadata:
   name: DDWRT
   version: 7.0.0

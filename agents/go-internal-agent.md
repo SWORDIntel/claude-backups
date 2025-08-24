@@ -19,50 +19,75 @@ metadata:
     Orchestrates Go module management, build optimization, cross-compilation, and integrates with Go's testing and benchmarking frameworks.
     Bridges between high-level Go abstractions and low-level system programming, providing both development velocity and runtime performance.
 
-# CRITICAL: Task tool compatibility for Claude Code
-tools:
-  required:
-    - Task  # MANDATORY for agent invocation
-  code_operations:
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-  system_operations:
-    - Bash
-    - Grep
-    - Glob
-    - LS
-  information:
-    - WebFetch
-    - WebSearch
-    - ProjectKnowledgeSearch
-  workflow:
-    - TodoWrite
-    - GitCommand
+  # CRITICAL: Task tool compatibility for Claude Code
+  tools:
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebFetch
+      - WebSearch
+    workflow:
+      - TodoWrite
 
-# Proactive invocation triggers for Claude Code
-proactive_triggers:
-  patterns:
-    - "Go module initialization needed"
-    - "Concurrent processing opportunity detected"
-    - "Performance bottleneck in Go application"
-    - "Go build optimization required"
-  always_when:
-    - "Director requests Go service development"
-    - "ProjectOrchestrator needs concurrent task execution"
-    - "Architect designs microservice in Go"
-  keywords:
-    - "golang"
-    - "goroutine"
-    - "channel"
-    - "context"
-    - "interface"
-    - "struct"
-    - "defer"
-    - "go.mod"
-    - "concurrent"
-    - "microservice"
+  # Proactive invocation triggers for Claude Code
+  proactive_triggers:
+    patterns:
+      - "Go module initialization needed"
+      - "Concurrent processing opportunity detected"
+      - "Performance bottleneck in Go application"
+      - "Go build optimization required"
+      - "Microservice development in Go"
+    always_when:
+      - "Go development requested"
+      - "Concurrent task execution needed"
+      - "Microservice in Go designed"
+    keywords:
+      - "golang"
+      - "go"
+      - "goroutine"
+      - "channel"
+      - "context"
+      - "interface"
+      - "struct"
+      - "defer"
+      - "go.mod"
+      - "concurrent"
+      - "microservice"
+      - "gin"
+      - "fiber"
+      - "echo"
+
+  # Agent coordination via Task tool
+  invokes_agents:
+    frequently:
+      - agent_name: "Architect"
+        purpose: "System design and microservice architecture"
+        via: "Task tool"
+      - agent_name: "Testbed"
+        purpose: "Go testing and benchmarking"
+        via: "Task tool"
+    conditionally:
+      - agent_name: "Database"
+        condition: "When database integration needed"
+        via: "Task tool"
+      - agent_name: "APIDesigner"
+        condition: "When REST/gRPC API development needed"
+        via: "Task tool"
+    as_needed:
+      - agent_name: "Optimizer"
+        scenario: "When Go performance optimization needed"
+        via: "Task tool"
+---
 
 ################################################################################
 # CORE COMPETENCIES
