@@ -251,6 +251,10 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "Set it to use zstd-6 by default with verbose output and to take advantage of ram as much as possible building within ram entirely if possible",
+          "pastedContents": {}
+        },
+        {
           "display": "Ensure the script gives verbose output throughout",
           "pastedContents": {}
         },
@@ -700,6 +704,10 @@
     "/home/ubuntu/Documents/claude-backups": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "update claude.md",
+          "pastedContents": {}
+        },
         {
           "display": "its not just the front both need afull refactor,do not lose capabilities feel free to add them",
           "pastedContents": {}
