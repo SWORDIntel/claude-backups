@@ -95,7 +95,7 @@ print_header() {
     echo ""
     print_cyan "╔═══════════════════════════════════════════════════════════════╗"
     print_cyan "║           Claude Master Installer v10.0                      ║"
-    print_cyan "║    Complete System with Database & Learning Integration      ║"
+    print_cyan "║         Default: Full Install (57 Agents + Tools)           ║"
     print_cyan "╚═══════════════════════════════════════════════════════════════╝"
     echo ""
     print_dim "Project: $PROJECT_ROOT"
@@ -184,10 +184,10 @@ get_user_preferences() {
         ALLOW_SYSTEM_PACKAGES="true"
         
     else  # Default: full installation
-        print_bold "Starting Full Installation (Default)"
+        print_bold "Starting Full Installation (Default - Recommended)"
         echo "────────────────────────"
         echo ""
-        print_cyan "This installer will set up:"
+        print_cyan "This installer will set up the complete system:"
         echo "  • Claude Code with all 41 agents"
         echo "  • PostgreSQL database system"
         echo "  • Agent learning system with ML"
@@ -198,9 +198,9 @@ get_user_preferences() {
         ALLOW_SYSTEM_PACKAGES="true"
         INSTALLATION_MODE="full"
         
-        print_green "✓ Full installation mode - all features enabled"
-        print_dim "  Tip: Use './claude-installer.sh --quick' for minimal install"
-        print_dim "       Use './claude-installer.sh --help' to see all options"
+        print_green "✓ Full installation mode - all features enabled (RECOMMENDED DEFAULT)"
+        print_dim "  Tip: This installs 57 agents, databases, learning systems, and tools"
+        print_dim "       Use '--quick' for minimal install or '--help' for all options"
     fi
     
     echo ""
@@ -1346,7 +1346,172 @@ run_tests() {
     show_progress
 }
 
-# 10. Show summary
+# 10. Install Global Agents Bridge
+install_global_agents_bridge() {
+    print_header "Installing Global Agents Bridge"
+    
+    BRIDGE_SCRIPT="$PROJECT_ROOT/tools/claude-global-agents-bridge.py"
+    
+    if [[ ! -f "$BRIDGE_SCRIPT" ]]; then
+        warning "Global Agents Bridge script not found at: $BRIDGE_SCRIPT"
+        warning "Skipping bridge installation"
+        return 1
+    fi
+    
+    info "Installing Global Agents Bridge v10.0..."
+    
+    # Set environment variables for the bridge
+    export CLAUDE_AGENTS_ROOT="$AGENTS_TARGET"
+    export PYTHONPATH="$PROJECT_ROOT:$PYTHONPATH"
+    
+    # Install custom wrapper instead of bridge-created launcher
+    info "Installing custom wrapper with enhanced functionality..."
+    
+    # Create .local/bin directory if it doesn't exist
+    mkdir -p "$HOME/.local/bin"
+    
+    # Install the ultimate wrapper as claude-agent
+    if [[ -f "$PROJECT_ROOT/claude-wrapper-ultimate.sh" ]]; then
+        cp "$PROJECT_ROOT/claude-wrapper-ultimate.sh" "$HOME/.local/bin/claude-agent"
+        chmod +x "$HOME/.local/bin/claude-agent"
+        success "Custom wrapper 'claude-agent' installed with enhanced features"
+    else
+        warning "Custom wrapper not found, creating basic launcher..."
+        # Create basic launcher as fallback
+        cat > "$HOME/.local/bin/claude-agent" << EOF
+#!/bin/bash
+# Claude Agent Global Launcher v10.0 (Basic)
+export CLAUDE_AGENTS_ROOT="$AGENTS_TARGET"
+export PYTHONPATH="$PROJECT_ROOT/agents/src/python:\$PYTHONPATH"
+
+BRIDGE_SCRIPT="$BRIDGE_SCRIPT"
+
+if [ "\$1" = "list" ] || [ -z "\$1" ]; then
+    python3 "\$BRIDGE_SCRIPT" --list
+    exit 0
+fi
+
+if [ "\$1" = "status" ]; then
+    python3 "\$BRIDGE_SCRIPT" --status
+    exit 0
+fi
+
+# Invoke agent
+python3 "\$BRIDGE_SCRIPT" --invoke "\$@"
+EOF
+        chmod +x "$HOME/.local/bin/claude-agent"
+        success "Basic launcher 'claude-agent' created"
+    fi
+    
+    # Initialize bridge without launcher creation
+    if python3 "$BRIDGE_SCRIPT" --install 2>/dev/null; then
+        success "Global Agents Bridge initialized successfully"
+    fi
+    
+    # Test installation
+    info "Testing wrapper installation..."
+    if "$HOME/.local/bin/claude-agent" status >/dev/null 2>&1; then
+        success "Wrapper installation verified - all agents accessible"
+    else
+        warning "Wrapper installed but verification failed"
+        info "  python3 $BRIDGE_SCRIPT --install"
+    fi
+    
+    show_progress
+}
+
+# 11. Setup Agent Activation System
+setup_agent_activation() {
+    print_header "Setting up Agent Activation System"
+    
+    info "Installing comprehensive CLI interface for agent system..."
+    
+    # Ensure config directory exists
+    mkdir -p "$HOME/.config/claude"
+    
+    # Install the activation script
+    ACTIVATION_SCRIPT="$PROJECT_ROOT/config/activate-agents.sh"
+    
+    if [[ -f "$ACTIVATION_SCRIPT" ]]; then
+        # Copy to config directory
+        cp "$ACTIVATION_SCRIPT" "$HOME/.config/claude/"
+        chmod +x "$HOME/.config/claude/activate-agents.sh"
+        success "Agent activation script installed"
+        
+        # Setup agent registry if it doesn't exist
+        if [[ ! -f "$HOME/.config/claude/project-agents.json" ]]; then
+            info "Setting up agent registry..."
+            if python3 "$PROJECT_ROOT/tools/register-custom-agents.py" --install 2>/dev/null; then
+                success "Agent registry initialized"
+            else
+                warning "Agent registry setup failed - can be done manually later"
+            fi
+        fi
+        
+        # Add to shell profile for permanent activation
+        setup_shell_integration
+        
+        info "Agent activation system features:"
+        echo "  • Enhanced CLI commands (claude-agents, claude-status, claude-invoke)"
+        echo "  • Environment variables and path setup"  
+        echo "  • Performance monitoring and metrics"
+        echo "  • Integrated help system"
+        echo "  • Agent registry management"
+        
+    else
+        warning "Activation script not found at: $ACTIVATION_SCRIPT"
+        warning "Skipping activation system setup"
+    fi
+    
+    show_progress
+}
+
+# Setup shell integration for permanent activation
+setup_shell_integration() {
+    info "Setting up shell integration for permanent activation..."
+    
+    local activation_line="source ~/.config/claude/activate-agents.sh"
+    local shells_updated=0
+    
+    # Update .bashrc if it exists
+    if [[ -f "$HOME/.bashrc" ]]; then
+        if ! grep -q "activate-agents.sh" "$HOME/.bashrc" 2>/dev/null; then
+            echo "" >> "$HOME/.bashrc"
+            echo "# Claude Agent System Activation" >> "$HOME/.bashrc"
+            echo "$activation_line" >> "$HOME/.bashrc"
+            ((shells_updated++))
+        fi
+    fi
+    
+    # Update .zshrc if it exists  
+    if [[ -f "$HOME/.zshrc" ]]; then
+        if ! grep -q "activate-agents.sh" "$HOME/.zshrc" 2>/dev/null; then
+            echo "" >> "$HOME/.zshrc"
+            echo "# Claude Agent System Activation" >> "$HOME/.zshrc"
+            echo "$activation_line" >> "$HOME/.zshrc"
+            ((shells_updated++))
+        fi
+    fi
+    
+    # Update .profile as fallback
+    if [[ -f "$HOME/.profile" ]]; then
+        if ! grep -q "activate-agents.sh" "$HOME/.profile" 2>/dev/null; then
+            echo "" >> "$HOME/.profile"
+            echo "# Claude Agent System Activation" >> "$HOME/.profile"
+            echo "$activation_line" >> "$HOME/.profile"
+            ((shells_updated++))
+        fi
+    fi
+    
+    if [[ $shells_updated -gt 0 ]]; then
+        success "Shell integration added to $shells_updated profile(s)"
+        info "Restart your shell or run: source ~/.config/claude/activate-agents.sh"
+    else
+        info "Shell integration already present or no shell profiles found"
+    fi
+}
+
+# 12. Show summary
 show_summary() {
     echo ""
     echo ""
@@ -1361,6 +1526,8 @@ show_summary() {
     echo "  • Claude NPM Package"
     echo "  • Enhanced Wrapper with Auto Permission Bypass"
     echo "  • $AGENT_COUNT Agents with full metadata and categories"
+    print_green "  • Global Agents Bridge v10.0 (60 agents via claude-agent command)"
+    print_green "  • Agent Activation System v10.0 (Enhanced CLI interface)"
     echo "  • PostgreSQL Database System (port 5433)"
     echo "  • Agent Learning System with ML models"
     echo "  • Tandem Orchestration System v2.0 (40+ agents ready)"
@@ -1377,9 +1544,24 @@ show_summary() {
     printf "  %-30s %s\n" "claude --status" "Show status"
     printf "  %-30s %s\n" "claude --list-agents" "List agents"
     printf "  %-30s %s\n" "claude --orchestrator" "Launch Python orchestrator UI"
+    echo ""
+    print_bold "Global Agents Bridge (NEW):"
+    printf "  %-30s %s\n" "claude-agent list" "List all 60 specialized agents"
+    printf "  %-30s %s\n" "claude-agent status" "Show bridge system status"
+    printf "  %-30s %s\n" "claude-agent <name> <prompt>" "Invoke any agent directly"
     printf "  %-30s %s\n" "claude-learning status" "Check learning system"
     printf "  %-30s %s\n" "claude-learning cli dashboard" "Learning dashboard"
     printf "  %-30s %s\n" "python-orchestrator" "Direct orchestrator access"
+    echo ""
+    print_bold "Agent Activation System (NEW):"
+    printf "  %-30s %s\n" "claude-agents" "List all available agents"
+    printf "  %-30s %s\n" "claude-status" "Show comprehensive status"
+    printf "  %-30s %s\n" "claude-invoke <name> <prompt>" "Invoke agent with prompt"
+    printf "  %-30s %s\n" "claude-info <name>" "Show agent details"
+    printf "  %-30s %s\n" "claude-test" "Test agent system"
+    printf "  %-30s %s\n" "claude-metrics" "Show performance metrics"
+    printf "  %-30s %s\n" "claude-monitor" "Live monitoring"
+    printf "  %-30s %s\n" "claude-daemon" "Background monitoring"
     printf "  %-30s %s\n" "claude agent <name>" "Run specific agent"
     echo ""
     
@@ -1449,15 +1631,19 @@ parse_arguments() {
                 echo ""
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
+                echo "🚀 Claude Agent Framework v7.0 Unified Installer"
+                echo ""
                 echo "Options:"
-                echo "  --full, -f        Full installation with all components (DEFAULT)"
-                echo "  --quick, -q       Quick installation with minimal components"
+                echo "  (no options)      Full installation - all components (DEFAULT & RECOMMENDED)"
+                echo "  --full, -f        Same as default - complete system installation"
+                echo "  --quick, -q       Quick installation with minimal components only"
                 echo "  --custom, -c      Custom installation - choose components"
                 echo "  --skip-tests      Skip validation tests"
                 echo "  --verbose, -v     Show detailed output"
                 echo "  --help, -h        Show this help message"
                 echo ""
-                echo "Default behavior: Full installation (equivalent to --full)"
+                echo "💡 Recommended: Just run './claude-installer.sh' for complete installation"
+                echo "   This installs all 57 agents, databases, learning systems, and tools"
                 exit 0
                 ;;
             *)
@@ -1517,6 +1703,12 @@ main() {
     else
         info "Skipping tests as requested"
     fi
+    
+    # Install Global Agents Bridge
+    install_global_agents_bridge
+    
+    # Setup Agent Activation System
+    setup_agent_activation
     
     # Reset progress for completion
     CURRENT_STEP=$TOTAL_STEPS

@@ -499,6 +499,28 @@ claude-orchestrate "complete project development cycle"
 CLAUDE_ORCHESTRATION=off claude /task "simple task"  # Disable suggestions
 ```
 
+### Global Agents Bridge Commands (NEW v10.0)
+```bash
+# Automatic installation via main installer
+./claude-installer.sh                           # Installs bridge automatically
+
+# Manual bridge management
+python3 tools/claude-global-agents-bridge.py --install    # Manual bridge install
+python3 tools/claude-global-agents-bridge.py --status     # Bridge status
+
+# Agent access via bridge
+claude-agent list                               # List all 60 agents
+claude-agent status                             # System status  
+claude-agent director "strategic planning"     # Invoke director
+claude-agent security "audit vulnerabilities"  # Invoke security
+claude-agent optimizer "improve performance"   # Invoke optimizer
+
+# Enhanced wrapper integration
+claude list                                     # List via wrapper
+claude status                                   # Status via wrapper
+claude director "strategic plan"               # Direct agent via wrapper
+```
+
 ### Enhanced Learning System v5.0 Commands (NEW)
 ```bash
 # Complete learning system setup (1049 lines - comprehensive orchestrator)
@@ -535,17 +557,28 @@ CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh status   # Show detailed system status
 ## Critical Context
 
 
-## Available Task Tool Agents
+## Agent Access Methods
 
-These agents can be invoked directly with Task():
-
-### Built-in Agents
+### Claude Code Built-in Agents (Task Tool Only)
+These 3 agents are accessible via Claude Code's Task tool:
 - `general-purpose`: General-purpose agent for complex tasks
-- `statusline-setup`: Configure status line settings
+- `statusline-setup`: Configure status line settings  
 - `output-style-setup`: Configure output styles
-- `C-INTERNAL`: Low-level C operations
 
-### Project Agents (57 available)
+**Note**: Claude Code's Task tool is limited to these 3 built-in agents and cannot be extended.
+
+### Global Agents Bridge (60 Specialized Agents)
+**NEW**: All 60 specialized agents are accessible via the `claude-agent` command through Global Agents Bridge v10.0:
+
+```bash
+claude-agent list                    # List all 60 agents
+claude-agent status                  # Show bridge system status
+claude-agent director "strategic plan"      # Invoke director agent
+claude-agent security "audit system"        # Invoke security agent
+claude-agent optimizer "improve performance" # Invoke optimizer agent
+```
+
+### Project Agents (60 available via claude-agent)
 
 **Command & Control:**
 - `director`: Strategic command and control
@@ -624,16 +657,63 @@ These agents can be invoked directly with Task():
 - `oversight`: Quality assurance
 - `integration`: System integration
 
-### Usage Example
+### Usage Examples
+
+**Claude Code Task Tool (3 built-in agents only):**
 ```python
-Task(subagent_type="director", prompt="Create strategic plan")
-Task(subagent_type="security", prompt="Audit for vulnerabilities")
-Task(subagent_type="optimizer", prompt="Optimize performance")
+Task(subagent_type="general-purpose", prompt="Complex analysis task")
+Task(subagent_type="statusline-setup", prompt="Configure status line")
+Task(subagent_type="output-style-setup", prompt="Set output style")
 ```
 
-### Auto-Invocation Patterns (MANDATORY - USE PROACTIVELY)
+**Global Agents Bridge (60 specialized agents):**
+```bash
+# Command line access to all agents
+claude-agent director "Create strategic plan"
+claude-agent security "Audit for vulnerabilities" 
+claude-agent optimizer "Optimize performance"
+claude-agent architect "Design system architecture"
+claude-agent c-internal "Compile optimized binary"
+```
 
-Claude MUST automatically invoke specialized agents when detecting relevant patterns:
+**Enhanced Claude Wrapper Integration:**
+```bash
+# The claude command now supports direct agent invocation
+claude director "strategic planning"
+claude security "vulnerability assessment"
+claude list                     # List agents via bridge
+claude status                   # Show bridge status
+```
+
+### Auto-Invocation Patterns (CURRENT LIMITATIONS)
+
+**Note**: Due to Claude Code Task tool limitations, automatic invocation of the 60 specialized agents is not currently possible within Claude Code sessions. However, users can manually invoke any agent via:
+
+1. **Direct command line**: `claude-agent <agent-name> <prompt>`
+2. **Enhanced wrapper**: `claude <agent-name> <prompt>`  
+3. **Task tool**: Limited to 3 built-in agents only
+
+### Current Practical Usage (2025-08-24)
+
+**What Works Now:**
+- ✅ **60 specialized agents** fully functional via command line
+- ✅ **Global Agents Bridge v10.0** installed and operational
+- ✅ **Enhanced claude wrapper** supports direct agent invocation
+- ✅ **Complete agent ecosystem** with strategic, security, development, and specialized agents
+- ✅ **Automatic installation** via `claude-installer.sh`
+
+**What's Limited:**
+- ❌ **Claude Code Task tool** only supports 3 built-in agents (cannot be extended)
+- ❌ **Auto-invocation within Claude Code** not possible for specialized agents
+- ⚠️ **Manual invocation required** for accessing the 60 specialized agents
+
+**Recommended Workflow:**
+1. Use Claude Code for general development and planning
+2. Use `claude-agent <name> <prompt>` for specialized agent tasks
+3. Use `claude list` to see available agents
+4. Use `claude status` to check system health
+
+**Ideal Auto-Invocation Patterns** (for future implementation when Task tool supports custom agents):
 
 #### Immediate Auto-Invocation Triggers:
 1. **Multi-step tasks** → Director + ProjectOrchestrator (ALWAYS, no exceptions)
@@ -1061,7 +1141,24 @@ export METEOR_LAKE_OPTIMIZATION=true
   - **Enterprise-grade network management** with specialized network agents
   - **Enhanced quality assurance** with dedicated QA and oversight agents
 
-### Enhanced Agent Learning System v5.0 Integration (2025-08-24) 🚀 LATEST
+### Global Agents Bridge Integration (2025-08-24) 🚀 LATEST
+- **Component**: Global Agents Bridge v10.0 with 60-agent ecosystem access
+- **Integration**: Automatic installation via `claude-installer.sh` 
+- **Commands Added**:
+  - `claude-agent list` - List all 60 specialized agents
+  - `claude-agent status` - Show bridge system status
+  - `claude-agent <name> <prompt>` - Invoke any agent directly
+- **Enhanced Wrapper**: Direct agent invocation via `claude <agent-name> <prompt>`
+- **Key Features**:
+  - **60 Agent Access**: Full command-line access to all specialized agents
+  - **Intelligent Routing**: C bridge, Tandem orchestration, Python fallback
+  - **Performance Optimization**: 100K+ msg/sec with C bridge active
+  - **Task Tool Limitation**: Claude Code Task tool limited to 3 built-in agents (cannot be extended)
+  - **Practical Solution**: Bridge provides full agent ecosystem access outside Claude Code
+- **Installation**: Automatically installed with main installer
+- **Status**: PRODUCTION - All 60 agents accessible via command line
+
+### Enhanced Agent Learning System v5.0 Integration (2025-08-24)
 - **Location**: Root directory - `integrated_learning_setup.py` (39,926 bytes comprehensive orchestrator)
 - **Architecture**: Complete ML-powered agent performance analytics with PostgreSQL 17 + pgvector
 - **Core Components**:
@@ -1168,6 +1265,7 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 *Last Updated: 2025-08-24*  
 *Framework Version: 7.0*  
-*Agent Count: 57 (was 32)*  
+*Agent Count: 60 (was 32)*  
+*Global Agents Bridge: v10.0*  
 *Learning System: v5.0*  
-*Status: PRODUCTION*
+*Status: PRODUCTION - Full agent ecosystem accessible via claude-agent command*

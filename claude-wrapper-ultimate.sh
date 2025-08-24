@@ -532,6 +532,26 @@ main() {
     
     # Handle special commands
     case "${1:-}" in
+        list)
+            # Use global bridge for agent listing
+            local bridge_script="$CLAUDE_PROJECT_ROOT/tools/claude-global-agents-bridge.py"
+            if [[ -f "$bridge_script" ]]; then
+                python3 "$bridge_script" --list
+            else
+                echo "Agent bridge not found - use: claude-agent install"
+            fi
+            exit 0
+            ;;
+        status)
+            # Use global bridge for system status
+            local bridge_script="$CLAUDE_PROJECT_ROOT/tools/claude-global-agents-bridge.py"
+            if [[ -f "$bridge_script" ]]; then
+                python3 "$bridge_script" --status
+            else
+                show_status
+            fi
+            exit 0
+            ;;
         --status|--unified-status)
             show_status
             exit 0
@@ -634,6 +654,15 @@ main() {
             fi
             ;;
         *)
+            # Check if this is a direct agent invocation
+            local bridge_script="$CLAUDE_PROJECT_ROOT/tools/claude-global-agents-bridge.py"
+            if [[ -f "$bridge_script" ]] && [[ $# -ge 2 ]] && [[ "$1" != "/"* ]] && [[ "$1" != "-"* ]]; then
+                # Looks like: claude-agent <agent-name> <prompt>
+                echo -e "${CYAN}${ROCKET} Invoking agent: $1${NC}"
+                python3 "$bridge_script" --invoke "$@"
+                exit $?
+            fi
+            
             # Default execution
             update_metrics "direct" "0"
             if [[ "$PERMISSION_BYPASS" == "true" ]]; then
