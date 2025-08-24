@@ -20,18 +20,18 @@
     "activeForm": "Successfully running complete LiveCD build"
   },
   {
-    "content": "Monitor build progress to completion",
+    "content": "Create squashfs filesystem from build",
     "status": "in_progress",
-    "activeForm": "Monitoring build progress to completion"
+    "activeForm": "Creating squashfs filesystem (90% complete)"
   },
   {
-    "content": "Execute all 12 LiveCD modules sequentially",
+    "content": "Create bootable ISO image",
     "status": "pending",
-    "activeForm": "Ready to execute all 12 LiveCD modules sequentially"
+    "activeForm": "Ready to create bootable ISO image"
   },
   {
-    "content": "Create final ISO image from completed build",
+    "content": "Test final ISO image",
     "status": "pending",
-    "activeForm": "Ready to create final ISO image from completed build"
+    "activeForm": "Ready to test final ISO image"
   }
 ]

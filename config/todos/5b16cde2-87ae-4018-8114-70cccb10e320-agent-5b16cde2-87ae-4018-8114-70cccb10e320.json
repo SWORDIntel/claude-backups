@@ -1,17 +1,1 @@
-[
-  {
-    "content": "Fix syntax error in hardware_security.sh line 934 (orphaned EOF)",
-    "status": "in_progress",
-    "activeForm": "Fixing syntax error in hardware_security.sh line 934"
-  },
-  {
-    "content": "Test kernel build script after fixing syntax errors",
-    "status": "pending",
-    "activeForm": "Testing kernel build script after fixes"
-  },
-  {
-    "content": "Verify kernel build completes successfully",
-    "status": "pending",
-    "activeForm": "Verifying kernel build completion"
-  }
-]
+[]
