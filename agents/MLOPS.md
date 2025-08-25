@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: MLOps
+  name: MLOPS
   version: 8.0.0
   uuid: ml0p5-m0d3-l0p5-8v00-ml0p5000001
   category: DATA_ML

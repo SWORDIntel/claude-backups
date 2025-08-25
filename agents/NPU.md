@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: NPU-ML-ACCELERATOR
+  name: NPU
   version: 8.0.0
   uuid: a9f5c2e8-7b3d-4e9a-b1c6-8d4f2a9e5c71
   category: ML_ACCELERATION

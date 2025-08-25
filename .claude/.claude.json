@@ -1,0 +1,30 @@
+{
+  "installMethod": "unknown",
+  "autoUpdates": true,
+  "tipsHistory": {
+    "new-user-warmup": 0
+  },
+  "userID": "fd42f68dbc61e0f9111783abdf2481f63afc63be63ca0e2ff99a291622ffff7b",
+  "fallbackAvailableWarningThreshold": 0.5,
+  "projects": {
+    "/home/ubuntu/Documents/Z-FORGE": {
+      "allowedTools": [],
+      "history": [
+        {
+          "display": "Amazing,ensure docker check looks for wmdocker docker.io docker-buildx\n not just docker and if launched without sudo just say you need sudo",
+          "pastedContents": {}
+        }
+      ],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": false,
+      "ignorePatterns": [],
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "hasCompletedProjectOnboarding": true
+    }
+  }
+}

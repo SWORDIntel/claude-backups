@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Database
+  name: DATABASE
   version: 8.0.0
   uuid: d474b453-4rch-0p71-m1z3-d474b4530001
   category: DATABASE

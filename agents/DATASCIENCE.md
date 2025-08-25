@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: DataScience
+  name: DATASCIENCE
   version: 8.0.0
   uuid: da7a5c13-7a71-7c53-7155-da7a5c130001
   category: DATA_ML
