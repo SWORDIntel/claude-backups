@@ -298,18 +298,31 @@ check_prerequisites() {
     
     # Python 3 with version check
     printf "  %-20s" "Python 3..."
-    if command -v python3 &>/dev/null; then
-        PYTHON_VERSION=$(python3 --version 2>&1 | sed 's/Python //')
+    
+    # Try multiple ways to find python3
+    PYTHON_CMD=""
+    for cmd in python3 python python3.12 python3.11 python3.10 python3.9 python3.8; do
+        if command -v "$cmd" &>/dev/null; then
+            # Test if it's actually python3
+            if "$cmd" --version 2>&1 | grep -q "Python 3"; then
+                PYTHON_CMD="$cmd"
+                break
+            fi
+        fi
+    done
+    
+    if [[ -n "$PYTHON_CMD" ]]; then
+        PYTHON_VERSION=$($PYTHON_CMD --version 2>&1 | sed 's/Python //')
         PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
         PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
         
-        # Accept Python 3.8+ (including 3.13)
-        if [[ "$PYTHON_MAJOR" -eq 3 && "$PYTHON_MINOR" -ge 8 ]]; then
+        # Accept Python 3.8+ (including 3.13) - fix comparison for double-digit versions
+        if [[ "$PYTHON_MAJOR" -eq 3 ]] && [[ "$PYTHON_MINOR" -ge 8 ]]; then
             print_green "$SUCCESS (v$PYTHON_VERSION)"
-            export PYTHON_CMD="python3"
+            export PYTHON_CMD="$PYTHON_CMD"
         else
             print_yellow "$WARNING v$PYTHON_VERSION (need 3.8+)"
-            export PYTHON_CMD="python3"
+            export PYTHON_CMD="$PYTHON_CMD"
         fi
     else
         print_red "$ERROR Not installed"
@@ -2679,8 +2692,8 @@ main() {
     # Install Global Agents Bridge
     install_global_agents_bridge
     
-    # Setup Agent Activation System
-    setup_agent_activation
+    # Setup Agent Activation System (disabled - causes terminal crashes)
+    # setup_agent_activation
     
     # Reset progress for completion
     CURRENT_STEP=$TOTAL_STEPS

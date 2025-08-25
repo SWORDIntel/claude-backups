@@ -310,8 +310,8 @@ execute_claude() {
     shift
     local args=("$@")
     
-    # Add permission bypass if enabled
-    if [[ "${PERMISSION_BYPASS:-false}" == "true" ]] && [[ "${args[0]}" != "--safe" ]]; then
+    # Add permission bypass if enabled (default to true)
+    if [[ "${PERMISSION_BYPASS:-true}" == "true" ]] && [[ "${args[0]}" != "--safe" ]]; then
         args=("--dangerously-skip-permissions" "${args[@]}")
     fi
     
