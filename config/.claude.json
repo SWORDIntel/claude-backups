@@ -1030,6 +1030,22 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "remvoe hardcoded paths clean it up it should always be relative and in the current working dir",
+          "pastedContents": {}
+        },
+        {
+          "display": "Does the claude ultimate wrapper source/actvate the venv",
+          "pastedContents": {}
+        },
+        {
+          "display": "update claude.md",
+          "pastedContents": {}
+        },
+        {
+          "display": "And we have symlinked the wrapper already?",
+          "pastedContents": {}
+        },
+        {
           "display": "love it,save this bashrc in the claude-baackups dir in config/ as bashrc.optimal",
           "pastedContents": {}
         },

@@ -215,25 +215,26 @@ fix_yoga_wasm_issue() {
 activate_venv() {
     local venv_paths=(
         "${CLAUDE_VENV:-}"
-        "$HOME/.local/share/claude/venv"
-        "$HOME/Documents/claude-backups/venv"
-        "$HOME/Documents/Claude/venv"
-        "$HOME/.claude-venv"
         "./venv"
         "./.venv"
+        "../venv"
+        "../.venv"
     )
     
     for venv_path in "${venv_paths[@]}"; do
         if [[ -n "$venv_path" ]] && [[ -d "$venv_path" ]] && [[ -f "$venv_path/bin/activate" ]]; then
             log_debug "Activating virtual environment: $venv_path"
             
-            export VIRTUAL_ENV="$venv_path"
-            export PATH="$venv_path/bin:$PATH"
-            export PYTHONPATH="$venv_path/lib/python*/site-packages:${PYTHONPATH:-}"
+            # Use realpath to get absolute path for exports
+            local abs_venv_path="$(realpath "$venv_path" 2>/dev/null || echo "$venv_path")"
+            
+            export VIRTUAL_ENV="$abs_venv_path"
+            export PATH="$abs_venv_path/bin:$PATH"
+            export PYTHONPATH="$abs_venv_path/lib/python*/site-packages:${PYTHONPATH:-}"
             unset PYTHONHOME
             
             export CLAUDE_VENV_ACTIVATED="true"
-            export CLAUDE_VENV_PATH="$venv_path"
+            export CLAUDE_VENV_PATH="$abs_venv_path"
             
             return 0
         fi

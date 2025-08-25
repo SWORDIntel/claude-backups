@@ -7,13 +7,14 @@
 **Purpose**: Hardware-aware multi-agent orchestration system with Tandem Orchestration, optimized for Intel Meteor Lake architecture  
 **Status**: PRODUCTION  
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)  
-**Latest Feature**: Enhanced ML Learning System v3.1 with PostgreSQL 16/17 Universal Compatibility  
+**Latest Feature**: Claude Ultimate Wrapper v13.1 with Automatic Agent Registration  
 **Database**: PostgreSQL 16/17 with pgvector extension, enhanced JSON, VACUUM improvements, and ML learning capabilities  
-**Agent Count**: 65 specialized agents (expanded from 57) - Counter-Intelligence & Cognitive Defense Integration Complete
+**Agent Count**: 71 specialized agents detected in agents/ directory (includes documentation and templates)  
+**Wrapper Version**: claude-wrapper-ultimate.sh v13.1 (symlinked installation)
 
 ## System Architecture
 
-This is a comprehensive agent-based system with **65 specialized agents** that can autonomously coordinate via Claude Code's Task tool and the advanced Tandem Orchestration System. All agents follow the v7.0 template standard and are optimized for Intel Meteor Lake CPUs with dual-layer Python/C execution capabilities.
+This is a comprehensive agent-based system with **71 agent files in the agents/ directory** (69 specialized agents plus templates/docs) that can autonomously coordinate via Claude Code's Task tool and the advanced Tandem Orchestration System. All agents follow the v7.0 template standard and are optimized for Intel Meteor Lake CPUs with dual-layer Python/C execution capabilities.
 
 ### Key Features
 - **Hardware-Aware Execution**: Optimized for Intel Core Ultra 7 155H (Meteor Lake)
@@ -29,8 +30,48 @@ This is a comprehensive agent-based system with **65 specialized agents** that c
 - **Professional Organization**: Clean directory structure with database/, agents/, docs/, orchestration/
 - **Counter-Intelligence Integration**: 99.99% surveillance evasion with Five Eyes/NATO defense capabilities
 - **Cognitive Defense**: 99.94% manipulation detection with deprogramming protocols
+- **Claude Ultimate Wrapper v13.1**: Automatic agent discovery and registration with enhanced error recovery
 
-## Agent Ecosystem (65 Agents)
+## Claude Ultimate Wrapper v13.1
+
+The `claude-wrapper-ultimate.sh` is an enhanced wrapper that provides:
+
+### Features
+- **Automatic Agent Registration**: Discovers and registers all 71 agents from `agents/` directory
+- **Intelligent Path Discovery**: Finds agents relative to script location (symlink-aware)
+- **Agent Metadata Extraction**: Extracts category, description, UUID, tools from agent files
+- **Status Classification**: Categorizes agents as active/template/stub based on completeness
+- **JSON Registry Cache**: Maintains cached registry for performance
+- **Error Recovery**: Automatic yoga.wasm issue detection and recovery
+- **Virtual Environment Support**: Automatic venv activation if available
+- **Permission Bypass**: Built-in `--dangerously-skip-permissions` for LiveCD compatibility
+- **Banner Suppression**: Clean output without verbose headers
+
+### Installation
+```bash
+# Symlink installation (preserves agent discovery)
+ln -sf /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh /home/ubuntu/.local/bin/claude
+chmod +x /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh
+```
+
+### Commands
+- `claude --help` - Show comprehensive help
+- `claude --status` - System status with agent registry info
+- `claude --agents` or `claude agents` - List all available agents by category
+- `claude --register-agents` - Manually refresh agent registry
+- `claude --agent <name>` or `claude agent <name>` - Run specific agent
+- `claude --agent-info <name>` - Show detailed agent information
+- `claude --fix` - Auto-detect and fix issues
+- `claude --safe` - Run without permission bypass
+
+### Agent Discovery
+The wrapper automatically finds agents in:
+1. `$CLAUDE_PROJECT_ROOT/agents` (if project root detected)
+2. Script directory + `/agents` (follows symlinks)
+3. Current directory + `/agents`
+4. Fallback to `$HOME/agents`
+
+## Agent Ecosystem (71 Files, 69 Active Agents)
 
 ### Command & Control (2 agents)
 - **Director**: Strategic command and control (CRITICAL)
@@ -113,6 +154,25 @@ This is a comprehensive agent-based system with **65 specialized agents** that c
 ### Quality & Oversight (2 agents)
 - **Oversight**: Quality assurance and compliance
 - **Integration**: System integration specialist
+
+### Additional Agents Found in agents/ Directory
+The following additional agents were detected (71 total files):
+- **APT41-Defense-Agent**: APT41 defense specialist
+- **APT41-RedTeam-Agent**: APT41 red team simulator
+- **BGP-Blue-Team**: BGP blue team operations
+- **BGP-Red-Team**: BGP red team operations
+- **Carbon-Internal-Agent**: Carbon analysis specialist
+- **ClaudeCode-PromptInjector**: Prompt injection testing
+- **CPP-Internal-Agent**: C++ development specialist
+- **Ghost-Protocol-Agent**: Counter-intelligence operations
+- **Prompt-Defender**: Prompt defense mechanisms
+- **Prompt-Injector**: Prompt injection testing
+- **PsyOps-Agent**: Psychological operations
+- **Wrapper-Liberation**: Wrapper liberation tools
+- **Wrapper-Liberation-Pro**: Advanced wrapper liberation
+- **Zig-Internal-Agent**: Zig language specialist
+- **Template.md**: Agent template for new agents
+- **WHERE_I_AM.md**: Documentation file
 
 ## Tandem Orchestration System
 
@@ -937,7 +997,23 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ## Recent Updates
 
-### ML Learning System v3.1 with PostgreSQL 16/17 Compatibility (2025-08-24) 🚀 LATEST
+### Claude Ultimate Wrapper v13.1 Installation (2025-08-25) 🚀 LATEST
+- **Enhanced Wrapper**: claude-wrapper-ultimate.sh v13.1 with automatic agent registration
+- **71 Agents Detected**: Complete agent discovery from agents/ directory
+- **Symlink Installation**: Preserves agent discovery by maintaining directory relationships
+- **Automatic Registration**: JSON-based registry with metadata extraction
+- **Installer Updated**: claude-installer.sh now uses symlinks instead of copying
+- **Global Command**: Available as `claude` command with full feature set
+- **Key Features**:
+  - Automatic agent discovery and registration
+  - Intelligent path detection (follows symlinks)
+  - Agent status classification (active/template/stub)
+  - Enhanced error recovery and yoga.wasm fixes
+  - Permission bypass for LiveCD compatibility
+  - Virtual environment auto-activation
+- **Status**: PRODUCTION READY - All 71 agents accessible
+
+### ML Learning System v3.1 with PostgreSQL 16/17 Compatibility (2025-08-24)
 - **Universal Database Compatibility**: Full PostgreSQL 16 and 17 support with automatic version detection
 - **Schema Evolution**: Learning system v3.1 with ML features and drift prevention
 - **SQL-Internal Agent**: New elite SQL specialist with 100K+ QPS capability
