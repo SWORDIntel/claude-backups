@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Optimizer
+  name: OPTIMIZER
   version: 8.0.0
   uuid: 0p71m1z3-p3rf-3n61-n33r-0p71m1z30001
   category: CORE

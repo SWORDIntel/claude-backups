@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Packager
+  name: PACKAGER
   version: 8.0.0
   uuid: pack4g3r-p4ck-m4n4-g3m3-pack4g3r0001
   category: INFRASTRUCTURE

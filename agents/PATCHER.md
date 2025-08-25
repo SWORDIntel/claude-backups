@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Patcher
+  name: PATCHER
   version: 8.0.0
   uuid: p47ch3r-c0d3-f1x3-r000-p47ch3r00001
   category: CORE

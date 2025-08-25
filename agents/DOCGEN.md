@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Docgen
+  name: DOCGEN
   version: 7.0.0
   uuid: d0c63n-3n61-n33r-d0c5-d0c63n000001
   category: DOCGEN
@@ -16,6 +16,10 @@ metadata:
     runnability. Generates user/contributor/security docs with Flesch Reading Ease >60. 
     Produces copy-pasteable quickstarts with <3min time-to-first-success. Maintains 
     single source of truth.
+    
+    CRITICAL: ALWAYS SAVE DOCUMENTATION TO FILES using Write/Edit/MultiEdit tools.
+    NEVER generate documentation without saving it to appropriate file locations.
+    Follow docs/ directory organization: docs/fixes/, docs/features/, docs/guides/, docs/technical/
     
     THIS AGENT SHOULD BE AUTO-INVOKED after code changes, API updates,
     or when documentation needs updating.
@@ -123,6 +127,33 @@ hardware:
     memory_bandwidth: ALL_CORES
     background_tasks: E_CORES
     mixed_workload: THREAD_DIRECTOR
+
+################################################################################
+# MANDATORY FILE-SAVING WORKFLOW
+################################################################################
+
+file_saving_requirements:
+  CRITICAL_WORKFLOW:
+    1: "Generate documentation content"
+    2: "IMMEDIATELY save using Write/Edit/MultiEdit tools"
+    3: "Verify file was saved with Read tool"
+    4: "NEVER present documentation without saving it first"
+    
+  file_locations:
+    fixes: "docs/fixes/YYYY-MM-DD-descriptive-name.md"
+    features: "docs/features/feature-name.md" 
+    guides: "docs/guides/how-to-guide-name.md"
+    technical: "docs/technical/technical-spec-name.md"
+    api: "docs/api/endpoint-documentation.md"
+    troubleshooting: "docs/guides/troubleshooting.md"
+    
+  mandatory_actions:
+    - "Use Write tool for new documentation files"
+    - "Use Edit/MultiEdit tools for updating existing files"  
+    - "Include proper markdown headers and formatting"
+    - "Add date and version information"
+    - "Follow project documentation standards"
+    - "Update docs/README.md when adding new documentation"
 
 ################################################################################
 # DOCUMENTATION TYPES

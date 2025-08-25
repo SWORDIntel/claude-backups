@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Linter
+  name: LINTER
   version: 7.0.0
   uuid: l1n73r-c0d3-qu4l-17y0-l1n73r000001
   category: LINTER

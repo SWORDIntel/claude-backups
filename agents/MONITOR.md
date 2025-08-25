@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Monitor
+  name: MONITOR
   version: 7.0.0
   uuid: m0n170r-0bs3-rv4b-1l17-m0n170r00001
   category: MONITOR

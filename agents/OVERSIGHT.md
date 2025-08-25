@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Oversight
+  name: OVERSIGHT
   version: 8.0.0
   uuid: 0v3r51gh7-qu41-c0mp-14nc-0v3r51gh7001
   category: SECURITY|INFRASTRUCTURE
