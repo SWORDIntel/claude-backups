@@ -1991,11 +1991,50 @@ validate_agents() {
     show_progress
 }
 
+# Modular call to wrapper integration installer
+call_wrapper_integration() {
+    local wrapper_installer="$PROJECT_ROOT/installers/install-wrapper-integration.sh"
+    
+    # Check if wrapper integration installer exists
+    if [[ ! -f "$wrapper_installer" ]]; then
+        warning "Wrapper integration installer not found: $wrapper_installer"
+        return 1
+    fi
+    
+    # Set up environment variables for the modular installer
+    export CALLER_PROJECT_ROOT="$PROJECT_ROOT"
+    export CALLER_LOCAL_BIN="$LOCAL_BIN"
+    export CALLER_LOG_FILE="$LOG_FILE"
+    export CALLER_INSTALLATION_MODE="$INSTALLATION_MODE"
+    
+    info "Running modular wrapper integration installer..."
+    
+    # Execute the modular installer with proper error handling
+    if bash "$wrapper_installer" --quiet 2>&1 | tee -a "$LOG_FILE" >/dev/null; then
+        success "Wrapper integration system installed successfully"
+        info "  • Professional wrapper system active"
+        info "  • AI orchestration capabilities enabled"
+        info "  • Enhanced bash output handling configured"
+        info "  • Seamless fallback systems ready"
+        return 0
+    else
+        warning "Wrapper integration failed, falling back to legacy wrapper"
+        return 1
+    fi
+}
+
 # 7. Create wrapper
 create_wrapper() {
     print_section "Creating Enhanced Claude Wrapper"
     
     force_mkdir "$LOCAL_BIN"
+    
+    # NEW: Default wrapper integration as first priority
+    info "Installing wrapper integration system..."
+    if call_wrapper_integration; then
+        show_progress
+        return
+    fi
     
     # Check for ultimate wrapper first, then enhanced wrapper
     if [[ -f "$PROJECT_ROOT/claude-wrapper-ultimate.sh" ]]; then

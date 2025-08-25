@@ -31,7 +31,8 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(do if ! grep -q \"Task.*MANDATORY\" \"$file\")",
-      "Bash(then echo \"Missing Task tool: $file\")"
+      "Bash(then echo \"Missing Task tool: $file\")",
+      "Bash(mv:*)"
     ],
     "additionalDirectories": [
       "/home/ubuntu/Downloads",
