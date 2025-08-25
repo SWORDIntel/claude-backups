@@ -22,7 +22,7 @@
     "custom-commands": 28,
     "ide-upsell-external-terminal": 28
   },
-  "promptQueueUseCount": 44,
+  "promptQueueUseCount": 45,
   "firstStartTime": "2025-08-23T16:03:36.613Z",
   "userID": "8db731192f4311ad7639f124a66270818c5b284fe1cee5ee89dd4b317d2b6314",
   "projects": {
@@ -1029,6 +1029,18 @@
     "/home/ubuntu/Downloads/claude-backups": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "what does the agent tool report avaalble",
+          "pastedContents": {}
+        },
+        {
+          "display": "Update agent-invocation-patterns.yaml now with the new agents we have",
+          "pastedContents": {}
+        },
+        {
+          "display": "Ensure claude-installer.sh adds this alias to bashrc",
+          "pastedContents": {}
+        },
         {
           "display": "this approach is working",
           "pastedContents": {}

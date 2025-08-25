@@ -1,6 +1,6 @@
 # Agent Invocation Patterns for Semantic Matching
 # Updated from CLAUDE.MD v7.0 - Comprehensive Auto-Invocation Guide
-# Total Agents: 57 (excluding WHERE_I_AM and TEMPLATE)
+# Total Agents: 70 (expanded agent ecosystem)
 
 agents:
   # COMMAND & CONTROL (2)
@@ -32,7 +32,7 @@ agents:
     semantic_groups: ["coordination", "orchestration", "workflow"]
     priority: "high"
 
-  # SECURITY SPECIALISTS (11)
+  # SECURITY SPECIALISTS (13)
   security:
     patterns:
       - "secure"
@@ -141,6 +141,16 @@ agents:
       - "supply chain security"
     semantic_groups: ["security", "apt_defense", "nation_state"]
     
+  apt41-redteam-agent:
+    patterns:
+      - "APT41"
+      - "advanced persistent threat simulation"
+      - "APT simulation"
+      - "nation-state simulation"
+      - "sophisticated attack"
+      - "APT41 tactics"
+    semantic_groups: ["security", "apt_simulation", "red_team"]
+    
   nsa:
     patterns:
       - "intelligence"
@@ -164,6 +174,26 @@ agents:
       - "counter-narrative"
       - "influence campaign"
     semantic_groups: ["security", "psyops", "influence"]
+
+  ghost_protocol_agent:
+    patterns:
+      - "counter-intelligence"
+      - "anti-surveillance"
+      - "surveillance evasion"
+      - "ghost protocol"
+      - "intelligence operations"
+      - "covert operations"
+    semantic_groups: ["security", "counter_intelligence", "covert"]
+
+  cognitive_defense_agent:
+    patterns:
+      - "cognitive warfare"
+      - "manipulation detection"
+      - "psychological defense"
+      - "cognitive security"
+      - "mental manipulation"
+      - "psychological operations defense"
+    semantic_groups: ["security", "cognitive_defense", "psychological"]
 
   # CORE DEVELOPMENT (8)
   architect:
@@ -367,7 +397,7 @@ agents:
       - "proxmox configuration"
     semantic_groups: ["virtualization", "vms", "hypervisor"]
 
-  # LANGUAGE-SPECIFIC (8)
+  # LANGUAGE-SPECIFIC DEVELOPMENT (8)
   c-internal:
     patterns:
       - "C"
@@ -478,6 +508,36 @@ agents:
       - "CPU instructions"
     semantic_groups: ["assembly", "low_level", "optimization"]
 
+  # ADDITIONAL LANGUAGE AGENTS
+  cpp_internal_agent:
+    patterns:
+      - "C++"
+      - "cpp"
+      - "templates"
+      - "STL"
+      - "boost"
+      - "modern cpp"
+      - "C++17"
+      - "C++20"
+    semantic_groups: ["cpp", "systems", "templates"]
+
+  carbon-internal-agent:
+    patterns:
+      - "Carbon"
+      - "carbon language"
+      - "google carbon"
+      - "carbon programming"
+    semantic_groups: ["carbon", "google", "experimental"]
+
+  zig-internal-agent:
+    patterns:
+      - "Zig"
+      - "zig language"
+      - "comptime"
+      - "zig build"
+      - "systems programming zig"
+    semantic_groups: ["zig", "systems", "comptime"]
+
   # SPECIALIZED PLATFORMS (7)
   apidesigner:
     patterns:
@@ -507,6 +567,18 @@ agents:
       - "schema creation"
       - "migration"
     semantic_groups: ["database", "data", "sql"]
+
+  sql-internal-agent:
+    patterns:
+      - "SQL optimization"
+      - "query performance"
+      - "database tuning"
+      - "index optimization"
+      - "PostgreSQL performance"
+      - "MySQL optimization"
+      - "complex queries"
+      - "100K QPS"
+    semantic_groups: ["sql", "database_optimization", "performance"]
     
   web:
     patterns:
@@ -573,7 +645,7 @@ agents:
       - "CLI tool"
     semantic_groups: ["terminal_ui", "cli", "console"]
 
-  # DATA & ML (3)
+  # DATA & ML (4)
   datascience:
     patterns:
       - "data science"
@@ -638,6 +710,24 @@ agents:
       - "routing security"
       - "AS peering"
     semantic_groups: ["bgp", "routing", "network_security"]
+
+  bgp-blue-team:
+    patterns:
+      - "BGP defense"
+      - "route protection"
+      - "BGP monitoring"
+      - "routing anomaly detection"
+      - "BGP security monitoring"
+    semantic_groups: ["bgp", "defense", "monitoring"]
+
+  bgp-red-team:
+    patterns:
+      - "BGP attack"
+      - "route hijacking"
+      - "BGP manipulation"
+      - "routing attack simulation"
+      - "BGP penetration testing"
+    semantic_groups: ["bgp", "offensive", "simulation"]
     
   iot-access-control-agent:
     patterns:
@@ -751,6 +841,47 @@ agents:
       - "interface design"
     semantic_groups: ["integration", "coordination", "interfaces"]
 
+  # SPECIALIZED AGENTS
+  prompt-defender:
+    patterns:
+      - "prompt injection"
+      - "prompt defense"
+      - "AI safety"
+      - "prompt security"
+      - "injection defense"
+    semantic_groups: ["ai_security", "prompt_defense"]
+
+  prompt-injector:
+    patterns:
+      - "prompt injection testing"
+      - "AI vulnerability testing"
+      - "prompt manipulation"
+      - "AI red team"
+    semantic_groups: ["ai_testing", "prompt_injection"]
+
+  claudecode-promptinjector:
+    patterns:
+      - "Claude Code prompt injection"
+      - "Claude specific injection"
+      - "Claude Code vulnerability"
+    semantic_groups: ["claude_security", "specific_injection"]
+
+  wrapper-liberation:
+    patterns:
+      - "wrapper bypass"
+      - "system liberation"
+      - "constraint removal"
+      - "wrapper circumvention"
+    semantic_groups: ["wrapper_bypass", "liberation"]
+
+  wrapper-liberation-pro:
+    patterns:
+      - "advanced wrapper bypass"
+      - "professional liberation"
+      - "enterprise wrapper bypass"
+      - "advanced constraint removal"
+    semantic_groups: ["advanced_bypass", "professional_liberation"]
+
 # Semantic groups for cross-agent matching
 semantic_groups:
   creation:
@@ -763,11 +894,11 @@ semantic_groups:
     
   security:
     related: ["auditing", "vulnerability", "protection", "hardening"]
-    agents: ["cso", "security", "securityauditor", "bastion", "cryptoexpert"]
+    agents: ["cso", "security", "securityauditor", "bastion", "cryptoexpert", "ghost_protocol_agent", "cognitive_defense_agent"]
     
   performance:
     related: ["optimization", "speed", "efficiency", "profiling"]
-    agents: ["optimizer", "monitor", "leadengineer"]
+    agents: ["optimizer", "monitor", "leadengineer", "sql-internal-agent"]
     
   deployment:
     related: ["release", "production", "publishing", "rollout"]
@@ -779,7 +910,7 @@ semantic_groups:
     
   data_analysis:
     related: ["analytics", "statistics", "insights", "visualization"]
-    agents: ["datascience", "database", "researcher"]
+    agents: ["datascience", "database", "researcher", "sql-internal-agent"]
     
   mobile_development:
     related: ["apps", "ios", "android", "cross_platform"]
@@ -797,6 +928,18 @@ semantic_groups:
     related: ["coordination", "planning", "strategy", "governance"]
     agents: ["director", "projectorchestrator", "planner"]
 
+  language_development:
+    related: ["programming", "compiling", "coding", "development"]
+    agents: ["c-internal", "python-internal", "rust-internal-agent", "go-internal-agent", "java-internal-agent", "typescript-internal-agent", "kotlin-internal-agent", "assembly-internal-agent", "cpp_internal_agent", "carbon-internal-agent", "zig-internal-agent"]
+
+  network_security:
+    related: ["networking", "routing", "security", "monitoring"]
+    agents: ["cisco-agent", "bgp-purple-team-agent", "bgp-blue-team", "bgp-red-team", "iot-access-control-agent"]
+
+  advanced_threats:
+    related: ["apt", "nation_state", "advanced_attacks", "intelligence"]
+    agents: ["apt41-defense-agent", "apt41-redteam-agent", "nsa", "psyops_agent", "ghost_protocol_agent", "cognitive_defense_agent"]
+
 # Compound invocation patterns
 compound_patterns:
   security_audit:
@@ -811,7 +954,7 @@ compound_patterns:
     
   performance_optimization:
     trigger: ["optimize performance", "speed up", "improve performance"]
-    agents: ["optimizer", "monitor", "leadengineer"]
+    agents: ["optimizer", "monitor", "leadengineer", "sql-internal-agent"]
     mode: "parallel"
     
   mobile_app_development:
@@ -840,6 +983,22 @@ compound_patterns:
     agents: ["debugger", "patcher", "testbed", "linter", "deployer"]
     mode: "sequential"
 
+  advanced_threat_response:
+    trigger: ["APT", "nation state attack", "advanced persistent threat"]
+    agents: ["apt41-defense-agent", "cso", "security", "ghost_protocol_agent", "cognitive_defense_agent"]
+    mode: "parallel"
+    priority: "urgent"
+
+  network_security_audit:
+    trigger: ["network security", "routing security", "BGP security"]
+    agents: ["cisco-agent", "bgp-purple-team-agent", "bgp-blue-team", "security"]
+    mode: "parallel"
+
+  database_optimization:
+    trigger: ["database performance", "SQL optimization", "query tuning"]
+    agents: ["database", "sql-internal-agent", "optimizer", "monitor"]
+    mode: "sequential"
+
 # Execution modes
 execution_modes:
   parallel:
@@ -861,8 +1020,8 @@ execution_modes:
 # Priority levels
 priority_levels:
   urgent:
-    agents: ["cso", "security", "patcher"]
-    keywords: ["incident", "breach", "emergency", "critical"]
+    agents: ["cso", "security", "patcher", "apt41-defense-agent", "ghost_protocol_agent"]
+    keywords: ["incident", "breach", "emergency", "critical", "apt", "nation-state"]
     
   high:
     agents: ["director", "projectorchestrator", "architect"]
