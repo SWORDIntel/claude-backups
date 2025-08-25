@@ -1993,6 +1993,12 @@ validate_agents() {
 
 # Modular call to wrapper integration installer
 call_wrapper_integration() {
+    # Check if wrapper integration should be skipped
+    if [[ "$SKIP_WRAPPER_INTEGRATION" == "true" ]]; then
+        info "Wrapper integration skipped per user request"
+        return 1
+    fi
+    
     local wrapper_installer="$PROJECT_ROOT/installers/install-wrapper-integration.sh"
     
     # Check if wrapper integration installer exists
@@ -2013,7 +2019,7 @@ call_wrapper_integration() {
     if bash "$wrapper_installer" --quiet 2>&1 | tee -a "$LOG_FILE" >/dev/null; then
         success "Wrapper integration system installed successfully"
         info "  • Professional wrapper system active"
-        info "  • AI orchestration capabilities enabled"
+        info "  • AI orchestration capabilities enabled" 
         info "  • Enhanced bash output handling configured"
         info "  • Seamless fallback systems ready"
         return 0
@@ -2958,6 +2964,7 @@ parse_arguments() {
     INSTALLATION_MODE="full"
     SKIP_TESTS=false
     VERBOSE=false
+    SKIP_WRAPPER_INTEGRATION=false
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -2977,6 +2984,10 @@ parse_arguments() {
                 SKIP_TESTS=true
                 shift
                 ;;
+            --skip-wrapper-integration)
+                SKIP_WRAPPER_INTEGRATION=true
+                shift
+                ;;
             --verbose|-v)
                 VERBOSE=true
                 shift
@@ -2994,6 +3005,7 @@ parse_arguments() {
                 echo "  --quick, -q       Quick installation with minimal components only"
                 echo "  --custom, -c      Custom installation - choose components"
                 echo "  --skip-tests      Skip validation tests"
+                echo "  --skip-wrapper-integration  Skip wrapper integration system"
                 echo "  --verbose, -v     Show detailed output"
                 echo "  --help, -h        Show this help message"
                 echo ""
