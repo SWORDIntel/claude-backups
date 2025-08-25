@@ -1,0 +1,6 @@
+{
+  "outputStyle": "precision-orchestration",
+  "verbose": true,
+  "autoOrchestration": true,
+  "defaultAgentInvocation": "intelligent"
+}

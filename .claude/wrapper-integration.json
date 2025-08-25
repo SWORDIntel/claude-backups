@@ -1,0 +1,13 @@
+{
+    "integration_version": "2.0",
+    "orchestration_enabled": true,
+    "python_orchestration_dir": "/home/ubuntu/Documents/claude-backups/agents/src/python",
+    "orchestration_dir": "/home/ubuntu/Documents/claude-backups/orchestration",
+    "wrapper_features": {
+        "permission_bypass": true,
+        "agent_discovery": true,
+        "orchestration_bridge": true,
+        "professional_commands": true
+    },
+    "installation_source": "modular_installer"
+}

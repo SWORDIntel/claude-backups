@@ -1,0 +1,22 @@
+[
+  {
+    "content": "Fix ZFSLCD_INITIALIZED unbound variable error",
+    "status": "completed",
+    "activeForm": "Fixing ZFSLCD_INITIALIZED unbound variable error"
+  },
+  {
+    "content": "Test module execution after fix",
+    "status": "completed",
+    "activeForm": "Testing module execution after fix"
+  },
+  {
+    "content": "Monitor full installation run",
+    "status": "completed",
+    "activeForm": "Monitoring full installation run"
+  },
+  {
+    "content": "Fix DNS resolution in chroot",
+    "status": "in_progress",
+    "activeForm": "Fixing DNS resolution in chroot"
+  }
+]

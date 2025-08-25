@@ -1,0 +1,17 @@
+[
+  {
+    "content": "Install arch-chroot infrastructure",
+    "status": "completed",
+    "activeForm": "Installing infrastructure"
+  },
+  {
+    "content": "Execute systematic migration",
+    "status": "in_progress",
+    "activeForm": "Migrating to arch-chroot"
+  },
+  {
+    "content": "Integrate documentation system",
+    "status": "pending",
+    "activeForm": "Integrating documentation"
+  }
+]

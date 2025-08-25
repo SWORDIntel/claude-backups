@@ -3264,3 +3264,15 @@
 2025-08-25 01:37:18.977 UTC [56231] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
 2025-08-25 01:37:21.289 UTC [56253] FATAL:  data directory "/home/ubuntu/Downloads/claude-backups/database/data/postgresql" has invalid permissions
 2025-08-25 01:37:21.289 UTC [56253] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 15:24:23.048 UTC [331182] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 15:24:23.048 UTC [331182] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 15:24:27.303 UTC [331981] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 15:24:27.303 UTC [331981] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 15:24:29.689 UTC [332344] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 15:24:29.689 UTC [332344] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 15:47:37.242 UTC [354871] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 15:47:37.242 UTC [354871] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 15:47:41.488 UTC [354936] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 15:47:41.488 UTC [354936] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 15:47:43.899 UTC [354964] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 15:47:43.899 UTC [354964] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).

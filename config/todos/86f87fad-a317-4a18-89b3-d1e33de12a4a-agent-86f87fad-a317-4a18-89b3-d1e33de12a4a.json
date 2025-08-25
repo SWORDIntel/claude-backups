@@ -1,0 +1,17 @@
+[
+  {
+    "content": "Explore the Docker system in database/ directory",
+    "status": "completed",
+    "activeForm": "Exploring the Docker system in database/ directory"
+  },
+  {
+    "content": "Analyze Docker configurations and compose files",
+    "status": "in_progress",
+    "activeForm": "Analyzing Docker configurations and compose files"
+  },
+  {
+    "content": "Document the Docker database system in docs/",
+    "status": "pending",
+    "activeForm": "Documenting the Docker database system in docs/"
+  }
+]

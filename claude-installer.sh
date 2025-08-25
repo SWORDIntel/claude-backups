@@ -371,6 +371,35 @@ check_prerequisites() {
         print_yellow "$WARNING Low space"
     fi
     
+    # Docker (for containerized database option)
+    printf "  %-20s" "Docker..."
+    if command -v docker &>/dev/null && docker --version &>/dev/null 2>&1; then
+        DOCKER_VERSION=$(docker --version | grep -oE '[0-9]+\.[0-9]+' | head -1)
+        print_green "$SUCCESS (v$DOCKER_VERSION)"
+        export DOCKER_AVAILABLE=true
+    else
+        print_yellow "$WARNING (not available)"
+        export DOCKER_AVAILABLE=false
+    fi
+    
+    # Docker Compose (for containerized database option)
+    printf "  %-20s" "Docker Compose..."
+    if command -v docker-compose &>/dev/null; then
+        COMPOSE_VERSION=$(docker-compose --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -1)
+        print_green "$SUCCESS (v$COMPOSE_VERSION)"
+        export COMPOSE_AVAILABLE=true
+        export COMPOSE_CMD="docker-compose"
+    elif docker compose version &>/dev/null 2>&1; then
+        COMPOSE_VERSION=$(docker compose version | grep -oE '[0-9]+\.[0-9]+' | head -1)
+        print_green "$SUCCESS (built-in v$COMPOSE_VERSION)"
+        export COMPOSE_AVAILABLE=true
+        export COMPOSE_CMD="docker compose"
+    else
+        print_yellow "$WARNING (not available)"
+        export COMPOSE_AVAILABLE=false
+        export COMPOSE_CMD=""
+    fi
+    
     show_progress
 }
 
@@ -1397,10 +1426,452 @@ EOF
     show_progress
 }
 
-# 6.6. Setup database system
-setup_database_system() {
-    print_section "Setting up PostgreSQL Database System"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DOCKER INSTALLATION FUNCTIONS  
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 6.6.0. Install Docker dependencies automatically
+install_docker_dependencies() {
+    print_section "Docker Installation"
     
+    # Skip if not allowed to install system packages
+    if [[ "$ALLOW_SYSTEM_PACKAGES" != "true" ]]; then
+        info "Docker installation requires system package management"
+        info "To enable: run installer with --full or --custom mode"
+        return 1
+    fi
+    
+    # Check if already installed
+    if check_docker_prerequisites_silent; then
+        success "Docker and Docker Compose already installed"
+        return 0
+    fi
+    
+    info "Docker and Docker Compose are required for containerized database deployment"
+    echo "  • Self-contained PostgreSQL 17 with pgvector extension"
+    echo "  • Isolated environment with no system package conflicts"
+    echo "  • Easy backup, restore, and scaling capabilities"
+    echo "  • Comprehensive monitoring with Prometheus"
+    echo ""
+    
+    # Auto-install if we're in automatic mode, otherwise prompt
+    local install_docker=false
+    if [[ "$AUTO_MODE" == "true" ]]; then
+        info "Auto-installing Docker in automatic mode..."
+        install_docker=true
+    else
+        echo "Would you like to install Docker and Docker Compose automatically? [Y/n]"
+        read -r response
+        if [[ -z "$response" ]] || [[ "$response" =~ ^[Yy]$ ]]; then
+            install_docker=true
+        fi
+    fi
+    
+    if [[ "$install_docker" == "true" ]]; then
+        info "Installing Docker and Docker Compose..."
+        
+        # Try the dedicated installer first
+        local DOCKER_INSTALLER="$PROJECT_ROOT/database/docker/install-docker.sh"
+        if [[ -f "$DOCKER_INSTALLER" ]]; then
+            chmod +x "$DOCKER_INSTALLER"
+            if "$DOCKER_INSTALLER"; then
+                success "Docker installation completed via dedicated installer"
+                # Re-check prerequisites to update environment variables
+                if check_docker_prerequisites_silent; then
+                    export DOCKER_AVAILABLE=true
+                    export COMPOSE_AVAILABLE=true
+                    return 0
+                fi
+            else
+                warning "Dedicated installer failed, trying manual installation..."
+            fi
+        fi
+        
+        # Fallback to manual installation
+        if install_docker_manual; then
+            success "Docker installed successfully"
+            export DOCKER_AVAILABLE=true
+            export COMPOSE_AVAILABLE=true
+            return 0
+        else
+            error "Docker installation failed"
+            return 1
+        fi
+    else
+        info "Skipping Docker installation"
+        info "Manual installation: curl -fsSL https://get.docker.com | sh"
+        return 1
+    fi
+}
+
+# Manual Docker installation with OS detection
+install_docker_manual() {
+    info "Installing Docker manually with OS detection..."
+    
+    # Detect OS
+    if [[ -f /etc/os-release ]]; then
+        source /etc/os-release
+        local OS_ID=$ID
+        local OS_VERSION=$VERSION_ID
+    else
+        warning "Cannot detect OS, using generic installation"
+        OS_ID="unknown"
+    fi
+    
+    case "$OS_ID" in
+        ubuntu|debian)
+            install_docker_debian_ubuntu
+            ;;
+        centos|rhel|fedora)
+            install_docker_redhat
+            ;;
+        arch)
+            install_docker_arch
+            ;;
+        *)
+            install_docker_generic
+            ;;
+    esac
+    
+    # Post-installation setup
+    setup_docker_service
+    return $?
+}
+
+# Install Docker on Debian/Ubuntu
+install_docker_debian_ubuntu() {
+    info "Installing Docker on Debian/Ubuntu..."
+    
+    # Update package index
+    sudo apt-get update -qq
+    
+    # Install prerequisites
+    sudo apt-get install -y -qq \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release \
+        apt-transport-https \
+        software-properties-common
+    
+    # Add Docker's official GPG key
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/${OS_ID}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    
+    # Add Docker repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${OS_ID} $(lsb_release -cs) stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Update package index with new repository
+    sudo apt-get update -qq
+    
+    # Install Docker Engine and Compose
+    sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    
+    # Install standalone docker-compose for compatibility
+    install_docker_compose_standalone
+}
+
+# Install Docker on RHEL/CentOS/Fedora
+install_docker_redhat() {
+    info "Installing Docker on RHEL/CentOS/Fedora..."
+    
+    if command -v dnf >/dev/null 2>&1; then
+        sudo dnf update -y -q
+        sudo dnf install -y -q dnf-plugins-core
+        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+        sudo dnf install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    else
+        sudo yum update -y -q
+        sudo yum install -y -q yum-utils
+        sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        sudo yum install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    fi
+    
+    install_docker_compose_standalone
+}
+
+# Install Docker on Arch Linux
+install_docker_arch() {
+    info "Installing Docker on Arch Linux..."
+    sudo pacman -Syu --noconfirm --quiet
+    sudo pacman -S --noconfirm --quiet docker docker-compose
+}
+
+# Generic Docker installation
+install_docker_generic() {
+    warning "Using generic Docker installation method"
+    
+    # Try snap first
+    if command -v snap >/dev/null 2>&1; then
+        info "Installing Docker via snap..."
+        sudo snap install docker
+        return 0
+    fi
+    
+    # Try Docker's convenience script
+    info "Using Docker convenience script..."
+    curl -fsSL https://get.docker.com | sh
+    
+    install_docker_compose_standalone
+}
+
+# Install standalone docker-compose for compatibility
+install_docker_compose_standalone() {
+    info "Installing standalone docker-compose..."
+    
+    local COMPOSE_VERSION
+    COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d'"' -f4)
+    
+    if [[ -n "$COMPOSE_VERSION" ]]; then
+        sudo curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" \
+            -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+    else
+        warning "Could not determine latest docker-compose version"
+    fi
+}
+
+# Setup Docker service and user permissions
+setup_docker_service() {
+    info "Setting up Docker service and permissions..."
+    
+    # Start and enable Docker service
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    
+    # Add user to docker group
+    sudo usermod -aG docker "$USER"
+    
+    # Test Docker installation (using sudo for immediate test)
+    if sudo docker run --rm hello-world >/dev/null 2>&1; then
+        success "Docker installation test passed"
+    else
+        warning "Docker installation test failed, but Docker appears to be installed"
+    fi
+    
+    # Set environment variables for current session
+    export DOCKER_AVAILABLE=true
+    
+    # Test Docker Compose
+    if command -v docker-compose >/dev/null 2>&1; then
+        local COMPOSE_VERSION
+        COMPOSE_VERSION=$(docker-compose --version 2>/dev/null | cut -d' ' -f3 | cut -d',' -f1)
+        export COMPOSE_AVAILABLE=true
+        export COMPOSE_CMD="docker-compose"
+        success "Docker Compose available: $COMPOSE_VERSION"
+    elif docker compose version >/dev/null 2>&1; then
+        local COMPOSE_VERSION
+        COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "v2+")
+        export COMPOSE_AVAILABLE=true
+        export COMPOSE_CMD="docker compose"
+        success "Docker Compose plugin available: $COMPOSE_VERSION"
+    else
+        warning "Docker Compose not available after installation"
+        export COMPOSE_AVAILABLE=false
+        export COMPOSE_CMD=""
+    fi
+    
+    warning "IMPORTANT: You may need to logout and login again (or run 'newgrp docker')"
+    warning "for the docker group membership to take effect."
+    
+    return 0
+}
+
+# 6.6.1. Check Docker prerequisites (silent version for internal use)
+check_docker_prerequisites_silent() {
+    local docker_available=false
+    local compose_available=false
+    
+    # Check Docker installation
+    if command -v docker >/dev/null 2>&1; then
+        if docker --version >/dev/null 2>&1; then
+            docker_available=true
+        fi
+    fi
+    
+    # Check Docker Compose installation
+    if command -v docker-compose >/dev/null 2>&1; then
+        compose_available=true
+    elif docker compose version >/dev/null 2>&1; then
+        compose_available=true
+    fi
+    
+    # Return status
+    if [[ "$docker_available" == "true" && "$compose_available" == "true" ]]; then
+        return 0  # Both available
+    else
+        return 1  # Missing components
+    fi
+}
+
+# 6.6.1. Check Docker prerequisites (verbose version for user display)
+check_docker_prerequisites() {
+    local docker_available=false
+    local compose_available=false
+    
+    # Check Docker installation
+    if command -v docker >/dev/null 2>&1; then
+        if docker --version >/dev/null 2>&1; then
+            docker_available=true
+            local DOCKER_VERSION=$(docker --version | cut -d' ' -f3 | cut -d',' -f1)
+            info "Docker $DOCKER_VERSION detected"
+        fi
+    fi
+    
+    # Check Docker Compose installation
+    if command -v docker-compose >/dev/null 2>&1; then
+        compose_available=true
+        local COMPOSE_VERSION=$(docker-compose --version | cut -d' ' -f3 | cut -d',' -f1)
+        info "Docker Compose $COMPOSE_VERSION detected"
+    elif docker compose version >/dev/null 2>&1; then
+        compose_available=true
+        local COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "v2+")
+        info "Docker Compose plugin $COMPOSE_VERSION detected"
+    fi
+    
+    # Return status
+    if [[ "$docker_available" == "true" && "$compose_available" == "true" ]]; then
+        return 0  # Both available
+    else
+        return 1  # Missing components
+    fi
+}
+
+
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DOCKER DATABASE INTEGRATION FUNCTIONS  
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Choose database deployment method
+choose_database_deployment() {
+    echo ""
+    print_section "Database Deployment Options"
+    
+    echo "Choose how to deploy the PostgreSQL database and learning system:"
+    echo ""
+    echo "1) Docker Container (Recommended)"
+    echo "   - Self-contained environment with zero conflicts"
+    echo "   - PostgreSQL 16 + pgvector extension pre-configured"
+    echo "   - Python Learning System + Agent Bridge included"
+    echo "   - One-command startup and teardown"
+    echo ""
+    echo "2) Native Installation"
+    echo "   - Traditional PostgreSQL installation"
+    echo "   - System package dependencies"
+    echo ""
+    echo "3) Skip Database Setup"
+    echo "   - No database installation"
+    echo "   - Limited agent capabilities"
+    echo ""
+    
+    while true; do
+        printf "Select deployment method [1-3]: "
+        read -r choice
+        
+        case "$choice" in
+            1)
+                if [[ "$DOCKER_AVAILABLE" == "true" ]] && [[ "$COMPOSE_AVAILABLE" == "true" ]]; then
+                    export DATABASE_DEPLOYMENT_METHOD="docker"
+                    return 0
+                else
+                    warning "Docker not available. Using native installation."
+                    export DATABASE_DEPLOYMENT_METHOD="native"
+                    return 0
+                fi
+                ;;
+            2)
+                export DATABASE_DEPLOYMENT_METHOD="native"
+                return 0
+                ;;
+            3)
+                export DATABASE_DEPLOYMENT_METHOD="skip"
+                return 0
+                ;;
+            *)
+                warning "Invalid choice. Please select 1, 2, or 3."
+                ;;
+        esac
+    done
+}
+
+# Setup Docker-based database and learning system
+setup_docker_database() {
+    print_section "Setting up Docker Database System"
+    
+    local ENV_FILE="$PROJECT_ROOT/.env"
+    
+    # Check for docker-compose.yml
+    if [[ ! -f "$PROJECT_ROOT/docker-compose.yml" ]]; then
+        error "docker-compose.yml not found in project root"
+        return 1
+    fi
+    
+    # Create secure environment file if needed
+    if [[ ! -f "$ENV_FILE" ]]; then
+        info "Creating secure environment configuration..."
+        if command -v openssl &>/dev/null; then
+            POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        else
+            POSTGRES_PASSWORD="claude_secure_$(date +%s)_$(( RANDOM % 9999 ))"
+        fi
+        
+        cat > "$ENV_FILE" << EOF
+# Claude Agent Framework - Docker Environment
+POSTGRES_USER=claude_agent
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+POSTGRES_DB=claude_agents_auth
+POSTGRES_EXTERNAL_PORT=5433
+LEARNING_API_PORT=8080
+AGENT_BRIDGE_PORT=8081
+PROMETHEUS_PORT=9091
+POSTGRES_MAX_CONNECTIONS=200
+POSTGRES_SHARED_BUFFERS=256MB
+EOF
+        success "Environment file created"
+    fi
+    
+    # Start Docker services
+    info "Starting Docker services (this may take a few minutes)..."
+    cd "$PROJECT_ROOT"
+    
+    if $COMPOSE_CMD down --remove-orphans 2>/dev/null && $COMPOSE_CMD up -d --build; then
+        success "Docker services started successfully"
+        
+        # Wait for services to be healthy
+        info "Waiting for services to become healthy..."
+        local max_wait=60
+        local wait_time=0
+        
+        while [[ $wait_time -lt $max_wait ]]; do
+            if curl -sf http://localhost:8080/health >/dev/null 2>&1 && \
+               curl -sf http://localhost:8081/health >/dev/null 2>&1; then
+                success "All services are healthy and running"
+                break
+            fi
+            printf "."
+            sleep 3
+            wait_time=$((wait_time + 3))
+        done
+        
+        echo ""
+        info "Docker services running:"
+        echo "  • PostgreSQL 16: localhost:5433"
+        echo "  • Learning API: http://localhost:8080/docs"
+        echo "  • Agent Bridge: http://localhost:8081/docs"
+        echo "  • Management: docker-compose ps"
+    else
+        warning "Docker services failed to start - continuing with limited functionality"
+    fi
+    
+    show_progress
+    return 0
+}
+
+# 6.6. Setup database system (routing function)
+setup_database_system() {
     local DB_DIR="$PROJECT_ROOT/database"
     
     if [[ ! -d "$DB_DIR" ]]; then
@@ -1408,6 +1879,73 @@ setup_database_system() {
         show_progress
         return
     fi
+    
+    # First, try to install Docker automatically if needed
+    local docker_install_attempted=false
+    
+    # Check if Docker is not available but we want to offer containerized deployment
+    if [[ "$DOCKER_AVAILABLE" != "true" ]] || [[ "$COMPOSE_AVAILABLE" != "true" ]]; then
+        # Check if we have docker-compose.yml indicating Docker support
+        if [[ -f "$PROJECT_ROOT/docker-compose.yml" ]] && [[ "$ALLOW_SYSTEM_PACKAGES" == "true" ]]; then
+            info "Docker containerization is available but Docker is not installed"
+            
+            # Attempt automatic Docker installation
+            if install_docker_dependencies; then
+                docker_install_attempted=true
+                # Re-check Docker availability after installation
+                if check_docker_prerequisites_silent; then
+                    export DOCKER_AVAILABLE=true
+                    export COMPOSE_AVAILABLE=true
+                    # Set compose command based on what's available
+                    if command -v docker-compose >/dev/null 2>&1; then
+                        export COMPOSE_CMD="docker-compose"
+                    elif docker compose version >/dev/null 2>&1; then
+                        export COMPOSE_CMD="docker compose"
+                    fi
+                fi
+            else
+                warning "Docker installation skipped or failed"
+            fi
+        fi
+    fi
+    
+    # Now check if Docker is available and offer choice
+    if [[ "$DOCKER_AVAILABLE" == "true" ]] && [[ "$COMPOSE_AVAILABLE" == "true" ]] && [[ -f "$PROJECT_ROOT/docker-compose.yml" ]]; then
+        choose_database_deployment
+        
+        case "$DATABASE_DEPLOYMENT_METHOD" in
+            "docker")
+                setup_docker_database
+                return
+                ;;
+            "native")
+                # Fall through to native setup
+                ;;
+            "skip")
+                info "Database setup skipped as requested"
+                show_progress
+                return
+                ;;
+        esac
+    else
+        if [[ "$docker_install_attempted" == "true" ]]; then
+            warning "Docker installation completed but containers are not available in current session"
+            info "You may need to logout/login or run 'newgrp docker' for Docker group membership"
+            info "Falling back to native PostgreSQL installation for now"
+        else
+            info "Docker not available, using native PostgreSQL installation"
+        fi
+    fi
+    
+    # Native database setup (original implementation)
+    setup_native_database
+}
+
+# 6.6.5. Setup native database (original implementation)
+setup_native_database() {
+    print_section "Setting up Native PostgreSQL Database"
+    
+    local DB_DIR="$PROJECT_ROOT/database"
     
     # Make scripts executable
     chmod +x "$DB_DIR"/*.sh 2>/dev/null
@@ -1423,15 +1961,13 @@ setup_database_system() {
             sudo apt-get update 2>/dev/null
             sudo apt-get install -y postgresql postgresql-client postgresql-contrib redis-server 2>/dev/null || {
                 warning "Failed to install PostgreSQL/Redis - continuing without database"
-                show_progress
-                return
+                return 1
             }
             success "PostgreSQL and Redis installed"
         else
             warning "PostgreSQL not installed - database features will be limited"
             info "Install with: sudo apt-get install postgresql postgresql-client redis-server"
-            show_progress
-            return
+            return 1
         fi
     fi
     
@@ -1477,7 +2013,7 @@ setup_database_system() {
     # Setup database using manage_database.sh
     if [[ -f "$DB_DIR/manage_database.sh" ]]; then
         info "Setting up Claude authentication database..."
-        cd "$DB_DIR" || return
+        cd "$DB_DIR" || return 1
         
         # Initialize and setup database
         bash ./manage_database.sh setup 2>&1 | while read line; do
@@ -1542,9 +2078,8 @@ setup_database_system() {
         bash "$DB_DIR/scripts/learning_sync.sh" setup-hooks 2>/dev/null
     fi
     
-    show_progress
+    success "Native PostgreSQL database setup completed"
 }
-
 # 6.7. Setup learning system
 setup_learning_system() {
     print_section "Setting up Agent Learning System"
@@ -3060,6 +3595,7 @@ parse_arguments() {
     SKIP_TESTS=false
     VERBOSE=false
     SKIP_WRAPPER_INTEGRATION=false
+    AUTO_MODE=false
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -3087,6 +3623,10 @@ parse_arguments() {
                 VERBOSE=true
                 shift
                 ;;
+            --auto|-a)
+                AUTO_MODE=true
+                shift
+                ;;
             --help|-h)
                 echo "Claude Master Installer v10.0"
                 echo ""
@@ -3102,6 +3642,7 @@ parse_arguments() {
                 echo "  --skip-tests      Skip validation tests"
                 echo "  --skip-wrapper-integration  Skip wrapper integration system"
                 echo "  --verbose, -v     Show detailed output"
+                echo "  --auto, -a        Automatic mode - no user prompts, install all dependencies"
                 echo "  --help, -h        Show this help message"
                 echo ""
                 echo "💡 Recommended: Just run './claude-installer.sh' for complete installation"
@@ -3137,6 +3678,29 @@ main() {
     
     # Run installation steps based on mode
     check_prerequisites
+    
+    # For full and custom installations, offer Docker installation early if needed
+    if [[ "$INSTALLATION_MODE" == "full" ]] || [[ "$INSTALLATION_MODE" == "custom" ]]; then
+        # Only offer Docker installation if not already available and system packages are allowed
+        if [[ "$DOCKER_AVAILABLE" != "true" ]] || [[ "$COMPOSE_AVAILABLE" != "true" ]]; then
+            if [[ "$ALLOW_SYSTEM_PACKAGES" == "true" ]] && [[ -f "$PROJECT_ROOT/docker-compose.yml" ]]; then
+                info "Docker installation can be done now for better database integration"
+                if install_docker_dependencies; then
+                    # Re-export variables for current session
+                    if check_docker_prerequisites_silent; then
+                        export DOCKER_AVAILABLE=true
+                        export COMPOSE_AVAILABLE=true
+                        if command -v docker-compose >/dev/null 2>&1; then
+                            export COMPOSE_CMD="docker-compose"
+                        elif docker compose version >/dev/null 2>&1; then
+                            export COMPOSE_CMD="docker compose"
+                        fi
+                    fi
+                fi
+            fi
+        fi
+    fi
+    
     install_npm_package
     install_agents
     
