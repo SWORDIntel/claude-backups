@@ -22,7 +22,7 @@
     "custom-commands": 28,
     "ide-upsell-external-terminal": 28
   },
-  "promptQueueUseCount": 62,
+  "promptQueueUseCount": 63,
   "firstStartTime": "2025-08-23T16:03:36.613Z",
   "userID": "8db731192f4311ad7639f124a66270818c5b284fe1cee5ee89dd4b317d2b6314",
   "projects": {
@@ -1030,6 +1030,32 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "done",
+          "pastedContents": {}
+        },
+        {
+          "display": "no you havent",
+          "pastedContents": {}
+        },
+        {
+          "display": "so put back   Moved claude-installer.sh to bin/\n  Moved claude-wrapper-fixed.sh to bin/\n  Moved claude-wrapper-ultimate.sh to bin/\n  Moved integrate_hybrid_bridge.sh to bin/\n  Moved bring-online to bin/\n  Moved enable-natural-invocation.sh to utilities/\n  Moved all_md_agents.txt to archive/\n  Moved claude.md.txt to archive/\n  Moved integrated_learning_setup.py to learning-setup/\n  Moved learning_config_manager.py to learning-setup/\n  Moved github-sync.sh to maintenance/\n  Moved enable-natural-invocation.sh to utilities/\n  Moved switch to bin/\n  Moved status to bin/\n  Moving test files...\n",
+          "pastedContents": {}
+        },
+        {
+          "display": "stop too aggressive this happened [Pasted text #1 +60 lines]",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "Moving main executables...\nMoved launch_hybrid_system.sh to bin/\nMoved check_system_status.sh to bin/\nMoved claude-installer.sh to bin/\nMoved claude-wrapper-fixed.sh to bin/\nMoved claude-wrapper-ultimate.sh to bin/\nMoved integrate_hybrid_bridge.sh to bin/\nMoved bring-online to bin/\nMoved switch to bin/\nMoved status to bin/\nMoving test files...\nMoved test_fixes.py to tests/\nMoved test_hybrid_integration.py to tests/\nMoved test_with_venv.sh to tests/\nMoved test_wrapper_functions.sh to tests/\nMoved test-agent-registration.py to tests/\nMoved test-agent-registration.sh to tests/\nMoved test-bash-output.sh to tests/\nMoved test-installer-integration.sh to tests/\nMoved test-registration-manual.py to tests/\nMoved test-wrapper-venv.sh to tests/\nMoved test-wrapper.sh to tests/\nMoved quick_test.py to tests/\nMoved validate_docker_fixes.sh to tests/\nMoved verify-installation.sh to tests/\nMoved verify-no-functionality-lost.sh to tests/\nMoving utilities...\nMoved standardize-agents.py to utilities/\nMoved create-complete-registry.py to utilities/\nMoved fix-agent-registration.py to utilities/\nMoved enable-natural-invocation.sh to utilities/\nMoved pdf-text-extractor-tui.py to utilities/\nMoved organize_root_directory.sh to utilities/\nMoving maintenance files...\nMoved github-sync.sh to maintenance/\nMoved apply-bash-output-fix.sh to maintenance/\nMoved install-wrapper.sh to maintenance/\nMoved fix-bash-output.patch to maintenance/\nMoving network tools...\nMoved advanced-network-fix.sh to network-tools/\nMoved check-network-status.sh to network-tools/\nMoved fix-wired-connection.sh to network-tools/\nMoved switch-to-systemd-network.sh to network-tools/\nMoving learning setup...\nMoved integrated_learning_setup.py to learning-setup/\nMoved learning_config_manager.py to learning-setup/\nMoving documentation...\nMoved BASH_OUTPUT_FIX_SUMMARY.md to archive/\nMoved DOCKER_FIXES_SUMMARY.md to archive/\nMoved HYBRID_INTEGRATION_STATUS.md to archive/\nMoved FIRST_TIME_LAUNCH_GUIDE.md to archive/\nMoved TESTING_GUIDE.md to archive/\nMoved files.txt to archive/\nMoved all_md_agents.txt to archive/\nMoved claude.md.txt to archive/\nCreating symlinks...\nCreated ./launch symlink\nCreated ./status-check symlink\nCreated ./install symlink\n✅ Root directory cleanup complete!\n[I"
+            }
+          }
+        },
+        {
+          "display": "Sort the scripts in the root out we cant have this mess",
+          "pastedContents": {}
+        },
+        {
           "display": "How to launch it for the 1st time then",
           "pastedContents": {}
         },
@@ -1462,26 +1488,6 @@
               "content": "(venv) ubuntu@ubuntu:~/Downloads/claude-backups(main)$ pip3 install -r requirements.txt \nerror: externally-managed-environment\n\n× This environment is externally managed\n╰─> To install Python packages system-wide, try apt install\n    python3-xyz, where xyz is the package you are trying to\n    install.\n    \n    If you wish to install a non-Debian-packaged Python package,\n    create a virtual environment using python3 -m venv path/to/venv.\n    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make\n    sure you have python3-full installed.\n    \n    If you wish to install a non-Debian packaged Python application,\n    it may be easiest to use pipx install xyz, which will manage a\n    virtual environment for you. Make sure you have pipx installed.\n    \n    See /usr/share/doc/python3.12/README.venv for more information.\n\nnote: If you believe this is a mistake, please contact your Python installation or OS distribution provider. You can override this, at the risk of breaking your Python installation or OS, by passing --break-system-packages.\nhint: See PEP 668 for the detailed specification.\n(venv) ubuntu@ubuntu:~/Downloads/claude-backups(main)$ \n\n[I"
             }
           }
-        },
-        {
-          "display": "(venv) ubuntu@ubuntu:~/Downloads/claude-backups(main)$ pip3 install -r requirements.txt \n",
-          "pastedContents": {}
-        },
-        {
-          "display": "what does the agent tool report avaalble",
-          "pastedContents": {}
-        },
-        {
-          "display": "Update agent-invocation-patterns.yaml now with the new agents we have",
-          "pastedContents": {}
-        },
-        {
-          "display": "Ensure claude-installer.sh adds this alias to bashrc",
-          "pastedContents": {}
-        },
-        {
-          "display": "this approach is working",
-          "pastedContents": {}
         }
       ],
       "mcpContextUris": [],
