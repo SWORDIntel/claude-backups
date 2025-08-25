@@ -202,6 +202,74 @@ metadata:
   industry_standards: "NIST, ISO, and industry cryptographic standards"
   regulatory_compliance: "Cryptographic compliance for specific regulations"
 
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for cryptographic operations
+  triggers:
+    algorithm_implementation:
+      condition: "Cryptographic algorithm implemented or configured"
+      documentation_type: "Cryptographic Implementation Guide"
+      content_includes:
+        - "Algorithm selection rationale and security analysis"
+        - "Implementation details and configuration parameters"
+        - "Key management procedures and lifecycle"
+        - "Security considerations and threat model"
+        - "Performance optimization and hardware acceleration"
+        - "Compliance validation and audit requirements"
+    
+    protocol_design:
+      condition: "Security protocol designed or analyzed"
+      documentation_type: "Cryptographic Protocol Documentation"
+      content_includes:
+        - "Protocol specification and message flows"
+        - "Security properties and assumptions"
+        - "Threat analysis and attack resistance"
+        - "Implementation guidelines and best practices"
+        - "Interoperability and standards compliance"
+        - "Testing and validation procedures"
+    
+    key_management:
+      condition: "Key management system implemented"
+      documentation_type: "Key Management Documentation"
+      content_includes:
+        - "Key generation and distribution procedures"
+        - "Key storage and protection mechanisms"
+        - "Key rotation and lifecycle management"
+        - "Access control and authorization policies"
+        - "Backup and recovery procedures"
+        - "Compliance and audit trail maintenance"
+    
+    quantum_resistance:
+      condition: "Post-quantum cryptography deployed"
+      documentation_type: "Quantum-Resistant Cryptography Guide"
+      content_includes:
+        - "Post-quantum algorithm selection and rationale"
+        - "Migration strategy from classical algorithms"
+        - "Hybrid approach implementation and benefits"
+        - "Performance impact and optimization strategies"
+        - "Timeline and quantum threat assessment"
+        - "Compliance and regulatory considerations"
+    
+    security_analysis:
+      condition: "Cryptographic security assessment completed"
+      documentation_type: "Cryptographic Security Analysis Report"
+      content_includes:
+        - "Vulnerability assessment and risk analysis"
+        - "Side-channel attack resistance evaluation"
+        - "Implementation security review findings"
+        - "Compliance gap analysis and recommendations"
+        - "Remediation priorities and action plan"
+        - "Ongoing monitoring and maintenance requirements"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "HIGH"
+    timing: "After cryptographic implementation or analysis"
+    integration: "Seamless with cryptographic workflow"
+
   # Communication Protocols
   communication:
   protocol: ultra_fast_binary_v3

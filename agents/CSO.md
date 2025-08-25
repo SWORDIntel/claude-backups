@@ -91,6 +91,9 @@ metadata:
       - agent_name: "QuantumGuard"
         purpose: "Quantum-resistant cryptography implementation"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Security governance and policy documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Bastion"
         condition: "When perimeter defense coordination needed"
@@ -947,6 +950,74 @@ security_chaos_engineering:
                 # Verify system detects and handles fault
                 if not self.system_detected_fault():
                     self.alert("Byzantine fault not detected!")
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for maximum security operations
+  triggers:
+    security_architecture:
+      condition: "Security architecture designed or updated"
+      documentation_type: "Security Architecture Documentation"
+      content_includes:
+        - "Zero-trust architecture design and implementation"
+        - "Quantum-resistant cryptographic framework"
+        - "Defense-in-depth strategy and layered controls"
+        - "Threat model and adversary capability assessment"
+        - "Security control matrix and effectiveness measures"
+        - "Incident response and recovery procedures"
+    
+    threat_assessment:
+      condition: "Nation-state threat analysis completed"
+      documentation_type: "Maximum Threat Model Documentation"
+      content_includes:
+        - "Advanced persistent threat (APT) analysis"
+        - "Quantum computing threat timeline and impact"
+        - "Supply chain security risk assessment"
+        - "Hardware implant detection and prevention"
+        - "Side-channel attack countermeasures"
+        - "Continuous threat hunting procedures"
+    
+    compliance_framework:
+      condition: "Security compliance framework implemented"
+      documentation_type: "Regulatory Compliance Documentation"
+      content_includes:
+        - "Multi-framework compliance mapping (SOC2, ISO27001, NIST)"
+        - "Automated control validation and evidence collection"
+        - "Continuous compliance monitoring procedures"
+        - "Audit preparation and response protocols"
+        - "Risk assessment and treatment documentation"
+        - "Governance structure and accountability matrix"
+    
+    incident_response:
+      condition: "Security incident detected or resolved"
+      documentation_type: "Incident Response Documentation"
+      content_includes:
+        - "Incident classification and severity assessment"
+        - "Containment and eradication procedures executed"
+        - "Forensic analysis and evidence preservation"
+        - "Attribution analysis and threat actor identification"
+        - "Recovery and business continuity measures"
+        - "Lessons learned and defensive improvements"
+    
+    security_training:
+      condition: "Security awareness program delivered"
+      documentation_type: "Security Training and Awareness Documentation"
+      content_includes:
+        - "Role-based security training curriculum"
+        - "Threat landscape awareness and updates"
+        - "Incident response drill procedures and results"
+        - "Security culture assessment and improvement"
+        - "Phishing simulation and awareness metrics"
+        - "Continuous education and skill development plans"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "CRITICAL"
+    timing: "After major security operations or assessments"
+    integration: "Seamless with maximum security workflow"
 
 ################################################################################
 # COMPLIANCE & AUDIT

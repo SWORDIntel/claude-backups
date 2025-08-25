@@ -1,0 +1,116 @@
+# Agent Bridge Container
+# Communication hub for agent coordination
+FROM python:3.12-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r claude && useradd -r -g claude claude
+
+WORKDIR /app
+
+# Install Python packages for bridge
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    httpx \
+    pyyaml \
+    prometheus-client \
+    psycopg2-binary \
+    asyncpg \
+    python-multipart \
+    python-jose[cryptography] \
+    passlib[bcrypt]
+
+# Create directories
+RUN mkdir -p /app/agents /app/config \
+    && chown -R claude:claude /app
+
+# Switch to non-root user
+USER claude
+
+# Volumes for agent definitions and config
+VOLUME ["/app/agents", "/app/config"]
+
+# Create enhanced bridge API with error handling
+RUN echo 'import os\n\
+import yaml\n\
+import httpx\n\
+import asyncio\n\
+from pathlib import Path\n\
+from fastapi import FastAPI, HTTPException\n\
+from typing import Dict, List, Any\n\
+\n\
+app = FastAPI(title="Claude Agent Bridge", version="1.0")\n\
+\n\
+@app.get("/health")\n\
+async def health():\n\
+    """Health check with dependency verification"""\n\
+    status = {"service": "agent-bridge", "status": "healthy"}\n\
+    \n\
+    # Check learning system connectivity\n\
+    learning_url = os.getenv("LEARNING_API_URL", "http://learning-system:8080")\n\
+    try:\n\
+        async with httpx.AsyncClient(timeout=5.0) as client:\n\
+            response = await client.get(f"{learning_url}/health")\n\
+            status["learning_system"] = "connected" if response.status_code == 200 else "disconnected"\n\
+    except Exception as e:\n\
+        status["learning_system"] = f"error: {str(e)}"\n\
+    \n\
+    return status\n\
+\n\
+@app.get("/agents")\n\
+def list_agents():\n\
+    """List available agents with metadata"""\n\
+    agents_dir = Path("/app/agents")\n\
+    if not agents_dir.exists():\n\
+        raise HTTPException(status_code=404, detail="Agents directory not found")\n\
+    \n\
+    agents = []\n\
+    for agent_file in agents_dir.glob("*.md"):\n\
+        try:\n\
+            with open(agent_file, "r") as f:\n\
+                content = f.read()\n\
+                # Extract basic info from YAML frontmatter\n\
+                if content.startswith("---"):\n\
+                    parts = content.split("---", 2)\n\
+                    if len(parts) >= 3:\n\
+                        try:\n\
+                            metadata = yaml.safe_load(parts[1])\n\
+                            agents.append({\n\
+                                "name": agent_file.stem,\n\
+                                "description": metadata.get("description", "No description"),\n\
+                                "category": metadata.get("category", "unknown"),\n\
+                                "status": metadata.get("status", "unknown")\n\
+                            })\n\
+                        except yaml.YAMLError:\n\
+                            agents.append({"name": agent_file.stem, "status": "yaml_error"})\n\
+                else:\n\
+                    agents.append({"name": agent_file.stem, "status": "no_metadata"})\n\
+        except Exception as e:\n\
+            agents.append({"name": agent_file.stem, "error": str(e)})\n\
+    \n\
+    return {"agents": agents, "count": len(agents)}\n\
+\n\
+@app.get("/status")\n\
+def status():\n\
+    """System status overview"""\n\
+    return {\n\
+        "bridge": "operational",\n\
+        "learning_api": os.getenv("LEARNING_API_URL", "not_configured"),\n\
+        "postgres": f"{os.getenv(\"POSTGRES_HOST\", \"unknown\")}:{os.getenv(\"POSTGRES_PORT\", \"5432\")}",\n\
+        "agents_dir": str(Path("/app/agents").exists()),\n\
+        "config_dir": str(Path("/app/config").exists())\n\
+    }' > /app/bridge.py
+
+EXPOSE 8081
+
+# Health check
+HEALTHCHECK --interval=20s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8081/health || exit 1
+
+# Start bridge
+CMD ["uvicorn", "bridge:app", "--host", "0.0.0.0", "--port", "8081"]

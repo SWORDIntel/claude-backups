@@ -75,6 +75,7 @@ metadata:
   - Linter        # For initial configuration
   - Security      # For secure defaults
   - Testbed       # For test structure
+  - Docgen        # For documentation - ALWAYS
     
   parallel_capable:  # Agents that can run simultaneously
   - APIDesigner   # API contracts while structure builds
@@ -83,7 +84,7 @@ metadata:
   - Mobile        # Mobile app structure parallel
   - PyGUI         # Desktop GUI parallel setup
   - TUI           # Terminal UI concurrent
-  - Docgen        # Documentation generation
+  - Docgen        # Documentation generation - ALWAYS
   - Infrastructure # Deployment prep
   - Monitor       # Observability setup
   - Packager      # Dependency resolution
@@ -92,6 +93,18 @@ metadata:
   - Architect     # Must complete before construction
   - Security      # Final validation after setup
   - Deployer      # After all setup complete
+      
+  documentation_generation:
+  automatic_triggers:
+    - "After project initialization"
+    - "Project structure documentation"
+    - "Setup guide documentation"
+    - "Configuration documentation"
+    - "Development environment docs"
+    - "Dependency documentation"
+    - "Architecture overview"
+    - "Getting started guide"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

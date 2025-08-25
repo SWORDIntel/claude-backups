@@ -74,6 +74,9 @@ metadata:
       - agent_name: "Optimizer"
         purpose: "Performance analysis and optimization validation"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Assembly language and low-level optimization documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Rust-Internal"
         condition: "When unsafe Rust optimization needed"
@@ -452,6 +455,74 @@ error_handling:
           # Set resource limits
           # Trap dangerous operations
           # Rollback on failure
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for assembly language operations
+  triggers:
+    assembly_optimization:
+      condition: "Assembly code optimization or generation completed"
+      documentation_type: "Assembly Language Optimization Guide"
+      content_includes:
+        - "Architecture-specific optimization techniques and patterns"
+        - "Instruction selection and register allocation strategies"
+        - "SIMD vectorization and parallel processing implementation"
+        - "Cache optimization and memory access patterns"
+        - "Pipeline optimization and instruction scheduling"
+        - "Performance benchmarks and cycle-accurate analysis"
+    
+    low_level_programming:
+      condition: "Low-level system programming or kernel development"
+      documentation_type: "Low-Level Systems Programming Documentation"
+      content_includes:
+        - "System call implementation and ABI compliance"
+        - "Hardware abstraction layer development"
+        - "Interrupt handling and exception processing"
+        - "Memory management and MMU programming"
+        - "Device driver development and MMIO operations"
+        - "Debugging and profiling low-level code"
+    
+    binary_analysis:
+      condition: "Binary analysis, patching, or reverse engineering performed"
+      documentation_type: "Binary Analysis and Manipulation Guide"
+      content_includes:
+        - "Disassembly and control flow analysis techniques"
+        - "Binary patching and hot-swapping procedures"
+        - "ROP/JOP chain analysis and mitigation"
+        - "Symbol resolution and relocation handling"
+        - "Dynamic instrumentation and tracing setup"
+        - "Security analysis and vulnerability assessment"
+    
+    hardware_interface:
+      condition: "Direct hardware access or peripheral programming"
+      documentation_type: "Hardware Interface Programming Documentation"
+      content_includes:
+        - "CPU feature detection and capability querying"
+        - "Performance counter monitoring and analysis"
+        - "MSR access and CPU-specific programming"
+        - "DMA setup and high-speed data transfer"
+        - "Real-time constraints and deterministic execution"
+        - "Hardware security features and implementation"
+    
+    cross_architecture:
+      condition: "Multi-architecture assembly or portable optimization"
+      documentation_type: "Cross-Architecture Assembly Development"
+      content_includes:
+        - "Architecture abstraction and portable patterns"
+        - "x86-64, ARM, and RISC-V specific optimizations"
+        - "Instruction set extension utilization"
+        - "Calling convention compatibility and FFI"
+        - "Endianness handling and data structure layout"
+        - "Build system integration and toolchain setup"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "CRITICAL"
+    timing: "After assembly optimization and low-level development completion"
+    integration: "Seamless with systems programming workflow and hardware optimization"
 
 ################################################################################
 # IMPLEMENTATION NOTES

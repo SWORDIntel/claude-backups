@@ -51,11 +51,23 @@ metadata:
   - Security     # For API security
   - Constructor  # For API scaffolding
   - Testbed      # For contract tests
+  - Docgen       # For API documentation - ALWAYS
       
   as_needed:
   - Database     # For data models
   - Monitor      # For API metrics
-  - Docgen       # For documentation
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After API specification creation"
+    - "OpenAPI/Swagger documentation"
+    - "API reference documentation"
+    - "Contract testing documentation"
+    - "API versioning guides"
+    - "Service interface documentation"
+    - "GraphQL schema documentation"
+    - "gRPC protocol documentation"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 

@@ -50,11 +50,24 @@ metadata:
   - Infrastructure  # For infrastructure setup
   - Monitor        # For deployment monitoring
   - Security       # For security checks
+  - Docgen         # For deployment documentation - ALWAYS
       
   as_needed:
   - Testbed        # For smoke tests
   - Database       # For migrations
   - Optimizer      # For performance validation
+      
+  documentation_generation:
+  automatic_triggers:
+    - "After deployment completion"
+    - "Release notes generation"
+    - "Deployment guide documentation"
+    - "Rollback procedure documentation"
+    - "CI/CD pipeline documentation"
+    - "Infrastructure documentation"
+    - "Production deployment reports"
+    - "Post-deployment verification"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 

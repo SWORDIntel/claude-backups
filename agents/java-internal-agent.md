@@ -91,6 +91,9 @@ metadata:
       - agent_name: "APIDesigner"
         purpose: "REST API and microservice design"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Java enterprise and Spring documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Testbed"
         condition: "When comprehensive Java testing needed"
@@ -406,6 +409,74 @@ quality_enforcement:
       horizontal: "Auto-scaling enabled"
       vertical: "JVM tuning applied"
       elastic: "Cloud-native ready"
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for Java development operations
+  triggers:
+    enterprise_application:
+      condition: "Java enterprise application developed or configured"
+      documentation_type: "Enterprise Java Application Documentation"
+      content_includes:
+        - "Spring Boot application architecture and configuration"
+        - "Microservices design patterns and implementation"
+        - "JPA/Hibernate data layer and optimization strategies"
+        - "REST API documentation and OpenAPI specifications"
+        - "Security configuration and authentication flows"
+        - "Performance tuning and JVM optimization guidelines"
+    
+    jvm_optimization:
+      condition: "JVM performance tuning or optimization completed"
+      documentation_type: "JVM Performance Optimization Guide"
+      content_includes:
+        - "Garbage collection tuning and analysis"
+        - "Memory management and heap sizing strategies"
+        - "Thread pool optimization and concurrent programming"
+        - "Performance profiling results and recommendations"
+        - "JFR monitoring and diagnostic procedures"
+        - "Production deployment and scaling considerations"
+    
+    spring_ecosystem:
+      condition: "Spring framework integration or configuration"
+      documentation_type: "Spring Ecosystem Integration Documentation"
+      content_includes:
+        - "Spring Cloud configuration and service discovery"
+        - "Spring Security implementation and best practices"
+        - "Spring Data repository patterns and query optimization"
+        - "Spring Batch job configuration and monitoring"
+        - "Reactive programming with Spring WebFlux"
+        - "Messaging integration with Spring Cloud Stream"
+    
+    microservices_architecture:
+      condition: "Microservices architecture designed or implemented"
+      documentation_type: "Java Microservices Architecture Guide"
+      content_includes:
+        - "Service decomposition strategy and bounded contexts"
+        - "Inter-service communication patterns and protocols"
+        - "Distributed data management and event sourcing"
+        - "Circuit breaker and resilience patterns"
+        - "Service mesh integration and observability"
+        - "Containerization and Kubernetes deployment"
+    
+    build_deployment:
+      condition: "Java build pipeline or deployment configured"
+      documentation_type: "Java Build and Deployment Documentation"
+      content_includes:
+        - "Maven/Gradle multi-module project structure"
+        - "CI/CD pipeline configuration and best practices"
+        - "Docker containerization and optimization"
+        - "Kubernetes deployment manifests and Helm charts"
+        - "Testing strategies and quality gate implementation"
+        - "Production monitoring and alerting setup"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "HIGH"
+    timing: "After Java development and architecture completion"
+    integration: "Seamless with enterprise Java workflow and Spring ecosystem"
 
 ################################################################################
 # INTEGRATION HOOKS

@@ -73,12 +73,25 @@ metadata:
   - Monitor:      "Gather system metrics during analysis"
   - Optimizer:    "Profile and optimize after fix"
   - Testbed:      "Create regression test suites"
+  - Docgen:       "Debug analysis documentation - ALWAYS"
       
   as_needed:
   - Security:     "Analyze security implications of bugs"
   - Architect:    "Review design issues causing failures"
   - Constructor:  "Rebuild corrupted project structures"
   - Director:     "Escalate critical production issues"
+      
+  documentation_generation:
+  automatic_triggers:
+    - "After root cause analysis"
+    - "Debug session reports"
+    - "Performance analysis documentation"
+    - "Bug investigation reports"
+    - "Crash analysis documentation"
+    - "Memory leak reports"
+    - "Deadlock analysis documentation"
+    - "Fix verification reports"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

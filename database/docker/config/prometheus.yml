@@ -1,0 +1,39 @@
+# Prometheus Configuration for Claude Agent Framework
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PostgreSQL monitoring
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+
+  # Learning System API
+  - job_name: 'learning-system'
+    static_configs:
+      - targets: ['learning-system:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Agent Bridge
+  - job_name: 'agent-bridge'
+    static_configs:
+      - targets: ['agent-bridge:8081']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Node exporter (if added later)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']

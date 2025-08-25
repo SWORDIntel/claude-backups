@@ -107,7 +107,17 @@ metadata:
   - Deployer         # Production deployment
   - Packager         # Distribution management
   - Optimizer        # Performance tuning
-  - Docgen           # Documentation generation
+  - Docgen           # Documentation generation - ALWAYS for documentation
+      
+  documentation_generation:
+  automatic_triggers:
+    - "After workflow completion"
+    - "Agent handoff documentation"
+    - "Gap analysis reports"
+    - "Quality gate results"
+    - "Execution plan documentation"
+    - "Progress tracking reports"
+  invokes: Docgen  # ALWAYS invoke for documentation
       
   parallel_orchestration:
   track_1: [Constructor, Patcher, Linter]     # Code development

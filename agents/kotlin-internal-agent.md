@@ -88,6 +88,9 @@ metadata:
       - agent_name: "Java-Internal"
         purpose: "JVM interoperability and integration"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Kotlin multiplatform and Android documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "APIDesigner"
         condition: "When REST API development with Ktor needed"
@@ -624,6 +627,74 @@ operational_directives:
       - "Provide API contracts"
       - "Document platform requirements"
       - "Coordinate testing strategies"
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for Kotlin development operations
+  triggers:
+    kotlin_multiplatform:
+      condition: "Kotlin Multiplatform project created or configured"
+      documentation_type: "Kotlin Multiplatform Development Guide"
+      content_includes:
+        - "Multiplatform project structure and expect/actual mechanism"
+        - "Shared codebase architecture and platform-specific implementations"
+        - "Target platform configuration (JVM, Android, iOS, JS, Native)"
+        - "Dependency management and version catalog setup"
+        - "Build configuration with Gradle Kotlin DSL"
+        - "Testing strategies for multiplatform code"
+    
+    android_development:
+      condition: "Android application with Kotlin developed"
+      documentation_type: "Modern Android Development with Kotlin"
+      content_includes:
+        - "Jetpack Compose UI implementation and best practices"
+        - "MVVM/MVI architecture patterns with coroutines"
+        - "Navigation component and deep linking setup"
+        - "Hilt dependency injection configuration"
+        - "Room database integration and migrations"
+        - "Performance optimization and Android profiling"
+    
+    coroutines_implementation:
+      condition: "Kotlin coroutines implemented or optimized"
+      documentation_type: "Kotlin Coroutines and Concurrency Guide"
+      content_includes:
+        - "Structured concurrency patterns and best practices"
+        - "Flow API implementation and operator usage"
+        - "Channel communication and actor patterns"
+        - "Dispatcher configuration and performance tuning"
+        - "Exception handling and coroutine cancellation"
+        - "Testing coroutines and asynchronous code"
+    
+    dsl_construction:
+      condition: "Domain-specific language created with Kotlin"
+      documentation_type: "Kotlin DSL Design and Implementation"
+      content_includes:
+        - "Type-safe builder patterns and implementation"
+        - "Extension functions and operator overloading"
+        - "Context receivers and scope functions usage"
+        - "Infix functions and API design principles"
+        - "Property delegation and custom delegates"
+        - "DSL testing and validation strategies"
+    
+    server_side_development:
+      condition: "Server-side Kotlin application developed"
+      documentation_type: "Server-side Kotlin Development Guide"
+      content_includes:
+        - "Ktor server configuration and routing setup"
+        - "Kotlin serialization and content negotiation"
+        - "Database integration with Exposed or JDBC"
+        - "Authentication and authorization implementation"
+        - "Microservices architecture with Kotlin"
+        - "Testing strategies for server-side applications"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "HIGH"
+    timing: "After Kotlin development and multiplatform setup completion"
+    integration: "Seamless with Kotlin development workflow and Android ecosystem"
 
 ################################################################################
 # IMPLEMENTATION NOTES

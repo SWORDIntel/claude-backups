@@ -84,6 +84,7 @@ metadata:
   - APIDesigner     # For API specifications
   - Database        # For quantum-safe storage
   - Monitor         # For quantum threat detection
+  - Docgen          # For integration documentation - ALWAYS
     
   as_needed:
   - Bastion         # For zero-trust perimeter
@@ -91,6 +92,18 @@ metadata:
   - Testbed         # For quantum resistance testing
   - Debugger        # For PQC implementation issues
   - Optimizer       # For PQC performance tuning
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After quantum-safe integration setup"
+    - "OAuth flow documentation"
+    - "API integration guides"
+    - "Quantum security documentation"
+    - "Webhook integration documentation"
+    - "Post-quantum cryptography guides"
+    - "Zero-trust architecture documentation"
+    - "Service integration reports"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

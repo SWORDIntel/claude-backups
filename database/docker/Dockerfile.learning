@@ -1,0 +1,118 @@
+# Python Learning System Container
+# Based on DOCKER agent specifications
+FROM python:3.12-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    g++ \
+    postgresql-client \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN groupadd -r claude && useradd -r -g claude claude
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir \
+    psycopg2-binary \
+    asyncpg \
+    fastapi \
+    uvicorn \
+    prometheus-client \
+    numpy \
+    scikit-learn \
+    joblib
+
+# Create necessary directories
+RUN mkdir -p /app/learning /app/config /app/data /app/logs \
+    && chown -R claude:claude /app
+
+# Switch to non-root user
+USER claude
+
+# Copy learning system code (mounted as volume in compose)
+VOLUME ["/app/learning", "/app/config", "/app/data", "/app/logs"]
+
+# Expose API port
+EXPOSE 8080
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Create startup script for learning system
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Starting Claude Learning System..."\n\
+echo "Environment: LEARNING_ENV=${LEARNING_ENV:-unknown}"\n\
+echo "Python path: $PYTHONPATH"\n\
+echo "Working directory: $(pwd)"\n\
+\n\
+# Wait for PostgreSQL\n\
+echo "Waiting for PostgreSQL..."\n\
+until pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do\n\
+  echo "PostgreSQL not ready, waiting..."\n\
+  sleep 2\n\
+done\n\
+echo "PostgreSQL is ready!"\n\
+\n\
+# Check if learning system exists\n\
+if [ -f "/app/learning/postgresql_learning_system.py" ]; then\n\
+  echo "Found postgresql_learning_system.py"\n\
+  cd /app\n\
+  export PYTHONPATH="/app:/app/learning:$PYTHONPATH"\n\
+  \n\
+  # Try to run learning system directly\n\
+  echo "Attempting to start learning system..."\n\
+  python /app/learning/postgresql_learning_system.py dashboard || {\n\
+    echo "Direct execution failed, trying module approach..."\n\
+    python -c "\n\
+import sys\n\
+sys.path.insert(0, \"/app/learning\")\n\
+import postgresql_learning_system\n\
+postgresql_learning_system.main()\n\
+    " || {\n\
+      echo "Module approach failed, starting FastAPI server..."\n\
+      python -c "\n\
+from fastapi import FastAPI\n\
+import uvicorn\n\
+app = FastAPI(title=\"Claude Learning System\", version=\"1.0\")\n\
+@app.get(\"/health\")\n\
+def health(): return {\"status\": \"healthy\", \"service\": \"learning-system\", \"mode\": \"fallback\"}\n\
+@app.get(\"/\")\n\
+def root(): return {\"message\": \"Claude Learning System (Fallback Mode)\"}\n\
+uvicorn.run(app, host=\"0.0.0.0\", port=8080)\n\
+      "\n\
+    }\n\
+  }\n\
+else\n\
+  echo "ERROR: Learning system not found at /app/learning/"\n\
+  echo "Available files:"\n\
+  ls -la /app/learning/ 2>/dev/null || echo "Directory not mounted"\n\
+  echo "Available directories:"\n\
+  ls -la /app/ 2>/dev/null || echo "App directory empty"\n\
+  echo "Starting fallback FastAPI server..."\n\
+  python -c "\n\
+from fastapi import FastAPI\n\
+import uvicorn\n\
+app = FastAPI(title=\"Claude Learning Fallback\", version=\"1.0\")\n\
+@app.get(\"/health\")\n\
+def health(): return {\"status\": \"healthy\", \"service\": \"learning-fallback\", \"error\": \"learning_system_not_found\"}\n\
+@app.get(\"/debug\")\n\
+def debug(): \n\
+    import os\n\
+    return {\"env\": dict(os.environ), \"cwd\": os.getcwd()}\n\
+uvicorn.run(app, host=\"0.0.0.0\", port=8080)\n\
+  "\n\
+fi' > /app/start-learning.sh \
+    && chmod +x /app/start-learning.sh
+
+# Start the learning system
+CMD ["/app/start-learning.sh"]

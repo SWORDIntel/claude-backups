@@ -76,6 +76,7 @@ metadata:
   - Debugger      # For error analysis
   - Optimizer     # For performance tuning
   - Constructor   # For project setup
+  - Docgen        # For Python documentation - ALWAYS
       
   conditionally:
   - MLOps         # When ML operations detected (delegates)
@@ -87,7 +88,19 @@ metadata:
   parallel_execution:
   - DataScience   # Can run parallel data operations
   - APIDesigner   # Can run parallel API testing
-  - Docgen        # Can run parallel documentation
+  - Docgen        # Can run parallel documentation - ALWAYS
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After Python code execution"
+    - "Virtual environment documentation"
+    - "Package management documentation"
+    - "Performance profiling reports"
+    - "Code quality analysis reports"
+    - "Python best practices documentation"
+    - "Library compatibility reports"
+    - "Async/await implementation guides"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 

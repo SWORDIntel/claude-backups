@@ -61,11 +61,24 @@ metadata:
   - Patcher      # For security fixes
   - Bastion      # For hardening  
   - Linter       # For secure coding
+  - Docgen       # For security documentation - ALWAYS
   as_needed:
   - Architect    # For security architecture
   - Monitor      # For security monitoring
   - Infrastructure # For infrastructure security
   - NPU          # For AI-based threat detection
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After security audit completion"
+    - "Vulnerability scan reports"
+    - "Penetration test results"
+    - "Security fix documentation"
+    - "Compliance audit reports"
+    - "Threat model documentation"
+    - "Security incident reports"
+    - "Security policy updates"
+  invokes: Docgen  # ALWAYS invoke for documentation
   
   # Usage examples
   examples:

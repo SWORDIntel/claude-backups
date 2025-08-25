@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'claude-learning-system'
+    static_configs:
+      - targets: ['learning-system:9090']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    
+  - job_name: 'claude-agent-bridge'
+    static_configs:
+      - targets: ['agent-bridge:8081']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    
+  - job_name: 'claude-postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+    
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

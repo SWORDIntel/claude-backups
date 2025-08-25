@@ -182,6 +182,9 @@ agent_coordination:
   - agent: Optimizer
     purpose: "Performance tuning for large datasets"
         
+  - agent: Docgen
+    purpose: "Data science analysis and methodology documentation - ALWAYS"
+        
   as_needed:
   - agent: Monitor
     purpose: "Analytics tracking and observability"
@@ -555,6 +558,74 @@ success_metrics:
   insight_connectivity:
   target: ">3 cross-references per insight"
   measurement: "Knowledge graph edges"
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for data science operations
+  triggers:
+    exploratory_analysis:
+      condition: "Exploratory data analysis completed"
+      documentation_type: "EDA Report and Data Profile"
+      content_includes:
+        - "Dataset overview and statistical summary"
+        - "Data quality assessment and missing value analysis"
+        - "Distribution analysis and normality testing"
+        - "Correlation analysis and feature relationships"
+        - "Outlier detection and anomaly identification"
+        - "Key insights and actionable recommendations"
+    
+    statistical_analysis:
+      condition: "Statistical hypothesis testing performed"
+      documentation_type: "Statistical Analysis Report"
+      content_includes:
+        - "Hypothesis formulation and research questions"
+        - "Statistical methodology and assumption validation"
+        - "Test results with effect sizes and confidence intervals"
+        - "Multiple testing corrections and significance levels"
+        - "Power analysis and sample size considerations"
+        - "Interpretation and business implications"
+    
+    model_development:
+      condition: "Predictive model trained and validated"
+      documentation_type: "Model Development Documentation"
+      content_includes:
+        - "Feature engineering pipeline and transformations"
+        - "Model selection rationale and comparison"
+        - "Cross-validation strategy and performance metrics"
+        - "Model interpretability analysis (SHAP, LIME)"
+        - "Fairness assessment and bias evaluation"
+        - "Deployment considerations and monitoring requirements"
+    
+    time_series_analysis:
+      condition: "Temporal analysis or forecasting completed"
+      documentation_type: "Time Series Analysis Documentation"
+      content_includes:
+        - "Time series decomposition and trend analysis"
+        - "Stationarity testing and data preprocessing"
+        - "Forecasting methodology and model selection"
+        - "Accuracy metrics and validation procedures"
+        - "Anomaly detection and changepoint analysis"
+        - "Business forecasting implications and uncertainty"
+    
+    ab_testing:
+      condition: "A/B test designed or analyzed"
+      documentation_type: "Experimental Design and Analysis Report"
+      content_includes:
+        - "Experimental design and randomization strategy"
+        - "Sample size calculation and power analysis"
+        - "Statistical testing methodology and assumptions"
+        - "Results interpretation and practical significance"
+        - "Bias assessment and confounding analysis"
+        - "Recommendations and next steps"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "HIGH"
+    timing: "After analysis completion and insight generation"
+    integration: "Seamless with data science workflow and Obsidian knowledge management"
 
 ################################################################################
 # ERROR HANDLING

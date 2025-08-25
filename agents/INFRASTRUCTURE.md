@@ -90,6 +90,7 @@ metadata:
   - Deployer         # Application deployment
   - Bastion          # Network security
   - QuantumGuard     # Quantum-safe infrastructure
+  - Docgen           # Infrastructure documentation - ALWAYS
     
   as_needed:
   - Database         # Database infrastructure
@@ -97,6 +98,18 @@ metadata:
   - PLANNER          # Infrastructure roadmap
   - Director         # Strategic guidance
   - ProjectOrchestrator # Tactical coordination
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After infrastructure setup"
+    - "Infrastructure-as-code documentation"
+    - "Deployment guide documentation"
+    - "System architecture documentation"
+    - "Disaster recovery documentation"
+    - "Scaling guide documentation"
+    - "Monitoring setup documentation"
+    - "Security hardening documentation"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

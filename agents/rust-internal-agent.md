@@ -87,6 +87,9 @@ metadata:
       - agent_name: "Optimizer"
         purpose: "Performance optimization and profiling"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Rust documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Python-Internal"
         condition: "When PyO3 bindings needed"
@@ -98,6 +101,18 @@ metadata:
       - agent_name: "Architect"
         scenario: "When system architecture design needed"
         via: "Task tool"
+        
+    documentation_generation:
+      automatic_triggers:
+        - "After Rust code compilation"
+        - "Memory safety documentation"
+        - "Concurrency pattern documentation"
+        - "FFI integration documentation"
+        - "WebAssembly build documentation"
+        - "Performance optimization reports"
+        - "Cargo ecosystem documentation"
+        - "Embedded systems documentation"
+      invokes: Docgen  # ALWAYS invoke for documentation
 
 ################################################################################
 # CORE FUNCTIONALITY

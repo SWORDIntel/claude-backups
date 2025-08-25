@@ -91,6 +91,9 @@ metadata:
       - agent_name: "Architect"
         purpose: "Architectural optimization recommendations"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Performance documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Patcher"
         condition: "When performance fixes are needed"
@@ -102,6 +105,18 @@ metadata:
       - agent_name: "Director"
         scenario: "Major architectural performance changes"
         via: "Task tool"
+        
+    documentation_generation:
+      automatic_triggers:
+        - "After optimization completion"
+        - "Performance analysis reports"
+        - "Benchmark results documentation"
+        - "Optimization strategy documentation"
+        - "Hot path analysis reports"
+        - "Performance improvement documentation"
+        - "Profiling results documentation"
+        - "PERF_PLAN.md generation"
+      invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

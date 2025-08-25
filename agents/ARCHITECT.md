@@ -96,10 +96,22 @@ metadata:
   - Linter           # Code quality architecture
   - Deployer         # Deployment architecture
   - Packager         # Distribution architecture
-  - Docgen           # Architecture documentation
+  - Docgen           # Architecture documentation - ALWAYS for documentation
   - QADirector       # Quality architecture
   - Bastion          # Security architecture
   - Oversight        # Governance architecture
+      
+  documentation_generation:
+  automatic_triggers:
+    - "After architecture design completion"
+    - "System design documentation"
+    - "Technology evaluation reports"
+    - "Architecture decision records (ADRs)"
+    - "Performance architecture documentation"
+    - "Security architecture documentation"
+    - "API design documentation"
+    - "Database schema documentation"
+  invokes: Docgen  # ALWAYS invoke for documentation
       
   architectural_domains:
   system_design: [APIDesigner, Database, Infrastructure, Security]

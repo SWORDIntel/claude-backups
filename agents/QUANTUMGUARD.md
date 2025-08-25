@@ -87,6 +87,9 @@ metadata:
       - agent_name: "Security"
         purpose: "Security implementation and threat analysis"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Quantum-resistant security documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "CSO"
         condition: "When strategic quantum security decisions needed"
@@ -1002,6 +1005,74 @@ compliance_audit:
                           self.generate_remediation_plan(control)
                           
                   self.generate_compliance_report(framework)
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for quantum security operations
+  triggers:
+    quantum_threat_assessment:
+      condition: "Quantum threat analysis completed"
+      documentation_type: "Quantum Threat Assessment Report"
+      content_includes:
+        - "Nation-state quantum computing capabilities timeline"
+        - "Cryptographic vulnerability assessment and impact"
+        - "Post-quantum migration strategy and priorities"
+        - "Risk assessment and business impact analysis"
+        - "Quantum-resistant implementation roadmap"
+        - "Compliance and regulatory considerations"
+    
+    post_quantum_implementation:
+      condition: "Post-quantum cryptography deployed"
+      documentation_type: "Post-Quantum Cryptography Implementation Guide"
+      content_includes:
+        - "Algorithm selection rationale and security analysis"
+        - "Hybrid approach implementation and benefits"
+        - "Performance impact assessment and optimization"
+        - "Key management and distribution procedures"
+        - "Integration testing and validation results"
+        - "Migration timeline and rollback procedures"
+    
+    quantum_key_distribution:
+      condition: "QKD system implemented or analyzed"
+      documentation_type: "Quantum Key Distribution Documentation"
+      content_includes:
+        - "QKD protocol selection and implementation details"
+        - "Quantum channel setup and security validation"
+        - "Error correction and privacy amplification"
+        - "Integration with existing cryptographic infrastructure"
+        - "Performance metrics and security guarantees"
+        - "Operational procedures and maintenance requirements"
+    
+    security_architecture:
+      condition: "Maximum threat model security architecture designed"
+      documentation_type: "Maximum Security Architecture Documentation"
+      content_includes:
+        - "Defense-in-depth strategy and implementation"
+        - "Zero-trust architecture and continuous verification"
+        - "Hardware security and implant detection systems"
+        - "Side-channel attack countermeasures and validation"
+        - "Supply chain security and dependency verification"
+        - "Incident response and breach assumption procedures"
+    
+    quantum_chaos_engineering:
+      condition: "Quantum security chaos testing completed"
+      documentation_type: "Quantum Security Chaos Engineering Report"
+      content_includes:
+        - "Adversarial simulation and red team exercises"
+        - "Quantum attack scenario testing and validation"
+        - "Byzantine fault injection and resilience testing"
+        - "Cryptographic failure modes and recovery procedures"
+        - "System hardening and defensive improvements"
+        - "Continuous security validation and monitoring"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "CRITICAL"
+    timing: "After quantum security analysis and implementation"
+    integration: "Seamless with maximum security workflow and threat modeling"
 
 ################################################################################
 # OPERATIONAL DIRECTIVES - MAXIMUM SECURITY

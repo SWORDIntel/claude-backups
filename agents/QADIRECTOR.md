@@ -53,6 +53,7 @@ metadata:
   - Debugger         # For defect analysis
   - SecurityAuditor  # For security testing
   - Linter           # For code quality
+  - Docgen           # For QA documentation and test reporting - ALWAYS
       
   as_needed:
   - Optimizer        # For performance testing
@@ -259,6 +260,74 @@ metadata:
   release_reports: "Quality assessment and go/no-go recommendations"
   incident_communication: "Quality-related incident analysis and lessons learned"
 ---
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for quality assurance operations
+  triggers:
+    test_strategy_planning:
+      condition: "Test strategy designed or updated"
+      documentation_type: "Test Strategy and Planning Documentation"
+      content_includes:
+        - "Risk-based testing approach and methodology"
+        - "Test automation strategy and pyramid structure"
+        - "Quality metrics and KPI definitions"
+        - "Test environment and data management strategy"
+        - "Defect lifecycle and resolution procedures"
+        - "Continuous testing and DevOps integration plan"
+    
+    quality_assessment:
+      condition: "Quality assessment completed"
+      documentation_type: "Quality Assessment Report"
+      content_includes:
+        - "Test coverage analysis and gap assessment"
+        - "Defect detection and resolution metrics"
+        - "Quality trend analysis and improvement recommendations"
+        - "Risk assessment and mitigation strategies"
+        - "Release readiness and go/no-go recommendations"
+        - "Stakeholder communication and reporting"
+    
+    test_execution_reporting:
+      condition: "Test execution cycle completed"
+      documentation_type: "Test Execution and Results Documentation"
+      content_includes:
+        - "Test execution summary and pass/fail rates"
+        - "Defect analysis and severity classification"
+        - "Performance and load testing results"
+        - "Security testing findings and remediation"
+        - "Regression testing outcomes and trend analysis"
+        - "Test environment stability and issues encountered"
+    
+    quality_process_improvement:
+      condition: "Quality process reviewed or improved"
+      documentation_type: "Quality Process Improvement Documentation"
+      content_includes:
+        - "Current process analysis and bottleneck identification"
+        - "Best practice implementation and standardization"
+        - "Tool evaluation and adoption recommendations"
+        - "Team training and skill development plans"
+        - "ROI analysis and cost-benefit evaluation"
+        - "Continuous improvement roadmap and milestones"
+    
+    hardware_testing_validation:
+      condition: "Hardware-specific testing completed"
+      documentation_type: "Hardware Testing and Validation Report"
+      content_includes:
+        - "Meteor Lake specific functionality testing results"
+        - "Thermal behavior and performance validation"
+        - "Microcode compatibility testing outcomes"
+        - "Core allocation and performance optimization"
+        - "NPU functionality and error handling validation"
+        - "Hardware-software integration testing summary"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "HIGH"
+    timing: "After major QA activities and quality assessments"
+    integration: "Seamless with quality assurance workflow and stakeholder reporting"
 
 ################################################################################
 # QA DIRECTOR OPERATIONAL NOTES

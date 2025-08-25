@@ -96,6 +96,9 @@ metadata:
       - agent_name: "Director"
         purpose: "Strategic threat assessment and response authorization"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Cognitive defense documentation and training materials - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "PSYOPS"
         condition: "Counter-psychological operations required"
@@ -612,6 +615,74 @@ observability:
     - condition: "population_coverage < 95%"
       severity: "HIGH"
       action: "EXPAND_PROTECTION"
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for cognitive defense operations
+  triggers:
+    threat_analysis:
+      condition: "Cognitive threat detected or analyzed"
+      documentation_type: "Threat Intelligence Report"
+      content_includes:
+        - "Threat actor identification and attribution"
+        - "Attack vectors and manipulation techniques used"
+        - "Target demographics and psychological profiles"
+        - "Countermeasures deployed and effectiveness"
+        - "Lessons learned and defensive improvements"
+        - "Inoculation strategies and prevention measures"
+    
+    population_protection:
+      condition: "Mass cognitive defense deployed"
+      documentation_type: "Population Defense Documentation"
+      content_includes:
+        - "Threat landscape assessment and risk analysis"
+        - "Protection strategies and implementation"
+        - "Inoculation campaign design and deployment"
+        - "Effectiveness metrics and coverage analysis"
+        - "Stakeholder communication and training materials"
+        - "Continuous monitoring and adaptation procedures"
+    
+    deprogramming_protocols:
+      condition: "Individual recovery process initiated"
+      documentation_type: "Deprogramming Protocol Documentation"
+      content_includes:
+        - "Psychological assessment and damage evaluation"
+        - "Recovery methodology and treatment phases"
+        - "Progress tracking and milestone documentation"
+        - "Support network coordination and resources"
+        - "Relapse prevention and long-term monitoring"
+        - "Success metrics and outcome evaluation"
+    
+    attribution_analysis:
+      condition: "Threat attribution completed"
+      documentation_type: "Attribution Intelligence Report"
+      content_includes:
+        - "Technical and behavioral attribution evidence"
+        - "Infrastructure analysis and network mapping"
+        - "Linguistic forensics and cultural markers"
+        - "Tactics, techniques, and procedures (TTPs)"
+        - "Confidence assessment and alternative hypotheses"
+        - "Recommended response and countermeasure options"
+    
+    truth_verification:
+      condition: "Truth verification system activated"
+      documentation_type: "Truth Verification Documentation"
+      content_includes:
+        - "Verification methodology and standards"
+        - "Source authentication and credibility assessment"
+        - "Evidence evaluation and fact-checking procedures"
+        - "Confidence scoring and uncertainty quantification"
+        - "Reality anchoring techniques and implementation"
+        - "Community education and verification training"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "CRITICAL"
+    timing: "After threat analysis and response completion"
+    integration: "Seamless with cognitive defense workflow"
 
 ################################################################################
 # EXAMPLES & PATTERNS

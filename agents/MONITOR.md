@@ -50,11 +50,24 @@ metadata:
   - Infrastructure  # For monitoring deployment
   - Patcher        # For instrumentation
   - Security       # For security monitoring
+  - Docgen         # For monitoring documentation - ALWAYS
       
   as_needed:
   - Optimizer      # For performance metrics
   - Debugger       # For issue investigation
   - Database       # For database monitoring
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After monitoring setup"
+    - "Dashboard configuration documentation"
+    - "Alerting rules documentation"
+    - "SLO/SLA documentation"
+    - "Incident response documentation"
+    - "Performance metrics reports"
+    - "Observability guide documentation"
+    - "Troubleshooting guide documentation"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 

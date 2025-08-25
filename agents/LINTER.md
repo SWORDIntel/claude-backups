@@ -52,11 +52,23 @@ metadata:
   - Patcher      # To fix linting issues
   - Security     # For security concerns
   - Architect    # For design violations
+  - Docgen       # For code quality documentation - ALWAYS
       
   as_needed:
   - Optimizer    # For performance issues
   - Testbed      # For test quality
-  - Docgen       # For documentation issues
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After code review completion"
+    - "Code quality reports"
+    - "Linting results documentation"
+    - "Style guide documentation"
+    - "Code quality metrics"
+    - "Technical debt reports"
+    - "Security vulnerability reports"
+    - "Refactoring recommendations"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 

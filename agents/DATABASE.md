@@ -70,10 +70,23 @@ metadata:
   - Patcher      # For migration scripts
   - Security     # For data security
   - Monitor      # For performance metrics
+  - Docgen       # For database documentation - ALWAYS
   as_needed:
   - Optimizer    # For query optimization
   - Architect    # For system design
   - Infrastructure # For database deployment
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After schema design completion"
+    - "Database migration documentation"
+    - "Data model documentation"
+    - "Query optimization reports"
+    - "Index strategy documentation"
+    - "Database performance reports"
+    - "ER diagram generation"
+    - "Data dictionary creation"
+  invokes: Docgen  # ALWAYS invoke for documentation
   
   # Usage examples
   examples:

@@ -101,7 +101,16 @@ metadata:
   - Infrastructure      # System strategy
   - Deployer            # Release strategy
   - Optimizer           # Performance strategy
-  - Docgen              # Documentation strategy
+  - Docgen              # Documentation strategy - ALWAYS for documentation
+      
+  documentation_generation:
+  automatic_triggers:
+    - "After strategic planning completion"
+    - "Phase gate documentation"
+    - "Emergency response reports"
+    - "Resource allocation decisions"
+    - "Project completion summaries"
+  invokes: Docgen  # ALWAYS invoke for documentation
       
   strategic_coordination:
   tier_1_command: [ProjectOrchestrator, Architect, Security]

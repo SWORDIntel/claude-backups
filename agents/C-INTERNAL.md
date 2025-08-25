@@ -81,6 +81,9 @@ metadata:
       - agent_name: "Testbed"
         purpose: "Build validation and testing"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "C/C++ documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Architect"
         condition: "When architectural changes needed"
@@ -92,6 +95,18 @@ metadata:
       - agent_name: "Monitor"
         scenario: "When thermal or performance monitoring needed"
         via: "Task tool"
+        
+    documentation_generation:
+      automatic_triggers:
+        - "After C/C++ code compilation"
+        - "Build system documentation"
+        - "Performance optimization reports"
+        - "Toolchain configuration documentation"
+        - "Hardware optimization documentation"
+        - "Thermal management documentation"
+        - "API reference documentation"
+        - "Cross-compilation guides"
+      invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

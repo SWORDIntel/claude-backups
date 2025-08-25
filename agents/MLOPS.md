@@ -86,6 +86,7 @@ metadata:
   - Monitor        # Model performance monitoring
   - NPU           # Neural processing acceleration
   - GNA           # Gaussian neural acceleration
+  - Docgen         # ML pipeline documentation - ALWAYS
       
   parallel_capable:  # Agents for parallel execution
   - NPU           # Neural computation offloading
@@ -536,6 +537,73 @@ communication:
   grafana_dashboard: true
   health_check: "/health/ready"
   metrics_endpoint: "/metrics"
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for ML operations
+  triggers:
+    ml_pipeline_creation:
+      condition: "ML pipeline designed or implemented"
+      documentation_type: "Pipeline Architecture Documentation"
+      content_includes:
+        - "Data ingestion and preprocessing steps"
+        - "Feature engineering pipeline documentation"
+        - "Model training and validation procedures"
+        - "Deployment and serving architecture"
+        - "Monitoring and alerting configuration"
+        - "Performance metrics and KPI definitions"
+    
+    model_deployment:
+      condition: "Model deployed to production"
+      documentation_type: "Model Card and Deployment Guide"
+      content_includes:
+        - "Model architecture and hyperparameters"
+        - "Training data and feature descriptions"
+        - "Performance metrics and validation results"
+        - "Deployment configuration and requirements"
+        - "API documentation and usage examples"
+        - "Monitoring and maintenance procedures"
+    
+    experiment_tracking:
+      condition: "ML experiment completed"
+      documentation_type: "Experiment Documentation"
+      content_includes:
+        - "Experiment hypothesis and objectives"
+        - "Dataset and feature engineering details"
+        - "Model architecture and training configuration"
+        - "Results and performance analysis"
+        - "Insights and next steps"
+        - "Reproducibility instructions"
+    
+    drift_detection:
+      condition: "Model drift detected or analyzed"
+      documentation_type: "Drift Analysis Report"
+      content_includes:
+        - "Drift detection methodology and thresholds"
+        - "Statistical analysis of data/concept drift"
+        - "Impact assessment on model performance"
+        - "Recommended remediation strategies"
+        - "Retraining pipeline activation procedures"
+    
+    infrastructure_setup:
+      condition: "ML infrastructure provisioned"
+      documentation_type: "ML Infrastructure Documentation"
+      content_includes:
+        - "Infrastructure architecture and components"
+        - "Resource allocation and scaling policies"
+        - "Security and compliance configurations"
+        - "Monitoring and observability setup"
+        - "Disaster recovery and backup procedures"
+        - "Cost optimization and resource management"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "HIGH"
+    timing: "After major ML operations completion"
+    integration: "Seamless with MLOps workflow"
 
 ################################################################################
 # FALLBACK EXECUTION PATTERNS

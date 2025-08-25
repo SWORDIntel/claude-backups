@@ -1,0 +1,157 @@
+version: '3.9'
+
+# Claude Agent Framework - Self-Contained Database & Learning System
+# Complete containerized environment with zero external dependencies
+
+services:
+  # PostgreSQL Database with pgvector extension
+  postgres:
+    container_name: claude-postgres
+    image: pgvector/pgvector:pg16-latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-claude_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claude_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-claude_auth}
+      # Security: Remove trust auth method - use password authentication
+      # POSTGRES_HOST_AUTH_METHOD: trust  # REMOVED - SECURITY RISK
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8 --auth-host=scram-sha-256 --auth-local=peer"
+    volumes:
+      # Data persistence using existing PostgreSQL data
+      - ./database/data/postgresql:/var/lib/postgresql/data
+      # SQL initialization scripts (ordered)
+      - ./database/sql/auth_db_setup.sql:/docker-entrypoint-initdb.d/01-auth-setup.sql:ro
+      - ./database/sql/learning_system_schema_pg16_compatible.sql:/docker-entrypoint-initdb.d/02-learning-schema.sql:ro
+      - ./database/sql/postgresql_16_json_compatibility_layer.sql:/docker-entrypoint-initdb.d/03-json-compat.sql:ro
+      # Custom PostgreSQL configuration
+      - ./database/docker/config/postgresql.conf:/var/lib/postgresql/data/postgresql.conf:ro
+    ports:
+      - "5433:5432"  # Expose on 5433 to avoid conflicts
+    networks:
+      claude_network:
+        ipv4_address: 172.20.0.10
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-claude_user} -d ${POSTGRES_DB:-claude_auth} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Python Learning System
+  learning-system:
+    container_name: claude-learning
+    build:
+      context: .
+      dockerfile: ./database/docker/Dockerfile.learning
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-claude_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claude_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-claude_auth}
+      PYTHONUNBUFFERED: 1
+      LEARNING_ENV: docker
+    volumes:
+      # Mount Python learning system code
+      - ./agents/src/python:/app/learning:ro
+      # Mount configuration
+      - ./config:/app/config
+      # Shared learning data
+      - learning_data:/app/data
+      # Logs
+      - ./logs:/app/logs
+    ports:
+      - "8080:8080"  # Learning system API
+    networks:
+      claude_network:
+        ipv4_address: 172.20.0.20
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # Agent Bridge for Communication
+  agent-bridge:
+    container_name: claude-bridge
+    build:
+      context: .
+      dockerfile: ./database/docker/Dockerfile.bridge
+    restart: unless-stopped
+    depends_on:
+      - learning-system
+    environment:
+      LEARNING_API_URL: http://learning-system:8080
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      BRIDGE_PORT: 8081
+    volumes:
+      # Mount agent definitions
+      - ./agents:/app/agents:ro
+      # Configuration
+      - ./config:/app/config
+    ports:
+      - "8081:8081"  # Bridge API
+    networks:
+      claude_network:
+        ipv4_address: 172.20.0.30
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+
+  # Optional: Prometheus for monitoring
+  prometheus:
+    container_name: claude-prometheus
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./database/docker/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9091:9090"
+    networks:
+      claude_network:
+        ipv4_address: 172.20.0.40
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+networks:
+  claude_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+volumes:
+  learning_data:
+    driver: local
+  prometheus_data:
+    driver: local

@@ -76,6 +76,9 @@ metadata:
       - agent_name: "APIDesigner"
         purpose: "API design and integration"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "TypeScript and modern JavaScript documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Testbed"
         condition: "When comprehensive TypeScript testing needed"
@@ -586,6 +589,74 @@ success_metrics:
     build_caching:
       target: ">70% cache hit rate"
       measurement: "Incremental build efficiency"
+
+################################################################################
+# DOCUMENTATION GENERATION
+################################################################################
+
+documentation_generation:
+  # Automatic documentation triggers for TypeScript/JavaScript development
+  triggers:
+    typescript_application:
+      condition: "TypeScript application or library developed"
+      documentation_type: "TypeScript Application Development Guide"
+      content_includes:
+        - "TypeScript configuration and compiler options"
+        - "Advanced type system usage and generic programming"
+        - "Module resolution and declaration file generation"
+        - "Build pipeline configuration with bundlers"
+        - "Type safety best practices and strict mode"
+        - "Integration testing and type coverage analysis"
+    
+    frontend_framework:
+      condition: "Frontend framework application built with TypeScript"
+      documentation_type: "Modern Frontend Development Documentation"
+      content_includes:
+        - "Framework-specific TypeScript configuration"
+        - "Component architecture and type safety patterns"
+        - "State management with TypeScript"
+        - "API integration and type generation"
+        - "Performance optimization and bundle analysis"
+        - "Testing strategies for TypeScript applications"
+    
+    build_optimization:
+      condition: "Build pipeline or bundling configured"
+      documentation_type: "TypeScript Build and Bundling Guide"
+      content_includes:
+        - "Webpack, Vite, or Turbopack configuration"
+        - "Code splitting and lazy loading implementation"
+        - "Tree shaking and bundle size optimization"
+        - "Source map generation and debugging setup"
+        - "Hot module replacement and development workflow"
+        - "Production deployment and CI/CD integration"
+    
+    api_integration:
+      condition: "API clients or type definitions generated"
+      documentation_type: "TypeScript API Integration Documentation"
+      content_includes:
+        - "OpenAPI to TypeScript type generation"
+        - "REST and GraphQL client implementation"
+        - "Type-safe API contracts and validation"
+        - "Error handling and response type safety"
+        - "Authentication and authorization patterns"
+        - "Testing API integrations with TypeScript"
+    
+    nodejs_application:
+      condition: "Node.js application developed with TypeScript"
+      documentation_type: "Node.js TypeScript Development Guide"
+      content_includes:
+        - "Node.js TypeScript configuration and tooling"
+        - "Express.js or Fastify server setup with types"
+        - "Database integration with type safety"
+        - "Middleware implementation and type definitions"
+        - "Environment configuration and validation"
+        - "Production deployment and monitoring setup"
+  
+  auto_invoke_docgen:
+    frequency: "ALWAYS"
+    priority: "HIGH"
+    timing: "After TypeScript development and build configuration completion"
+    integration: "Seamless with TypeScript workflow and modern JavaScript ecosystem"
 
 ################################################################################
 # IMPLEMENTATION NOTES

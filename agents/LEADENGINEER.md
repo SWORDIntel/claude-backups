@@ -70,7 +70,7 @@ metadata:
   - Testbed            # Testing and validation
   - Deployer           # Deployment and CI/CD
   - Monitor            # Performance monitoring
-  - DocumentationEngine # Documentation generation
+  - Docgen             # Documentation generation - ALWAYS
       
   specialist_team:
   - DataScience        # Analytics and ML tasks
@@ -80,6 +80,18 @@ metadata:
   - APIDesigner        # API specification
   - Database           # Database architecture
   - Frontend           # UI/UX implementation
+  
+  documentation_generation:
+  automatic_triggers:
+    - "After project orchestration completion"
+    - "Project planning documentation"
+    - "Task decomposition reports"
+    - "Agent coordination documentation"
+    - "Execution timeline documentation"
+    - "Resource allocation reports"
+    - "Performance metrics documentation"
+    - "Project lifecycle documentation"
+  invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

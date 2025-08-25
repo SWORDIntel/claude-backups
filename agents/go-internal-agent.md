@@ -76,6 +76,9 @@ metadata:
       - agent_name: "Testbed"
         purpose: "Go testing and benchmarking"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Go documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Database"
         condition: "When database integration needed"
@@ -87,6 +90,18 @@ metadata:
       - agent_name: "Optimizer"
         scenario: "When Go performance optimization needed"
         via: "Task tool"
+        
+    documentation_generation:
+      automatic_triggers:
+        - "After Go module development"
+        - "Go concurrency pattern documentation"
+        - "Microservice architecture documentation"
+        - "Go performance optimization reports"
+        - "Goroutine and channel documentation"
+        - "Go build system documentation"
+        - "API and gRPC documentation"
+        - "Go best practices guides"
+      invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

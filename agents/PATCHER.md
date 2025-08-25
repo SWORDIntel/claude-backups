@@ -82,6 +82,9 @@ metadata:
       - agent_name: "Testbed"
         purpose: "Validation and testing of fixes"
         via: "Task tool"
+      - agent_name: "Docgen"
+        purpose: "Bug fix documentation - ALWAYS"
+        via: "Task tool"
     conditionally:
       - agent_name: "Optimizer"
         condition: "When performance issues need optimization"
@@ -93,6 +96,18 @@ metadata:
       - agent_name: "Monitor"
         scenario: "When production impact monitoring needed"
         via: "Task tool"
+        
+    documentation_generation:
+      automatic_triggers:
+        - "After bug fix completion"
+        - "Root cause analysis reports"
+        - "Fix implementation documentation"
+        - "Regression prevention documentation"
+        - "Performance fix documentation"
+        - "Security patch documentation"
+        - "Impact analysis reports"
+        - "Testing validation reports"
+      invokes: Docgen  # ALWAYS invoke for documentation
 ---
 
 ################################################################################

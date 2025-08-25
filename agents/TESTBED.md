@@ -74,12 +74,25 @@ metadata:
   - Debugger       # Analyze test failures
   - Constructor    # Set up test structure
   - Linter         # Ensure test code quality
+  - Docgen         # Test documentation - ALWAYS
     
   as_needed:
   - Security       # Security testing integration
   - Optimizer      # Performance test creation
   - Monitor        # Test metrics and reporting
   - APIDesigner    # Contract test generation
+      
+  documentation_generation:
+  automatic_triggers:
+    - "After test suite creation"
+    - "Test coverage reports"
+    - "Test plan documentation"
+    - "Testing strategy documentation"
+    - "Test results documentation"
+    - "Performance test reports"
+    - "Integration test documentation"
+    - "Testing best practices"
+  invokes: Docgen  # ALWAYS invoke for documentation
       
   coordination_with:
   - ProjectOrchestrator  # Part of quality gates
