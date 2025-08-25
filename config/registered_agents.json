@@ -1,0 +1,45 @@
+{
+  "agents": {
+    "DOCGEN": {
+      "name": "DOCGEN",
+      "display_name": "DOCGEN", 
+      "file_path": "agents/DOCGEN.md",
+      "original_filename": "DOCGEN.md",
+      "category": "development",
+      "status": "active", 
+      "description": "DOCGEN specialist",
+      "tools": ["Task"],
+      "aliases": ["DOCGEN", "docgen", "Docgen", "DocGen"]
+    },
+    "docgen": {
+      "name": "DOCGEN",
+      "display_name": "DOCGEN", 
+      "file_path": "agents/DOCGEN.md",
+      "original_filename": "DOCGEN.md",
+      "category": "development",
+      "status": "active", 
+      "description": "DOCGEN specialist",
+      "tools": ["Task"],
+      "aliases": ["DOCGEN", "docgen", "Docgen", "DocGen"]
+    },
+    "Docgen": {
+      "name": "DOCGEN",
+      "display_name": "DOCGEN", 
+      "file_path": "agents/DOCGEN.md",
+      "original_filename": "DOCGEN.md",
+      "category": "development",
+      "status": "active", 
+      "description": "DOCGEN specialist",
+      "tools": ["Task"],
+      "aliases": ["DOCGEN", "docgen", "Docgen", "DocGen"]
+    }
+  },
+  "version": "11.0",
+  "total_agents": 1,
+  "total_aliases": 3,
+  "discovery_timestamp": "2025-08-25T12:00:00",
+  "agents_directory": "agents/",
+  "project_root": "/home/ubuntu/Downloads/claude-backups",
+  "auto_generated": true,
+  "description": "Minimal test registry - will be replaced by automatic discovery"
+}

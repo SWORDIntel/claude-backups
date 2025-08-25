@@ -3030,6 +3030,9 @@ main() {
     # Install Global Agents Bridge
     install_global_agents_bridge
     
+    # Setup automatic agent registry updates
+    setup_agent_registry_cron
+    
     # Setup Agent Activation System (disabled - causes terminal crashes)
     # setup_agent_activation
     
@@ -3040,6 +3043,42 @@ main() {
     
     # Show summary
     show_summary
+}
+
+# Setup automatic agent registry updates via cron
+setup_agent_registry_cron() {
+    info "Setting up automatic agent registry updates..."
+    
+    # Make the cron script executable
+    if [[ -f "$PROJECT_ROOT/scripts/agent-registry-updater.sh" ]]; then
+        chmod +x "$PROJECT_ROOT/scripts/agent-registry-updater.sh"
+        
+        # Add cron job to update registry every 5 minutes
+        local cron_line="*/5 * * * * $PROJECT_ROOT/scripts/agent-registry-updater.sh"
+        
+        # Check if cron job already exists
+        if ! crontab -l 2>/dev/null | grep -q "agent-registry-updater.sh"; then
+            # Add the cron job
+            (crontab -l 2>/dev/null; echo "$cron_line") | crontab -
+            success "Agent registry auto-update enabled (every 5 minutes)"
+            info "  • Registry location: $PROJECT_ROOT/config/registered_agents.json"
+            info "  • Symlinked to: ~/.cache/claude/registered_agents.json"
+            info "  • Updates automatically when agents are added/modified"
+        else
+            success "Agent registry cron job already configured"
+        fi
+        
+        # Run initial registration
+        info "Running initial agent registration..."
+        if python3 "$PROJECT_ROOT/tools/register-custom-agents.py" >/dev/null 2>&1; then
+            success "Initial agent registry created"
+        else
+            warning "Initial agent registration had issues - will retry via cron"
+        fi
+        
+    else
+        warning "Agent registry updater script not found - skipping cron setup"
+    fi
 }
 
 # Run the installer

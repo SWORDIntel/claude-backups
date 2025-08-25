@@ -572,6 +572,7 @@ When invoking multiple agents, use these execution modes:
 5. **MONITOR hardware** when using C-Internal or Assembly-Internal
 6. **VALIDATE security** with Security team for any sensitive operations
 7. **DOCUMENT decisions** with Docgen after major implementations
+8. **NEVER HARDCODE PATHS** - Always use relative paths, environment variables, or dynamic path resolution
 
 ---
 
@@ -608,6 +609,50 @@ Common agent chains based on invokes_agents relationships:
 - Always consider security implications - invoke Security team when needed
 - Monitor performance impacts with Monitor agent
 - Document significant changes with Docgen
+
+## 🚫 PATH MANAGEMENT GUIDELINES
+
+**CRITICAL**: Never hardcode absolute paths in any code, configuration, or documentation.
+
+### ❌ NEVER DO THIS:
+```bash
+# Hardcoded absolute paths
+/home/ubuntu/Downloads/claude-backups/docker-compose.yml
+/home/john/project/config/database.conf
+C:\Users\Admin\Projects\app\settings.ini
+```
+
+### ✅ ALWAYS DO THIS:
+```bash
+# Relative paths
+./docker-compose.yml
+../config/database.conf
+./settings.ini
+
+# Environment variables
+$PROJECT_ROOT/docker-compose.yml
+${HOME}/.config/app/settings.ini
+$CLAUDE_PROJECT_DIR/config/
+
+# Dynamic resolution
+$(pwd)/docker-compose.yml
+$(dirname "$0")/config/
+"$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+```
+
+### Path Resolution Patterns:
+1. **Script Directory**: `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
+2. **Project Root**: `PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"`
+3. **Config Files**: `"$PROJECT_ROOT/config/app.conf"`
+4. **Data Directories**: `"$PROJECT_ROOT/data/"`
+5. **Environment Variables**: `${CLAUDE_HOME:-$HOME/.claude}`
+
+### Why This Matters:
+- **Portability**: Code works across different systems and users
+- **Deployment**: No path changes needed for different environments
+- **Security**: Reduces exposure of system-specific information
+- **Maintenance**: Easier to move, copy, or reorganize projects
+- **Collaboration**: Works for all team members regardless of setup
 
 ---
 

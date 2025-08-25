@@ -7,7 +7,8 @@ services:
   # PostgreSQL Database with pgvector extension
   postgres:
     container_name: claude-postgres
-    image: pgvector/pgvector:pg16-latest
+    # Using PostgreSQL 16 with manual pgvector installation for reliability
+    image: postgres:16
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-claude_user}
@@ -16,6 +17,8 @@ services:
       # Security: Remove trust auth method - use password authentication
       # POSTGRES_HOST_AUTH_METHOD: trust  # REMOVED - SECURITY RISK
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8 --auth-host=scram-sha-256 --auth-local=peer"
+      # Install pgvector extension during container startup
+      POSTGRES_EXTENSIONS: "vector"
     volumes:
       # Data persistence using existing PostgreSQL data
       - ./database/data/postgresql:/var/lib/postgresql/data
@@ -23,6 +26,8 @@ services:
       - ./database/sql/auth_db_setup.sql:/docker-entrypoint-initdb.d/01-auth-setup.sql:ro
       - ./database/sql/learning_system_schema_pg16_compatible.sql:/docker-entrypoint-initdb.d/02-learning-schema.sql:ro
       - ./database/sql/postgresql_16_json_compatibility_layer.sql:/docker-entrypoint-initdb.d/03-json-compat.sql:ro
+      # pgvector extension installation script
+      - ./database/docker/install-pgvector.sh:/docker-entrypoint-initdb.d/00-install-pgvector.sh:ro
       # Custom PostgreSQL configuration
       - ./database/docker/config/postgresql.conf:/var/lib/postgresql/data/postgresql.conf:ro
     ports:

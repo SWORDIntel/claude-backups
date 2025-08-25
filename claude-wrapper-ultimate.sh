@@ -356,25 +356,22 @@ execute_claude() {
     
     log_debug "Executing: $claude_binary ${args[*]}"
     
-    # FIXED: Don't use exec which replaces the shell process
-    # Instead, run normally to preserve output handling
+    # FIXED: Use exec to replace shell process and preserve bash output
+    # This ensures Claude gets proper stdin/stdout/stderr handling
     
     # Method 1: Try direct execution
     if [[ -x "$claude_binary" ]]; then
-        "$claude_binary" "${args[@]}"
-        return $?
+        exec "$claude_binary" "${args[@]}"
     fi
     
     # Method 2: Try with node
     if command_exists node; then
-        node "$claude_binary" "${args[@]}"
-        return $?
+        exec node "$claude_binary" "${args[@]}"
     fi
     
     # Method 3: Try with npx
     if command_exists npx; then
-        npx @anthropic-ai/claude-code "${args[@]}"
-        return $?
+        exec npx @anthropic-ai/claude-code "${args[@]}"
     fi
     
     log_error "All execution methods failed"

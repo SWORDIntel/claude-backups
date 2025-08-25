@@ -919,6 +919,22 @@ claude status                   # Show bridge status
 - **When conflicts arise, extend structures rather than remove fields**
 - **Include dependencies we don't need rather than accidentally removing ones we do**
 
+### Path Management Policy ⚠️ CRITICAL ⚠️
+**NEVER HARDCODE ABSOLUTE PATHS**
+- **ALWAYS use relative paths, environment variables, or dynamic resolution**
+- **NEVER commit hardcoded user-specific paths like /home/username/**
+- **Use `$(dirname "$0")` for script-relative paths**
+- **Use environment variables for configurable locations**
+- **Ensure portability across different systems and users**
+
+### Wrapper/Script Execution Policy ⚠️ CRITICAL ⚠️
+**NEVER RUN CLAUDE AS SUBPROCESS IN WRAPPERS**
+- **ALWAYS use `exec` to replace shell process when executing Claude**
+- **NEVER run Claude as subprocess with `"$claude_binary" "${args[@]}"` - this breaks bash output**
+- **Use `exec "$claude_binary" "${args[@]}"` to preserve proper I/O handling**
+- **Subprocess execution creates wrapper interference that suppresses bash command output**
+- **`exec` ensures Claude gets direct terminal access without intermediate process filtering**
+
 ### Integration Approach
 - **Seamless Integration**: New features must work alongside existing systems
 - **Zero Functionality Loss**: Every existing feature must continue working
@@ -942,6 +958,7 @@ claude status                   # Show bridge status
 - Use existing libraries (check package.json/requirements.txt)
 - Preserve all existing APIs and interfaces
 - Extend rather than replace when possible
+- **NEVER hardcode absolute paths** - use relative paths, environment variables, or dynamic resolution
 
 ### Organization & Cleanliness Policy
 - **Keep directories CLEAN**: Move deprecated/duplicate files to `deprecated/` folders
