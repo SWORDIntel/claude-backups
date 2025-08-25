@@ -1501,7 +1501,18 @@
       ],
       "exampleFilesGeneratedAt": 1756085907199,
       "hasCompletedProjectOnboarding": true,
-      "lastTotalWebSearchRequests": 0
+      "lastTotalWebSearchRequests": 0,
+      "lastCost": 6.047303999999998,
+      "lastAPIDuration": 864469,
+      "lastToolDuration": 1166,
+      "lastDuration": 4502894,
+      "lastLinesAdded": 1277,
+      "lastLinesRemoved": 520,
+      "lastTotalInputTokens": 76628,
+      "lastTotalOutputTokens": 35145,
+      "lastTotalCacheCreationInputTokens": 573202,
+      "lastTotalCacheReadInputTokens": 11117003,
+      "lastSessionId": "9ef4f65f-6cf2-434a-95c5-16277742099b"
     }
   },
   "oauthAccount": {
