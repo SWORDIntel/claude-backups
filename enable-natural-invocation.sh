@@ -114,6 +114,17 @@ check_prerequisites() {
     
     local all_good=true
     
+    # Check for venv and activate it
+    if [ -d "$SCRIPT_DIR/venv" ] && [ -f "$SCRIPT_DIR/venv/bin/python3" ]; then
+        export VIRTUAL_ENV="$SCRIPT_DIR/venv"
+        export PATH="$SCRIPT_DIR/venv/bin:$PATH"
+        print_success "Using existing venv at: $SCRIPT_DIR/venv"
+        
+        # Use venv Python for all checks
+        alias python3="$SCRIPT_DIR/venv/bin/python3"
+        alias pip="$SCRIPT_DIR/venv/bin/pip"
+    fi
+    
     # Check Python
     if check_python_version; then
         print_success "Python 3.8+ found: $(python3 --version 2>&1 | cut -d' ' -f2)"
@@ -179,15 +190,24 @@ install_hook_configuration() {
     # Backup existing configuration
     backup_file "$hooks_config"
     
+    # Determine Python interpreter to use
+    local python_interpreter="python3"
+    if [ -f "$SCRIPT_DIR/venv/bin/python3" ]; then
+        python_interpreter="$SCRIPT_DIR/venv/bin/python3"
+    fi
+    
     # Create comprehensive hook configuration
     cat > "$hooks_config" << EOF
 {
   "version": "$VERSION",
   "enabled": true,
+  "python_interpreter": "$python_interpreter",
+  "venv_path": "$SCRIPT_DIR/venv",
   "hooks": {
     "pre-task": {
       "enabled": true,
       "script": "$HOOKS_DIR/natural-invocation-hook.py",
+      "interpreter": "$python_interpreter",
       "function": "hook_pre_task",
       "description": "Analyzes task invocations to suggest relevant agents",
       "timeout": 5
@@ -543,11 +563,14 @@ EOF
 run_tests() {
     print_step "Running tests..."
     
-    # Use venv Python if available
+    # Always use venv Python if it exists
     local python_cmd="python3"
-    if [ -n "$VIRTUAL_ENV" ]; then
-        python_cmd="$VIRTUAL_ENV/bin/python3"
+    if [ -f "$SCRIPT_DIR/venv/bin/python3" ]; then
+        python_cmd="$SCRIPT_DIR/venv/bin/python3"
         print_info "Using venv Python: $python_cmd"
+    elif [ -n "$VIRTUAL_ENV" ]; then
+        python_cmd="$VIRTUAL_ENV/bin/python3"
+        print_info "Using activated venv Python: $python_cmd"
     fi
     
     # Create comprehensive test script
@@ -695,7 +718,13 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-python3 -c "
+# Use venv Python if available
+PYTHON_CMD="python3"
+if [ -f "$SCRIPT_DIR/venv/bin/python3" ]; then
+    PYTHON_CMD="$SCRIPT_DIR/venv/bin/python3"
+fi
+
+$PYTHON_CMD -c "
 import os, sys
 from pathlib import Path
 import importlib.util

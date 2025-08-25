@@ -412,7 +412,12 @@ system:
 │   ├── system/              # System scripts
 │   └── admin/               # Administrative tools
 │
-├── docs/                     # Project Documentation
+├── docs/                     # Project Documentation (ALL DOCS GO HERE)
+│   ├── fixes/                # Bug fixes and patches documentation
+│   ├── features/             # New features documentation
+│   ├── guides/               # User guides and tutorials
+│   ├── technical/            # Technical specifications
+│   └── README.md             # Documentation index
 ├── config/                   # Configuration files
 │   ├── database.json         # Database connection configuration  
 │   ├── learning_config.json  # Learning system configuration
@@ -877,6 +882,30 @@ claude status                   # Show bridge status
 - Agents can invoke each other autonomously
 - Proactive triggers enable context-based auto-invocation
 - Circular dependencies are allowed and handled
+
+## Documentation Guidelines
+
+### Documentation Organization Policy 📚 MANDATORY
+**ALL DOCUMENTATION MUST BE FILED IN THE docs/ FOLDER**
+- **NEVER leave documentation in the root directory**
+- **ALWAYS organize docs into appropriate subfolders**:
+  - `docs/fixes/` - Bug fixes, patches, and issue resolutions
+  - `docs/features/` - New features and enhancements
+  - `docs/guides/` - User guides, tutorials, and how-tos
+  - `docs/technical/` - Technical specifications, architecture docs
+  - `docs/` - General documentation and index files
+- **ALWAYS update docs/README.md** when adding new documentation
+- **Use descriptive filenames**: `BASH_OUTPUT_FIX_SUMMARY.md` not `fix.md`
+- **Include date in filename for time-sensitive docs**: `2025-08-25-wrapper-fix.md`
+- **Create subdirectories for major features**: `docs/features/tandem-orchestration/`
+
+### Documentation Standards
+- **Markdown format** for all documentation (.md extension)
+- **Clear headers** with proper hierarchy (# ## ###)
+- **Code examples** in fenced code blocks with language specification
+- **Status indicators**: ✅ Complete, 🚧 In Progress, ❌ Deprecated
+- **Version numbers** when relevant
+- **Links to related docs** at the bottom of each file
 
 ## Development Guidelines
 

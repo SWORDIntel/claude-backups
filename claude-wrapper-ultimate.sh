@@ -22,12 +22,28 @@
 # Don't exit on errors - handle them gracefully
 set +e
 
-# Suppress verbose agent bridge headers
-export CLAUDE_QUIET_MODE=true
-export CLAUDE_SUPPRESS_BANNER=true
-export NO_AGENT_BRIDGE_HEADER=true
-export CLAUDE_BRIDGE_QUIET=true
-export DISABLE_AGENT_BRIDGE=true
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# OUTPUT CONTROL - CONFIGURABLE (FIXED FOR BASH OUTPUT)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Allow user to control output suppression via environment variable
+# Default to NOT suppressing output to fix bash output issues
+if [[ "${CLAUDE_FORCE_QUIET:-false}" == "true" ]]; then
+    # Only suppress if explicitly requested
+    export CLAUDE_QUIET_MODE=true
+    export CLAUDE_SUPPRESS_BANNER=true
+    export NO_AGENT_BRIDGE_HEADER=true
+    export CLAUDE_BRIDGE_QUIET=true
+    export DISABLE_AGENT_BRIDGE=true
+else
+    # Default: Allow normal output
+    export CLAUDE_QUIET_MODE=false
+    export CLAUDE_SUPPRESS_BANNER=false
+    # Still suppress verbose headers but allow actual output
+    export NO_AGENT_BRIDGE_HEADER=true
+    export CLAUDE_BRIDGE_QUIET=false
+    export DISABLE_AGENT_BRIDGE=false
+fi
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # COLORS AND SYMBOLS (SAFE)
@@ -340,19 +356,25 @@ execute_claude() {
     
     log_debug "Executing: $claude_binary ${args[*]}"
     
+    # FIXED: Don't use exec which replaces the shell process
+    # Instead, run normally to preserve output handling
+    
     # Method 1: Try direct execution
     if [[ -x "$claude_binary" ]]; then
-        exec "$claude_binary" "${args[@]}" 2>&1
+        "$claude_binary" "${args[@]}"
+        return $?
     fi
     
     # Method 2: Try with node
     if command_exists node; then
-        exec node "$claude_binary" "${args[@]}" 2>&1
+        node "$claude_binary" "${args[@]}"
+        return $?
     fi
     
     # Method 3: Try with npx
     if command_exists npx; then
-        exec npx @anthropic-ai/claude-code "${args[@]}" 2>&1
+        npx @anthropic-ai/claude-code "${args[@]}"
+        return $?
     fi
     
     log_error "All execution methods failed"
@@ -413,7 +435,7 @@ initialize_environment() {
 
 show_status() {
     echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${CYAN}${BOLD}          Claude Ultimate Wrapper v13.0 Status${NC}"
+    echo -e "${CYAN}${BOLD}          Claude Ultimate Wrapper v13.1 Status${NC}"
     echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
     echo
     

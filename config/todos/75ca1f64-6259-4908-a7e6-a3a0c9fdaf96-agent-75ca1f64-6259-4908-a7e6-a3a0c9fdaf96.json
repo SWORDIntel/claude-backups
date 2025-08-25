@@ -1,1 +1,37 @@
-[]
+[
+  {
+    "content": "Use DOCGEN agent to organize documentation",
+    "status": "completed",
+    "activeForm": "Using DOCGEN agent for documentation organization"
+  },
+  {
+    "content": "Document hooks system",
+    "status": "completed",
+    "activeForm": "Documenting hooks system"
+  },
+  {
+    "content": "Document installation process in detail",
+    "status": "completed",
+    "activeForm": "Documenting installation process"
+  },
+  {
+    "content": "Document ML Learning System v3.1",
+    "status": "completed",
+    "activeForm": "Documenting ML Learning System"
+  },
+  {
+    "content": "Create organized directory structure for docs",
+    "status": "in_progress",
+    "activeForm": "Creating organized documentation structure"
+  },
+  {
+    "content": "Document binary communication system",
+    "status": "pending",
+    "activeForm": "Documenting binary communication"
+  },
+  {
+    "content": "Document Tandem Orchestration in detail",
+    "status": "pending",
+    "activeForm": "Documenting Tandem Orchestration"
+  }
+]
