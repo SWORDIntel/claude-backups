@@ -1,7 +1,7 @@
 {
   "customAgentsEnabled": true,
-  "customAgentsPath": "/home/ubuntu/Documents/claude-backups/.claude/custom-agents.json",
-  "agentRegistryPath": "/home/ubuntu/Documents/claude-backups/.claude/agent-registry.json",
+  "customAgentsPath": "/home/ubuntu/Downloads/claude-backups/.claude/custom-agents.json",
+  "agentRegistryPath": "/home/ubuntu/Downloads/claude-backups/.claude/agent-registry.json",
   "enabledAgents": [
     "director", "projectorchestrator", "security", "bastion", "cso",
     "cryptoexpert", "quantumguard", "securityauditor", "securitychaosagent",

@@ -3218,3 +3218,15 @@
 2025-08-24 22:10:49.272 UTC [355560] FATAL:  database "ubuntu" does not exist
 2025-08-24 22:11:04.472 UTC [30464] LOG:  checkpoint complete: wrote 174 buffers (1.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=17.364 s, sync=0.001 s, total=17.367 s; sync files=73, longest=0.001 s, average=0.001 s; distance=879 kB, estimate=1986 kB; lsn=0/204AC58, redo lsn=0/204AC20
 2025-08-24 22:11:22.380 UTC [355655] FATAL:  database "ubuntu" does not exist
+2025-08-24 23:59:43.149 UTC [25166] FATAL:  data directory "/home/ubuntu/Downloads/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 23:59:43.149 UTC [25166] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-24 23:59:47.394 UTC [25186] FATAL:  data directory "/home/ubuntu/Downloads/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 23:59:47.394 UTC [25186] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-24 23:59:49.706 UTC [25208] FATAL:  data directory "/home/ubuntu/Downloads/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-24 23:59:49.706 UTC [25208] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 00:05:37.182 UTC [33328] FATAL:  data directory "/home/ubuntu/Downloads/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 00:05:37.182 UTC [33328] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 00:05:41.430 UTC [33352] FATAL:  data directory "/home/ubuntu/Downloads/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 00:05:41.430 UTC [33352] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-25 00:05:43.739 UTC [33375] FATAL:  data directory "/home/ubuntu/Downloads/claude-backups/database/data/postgresql" has invalid permissions
+2025-08-25 00:05:43.739 UTC [33375] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).

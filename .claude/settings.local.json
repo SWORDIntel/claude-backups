@@ -1,4 +1,15 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(bash:*)",
+      "Bash(grep:*)",
+      "Read(//home/ubuntu/Downloads/**)",
+      "Bash(./claude-installer.sh:*)"
+    ],
+    "additionalDirectories": [
+      "/home/ubuntu/Downloads"
+    ]
+  },
   "claude_project_root": "auto",
   "self_contained": true,
   "use_symlinks": true,

@@ -1,6 +1,6 @@
 [Unit]
 Description=Claude Agent Framework - Tandem Orchestration System
-Documentation=file:///home/ubuntu/Documents/claude-backups/docs/TANDEM_ORCHESTRATION_SYSTEM.md
+Documentation=file:///home/ubuntu/Downloads/claude-backups/docs/TANDEM_ORCHESTRATION_SYSTEM.md
 After=network.target multi-user.target
 Wants=network.target
 
@@ -8,18 +8,18 @@ Wants=network.target
 Type=simple
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/home/ubuntu/Documents/claude-backups/agents/src/python
-Environment=PYTHONPATH=/home/ubuntu/Documents/claude-backups/agents/src/python:/home/ubuntu/Documents/claude-backups/agents/src/python
+WorkingDirectory=/home/ubuntu/Downloads/claude-backups/agents/src/python
+Environment=PYTHONPATH=/home/ubuntu/Downloads/claude-backups/agents/src/python:/home/ubuntu/Downloads/claude-backups/agents/src/python
 Environment=ENABLE_METEOR_LAKE_OPT=1
 Environment=ENABLE_AVX512=0
 Environment=TANDEM_LOG_LEVEL=INFO
-Environment=TANDEM_CONFIG_DIR=/home/ubuntu/Documents/claude-backups/agents/src/python/config
+Environment=TANDEM_CONFIG_DIR=/home/ubuntu/Downloads/claude-backups/agents/src/python/config
 Environment=OPENVINO_AVAILABLE=0
 Environment=NPU_ACCELERATION_ENABLED=0
 Environment=INTEL_OPENVINO_DIR=
 ExecStartPre=/bin/bash -c "[ -f '/home/ubuntu/openvino_ml_env/bin/setupvars.sh' ] && source '/home/ubuntu/openvino_ml_env/bin/setupvars.sh' || true"
-ExecStartPre=/home/ubuntu/Documents/claude-backups/agents/src/python/venv_production/bin/python -c "import production_orchestrator; print('Tandem Orchestrator module check: OK')"
-ExecStart=/home/ubuntu/Documents/claude-backups/agents/src/python/venv_production/bin/python -m production_orchestrator --mode=production --config=/home/ubuntu/Documents/claude-backups/agents/src/python/config/production.yaml
+ExecStartPre=/home/ubuntu/Downloads/claude-backups/agents/src/python/venv_production/bin/python -c "import production_orchestrator; print('Tandem Orchestrator module check: OK')"
+ExecStart=/home/ubuntu/Downloads/claude-backups/agents/src/python/venv_production/bin/python -m production_orchestrator --mode=production --config=/home/ubuntu/Downloads/claude-backups/agents/src/python/config/production.yaml
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGTERM
@@ -34,7 +34,7 @@ SyslogIdentifier=tandem-orchestrator
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/ubuntu/Documents/claude-backups/agents/src/python /home/ubuntu/Documents/claude-backups/agents/monitoring/logs
+ReadWritePaths=/home/ubuntu/Downloads/claude-backups/agents/src/python /home/ubuntu/Downloads/claude-backups/agents/monitoring/logs
 PrivateTmp=true
 
 # Resource limits
