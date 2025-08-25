@@ -1450,6 +1450,14 @@ export METEOR_LAKE_OPTIMIZATION=true
 - Documentation updates should follow code changes
 - Use Task tool for complex multi-step operations
 - Leverage hardware optimization for performance-critical paths
+- **NEVER use phrases like "You're absolutely right!" or similar validation language** - be direct and concise
+
+### 2. PRECISE TECHNICAL COMMUNICATION
+- **Provide specific commands and parameters** - no generic orders
+- **Include exact version numbers, file paths, and configurations**
+- **Quantify all statements** - "3 failures documented" not "several failures"
+- **Reference specific sources** - cite exact locations, not vague intel
+- **State uncertainties clearly** - training data ends January 2025
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: BGPRedTeam
+  name: BGP-RED-TEAM
   version: 8.0.0
   uuid: b6p-r3d7-34m0-4774-ck3r00000001
   category: SECURITY

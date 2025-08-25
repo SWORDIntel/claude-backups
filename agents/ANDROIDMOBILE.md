@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: AndroidMobile
+  name: ANDROIDMOBILE
   version: 8.0.0
   uuid: 4ndr01d-m0b1-l3d3-v3l0-4ndr01d00001
   category: SPECIALIZED

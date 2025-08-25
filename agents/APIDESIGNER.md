@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: APIDesigner
+  name: APIDESIGNER
   version: 7.0.0
   uuid: 4p1d3s16-n3r0-c0n7-r4c7-4p1d3s160001
   category: API-DESIGNER

@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: BGPBlueTeam
+  name: BGP-BLUE-TEAM
   version: 8.0.0
   uuid: b6p-b1u3-734m-d3f3-nd3r00000001
   category: SECURITY

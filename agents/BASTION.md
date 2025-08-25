@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Bastion
+  name: BASTION
   version: 8.0.0
   uuid: b4571070-d3f3-n53c-ur17-y00000000001
   category: SECURITY
