@@ -1059,6 +1059,26 @@ export METEOR_LAKE_OPTIMIZATION=true
   - Virtual environment auto-activation
 - **Status**: PRODUCTION READY - All 71 agents accessible
 
+### Agent Name Capitalization Standardization (2025-08-25) ✅ COMPLETE
+- **Complete Standardization**: All 71 agent files now use consistent UPPERCASE naming conventions
+- **Files Processed**: 25 lowercase agent files renamed and metadata updated
+- **Perfect Alignment**: Filename and metadata name fields exactly matched across all agents
+- **Categories Standardized**:
+  - **Security Specialists**: 8 files (APT41, BGP, Prompt security, Ghost Protocol, etc.)
+  - **Language-Specific**: 8 files (Assembly, C++, Go, Java, Kotlin, Rust, TypeScript, Zig)
+  - **Infrastructure**: 4 files (Cisco, Docker, DD-WRT, Proxmox)
+  - **Specialized**: 5 files (Carbon, IoT, SQL, Wrapper Liberation, PsyOps)
+- **Quality Assurance**:
+  - One-by-one processing with zero automation errors
+  - Complete backup created: `agents-backup-YYYYMMDD-HHMMSS.tar.gz`
+  - Full documentation: `docs/fixes/2025-08-25-agent-name-capitalization.md`
+- **System Benefits**:
+  - Perfect naming consistency across entire 71-agent ecosystem
+  - Improved discoverability with UPPERCASE filenames
+  - Future-proof standardized format for new agent additions
+  - Enhanced automation compatibility with consistent naming
+- **Status**: PRODUCTION READY - All agents perfectly standardized ✅
+
 ### ML Learning System v3.1 with PostgreSQL 16/17 Compatibility (2025-08-24)
 - **Universal Database Compatibility**: Full PostgreSQL 16 and 17 support with automatic version detection
 - **Schema Evolution**: Learning system v3.1 with ML features and drift prevention
