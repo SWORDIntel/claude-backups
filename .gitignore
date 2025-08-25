@@ -33,6 +33,12 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Python virtual environments
+venv/
+env/
+.env
+.venv
+
 # Backup files
 *.bak
 *.backup

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# CLAUDE ULTIMATE WRAPPER v13.0 - ENHANCED WITH BANNER SUPPRESSION
+# CLAUDE ULTIMATE WRAPPER v13.1 - ENHANCED WITH AUTOMATIC AGENT REGISTRATION
 # 
 # Features:
 # • Automatic yoga.wasm error detection and recovery
@@ -12,6 +12,11 @@
 # • Performance monitoring and caching
 # • Banner suppression for clean output
 # • Correct agent system status reporting
+# • Automatic agent discovery and registration from agents/ directory
+# • Intelligent agent metadata extraction (category, description, tools, UUID)
+# • Agent status tracking (active/template/stub)
+# • Enhanced agent search and execution
+# • JSON-based agent registry with caching
 # ═══════════════════════════════════════════════════════════════════════════
 
 # Don't exit on errors - handle them gracefully
@@ -244,8 +249,13 @@ activate_venv() {
 
 find_project_root() {
     local current_dir="$(pwd 2>/dev/null || echo "$HOME")"
+    
+    # First check if script is being run from within a project directory
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null)"
+    
     local search_paths=(
         "$current_dir"
+        "$script_dir"
         "${CLAUDE_PROJECT_ROOT:-}"
         "$HOME/Documents/Claude"
         "$HOME/Documents/claude-backups"
@@ -262,6 +272,12 @@ find_project_root() {
             fi
         fi
     done
+    
+    # If no project found, use current directory if it has agents
+    if [[ -d "$current_dir/agents" ]]; then
+        echo "$current_dir"
+        return 0
+    fi
     
     echo "$HOME/claude-project"
     mkdir -p "$HOME/claude-project" 2>/dev/null || true
@@ -359,7 +375,16 @@ initialize_environment() {
         export CLAUDE_DIR="$CLAUDE_PROJECT_ROOT/.claude"
         export CLAUDE_AGENTS_DIR="$CLAUDE_DIR/agents"
         export CLAUDE_CONFIG_DIR="$CLAUDE_DIR/config"
+    elif [[ -d "$CLAUDE_PROJECT_ROOT/agents" ]]; then
+        # If agents directory exists in project root, use it
+        export CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
+        export CLAUDE_CONFIG_DIR="$CLAUDE_PROJECT_ROOT/config"
+    elif [[ -d "./agents" ]]; then
+        # If agents directory exists relative to current directory
+        export CLAUDE_AGENTS_DIR="$(realpath ./agents 2>/dev/null || pwd)/agents"
+        export CLAUDE_CONFIG_DIR="$(realpath ./config 2>/dev/null || pwd)/config"
     else
+        # Final fallback
         export CLAUDE_AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$HOME/agents}"
         export CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.config/claude}"
     fi
@@ -450,8 +475,45 @@ show_status() {
     # Directories
     echo -e "${BOLD}Directories:${NC}"
     echo "  Project: $CLAUDE_PROJECT_ROOT"
-    [[ -d "$CLAUDE_AGENTS_DIR" ]] && echo "  Agents: $CLAUDE_AGENTS_DIR ($(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l) found)"
+    if [[ -d "$CLAUDE_AGENTS_DIR" ]]; then
+        local total_agents=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" 2>/dev/null | wc -l)
+        echo "  Agents: $CLAUDE_AGENTS_DIR ($total_agents found)"
+    else
+        echo -e "  Agents: ${RED}${ERROR} Not found${NC}"
+    fi
     echo "  Cache: $CACHE_DIR"
+    
+    # Agent Registry Status
+    local registry_file="$CACHE_DIR/registered_agents.json"
+    if [[ -f "$registry_file" ]]; then
+        local registered_count=0
+        local active_count=0
+        local template_count=0
+        local stub_count=0
+        
+        if command_exists python3; then
+            eval "$(python3 -c "
+import json, sys
+try:
+    with open('$registry_file', 'r') as f:
+        registry = json.load(f)
+    agents = registry.get('agents', {})
+    print(f'registered_count={len(agents)}')
+    print(f'active_count={sum(1 for a in agents.values() if a.get(\"status\") == \"active\")}')
+    print(f'template_count={sum(1 for a in agents.values() if a.get(\"status\") == \"template\")}')
+    print(f'stub_count={sum(1 for a in agents.values() if a.get(\"status\") == \"stub\")}')
+except Exception:
+    print('registered_count=0')
+" 2>/dev/null)"
+        fi
+        
+        echo "  Registry: $registered_count registered"
+        [[ $active_count -gt 0 ]] && echo "    Active: $active_count"
+        [[ $template_count -gt 0 ]] && echo "    Templates: $template_count"
+        [[ $stub_count -gt 0 ]] && echo "    Stubs: $stub_count"
+    else
+        echo -e "  Registry: ${DIM}Not created (run 'claude agents' to register)${NC}"
+    fi
     echo
     
     # Agent System (check actual status)
@@ -558,34 +620,298 @@ auto_fix_issues() {
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# AGENT MANAGEMENT
+# AGENT MANAGEMENT WITH AUTOMATIC REGISTRATION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Agent registry cache
+AGENT_REGISTRY_CACHE="$CACHE_DIR/agent_registry.cache"
+AGENT_REGISTRY_TIMESTAMP="$CACHE_DIR/agent_registry.timestamp"
+
+# Automatic agent registration from agents/ directory
+register_agents_from_directory() {
+    local agents_dir="${1:-$CLAUDE_AGENTS_DIR}"
+    local registry_file="$CACHE_DIR/registered_agents.json"
+    
+    if [[ ! -d "$agents_dir" ]]; then
+        log_warning "Agents directory not found: $agents_dir"
+        return 1
+    fi
+    
+    log_debug "Registering agents from: $agents_dir"
+    
+    # Create registry file if it doesn't exist
+    if [[ ! -f "$registry_file" ]]; then
+        echo '{"agents": {}, "last_updated": "", "total_count": 0}' > "$registry_file"
+    fi
+    
+    local agent_count=0
+    local updated_agents=()
+    
+    # Initialize registry JSON
+    local temp_registry=$(mktemp)
+    echo '{"agents": {}, "last_updated": "'$(date -Iseconds)'", "total_count": 0}' > "$temp_registry"
+    
+    while IFS= read -r agent_file; do
+        if [[ ! -f "$agent_file" ]]; then
+            continue
+        fi
+        
+        local agent_name=$(basename "$agent_file" | sed 's/\.[mM][dD]$//' | tr '[:upper:]' '[:lower:]')
+        local agent_display_name=$(basename "$agent_file" | sed 's/\.[mM][dD]$//')
+        local category="general"
+        local description=""
+        local uuid=""
+        local tools=()
+        local status="active"
+        
+        # Extract metadata from agent file
+        if [[ -r "$agent_file" ]]; then
+            # Try to extract category from frontmatter or content
+            if grep -q "^category:" "$agent_file" 2>/dev/null; then
+                category=$(grep "^category:" "$agent_file" | head -1 | sed 's/category: *//; s/[[:space:]]*$//')
+            elif grep -qE "^\*\*Category:\*\*" "$agent_file" 2>/dev/null; then
+                category=$(grep -E "^\*\*Category:\*\*" "$agent_file" | head -1 | sed 's/^\*\*Category:\*\* *//; s/[[:space:]]*$//')
+            fi
+            
+            # Extract description
+            if grep -q "^description:" "$agent_file" 2>/dev/null; then
+                description=$(grep "^description:" "$agent_file" | head -1 | sed 's/description: *//; s/[[:space:]]*$//')
+            elif grep -qE "^\*\*Purpose:\*\*" "$agent_file" 2>/dev/null; then
+                description=$(grep -E "^\*\*Purpose:\*\*" "$agent_file" | head -1 | sed 's/^\*\*Purpose:\*\* *//; s/[[:space:]]*$//')
+            elif grep -q "^## Purpose" "$agent_file" 2>/dev/null; then
+                description=$(awk '/^## Purpose/{getline; print; exit}' "$agent_file" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+            fi
+            
+            # Extract UUID
+            if grep -q "^uuid:" "$agent_file" 2>/dev/null; then
+                uuid=$(grep "^uuid:" "$agent_file" | head -1 | sed 's/uuid: *//; s/[[:space:]]*$//')
+            elif grep -qE "^\*\*UUID:\*\*" "$agent_file" 2>/dev/null; then
+                uuid=$(grep -E "^\*\*UUID:\*\*" "$agent_file" | head -1 | sed 's/^\*\*UUID:\*\* *//; s/[[:space:]]*$//')
+            fi
+            
+            # Extract tools array (simplified - look for tools: section)
+            if grep -q "^tools:" "$agent_file" 2>/dev/null; then
+                # Extract tools array items (basic implementation)
+                while IFS= read -r tool_line; do
+                    if [[ "$tool_line" =~ ^[[:space:]]*-[[:space:]]*(.+)$ ]]; then
+                        tools+=("${BASH_REMATCH[1]}")
+                    fi
+                done < <(awk '/^tools:/,/^[^[:space:]-]/ {if ($0 ~ /^[[:space:]]*-/) print $0}' "$agent_file" | head -10)
+            fi
+            
+            # Determine status based on file completeness
+            local file_size=$(stat -f%z "$agent_file" 2>/dev/null || stat -c%s "$agent_file" 2>/dev/null || echo "0")
+            if [[ $file_size -lt 100 ]]; then
+                status="stub"
+            elif ! grep -q "## Implementation" "$agent_file" 2>/dev/null; then
+                status="template"
+            else
+                status="active"
+            fi
+        fi
+        
+        # Build JSON entry for this agent
+        local tools_json=""
+        if [[ ${#tools[@]} -gt 0 ]]; then
+            tools_json=$(printf '"%s",' "${tools[@]}")
+            tools_json="[${tools_json%,}]"
+        else
+            tools_json="[]"
+        fi
+        
+        # Add agent to temporary registry
+        local agent_json='{
+            "name": "'$agent_name'",
+            "display_name": "'$agent_display_name'",
+            "file_path": "'$agent_file'",
+            "category": "'${category:-general}'",
+            "description": "'${description:-No description available}'",
+            "uuid": "'${uuid:-unknown}'",
+            "tools": '$tools_json',
+            "status": "'$status'",
+            "last_modified": "'$(date -r "$agent_file" -Iseconds 2>/dev/null || date -Iseconds)'"
+        }'
+        
+        # Use python or node to properly merge JSON (fallback to simple method)
+        if command_exists python3; then
+            python3 -c "
+import json, sys
+try:
+    with open('$temp_registry', 'r') as f: registry = json.load(f)
+    registry['agents']['$agent_name'] = $agent_json
+    registry['total_count'] = len(registry['agents'])
+    with open('$temp_registry', 'w') as f: json.dump(registry, f, indent=2)
+except Exception as e:
+    print(f'JSON merge error: {e}', file=sys.stderr)
+            " 2>/dev/null || log_debug "Python JSON merge failed for agent: $agent_name"
+        fi
+        
+        updated_agents+=("$agent_name")
+        ((agent_count++))
+        
+        log_debug "Registered agent: $agent_name [$category] - $status"
+        
+    done < <(find "$agents_dir" -maxdepth 1 -type f \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | grep -v -i template | head -100)
+    
+    # Move temporary registry to final location
+    if [[ -s "$temp_registry" ]]; then
+        mv "$temp_registry" "$registry_file"
+        echo "$agent_count" > "$CACHE_DIR/agent_count.cache"
+        echo "${updated_agents[*]}" > "$CACHE_DIR/agent_names.cache"
+        log_debug "Agent registration complete: $agent_count agents registered"
+        return 0
+    else
+        rm -f "$temp_registry" 2>/dev/null
+        log_warning "Agent registration failed - no agents found or processed"
+        return 1
+    fi
+}
+
+# Get registered agent information
+get_agent_info() {
+    local agent_name="$1"
+    local registry_file="$CACHE_DIR/registered_agents.json"
+    
+    if [[ ! -f "$registry_file" ]]; then
+        return 1
+    fi
+    
+    if command_exists python3; then
+        python3 -c "
+import json, sys
+try:
+    with open('$registry_file', 'r') as f:
+        registry = json.load(f)
+    agent = registry['agents'].get('${agent_name,,}')
+    if agent:
+        print(f\"Name: {agent['display_name']}\")
+        print(f\"Category: {agent['category']}\")
+        print(f\"Status: {agent['status']}\")
+        print(f\"Description: {agent['description']}\")
+        print(f\"File: {agent['file_path']}\")
+        if agent['tools']:
+            print(f\"Tools: {', '.join(agent['tools'])}\")
+    else:
+        sys.exit(1)
+except Exception:
+    sys.exit(1)
+        " 2>/dev/null
+    else
+        # Fallback: try to find agent file directly
+        find_agent_file "$agent_name" >/dev/null 2>&1
+    fi
+}
+
+# Find agent file (enhanced version)
+find_agent_file() {
+    local agent_name="$1"
+    local agents_dir="${CLAUDE_AGENTS_DIR}"
+    
+    # Try multiple name variations and locations
+    local search_patterns=(
+        "${agents_dir}/${agent_name}.md"
+        "${agents_dir}/${agent_name}.MD"
+        "${agents_dir}/${agent_name^^}.md"
+        "${agents_dir}/${agent_name,,}.md"
+        "${agents_dir}/*${agent_name,,}*.md"
+        "${agents_dir}/*${agent_name^^}*.md"
+    )
+    
+    for pattern in "${search_patterns[@]}"; do
+        local matches=($(ls $pattern 2>/dev/null | head -5))
+        if [[ ${#matches[@]} -gt 0 ]]; then
+            echo "${matches[0]}"
+            return 0
+        fi
+    done
+    
+    return 1
+}
 
 list_agents() {
     echo -e "${CYAN}${BOLD}Available Agents:${NC}"
     echo
     
-    if [[ ! -d "$CLAUDE_AGENTS_DIR" ]]; then
-        log_warning "Agents directory not found: $CLAUDE_AGENTS_DIR"
-        return 1
+    # Auto-register agents if not already done or if directory is newer
+    local registry_file="$CACHE_DIR/registered_agents.json"
+    local should_register=false
+    
+    if [[ ! -f "$registry_file" ]]; then
+        should_register=true
+    elif [[ -d "$CLAUDE_AGENTS_DIR" ]]; then
+        # Check if agents directory is newer than registry
+        local agents_newer=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" -newer "$registry_file" 2>/dev/null | wc -l)
+        [[ $agents_newer -gt 0 ]] && should_register=true
     fi
     
-    local count=0
-    while IFS= read -r agent_file; do
-        local agent_name=$(basename "$agent_file" | sed 's/\.[mM][dD]$//')
-        local category="general"
-        
-        # Try to extract category from frontmatter
-        if grep -q "^category:" "$agent_file" 2>/dev/null; then
-            category=$(grep "^category:" "$agent_file" | head -1 | sed 's/category: *//')
+    if $should_register; then
+        log_debug "Auto-registering agents from directory..."
+        register_agents_from_directory "$CLAUDE_AGENTS_DIR"
+    fi
+    
+    # Display registered agents
+    if [[ -f "$registry_file" ]] && command_exists python3; then
+        python3 -c "
+import json, sys
+try:
+    with open('$registry_file', 'r') as f:
+        registry = json.load(f)
+    
+    agents = registry.get('agents', {})
+    if not agents:
+        print('  No agents registered')
+        sys.exit(0)
+    
+    # Group by category
+    categories = {}
+    for name, agent in agents.items():
+        cat = agent.get('category', 'general')
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(agent)
+    
+    # Display by category
+    for category in sorted(categories.keys()):
+        print(f'\\n  \\033[1;33m{category.title()}:\\033[0m')
+        agents_in_cat = sorted(categories[category], key=lambda x: x['display_name'])
+        for agent in agents_in_cat:
+            status_color = '\\033[0;32m' if agent['status'] == 'active' else '\\033[0;33m' if agent['status'] == 'template' else '\\033[0;31m'
+            status_symbol = '✓' if agent['status'] == 'active' else '○' if agent['status'] == 'template' else '✗'
+            print(f'    {status_color}{status_symbol}\\033[0m \\033[1m{agent[\"display_name\"]:<18}\\033[0m \\033[2m{agent[\"description\"][:50]}\\033[0m')
+    
+    print(f'\\n  Total: {len(agents)} agents')
+    print(f'  Active: {sum(1 for a in agents.values() if a[\"status\"] == \"active\")}')
+    print(f'  Templates: {sum(1 for a in agents.values() if a[\"status\"] == \"template\")}')
+    print(f'  Stubs: {sum(1 for a in agents.values() if a[\"status\"] == \"stub\")}')
+    
+except Exception as e:
+    print(f'Error reading agent registry: {e}', file=sys.stderr)
+    sys.exit(1)
+        "
+    else
+        # Fallback: simple directory listing
+        if [[ ! -d "$CLAUDE_AGENTS_DIR" ]]; then
+            log_warning "Agents directory not found: $CLAUDE_AGENTS_DIR"
+            return 1
         fi
         
-        printf "  %-20s ${DIM}[%s]${NC}\n" "$agent_name" "$category"
-        ((count++))
-    done < <(find "$CLAUDE_AGENTS_DIR" -type f \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | sort)
-    
-    echo
-    echo "Total: $count agents"
+        local count=0
+        while IFS= read -r agent_file; do
+            local agent_name=$(basename "$agent_file" | sed 's/\.[mM][dD]$//')
+            local category="general"
+            
+            # Try to extract category from frontmatter
+            if grep -q "^category:" "$agent_file" 2>/dev/null; then
+                category=$(grep "^category:" "$agent_file" | head -1 | sed 's/category: *//')
+            fi
+            
+            printf "  %-20s ${DIM}[%s]${NC}\n" "$agent_name" "$category"
+            ((count++))
+        done < <(find "$CLAUDE_AGENTS_DIR" -type f \( -name "*.md" -o -name "*.MD" \) 2>/dev/null | sort)
+        
+        echo
+        echo "Total: $count agents"
+    fi
 }
 
 run_agent() {
@@ -597,26 +923,70 @@ run_agent() {
         return 1
     fi
     
-    # Find agent file (case-insensitive)
-    local agent_file=""
-    for pattern in \
-        "$CLAUDE_AGENTS_DIR/${agent_name}.md" \
-        "$CLAUDE_AGENTS_DIR/${agent_name}.MD" \
-        "$CLAUDE_AGENTS_DIR/${agent_name^^}.md" \
-        "$CLAUDE_AGENTS_DIR/${agent_name,,}.md"; do
-        if [[ -f "$pattern" ]]; then
-            agent_file="$pattern"
-            break
-        fi
-    done
+    # Ensure agents are registered
+    local registry_file="$CACHE_DIR/registered_agents.json"
+    if [[ ! -f "$registry_file" ]]; then
+        log_debug "Registering agents for first run..."
+        register_agents_from_directory "$CLAUDE_AGENTS_DIR"
+    fi
     
+    # Try to get agent info from registry first
+    local agent_file=""
+    if get_agent_info "$agent_name" >/dev/null 2>&1; then
+        # Get file path from registry
+        if command_exists python3; then
+            agent_file=$(python3 -c "
+import json, sys
+try:
+    with open('$registry_file', 'r') as f:
+        registry = json.load(f)
+    agent = registry['agents'].get('${agent_name,,}')
+    if agent:
+        print(agent['file_path'])
+    else:
+        sys.exit(1)
+except Exception:
+    sys.exit(1)
+            " 2>/dev/null)
+        fi
+    fi
+    
+    # Fallback to manual search
     if [[ -z "$agent_file" ]]; then
+        agent_file=$(find_agent_file "$agent_name")
+    fi
+    
+    if [[ -z "$agent_file" ]] || [[ ! -f "$agent_file" ]]; then
         log_error "Agent not found: $agent_name"
-        log_info "Run 'claude agents' to see available agents"
+        echo
+        echo -e "${CYAN}Available agents:${NC}"
+        if [[ -f "$registry_file" ]] && command_exists python3; then
+            python3 -c "
+import json
+try:
+    with open('$registry_file', 'r') as f:
+        registry = json.load(f)
+    agents = list(registry.get('agents', {}).keys())[:10]  # Show first 10
+    for agent in sorted(agents):
+        print(f'  - {agent}')
+    if len(registry.get('agents', {})) > 10:
+        print(f'  ... and {len(registry.get(\"agents\", {})) - 10} more')
+except Exception:
+    pass
+            " 2>/dev/null
+        fi
+        echo -e "\nRun 'claude agents' to see all available agents"
         return 1
     fi
     
+    # Display agent info if available
     log_info "Loading agent: $agent_name"
+    if get_agent_info "$agent_name" >/dev/null 2>&1; then
+        get_agent_info "$agent_name" | while read -r line; do
+            log_debug "$line"
+        done
+    fi
+    
     export CLAUDE_AGENT="$agent_name"
     export CLAUDE_AGENT_FILE="$agent_file"
     
@@ -648,42 +1018,91 @@ main() {
             exit 0
             ;;
             
+        --register-agents|register-agents)
+            echo -e "${CYAN}${BOLD}Registering agents from directory...${NC}"
+            if register_agents_from_directory "$CLAUDE_AGENTS_DIR"; then
+                log_success "Agents registered successfully"
+                echo
+                list_agents
+            else
+                log_error "Failed to register agents"
+                exit 1
+            fi
+            exit 0
+            ;;
+            
         --agent|agent)
             shift
             run_agent "$@"
             exit $?
             ;;
             
+        --agent-info)
+            shift
+            local agent_name="$1"
+            if [[ -z "$agent_name" ]]; then
+                log_error "Usage: claude --agent-info <name>"
+                exit 1
+            fi
+            
+            echo -e "${CYAN}${BOLD}Agent Information: $agent_name${NC}"
+            echo
+            if get_agent_info "$agent_name"; then
+                exit 0
+            else
+                log_error "Agent not found: $agent_name"
+                echo -e "\nRun 'claude agents' to see available agents"
+                exit 1
+            fi
+            ;;
+            
         --help|help|-h)
-            echo -e "${CYAN}${BOLD}Claude Ultimate Wrapper v13.0${NC}"
-            echo -e "${DIM}Enhanced with banner suppression and correct status reporting${NC}"
+            echo -e "${CYAN}${BOLD}Claude Ultimate Wrapper v13.1${NC}"
+            echo -e "${DIM}Enhanced with automatic agent registration and management${NC}"
             echo
             echo "Usage: claude [OPTIONS] [COMMAND]"
             echo
             echo "Options:"
-            echo "  --status       Show comprehensive system status"
-            echo "  --fix          Auto-detect and fix issues"
-            echo "  --agents       List available agents"
-            echo "  --agent NAME   Run specific agent"
-            echo "  --safe         Run without permission bypass"
-            echo "  --debug        Enable debug output"
-            echo "  --help         Show this help"
+            echo "  --status           Show comprehensive system status"
+            echo "  --fix              Auto-detect and fix issues"
+            echo "  --agents           List available agents with categories"
+            echo "  --register-agents  Manually register agents from agents/ directory"
+            echo "  --agent NAME       Run specific agent"
+            echo "  --agent-info NAME  Show detailed information about an agent"
+            echo "  --safe             Run without permission bypass"
+            echo "  --debug            Enable debug output"
+            echo "  --help             Show this help"
             echo
             echo "Commands:"
-            echo "  task <text>    Execute a task"
-            echo "  <any>          Pass through to Claude"
+            echo "  task <text>        Execute a task"
+            echo "  agent <name>       Shortcut for --agent"
+            echo "  <any>              Pass through to Claude"
+            echo
+            echo "Agent Management:"
+            echo "  • Agents are automatically discovered from agents/ directory"
+            echo "  • Registry is cached and updated when directory changes"
+            echo "  • Supports metadata extraction (category, description, tools)"
+            echo "  • Status tracking (active/template/stub)"
             echo
             echo "Environment Variables:"
             echo "  CLAUDE_AUTO_FIX=true         Enable automatic issue fixing"
             echo "  CLAUDE_PERMISSION_BYPASS=true Enable permission bypass"
             echo "  CLAUDE_DEBUG=true            Enable debug mode"
             echo "  CLAUDE_PROJECT_ROOT          Set project root directory"
+            echo "  CLAUDE_AGENTS_DIR            Path to agents directory"
             echo "  CLAUDE_VENV                  Path to Python virtual environment"
+            echo
+            echo "Examples:"
+            echo "  claude agents                List all available agents"
+            echo "  claude agent director        Run the director agent"
+            echo "  claude --agent-info security Show security agent details"
+            echo "  claude --register-agents     Refresh agent registry"
             echo
             echo "Troubleshooting:"
             echo "  If Claude fails to start, run: claude --fix"
             echo "  For detailed diagnostics: claude --status"
             echo "  For debug output: claude --debug [command]"
+            echo "  If agents not found: claude --register-agents"
             exit 0
             ;;
             

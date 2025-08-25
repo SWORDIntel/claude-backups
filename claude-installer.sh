@@ -1999,31 +1999,25 @@ create_wrapper() {
     
     # Check for ultimate wrapper first, then enhanced wrapper
     if [[ -f "$PROJECT_ROOT/claude-wrapper-ultimate.sh" ]]; then
-        # Use the ultimate wrapper from project
-        cp "$PROJECT_ROOT/claude-wrapper-ultimate.sh" "$LOCAL_BIN/claude"
-        chmod +x "$LOCAL_BIN/claude"
+        # Use symlink for ultimate wrapper to preserve agent discovery
+        ln -sf "$PROJECT_ROOT/claude-wrapper-ultimate.sh" "$LOCAL_BIN/claude"
+        chmod +x "$PROJECT_ROOT/claude-wrapper-ultimate.sh"
         
-        # Replace placeholders
-        sed -i "s|PROJECT_ROOT_PLACEHOLDER|$PROJECT_ROOT|g" "$LOCAL_BIN/claude"
-        sed -i "s|BINARY_PLACEHOLDER|$CLAUDE_BINARY|g" "$LOCAL_BIN/claude"
-        
-        success "Ultimate wrapper installed with AI intelligence features"
+        success "Ultimate wrapper installed with AI intelligence features (symlinked)"
         info "  • Pattern learning system active"
         info "  • Quick access shortcuts configured"
         info "  • Confidence scoring enabled"
+        info "  • Automatic agent discovery from $PROJECT_ROOT/agents"
         info "  • Permission bypass always enabled for enhanced functionality"
         show_progress
         return
     elif [[ -f "$PROJECT_ROOT/claude-wrapper-enhanced.sh" ]]; then
-        # Fall back to enhanced wrapper
-        cp "$PROJECT_ROOT/claude-wrapper-enhanced.sh" "$LOCAL_BIN/claude"
-        chmod +x "$LOCAL_BIN/claude"
+        # Use symlink for enhanced wrapper as well
+        ln -sf "$PROJECT_ROOT/claude-wrapper-enhanced.sh" "$LOCAL_BIN/claude"
+        chmod +x "$PROJECT_ROOT/claude-wrapper-enhanced.sh"
         
-        # Replace placeholders
-        sed -i "s|PROJECT_ROOT_PLACEHOLDER|$PROJECT_ROOT|g" "$LOCAL_BIN/claude"
-        sed -i "s|BINARY_PLACEHOLDER|$CLAUDE_BINARY|g" "$LOCAL_BIN/claude"
-        
-        success "Enhanced wrapper installed with intelligence features"
+        success "Enhanced wrapper installed with intelligence features (symlinked)"
+        info "  • Wrapper linked to preserve directory structure"
         show_progress
         return
     fi
@@ -2617,8 +2611,13 @@ run_tests() {
     
     # Test 2: Wrapper
     printf "  %-30s" "Wrapper executable..."
-    if [[ -x "$LOCAL_BIN/claude" ]]; then
-        print_green "$SUCCESS"
+    if [[ -x "$LOCAL_BIN/claude" ]] || [[ -L "$LOCAL_BIN/claude" ]]; then
+        # Check if it's a symlink (preferred for agent discovery) or regular file
+        if [[ -L "$LOCAL_BIN/claude" ]]; then
+            print_green "$SUCCESS (symlinked)"
+        else
+            print_green "$SUCCESS"
+        fi
         ((TESTS_PASSED++))
     else
         print_red "$ERROR"
@@ -2681,11 +2680,11 @@ install_global_agents_bridge() {
     # Create .local/bin directory if it doesn't exist
     mkdir -p "$HOME/.local/bin"
     
-    # Install the ultimate wrapper as claude-agent
+    # Install the ultimate wrapper as claude-agent (symlinked to preserve agent discovery)
     if [[ -f "$PROJECT_ROOT/claude-wrapper-ultimate.sh" ]]; then
-        cp "$PROJECT_ROOT/claude-wrapper-ultimate.sh" "$HOME/.local/bin/claude-agent"
-        chmod +x "$HOME/.local/bin/claude-agent"
-        success "Custom wrapper 'claude-agent' installed with enhanced features"
+        ln -sf "$PROJECT_ROOT/claude-wrapper-ultimate.sh" "$HOME/.local/bin/claude-agent"
+        chmod +x "$PROJECT_ROOT/claude-wrapper-ultimate.sh"
+        success "Custom wrapper 'claude-agent' installed with enhanced features (symlinked)"
     else
         warning "Custom wrapper not found, creating basic launcher..."
         # Create basic launcher as fallback
