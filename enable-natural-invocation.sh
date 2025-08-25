@@ -77,10 +77,9 @@ check_command() {
 
 check_python_version() {
     if check_command python3; then
-        python_version=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-        if [[ $(echo "$python_version >= $MIN_PYTHON_VERSION" | bc -l) -eq 1 ]]; then
-            return 0
-        fi
+        # Use Python itself to check version compatibility
+        python3 -c "import sys; exit(0 if sys.version_info >= (3, 8) else 1)" 2>/dev/null
+        return $?
     fi
     return 1
 }
@@ -364,14 +363,43 @@ EOF
 install_hook_scripts() {
     print_step "Installing hook scripts..."
     
-    # Check if natural-invocation-hook.py exists
+    # Ensure hooks directory exists in cache location
+    local cache_hooks_dir="$HOME/.cache/hooks"
+    create_directory "$cache_hooks_dir" "Cache hooks directory"
+    
+    # Create symlinks from project hooks to cache location
+    local project_hooks_dir="$SCRIPT_DIR/hooks"
+    
+    if [ -d "$project_hooks_dir" ]; then
+        print_info "Creating symlinks from project hooks to cache location..."
+        
+        # Create symlink for natural-invocation-hook.py
+        if [ -f "$project_hooks_dir/natural-invocation-hook.py" ]; then
+            ln -sf "$project_hooks_dir/natural-invocation-hook.py" "$cache_hooks_dir/natural-invocation-hook.py"
+            print_success "Created symlink: natural-invocation-hook.py"
+        fi
+        
+        # Create symlinks for other hook files
+        for hook_file in "$project_hooks_dir"/*.py; do
+            if [ -f "$hook_file" ]; then
+                local basename=$(basename "$hook_file")
+                ln -sf "$hook_file" "$cache_hooks_dir/$basename"
+                print_success "Created symlink: $basename"
+            fi
+        done
+    else
+        print_warning "Project hooks directory not found: $project_hooks_dir"
+    fi
+    
+    # Also ensure hooks exist in the configured HOOKS_DIR
     local hook_script="$HOOKS_DIR/natural-invocation-hook.py"
     
-    if [ -f "$SCRIPT_DIR/natural-invocation-hook.py" ]; then
-        cp "$SCRIPT_DIR/natural-invocation-hook.py" "$hook_script"
-        print_success "Copied natural-invocation-hook.py to hooks directory"
+    if [ -f "$SCRIPT_DIR/hooks/natural-invocation-hook.py" ]; then
+        # Create symlink instead of copying
+        ln -sf "$SCRIPT_DIR/hooks/natural-invocation-hook.py" "$hook_script"
+        print_success "Created symlink for natural-invocation-hook.py in $HOOKS_DIR"
     elif [ -f "$hook_script" ]; then
-        print_info "Hook script already exists"
+        print_info "Hook script already exists in $HOOKS_DIR"
     else
         print_warning "Hook script not found, creating minimal version..."
         
@@ -404,18 +432,24 @@ EOF
         chmod +x "$hook_script"
     fi
     
-    # Check if fuzzy matcher exists
+    # Check if fuzzy matcher exists and create symlink
     local fuzzy_matcher="$CONFIG_DIR/claude-fuzzy-agent-matcher.py"
-    if [ -f "$SCRIPT_DIR/claude-fuzzy-agent-matcher.py" ]; then
-        cp "$SCRIPT_DIR/claude-fuzzy-agent-matcher.py" "$fuzzy_matcher"
-        print_success "Copied fuzzy matcher to config directory"
+    if [ -f "$SCRIPT_DIR/hooks/claude-fuzzy-agent-matcher.py" ]; then
+        ln -sf "$SCRIPT_DIR/hooks/claude-fuzzy-agent-matcher.py" "$fuzzy_matcher"
+        print_success "Created symlink for fuzzy matcher"
+    elif [ -f "$SCRIPT_DIR/claude-fuzzy-agent-matcher.py" ]; then
+        ln -sf "$SCRIPT_DIR/claude-fuzzy-agent-matcher.py" "$fuzzy_matcher"
+        print_success "Created symlink for fuzzy matcher"
     fi
     
-    # Check if semantic matcher exists
+    # Check if semantic matcher exists and create symlink
     local semantic_matcher="$CONFIG_DIR/agent-semantic-matcher.py"
-    if [ -f "$SCRIPT_DIR/agent-semantic-matcher.py" ]; then
-        cp "$SCRIPT_DIR/agent-semantic-matcher.py" "$semantic_matcher"
-        print_success "Copied semantic matcher to config directory"
+    if [ -f "$SCRIPT_DIR/hooks/agent-semantic-matcher.py" ]; then
+        ln -sf "$SCRIPT_DIR/hooks/agent-semantic-matcher.py" "$semantic_matcher"
+        print_success "Created symlink for semantic matcher"
+    elif [ -f "$SCRIPT_DIR/agent-semantic-matcher.py" ]; then
+        ln -sf "$SCRIPT_DIR/agent-semantic-matcher.py" "$semantic_matcher"
+        print_success "Created symlink for semantic matcher"
     fi
 }
 
@@ -426,6 +460,16 @@ EOF
 setup_environment() {
     print_step "Setting up environment variables..."
     
+    # Check for venv in project directory
+    local venv_path=""
+    if [ -d "$SCRIPT_DIR/venv" ]; then
+        venv_path="$SCRIPT_DIR/venv"
+        print_success "Found venv at: $venv_path"
+    elif [ -d "$HOME/Downloads/claude-backups/venv" ]; then
+        venv_path="$HOME/Downloads/claude-backups/venv"
+        print_success "Found venv at: $venv_path"
+    fi
+    
     # Export variables for current session
     export CLAUDE_BASE_PATH="$CLAUDE_BASE_PATH"
     export CLAUDE_AGENTS_PATH="$CLAUDE_AGENTS_PATH"
@@ -433,7 +477,15 @@ setup_environment() {
     export CLAUDE_HOOKS_ENABLED=true
     export CLAUDE_HOOKS_CONFIG="$CONFIG_DIR/hooks.json"
     export CLAUDE_NATURAL_INVOCATION=true
-    export PYTHONPATH="$CONFIG_DIR:$PYTHONPATH"
+    export PYTHONPATH="$CONFIG_DIR:$SCRIPT_DIR:$SCRIPT_DIR/hooks:$PYTHONPATH"
+    
+    # If venv exists, set it up
+    if [ -n "$venv_path" ]; then
+        export VIRTUAL_ENV="$venv_path"
+        export PATH="$venv_path/bin:$PATH"
+        export CLAUDE_VENV_PATH="$venv_path"
+        print_success "Virtual environment configured"
+    fi
     
     # Create environment file
     local env_file="$CONFIG_DIR/natural-invocation.env"
@@ -445,8 +497,26 @@ export CLAUDE_CACHE_PATH="$CLAUDE_CACHE_PATH"
 export CLAUDE_HOOKS_ENABLED=true
 export CLAUDE_HOOKS_CONFIG="$CONFIG_DIR/hooks.json"
 export CLAUDE_NATURAL_INVOCATION=true
-export PYTHONPATH="$CONFIG_DIR:\$PYTHONPATH"
+export PYTHONPATH="$CONFIG_DIR:$SCRIPT_DIR:$SCRIPT_DIR/hooks:\$PYTHONPATH"
+
+# Virtual environment (if available)
 EOF
+    
+    if [ -n "$venv_path" ]; then
+        cat >> "$env_file" << EOF
+export VIRTUAL_ENV="$venv_path"
+export PATH="$venv_path/bin:\$PATH"
+export CLAUDE_VENV_PATH="$venv_path"
+
+# Activate venv function
+activate_claude_venv() {
+    if [ -f "$venv_path/bin/activate" ]; then
+        source "$venv_path/bin/activate"
+        echo "Claude venv activated"
+    fi
+}
+EOF
+    fi
     
     print_success "Environment variables configured"
     
@@ -473,6 +543,13 @@ EOF
 run_tests() {
     print_step "Running tests..."
     
+    # Use venv Python if available
+    local python_cmd="python3"
+    if [ -n "$VIRTUAL_ENV" ]; then
+        python_cmd="$VIRTUAL_ENV/bin/python3"
+        print_info "Using venv Python: $python_cmd"
+    fi
+    
     # Create comprehensive test script
     local test_script="$CACHE_DIR/test-natural-invocation.py"
     cat > "$test_script" << 'EOF'
@@ -486,7 +563,10 @@ from pathlib import Path
 
 # Setup paths
 base_path = os.environ.get('CLAUDE_BASE_PATH', Path.home() / '.config' / 'claude')
+script_dir = os.environ.get('CLAUDE_SCRIPT_DIR', os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, str(base_path))
+sys.path.insert(0, script_dir)
+sys.path.insert(0, os.path.join(script_dir, 'hooks'))
 
 print("\n🧪 Natural Agent Invocation Test Suite")
 print("=" * 60)
@@ -521,8 +601,18 @@ test_cases = {
 }
 
 try:
-    # Try to import the hook
-    from natural_invocation_hook import EnhancedNaturalInvocationHook
+    # Add hooks directory to path
+    import os
+    script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    hooks_dir = os.path.join(script_dir, 'hooks')
+    sys.path.insert(0, hooks_dir)
+    
+    # Try to import the hook (file uses hyphen, but import uses underscore)
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("natural_invocation_hook", os.path.join(hooks_dir, "natural-invocation-hook.py"))
+    natural_invocation_hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(natural_invocation_hook)
+    EnhancedNaturalInvocationHook = natural_invocation_hook.EnhancedNaturalInvocationHook
     hook = EnhancedNaturalInvocationHook()
     
     passed = 0
@@ -566,7 +656,10 @@ EOF
     chmod +x "$test_script"
     
     # Run tests
-    if python3 "$test_script"; then
+    # Export script directory for the test
+    export CLAUDE_SCRIPT_DIR="$SCRIPT_DIR"
+    
+    if $python_cmd "$test_script"; then
         print_success "All tests passed"
     else
         print_warning "Some tests failed - system may still work"
@@ -604,8 +697,15 @@ fi
 
 python3 -c "
 import os, sys
-sys.path.insert(0, os.environ.get('CLAUDE_BASE_PATH', '$HOME/.config/claude'))
-from natural_invocation_hook import EnhancedNaturalInvocationHook
+from pathlib import Path
+import importlib.util
+script_dir = '$SCRIPT_DIR'
+hooks_dir = os.path.join(script_dir, 'hooks')
+hook_file = os.path.join(hooks_dir, 'natural-invocation-hook.py')
+spec = importlib.util.spec_from_file_location('natural_invocation_hook', hook_file)
+natural_invocation_hook = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(natural_invocation_hook)
+EnhancedNaturalInvocationHook = natural_invocation_hook.EnhancedNaturalInvocationHook
 hook = EnhancedNaturalInvocationHook()
 context = hook.analyze_input('$1')
 if context.agents:
