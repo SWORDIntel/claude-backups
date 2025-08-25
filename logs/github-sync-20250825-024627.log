@@ -1,6 +1,6 @@
 [0;34m[INFO][0m Starting sync process for: /home/ubuntu/Downloads/claude-backups
 [0;34m[INFO][0m Target repository: https://github.com/SWORDIntel/claude-backups
-[0;34m[INFO][0m Log file: /home/ubuntu/Downloads/claude-backups/logs/github-sync-20250825-014639.log
+[0;34m[INFO][0m Log file: /home/ubuntu/Downloads/claude-backups/logs/github-sync-20250825-024627.log
 [0;32m[SUCCESS][0m GitHub CLI is installed
 [0;34m[INFO][0m Checking GitHub authentication...
 [0;32m[SUCCESS][0m Already authenticated with GitHub
@@ -13,8 +13,3 @@
 [0;34m[INFO][0m Fetching latest changes from remote...
 [0;34m[INFO][0m Current branch: main
 [0;34m[INFO][0m Staging all changes...
-[0;34m[INFO][0m Changes to be committed:
-[0;34m[INFO][0m Committing changes: Auto-sync: 2025-08-25 01:46:40 - 20 files updated
-[0;34m[INFO][0m Pushing changes to remote repository...
-[0;32m[SUCCESS][0m Repository sync completed successfully!
-[0;34m[INFO][0m Repository Status:

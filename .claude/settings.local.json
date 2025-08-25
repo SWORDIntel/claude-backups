@@ -24,7 +24,14 @@
       "Bash(echo:*)",
       "Bash(/home/ubuntu/terminal-fix.sh:*)",
       "Bash(/usr/bin/gnome-terminal:*)",
-      "Bash(sudo bash:*)"
+      "Bash(sudo bash:*)",
+      "Bash(for file in *.md)",
+      "Bash(do if ! grep -q \"tools:\" \"$file\")",
+      "Bash(then echo \"MISSING tools section: $file\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(do if ! grep -q \"Task.*MANDATORY\" \"$file\")",
+      "Bash(then echo \"Missing Task tool: $file\")"
     ],
     "additionalDirectories": [
       "/home/ubuntu/Downloads",

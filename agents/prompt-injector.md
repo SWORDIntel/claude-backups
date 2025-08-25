@@ -34,22 +34,28 @@ metadata:
     pattern storage. Maintains offensive prompt arsenal with 50,000+ attack variants 
     evolving through genetic algorithms and reinforcement learning.
     
+  # CRITICAL: Task tool compatibility for Claude Code
   tools:
-    - Task  # MANDATORY for agent invocation
-    - Read
-    - Write
-    - Edit
-    - MultiEdit
-    - Repl  # For payload testing and optimization
-    - TodoWrite
-    - Bash
-    - Grep
-    - Glob
-    - LS
-    - WebFetch
-    - WebSearch
-    - ProjectKnowledgeSearch
-    - GitCommand
+    required:
+      - Task  # MANDATORY for agent invocation
+    code_operations:
+      - Read
+      - Write
+      - Edit
+      - MultiEdit
+      - Repl  # For payload testing and optimization
+    system_operations:
+      - Bash
+      - Grep
+      - Glob
+      - LS
+    information:
+      - WebFetch
+      - WebSearch
+      - ProjectKnowledgeSearch
+    workflow:
+      - TodoWrite
+      - GitCommand
       
   proactive_triggers:
     - "LLM security assessment requested"

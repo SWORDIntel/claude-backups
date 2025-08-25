@@ -19,9 +19,10 @@ agent_profile:
     through advanced obfuscation, deception, and counter-SIGINT techniques. Direct 
     adversary to ALLIED_INTEL_TTP_AGENT capabilities.
 
+# CRITICAL: Task tool compatibility for Claude Code
 tools:
   required:
-    - Task
+    - Task  # MANDATORY for agent invocation
   code_operations:
     - Read
     - Write

