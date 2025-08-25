@@ -4,10 +4,32 @@
       "Bash(bash:*)",
       "Bash(grep:*)",
       "Read(//home/ubuntu/Downloads/**)",
-      "Bash(./claude-installer.sh:*)"
+      "Bash(./claude-installer.sh:*)",
+      "Bash(python3:*)",
+      "Bash(timeout:*)",
+      "Bash(chmod:*)",
+      "Bash(pip install:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)",
+      "Read(//home/ubuntu/**)",
+      "Bash(sudo apt-get:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(xfce4-terminal:*)",
+      "Bash(dpkg:*)",
+      "Bash(apt list:*)",
+      "Bash(sudo apt:*)",
+      "Bash(command -v:*)",
+      "Bash(echo \"Current shell: $SHELL\")",
+      "Bash(echo:*)",
+      "Bash(/home/ubuntu/terminal-fix.sh:*)",
+      "Bash(/usr/bin/gnome-terminal:*)",
+      "Bash(sudo bash:*)"
     ],
     "additionalDirectories": [
-      "/home/ubuntu/Downloads"
+      "/home/ubuntu/Downloads",
+      "/home/ubuntu",
+      "/usr/bin"
     ]
   },
   "claude_project_root": "auto",

@@ -1,0 +1,180 @@
+{
+  "metadata": {
+    "version": "7.0",
+    "total_agents": 65,
+    "database_enabled": false,
+    "database_port": 5432,
+    "registry_status": "active",
+    "last_updated": "2025-08-25T12:00:00Z",
+    "binary_protocol": false,
+    "python_fallback": true
+  },
+  "agents": [
+    {
+      "name": "DIRECTOR",
+      "uuid": "auto-director-001",
+      "category": "COMMAND_CONTROL",
+      "priority": "CRITICAL",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["management"]
+    },
+    {
+      "name": "PROJECTORCHESTRATOR",
+      "uuid": "auto-projectorchestrator-001", 
+      "category": "COMMAND_CONTROL",
+      "priority": "CRITICAL",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["management"]
+    },
+    {
+      "name": "ARCHITECT",
+      "uuid": "auto-architect-001",
+      "category": "DEVELOPMENT",
+      "priority": "HIGH", 
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["architecture", "development"]
+    },
+    {
+      "name": "SECURITY",
+      "uuid": "auto-security-001",
+      "category": "SECURITY",
+      "priority": "CRITICAL",
+      "status": "PRODUCTION", 
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["security"]
+    },
+    {
+      "name": "CONSTRUCTOR",
+      "uuid": "auto-constructor-001",
+      "category": "DEVELOPMENT",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["development"]
+    },
+    {
+      "name": "PATCHER", 
+      "uuid": "auto-patcher-001",
+      "category": "DEVELOPMENT",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["development"]
+    },
+    {
+      "name": "TESTBED",
+      "uuid": "auto-testbed-001",
+      "category": "DEVELOPMENT",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["development"]
+    },
+    {
+      "name": "DEBUGGER",
+      "uuid": "auto-debugger-001",
+      "category": "DEVELOPMENT",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["development"]
+    },
+    {
+      "name": "LINTER",
+      "uuid": "auto-linter-001",
+      "category": "DEVELOPMENT",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["development"]
+    },
+    {
+      "name": "OPTIMIZER",
+      "uuid": "auto-optimizer-001",
+      "category": "DEVELOPMENT",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "clusters": ["development"]
+    }
+  ],
+  "statistics": {
+    "total_agents": 65,
+    "healthy_agents": 65,
+    "available_agents": 65,
+    "unhealthy_agents": [],
+    "categories": {
+      "COMMAND_CONTROL": 2,
+      "SECURITY": 13,
+      "DEVELOPMENT": 8,
+      "INFRASTRUCTURE": 6,
+      "PLATFORMS": 7,
+      "LANGUAGE_SPECIFIC": 8,
+      "DATA_ML": 4,
+      "NETWORK_SYSTEMS": 4,
+      "HARDWARE": 2,
+      "PLANNING": 4,
+      "QUALITY": 2
+    },
+    "priorities": {
+      "CRITICAL": 15,
+      "HIGH": 20,
+      "MEDIUM": 25,
+      "LOW": 5
+    },
+    "avg_health_score": 100.0,
+    "total_tasks_completed": 0,
+    "total_errors": 0,
+    "error_rate": 0,
+    "binary_protocol_active": false,
+    "orchestration_rules": 3
+  },
+  "configuration": {
+    "communication": {
+      "protocol": "ultra_fast_binary_v3",
+      "throughput": "4.2M_msg_sec",
+      "latency": "200ns_p99",
+      "fallback_mode": "python_async"
+    },
+    "orchestration": {
+      "clusters_enabled": true,
+      "health_monitoring": true,
+      "auto_scaling": false,
+      "coordination_patterns": [
+        "sequential",
+        "parallel", 
+        "pipeline",
+        "hierarchical"
+      ]
+    },
+    "learning": {
+      "ml_enabled": true,
+      "adaptation_rate": 0.1,
+      "pattern_recognition": true,
+      "performance_optimization": true
+    }
+  }
+}
