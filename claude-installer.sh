@@ -2054,6 +2054,10 @@ create_wrapper() {
         info "  • Confidence scoring enabled"
         info "  • Automatic agent discovery from $PROJECT_ROOT/agents"
         info "  • Permission bypass always enabled for enhanced functionality"
+        
+        # Setup agent discovery system
+        setup_agent_discovery
+        
         show_progress
         return
     elif [[ -f "$PROJECT_ROOT/claude-wrapper-enhanced.sh" ]]; then
@@ -2063,6 +2067,10 @@ create_wrapper() {
         
         success "Enhanced wrapper installed with intelligence features (symlinked)"
         info "  • Wrapper linked to preserve directory structure"
+        
+        # Setup agent discovery system
+        setup_agent_discovery
+        
         show_progress
         return
     fi
@@ -2235,6 +2243,9 @@ WRAPPER
     
     chmod +x "$LOCAL_BIN/claude"
     success "Wrapper created"
+    
+    # Setup agent discovery system
+    setup_agent_discovery
     
     show_progress
 }
@@ -2773,6 +2784,90 @@ EOF
     fi
     
     show_progress
+}
+
+# 10.5. Setup Agent Discovery System
+setup_agent_discovery() {
+    info "Setting up agent discovery system..."
+    
+    # Create .claude directory if it doesn't exist
+    local claude_dir="$PROJECT_ROOT/.claude"
+    if [[ ! -d "$claude_dir" ]]; then
+        mkdir -p "$claude_dir"
+        success "Created .claude directory: $claude_dir"
+    else
+        info ".claude directory already exists"
+    fi
+    
+    # Create symlink from .claude/agents to agents directory
+    local agents_symlink="$claude_dir/agents"
+    local agents_source="../agents"  # Use relative path for portability
+    
+    if [[ -d "$PROJECT_ROOT/agents" ]]; then
+        # Check if symlink exists and is correct
+        if [[ -L "$agents_symlink" ]]; then
+            local current_target=$(readlink "$agents_symlink")
+            if [[ "$current_target" == "$agents_source" || "$current_target" == "$(readlink -f "$PROJECT_ROOT/agents")" ]]; then
+                success "Agents symlink already properly configured: .claude/agents -> $current_target"
+            else
+                # Remove and recreate with correct target
+                rm -f "$agents_symlink"
+                ln -sf "$agents_source" "$agents_symlink"
+                success "Updated agents symlink: .claude/agents -> $agents_source"
+            fi
+        elif [[ ! -e "$agents_symlink" ]]; then
+            # Create new symlink
+            ln -sf "$agents_source" "$agents_symlink"
+            success "Created agents symlink: .claude/agents -> $agents_source"
+        else
+            warning "Non-symlink file exists at $agents_symlink - skipping symlink creation"
+        fi
+    else
+        warning "Agents directory not found: $PROJECT_ROOT/agents"
+    fi
+    
+    # Create cache directory with proper permissions
+    local cache_dir="$HOME/.cache/claude"
+    if [[ ! -d "$cache_dir" ]]; then
+        mkdir -p "$cache_dir"
+        chmod 755 "$cache_dir"
+        success "Created cache directory: $cache_dir"
+    else
+        # Ensure proper permissions
+        chmod 755 "$cache_dir" 2>/dev/null || true
+        info "Cache directory exists with proper permissions"
+    fi
+    
+    # Run custom agent registration
+    local register_script="$PROJECT_ROOT/tools/register-custom-agents.py"
+    if [[ -f "$register_script" ]]; then
+        info "Running custom agent registration..."
+        if python3 "$register_script" --install >/dev/null 2>&1; then
+            success "Custom agent registry updated successfully"
+            
+            # Check if registry file was created and get count
+            if [[ -f "$HOME/.cache/claude/registered_agents.json" ]]; then
+                local agent_count=$(python3 -c "
+import json
+try:
+    with open('$HOME/.cache/claude/registered_agents.json', 'r') as f:
+        data = json.load(f)
+    print(len(data.get('agents', {})))
+except:
+    print('unknown')
+" 2>/dev/null)
+                success "  • Registered $agent_count agents in registry"
+                info "  • Registry location: $HOME/.cache/claude/registered_agents.json"
+            fi
+        else
+            warning "Agent registration had issues - will be retried by cron job"
+        fi
+    else
+        warning "Agent registration script not found: $register_script"
+        info "Manual registration can be done later with: python3 tools/register-custom-agents.py"
+    fi
+    
+    success "Agent discovery system setup complete"
 }
 
 # 11. Setup Agent Activation System
