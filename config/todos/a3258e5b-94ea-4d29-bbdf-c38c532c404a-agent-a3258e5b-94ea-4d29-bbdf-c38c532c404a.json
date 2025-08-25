@@ -41,12 +41,12 @@
   },
   {
     "content": "Deploy DOCGEN for comprehensive documentation",
-    "status": "in_progress",
+    "status": "completed",
     "activeForm": "Deploying DOCGEN for documentation"
   },
   {
     "content": "Deploy second DOCGEN for README and integration guide",
-    "status": "pending",
+    "status": "in_progress",
     "activeForm": "Deploying second DOCGEN for README"
   }
 ]

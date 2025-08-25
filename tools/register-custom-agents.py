@@ -370,15 +370,16 @@ class GlobalAgentCoordinator:
         """Scan all agent .md files and extract metadata"""
         agents = {}
         
+        # Only scan .md files in the agents/ root directory
         for agent_file in self.agents_dir.glob("*.md"):
-            if agent_file.stem in ['README', 'Template', 'STATUSLINE_INTEGRATION']:
+            if agent_file.stem in ['README', 'Template', 'TEMPLATE', 'WHERE_I_AM', 'STATUSLINE_INTEGRATION']:
                 continue
                 
-            agent_name = agent_file.stem.lower()
+            agent_name = agent_file.stem  # Keep original case (DOCGEN, DIRECTOR, etc.)
             agent_data = self._parse_agent_file(agent_file)
             
             if agent_data:
-                agents[agent_name] = {
+                agent_info = {
                     'name': agent_file.stem,
                     'file': str(agent_file),
                     'metadata': agent_data,
@@ -388,6 +389,11 @@ class GlobalAgentCoordinator:
                     'priority': self._extract_priority(agent_data)
                 }
                 
+                # Store with both original case and lowercase for compatibility
+                agents[agent_name] = agent_info
+                if agent_name.lower() != agent_name:
+                    agents[agent_name.lower()] = agent_info
+                    
         return agents
     
     def _parse_agent_file(self, file_path: Path) -> Dict:

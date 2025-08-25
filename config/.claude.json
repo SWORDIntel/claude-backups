@@ -1,11 +1,11 @@
 {
-  "numStartups": 35,
+  "numStartups": 36,
   "installMethod": "native",
   "autoUpdates": true,
   "hasSeenTasksHint": true,
   "tipsHistory": {
     "new-user-warmup": 8,
-    "memory-command": 21,
+    "memory-command": 36,
     "theme-command": 21,
     "status-line": 27,
     "prompt-queue": 1,
@@ -22,7 +22,7 @@
     "custom-commands": 28,
     "ide-upsell-external-terminal": 28
   },
-  "promptQueueUseCount": 55,
+  "promptQueueUseCount": 60,
   "firstStartTime": "2025-08-23T16:03:36.613Z",
   "userID": "8db731192f4311ad7639f124a66270818c5b284fe1cee5ee89dd4b317d2b6314",
   "projects": {
@@ -1030,6 +1030,46 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "androidmobile\napidesigner\narchitect\napt41-defense-agent\napt41-redteam-agent\nassembly-internal-agent\nbastion\nbgp-blue-team\nbgp-purple-team-agent\nbgp-red-team\nc-internal\ncarbon-internal-agent\ncisco-agent\nclaudecode-promptinjector\ncognitive_defense_agent\nconstructor\ncpp_internal_agent\ncryptoexpert\ncso\ndatabase\ndatascience\nddwrt-agent\ndebugger\ndeployer\ndirector\ndocker-agent\ndocgen\nghost_protocol_agent\ngna\ngo-internal-agent\ninfrastructure\nintergration\niot-access-control-agent\njava-internal-agent\nkotlin-internal-agent\nleadengineer\nlinter\nmlops\nmonitor\nnpu\nnsa\noptimizer\noversight\npackager\npatcher\nplanner\nprojectorchestrator\nprompt-defender\nprompt-injector\nproxmox-agent\npsyops_agent\npygui\npython-internal\nqadirector\nquantumguard\nredteamorchestrator\nresearcher\nrust-internal-agent\nsecurity\nsecurityauditor\nsecuritychaosagent\nsql-internal-agent\ntemplate\ntestbed\ntui\ntypescript-internal-agent\nweb\nwrapper-liberation\nwrapper-liberation-pro\nzig-internal-agent ",
+          "pastedContents": {}
+        },
+        {
+          "display": "did we fix all in metadata too",
+          "pastedContents": {}
+        },
+        {
+          "display": "0 tokens 0 tool uses?",
+          "pastedContents": {}
+        },
+        {
+          "display": "bash output should be fixed",
+          "pastedContents": {}
+        },
+        {
+          "display": "tools/register-custom-agents.py is what we use",
+          "pastedContents": {}
+        },
+        {
+          "display": "not that[Pasted text #1 +8 lines] check that vs all_md_agents.txt there is a clear disconnect",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "    ⎿  Error: Agent type 'DOCGEN' not found. Available agents: general-purpose, statusline-setup, output-style-setup, Cloud-Native Development, typescript-internal, Docker, \n       APIDesigner, Architect, Bastion, Constructor, DataScience, Database, Debugger, Deployer, Director, Docgen, Infrastructure, Linter, MLOps, Mobile, Monitor, Optimizer, \n       Oversight, Patcher, ProjectOrchestrator, PyGUI, RESEARCHER, Security, SecurityChaosAgent, TUI, Testbed, Web, c-internal, python-internal, Packager, PLANNER, QADirector, \n       QuantumGuard, RedTeamOrchestrator, SecurityAuditor, AgentName, go-internal, IoTAccessControl, java-internal, Android Excellence, PromptInjectionAgent, DR Planning, \n       Psyops_Agent, statusline_integration, Seamless FFI, OLAP and Data Warehousing, GHOST-PROTOCOL, WrapperLiberationAgent, BGPRedTeam, BGPBlueTeam, zig-internal, \n       ClaudeCodeExploitAgent, APT41DefenseOrchestrator, APT41RedTeamSimulator, ASSEMBLY-INTERNAL, BGPPurpleTeam, GNA, Integration, LEADENGINEER, NPU-ML-ACCELERATOR, \n       Allied_Intel_TTP_Agent, [Competency Name], CInternal, carbon-internal, Cisco Security Features, Temporal Analysis, ParallelDebugger, gnu, resilient-routing, Adaptive Drift \n       Response, AndroidMobile, Performance Engineering, cpp-internal, CryptoExpert, CSO, Cognitive_Defense_Agent\n[I"
+            }
+          }
+        },
+        {
+          "display": "Agent registration module appears to be malfunctioning [Pasted text #1 +10 lines]",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "● DOCGEN(Generate comprehensive documentation)\n  ⎿  Initializing…\n  ⎿  Error: Agent type 'DOCGEN' not found. Available agents: general-purpose, statusline-setup, output-style-setup, Cloud-Native Development, typescript-internal, Docker, \n     APIDesigner, Architect, Bastion, Constructor, DataScience, Database, Debugger, Deployer, Director, Docgen, Infrastructure, Linter, MLOps, Mobile, Monitor, Optimizer, \n     Oversight, Patcher, ProjectOrchestrator, PyGUI, RESEARCHER, Security, SecurityChaosAgent, TUI, Testbed, Web, c-internal, python-internal, Packager, PLANNER, QADirector, \n     QuantumGuard, RedTeamOrchestrator, SecurityAuditor, AgentName, go-internal, IoTAccessControl, java-internal, Android Excellence, PromptInjectionAgent, DR Planning, \n     Psyops_Agent, statusline_integration, Seamless FFI, OLAP and Data Warehousing, GHOST-PROTOCOL, WrapperLiberationAgent, BGPRedTeam, BGPBlueTeam, zig-internal, \n     ClaudeCodeExploitAgent, APT41DefenseOrchestrator, APT41RedTeamSimulator, ASSEMBLY-INTERNAL, BGPPurpleTeam, GNA, Integration, LEADENGINEER, NPU-ML-ACCELERATOR, \n     Allied_Intel_TTP_Agent, [Competency Name], CInternal, carbon-internal, Cisco Security Features, Temporal Analysis, ParallelDebugger, gnu, resilient-routing, Adaptive Drift \n     Response, AndroidMobile, Performance Engineering, cpp-internal, CryptoExpert, CSO, Cognitive_Defense_Agent\n"
+            }
+          }
+        },
+        {
           "display": "use DOCGEN and generate comprehensive documentation i ndocu/ and another DOCGEN agent to make a READDME on how to start it and intergrate ti with the learning system",
           "pastedContents": {}
         },
@@ -1417,22 +1457,6 @@
         },
         {
           "display": "Create a script in my claude-backups directory in download which,if not done,wwill run you through gh auth login but if done will automatically  sync th entire folderr/repo to its corresponding online github",
-          "pastedContents": {}
-        },
-        {
-          "display": "Update my package list  with more better up to date repos with all enabled eg non free firmware multiverse etc dulbe check online it matches Ubuntu 24.04.3 LTS",
-          "pastedContents": {}
-        },
-        {
-          "display": "Ok cool add another 5 QOL enhancments",
-          "pastedContents": {}
-        },
-        {
-          "display": "ultrathink be careful this is my bashrc",
-          "pastedContents": {}
-        },
-        {
-          "display": "Enhance my bashrc file add some prretty colours basic autocomplete some other shit just add  at least 5 differen t asorted QOL improvvements to this livecd,oh and auto compleition",
           "pastedContents": {}
         }
       ],
