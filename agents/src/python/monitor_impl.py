@@ -48,6 +48,17 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
+# Import parallel orchestration enhancements
+try:
+    from parallel_orchestration_enhancements import (
+        EnhancedOrchestrationMixin, ParallelOrchestrationEnhancer,
+        ParallelExecutionMode, ParallelTask, ParallelBatch,
+        TaskResult, MessageType
+    )
+    HAS_ORCHESTRATION_ENHANCEMENTS = True
+except ImportError:
+    HAS_ORCHESTRATION_ENHANCEMENTS = False
+
 @dataclass
 class Metric:
     """Metric definition"""
@@ -560,13 +571,23 @@ class SystemMonitor:
         
         return trends
 
-class MONITORPythonExecutor:
-    """
-    MONITOR Agent Python Implementation v9.0
-    
-    Comprehensive monitoring with metrics, alerts, health checks,
-    logging, and system resource tracking.
-    """
+# Base class with optional orchestration enhancement  
+if HAS_ORCHESTRATION_ENHANCEMENTS:
+    class MONITORPythonExecutor(EnhancedOrchestrationMixin):
+        """
+        MONITOR Agent Python Implementation v10.0 - Enhanced
+        
+        Comprehensive monitoring with metrics, alerts, health checks,
+        logging, system resource tracking, and distributed coordination.
+        """
+else:
+    class MONITORPythonExecutor:
+        """
+        MONITOR Agent Python Implementation v9.0
+        
+        Comprehensive monitoring with metrics, alerts, health checks,
+        logging, and system resource tracking.
+        """
     
     def __init__(self):
         self.agent_name = "MONITOR"

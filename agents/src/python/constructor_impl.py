@@ -44,6 +44,17 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 from enum import Enum
 
+# Import parallel orchestration enhancements
+try:
+    from parallel_orchestration_enhancements import (
+        EnhancedOrchestrationMixin, ParallelOrchestrationEnhancer,
+        ParallelExecutionMode, ParallelTask, ParallelBatch,
+        TaskResult, MessageType
+    )
+    HAS_ORCHESTRATION_ENHANCEMENTS = True
+except ImportError:
+    HAS_ORCHESTRATION_ENHANCEMENTS = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -128,14 +139,25 @@ class SecurityConfiguration:
     headers: Dict[str, Any]
     scanning: Dict[str, Any]
 
-class CONSTRUCTORPythonExecutor:
-    """
-    CONSTRUCTOR Agent v9.0 - Precision Project Initialization Specialist & Orchestrator
-    
-    A comprehensive project initialization specialist that creates minimal, reproducible
-    scaffolds with security hardening, performance baselines, and advanced parallel
-    orchestration capabilities.
-    """
+# Base class with optional orchestration enhancement
+if HAS_ORCHESTRATION_ENHANCEMENTS:
+    class CONSTRUCTORPythonExecutor(EnhancedOrchestrationMixin):
+        """
+        CONSTRUCTOR Agent v10.0 - Enhanced Precision Project Initialization Specialist & Orchestrator
+        
+        A comprehensive project initialization specialist that creates minimal, reproducible
+        scaffolds with security hardening, performance baselines, and advanced parallel
+        orchestration capabilities with enhanced inter-agent coordination.
+        """
+else:
+    class CONSTRUCTORPythonExecutor:
+        """
+        CONSTRUCTOR Agent v9.0 - Precision Project Initialization Specialist & Orchestrator
+        
+        A comprehensive project initialization specialist that creates minimal, reproducible
+        scaffolds with security hardening, performance baselines, and advanced parallel
+        orchestration capabilities.
+        """
     
     def __init__(self):
         """Initialize the CONSTRUCTOR agent"""
@@ -168,7 +190,19 @@ class CONSTRUCTORPythonExecutor:
         self.executor = ThreadPoolExecutor(max_workers=10)
         self.coordination_lock = threading.Lock()
         
+        # Initialize orchestration enhancements if available
+        if HAS_ORCHESTRATION_ENHANCEMENTS:
+            super().__init__()  # Initialize EnhancedOrchestrationMixin
+            self._orchestration_enhancer = ParallelOrchestrationEnhancer(
+                agent_id=self.uuid,
+                agent_name=self.agent_name,
+                max_workers=10
+            )
+            self.version = "10.0.0"  # Update version for enhanced capabilities
+            
         logger.info(f"CONSTRUCTOR Agent {self.version} initialized at {self.start_time}")
+        if HAS_ORCHESTRATION_ENHANCEMENTS:
+            logger.info("Enhanced orchestration capabilities activated")
     
     def _initialize_templates(self) -> Dict[str, ProjectTemplate]:
         """Initialize project templates for different languages and frameworks"""
@@ -1882,6 +1916,74 @@ spec:
                 recommendations.extend(results['recommendations'])
         
         return recommendations
+    
+    # Enhanced orchestration methods
+    async def execute_parallel_workflow(self, workflow_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute parallel workflow using orchestration enhancements"""
+        if not HAS_ORCHESTRATION_ENHANCEMENTS:
+            return await self.execute_command('coordinate_workflow', workflow_config)
+            
+        try:
+            # Create parallel batch from workflow
+            batch = ParallelBatch(
+                batch_id=str(uuid.uuid4()),
+                tasks=[
+                    ParallelTask(
+                        task_id=f"task_{i}",
+                        agent_name=task.get('agent', 'constructor'),
+                        command=task.get('command', 'create_project'),
+                        parameters=task.get('params', {}),
+                        execution_mode=ParallelExecutionMode.CONCURRENT,
+                        dependencies=task.get('dependencies', [])
+                    )
+                    for i, task in enumerate(workflow_config.get('tasks', []))
+                ],
+                execution_mode=ParallelExecutionMode.CONCURRENT
+            )
+            
+            # Execute using orchestration enhancer
+            results = await self._orchestration_enhancer.execute_parallel_batch(batch)
+            
+            return {
+                'success': True,
+                'workflow_id': batch.batch_id,
+                'results': results,
+                'execution_mode': 'enhanced_orchestration'
+            }
+            
+        except Exception as e:
+            logger.error(f"Enhanced workflow execution failed: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'fallback': 'Using standard coordination'
+            }
+    
+    async def coordinate_with_agents(self, agent_tasks: Dict[str, Dict]) -> Dict[str, Any]:
+        """Coordinate tasks with other agents using enhanced orchestration"""
+        if not HAS_ORCHESTRATION_ENHANCEMENTS:
+            return await self._coordinate_workflow(agent_tasks)
+            
+        try:
+            # Send messages to agents
+            results = {}
+            for agent_name, task_config in agent_tasks.items():
+                message_id = await self.send_message_to_agent(
+                    target_agent=agent_name,
+                    message_type=MessageType.TASK_REQUEST,
+                    content=task_config
+                )
+                results[agent_name] = {'message_id': message_id, 'status': 'sent'}
+            
+            return {
+                'success': True,
+                'coordination_results': results,
+                'mode': 'enhanced_orchestration'
+            }
+            
+        except Exception as e:
+            logger.error(f"Enhanced coordination failed: {e}")
+            return await self._coordinate_workflow(agent_tasks)
     
     def _get_next_steps(self, template: ProjectTemplate) -> List[str]:
         """Get next steps for project completion"""
