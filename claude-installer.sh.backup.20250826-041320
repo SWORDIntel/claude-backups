@@ -747,18 +747,14 @@ install_agents() {
 
 # 3.5. Install Global CLAUDE.md (Agent Auto-Invocation Guide)
 install_global_claude_md() {
-    print_section "Installing Global CLAUDE.md"
+    print_section "Installing Global CLAUDE.md (Agent Auto-Invocation Guide)"
     
-    # Simply copy the repo's CLAUDE.md as a template
-    if [[ -f "$PROJECT_ROOT/CLAUDE.md" ]]; then
-        cp "$PROJECT_ROOT/CLAUDE.md" "$HOME_DIR/CLAUDE.md"
-        success "CLAUDE.md template copied to $HOME_DIR"
-    else
-        warning "CLAUDE.md not found in project root - skipping"
-    fi
+    local claude_md_source="$PROJECT_ROOT/claude.md.txt"
+    local claude_md_target="$HOME_DIR/CLAUDE.md"
     
-    show_progress
-}
+    # Create the comprehensive agent auto-invocation guide content
+    local claude_md_content='# CLAUDE.MD - Global Agent Auto-Invocation Guide
+# Claude Portable Agent Framework v7.0 - Auto-Invocation Patterns
 
 ## 🎯 AGENT AUTO-INVOCATION QUICK REFERENCE
 
