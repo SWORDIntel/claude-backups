@@ -1,0 +1,55 @@
+# Database dependencies
+psycopg2-binary
+sqlalchemy
+alembic
+asyncpg
+aiosqlite
+
+# API framework
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+starlette
+
+# Learning system dependencies
+numpy
+scikit-learn
+pandas
+joblib
+scipy
+
+# Redis support
+redis
+aioredis
+
+# Monitoring
+prometheus-client
+opentelemetry-api
+opentelemetry-sdk
+
+# Utilities
+python-dotenv
+aiofiles
+httpx
+tenacity
+click
+PyYAML
+
+# pgvector support (not in main requirements)
+pgvector==0.2.4
+
+# Logging
+structlog
+colorlog
+loguru
+
+# Security
+PyJWT
+passlib[bcrypt]
+bcrypt
+cryptography
+
+# Async support
+websockets
+aiohttp

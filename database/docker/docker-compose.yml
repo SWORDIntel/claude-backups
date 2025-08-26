@@ -4,8 +4,8 @@ services:
   # PostgreSQL 16/17 with pgvector
   postgres:
     build:
-      context: .
-      dockerfile: Dockerfile.postgres
+      context: ..
+      dockerfile: docker/Dockerfile.postgres
     container_name: claude-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-claude_agent}
@@ -114,7 +114,7 @@ services:
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
     volumes:
-      - prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     ports:
       - "9091:9090"
