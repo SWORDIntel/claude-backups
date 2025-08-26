@@ -1,0 +1,34 @@
+#!/bin/bash
+# Documentation Browser Launcher for Claude Agent Framework
+
+echo "Starting Claude Agent Framework Documentation Browser..."
+echo "Location: $(pwd)"
+
+# Check if we're in the docs directory
+if [[ $(basename $(pwd)) != "docs" ]]; then
+    echo "Warning: Not running from docs/ directory"
+    echo "Current: $(pwd)"
+    echo "Expected to be in a 'docs' directory for optimal functionality"
+    echo ""
+fi
+
+# Check Python availability
+if ! command -v python3 &> /dev/null; then
+    echo "Error: python3 not found. Please install Python 3.6 or higher."
+    exit 1
+fi
+
+# Check tkinter availability
+python3 -c "import tkinter" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Error: tkinter not available. Please install python3-tk:"
+    echo "  Ubuntu/Debian: sudo apt install python3-tk"
+    echo "  RHEL/CentOS: sudo yum install tkinter"
+    exit 1
+fi
+
+# Launch the browser
+echo "Launching Documentation Browser..."
+python3 documentation_browser.py
+
+echo "Documentation browser closed."
