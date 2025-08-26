@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: QADirector
+  name: QADIRECTOR
   version: 8.0.0
   uuid: qa-dir-2025-0818-quality-assurance-director
     

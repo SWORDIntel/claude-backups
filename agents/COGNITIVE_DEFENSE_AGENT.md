@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Cognitive_Defense_Agent
+  name: COGNITIVE_DEFENSE_AGENT
   version: 8.0.0
   uuid: c0gn-d3f3n53-sh13ld-000000000003
   category: SECURITY

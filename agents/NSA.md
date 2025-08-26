@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Allied_Intel_TTP_Agent
+  name: NSA
   version: 14.0.0
   uuid: 5eye-nato-int3l-0p5-000000000001
   category: MULTINATIONAL_INTELLIGENCE

@@ -9,12 +9,12 @@
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)  
 **Latest Feature**: Claude Ultimate Wrapper v13.1 with Automatic Agent Registration  
 **Database**: PostgreSQL 16/17 with pgvector extension, enhanced JSON, VACUUM improvements, and ML learning capabilities  
-**Agent Count**: 71 specialized agents detected in agents/ directory (includes documentation and templates)  
+**Agent Count**: 76 specialized agents detected in agents/ directory (74 active agents plus Template.md and TEMPLATE.md)  
 **Wrapper Version**: claude-wrapper-ultimate.sh v13.1 (symlinked installation)
 
 ## System Architecture
 
-This is a comprehensive agent-based system with **71 agent files in the agents/ directory** (69 specialized agents plus templates/docs) that can autonomously coordinate via Claude Code's Task tool and the advanced Tandem Orchestration System. All agents follow the v7.0 template standard and are optimized for Intel Meteor Lake CPUs with dual-layer Python/C execution capabilities.
+This is a comprehensive agent-based system with **76 agent files in the agents/ directory** (74 specialized agents plus 2 templates) that can autonomously coordinate via Claude Code's Task tool and the advanced Tandem Orchestration System. All agents follow the v7.0 template standard and are optimized for Intel Meteor Lake CPUs with dual-layer Python/C execution capabilities.
 
 ### Key Features
 - **Hardware-Aware Execution**: Optimized for Intel Core Ultra 7 155H (Meteor Lake)
@@ -37,7 +37,7 @@ This is a comprehensive agent-based system with **71 agent files in the agents/ 
 The `claude-wrapper-ultimate.sh` is an enhanced wrapper that provides:
 
 ### Features
-- **Automatic Agent Registration**: Discovers and registers all 71 agents from `agents/` directory
+- **Automatic Agent Registration**: Discovers and registers all 76 agents from `agents/` directory
 - **Intelligent Path Discovery**: Finds agents relative to script location (symlink-aware)
 - **Agent Metadata Extraction**: Extracts category, description, UUID, tools from agent files
 - **Status Classification**: Categorizes agents as active/template/stub based on completeness
@@ -71,108 +71,109 @@ The wrapper automatically finds agents in:
 3. Current directory + `/agents`
 4. Fallback to `$HOME/agents`
 
-## Agent Ecosystem (71 Files, 69 Active Agents)
+## Agent Ecosystem (76 Files, 74 Active Agents)
 
 ### Command & Control (2 agents)
-- **Director**: Strategic command and control (CRITICAL)
-- **ProjectOrchestrator**: Tactical coordination nexus (CRITICAL)
+- **DIRECTOR**: Strategic command and control (CRITICAL)
+- **PROJECTORCHESTRATOR**: Tactical coordination nexus (CRITICAL)
 
-### Security Specialists (13 agents)
-- **Security**: Comprehensive security analysis
-- **Bastion**: Defensive security specialist
-- **SecurityChaosAgent**: Distributed chaos testing
-- **SecurityAuditor**: Advanced security audits
+### Security Specialists (22 agents)
+- **SECURITY**: Comprehensive security analysis
+- **BASTION**: Defensive security specialist
+- **SECURITYCHAOSAGENT**: Distributed chaos testing
+- **SECURITYAUDITOR**: Advanced security audits
 - **CSO**: Chief Security Officer coordination
-- **CryptoExpert**: Cryptography and encryption
-- **QuantumGuard**: Quantum security protocols
-- **RedTeamOrchestrator**: Red team operations
-- **APT41Defense**: Advanced persistent threat defense
-- **NSA_TTP**: Nation-state tactics and techniques
-- **PsyOps**: Psychological operations defense
-- **Ghost-Protocol**: Elite counter-intelligence & anti-surveillance (99.99% evasion)
-- **Cognitive-Defense**: Cognitive warfare defense & manipulation detection (99.94% accuracy)
+- **CRYPTOEXPERT**: Cryptography and encryption
+- **QUANTUMGUARD**: Quantum security protocols
+- **REDTEAMORCHESTRATOR**: Red team operations
+- **APT41-DEFENSE-AGENT**: Advanced persistent threat defense
+- **APT41-REDTEAM-AGENT**: APT41 red team simulation
+- **NSA**: Nation-state tactics and techniques
+- **PSYOPS-AGENT**: Psychological operations defense
+- **GHOST-PROTOCOL-AGENT**: Elite counter-intelligence & anti-surveillance (99.99% evasion)
+- **COGNITIVE_DEFENSE_AGENT**: Cognitive warfare defense & manipulation detection (99.94% accuracy)
+- **BGP-BLUE-TEAM**: BGP defensive operations
+- **BGP-PURPLE-TEAM-AGENT**: BGP security testing
+- **BGP-RED-TEAM**: BGP offensive operations
+- **CHAOS-AGENT**: Chaos engineering security testing
+- **CLAUDECODE-PROMPTINJECTOR**: Prompt injection testing
+- **PROMPT-DEFENDER**: Prompt defense mechanisms
+- **PROMPT-INJECTOR**: Advanced prompt injection
+- **RED-TEAM**: Red team coordination
 
 ### Core Development (8 agents)
-- **Architect**: System design and technical architecture
-- **Constructor**: Project initialization specialist
-- **Patcher**: Precision code surgery and bug fixes
-- **Debugger**: Tactical failure analysis
-- **Testbed**: Elite test engineering
-- **Linter**: Senior code review specialist
-- **Optimizer**: Performance engineering
-- **QADirector**: Quality assurance leadership
+- **ARCHITECT**: System design and technical architecture
+- **CONSTRUCTOR**: Project initialization specialist
+- **PATCHER**: Precision code surgery and bug fixes
+- **DEBUGGER**: Tactical failure analysis
+- **TESTBED**: Elite test engineering
+- **LINTER**: Senior code review specialist
+- **OPTIMIZER**: Performance engineering
+- **QADIRECTOR**: Quality assurance leadership
 
-### Infrastructure & DevOps (6 agents)
-- **Infrastructure**: System setup and configuration
-- **Deployer**: Deployment orchestration
-- **Monitor**: Observability and monitoring
-- **Packager**: Package management and distribution
-- **Docker**: Container orchestration
-- **Proxmox**: Virtualization management
+### Infrastructure & DevOps (8 agents)
+- **INFRASTRUCTURE**: System setup and configuration
+- **DEPLOYER**: Deployment orchestration
+- **MONITOR**: Observability and monitoring
+- **PACKAGER**: Package management and distribution
+- **DOCKER-AGENT**: Container orchestration
+- **PROXMOX-AGENT**: Virtualization management
+- **CISCO-AGENT**: Cisco network configuration
+- **DDWRT-AGENT**: Router firmware management
 
-### Language-Specific Development (8 agents)
-- **C-Internal**: Elite C/C++ systems engineer
-- **Python-Internal**: Python execution environment
-- **Rust-Internal**: Rust systems programming
-- **Go-Internal**: Go backend development
-- **Java-Internal**: Java enterprise applications
-- **TypeScript-Internal**: TypeScript/JavaScript development
-- **Kotlin-Internal**: Kotlin multiplatform development
-- **Assembly-Internal**: Low-level assembly programming
+### Language-Specific Development (11 agents)
+- **C-INTERNAL**: Elite C/C++ systems engineer
+- **CPP-INTERNAL-AGENT**: C++ development specialist
+- **PYTHON-INTERNAL**: Python execution environment
+- **RUST-INTERNAL-AGENT**: Rust systems programming
+- **GO-INTERNAL-AGENT**: Go backend development
+- **JAVA-INTERNAL-AGENT**: Java enterprise applications
+- **TYPESCRIPT-INTERNAL-AGENT**: TypeScript/JavaScript development
+- **KOTLIN-INTERNAL-AGENT**: Kotlin multiplatform development
+- **ASSEMBLY-INTERNAL-AGENT**: Low-level assembly programming
+- **SQL-INTERNAL-AGENT**: SQL database specialist
+- **ZIG-INTERNAL-AGENT**: Zig language specialist
 
 ### Specialized Platforms (7 agents)
-- **APIDesigner**: API architecture and contracts
-- **Database**: Data architecture and optimization
-- **Web**: Modern web frameworks (React/Vue/Angular)
-- **Mobile**: iOS/Android development
-- **AndroidMobile**: Android-specific development
-- **PyGUI**: Python GUI development (Tkinter/PyQt/Streamlit)
+- **APIDESIGNER**: API architecture and contracts
+- **DATABASE**: Data architecture and optimization
+- **WEB**: Modern web frameworks (React/Vue/Angular)
+- **Mobile**: iOS/Android development (NOTE: No MOBILE.md found)
+- **ANDROIDMOBILE**: Android-specific development
+- **PYGUI**: Python GUI development (Tkinter/PyQt/Streamlit)
 - **TUI**: Terminal UI specialist (ncurses/termbox)
 
-### Data & ML (4 agents)
-- **DataScience**: Data analysis and ML specialist
-- **MLOps**: ML pipeline and deployment
+### Data & ML (3 agents)
+- **DATASCIENCE**: Data analysis and ML specialist
+- **MLOPS**: ML pipeline and deployment
 - **NPU**: Neural processing unit optimization
-- **SQL-Internal**: Elite SQL specialist (100K+ QPS capability)
 
-### Network & Systems (4 agents)
-- **Cisco**: Cisco network configuration
-- **BGP-Purple-Team**: BGP security and routing
-- **IoT-Access-Control**: IoT security management
-- **DD-WRT**: Router firmware management
+### Network & Systems (1 agent)
+- **IOT-ACCESS-CONTROL-AGENT**: IoT security management
 
 ### Hardware & Acceleration (2 agents)
 - **GNA**: Gaussian Neural Accelerator
-- **LeadEngineer**: Hardware-software integration
+- **LEADENGINEER**: Hardware-software integration
 
 ### Planning & Documentation (4 agents)
-- **Planner**: Strategic project planning
-- **Docgen**: Documentation engineering
-- **Researcher**: Technology evaluation
-- **StatusLine-Integration**: Development environment integration
+- **PLANNER**: Strategic project planning
+- **DOCGEN**: Documentation engineering
+- **RESEARCHER**: Technology evaluation
+- **StatusLine-Integration**: Development environment integration (NOTE: No statusline agent file found)
 
-### Quality & Oversight (2 agents)
-- **Oversight**: Quality assurance and compliance
-- **Integration**: System integration specialist
+### Quality & Oversight (3 agents)
+- **OVERSIGHT**: Quality assurance and compliance
+- **INTERGRATION**: System integration specialist (Note: filename is INTERGRATION.md)
+- **AUDITOR**: Compliance and audit specialist
 
-### Additional Agents Found in agents/ Directory
-The following additional agents were detected (71 total files):
-- **APT41-Defense-Agent**: APT41 defense specialist
-- **APT41-RedTeam-Agent**: APT41 red team simulator
-- **BGP-Blue-Team**: BGP blue team operations
-- **BGP-Red-Team**: BGP red team operations
-- **Carbon-Internal-Agent**: Carbon analysis specialist
-- **ClaudeCode-PromptInjector**: Prompt injection testing
-- **CPP-Internal-Agent**: C++ development specialist
-- **Ghost-Protocol-Agent**: Counter-intelligence operations
-- **Prompt-Defender**: Prompt defense mechanisms
-- **Prompt-Injector**: Prompt injection testing
-- **PsyOps-Agent**: Psychological operations
-- **Wrapper-Liberation**: Wrapper liberation tools
-- **Wrapper-Liberation-Pro**: Advanced wrapper liberation
-- **Zig-Internal-Agent**: Zig language specialist
-- **Template.md**: Agent template for new agents
-- **WHERE_I_AM.md**: Documentation file
+### Additional Utility Agents (6 agents)
+- **ORCHESTRATOR**: Multi-agent orchestration
+- **CRYPTO**: Cryptographic operations
+- **QUANTUM**: Quantum computing specialist
+- **CARBON-INTERNAL-AGENT**: Carbon analysis specialist
+- **WRAPPER-LIBERATION**: Wrapper liberation tools
+- **WRAPPER-LIBERATION-PRO**: Advanced wrapper liberation
+
 
 ## Tandem Orchestration System
 
@@ -1461,9 +1462,9 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ---
 
-*Last Updated: 2025-08-24*  
+*Last Updated: 2025-08-26*  
 *Framework Version: 7.0*  
-*Agent Count: 65 specialized agents*  
+*Agent Count: 76 specialized agents (74 active + 2 templates)*  
 *Global CLAUDE.md: Auto-invocation integration complete*  
 *Global Agents Bridge: v10.0*  
 *Learning System: v3.1 with PostgreSQL 16/17 compatibility*  

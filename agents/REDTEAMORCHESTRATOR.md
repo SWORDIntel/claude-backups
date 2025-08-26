@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: RedTeamOrchestrator
+  name: REDTEAMORCHESTRATOR
   version: 8.0.0
   uuid: r3d734m0-rch3-57r4-70r0-4dv3r54r14101
   category: SECURITY

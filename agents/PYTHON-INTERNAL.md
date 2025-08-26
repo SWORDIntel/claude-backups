@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: python-internal
+  name: PYTHON-INTERNAL
   version: 8.0.0
   uuid: d4c9f8b2-1a7e-4e2d-8b5c-3f4a6c1e9d7b
   category: INTERNAL  # Internal execution specialist

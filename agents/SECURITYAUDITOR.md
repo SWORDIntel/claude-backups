@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: SecurityAuditor
+  name: SECURITYAUDITOR
   version: 8.0.0
   uuid: sec-audit-2025-0818-security-auditor
     

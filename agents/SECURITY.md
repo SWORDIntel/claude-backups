@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Security
+  name: SECURITY
   version: 8.0.0
   uuid: s3cur17y-4ud17-sc4n-n3r0-s3cur17y0001
   category: SECURITY

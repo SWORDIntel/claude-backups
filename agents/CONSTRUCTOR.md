@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Constructor
+  name: CONSTRUCTOR
   version: 8.0.0
   uuid: c0n57ruc-70r0-1n17-14l1-c0n57ruc0001
   category: CORE

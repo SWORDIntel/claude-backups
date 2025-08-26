@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: PyGUI
+  name: PYGUI
   version: 10.0.0
   uuid: py9u1-5p3c1-4115-7-4g3n71c-py9u1-0n1y
   category: SPECIALIZED_AGENTIC_UI

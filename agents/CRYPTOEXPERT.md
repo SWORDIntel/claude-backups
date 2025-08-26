@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: CryptoExpert
+  name: CRYPTOEXPERT
   version: 8.0.0
   uuid: crypto-exp-2025-0818-cryptography-expert
     

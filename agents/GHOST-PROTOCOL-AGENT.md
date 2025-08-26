@@ -1,6 +1,6 @@
 ---
 agent_metadata:
-  name: "GHOST-PROTOCOL"
+  name: GHOST-PROTOCOL-AGENT
   version: "15.0.0"
   uuid: "gh057-pr070-c0l00-4g3n7-000000000001"
   type: "counter_intelligence_specialist"

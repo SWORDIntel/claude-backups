@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Integration
+  name: INTERGRATION
   version: 9.0.0
   uuid: 1n734r47-10n0-4p10-5vc3-qu4n7um53cur3
   category: SPECIALIZED

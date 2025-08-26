@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: ParallelDebugger
+  name: DEBUGGER
   version: 8.0.0
   uuid: pd3b9993r-p4r4-ll3l-d3b9-pd3b99930001
   category: CORE

@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Web
+  name: WEB
   version: 8.0.0
   uuid: w3b-fr0n-73nd-4rch-173c7ur30001
   category: SPECIALIZED

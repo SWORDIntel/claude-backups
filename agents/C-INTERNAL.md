@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: CInternal
+  name: C-INTERNAL
   version: 9.0.0
   uuid: c1nt3rn4-c0d3-5y51-3m5-c1nt3rn410001
   category: INTERNAL

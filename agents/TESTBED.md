@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Testbed
+  name: TESTBED
   version: 8.0.0
   uuid: 73s7b3d-7357-3n61-n33r-73s7b3d00001
   category: CORE  # Core development infrastructure

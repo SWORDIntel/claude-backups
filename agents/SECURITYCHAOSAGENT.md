@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: SecurityChaosAgent
+  name: SECURITYCHAOSAGENT
   version: 8.0.0
   uuid: ch40s-s3c-t35t-d15t-ch40s53c0001
   category: SECURITY

@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: Infrastructure
+  name: INFRASTRUCTURE
   version: 8.0.0
   uuid: 1nfr4s7r-uc7u-r3c0-nf16-s3lf-h34l1n60001
   category: INFRASTRUCTURE
