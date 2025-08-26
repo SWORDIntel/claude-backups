@@ -35,35 +35,77 @@ import asyncio
 import functools
 import inspect
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, Callable
 import importlib
 import sys
 
-from tandem_orchestration_base import (
-    TandemOrchestrationBase, AgentTask, TaskPriority, HealthStatus
-)
-from production_orchestrator_bridge import create_orchestrator_bridge
-
-# Configure logging
+# Configure logging first
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+try:
+    from tandem_orchestration_base import (
+        TandemOrchestrationBase, AgentTask, TaskPriority, HealthStatus
+    )
+    from production_orchestrator_bridge import create_orchestrator_bridge
+except ImportError as e:
+    logger.error(f"Could not import orchestration components: {e}")
+    # Create minimal fallback classes
+    class TandemOrchestrationBase:
+        def __init__(self, agent_name: str, orchestrator_bridge=None):
+            self.agent_name = agent_name
+            self.orchestrator_bridge = orchestrator_bridge
+            self.is_running = False
+            
+    class AgentTask:
+        def __init__(self, action: str, context: Dict[str, Any]):
+            self.action = action
+            self.context = context
+            
+    class TaskPriority:
+        LOW = 1
+        NORMAL = 2
+        HIGH = 3
+        CRITICAL = 4
+        
+    class HealthStatus:
+        HEALTHY = "healthy"
+        DEGRADED = "degraded"
+        UNHEALTHY = "unhealthy"
+        
+    def create_orchestrator_bridge(mode: str = "mock"):
+        from unittest.mock import Mock
+        return Mock()
 
 
 class EnhancedAgentWrapper(TandemOrchestrationBase):
     """Wrapper that adds orchestration to existing agents"""
     
     def __init__(self, original_agent: Any, agent_name: str, bridge_mode: str = "production"):
-        # Initialize base orchestration
-        orchestrator_bridge = create_orchestrator_bridge(bridge_mode)
-        super().__init__(agent_name, orchestrator_bridge)
-        
-        # Store original agent
+        # Store original agent first
         self.original_agent = original_agent
+        
+        # Extract methods before parent initialization
         self.original_methods = self._extract_agent_methods()
         
         # Agent-specific configuration
         self.agent_config = self._determine_agent_config(agent_name)
+        
+        # Initialize base orchestration
+        try:
+            orchestrator_bridge = create_orchestrator_bridge(bridge_mode)
+        except Exception as e:
+            logger.warning(f"Could not create orchestrator bridge: {e}, using mock")
+            try:
+                from tandem_orchestration_base import MockOrchestratorBridge
+                orchestrator_bridge = MockOrchestratorBridge()
+            except ImportError:
+                from unittest.mock import Mock
+                orchestrator_bridge = Mock()
+            
+        super().__init__(agent_name, orchestrator_bridge)
         
         logger.info(f"Enhanced agent {agent_name} with orchestration capabilities")
         

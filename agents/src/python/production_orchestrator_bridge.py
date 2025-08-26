@@ -37,7 +37,7 @@ from dataclasses import asdict
 # Import existing orchestration components
 try:
     from production_orchestrator import ProductionOrchestrator, CommandStep, CommandSet, ExecutionMode
-    from agent_registry import AgentRegistry, AgentInfo
+    from agent_registry import EnhancedAgentRegistry as AgentRegistry, AgentMetadata as AgentInfo
 except ImportError as e:
     logging.warning(f"Could not import orchestration components: {e}")
     # Fallback imports for development
