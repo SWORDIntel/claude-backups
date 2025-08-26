@@ -1,11 +1,11 @@
 {
-  "project_root": "/home/ubuntu/Documents/claude-backups",
-  "agents_dir": "/home/ubuntu/Documents/claude-backups/agents",
-  "python_path": "/home/ubuntu/Documents/claude-backups/agents/src/python",
+  "project_root": "/media/ubuntu/59532cef-3a4b-49b8-b900-030dc7bf25c8/claude-backups",
+  "agents_dir": "/media/ubuntu/59532cef-3a4b-49b8-b900-030dc7bf25c8/claude-backups/agents",
+  "python_path": "/media/ubuntu/59532cef-3a4b-49b8-b900-030dc7bf25c8/claude-backups/agents/src/python",
   "venv_dir": "/home/ubuntu/.local/share/claude/venv",
   "orchestrators": {
-    "production": "/home/ubuntu/Documents/claude-backups/agents/src/python/production_orchestrator.py",
-    "tandem": "/home/ubuntu/Documents/claude-backups/agents/src/python/tandem_orchestrator.py"
+    "production": "/media/ubuntu/59532cef-3a4b-49b8-b900-030dc7bf25c8/claude-backups/agents/src/python/production_orchestrator.py",
+    "tandem": "/media/ubuntu/59532cef-3a4b-49b8-b900-030dc7bf25c8/claude-backups/agents/src/python/tandem_orchestrator.py"
   },
   "execution_modes": [
     "INTELLIGENT",

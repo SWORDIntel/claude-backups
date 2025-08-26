@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# ENHANCED PYTHON TANDEM ORCHESTRATION SYSTEM LAUNCHER v2.0
+# PRODUCTION ORCHESTRATOR LAUNCHER v2.0
 # 
 # Production-grade launcher with advanced monitoring, health checks,
 # configuration management, and enterprise features
@@ -85,9 +85,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(find_project_root)"
 AGENTS_DIR="$PROJECT_ROOT/agents"
 PYTHON_DIR="$AGENTS_DIR/src/python"
-CONFIG_DIR="$HOME/.config/python-tandem-orchestrator"
-CACHE_DIR="$HOME/.cache/python-tandem-orchestrator"
-LOG_DIR="$HOME/.local/share/python-tandem-orchestrator/logs"
+CONFIG_DIR="$HOME/.config/production-orchestrator"
+CACHE_DIR="$HOME/.cache/production-orchestrator"
+LOG_DIR="$HOME/.local/share/production-orchestrator/logs"
 
 # Runtime files
 MARKER_FILE="$CACHE_DIR/.orchestration_active"
@@ -122,7 +122,7 @@ setup_logging() {
     
     # Initialize session log
     {
-        echo "# Python Tandem Orchestrator Session Log"
+        echo "# Production Orchestrator Session Log"
         echo "# Started: $(date)"
         echo "# Version: $LAUNCHER_VERSION Build: $LAUNCHER_BUILD"
         echo "# Project Root: $PROJECT_ROOT"
@@ -155,7 +155,7 @@ log_message() {
 load_configuration() {
     # Default configuration
     cat > "$CONFIG_FILE" << 'EOF'
-# Python Tandem Orchestrator Configuration
+# Production Orchestrator Configuration
 # Auto-generated configuration file
 
 [system]
@@ -418,7 +418,7 @@ stop_health_monitoring() {
 # ============================================================================
 
 cleanup() {
-    log_message "INFO" "Shutting down Python Tandem Orchestration System..."
+    log_message "INFO" "Shutting down Production Orchestration System..."
     
     # Stop health monitoring
     stop_health_monitoring
@@ -452,10 +452,10 @@ cleanup() {
     # Final metrics collection
     collect_system_metrics
     
-    log_message "SUCCESS" "Python orchestration system deactivated"
+    log_message "SUCCESS" "Production orchestration system deactivated"
     echo ""
     echo -e "${GREEN}${ICON_SUCCESS} Session log saved: $SESSION_LOG${NC}"
-    echo -e "${CYAN}${ICON_INFO} Thank you for using the Python Tandem Orchestration System!${NC}"
+    echo -e "${CYAN}${ICON_INFO} Thank you for using the Production Orchestration System!${NC}"
     
     exit 0
 }
@@ -470,7 +470,7 @@ trap cleanup SIGINT SIGTERM EXIT
 show_enhanced_header() {
     clear
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════════${NC}"
-    echo -e "${BOLD}${WHITE}      ${ICON_ROCKET} Python Tandem Orchestration System Launcher v$LAUNCHER_VERSION      ${NC}"
+    echo -e "${BOLD}${WHITE}      ${ICON_ROCKET} Production Orchestrator Launcher v$LAUNCHER_VERSION      ${NC}"
     echo -e "${CYAN}                    Advanced Agent Coordination & Workflow Engine                  ${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════════${NC}"
     echo -e "${DIM}Build: $LAUNCHER_BUILD | Project: $PROJECT_ROOT${NC}"
@@ -815,7 +815,7 @@ from production_orchestrator import ProductionOrchestrator
 from test_tandem_system import StandardWorkflows
 
 async def interactive():
-    print('🎯 Interactive Python Orchestrator')
+    print('🎯 Interactive Production Orchestrator')
     print('='*50)
     orchestrator = ProductionOrchestrator()
     await orchestrator.initialize()
@@ -970,7 +970,7 @@ main() {
     setup_logging
     load_configuration
     
-    log_message "INFO" "Python Tandem Orchestrator Launcher v$LAUNCHER_VERSION starting..."
+    log_message "INFO" "Production Orchestrator Launcher v$LAUNCHER_VERSION starting..."
     
     # Check for existing instance
     if [ -f "$PID_FILE" ]; then
@@ -978,7 +978,7 @@ main() {
         existing_pid=$(cat "$PID_FILE")
         if ps -p "$existing_pid" > /dev/null 2>&1; then
             log_message "ERROR" "Launcher already running (PID: $existing_pid)"
-            echo -e "${RED}${ICON_FAILURE} Python Tandem Orchestration System is already running${NC}"
+            echo -e "${RED}${ICON_FAILURE} Production Orchestration System is already running${NC}"
             echo "Please close the existing instance before starting a new one."
             exit 1
         else
@@ -1000,7 +1000,7 @@ main() {
     touch "$MARKER_FILE"
     echo $$ > "$PID_FILE"
     
-    log_message "SUCCESS" "Python Tandem Orchestration System activated"
+    log_message "SUCCESS" "Production Orchestration System activated"
     
     # Start health monitoring
     start_health_monitoring
@@ -1053,7 +1053,7 @@ case "${1:-}" in
         fi
         ;;
     "help"|"--help")
-        echo "Enhanced Python Tandem Orchestration System Launcher v$LAUNCHER_VERSION"
+        echo "Production Orchestrator Launcher v$LAUNCHER_VERSION"
         echo ""
         echo "Usage: $0 [option]"
         echo ""

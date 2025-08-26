@@ -135,6 +135,8 @@ Based on automated analysis of the current installer:
 - Error handling with graceful degradation
 - Restoration capabilities for all backup files
 - Preview mode for non-destructive analysis
+- Dynamic path resolution (no hardcoded paths)
+- Automatic /tmp noexec detection with /dev/shm fallback
 
 ## Expected Benefits
 
@@ -165,7 +167,7 @@ Based on automated analysis of the current installer:
 ### Generated Files (during optimization)
 - `claude-md-content.txt`: Extracted CLAUDE.md embedded content
 - `claude-installer.sh.backup.TIMESTAMP`: Automatic backup files
-- `/tmp/installer_analysis_cache.txt`: Analysis results cache
+- `${TEMP_DIR}/installer_analysis_cache.txt`: Analysis results cache (uses /dev/shm if /tmp has noexec)
 
 ### Documentation
 - `docs/tools/TUI_INSTALLER_OPTIMIZER.md`: This comprehensive guide
@@ -189,9 +191,10 @@ Based on automated analysis of the current installer:
 
 ### Common Issues
 - **Permission Errors**: Ensure script has execute permissions with `chmod +x`
-- **File Not Found**: Verify installer path in `INSTALLER_PATH` variable
+- **File Not Found**: Script now uses dynamic path resolution relative to script location
 - **Backup Restoration**: Use menu option 9 to restore from any backup
-- **Analysis Cache**: Delete `/tmp/installer_analysis_cache.txt` to force re-analysis
+- **Analysis Cache**: Delete cache file in temp directory to force re-analysis
+- **Temp Directory**: Automatically uses /dev/shm if /tmp has noexec mount option
 
 ### Error Recovery
 - All operations create automatic backups
@@ -199,13 +202,27 @@ Based on automated analysis of the current installer:
 - Check backup files with `.backup.TIMESTAMP` naming pattern
 - Original file is never modified without backup creation
 
+## Recent Updates (v1.1)
+
+### Path Resolution Improvements
+- **Dynamic Path Resolution**: Script automatically detects installer location relative to itself
+- **No Hardcoded Paths**: Uses `$(dirname "${BASH_SOURCE[0]}")` for portability
+- **Environment Variable Support**: Can override with `INSTALLER_PATH` environment variable
+
+### Temporary Directory Handling
+- **Automatic noexec Detection**: Checks if /tmp is mounted with noexec option
+- **Smart Fallback**: Automatically uses /dev/shm when /tmp has noexec
+- **Compatibility**: Works in restricted environments like LiveCD/LiveUSB
+- **User Notification**: Informs user when alternative temp directory is used
+
 ## Status
 
-- **Version**: 1.0
+- **Version**: 1.1
 - **Status**: Production Ready
 - **Testing**: Comprehensive analysis and optimization tested
 - **Compatibility**: Works with claude-installer.sh v10.0
 - **Platform**: Linux/Unix systems with Bash 4.0+
+- **Environment Support**: LiveCD/LiveUSB with noexec /tmp
 
 ---
 

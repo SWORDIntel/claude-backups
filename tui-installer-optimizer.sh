@@ -29,11 +29,34 @@ declare -r CHECK="✓"
 declare -r CROSS="✗"
 declare -r WARN="⚠"
 
-# File paths
-INSTALLER_PATH="/home/ubuntu/Documents/claude-backups/claude-installer.sh"
+# Check if /tmp has noexec and use /dev/shm as fallback
+check_tmp_exec() {
+    local test_file="/tmp/test_exec_$$"
+    if mount | grep -E "on /tmp.*noexec" >/dev/null 2>&1; then
+        return 1
+    fi
+    # Try to create and execute a test file
+    if echo '#!/bin/sh' > "$test_file" 2>/dev/null && chmod +x "$test_file" 2>/dev/null; then
+        rm -f "$test_file" 2>/dev/null
+        return 0
+    fi
+    return 1
+}
+
+# Determine temp directory (use /dev/shm if /tmp has noexec)
+if check_tmp_exec; then
+    TEMP_DIR="/tmp"
+else
+    TEMP_DIR="/dev/shm"
+    echo -e "${YELLOW}Note: Using /dev/shm for temporary files (/tmp has noexec)${NC}"
+fi
+
+# File paths - Use dynamic resolution instead of hardcoded paths
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALLER_PATH="${INSTALLER_PATH:-${SCRIPT_DIR}/claude-installer.sh}"
 BACKUP_PATH="${INSTALLER_PATH}.backup.$(date +%Y%m%d_%H%M%S)"
 OPTIMIZED_PATH="${INSTALLER_PATH}.optimized"
-ANALYSIS_CACHE="/tmp/installer_analysis_cache.txt"
+ANALYSIS_CACHE="${TEMP_DIR}/installer_analysis_cache.txt"
 
 # Analysis results
 declare -A OPTIMIZATION_STATS
@@ -507,7 +530,7 @@ create_directory() {
     
     if [[ -n "$insert_line" ]]; then
         # Create temporary file with new functions
-        local temp_file="/tmp/installer_optimized.sh"
+        local temp_file="${TEMP_DIR}/installer_optimized.sh"
         head -n "$insert_line" "$INSTALLER_PATH" > "$temp_file"
         echo "$error_handler" >> "$temp_file"
         tail -n +$((insert_line + 1)) "$INSTALLER_PATH" >> "$temp_file"

@@ -72,6 +72,28 @@ SETUP_VENV="yes"
 # HELPER FUNCTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+# Check if /tmp has noexec and use /dev/shm as fallback
+check_tmp_exec() {
+    local test_file="/tmp/test_exec_$$"
+    if mount | grep -E "on /tmp.*noexec" >/dev/null 2>&1; then
+        return 1
+    fi
+    # Try to create and execute a test file
+    if echo '#!/bin/sh' > "$test_file" 2>/dev/null && chmod +x "$test_file" 2>/dev/null; then
+        rm -f "$test_file" 2>/dev/null
+        return 0
+    fi
+    return 1
+}
+
+# Determine temp directory (use /dev/shm if /tmp has noexec)
+if check_tmp_exec; then
+    export TMPDIR="/tmp"
+else
+    export TMPDIR="/dev/shm"
+    print_yellow "$WARNING Note: Using /dev/shm for temporary files (/tmp has noexec)"
+fi
+
 # Create log directory
 mkdir -p "$LOG_DIR" 2>/dev/null || sudo mkdir -p "$LOG_DIR" 2>/dev/null
 
@@ -2226,7 +2248,7 @@ setup_production_environment() {
         }
         
         # Run setup with output capture and proper exit status handling
-        local temp_output=$(mktemp)
+        local temp_output=$(mktemp -p "$TMPDIR")
         local exit_status=0
         
         if bash "./setup_production_env.sh" --auto > "$temp_output" 2>&1; then
