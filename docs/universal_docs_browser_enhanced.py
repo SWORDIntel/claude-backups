@@ -327,7 +327,16 @@ class DocumentationStructureAnalyzer:
         return file_types
     
     def generate_role_mappings(self) -> Dict[str, List[str]]:
-        """Generate role-based document mappings based on detected structure"""
+        """Generate role-based document mappings based on detected structure
+        
+        Role Analysis Logic:
+        - New Users: Files with 'readme', 'getting', 'start', 'intro', 'quick', 'begin', 'guide' patterns
+        - Developers: Files with 'api', 'arch', 'design', 'dev', 'code', 'impl', 'technical' patterns  
+        - Administrators: Files with 'install', 'setup', 'config', 'deploy', 'admin', 'trouble' patterns
+        - Security Experts: Files with 'security', 'auth', 'crypto', 'secure', 'vuln', 'audit' patterns
+        
+        Analysis considers both filename patterns and category/directory names.
+        """
         mappings = {
             'New Users': [],
             'Developers': [],
@@ -683,9 +692,9 @@ class UniversalDocumentationBrowser:
             self.tree.tag_configure('category', background='lightblue', font=('Arial', 10, 'bold'))
             self.tree.tag_configure('file', background='white')
             
-            # Expand all categories
+            # Start with categories collapsed for cleaner initial view
             for item in self.tree.get_children():
-                self.tree.item(item, open=True)
+                self.tree.item(item, open=False)
             
             # Update statistics
             cat_count = len([c for c in self.categories.keys() if c != '_root'])
