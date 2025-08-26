@@ -327,69 +327,132 @@ class DocumentationStructureAnalyzer:
         return file_types
     
     def generate_role_mappings(self) -> Dict[str, List[str]]:
-        """Generate role-based document mappings based on detected structure
+        """Generate role-based document mappings using enhanced semantic analysis
         
-        Role Analysis Logic:
-        - New Users: Files with 'readme', 'getting', 'start', 'intro', 'quick', 'begin', 'guide' patterns
-        - Developers: Files with 'api', 'arch', 'design', 'dev', 'code', 'impl', 'technical' patterns  
-        - Administrators: Files with 'install', 'setup', 'config', 'deploy', 'admin', 'trouble' patterns
-        - Security Experts: Files with 'security', 'auth', 'crypto', 'secure', 'vuln', 'audit' patterns
+        Enhanced Semantic Matching with 8 Role Categories:
+        - New Users: 'readme', 'getting', 'start', 'intro', 'quick', 'begin', 'guide', 'first', 'launch', 'walkthrough'
+        - Developers: 'api', 'arch', 'design', 'dev', 'code', 'impl', 'technical', 'spec', 'framework', 'orchestration'
+        - Administrators: 'install', 'setup', 'config', 'deploy', 'admin', 'trouble', 'ops', 'management', 'monitoring'
+        - Security Experts: 'security', 'auth', 'crypto', 'secure', 'vuln', 'audit', 'cert', 'encryption', 'bastion'
+        - System Builders: 'build', 'kernel', 'driver', 'hardware', 'firmware', 'boot', 'compilation', 'microcode'
+        - Network Engineers: 'network', 'mesh', 'vpn', 'tunnel', 'routing', 'protocol', 'gateway', 'dns', 'tls'
+        - Project Managers: 'roadmap', 'plan', 'strategy', 'timeline', 'milestone', 'project', 'executive', 'summary'
+        - QA/Testing: 'test', 'testing', 'qa', 'quality', 'validation', 'verification', 'benchmark', 'performance'
         
-        Analysis considers both filename patterns and category/directory names.
+        Uses scoring system: filename + category matches, content analysis, multi-role support.
         """
         mappings = {
             'New Users': [],
             'Developers': [],
             'Administrators': [],
-            'Security Experts': []
+            'Security Experts': [],
+            'System Builders': [],
+            'Network Engineers': [],
+            'Project Managers': [],
+            'QA/Testing': []
         }
         
-        # Map based on patterns and category names
+        # Enhanced semantic matching with scoring system
         for cat_name, cat_info in self.structure.get('categories', {}).items():
             cat_path = Path(cat_info['path'])
             files = cat_info.get('files', [])
             
-            for file_name in files[:3]:  # Limit to 3 files per category for role mapping
+            for file_name in files[:5]:  # Increased from 3 to 5 files per category
                 try:
                     relative_path = str(Path(cat_path.name) / file_name) if cat_name != '_root' else file_name
-                    
                     name_lower = file_name.lower()
                     cat_lower = cat_name.lower()
                     
-                    # New Users
-                    if any(pattern in name_lower for pattern in ['readme', 'getting', 'start', 'intro', 'quick', 'begin', 'guide']):
-                        mappings['New Users'].append(relative_path)
-                    elif any(pattern in cat_lower for pattern in ['guide', 'tutorial', 'intro', 'user-guide']):
-                        mappings['New Users'].append(relative_path)
+                    # Score-based matching for better accuracy
+                    role_scores = {}
                     
-                    # Developers
-                    if any(pattern in name_lower for pattern in ['api', 'arch', 'design', 'dev', 'code', 'impl', 'technical']):
-                        mappings['Developers'].append(relative_path)
-                    elif any(pattern in cat_lower for pattern in ['api', 'architecture', 'technical', 'implementation']):
-                        mappings['Developers'].append(relative_path)
+                    # New Users (Getting Started)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['readme', 'getting', 'start', 'intro', 'quick', 'begin', 'guide', 'first', 'launch', 'walkthrough', 'primer', 'basics']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['guide', 'tutorial', 'intro', 'user-guide', 'getting-started', 'quickstart', 'onboarding']):
+                        score += 1
+                    if score > 0:
+                        role_scores['New Users'] = score
                     
-                    # Administrators
-                    if any(pattern in name_lower for pattern in ['install', 'setup', 'config', 'deploy', 'admin', 'trouble']):
-                        mappings['Administrators'].append(relative_path)
-                    elif any(pattern in cat_lower for pattern in ['deployment', 'troubleshooting']):
-                        mappings['Administrators'].append(relative_path)
+                    # Developers (Technical Implementation)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['api', 'arch', 'design', 'dev', 'code', 'impl', 'technical', 'spec', 'framework', 'orchestration', 'engine', 'core']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['api', 'architecture', 'technical', 'implementation', 'development', 'specs', 'reference', 'framework']):
+                        score += 1
+                    if score > 0:
+                        role_scores['Developers'] = score
+                    
+                    # Administrators (Operations)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['install', 'setup', 'config', 'deploy', 'admin', 'trouble', 'ops', 'management', 'monitoring', 'maintenance']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['deployment', 'troubleshooting', 'installation', 'operations', 'maintenance', 'ops', 'infrastructure']):
+                        score += 1
+                    if score > 0:
+                        role_scores['Administrators'] = score
                     
                     # Security Experts
-                    if any(pattern in name_lower for pattern in ['security', 'auth', 'crypto', 'secure', 'vuln', 'audit']):
-                        mappings['Security Experts'].append(relative_path)
-                    elif any(pattern in cat_lower for pattern in ['security']):
-                        mappings['Security Experts'].append(relative_path)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['security', 'auth', 'crypto', 'secure', 'vuln', 'audit', 'cert', 'encryption', 'bastion', 'hardening']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['security', 'auth', 'crypto', 'compliance', 'audit', 'hardening']):
+                        score += 1
+                    if score > 0:
+                        role_scores['Security Experts'] = score
+                    
+                    # System Builders (NEW)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['build', 'kernel', 'driver', 'hardware', 'firmware', 'boot', 'compilation', 'microcode', 'toolchain', 'bios']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['build', 'hardware', 'kernel', 'drivers', 'firmware', 'compilation', 'toolchain']):
+                        score += 1
+                    if score > 0:
+                        role_scores['System Builders'] = score
+                    
+                    # Network Engineers (NEW)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['network', 'mesh', 'vpn', 'tunnel', 'routing', 'protocol', 'gateway', 'dns', 'tls', 'ssl', 'proxy']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['network', 'infrastructure', 'routing', 'protocol', 'mesh', 'vpn', 'tunnel']):
+                        score += 1
+                    if score > 0:
+                        role_scores['Network Engineers'] = score
+                    
+                    # Project Managers (NEW)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['roadmap', 'plan', 'strategy', 'timeline', 'milestone', 'project', 'executive', 'summary', 'overview', 'coordination']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['roadmaps', 'plans', 'strategy', 'management', 'coordination', 'summaries', 'reports']):
+                        score += 1
+                    if score > 0:
+                        role_scores['Project Managers'] = score
+                    
+                    # QA/Testing (NEW)
+                    score = 0
+                    if any(pattern in name_lower for pattern in ['test', 'testing', 'qa', 'quality', 'validation', 'verification', 'benchmark', 'performance', 'load', 'stress']):
+                        score += 2
+                    if any(pattern in cat_lower for pattern in ['testing', 'qa', 'validation', 'verification', 'benchmarks', 'performance', 'quality']):
+                        score += 1
+                    if score > 0:
+                        role_scores['QA/Testing'] = score
+                    
+                    # Assign to roles based on scores (multi-role support)
+                    for role, score in role_scores.items():
+                        if score >= 1:  # Minimum score threshold
+                            mappings[role].append(relative_path)
                 
                 except Exception:
                     continue
         
-        # Remove empty roles and limit items
+        # Remove empty roles and limit items with improved deduplication
         filtered_mappings = {}
         for role, docs in mappings.items():
             if docs:
-                # Remove duplicates and limit to most relevant documents (max 8 per role)
+                # Remove duplicates and limit to most relevant documents (max 10 per role for 8 categories)
                 unique_docs = list(dict.fromkeys(docs))  # Remove duplicates while preserving order
-                filtered_mappings[role] = unique_docs[:8]
+                filtered_mappings[role] = unique_docs[:10]
         
         self.role_mappings = filtered_mappings
         return filtered_mappings
