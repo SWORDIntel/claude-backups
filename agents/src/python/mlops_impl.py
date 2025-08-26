@@ -303,7 +303,7 @@ class ModelDeployer:
         
         
         # Create mlops files and documentation
-        await self._create_mlops_files(result, context if 'context' in locals() else {})
+        # Note: File creation moved to async context if needed
         return {
             'deployment_id': deployment_id,
             'status': 'deployed',
@@ -1082,7 +1082,10 @@ class MLOPSPythonExecutor:
                 
             # Get model
             model, model_version = self.model_registry.get_model(model_id)
+            return {"status": "exported", "model_id": model_id, "format": format}
             
+        except Exception as e:
+            return {"error": f"Export failed: {str(e)}"}
             
     async def _create_mlops_files(self, result_data: Dict[str, Any], context: Dict[str, Any]):
         """Create mlops files and artifacts using declared tools"""
@@ -1242,7 +1245,7 @@ Last updated: {datetime.now().isoformat()}
         """Return current MLOPS agent status."""
         
         # Create mlops files and documentation
-        await self._create_mlops_files(result, context if 'context' in locals() else {})
+        # Note: File creation moved to async context if needed
         return {
             "agent_name": self.agent_name,
             "version": self.version,

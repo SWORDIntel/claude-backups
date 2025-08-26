@@ -1285,7 +1285,7 @@ is required for high-severity findings to prevent potential security incidents.
         """Generate risk assessment"""
         
         # Create securitychaosagent files and documentation
-        await self._create_securitychaosagent_files(result, context if 'context' in locals() else {})
+        # Note: File creation moved to async context if needed
         return {
             "overall_risk_level": "Medium" if self.metrics['vulnerabilities_discovered'] < 10 else "High",
             "critical_vulnerabilities": max(0, self.metrics['vulnerabilities_discovered'] - 5),

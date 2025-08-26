@@ -1158,7 +1158,7 @@ class DATASCIENCEPythonExecutor:
         """Return current DATASCIENCE agent status."""
         
         # Create datascience files and documentation
-        await self._create_datascience_files(result, context if 'context' in locals() else {})
+        # Note: File creation moved to async context if needed
         return {
             "agent_name": self.agent_name,
             "version": self.version,

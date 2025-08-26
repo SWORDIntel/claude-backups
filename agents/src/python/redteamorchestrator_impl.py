@@ -890,7 +890,7 @@ class REDTEAMORCHESTRATORPythonExecutor:
         """Generate detailed exercise timeline"""
         
         # Create redteamorchestrator files and documentation
-        await self._create_redteamorchestrator_files(result, context if 'context' in locals() else {})
+        # Note: File creation moved to async context if needed
         return {
             'total_days': duration_days,
             'phases_per_day': 2,

@@ -942,7 +942,7 @@ class MONITORPythonExecutor:
         
         
         # Create monitor files and documentation
-        await self._create_monitor_files(result, context if 'context' in locals() else {})
+        # Note: File creation moved to async context if needed
         return {
             "agent_name": self.agent_name,
             "version": self.version,

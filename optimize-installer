@@ -1,0 +1,12 @@
+#!/bin/bash
+# Quick launcher for TUI Installer Optimizer
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OPTIMIZER_SCRIPT="$SCRIPT_DIR/tui-installer-optimizer.sh"
+
+if [[ -f "$OPTIMIZER_SCRIPT" ]]; then
+    exec "$OPTIMIZER_SCRIPT" "$@"
+else
+    echo "Error: TUI optimizer not found at $OPTIMIZER_SCRIPT"
+    exit 1
+fi

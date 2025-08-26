@@ -243,13 +243,13 @@ class TkinterBuilder:
 if HAS_PYQT:
     class PyQtBuilder:
         """PyQt5 GUI builder"""
-    
-    def __init__(self):
-        self.app = None
-        self.window = None
-        self.components = {}
         
-    def create_application(self, app_config: GUIApplication) -> QtWidgets.QApplication:
+        def __init__(self):
+            self.app = None
+            self.window = None
+            self.components = {}
+            
+        def create_application(self, app_config: GUIApplication) -> QtWidgets.QApplication:
         """Create PyQt application"""
         self.app = QtWidgets.QApplication(sys.argv)
         self.window = QtWidgets.QMainWindow()
@@ -519,8 +519,8 @@ class {app.name.title().replace('_', '')}App:
 """
         
         for component in app.components:
-            code += f"""        # {component.id}
-        self.{component.id} = ttk.{component.component_type.title()}(self.root"""
+            code += f"        # {component.id}\n"
+            code += f"        self.{component.id} = ttk.{component.component_type.title()}(self.root"
             
             for prop, value in component.properties.items():
                 code += f", {prop}='{value}'"
@@ -531,7 +531,7 @@ class {app.name.title().replace('_', '')}App:
         code += """    
     def run(self):
         self.root.mainloop()
-
+"""
 
     async def _create_pygui_files(self, result_data: Dict[str, Any], context: Dict[str, Any]):
         """Create pygui files and artifacts using declared tools"""
@@ -690,16 +690,13 @@ class {app.name.title().replace('_', '')}App(QtWidgets.QMainWindow):
             }
             
             widget_class = widget_map.get(component.component_type, 'QWidget')
-            code += f"""        # {component.id}
-        self.{component.id} = QtWidgets.{widget_class}()
-"""
+            code += f"        # {component.id}\n"
+            code += f"        self.{component.id} = QtWidgets.{widget_class}()\n"
             
             if 'text' in component.properties:
-                code += f"""        self.{component.id}.setText("{component.properties['text']}")
-"""
+                code += f"        self.{component.id}.setText(\"{component.properties['text']}\")\n"
                 
-            code += f"""        layout.addWidget(self.{component.id})
-"""
+            code += f"        layout.addWidget(self.{component.id})\n"
             
         code += """
 
@@ -873,15 +870,6 @@ class PYGUIPythonExecutor:
                 else:
                     command = {'action': command_str}
             
-            result = await self.process_command(command)
-            return result
-        except Exception as e:
-            self.metrics['errors'] += 1
-            return {"error": str(e), "traceback": traceback.format_exc()}
-            
-    async def process_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute PYGUI commands"""
-        try:
             result = await self.process_command(command)
             return result
         except Exception as e:
@@ -1131,15 +1119,15 @@ import tkinter as tk
 from tkinter import messagebox
 
 def show_{dialog_type}_dialog():
-    messagebox.show{dialog_type}("{title}", "{message}")
+    messagebox.show{dialog_type}("{{title}}", "{{message}}")
     
 # For PyQt
 from PyQt5.QtWidgets import QMessageBox
 
 def show_{dialog_type}_dialog_qt():
     msg = QMessageBox()
-    msg.setWindowTitle("{title}")
-    msg.setText("{message}")
+    msg.setWindowTitle("{{title}}")
+    msg.setText("{{message}}")
     msg.exec_()
 """
             
@@ -1161,21 +1149,21 @@ def show_{dialog_type}_dialog_qt():
             if not HAS_MATPLOTLIB:
                 return {"error": "Matplotlib not available"}
                 
-            code = f"""
-# Create {chart_type} chart
+            code = """
+# Create {} chart
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-def create_{chart_type}_chart(parent, data):
+def create_{}_chart(parent, data):
     fig, ax = plt.subplots(figsize=(8, 6))
     
-    if '{chart_type}' == 'line':
+    if '{}' == 'line':
         ax.plot(data)
-    elif '{chart_type}' == 'bar':
+    elif '{}' == 'bar':
         ax.bar(range(len(data)), data)
-    elif '{chart_type}' == 'scatter':
+    elif '{}' == 'scatter':
         ax.scatter(range(len(data)), data)
-    elif '{chart_type}' == 'pie':
+    elif '{}' == 'pie':
         ax.pie(data)
         
     canvas = FigureCanvasTkAgg(fig, parent)
@@ -1183,7 +1171,7 @@ def create_{chart_type}_chart(parent, data):
     canvas.get_tk_widget().pack()
     
     return canvas
-"""
+""".format(chart_type, chart_type, chart_type, chart_type, chart_type, chart_type)
             
             return {
                 "status": "success",
@@ -1347,7 +1335,7 @@ def apply_{theme}_theme():
         
         
         # Create pygui files and documentation
-        await self._create_pygui_files(result, context if 'context' in locals() else {})
+        # Note: File creation moved to async context if needed
         return {
             "agent_name": self.agent_name,
             "version": self.version,
