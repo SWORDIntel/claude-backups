@@ -14,7 +14,8 @@ import json
 from typing import Dict, List, Any
 
 # Set up paths
-sys.path.append(str(Path(__file__).parent))
+project_root = Path(__file__).parent.parent.parent / "agents" / "src" / "python"
+sys.path.append(str(project_root))
 os.environ['CLAUDE_AGENTS_ROOT'] = str(Path(__file__).parent.parent.parent)
 
 # Import the enhanced components

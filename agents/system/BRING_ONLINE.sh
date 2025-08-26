@@ -12,6 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # System paths
+PROJECT_ROOT="/home/ubuntu/Documents/claude-backups"
 AGENTS_DIR="/home/ubuntu/Documents/Claude/agents"
 BUILD_DIR="$AGENTS_DIR/build"
 CONFIG_DIR="$AGENTS_DIR/config"
@@ -383,7 +384,7 @@ start_monitoring() {
 run_validation() {
     printf "${YELLOW}[7/8] Running validation tests...${NC}"
     
-    cd "$TESTS_DIR" 2>/dev/null || cd "$AGENTS_DIR"
+    cd "$PROJECT_ROOT/tests/agents" 2>/dev/null || cd "$AGENTS_DIR"
     
     # Run quick validation tests in background to prevent blocking
     if [ -f "run_all_tests.sh" ]; then

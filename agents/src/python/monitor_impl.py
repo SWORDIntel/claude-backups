@@ -571,23 +571,13 @@ class SystemMonitor:
         
         return trends
 
-# Base class with optional orchestration enhancement  
-if HAS_ORCHESTRATION_ENHANCEMENTS:
-    class MONITORPythonExecutor(EnhancedOrchestrationMixin):
-        """
-        MONITOR Agent Python Implementation v10.0 - Enhanced
-        
-        Comprehensive monitoring with metrics, alerts, health checks,
-        logging, system resource tracking, and distributed coordination.
-        """
-else:
-    class MONITORPythonExecutor:
-        """
-        MONITOR Agent Python Implementation v9.0
-        
-        Comprehensive monitoring with metrics, alerts, health checks,
-        logging, and system resource tracking.
-        """
+class MONITORPythonExecutor(EnhancedOrchestrationMixin if HAS_ORCHESTRATION_ENHANCEMENTS else object):
+    """
+    MONITOR Agent Python Implementation v10.0/9.0
+    
+    Comprehensive monitoring with metrics, alerts, health checks,
+    logging, system resource tracking, and optional distributed coordination.
+    """
     
     def __init__(self):
         self.agent_name = "MONITOR"
@@ -607,6 +597,17 @@ else:
             'logs_processed': 0,
             'errors': 0
         }
+        
+        # Initialize orchestration enhancements if available
+        if HAS_ORCHESTRATION_ENHANCEMENTS:
+            super().__init__()  # Initialize EnhancedOrchestrationMixin
+            self._orchestration_enhancer = ParallelOrchestrationEnhancer(
+                max_workers=8
+            )
+            self.version = "10.0.0"  # Update version for enhanced capabilities
+            self._distributed_monitoring_enabled = True
+        else:
+            self._distributed_monitoring_enabled = False
         
     async def execute_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
         """Execute MONITOR commands"""

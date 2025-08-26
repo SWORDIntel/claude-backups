@@ -27,6 +27,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import queue
 
+# Import parallel orchestration enhancements
+try:
+    from parallel_orchestration_enhancements import (
+        EnhancedOrchestrationMixin, ParallelOrchestrationEnhancer,
+        ParallelExecutionMode, ParallelTask, ParallelBatch,
+        TaskResult, MessageType
+    )
+    HAS_ORCHESTRATION_ENHANCEMENTS = True
+except ImportError:
+    HAS_ORCHESTRATION_ENHANCEMENTS = False
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -703,12 +714,12 @@ class ChaosCoordinator:
         
         return result
 
-class SecurityChaosAgentPythonExecutor:
+class SecurityChaosAgentPythonExecutor(EnhancedOrchestrationMixin if HAS_ORCHESTRATION_ENHANCEMENTS else object):
     """
-    SecurityChaosAgent Python Implementation v9.0
+    SecurityChaosAgent Python Implementation v10.0/9.0
     
     Distributed chaos engineering security specialist with comprehensive
-    vulnerability discovery and security stress testing capabilities.
+    vulnerability discovery, security stress testing, and optional parallel campaign capabilities.
     """
     
     def __init__(self):
@@ -733,6 +744,17 @@ class SecurityChaosAgentPythonExecutor:
             'findings_analyzed': 0,
             'errors': 0
         }
+        
+        # Initialize orchestration enhancements if available
+        if HAS_ORCHESTRATION_ENHANCEMENTS:
+            super().__init__()  # Initialize EnhancedOrchestrationMixin
+            self._orchestration_enhancer = ParallelOrchestrationEnhancer(
+                max_workers=12
+            )
+            self.version = "10.0.0"  # Update version for enhanced capabilities
+            self._parallel_chaos_enabled = True
+        else:
+            self._parallel_chaos_enabled = False
         
     async def execute_command(self, command_str: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Execute SecurityChaosAgent commands - v9.0 signature"""

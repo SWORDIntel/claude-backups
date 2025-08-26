@@ -12,7 +12,8 @@ import os
 from pathlib import Path
 
 # Add parent directory to path for imports
-sys.path.append(str(Path(__file__).parent))
+project_root = Path(__file__).parent.parent.parent / "agents" / "src" / "python"
+sys.path.append(str(project_root))
 
 from postgresql_learning_system import (
     UltimatePostgreSQLLearningSystem, 

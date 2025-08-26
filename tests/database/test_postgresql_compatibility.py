@@ -12,7 +12,8 @@ import os
 from pathlib import Path
 
 # Add the learning system to the path
-sys.path.append(str(Path(__file__).parent.parent / 'agents/src/python'))
+project_root = Path(__file__).parent.parent.parent / "database"
+sys.path.append(str(project_root))
 
 try:
     from postgresql_learning_system import UltimatePostgreSQLLearningSystem

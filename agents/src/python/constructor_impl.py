@@ -139,25 +139,14 @@ class SecurityConfiguration:
     headers: Dict[str, Any]
     scanning: Dict[str, Any]
 
-# Base class with optional orchestration enhancement
-if HAS_ORCHESTRATION_ENHANCEMENTS:
-    class CONSTRUCTORPythonExecutor(EnhancedOrchestrationMixin):
-        """
-        CONSTRUCTOR Agent v10.0 - Enhanced Precision Project Initialization Specialist & Orchestrator
-        
-        A comprehensive project initialization specialist that creates minimal, reproducible
-        scaffolds with security hardening, performance baselines, and advanced parallel
-        orchestration capabilities with enhanced inter-agent coordination.
-        """
-else:
-    class CONSTRUCTORPythonExecutor:
-        """
-        CONSTRUCTOR Agent v9.0 - Precision Project Initialization Specialist & Orchestrator
-        
-        A comprehensive project initialization specialist that creates minimal, reproducible
-        scaffolds with security hardening, performance baselines, and advanced parallel
-        orchestration capabilities.
-        """
+class CONSTRUCTORPythonExecutor(EnhancedOrchestrationMixin if HAS_ORCHESTRATION_ENHANCEMENTS else object):
+    """
+    CONSTRUCTOR Agent v10.0/9.0 - Precision Project Initialization Specialist & Orchestrator
+    
+    A comprehensive project initialization specialist that creates minimal, reproducible
+    scaffolds with security hardening, performance baselines, and advanced parallel
+    orchestration capabilities with optional enhanced inter-agent coordination.
+    """
     
     def __init__(self):
         """Initialize the CONSTRUCTOR agent"""
@@ -194,8 +183,6 @@ else:
         if HAS_ORCHESTRATION_ENHANCEMENTS:
             super().__init__()  # Initialize EnhancedOrchestrationMixin
             self._orchestration_enhancer = ParallelOrchestrationEnhancer(
-                agent_id=self.uuid,
-                agent_name=self.agent_name,
                 max_workers=10
             )
             self.version = "10.0.0"  # Update version for enhanced capabilities

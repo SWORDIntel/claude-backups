@@ -9,8 +9,9 @@ import json
 import os
 from pathlib import Path
 
-# Add current directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add project root to path 
+project_root = Path(__file__).parent.parent.parent / "agents" / "src" / "python"
+sys.path.insert(0, str(project_root))
 
 async def test_integration():
     """Test all learning system components"""

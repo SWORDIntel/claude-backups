@@ -571,8 +571,8 @@ show_menu() {
             echo -e "${CYAN}Testing Python Tandem Orchestration System...${NC}"
             echo ""
             
-            if [ -f "$AGENTS_DIR/src/python/test_tandem_system.py" ]; then
-                cd "$AGENTS_DIR/src/python"
+            if [ -f "$PROJECT_ROOT/tests/agents/test_tandem_system.py" ]; then
+                cd "$PROJECT_ROOT/tests/agents"
                 echo "Running comprehensive tests..."
                 
                 if python3 test_tandem_system.py --demo 2>/dev/null; then

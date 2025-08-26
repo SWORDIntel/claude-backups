@@ -25,6 +25,17 @@ import shutil
 import os
 from pathlib import Path
 
+# Import parallel orchestration enhancements
+try:
+    from parallel_orchestration_enhancements import (
+        EnhancedOrchestrationMixin, ParallelOrchestrationEnhancer,
+        ParallelExecutionMode, ParallelTask, ParallelBatch,
+        TaskResult, MessageType
+    )
+    HAS_ORCHESTRATION_ENHANCEMENTS = True
+except ImportError:
+    HAS_ORCHESTRATION_ENHANCEMENTS = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -109,8 +120,8 @@ class ExerciseResult:
     reversibility_verified: bool
     safety_violations: int
 
-class REDTEAMORCHESTRATORPythonExecutor:
-    """Elite adversarial security simulation orchestrator"""
+class REDTEAMORCHESTRATORPythonExecutor(EnhancedOrchestrationMixin if HAS_ORCHESTRATION_ENHANCEMENTS else object):
+    """Elite adversarial security simulation orchestrator v10.0/9.0 - Enhanced"""
     
     def __init__(self):
         self.agent_name = "REDTEAMORCHESTRATOR"
@@ -139,6 +150,17 @@ class REDTEAMORCHESTRATORPythonExecutor:
         # Initialize components
         self._initialize_technique_library()
         self._initialize_safety_controls()
+        
+        # Initialize orchestration enhancements if available
+        if HAS_ORCHESTRATION_ENHANCEMENTS:
+            super().__init__()  # Initialize EnhancedOrchestrationMixin
+            self._orchestration_enhancer = ParallelOrchestrationEnhancer(
+                max_workers=8
+            )
+            self.version = "10.0.0"  # Update version for enhanced capabilities
+            self._campaign_orchestration_enabled = True
+        else:
+            self._campaign_orchestration_enabled = False
         
         logger.info(f"REDTEAMORCHESTRATOR v{self.version} initialized successfully")
     

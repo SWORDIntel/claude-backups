@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 
 # Add current directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent))
+project_root = Path(__file__).parent.parent.parent / "agents" / "src" / "python"
+sys.path.insert(0, str(project_root))
 
 async def test_all_agents_orchestration():
     """Test complex workflow with all fixed agents"""

@@ -9,8 +9,9 @@ import sys
 import time
 from pathlib import Path
 
-# Add current directory to path
-sys.path.append(str(Path(__file__).parent))
+# Add project root to path 
+project_root = Path(__file__).parent.parent.parent / "agents" / "src" / "python"
+sys.path.append(str(project_root))
 
 from production_orchestrator import ProductionOrchestrator, StandardWorkflows, CommandSet, CommandStep, ExecutionMode, CommandType, Priority
 from agent_registry import get_registry
