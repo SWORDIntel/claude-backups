@@ -818,26 +818,12 @@ setup_claude_directory() {
         fi
     done
     
-    # Create settings file if it doesn't exist
-    if [[ ! -f "$CLAUDE_DIR/settings.local.json" ]]; then
-        cat > "$CLAUDE_DIR/settings.local.json" << 'EOF'
-{
-  "claude_project_root": "auto",
-  "self_contained": true,
-  "use_symlinks": true,
-  "directories": {
-    "agents": "./agents",
-    "config": "./config",
-    "hooks": "./hooks",
-    "database": "./database",
-    "docs": "./docs",
-    "scripts": "./scripts",
-    "tools": "./tools",
-    "orchestration": "./orchestration"
-  }
-}
-EOF
-        success "Created .claude/settings.local.json"
+    # Copy settings file from repo if it exists
+    if [[ -f "$PROJECT_ROOT/.claude/settings.local.json" ]]; then
+        cp "$PROJECT_ROOT/.claude/settings.local.json" "$CLAUDE_DIR/settings.local.json"
+        success "Copied .claude/settings.local.json from repo"
+    elif [[ ! -f "$CLAUDE_DIR/settings.local.json" ]]; then
+        warning "No settings.local.json found in repo - skipping"
     fi
     
     success ".claude directory structure created with symlinks"
@@ -848,121 +834,31 @@ EOF
 register_agents_with_task_tool() {
     print_section "Registering 60 Agents with Claude Code Task Tool"
     
-    info "Creating agent registry for Task tool access..."
+    # Copy agent registry from repo if it exists
+    if [[ -f "$PROJECT_ROOT/.claude/agent-registry.json" ]]; then
+        cp "$PROJECT_ROOT/.claude/agent-registry.json" "$CLAUDE_DIR/agent-registry.json"
+        success "Copied agent registry from repo"
+    else
+        warning "No agent-registry.json found in repo - skipping"
+    fi
     
-    # Create compact agent registry
-    cat > "$CLAUDE_DIR/agent-registry.json" <<'EOF'
-{"version":"1.0.0","agents":[
-{"name":"director","category":"command-control"},
-{"name":"projectorchestrator","category":"command-control"},
-{"name":"security","category":"security"},
-{"name":"bastion","category":"security"},
-{"name":"cso","category":"security"},
-{"name":"cryptoexpert","category":"security"},
-{"name":"quantumguard","category":"security"},
-{"name":"securityauditor","category":"security"},
-{"name":"securitychaosagent","category":"security"},
-{"name":"redteamorchestrator","category":"security"},
-{"name":"apt41-defense","category":"security"},
-{"name":"nsa","category":"security"},
-{"name":"psyops","category":"security"},
-{"name":"architect","category":"development"},
-{"name":"constructor","category":"development"},
-{"name":"patcher","category":"development"},
-{"name":"debugger","category":"development"},
-{"name":"testbed","category":"development"},
-{"name":"linter","category":"development"},
-{"name":"optimizer","category":"development"},
-{"name":"qadirector","category":"development"},
-{"name":"infrastructure","category":"devops"},
-{"name":"deployer","category":"devops"},
-{"name":"monitor","category":"devops"},
-{"name":"packager","category":"devops"},
-{"name":"docker","category":"devops"},
-{"name":"proxmox","category":"devops"},
-{"name":"c-internal","category":"language"},
-{"name":"python-internal","category":"language"},
-{"name":"rust-internal","category":"language"},
-{"name":"go-internal","category":"language"},
-{"name":"java-internal","category":"language"},
-{"name":"typescript-internal","category":"language"},
-{"name":"kotlin-internal","category":"language"},
-{"name":"assembly-internal","category":"language"},
-{"name":"zig-internal","category":"language"},
-{"name":"carbon-internal","category":"language"},
-{"name":"apidesigner","category":"platform"},
-{"name":"database","category":"platform"},
-{"name":"web","category":"platform"},
-{"name":"mobile","category":"platform"},
-{"name":"androidmobile","category":"platform"},
-{"name":"pygui","category":"platform"},
-{"name":"tui","category":"platform"},
-{"name":"datascience","category":"data-ml"},
-{"name":"mlops","category":"data-ml"},
-{"name":"npu","category":"data-ml"},
-{"name":"cisco","category":"network"},
-{"name":"bgp-purple-team","category":"network"},
-{"name":"iot-access-control","category":"network"},
-{"name":"ddwrt","category":"network"},
-{"name":"gna","category":"hardware"},
-{"name":"leadengineer","category":"hardware"},
-{"name":"planner","category":"planning"},
-{"name":"docgen","category":"planning"},
-{"name":"researcher","category":"planning"},
-{"name":"integration","category":"planning"},
-{"name":"oversight","category":"planning"}
-]}
-EOF
+    # Copy settings.json from repo if it exists
+    if [[ -f "$PROJECT_ROOT/.claude/settings.json" ]]; then
+        cp "$PROJECT_ROOT/.claude/settings.json" "$CLAUDE_DIR/settings.json"
+        success "Copied settings.json from repo"
+    else
+        warning "No settings.json found in repo - skipping"
+    fi
     
-    success "Agent registry created with 58 specialized agents"
+    # Copy available-agents.txt from repo if it exists
+    if [[ -f "$PROJECT_ROOT/.claude/available-agents.txt" ]]; then
+        cp "$PROJECT_ROOT/.claude/available-agents.txt" "$CLAUDE_DIR/available-agents.txt"
+        success "Copied available-agents.txt from repo"
+    else
+        warning "No available-agents.txt found in repo - skipping"
+    fi
     
-    # Create settings file for Claude Code
-    cat > "$CLAUDE_DIR/settings.json" <<EOF
-{
-  "customAgentsEnabled": true,
-  "customAgentsPath": "$CLAUDE_DIR/custom-agents.json",
-  "agentRegistryPath": "$CLAUDE_DIR/agent-registry.json",
-  "enabledAgents": [
-    "director", "projectorchestrator", "security", "bastion", "cso",
-    "cryptoexpert", "quantumguard", "securityauditor", "securitychaosagent",
-    "redteamorchestrator", "apt41-defense", "nsa", "psyops",
-    "architect", "constructor", "patcher", "debugger", "testbed",
-    "linter", "optimizer", "qadirector", "infrastructure", "deployer",
-    "monitor", "packager", "docker", "proxmox", "c-internal",
-    "python-internal", "rust-internal", "go-internal", "java-internal",
-    "typescript-internal", "kotlin-internal", "assembly-internal",
-    "zig-internal", "carbon-internal", "apidesigner", "database",
-    "web", "mobile", "androidmobile", "pygui", "tui", "datascience",
-    "mlops", "npu", "cisco", "bgp-purple-team", "iot-access-control",
-    "ddwrt", "gna", "leadengineer", "planner", "docgen", "researcher",
-    "integration", "oversight"
-  ]
-}
-EOF
-    
-    success "Claude Code settings configured"
-    
-    # Create quick reference
-    cat > "$CLAUDE_DIR/available-agents.txt" <<'EOF'
-AVAILABLE AGENTS (58 total) - Use with Task(subagent_type="name", prompt="...")
-
-COMMAND & CONTROL: director, projectorchestrator
-SECURITY: security, bastion, cso, cryptoexpert, quantumguard, securityauditor, 
-          securitychaosagent, redteamorchestrator, apt41-defense, nsa, psyops
-DEVELOPMENT: architect, constructor, patcher, debugger, testbed, linter, optimizer, qadirector
-DEVOPS: infrastructure, deployer, monitor, packager, docker, proxmox
-LANGUAGES: c-internal, python-internal, rust-internal, go-internal, java-internal,
-           typescript-internal, kotlin-internal, assembly-internal, zig-internal, carbon-internal
-PLATFORMS: apidesigner, database, web, mobile, androidmobile, pygui, tui
-DATA/ML: datascience, mlops, npu
-NETWORK: cisco, bgp-purple-team, iot-access-control, ddwrt
-HARDWARE: gna, leadengineer
-PLANNING: planner, docgen, researcher, integration, oversight
-
-Example: Task(subagent_type="director", prompt="Create strategic plan")
-EOF
-    
-    info "✅ All 58 agents registered and available via Task tool"
+    info "✅ All agents registered and available via Task tool"
     show_progress
 }
 
