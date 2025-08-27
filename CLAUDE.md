@@ -871,6 +871,7 @@ claude status                   # Show bridge status
 - **Proactively suggest multi-agent workflows** for complex requests
 - **Use all 57 available agents** - they're globally accessible via claude-agent
 - **Optimize with parallel execution** - run independent agents simultaneously for speed
+- READONLY should NEVER be used in shell scripts it is legacy obsolete and makes working with them a huge pain
 
 ### Hardware Optimization
 - Use P-cores for compute-intensive tasks
