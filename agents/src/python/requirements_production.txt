@@ -31,11 +31,11 @@ opentelemetry-exporter-prometheus==0.57b0
 opentelemetry-instrumentation==0.57b0
 opentelemetry-sdk==1.36.0
 opentelemetry-semantic-conventions==0.57b0
-orjson==3.11.2
+orjson==3.11.3
 packaging==25.0
 pandas==2.3.2
 pathspec==0.12.1
-platformdirs==4.3.8
+platformdirs==4.4.0
 pluggy==1.6.0
 prometheus_client==0.22.1
 propcache==0.3.2
