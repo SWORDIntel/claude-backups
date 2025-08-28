@@ -543,7 +543,7 @@ class CSystemBridge:
     
     # Binary protocol message structure
     MSG_HEADER_FORMAT = "!IIHH"  # magic, size, type, flags
-    MSG_MAGIC = 0xAGEN7000
+    MSG_MAGIC = 0xA6E57000
     
     def __init__(self, socket_path: str):
         self.socket_path = socket_path
