@@ -1280,10 +1280,87 @@ setup_docker_service() {
         export COMPOSE_CMD=""
     fi
     
-    warning "IMPORTANT: You may need to logout and login again (or run 'newgrp docker')"
-    warning "for the docker group membership to take effect."
+    # Apply Docker group membership fix
+    apply_docker_group_fix
     
     return 0
+}
+
+# Apply Docker group membership without requiring logout
+apply_docker_group_fix() {
+    info "Applying Docker group membership fix..."
+    
+    # Check if user is already in docker group for this session
+    if groups | grep -q docker; then
+        success "Docker group membership already active in current session"
+        return 0
+    fi
+    
+    # Check if user was just added to docker group
+    if getent group docker | grep -q "$USER"; then
+        warning "Docker group membership added but not active in current session"
+        
+        # Try to activate docker group in current session
+        info "Attempting to activate Docker group without logout..."
+        
+        # Method 1: Export docker socket permissions for current script
+        if [[ -S /var/run/docker.sock ]]; then
+            # Temporarily allow docker access via sudo for this session
+            export DOCKER_HOST="unix:///var/run/docker.sock"
+            
+            # Test if we can use docker without sudo now
+            if docker ps >/dev/null 2>&1; then
+                success "Docker access enabled for current session"
+            else
+                # Method 2: Use newgrp in a subshell for remaining commands
+                info "Activating Docker group with newgrp..."
+                
+                # Create a marker file to track if we're already in newgrp
+                local NEWGRP_MARKER="/tmp/.claude_docker_newgrp_$$"
+                
+                if [[ ! -f "$NEWGRP_MARKER" ]]; then
+                    touch "$NEWGRP_MARKER"
+                    
+                    print_yellow "════════════════════════════════════════════════════════════════"
+                    print_yellow "  Docker group membership requires activation"
+                    print_yellow "════════════════════════════════════════════════════════════════"
+                    echo ""
+                    echo "  To continue with Docker features, you have 3 options:"
+                    echo ""
+                    echo "  1) Run: newgrp docker"
+                    echo "     Then re-run the installer"
+                    echo ""
+                    echo "  2) Logout and login again"
+                    echo "     Then re-run the installer"
+                    echo ""
+                    echo "  3) Continue without Docker features (use sudo docker instead)"
+                    echo ""
+                    
+                    # Auto-apply newgrp if in automatic mode
+                    if [[ "$AUTO_MODE" == "true" ]]; then
+                        info "Auto-mode: Attempting to continue with sudo fallback..."
+                        export USE_SUDO_DOCKER=true
+                    else
+                        echo "Would you like to continue without Docker features? [y/N]"
+                        read -r response
+                        if [[ "$response" =~ ^[Yy]$ ]]; then
+                            export USE_SUDO_DOCKER=true
+                            info "Continuing with sudo docker fallback"
+                        else
+                            info "Please run 'newgrp docker' and restart the installer"
+                            rm -f "$NEWGRP_MARKER"
+                            exit 0
+                        fi
+                    fi
+                    
+                    rm -f "$NEWGRP_MARKER"
+                fi
+            fi
+        fi
+    else
+        warning "User not in docker group - Docker will require sudo"
+        export USE_SUDO_DOCKER=true
+    fi
 }
 
 # 6.6.1. Check Docker prerequisites (silent version for internal use)
@@ -1445,7 +1522,14 @@ EOF
     info "Starting Docker services (this may take a few minutes)..."
     cd "$PROJECT_ROOT"
     
-    if $COMPOSE_CMD down --remove-orphans 2>/dev/null && $COMPOSE_CMD up -d --build; then
+    # Use sudo if needed
+    local DOCKER_PREFIX=""
+    if [[ "$USE_SUDO_DOCKER" == "true" ]]; then
+        DOCKER_PREFIX="sudo "
+        info "Using sudo for Docker commands (group membership not active)"
+    fi
+    
+    if ${DOCKER_PREFIX}$COMPOSE_CMD down --remove-orphans 2>/dev/null && ${DOCKER_PREFIX}$COMPOSE_CMD up -d --build; then
         success "Docker services started successfully"
         
         # Wait for services to be healthy
@@ -1469,7 +1553,13 @@ EOF
         echo "  • PostgreSQL 16: localhost:5433"
         echo "  • Learning API: http://localhost:8080/docs"
         echo "  • Agent Bridge: http://localhost:8081/docs"
-        echo "  • Management: docker-compose ps"
+        if [[ "$USE_SUDO_DOCKER" == "true" ]]; then
+            echo "  • Management: sudo $COMPOSE_CMD ps"
+            echo ""
+            warning "Note: Docker commands require sudo until you run 'newgrp docker'"
+        else
+            echo "  • Management: $COMPOSE_CMD ps"
+        fi
     else
         warning "Docker services failed to start - continuing with limited functionality"
     fi
