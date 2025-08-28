@@ -20,7 +20,7 @@ from collections import defaultdict
 sys.path.append(str(Path(__file__).parent.parent / "agents" / "src" / "python"))
 
 try:
-    from production_orchestrator import (
+    from claude_agents.orchestration.production_orchestrator import (
         ProductionOrchestrator,
         CommandSet,
         CommandStep,

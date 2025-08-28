@@ -14,7 +14,7 @@ from enum import Enum
 sys.path.insert(0, '/app/learning')
 
 try:
-    from postgresql_learning_system import PostgreSQLLearningSystem, TaskType, LearningMode
+    from claude_agents.learning.postgresql_learning_system import PostgreSQLLearningSystem, TaskType, LearningMode
 except ImportError as e:
     logging.warning(f"Could not import learning system: {e}")
     PostgreSQLLearningSystem = None

@@ -279,7 +279,7 @@ __all__ = ['get_agent', 'list_agents']
             if subdir.is_dir() and not subdir.name.startswith('__'):
                 init_file = subdir / "__init__.py"
                 if not init_file.exists():
-                    init_file.write_text(f'"""{"} {subdir.name.title()} Module"""\n\n')
+                    init_file.write_text(f'"""{subdir.name.title()} Module"""\n\n')
                     
         # Also create __init__ for external orchestration directory
         external_orch_dir = Path("/home/ubuntu/claude-backups/orchestration")
