@@ -514,6 +514,27 @@ git push origin main
 # Sync every 3 agents when doing bulk updates
 ```
 
+### Documentation Browser
+```bash
+# Universal Documentation Browser with PDF extraction
+cd docs
+python3 universal_docs_browser_enhanced.py
+# → Opens GUI with auto-detection of documentation structure
+# → Integrated PDF text extraction using pdfplumber
+# → Configurable search functionality across all documentation
+
+# Browse specific directory
+python3 universal_docs_browser_enhanced.py ../agents
+# → Browse agent documentation with advanced search capabilities
+
+# Features:
+# - Auto-detection of documentation structure
+# - Configurable category recognition  
+# - Integrated PDF text extraction
+# - Portable single-file implementation
+# - Advanced search across all document types
+```
+
 ### Agent Invocation (NOW UNIFIED IN CLAUDE COMMAND)
 ```bash
 # Unified Claude command with integrated orchestration (DEFAULT after installation):
