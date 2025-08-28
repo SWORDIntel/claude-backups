@@ -281,6 +281,34 @@ __all__ = ['get_agent', 'list_agents']
                 if not init_file.exists():
                     init_file.write_text(f'"""{"} {subdir.name.title()} Module"""\n\n')
                     
+        # Also create __init__ for external orchestration directory
+        external_orch_dir = Path("/home/ubuntu/claude-backups/orchestration")
+        if external_orch_dir.exists():
+            external_init = external_orch_dir / "__init__.py"
+            if not external_init.exists():
+                external_init.write_text('''"""Claude Agent Framework - Orchestration Module"""
+
+# Import core orchestration components
+try:
+    from .production_orchestrator import ProductionOrchestrator
+    from .tandem_orchestrator import TandemOrchestrator
+    from .agent_registry import AgentRegistry
+    from .database_orchestrator import DatabaseOrchestrator
+    from .orchestrator_metrics import OrchestratorMetrics
+except ImportError as e:
+    # Fallback if not all modules are available
+    pass
+
+__all__ = [
+    'ProductionOrchestrator',
+    'TandemOrchestrator', 
+    'AgentRegistry',
+    'DatabaseOrchestrator',
+    'OrchestratorMetrics'
+]
+''')
+                print(f"   ✅ Created __init__.py for external orchestration directory")
+                    
     def update_orchestration_imports(self):
         """Update critical orchestration files to work with new structure"""
         print("\n🔧 Updating orchestration system imports...")
