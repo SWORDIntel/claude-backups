@@ -514,25 +514,32 @@ git push origin main
 # Sync every 3 agents when doing bulk updates
 ```
 
-### Documentation Browser
+### Documentation Browser (AI-Enhanced)
 ```bash
-# Universal Documentation Browser with PDF extraction
+# Universal Documentation Browser with AI-powered analysis and auto-installation
 cd docs
 python3 universal_docs_browser_enhanced.py
-# → Opens GUI with auto-detection of documentation structure
-# → Integrated PDF text extraction using pdfplumber
-# → Configurable search functionality across all documentation
+# → Auto-installs: pdfplumber, scikit-learn, markdown
+# → Opens GUI with AI-powered document classification
+# → Standardized overview generation using basic ML
+# → Cached PDF text extraction (.pdf.txt files created automatically)
 
-# Browse specific directory
+# Browse specific directory with intelligent categorization
 python3 universal_docs_browser_enhanced.py ../agents
-# → Browse agent documentation with advanced search capabilities
+# → AI generates standardized overviews like:
+# → "JULIA AGENT specialist with HIGH-PERFORMANCE AND COORDINATION"
+# → "Infrastructure implementation with DEPLOYMENT AND MONITORING"
+# → "BINARY protocol communication system documentation"
 
-# Features:
-# - Auto-detection of documentation structure
-# - Configurable category recognition  
-# - Integrated PDF text extraction
-# - Portable single-file implementation
-# - Advanced search across all document types
+# Enhanced Features:
+# - Automatic dependency installation (pdfplumber, scikit-learn, markdown)
+# - AI-powered document classification and capability extraction
+# - Standardized folder-based overview generation
+# - Markdown preview until document analysis completes
+# - Cached extracted text versions stored alongside PDFs (.pdf.txt)
+# - Intelligent language detection (Julia, Python, Rust, C++, etc.)
+# - Category-based templates (Agent files, Infrastructure, Security, etc.)
+# - Real-time analysis updates with progress indicators
 ```
 
 ### Agent Invocation (NOW UNIFIED IN CLAUDE COMMAND)

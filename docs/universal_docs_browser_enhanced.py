@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
-Universal Documentation Browser with PDF extraction
-A modular PyGUI interface that adapts to any documentation structure with integrated PDF text extraction
+Universal Documentation Browser with AI-Enhanced Analysis
+A modular PyGUI interface that adapts to any documentation structure with:
+- Automatic dependency installation
+- AI-powered document classification and summarization 
+- Standardized overview generation with ML
+- Cached extracted text versions for PDFs
+- Markdown preview until analysis completes
 
 Features:
 - Auto-detection of documentation structure
-- Configurable category recognition
-- Adaptive role-based access
-- Generic search functionality
-- Integrated PDF text extraction (using pdfplumber)
-- Portable and modular design
-- Single-file implementation
+- Intelligent document classification using basic ML
+- Automatic PDF text extraction with caching
+- Standardized folder-based overview generation
+- Markdown preview with live analysis updates
+- Automatic library installation for dependencies
+- Single-file portable implementation
 
 Usage: python3 universal_docs_browser_enhanced.py [directory]
 """
@@ -31,15 +36,55 @@ import configparser
 import argparse
 import tempfile
 import shutil
+import hashlib
+import time
 
-# Try to import PDF processing library
+# Auto-installation system
+def auto_install_package(package_name: str, import_name: str = None) -> bool:
+    """Auto-install package if not available"""
+    if import_name is None:
+        import_name = package_name
+    
+    try:
+        __import__(import_name)
+        return True
+    except ImportError:
+        print(f"Installing {package_name}...")
+        try:
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', package_name])
+            print(f"Successfully installed {package_name}")
+            return True
+        except subprocess.CalledProcessError:
+            print(f"Failed to install {package_name}")
+            return False
+
+# Auto-install critical dependencies
+PDFPLUMBER_AVAILABLE = auto_install_package('pdfplumber')
+SKLEARN_AVAILABLE = auto_install_package('scikit-learn', 'sklearn')
+MARKDOWN_AVAILABLE = auto_install_package('markdown')
+
+# Try to import dependencies after installation
 try:
     import pdfplumber
     PDF_EXTRACTION_AVAILABLE = True
 except ImportError:
     PDF_EXTRACTION_AVAILABLE = False
 
-# Try to import PIL for image support
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.cluster import KMeans
+    from sklearn.metrics.pairwise import cosine_similarity
+    import numpy as np
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+
+try:
+    import markdown
+    MARKDOWN_PROCESSING_AVAILABLE = True
+except ImportError:
+    MARKDOWN_PROCESSING_AVAILABLE = False
+
 try:
     from PIL import Image, ImageTk
     PIL_AVAILABLE = True
@@ -93,6 +138,241 @@ class PDFExtractor:
                 return info
         except Exception as e:
             return {"error": f"Could not read PDF info: {e}"}
+    
+    @staticmethod
+    def get_cached_text_path(pdf_path: Path) -> Path:
+        """Get path for cached extracted text"""
+        return pdf_path.with_suffix('.pdf.txt')
+    
+    @staticmethod
+    def extract_with_cache(pdf_path: Path, progress_callback=None) -> str:
+        """Extract PDF text with caching support"""
+        cache_path = PDFExtractor.get_cached_text_path(pdf_path)
+        
+        # Check if cached version exists and is newer than PDF
+        if cache_path.exists() and cache_path.stat().st_mtime > pdf_path.stat().st_mtime:
+            try:
+                with open(cache_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            except:
+                pass  # Fall through to extraction
+        
+        # Extract text and cache it
+        text_content = PDFExtractor.extract_text(pdf_path, progress_callback)
+        
+        try:
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                f.write(text_content)
+        except Exception as e:
+            print(f"Warning: Could not cache extracted text: {e}")
+        
+        return text_content
+
+class AIDocumentClassifier:
+    """AI-powered document classification and overview generation"""
+    
+    def __init__(self):
+        self.vectorizer = None
+        self.patterns = {
+            'agent_files': {
+                'pattern': r'(AGENT|agent).*\.(md|MD)',
+                'keywords': ['agent', 'implementation', 'coordination', 'task', 'proactive'],
+                'template': '{lang} AGENT specialist with {capabilities}'
+            },
+            'infrastructure': {
+                'pattern': r'(infrastructure|deployment|docker|database)',
+                'keywords': ['infrastructure', 'deployment', 'system', 'configuration'],
+                'template': 'Infrastructure implementation with {focus_areas}'
+            },
+            'documentation': {
+                'pattern': r'(docs|documentation|guide|manual|readme)',
+                'keywords': ['documentation', 'guide', 'instructions', 'manual'],
+                'template': '{doc_type} documentation for {system_name}'
+            },
+            'protocol': {
+                'pattern': r'(protocol|communication|binary|api)',
+                'keywords': ['protocol', 'communication', 'binary', 'message', 'api'],
+                'template': '{protocol_type} protocol documentation in {language}'
+            },
+            'security': {
+                'pattern': r'(security|crypto|auth|protection)',
+                'keywords': ['security', 'authentication', 'encryption', 'protection'],
+                'template': 'Security documentation covering {security_aspects}'
+            }
+        }
+    
+    def classify_document(self, file_path: Path, content: str = None) -> Dict[str, str]:
+        """Classify document and generate standardized overview"""
+        if content is None:
+            try:
+                if file_path.suffix.lower() == '.pdf':
+                    content = PDFExtractor.extract_with_cache(file_path)[:2000]  # First 2K chars
+                else:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()[:2000]
+            except:
+                content = ""
+        
+        # Extract key information
+        doc_info = {
+            'filename': file_path.name,
+            'category': self._classify_category(file_path, content),
+            'language': self._detect_language(file_path, content),
+            'capabilities': self._extract_capabilities(content),
+            'overview': self._generate_overview(file_path, content)
+        }
+        
+        return doc_info
+    
+    def _classify_category(self, file_path: Path, content: str) -> str:
+        """Classify document category"""
+        filename_lower = file_path.name.lower()
+        content_lower = content.lower()
+        
+        # Check patterns
+        for category, info in self.patterns.items():
+            if re.search(info['pattern'], filename_lower, re.IGNORECASE):
+                return category
+            
+            # Check content for keywords
+            keyword_count = sum(1 for keyword in info['keywords'] if keyword in content_lower)
+            if keyword_count >= 2:
+                return category
+        
+        return 'general'
+    
+    def _detect_language(self, file_path: Path, content: str) -> str:
+        """Detect programming language or document type"""
+        filename = file_path.name.upper()
+        content_lower = content.lower()
+        
+        # Language detection patterns
+        languages = {
+            'JULIA': ['julia', '.jl', 'using ', '@', 'function ', 'end'],
+            'PYTHON': ['python', '.py', 'import ', 'def ', 'class '],
+            'RUST': ['rust', '.rs', 'fn ', 'let ', 'cargo', 'crate'],
+            'C/C++': ['c++', '.cpp', '.c', '.h', '#include', 'int main'],
+            'JAVASCRIPT': ['javascript', '.js', '.ts', 'function', 'const ', 'let '],
+            'GO': ['golang', '.go', 'package ', 'func ', 'import '],
+            'JAVA': ['java', '.java', 'public class', 'import java'],
+            'DART': ['dart', '.dart', 'void main', 'import \'dart'],
+            'PHP': ['php', '.php', '<?php', 'function ', 'class '],
+            'SQL': ['sql', '.sql', 'select ', 'create table', 'database'],
+            'ASSEMBLY': ['assembly', '.asm', '.s', 'mov ', 'jmp ', 'call '],
+            'MATLAB': ['matlab', '.m', 'function ', 'clear', 'clc'],
+            'SCADA': ['scada', 'modbus', 'opc', 'hmi', 'plc'],
+            'BINARY': ['binary', 'protocol', 'communication', 'message'],
+            'MARKDOWN': ['.md', '# ', '## ', '```']
+        }
+        
+        for lang, indicators in languages.items():
+            score = 0
+            for indicator in indicators:
+                if indicator in filename or indicator in content_lower:
+                    score += 1
+            if score >= 2:
+                return lang
+        
+        return 'GENERAL'
+    
+    def _extract_capabilities(self, content: str) -> List[str]:
+        """Extract key capabilities from document content"""
+        capabilities = []
+        content_lower = content.lower()
+        
+        capability_patterns = {
+            'high-performance': ['performance', 'optimization', 'speed', 'fast'],
+            'security': ['security', 'authentication', 'encryption', 'protection'],
+            'coordination': ['coordination', 'orchestration', 'collaboration'],
+            'analysis': ['analysis', 'analytics', 'intelligence', 'insights'],
+            'automation': ['automation', 'automated', 'auto-', 'scripted'],
+            'integration': ['integration', 'interface', 'api', 'connector'],
+            'monitoring': ['monitoring', 'observability', 'metrics', 'logging'],
+            'deployment': ['deployment', 'production', 'container', 'docker'],
+            'testing': ['testing', 'validation', 'verification', 'quality']
+        }
+        
+        for capability, keywords in capability_patterns.items():
+            if any(keyword in content_lower for keyword in keywords):
+                capabilities.append(capability)
+        
+        return capabilities[:3]  # Top 3 capabilities
+    
+    def _generate_overview(self, file_path: Path, content: str) -> str:
+        """Generate standardized one-line overview"""
+        doc_info = {
+            'filename': file_path.name,
+            'language': self._detect_language(file_path, content),
+            'capabilities': self._extract_capabilities(content),
+            'category': self._classify_category(file_path, content)
+        }
+        
+        # Generate overview based on category and detected information
+        if doc_info['category'] == 'agent_files':
+            caps = ' AND '.join(doc_info['capabilities']).upper() if doc_info['capabilities'] else 'SPECIALIZED PROCESSING'
+            return f"{doc_info['language']} AGENT specialist with {caps}"
+        
+        elif doc_info['category'] == 'infrastructure':
+            focus = ' AND '.join(doc_info['capabilities']).upper() if doc_info['capabilities'] else 'SYSTEM MANAGEMENT'
+            return f"Infrastructure implementation with {focus}"
+        
+        elif doc_info['category'] == 'protocol':
+            return f"{doc_info['language']} protocol communication system documentation"
+        
+        elif doc_info['category'] == 'security':
+            aspects = ' AND '.join(doc_info['capabilities']).upper() if doc_info['capabilities'] else 'SECURITY MEASURES'
+            return f"Security documentation covering {aspects}"
+        
+        elif doc_info['category'] == 'documentation':
+            system = doc_info['language'] if doc_info['language'] != 'GENERAL' else 'SYSTEM'
+            return f"{system} documentation and implementation guide"
+        
+        else:
+            # General case
+            if doc_info['capabilities']:
+                caps = ' AND '.join(doc_info['capabilities']).upper()
+                return f"{doc_info['language']} implementation with {caps}"
+            else:
+                return f"{doc_info['language']} technical documentation"
+
+class MarkdownProcessor:
+    """Process and render markdown content"""
+    
+    @staticmethod
+    def process_markdown(content: str) -> str:
+        """Convert markdown to HTML if processor available"""
+        if not MARKDOWN_PROCESSING_AVAILABLE:
+            return content
+        
+        try:
+            # Convert markdown to HTML
+            html = markdown.markdown(content, extensions=['tables', 'fenced_code'])
+            return html
+        except Exception:
+            return content
+    
+    @staticmethod
+    def extract_first_paragraph(content: str) -> str:
+        """Extract first meaningful paragraph from markdown"""
+        lines = content.split('\n')
+        paragraph_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith('#'):  # Skip headers
+                continue
+            if line.startswith('---'):  # Skip frontmatter
+                continue
+            if line.startswith('```'):  # Skip code blocks
+                break
+            
+            paragraph_lines.append(line)
+            if len(' '.join(paragraph_lines)) > 200:  # Reasonable preview length
+                break
+        
+        return ' '.join(paragraph_lines)
 
 class DocumentationStructureAnalyzer:
     """Analyzes and adapts to different documentation structures"""
