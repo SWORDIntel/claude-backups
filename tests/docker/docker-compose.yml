@@ -1,0 +1,359 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Multi-Version Python Testing Environments
+  # ============================================================================
+  
+  python39-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.python39
+    container_name: claude-hooks-py39
+    environment:
+      - PYTHON_VERSION=3.9
+      - TEST_ENVIRONMENT=python39
+      - CLAUDE_TESTING=1
+    volumes:
+      - ../../../hooks/claude_unified_hook_system_v2.py:/app/claude_unified_hook_system_v2.py:ro
+      - ./test-fixtures:/app/test-fixtures:ro
+      - ./configs:/app/configs:ro
+      - test-results-39:/app/results
+      - test-logs-39:/app/logs
+    networks:
+      - claude-test-network
+    depends_on:
+      - redis
+    profiles:
+      - compatibility
+      - all
+
+  python310-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.python310
+    container_name: claude-hooks-py310
+    environment:
+      - PYTHON_VERSION=3.10
+      - TEST_ENVIRONMENT=python310
+      - CLAUDE_TESTING=1
+    volumes:
+      - ../../../hooks/claude_unified_hook_system_v2.py:/app/claude_unified_hook_system_v2.py:ro
+      - ./test-fixtures:/app/test-fixtures:ro
+      - ./configs:/app/configs:ro
+      - test-results-310:/app/results
+      - test-logs-310:/app/logs
+    networks:
+      - claude-test-network
+    depends_on:
+      - redis
+    profiles:
+      - compatibility
+      - all
+
+  python311-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.python311
+    container_name: claude-hooks-py311
+    environment:
+      - PYTHON_VERSION=3.11
+      - TEST_ENVIRONMENT=python311
+      - CLAUDE_TESTING=1
+    volumes:
+      - ../../../hooks/claude_unified_hook_system_v2.py:/app/claude_unified_hook_system_v2.py:ro
+      - ./test-fixtures:/app/test-fixtures:ro
+      - ./configs:/app/configs:ro
+      - test-results-311:/app/results
+      - test-logs-311:/app/logs
+    networks:
+      - claude-test-network
+    depends_on:
+      - redis
+    profiles:
+      - compatibility
+      - all
+      - primary
+
+  python312-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.python312
+    container_name: claude-hooks-py312
+    environment:
+      - PYTHON_VERSION=3.12
+      - TEST_ENVIRONMENT=python312
+      - CLAUDE_TESTING=1
+    volumes:
+      - ../../../hooks/claude_unified_hook_system_v2.py:/app/claude_unified_hook_system_v2.py:ro
+      - ./test-fixtures:/app/test-fixtures:ro
+      - ./configs:/app/configs:ro
+      - test-results-312:/app/results
+      - test-logs-312:/app/logs
+    networks:
+      - claude-test-network
+    depends_on:
+      - redis
+    profiles:
+      - compatibility
+      - all
+      - latest
+
+  # ============================================================================
+  # Security Testing Environment (Isolated)
+  # ============================================================================
+  
+  security-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.security
+    container_name: claude-hooks-security
+    environment:
+      - SECURITY_TESTING=1
+      - ISOLATION_MODE=strict
+      - PYTHONDONTWRITEBYTECODE=1
+    volumes:
+      - ../../../hooks/claude_unified_hook_system_v2.py:/app/claude_unified_hook_system_v2.py:ro
+      - ./test-fixtures/security:/app/test-fixtures/security:ro
+      - ./security-test-configs:/app/configs:ro
+      - security-results:/app/results
+      - security-logs:/app/logs
+      - security-quarantine:/app/quarantine
+    networks:
+      - claude-security-network
+    cap_add:
+      - SYS_PTRACE  # For debugging and security analysis
+    security_opt:
+      - apparmor:unconfined  # Needed for security testing tools
+    depends_on:
+      - redis-security
+    profiles:
+      - security
+      - all
+
+  # ============================================================================
+  # Performance Testing Environment with Monitoring
+  # ============================================================================
+  
+  performance-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.performance
+    container_name: claude-hooks-performance
+    environment:
+      - PERFORMANCE_TESTING=1
+      - MONITORING_ENABLED=1
+      - PROMETHEUS_MULTIPROC_DIR=/app/metrics
+    volumes:
+      - ../../../hooks/claude_unified_hook_system_v2.py:/app/claude_unified_hook_system_v2.py:ro
+      - ./test-fixtures/performance:/app/test-fixtures/performance:ro
+      - ./monitoring-configs:/app/monitoring:ro
+      - performance-results:/app/results
+      - performance-logs:/app/logs
+      - performance-metrics:/app/metrics
+      - performance-profiles:/app/profiles
+    networks:
+      - claude-test-network
+      - claude-monitoring-network
+    depends_on:
+      - redis
+      - prometheus
+      - grafana
+    profiles:
+      - performance
+      - all
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # ============================================================================
+  # Agent Coordination Testing Environment
+  # ============================================================================
+  
+  coordination-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.python311
+    container_name: claude-hooks-coordination
+    environment:
+      - COORDINATION_TESTING=1
+      - AGENT_REGISTRY_SIZE=76
+      - MAX_PARALLEL_AGENTS=8
+    volumes:
+      - ../../../hooks/claude_unified_hook_system_v2.py:/app/claude_unified_hook_system_v2.py:ro
+      - ../../../agents:/app/agents:ro
+      - ./test-fixtures/coordination:/app/test-fixtures/coordination:ro
+      - coordination-results:/app/results
+      - coordination-logs:/app/logs
+    networks:
+      - claude-test-network
+    depends_on:
+      - redis
+    profiles:
+      - coordination
+      - all
+
+  # ============================================================================
+  # Supporting Services
+  # ============================================================================
+  
+  redis:
+    image: redis:7-alpine
+    container_name: claude-redis
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - claude-test-network
+    profiles:
+      - compatibility
+      - performance
+      - coordination
+      - all
+      - primary
+
+  redis-security:
+    image: redis:7-alpine
+    container_name: claude-redis-security
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-security-data:/data
+    networks:
+      - claude-security-network
+    profiles:
+      - security
+      - all
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: claude-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring-configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - claude-monitoring-network
+    profiles:
+      - performance
+      - monitoring
+      - all
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: claude-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=claude-testing
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring-configs/grafana-dashboard.json:/var/lib/grafana/dashboards/claude-hooks.json:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - claude-monitoring-network
+    depends_on:
+      - prometheus
+    profiles:
+      - performance
+      - monitoring
+      - all
+
+  # ============================================================================
+  # Test Result Collector
+  # ============================================================================
+  
+  test-collector:
+    build:
+      context: .
+      dockerfile: Dockerfile.collector
+    container_name: claude-test-collector
+    environment:
+      - COLLECTOR_MODE=1
+    volumes:
+      - test-results-39:/data/python39:ro
+      - test-results-310:/data/python310:ro
+      - test-results-311:/data/python311:ro
+      - test-results-312:/data/python312:ro
+      - security-results:/data/security:ro
+      - performance-results:/data/performance:ro
+      - coordination-results:/data/coordination:ro
+      - ./results:/app/results
+    networks:
+      - claude-test-network
+    profiles:
+      - collector
+      - all
+
+# ============================================================================
+# Networks
+# ============================================================================
+
+networks:
+  claude-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  
+  claude-security-network:
+    driver: bridge
+    internal: true  # Isolated network for security testing
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+  
+  claude-monitoring-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+# ============================================================================
+# Volumes
+# ============================================================================
+
+volumes:
+  # Test results by Python version
+  test-results-39:
+  test-results-310:
+  test-results-311:
+  test-results-312:
+  
+  # Test logs by Python version
+  test-logs-39:
+  test-logs-310:
+  test-logs-311:
+  test-logs-312:
+  
+  # Security testing volumes
+  security-results:
+  security-logs:
+  security-quarantine:
+  
+  # Performance testing volumes
+  performance-results:
+  performance-logs:
+  performance-metrics:
+  performance-profiles:
+  
+  # Coordination testing volumes
+  coordination-results:
+  coordination-logs:
+  
+  # Supporting service data
+  redis-data:
+  redis-security-data:
+  prometheus-data:
+  grafana-data:

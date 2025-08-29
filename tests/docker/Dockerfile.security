@@ -1,0 +1,85 @@
+# Security Testing Isolated Environment
+FROM python:3.11-slim-bullseye
+
+LABEL test.type="security"
+LABEL isolation="high"
+LABEL security.testing="enabled"
+
+# Security-focused environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    SECURITY_TESTING=1 \
+    ISOLATION_MODE=strict
+
+# Create isolated test user with minimal privileges
+RUN groupadd -r sectest && useradd -r -g sectest -m -d /home/sectest -s /bin/bash sectest
+
+# Install security testing tools and minimal dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    gcc \
+    libc6-dev \
+    libffi-dev \
+    libssl-dev \
+    make \
+    pkg-config \
+    procps \
+    strace \
+    ltrace \
+    gdb \
+    netcat \
+    nmap \
+    tcpdump \
+    iptables \
+    fail2ban \
+    chkrootkit \
+    rkhunter \
+    clamav \
+    apparmor-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install security-focused Python packages
+COPY requirements-security.txt /tmp/
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements-security.txt
+
+# Create security testing directory structure
+WORKDIR /app
+RUN mkdir -p \
+    /app/tests/security \
+    /app/logs/security \
+    /app/results/security \
+    /app/malicious-inputs \
+    /app/sandbox \
+    /app/quarantine
+
+# Copy hook system and security test fixtures
+COPY claude_unified_hook_system_v2.py /app/
+COPY test-fixtures/security/ /app/test-fixtures/security/
+COPY security-test-configs/ /app/configs/
+
+# Set up security constraints
+RUN echo "sectest ALL=(ALL) NOPASSWD: /usr/bin/strace, /usr/bin/ltrace" >> /etc/sudoers && \
+    chmod 755 /app/sandbox && \
+    chmod 700 /app/quarantine
+
+# Configure AppArmor profile (if available)
+COPY security-profiles/claude-hook-security /etc/apparmor.d/
+
+# Set restrictive permissions
+RUN chown -R sectest:sectest /app /home/sectest && \
+    chmod -R 750 /app/tests && \
+    chmod -R 700 /app/logs
+
+# Security health check
+HEALTHCHECK --interval=60s --timeout=15s --start-period=10s --retries=2 \
+    CMD python -c "import claude_unified_hook_system_v2 as hooks; h=hooks.ClaudeUnifiedHooks(); print('Security test environment ready')" || exit 1
+
+# Drop privileges
+USER sectest
+
+# Security testing command
+CMD ["python", "-m", "pytest", "-v", "/app/tests/security/", "--tb=long", "--capture=no"]

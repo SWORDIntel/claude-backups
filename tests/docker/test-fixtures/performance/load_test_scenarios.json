@@ -1,0 +1,188 @@
+{
+  "scenarios": {
+    "baseline": {
+      "description": "Baseline performance test with single agent",
+      "concurrent_users": 1,
+      "duration_seconds": 30,
+      "inputs": [
+        "optimize this code",
+        "debug the error",
+        "test the application",
+        "deploy to production"
+      ],
+      "expected_agents": ["OPTIMIZER", "DEBUGGER", "TESTBED", "DEPLOYER"],
+      "target_response_time_ms": 500,
+      "target_throughput_rps": 10
+    },
+    
+    "moderate_load": {
+      "description": "Moderate load with multiple concurrent requests",
+      "concurrent_users": 10,
+      "duration_seconds": 60,
+      "inputs": [
+        "security audit of the system",
+        "performance optimization needed",
+        "full system deployment",
+        "comprehensive testing required",
+        "architecture review needed"
+      ],
+      "expected_agents": ["SECURITY", "OPTIMIZER", "DEPLOYER", "TESTBED", "ARCHITECT"],
+      "target_response_time_ms": 1000,
+      "target_throughput_rps": 50
+    },
+    
+    "high_load": {
+      "description": "High load test simulating production traffic",
+      "concurrent_users": 50,
+      "duration_seconds": 120,
+      "inputs": [
+        "urgent security incident response",
+        "critical performance issue",
+        "emergency deployment needed",
+        "system-wide debugging required",
+        "infrastructure monitoring alert"
+      ],
+      "expected_agents": ["SECURITY", "DEBUGGER", "DEPLOYER", "INFRASTRUCTURE", "MONITOR"],
+      "target_response_time_ms": 2000,
+      "target_throughput_rps": 100
+    },
+    
+    "stress_test": {
+      "description": "Stress test to find breaking point",
+      "concurrent_users": 100,
+      "duration_seconds": 180,
+      "inputs": [
+        "complex multi-agent coordination needed",
+        "parallel processing of multiple tasks",
+        "concurrent security and performance analysis",
+        "simultaneous deployment and monitoring"
+      ],
+      "expected_agents": ["DIRECTOR", "PROJECTORCHESTRATOR", "SECURITY", "OPTIMIZER", "DEPLOYER", "MONITOR"],
+      "target_response_time_ms": 5000,
+      "target_throughput_rps": 150,
+      "expect_degradation": true
+    },
+    
+    "burst_test": {
+      "description": "Burst load test with rapid spikes",
+      "concurrent_users": 200,
+      "duration_seconds": 60,
+      "burst_pattern": "ramp_up_30s_sustain_30s",
+      "inputs": [
+        "immediate response required",
+        "high priority task",
+        "emergency coordination",
+        "critical system analysis"
+      ],
+      "expected_agents": ["DIRECTOR", "SECURITY", "DEBUGGER"],
+      "target_response_time_ms": 10000,
+      "target_throughput_rps": 200,
+      "expect_circuit_breaker": true
+    },
+    
+    "endurance_test": {
+      "description": "Long-running endurance test",
+      "concurrent_users": 20,
+      "duration_seconds": 3600,
+      "inputs": [
+        "routine optimization check",
+        "periodic security scan",
+        "regular health monitoring",
+        "scheduled deployment verification"
+      ],
+      "expected_agents": ["OPTIMIZER", "SECURITY", "MONITOR", "DEPLOYER"],
+      "target_response_time_ms": 1500,
+      "target_throughput_rps": 30,
+      "memory_leak_threshold_mb": 100
+    },
+    
+    "cache_effectiveness": {
+      "description": "Test caching performance improvements",
+      "concurrent_users": 5,
+      "duration_seconds": 300,
+      "repeat_inputs": true,
+      "cache_hit_ratio_target": 0.8,
+      "inputs": [
+        "same optimization request",
+        "identical security check",
+        "repeated deployment task"
+      ],
+      "expected_agents": ["OPTIMIZER", "SECURITY", "DEPLOYER"],
+      "target_response_time_ms": 100,
+      "target_cache_hits": 240
+    },
+    
+    "parallel_agent_coordination": {
+      "description": "Test parallel agent execution performance",
+      "concurrent_users": 1,
+      "duration_seconds": 60,
+      "parallel_agents": true,
+      "inputs": [
+        "parallel security audit and optimization",
+        "concurrent testing and deployment",
+        "simultaneous debugging and monitoring"
+      ],
+      "expected_parallel_executions": 3,
+      "target_response_time_ms": 2000,
+      "coordination_overhead_threshold_ms": 200
+    },
+    
+    "memory_bounded_operations": {
+      "description": "Test memory usage under various loads",
+      "concurrent_users": 30,
+      "duration_seconds": 120,
+      "monitor_memory": true,
+      "inputs": [
+        "large input processing: " + "A" * 10000,
+        "complex pattern matching with many agents",
+        "extensive cache utilization test"
+      ],
+      "memory_limit_mb": 512,
+      "target_response_time_ms": 3000
+    },
+    
+    "circuit_breaker_test": {
+      "description": "Test circuit breaker functionality",
+      "concurrent_users": 10,
+      "duration_seconds": 180,
+      "failure_injection": true,
+      "failure_rate": 0.7,
+      "inputs": [
+        "task that will fail frequently",
+        "another failing task",
+        "success task for recovery"
+      ],
+      "circuit_breaker_threshold": 5,
+      "recovery_time_seconds": 60
+    }
+  },
+  
+  "performance_targets": {
+    "4x_improvement": {
+      "baseline_response_time_ms": 2000,
+      "target_response_time_ms": 500,
+      "improvement_factor": 4.0
+    },
+    "6x_improvement": {
+      "baseline_response_time_ms": 3000,
+      "target_response_time_ms": 500,
+      "improvement_factor": 6.0
+    }
+  },
+  
+  "monitoring_metrics": [
+    "response_time_p50",
+    "response_time_p95",
+    "response_time_p99",
+    "throughput_rps",
+    "error_rate",
+    "cache_hit_ratio",
+    "memory_usage_mb",
+    "cpu_usage_percent",
+    "active_connections",
+    "queue_depth",
+    "circuit_breaker_state",
+    "agent_execution_time",
+    "coordination_overhead"
+  ]
+}

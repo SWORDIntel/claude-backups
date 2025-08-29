@@ -1,0 +1,505 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'your-registry.com'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        COMPOSE_PROJECT_NAME = "claude-hooks-test-${BUILD_NUMBER}"
+        
+        // Test configuration
+        PYTHON_VERSIONS = "python39,python310,python311,python312"
+        TEST_PROFILES = "compatibility,security,performance,coordination"
+        
+        // Performance targets
+        PERFORMANCE_TARGET_4X = "4.0"
+        PERFORMANCE_TARGET_6X = "6.0"
+        SUCCESS_RATE_THRESHOLD = "0.95"
+        
+        // Security requirements
+        MAX_SECURITY_FINDINGS = "0"
+        SECURITY_SCAN_REQUIRED = "true"
+    }
+    
+    parameters {
+        choice(
+            name: 'TEST_SCOPE',
+            choices: ['full', 'compatibility', 'security', 'performance', 'smoke'],
+            description: 'Select test scope to run'
+        )
+        booleanParam(
+            name: 'PERFORMANCE_BENCHMARKING',
+            defaultValue: true,
+            description: 'Run performance benchmarking tests'
+        )
+        booleanParam(
+            name: 'SECURITY_DEEP_SCAN',
+            defaultValue: true,
+            description: 'Run comprehensive security analysis'
+        )
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                
+                // Validate hook system file exists
+                script {
+                    if (!fileExists('hooks/claude_unified_hook_system_v2.py')) {
+                        error('Hook system file not found')
+                    }
+                }
+            }
+        }
+        
+        stage('Build Test Environments') {
+            parallel {
+                stage('Build Python Environments') {
+                    when {
+                        anyOf {
+                            params.TEST_SCOPE == 'full'
+                            params.TEST_SCOPE == 'compatibility'
+                        }
+                    }
+                    steps {
+                        dir('tests/docker') {
+                            sh '''
+                                docker-compose build python39-test python310-test python311-test python312-test
+                            '''
+                        }
+                    }
+                }
+                
+                stage('Build Security Environment') {
+                    when {
+                        anyOf {
+                            params.TEST_SCOPE == 'full'
+                            params.TEST_SCOPE == 'security'
+                        }
+                    }
+                    steps {
+                        dir('tests/docker') {
+                            sh '''
+                                docker-compose build security-test
+                            '''
+                        }
+                    }
+                }
+                
+                stage('Build Performance Environment') {
+                    when {
+                        anyOf {
+                            params.TEST_SCOPE == 'full'
+                            params.TEST_SCOPE == 'performance'
+                        }
+                    }
+                    steps {
+                        dir('tests/docker') {
+                            sh '''
+                                docker-compose build performance-test
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Start Supporting Services') {
+            steps {
+                dir('tests/docker') {
+                    sh '''
+                        # Start Redis and monitoring stack
+                        docker-compose --profile all up -d redis prometheus grafana
+                        
+                        # Wait for services to be ready
+                        sleep 30
+                        
+                        # Health check services
+                        docker-compose ps
+                    '''
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            parallel {
+                stage('Compatibility Tests') {
+                    when {
+                        anyOf {
+                            params.TEST_SCOPE == 'full'
+                            params.TEST_SCOPE == 'compatibility'
+                            params.TEST_SCOPE == 'smoke'
+                        }
+                    }
+                    steps {
+                        dir('tests/docker') {
+                            sh '''
+                                # Run compatibility tests across Python versions
+                                docker-compose --profile compatibility up --abort-on-container-exit --exit-code-from python311-test
+                                
+                                # Collect results
+                                docker-compose run --rm test-collector
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            // Collect test results
+                            archiveArtifacts artifacts: 'tests/docker/results/compatibility_report.json', allowEmptyArchive: true
+                        }
+                    }
+                }
+                
+                stage('Security Tests') {
+                    when {
+                        anyOf {
+                            params.TEST_SCOPE == 'full'
+                            params.TEST_SCOPE == 'security'
+                        }
+                    }
+                    steps {
+                        dir('tests/docker') {
+                            sh '''
+                                # Run security tests in isolated environment
+                                docker-compose --profile security up --abort-on-container-exit --exit-code-from security-test
+                                
+                                # Additional security scans if requested
+                                if [ "$SECURITY_DEEP_SCAN" = "true" ]; then
+                                    # Run Bandit security scanner
+                                    docker-compose run --rm security-test bandit -r /app/claude_unified_hook_system_v2.py -f json -o /app/results/bandit_report.json
+                                    
+                                    # Run Safety vulnerability scanner
+                                    docker-compose run --rm security-test safety check --json --output /app/results/safety_report.json
+                                fi
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'tests/docker/results/security_report.json', allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'tests/docker/results/*security*.json', allowEmptyArchive: true
+                        }
+                    }
+                }
+                
+                stage('Performance Tests') {
+                    when {
+                        anyOf {
+                            params.TEST_SCOPE == 'full'
+                            params.TEST_SCOPE == 'performance'
+                        }
+                    }
+                    steps {
+                        dir('tests/docker') {
+                            sh '''
+                                # Run performance tests with monitoring
+                                docker-compose --profile performance up -d
+                                
+                                # Wait for performance test completion
+                                docker-compose logs -f performance-test &
+                                
+                                # Run benchmarks if enabled
+                                if [ "$PERFORMANCE_BENCHMARKING" = "true" ]; then
+                                    docker-compose exec performance-test python -m pytest /app/tests/performance/ --benchmark-json=/app/results/benchmark.json
+                                fi
+                                
+                                # Run load tests
+                                docker-compose exec performance-test python -m locust -f /app/tests/performance/load_test.py --headless --users 50 --spawn-rate 5 --run-time 5m --csv /app/results/load_test
+                                
+                                # Stop performance tests
+                                docker-compose --profile performance stop
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'tests/docker/results/performance_report.json', allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'tests/docker/results/*benchmark*.json', allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'tests/docker/results/*load_test*.csv', allowEmptyArchive: true
+                        }
+                    }
+                }
+                
+                stage('Agent Coordination Tests') {
+                    when {
+                        anyOf {
+                            params.TEST_SCOPE == 'full'
+                            params.TEST_SCOPE == 'coordination'
+                        }
+                    }
+                    steps {
+                        dir('tests/docker') {
+                            sh '''
+                                # Test agent coordination and registry
+                                docker-compose --profile coordination up --abort-on-container-exit --exit-code-from coordination-test
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'tests/docker/results/coordination_report.json', allowEmptyArchive: true
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Collect and Analyze Results') {
+            steps {
+                dir('tests/docker') {
+                    sh '''
+                        # Run result collector
+                        docker-compose run --rm test-collector
+                        
+                        # Copy results to Jenkins workspace
+                        docker cp $(docker-compose ps -q test-collector):/app/results ./jenkins-results || true
+                    '''
+                }
+                
+                script {
+                    // Parse test results
+                    def summaryFile = readFile('tests/docker/jenkins-results/summary_report.json')
+                    def summary = readJSON text: summaryFile
+                    
+                    // Set build status based on results
+                    def successRate = summary.get('success_rate', 0)
+                    def overallStatus = summary.get('overall_status', 'UNKNOWN')
+                    
+                    echo "Test Summary:"
+                    echo "- Success Rate: ${successRate * 100}%"
+                    echo "- Overall Status: ${overallStatus}"
+                    echo "- Total Tests: ${summary.get('total_tests', 0)}"
+                    echo "- Failed Tests: ${summary.get('failed_tests', 0)}"
+                    
+                    // Check if success rate meets threshold
+                    if (successRate < env.SUCCESS_RATE_THRESHOLD.toDouble()) {
+                        currentBuild.result = 'UNSTABLE'
+                        error("Success rate ${successRate * 100}% below threshold ${env.SUCCESS_RATE_THRESHOLD.toDouble() * 100}%")
+                    }
+                }
+            }
+        }
+        
+        stage('Performance Validation') {
+            when {
+                anyOf {
+                    params.TEST_SCOPE == 'full'
+                    params.TEST_SCOPE == 'performance'
+                }
+            }
+            steps {
+                script {
+                    try {
+                        def perfFile = readFile('tests/docker/jenkins-results/performance_report.json')
+                        def perf = readJSON text: perfFile
+                        
+                        // Validate performance improvements
+                        def improvements = perf.get('improvements', [:])
+                        
+                        echo "Performance Validation:"
+                        improvements.each { metric, value ->
+                            echo "- ${metric}: ${value}x improvement"
+                        }
+                        
+                        // Check 4x-6x improvement targets
+                        def meetsTargets = true
+                        if (improvements.containsKey('4x_improvement') && 
+                            improvements['4x_improvement'] < env.PERFORMANCE_TARGET_4X.toDouble()) {
+                            echo "WARNING: 4x improvement target not met"
+                            meetsTargets = false
+                        }
+                        
+                        if (!meetsTargets) {
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                        
+                    } catch (Exception e) {
+                        echo "Performance validation failed: ${e.message}"
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+        }
+        
+        stage('Security Validation') {
+            when {
+                anyOf {
+                    params.TEST_SCOPE == 'full'
+                    params.TEST_SCOPE == 'security'
+                }
+            }
+            steps {
+                script {
+                    try {
+                        def secFile = readFile('tests/docker/jenkins-results/security_report.json')
+                        def security = readJSON text: secFile
+                        
+                        def vulnerabilities = security.get('vulnerabilities_found', 0)
+                        def securityStatus = security.get('overall_security_status', 'UNKNOWN')
+                        
+                        echo "Security Validation:"
+                        echo "- Vulnerabilities Found: ${vulnerabilities}"
+                        echo "- Security Status: ${securityStatus}"
+                        echo "- Fixes Validated: ${security.get('fixes_validated', 0)}"
+                        
+                        // Check security requirements
+                        if (vulnerabilities > env.MAX_SECURITY_FINDINGS.toInteger()) {
+                            currentBuild.result = 'FAILURE'
+                            error("Security vulnerabilities found: ${vulnerabilities}")
+                        }
+                        
+                        if (securityStatus == 'NEEDS_ATTENTION') {
+                            currentBuild.result = 'UNSTABLE'
+                            echo "WARNING: Security status requires attention"
+                        }
+                        
+                    } catch (Exception e) {
+                        echo "Security validation failed: ${e.message}"
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
+        }
+        
+        stage('Generate Reports') {
+            steps {
+                dir('tests/docker') {
+                    sh '''
+                        # Generate additional reports
+                        if [ -f jenkins-results/dashboard.html ]; then
+                            cp jenkins-results/dashboard.html ${WORKSPACE}/test-dashboard.html
+                        fi
+                        
+                        # Create test summary for email
+                        cat > ${WORKSPACE}/test-summary.txt << EOF
+Claude Hook System Test Results - Build ${BUILD_NUMBER}
+========================================================
+
+Test Scope: ${TEST_SCOPE}
+Build Status: $(echo $currentBuild.result | head -n 1 || echo "SUCCESS")
+
+Environment Summary:
+$(cat jenkins-results/summary_report.json | jq -r '.environments_tested // "Unknown"') environments tested
+
+Test Results:
+- Total Tests: $(cat jenkins-results/summary_report.json | jq -r '.total_tests // 0')
+- Passed: $(cat jenkins-results/summary_report.json | jq -r '.passed_tests // 0')  
+- Failed: $(cat jenkins-results/summary_report.json | jq -r '.failed_tests // 0')
+- Success Rate: $(cat jenkins-results/summary_report.json | jq -r '.success_rate // 0')
+
+Performance Status:
+$(cat jenkins-results/performance_report.json | jq -r '.improvements // {}' | head -5 || echo "No performance data")
+
+Security Status:  
+$(cat jenkins-results/security_report.json | jq -r '.overall_security_status // "Unknown"')
+
+Dashboard: ${BUILD_URL}artifact/test-dashboard.html
+EOF
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            dir('tests/docker') {
+                sh '''
+                    # Cleanup containers and networks
+                    docker-compose --profile all down --volumes --remove-orphans || true
+                    
+                    # Clean up dangling images
+                    docker image prune -f || true
+                '''
+            }
+            
+            // Archive all test results
+            archiveArtifacts artifacts: 'tests/docker/jenkins-results/**/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'test-dashboard.html', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'test-summary.txt', allowEmptyArchive: true
+            
+            // Publish test results if available
+            script {
+                if (fileExists('tests/docker/jenkins-results/junit.xml')) {
+                    junit 'tests/docker/jenkins-results/junit.xml'
+                }
+            }
+        }
+        
+        success {
+            echo 'All tests passed successfully!'
+            
+            // Send success notification
+            emailext (
+                subject: "✅ Claude Hook System Tests PASSED - Build ${BUILD_NUMBER}",
+                body: """
+The Claude Hook System test suite has completed successfully.
+
+Build: ${BUILD_NUMBER}
+Test Scope: ${params.TEST_SCOPE}
+Performance Benchmarking: ${params.PERFORMANCE_BENCHMARKING}
+Security Deep Scan: ${params.SECURITY_DEEP_SCAN}
+
+All test criteria met:
+- Success rate above ${env.SUCCESS_RATE_THRESHOLD}
+- Performance improvements validated
+- Security requirements satisfied
+
+Test Dashboard: ${BUILD_URL}artifact/test-dashboard.html
+Build Log: ${BUILD_URL}console
+
+${readFile('test-summary.txt')}
+                """,
+                to: "${env.CHANGE_AUTHOR_EMAIL ?: env.DEFAULT_EMAIL}",
+                attachmentsPattern: 'test-dashboard.html,test-summary.txt'
+            )
+        }
+        
+        failure {
+            echo 'Tests failed!'
+            
+            emailext (
+                subject: "❌ Claude Hook System Tests FAILED - Build ${BUILD_NUMBER}",
+                body: """
+The Claude Hook System test suite has failed.
+
+Build: ${BUILD_NUMBER}
+Test Scope: ${params.TEST_SCOPE}
+
+Please review the test results and logs for details.
+
+Test Dashboard: ${BUILD_URL}artifact/test-dashboard.html
+Build Log: ${BUILD_URL}console
+
+${readFile('test-summary.txt')}
+                """,
+                to: "${env.CHANGE_AUTHOR_EMAIL ?: env.DEFAULT_EMAIL}",
+                attachmentsPattern: 'test-dashboard.html,test-summary.txt'
+            )
+        }
+        
+        unstable {
+            echo 'Tests completed with warnings!'
+            
+            emailext (
+                subject: "⚠️ Claude Hook System Tests UNSTABLE - Build ${BUILD_NUMBER}",
+                body: """
+The Claude Hook System test suite completed with warnings.
+
+Build: ${BUILD_NUMBER}
+Test Scope: ${params.TEST_SCOPE}
+
+Some tests may have failed or performance targets not fully met.
+Please review the detailed results.
+
+Test Dashboard: ${BUILD_URL}artifact/test-dashboard.html  
+Build Log: ${BUILD_URL}console
+
+${readFile('test-summary.txt')}
+                """,
+                to: "${env.CHANGE_AUTHOR_EMAIL ?: env.DEFAULT_EMAIL}",
+                attachmentsPattern: 'test-dashboard.html,test-summary.txt'
+            )
+        }
+    }
+}

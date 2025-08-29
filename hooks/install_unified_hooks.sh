@@ -6,7 +6,7 @@ set -e
 
 echo "==================================="
 echo "Claude Unified Hook System Installer"
-echo "Version: 3.0"
+echo "Version: 3.1 (Optimized)"
 echo "==================================="
 
 # Find project root

@@ -1,0 +1,56 @@
+# Test Result Collector and Report Generator
+FROM python:3.11-slim-bullseye
+
+LABEL test.type="collector"
+LABEL purpose="result-aggregation"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    COLLECTOR_MODE=1
+
+# Create collector user
+RUN groupadd -r collector && useradd -r -g collector -m -d /home/collector collector
+
+# Install minimal dependencies for report generation
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    jq \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages for report generation
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    pandas==2.2.3 \
+    matplotlib==3.9.2 \
+    seaborn==0.13.2 \
+    jinja2==3.1.4 \
+    pyyaml==6.0.2 \
+    jsonschema==4.23.0 \
+    requests==2.32.3
+
+# Create directory structure
+WORKDIR /app
+RUN mkdir -p \
+    /app/collectors \
+    /app/results \
+    /app/templates \
+    /app/reports \
+    /data
+
+# Copy collector scripts
+COPY collectors/ /app/collectors/
+COPY templates/ /app/templates/
+
+# Set ownership
+RUN chown -R collector:collector /app /home/collector
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=30s --start-period=10s --retries=2 \
+    CMD python -c "import os; print('Collector ready, data dirs:', len(os.listdir('/data')))" || exit 1
+
+USER collector
+
+# Default collector command
+CMD ["python", "/app/collectors/aggregate_results.py"]

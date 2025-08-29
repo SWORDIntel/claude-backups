@@ -1,0 +1,74 @@
+# Base Docker image for Claude Hook System Testing
+FROM python:3.11-slim-bullseye
+
+# Metadata
+LABEL maintainer="Claude Testing Environment"
+LABEL version="1.0"
+LABEL description="Base image for claude_unified_hook_system_v2.py testing"
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+# Create test user for security
+RUN groupadd -r claudetest && useradd -r -g claudetest -m -d /home/claudetest claudetest
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    gcc \
+    libc6-dev \
+    libffi-dev \
+    libssl-dev \
+    make \
+    pkg-config \
+    procps \
+    redis-server \
+    sqlite3 \
+    strace \
+    tcpdump \
+    time \
+    htop \
+    iotop \
+    sysstat \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python testing and monitoring dependencies
+COPY requirements-test.txt /tmp/
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements-test.txt
+
+# Create directory structure
+WORKDIR /app
+RUN mkdir -p \
+    /app/tests \
+    /app/logs \
+    /app/data \
+    /app/cache \
+    /app/configs \
+    /app/agents \
+    /app/results \
+    /app/monitoring
+
+# Copy test fixtures and configuration
+COPY test-fixtures/ /app/test-fixtures/
+COPY configs/ /app/configs/
+
+# Set ownership to test user
+RUN chown -R claudetest:claudetest /app /home/claudetest
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)" || exit 1
+
+# Switch to test user
+USER claudetest
+
+# Default command
+CMD ["python", "--version"]

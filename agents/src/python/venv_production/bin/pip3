@@ -1,4 +1,4 @@
-#!/home/ubuntu/claude-backups/agents/src/python/venv_production/bin/python3
+#!/home/john/claude-backups/agents/src/python/venv_production/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

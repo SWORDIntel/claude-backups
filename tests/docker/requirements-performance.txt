@@ -1,0 +1,69 @@
+# Performance testing specific dependencies
+pytest==8.3.3
+pytest-asyncio==0.23.8
+pytest-benchmark==4.0.0
+pytest-timeout==2.3.1
+pytest-xdist==3.6.0
+
+# Performance profiling and analysis
+psutil==6.0.0
+memory-profiler==0.61.0
+line-profiler==4.1.3
+py-spy==0.3.14
+pympler==0.9
+objgraph==3.6.1
+
+# Load testing
+locust==2.31.8
+aiohttp==3.10.10
+requests==2.32.3
+httpx==0.27.2
+
+# Async performance utilities
+uvloop==0.21.0
+asyncio-throttle==1.0.2
+
+# Monitoring and metrics
+prometheus-client==0.21.0
+statsd==4.0.1
+datadog==0.50.1
+
+# Time series data
+influxdb-client==1.45.0
+redis==5.1.0
+
+# CPU and memory optimization
+cython==3.0.11
+numba==0.60.0
+numpy==2.1.2
+
+# Benchmarking utilities
+timeit==1.0.0
+cProfile==1.0.0
+pyperf==2.7.0
+
+# Threading and multiprocessing optimization
+concurrent-futures==3.1.1
+multiprocessing-logging==0.3.4
+
+# Network performance testing
+netifaces==0.11.0
+speedtest-cli==2.1.3
+
+# File I/O performance
+aiofiles==24.1.0
+
+# Database performance (for caching tests)
+sqlite3==1.0.0
+sqlalchemy==2.0.36
+
+# JSON performance
+orjson==3.10.7
+ujson==5.10.0
+
+# Logging performance
+structlog==24.4.0
+loguru==0.7.2
+
+# Hardware information
+py-cpuinfo==9.0.0

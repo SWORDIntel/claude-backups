@@ -1,4 +1,4 @@
-#!/home/ubuntu/claude-backups/agents/src/python/venv_production/bin/python3
+#!/home/john/claude-backups/agents/src/python/venv_production/bin/python3
 import sys
 from Cython.Compiler.Main import setuptools_main
 if __name__ == '__main__':

@@ -1,0 +1,93 @@
+# Performance Testing Environment with Monitoring
+FROM python:3.11-slim-bullseye
+
+LABEL test.type="performance"
+LABEL monitoring="enabled"
+LABEL metrics="prometheus"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PERFORMANCE_TESTING=1 \
+    MONITORING_ENABLED=1
+
+# Create performance test user
+RUN groupadd -r perftest && useradd -r -g perftest -m -d /home/perftest perftest
+
+# Install performance monitoring and analysis tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    gcc \
+    libc6-dev \
+    libffi-dev \
+    libssl-dev \
+    make \
+    pkg-config \
+    procps \
+    redis-server \
+    sqlite3 \
+    strace \
+    time \
+    htop \
+    iotop \
+    sysstat \
+    perf-tools-unstable \
+    linux-perf \
+    valgrind \
+    gdb \
+    dstat \
+    nethogs \
+    iftop \
+    bmon \
+    nload \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install performance-focused Python packages
+COPY requirements-performance.txt /tmp/
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements-performance.txt
+
+# Create performance testing directory structure
+WORKDIR /app
+RUN mkdir -p \
+    /app/tests/performance \
+    /app/logs/performance \
+    /app/results/performance \
+    /app/metrics \
+    /app/profiles \
+    /app/benchmarks \
+    /app/monitoring/prometheus \
+    /app/monitoring/grafana
+
+# Copy hook system and performance test fixtures
+COPY claude_unified_hook_system_v2.py /app/
+COPY test-fixtures/performance/ /app/test-fixtures/performance/
+COPY monitoring-configs/ /app/monitoring/
+
+# Copy Prometheus configuration
+COPY prometheus.yml /app/monitoring/prometheus/
+COPY grafana-dashboard.json /app/monitoring/grafana/
+
+# Set up performance monitoring
+RUN echo 'kernel.perf_event_paranoid = 1' >> /etc/sysctl.conf && \
+    echo 'kernel.kptr_restrict = 0' >> /etc/sysctl.conf
+
+# Set ownership and permissions
+RUN chown -R perftest:perftest /app /home/perftest && \
+    chmod +x /app/tests/performance/*.py
+
+# Install Node.js for additional monitoring tools (optional)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g clinic
+
+# Performance health check
+HEALTHCHECK --interval=30s --timeout=20s --start-period=15s --retries=3 \
+    CMD python -c "import claude_unified_hook_system_v2 as hooks; h=hooks.ClaudeUnifiedHooks(); s=h.get_status(); print(f'Performance test ready: {len(s[\"agents\"])} agents')" || exit 1
+
+USER perftest
+
+# Performance testing command with profiling
+CMD ["python", "-m", "pytest", "-v", "/app/tests/performance/", "--benchmark-only", "--benchmark-json=/app/results/performance/benchmark.json"]

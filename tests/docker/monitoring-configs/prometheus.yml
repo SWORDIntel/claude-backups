@@ -1,0 +1,60 @@
+# Prometheus configuration for Claude Hook System testing
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Claude Hook System performance metrics
+  - job_name: 'claude-hooks-performance'
+    static_configs:
+      - targets: ['performance-test:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    params:
+      format: ['prometheus']
+
+  # Claude Hook System coordination metrics
+  - job_name: 'claude-hooks-coordination'
+    static_configs:
+      - targets: ['coordination-test:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Redis metrics for caching performance
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # System metrics from performance container
+  - job_name: 'node-exporter-performance'
+    static_configs:
+      - targets: ['performance-test:9100']
+    scrape_interval: 15s
+
+  # Container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+
+# Alerting rules for test environment
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Custom recording rules for Claude Hook System
+rule_files:
+  - "claude_hooks_rules.yml"
