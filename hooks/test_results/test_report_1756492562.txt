@@ -1,0 +1,128 @@
+CLAUDE UNIFIED HOOKS - COMPREHENSIVE TEST REPORT
+============================================================
+Generated: 2025-08-29 19:36:02
+Total Execution Time: 0.01s
+Memory Usage: +0.9MB
+
+OVERALL RESULTS
+--------------------
+Total Test Suites: 15
+Total Tests: 0
+Passed: 0 (0.0%)
+Failed: 0 (0.0%)
+Skipped: 0 (0.0%)
+Success Rate: 0.0%
+
+SUITE BREAKDOWN
+---------------
+Input Validation Tests (CRITICAL)
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Pattern Matching Tests (CRITICAL)
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Security Feature Tests (CRITICAL)
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Security Vulnerability Tests (CRITICAL)
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Caching Behavior Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Error Handling Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Performance Optimization Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Agent Priority System Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Circuit Breaker Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Rate Limiting Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Authentication Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Multi-Agent Integration Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+File Operations Integration Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Load Testing
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+Docker Integration Tests
+  Status: ❌ FAIL
+  Tests: 0/0 (0.0%)
+  Time: 0.00s
+  Memory: +0.0MB
+  Errors: 1 issues found
+
+REQUIREMENTS COMPLIANCE
+-----------------------
+✅ Total tests >=200: False (0)
+✅ Success rate >=85%: False (0.0%)
+✅ Critical suites pass: True
+✅ Memory usage stable: True (+0.9MB)

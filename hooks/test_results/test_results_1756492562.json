@@ -1,0 +1,179 @@
+{
+  "timestamp": 1756492562.9871137,
+  "total_time": 0.01057577133178711,
+  "memory_delta": 0.859375,
+  "overall": {
+    "total_tests": 0,
+    "passed_tests": 0,
+    "failed_tests": 0,
+    "skipped_tests": 0,
+    "success_rate": 0.0
+  },
+  "suites": {
+    "unit_input_validation": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "unit_pattern_matching": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "security_features": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "security_vulnerabilities": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "unit_caching": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "unit_error_handling": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "performance_optimizations": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "agent_priority": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "circuit_breaker": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "rate_limiting": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "authentication": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "integration_multiagent": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "integration_file_ops": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "load_testing": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    },
+    "docker_integration": {
+      "total_tests": 0,
+      "passed_tests": 0,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "execution_time": 0.0,
+      "memory_usage_mb": 0.0,
+      "coverage_percentage": 0.0,
+      "performance_metrics": {},
+      "error_count": 1
+    }
+  }
+}

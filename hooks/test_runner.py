@@ -390,7 +390,7 @@ class TestRunner:
     
     def _build_pytest_command(self, suite: TestSuite, coverage: bool, verbose: bool) -> List[str]:
         """Build pytest command for suite"""
-        cmd = ["python", "-m", "pytest"]
+        cmd = ["python3", "-m", "pytest"]
         
         # Add test pattern
         cmd.append(suite.pattern)
