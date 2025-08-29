@@ -1,0 +1,364 @@
+# Shadowgit Neural Docker Compose Configuration
+# Complete containerized deployment with NPU/GNA support
+version: '3.9'
+
+services:
+  # Main Shadowgit Neural Service
+  shadowgit-neural:
+    build:
+      context: .
+      dockerfile: Dockerfile.neural
+    image: shadowgit/neural:2.0.0
+    container_name: shadowgit-neural
+    hostname: shadowgit-neural
+    restart: unless-stopped
+    
+    # Hardware access for NPU/GNA
+    privileged: true
+    devices:
+      - /dev/dri:/dev/dri                    # GPU access
+      - /dev/accel/accel0:/dev/accel/accel0  # NPU device
+      - /dev/gna0:/dev/gna0                  # GNA device
+      
+    # Shared memory for IPC
+    shm_size: '1gb'
+    ipc: host
+    
+    volumes:
+      # Code directories to monitor
+      - ${PROJECT_PATH:-./projects}:/workspace:ro
+      - ${SHADOWGIT_HOME:-./shadowgit}:/opt/shadowgit
+      
+      # Shadow repository
+      - shadowgit-repo:/opt/shadowgit/.shadowgit.git
+      
+      # Models and cache
+      - shadowgit-models:/opt/shadowgit/models
+      - shadowgit-cache:/opt/shadowgit/cache
+      
+      # Logs
+      - shadowgit-logs:/opt/shadowgit/logs
+      
+      # Shared memory
+      - /dev/shm:/dev/shm
+      
+      # OpenVINO runtime
+      - /opt/intel/openvino:/opt/intel/openvino:ro
+      
+    environment:
+      # OpenVINO Configuration
+      - OPENVINO_ROOT=/opt/intel/openvino
+      - LD_LIBRARY_PATH=/opt/intel/openvino/runtime/lib/intel64:$LD_LIBRARY_PATH
+      - PYTHONPATH=/opt/intel/openvino/python/python3.10:$PYTHONPATH
+      
+      # NPU Configuration
+      - ZE_INTEL_NPU_LOGLEVEL=WARNING
+      - OV_NPU_LOG_LEVEL=WARNING
+      - NPU_COMPILER_TYPE=DRIVER
+      - NPU_PLATFORM=3720
+      
+      # GNA Configuration
+      - GNA_DEVICE_MODE=GNA_HW
+      - GNA_PRECISION=I8
+      - GNA_COMPILE_TARGET=GNA_TARGET_3_5
+      
+      # Shadowgit Configuration
+      - SHADOWGIT_MODE=production
+      - SHADOWGIT_NEURAL=enabled
+      - SHADOWGIT_POWER_MODE=balanced
+      - SHADOWGIT_BATCH_SIZE=32
+      - SHADOWGIT_GNA_ALWAYS_ON=true
+      
+    networks:
+      - shadowgit-network
+      
+    ports:
+      - "9090:9090"  # Prometheus metrics
+      - "8080:8080"  # Web UI (if enabled)
+      
+    healthcheck:
+      test: ["CMD", "python", "-c", "import shadowgit_neural_engine; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 1G
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+              
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=9090"
+      - "prometheus.io/path=/metrics"
+      
+  # MCP Server for Claude Integration
+  shadowgit-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    image: shadowgit/mcp:2.0.0
+    container_name: shadowgit-mcp
+    restart: unless-stopped
+    
+    depends_on:
+      - shadowgit-neural
+      
+    volumes:
+      - shadowgit-repo:/opt/shadowgit/.shadowgit.git:ro
+      - shadowgit-models:/opt/shadowgit/models:ro
+      - /dev/shm:/dev/shm
+      
+    environment:
+      - MCP_MODE=production
+      - NEURAL_ENGINE_HOST=shadowgit-neural
+      - NEURAL_ENGINE_PORT=8888
+      
+    networks:
+      - shadowgit-network
+      
+    ports:
+      - "3000:3000"  # MCP WebSocket
+      - "3001:3001"  # MCP gRPC
+      
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: shadowgit-prometheus
+    restart: unless-stopped
+    
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+      
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      
+    networks:
+      - shadowgit-network
+      
+    ports:
+      - "9091:9090"
+      
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: shadowgit-grafana
+    restart: unless-stopped
+    
+    depends_on:
+      - prometheus
+      
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=shadowgit
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      
+    networks:
+      - shadowgit-network
+      
+    ports:
+      - "3002:3000"
+      
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: shadowgit-redis
+    restart: unless-stopped
+    
+    volumes:
+      - redis-data:/data
+      
+    networks:
+      - shadowgit-network
+      
+    ports:
+      - "6379:6379"
+      
+    command: redis-server --appendonly yes
+    
+networks:
+  shadowgit-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+          
+volumes:
+  shadowgit-repo:
+    driver: local
+  shadowgit-models:
+    driver: local
+  shadowgit-cache:
+    driver: local
+  shadowgit-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  redis-data:
+    driver: local
+
+# ============================================================================
+# Dockerfile.neural - Main Neural Service Container
+# ============================================================================
+# Place this in a file named Dockerfile.neural
+
+# FROM ubuntu:22.04
+# 
+# # Install system dependencies
+# RUN apt-get update && apt-get install -y \
+#     python3.10 \
+#     python3.10-dev \
+#     python3-pip \
+#     git \
+#     wget \
+#     curl \
+#     build-essential \
+#     cmake \
+#     libusb-1.0-0 \
+#     libgflags-dev \
+#     libgoogle-glog-dev \
+#     libboost-all-dev \
+#     libtbb-dev \
+#     ocl-icd-libopencl1 \
+#     && rm -rf /var/lib/apt/lists/*
+# 
+# # Install OpenVINO
+# RUN wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB && \
+#     apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB && \
+#     echo "deb https://apt.repos.intel.com/openvino/2025 ubuntu22 main" > /etc/apt/sources.list.d/intel-openvino-2025.list && \
+#     apt-get update && \
+#     apt-get install -y intel-openvino-runtime-ubuntu22-2025.0 && \
+#     rm -rf /var/lib/apt/lists/*
+# 
+# # Create shadowgit user
+# RUN useradd -m -s /bin/bash shadowgit
+# 
+# # Setup application directory
+# WORKDIR /opt/shadowgit
+# 
+# # Copy application files
+# COPY --chown=shadowgit:shadowgit shadowgit_neural_engine.py .
+# COPY --chown=shadowgit:shadowgit shadowgit_watcher_enhanced.py .
+# COPY --chown=shadowgit:shadowgit requirements.txt .
+# 
+# # Install Python dependencies
+# RUN pip3 install --no-cache-dir -r requirements.txt
+# RUN pip3 install --no-cache-dir openvino==2025.0
+# 
+# # Setup OpenVINO environment
+# ENV PYTHONPATH=/opt/intel/openvino/python/python3.10:$PYTHONPATH
+# ENV LD_LIBRARY_PATH=/opt/intel/openvino/runtime/lib/intel64:$LD_LIBRARY_PATH
+# 
+# # Switch to shadowgit user
+# USER shadowgit
+# 
+# # Entry point
+# CMD ["python3", "shadowgit_watcher_enhanced.py"]
+
+# ============================================================================
+# Dockerfile.mcp - MCP Server Container
+# ============================================================================
+# Place this in a file named Dockerfile.mcp
+
+# FROM python:3.10-slim
+# 
+# # Install dependencies
+# RUN apt-get update && apt-get install -y \
+#     git \
+#     curl \
+#     && rm -rf /var/lib/apt/lists/*
+# 
+# # Create shadowgit user
+# RUN useradd -m -s /bin/bash shadowgit
+# 
+# # Setup application directory
+# WORKDIR /opt/shadowgit
+# 
+# # Copy MCP server
+# COPY --chown=shadowgit:shadowgit shadowgit_mcp_server.py .
+# COPY --chown=shadowgit:shadowgit shadowgit_neural_engine.py .
+# COPY --chown=shadowgit:shadowgit requirements-mcp.txt .
+# 
+# # Install Python dependencies
+# RUN pip3 install --no-cache-dir -r requirements-mcp.txt
+# 
+# # Switch to shadowgit user
+# USER shadowgit
+# 
+# # Expose MCP ports
+# EXPOSE 3000 3001
+# 
+# # Entry point
+# CMD ["python3", "shadowgit_mcp_server.py"]
+
+# ============================================================================
+# prometheus.yml - Prometheus Configuration
+# ============================================================================
+# Place this in prometheus.yml
+
+# global:
+#   scrape_interval: 15s
+#   evaluation_interval: 15s
+# 
+# scrape_configs:
+#   - job_name: 'shadowgit-neural'
+#     static_configs:
+#       - targets: ['shadowgit-neural:9090']
+#     metrics_path: /metrics
+#     
+#   - job_name: 'shadowgit-mcp'
+#     static_configs:
+#       - targets: ['shadowgit-mcp:9090']
+#     metrics_path: /metrics
+#     
+#   - job_name: 'node-exporter'
+#     static_configs:
+#       - targets: ['node-exporter:9100']
+
+# ============================================================================
+# docker-compose.override.yml - Development Override
+# ============================================================================
+# Use this for development with live code reload
+
+# version: '3.9'
+# 
+# services:
+#   shadowgit-neural:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.neural.dev
+#     volumes:
+#       - ./:/opt/shadowgit:rw
+#       - ${PROJECT_PATH:-./projects}:/workspace:rw
+#     environment:
+#       - SHADOWGIT_MODE=development
+#       - PYTHONDONTWRITEBYTECODE=1
+#       - PYTHONUNBUFFERED=1
+#     command: ["python3", "-m", "watchdog", "shadowgit_watcher_enhanced.py", "--reload"]
