@@ -1,0 +1,100 @@
+# Test Dependencies for Claude Unified Hook System
+# TESTBED Agent - Comprehensive Testing Requirements
+
+# Core testing framework
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-timeout>=2.3.1
+pytest-mock>=3.12.0
+pytest-xdist>=3.5.0  # For parallel test execution
+pytest-cov>=4.0.0    # For coverage reporting
+pytest-html>=4.1.0   # For HTML test reports
+
+# Performance and system monitoring
+psutil>=5.9.0
+memory-profiler>=0.61.0
+
+# Async testing utilities
+aiofiles>=23.2.1
+asynctest>=0.13.0
+
+# Mock and fixture utilities
+factory-boy>=3.3.0
+responses>=0.24.0
+requests-mock>=1.11.0
+
+# Data generation for testing
+faker>=22.0.0
+hypothesis>=6.90.0
+
+# Security testing
+bandit>=1.7.0
+safety>=2.3.0
+
+# Code quality and linting (for test validation)
+flake8>=7.0.0
+black>=24.0.0
+mypy>=1.8.0
+
+# XML parsing for test results
+lxml>=4.9.0
+xmltodict>=0.13.0
+
+# File system testing utilities
+pyfakefs>=5.3.0
+
+# Docker testing (optional, for Docker environment tests)
+docker>=7.0.0
+testcontainers>=3.7.0
+
+# Benchmarking and performance testing
+pytest-benchmark>=4.0.0
+locust>=2.17.0
+
+# Coverage reporting enhancements  
+coverage[toml]>=7.4.0
+
+# JSON schema validation for test data
+jsonschema>=4.20.0
+
+# Database testing (if needed for integration tests)
+pytest-postgresql>=5.0.0
+sqlalchemy>=2.0.0
+
+# Retry functionality for flaky tests
+pytest-rerunfailures>=12.0.0
+
+# Test ordering and dependency management
+pytest-order>=1.1.0
+pytest-dependency>=0.5.1
+
+# Environment variable testing
+pytest-env>=1.1.0
+
+# Subprocess testing utilities
+subprocess32>=3.5.4; python_version < '3.3'
+
+# Time/date mocking
+freezegun>=1.4.0
+
+# Network mocking and testing
+pook>=1.1.0
+
+# Resource cleanup utilities
+atexit2>=0.3.1
+
+# Enhanced assertions
+assertpy>=1.1
+
+# Test data serialization
+pickle5>=0.0.12; python_version < '3.8'
+
+# Logging testing utilities
+testfixtures>=7.2.0
+
+# Version compatibility
+packaging>=23.0.0
+
+# Development and debugging
+ipdb>=0.13.0
+pdbpp>=0.10.3
