@@ -1,4 +1,0 @@
-  File "/home/ubuntu/Documents/Claude/agents/03-BRIDGES/bridge_monitor.py", line 12
-    from 03-BRIDGES.claude_agent_bridge import BinaryBridgeConnection, AgentConfig
-         ^
-SyntaxError: leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers

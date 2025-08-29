@@ -28,17 +28,59 @@ dist/
 .vscode/
 .idea/
 
-# Python cache
+# Python cache and bytecode
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+**/__pycache__/
+**/*.pyc
+**/*.pyo
 
 # Python virtual environments
 venv/
 env/
 .env
 .venv
+*/venv/
+*/env/
+*/.venv
+virtualenv/
+ENV/
+venv*/
+env*/
+
+# Python package management
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Runtime artifacts
+*.stats
+*.log
+agents/runtime/status.json
+config/shell-snapshots/
+config/todos/
+database/data/postgresql/
+hooks/test_results/
+hook_profile.stats
 
 # Backup files
 *.bak
 *.backup
+*.pre-security
+*~backup
+# Runtime artifacts
+venv/
+*.stats
+*.log
+agents/runtime/status.json
+config/shell-snapshots/
+config/todos/
+database/data/postgresql/
+*.backup
+*pre-security
+
