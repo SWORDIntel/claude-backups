@@ -613,11 +613,6 @@ class UnifiedMatcher:
                     agents_found.add(agent)
                     confidence_scores[agent] = confidence_scores.get(agent, 0) + 0.2
         
-        if agents_found:
-            result["agents"] = sorted(agents_found, key=lambda x: confidence_scores.get(x, 0), reverse=True)
-            result["confidence"] = min(0.95, max(confidence_scores.values()) if confidence_scores else 0.7)
-            result["strategy"] = "hybrid_pattern_trie"
-        
         # Workflow detection
         workflow = self._detect_workflow_optimized(input_lower)
         if workflow:
@@ -626,8 +621,12 @@ class UnifiedMatcher:
             for agent in workflow_agents:
                 if agent not in agents_found:
                     agents_found.add(agent)
-            result["agents"] = list(agents_found)
-            result["confidence"] = min(0.95, result["confidence"] + 0.1)
+                    confidence_scores[agent] = confidence_scores.get(agent, 0) + 0.15
+        
+        if agents_found:
+            result["agents"] = sorted(agents_found, key=lambda x: confidence_scores.get(x, 0), reverse=True)
+            result["confidence"] = min(0.95, max(confidence_scores.values()) if confidence_scores else 0.7)
+            result["strategy"] = "hybrid_pattern_trie"
         
         # Add coordinator for complex tasks
         if len(agents_found) > 3 and "DIRECTOR" not in agents_found:
@@ -795,7 +794,9 @@ class UnifiedHookEngine:
             return {
                 "success": False,
                 "message": "No agents identified for this request",
-                "suggestion": "Try being more specific or mentioning agent names directly"
+                "suggestion": "Try being more specific or mentioning agent names directly",
+                "categories": match_result.get("categories", []),
+                "agents": []
             }
         
         # Execute with matched agents (parallel)
@@ -805,6 +806,11 @@ class UnifiedHookEngine:
             workflow=match_result["workflow"],
             context=context or {}
         )
+        
+        # Add match information to execution result
+        execution_result["categories"] = match_result.get("categories", [])
+        execution_result["agents"] = match_result.get("agents", [])
+        execution_result["confidence"] = match_result.get("confidence", 0)
         
         # Record for learning (non-blocking)
         if self.config.enable_learning:
@@ -948,6 +954,7 @@ class UnifiedHookEngine:
     
     async def _execute_via_task_tool(self, agent: str, prompt: str) -> Dict[str, Any]:
         """Execute via Task tool with circuit breaker"""
+        client_id = "system"  # Default client ID for internal execution
         if self._check_task_tool():
             try:
                 # Use circuit breaker for resilience

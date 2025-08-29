@@ -9,6 +9,7 @@ import json
 import time
 from pathlib import Path
 import sys
+import pytest
 
 # Add hooks directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -16,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from claude_unified_hook_system_v2 import ClaudeUnifiedHooks
 
 
+@pytest.mark.asyncio
 async def test_basic_functionality():
     """Test basic hook system functionality"""
     print("\n" + "="*60)
@@ -134,6 +136,7 @@ async def test_basic_functionality():
     return True
 
 
+@pytest.mark.asyncio
 async def test_edge_cases():
     """Test edge cases and error handling"""
     print("\n" + "="*60)

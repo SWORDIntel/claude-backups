@@ -10,6 +10,7 @@ import json
 import tempfile
 import random
 import string
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
@@ -554,6 +555,146 @@ class MockTaskTool:
             execution_time=self.delay,
             output=f"Mock execution for {agent}: {prompt[:50]}..."
         )
+
+class MockFactory:
+    """Factory for creating mock objects"""
+    
+    @staticmethod
+    def create_mock_task_tool():
+        """Create a mock Task tool for testing"""
+        return MockTaskTool()
+    
+    @staticmethod
+    def create_mock_circuit_breaker():
+        """Create a mock circuit breaker"""
+        class MockCircuitBreaker:
+            def __init__(self):
+                self.is_open = False
+                self.failure_count = 0
+            
+            def call(self, func, *args, **kwargs):
+                if self.is_open:
+                    raise Exception("Circuit breaker is open")
+                return func(*args, **kwargs)
+            
+            def record_success(self):
+                self.failure_count = 0
+            
+            def record_failure(self):
+                self.failure_count += 1
+                if self.failure_count >= 5:
+                    self.is_open = True
+        
+        return MockCircuitBreaker()
+
+class PerformanceBenchmark:
+    """Performance benchmarking utilities"""
+    
+    def __init__(self):
+        self.start_time = None
+        self.end_time = None
+        self.metrics = {}
+    
+    def start(self):
+        self.start_time = time.time()
+    
+    def stop(self):
+        self.end_time = time.time()
+        return self.end_time - self.start_time
+    
+    def record_metric(self, name: str, value: float):
+        self.metrics[name] = value
+    
+    def get_report(self):
+        return {
+            "duration": self.end_time - self.start_time if self.end_time else None,
+            "metrics": self.metrics
+        }
+
+class SecurityTestFramework:
+    """Security testing framework"""
+    
+    def __init__(self):
+        self.vulnerabilities = []
+    
+    def test_injection(self, input_str: str) -> bool:
+        """Test for injection vulnerabilities"""
+        dangerous_patterns = ['<script>', 'DROP TABLE', '../', '$(', '`']
+        for pattern in dangerous_patterns:
+            if pattern in input_str:
+                self.vulnerabilities.append(f"Potential injection: {pattern}")
+                return False
+        return True
+    
+    def test_path_traversal(self, path: str) -> bool:
+        """Test for path traversal vulnerabilities"""
+        if '../' in path or '..\\' in path:
+            self.vulnerabilities.append(f"Path traversal detected: {path}")
+            return False
+        return True
+    
+    def get_report(self):
+        return {
+            "vulnerabilities": self.vulnerabilities,
+            "passed": len(self.vulnerabilities) == 0
+        }
+
+class DockerTestEnvironment:
+    """Docker test environment utilities"""
+    
+    @staticmethod
+    def is_running_in_docker() -> bool:
+        """Check if running inside Docker container"""
+        return Path("/.dockerenv").exists() or os.environ.get("DOCKER_CONTAINER") is not None
+    
+    @staticmethod
+    def get_container_resources():
+        """Get Docker container resource limits"""
+        if not DockerTestEnvironment.is_running_in_docker():
+            return None
+        
+        return {
+            "cpu_quota": os.environ.get("CPU_QUOTA", "unlimited"),
+            "memory_limit": os.environ.get("MEMORY_LIMIT", "unlimited"),
+            "container_id": os.environ.get("HOSTNAME", "unknown")
+        }
+    
+    @staticmethod
+    def create_test_environment():
+        """Create test environment for Docker"""
+        temp_dir = tempfile.mkdtemp(prefix="docker_test_")
+        return temp_dir
+
+def create_temporary_project_structure():
+    """Create temporary project structure for testing"""
+    temp_dir = tempfile.mkdtemp(prefix="test_project_")
+    
+    # Create basic structure
+    (Path(temp_dir) / "agents").mkdir()
+    (Path(temp_dir) / "hooks").mkdir()
+    (Path(temp_dir) / "tests").mkdir()
+    
+    # Create sample agent file
+    agent_file = Path(temp_dir) / "agents" / "TEST_AGENT.md"
+    agent_file.write_text("""---
+name: TEST_AGENT
+uuid: test-uuid-1234
+category: testing
+tools:
+  - Task
+---
+
+# Test Agent
+
+Test agent for unit testing.
+""")
+    
+    return temp_dir
+
+def cleanup_test_environment(temp_dir: str):
+    """Clean up test environment"""
+    if Path(temp_dir).exists():
+        shutil.rmtree(temp_dir)
 
 class TestDataGenerator:
     """Advanced test data generation utilities"""

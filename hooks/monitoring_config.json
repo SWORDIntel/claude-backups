@@ -1,0 +1,13 @@
+{
+  "monitoring_enabled": true,
+  "health_check_interval": 60,
+  "metrics_retention": 300,
+  "alert_thresholds": {
+    "cpu_percent": 80,
+    "memory_percent": 90,
+    "error_rate": 5,
+    "throughput_min": 1000,
+    "response_time_max": 100
+  },
+  "webhook_url": null
+}

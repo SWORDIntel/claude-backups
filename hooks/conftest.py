@@ -28,9 +28,8 @@ import logging
 sys.path.insert(0, str(Path(__file__).parent))
 
 from test_fixtures import (
-    TestDataGenerator, MockFactory, PerformanceBenchmark,
-    SecurityTestFramework, DockerTestEnvironment,
-    create_temporary_project_structure, cleanup_test_environment
+    TestDataGenerator, TestFixtures, 
+    MockExecutionResult, MockTaskTool
 )
 
 # Configure logging for tests
