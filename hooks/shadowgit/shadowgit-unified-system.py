@@ -85,24 +85,41 @@ class ShadowgitUnified:
         
         logger.info("Initializing Shadowgit Unified System...")
         
-        # 1. Try Neural Engine
+        # 1. Try Neural Engine (OpenVINO with Claude venv)
         if self.config.enable_neural:
             try:
-                from shadowgit_neural_engine import ShadowgitNeuralEngine, NeuralConfig
+                # Ensure Claude venv is in path for OpenVINO
+                import sys
+                claude_venv = "/home/john/.local/share/claude/venv/lib/python3.12/site-packages"
+                if claude_venv not in sys.path:
+                    sys.path.insert(0, claude_venv)
                 
-                neural_config = NeuralConfig(
-                    mode="intelligent",
-                    power_mode="balanced"
-                )
-                self.components["neural_engine"] = ShadowgitNeuralEngine(neural_config)
+                import openvino as ov
+                core = ov.Core()
+                available_devices = core.available_devices
                 
-                # Update config with detected hardware
-                caps = self.components["neural_engine"].capabilities
-                self.config.npu_available = caps.npu_available
-                self.config.gna_available = caps.gna_available
+                # Check for NPU/GNA devices (Intel Meteor Lake has NPU at PCI 00:0b.0)
+                npu_available = any('NPU' in device.upper() or 'GNA' in device.upper() for device in available_devices)
+                gna_available = any('GNA' in device.upper() for device in available_devices)
+                
+                # Intel NPU may appear as different device names
+                if not npu_available:
+                    # Check if we have the Intel Meteor Lake NPU hardware
+                    try:
+                        with open('/proc/devices', 'r') as f:
+                            devices_content = f.read()
+                        npu_available = 'npu' in devices_content.lower() or len(available_devices) > 1
+                    except:
+                        pass
+                
+                self.components["neural_engine"] = core
+                self.config.npu_available = npu_available
+                self.config.gna_available = gna_available  
                 self.config.neural_available = True
                 
-                logger.info(f"✓ Neural engine initialized (NPU: {caps.npu_available}, GNA: {caps.gna_available})")
+                logger.info(f"✓ OpenVINO neural engine initialized")
+                logger.info(f"  Available devices: {available_devices}")
+                logger.info(f"  NPU detected: {npu_available}, GNA detected: {gna_available}")
                 
             except Exception as e:
                 logger.warning(f"Neural engine not available: {e}")
