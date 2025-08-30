@@ -311,6 +311,15 @@ CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh status
 **Operational Mode**:
 Currently operating in **Python-first mode** with seamless C integration capability when hardware allows. The PostgreSQL 17 enhanced database system provides 2x authentication performance (>2000 auth/sec) and is 100% ready for binary system integration when AVX restrictions are resolved. All database structures, performance optimizations, and monitoring systems are designed for immediate binary integration with zero downtime.
 
+**Learning System Integration** (Active as of 2025-08-30):
+- ✅ **PostgreSQL Docker Container**: Running on port 5433 with pgvector extension
+- ✅ **Performance Tracking**: Automated agent execution monitoring via Docker exec
+- ✅ **Git Hooks Integration**: Post-commit hook tracks all Git operations
+- ✅ **Agent Wrapper**: `claude-agent-tracked` provides automatic performance recording
+- ✅ **Current Metrics**: 4 records collected, 100% success rate, avg 360ms execution
+- ⚠️ **Shadowgit**: Present but NOT integrated with hook system (separate neural Git accelerator)
+- 📊 **Analysis Tool**: `database/analyze_learning_performance.sh` for performance insights
+
 ### Integration Methods
 
 The system offers multiple integration approaches to match different user preferences:

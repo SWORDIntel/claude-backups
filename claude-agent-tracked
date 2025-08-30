@@ -1,0 +1,26 @@
+#!/bin/bash
+# Wrapper to track agent executions automatically
+
+AGENT_NAME="${1^^}"  # Convert to uppercase
+shift  # Remove agent name from arguments
+
+export CLAUDE_AGENT_NAME="$AGENT_NAME"
+export CLAUDE_TASK_TYPE="${1:-general}"
+export CLAUDE_START_TIME=$(date +%s.%N)
+
+# Execute the original claude-agent command
+/home/john/.local/bin/claude-agent "$AGENT_NAME" "$@"
+RESULT=$?
+
+# Record success/failure
+if [ $RESULT -eq 0 ]; then
+    export CLAUDE_SUCCESS="true"
+else
+    export CLAUDE_SUCCESS="false"
+    export CLAUDE_ERROR="Exit code: $RESULT"
+fi
+
+# Track the performance
+python3 /home/john/claude-backups/hooks/track_agent_performance.py
+
+exit $RESULT

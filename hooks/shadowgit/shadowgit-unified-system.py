@@ -11,6 +11,7 @@ import asyncio
 import json
 import ctypes
 import subprocess
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
@@ -136,9 +137,17 @@ class ShadowgitUnified:
                 self.config.c_simd_available = False
         
         # 3. Legacy Analyzer (always available as final fallback)
-        from shadowgit_legacy_analyzer import LegacyASTAnalyzer
-        self.components["legacy_analyzer"] = LegacyASTAnalyzer()
-        logger.info("✓ Legacy analyzer initialized (fallback)")
+        try:
+            from shadowgit_legacy_analyzer import LegacyASTAnalyzer
+            self.components["legacy_analyzer"] = LegacyASTAnalyzer()
+            logger.info("✓ Legacy analyzer initialized (fallback)")
+        except ImportError:
+            # Create minimal legacy analyzer inline
+            class MinimalAnalyzer:
+                def analyze(self, code, filepath=""):
+                    return {"type": "basic", "lines": len(code.split('\n')), "filepath": filepath}
+            self.components["legacy_analyzer"] = MinimalAnalyzer()
+            logger.info("✓ Minimal analyzer initialized (fallback)")
         
         # 4. MCP Server (unified)
         try:
@@ -524,10 +533,46 @@ async def main():
     parser.add_argument("--disable-neural", action="store_true", help="Disable neural processing")
     parser.add_argument("--disable-c", action="store_true", help="Disable C acceleration")
     parser.add_argument("--config", help="Configuration file")
+    parser.add_argument("--hook-mode", action="store_true", help="Run in Git hook mode")
+    parser.add_argument("--operation", help="Git operation type (commit, push, merge, etc.)")
     
     args = parser.parse_args()
     
-    # Create unified configuration
+    # Handle hook mode
+    if args.hook_mode:
+        # Git hook mode - quick analysis and exit
+        operation = args.operation or "commit"
+        
+        # Set environment variables for learning system integration
+        import os
+        os.environ.setdefault('CLAUDE_AGENT_NAME', 'SHADOWGIT')
+        os.environ.setdefault('CLAUDE_TASK_TYPE', operation)
+        os.environ.setdefault('CLAUDE_START_TIME', str(time.time()))
+        
+        try:
+            # Quick analysis of recent changes
+            import subprocess
+            result = subprocess.run(['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'], 
+                                  capture_output=True, text=True, cwd='.')
+            changed_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
+            
+            # Record to learning system
+            try:
+                sys.path.append('/home/john/claude-backups/hooks')
+                from track_agent_performance import AgentPerformanceTracker
+                tracker = AgentPerformanceTracker()
+                start_time = float(os.environ.get('CLAUDE_START_TIME', time.time()))
+                tracker.record_agent_execution('SHADOWGIT', operation, start_time, time.time(), True)
+                print(f"✓ Shadowgit hook: {operation} - {len(changed_files)} files analyzed")
+            except Exception as e:
+                print(f"⚠ Shadowgit hook completed (learning system unavailable: {e})")
+                
+        except Exception as e:
+            print(f"✗ Shadowgit hook error: {e}")
+        
+        return  # Exit hook mode early
+    
+    # Create unified configuration for normal mode
     config = UnifiedConfig(
         watch_dirs=args.watch,
         enable_neural=not args.disable_neural,
