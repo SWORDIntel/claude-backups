@@ -3276,3 +3276,7 @@
 2025-08-25 15:47:41.488 UTC [354936] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
 2025-08-25 15:47:43.899 UTC [354964] FATAL:  data directory "/home/ubuntu/Documents/claude-backups/database/data/postgresql" has invalid permissions
 2025-08-25 15:47:43.899 UTC [354964] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2025-08-30 06:31:04.068 UTC [291856] FATAL:  could not open directory "pg_notify": No such file or directory
+2025-08-30 06:31:04.069 UTC [291856] LOG:  database system is shut down
+2025-08-30 06:31:12.806 UTC [291882] FATAL:  could not open directory "pg_notify": No such file or directory
+2025-08-30 06:31:12.807 UTC [291882] LOG:  database system is shut down
