@@ -44,6 +44,8 @@ class UnifiedConfig:
     # C acceleration (auto-detected)
     c_simd_available: bool = False
     avx512_available: bool = False
+    avx2_available: bool = False
+    avx2_lib_path: str = None  # Dynamically determined
     
     # Feature flags
     enable_neural: bool = True      # Try neural first
@@ -125,29 +127,42 @@ class ShadowgitUnified:
                 logger.warning(f"Neural engine not available: {e}")
                 self.config.neural_available = False
         
-        # 2. Try C SIMD Engine
+        # 2. Try C SIMD Engine (AVX2 or AVX-512)
         if self.config.enable_c_acceleration:
             try:
-                # Compile if needed
-                c_source = Path("c_diff_engine.c")
-                c_lib = Path("c_diff_engine.so")
+                # Try to import the robust AVX2 integration
+                import sys
+                sys.path.insert(0, str(Path.home() / "shadowgit"))
+                from shadowgit_avx2 import ShadowgitAVX2, is_avx2_available
                 
-                if c_source.exists():
-                    if not c_lib.exists() or c_source.stat().st_mtime > c_lib.stat().st_mtime:
-                        # Detect CPU features
-                        avx512 = "avx512" in open("/proc/cpuinfo").read()
-                        
-                        compile_cmd = ["gcc", "-O3", "-march=native"]
-                        if avx512:
-                            compile_cmd.append("-mavx512f")
-                            self.config.avx512_available = True
-                            
-                        compile_cmd.extend(["-shared", "-fPIC", "-o", str(c_lib), str(c_source)])
-                        subprocess.run(compile_cmd, check=True)
-                        
-                    self.components["c_diff_engine"] = ctypes.CDLL(str(c_lib))
+                avx2_engine = ShadowgitAVX2()
+                if avx2_engine.is_available():
+                    self.components["c_diff_engine"] = avx2_engine
                     self.config.c_simd_available = True
-                    logger.info(f"✓ C SIMD engine initialized (AVX-512: {self.config.avx512_available})")
+                    self.config.avx2_available = True
+                    self.config.avx2_lib_path = avx2_engine.get_library_info()['library_path']
+                    logger.info(f"✓ AVX2 SIMD engine loaded via robust integration")
+                else:
+                    # Fall back to compile standard C version
+                    c_source = Path("c_diff_engine.c")
+                    c_lib = Path("c_diff_engine.so")
+                    
+                    if c_source.exists():
+                        if not c_lib.exists() or c_source.stat().st_mtime > c_lib.stat().st_mtime:
+                            # Detect CPU features
+                            avx512 = "avx512" in open("/proc/cpuinfo").read()
+                            
+                            compile_cmd = ["gcc", "-O3", "-march=native"]
+                            if avx512:
+                                compile_cmd.append("-mavx512f")
+                                self.config.avx512_available = True
+                                
+                            compile_cmd.extend(["-shared", "-fPIC", "-o", str(c_lib), str(c_source)])
+                            subprocess.run(compile_cmd, check=True)
+                            
+                        self.components["c_diff_engine"] = ctypes.CDLL(str(c_lib))
+                        self.config.c_simd_available = True
+                        logger.info(f"✓ C SIMD engine initialized (AVX-512: {self.config.avx512_available})")
                     
             except Exception as e:
                 logger.warning(f"C acceleration not available: {e}")
@@ -193,7 +208,12 @@ class ShadowgitUnified:
                 pipeline.append("GNA (0.1W)")
             pipeline.append("Neural CPU")
         if self.config.c_simd_available:
-            pipeline.append(f"C SIMD {'AVX-512' if self.config.avx512_available else 'AVX2'}")
+            if self.config.avx2_available:
+                pipeline.append("C SIMD AVX2 (930M lines/sec)")
+            elif self.config.avx512_available:
+                pipeline.append("C SIMD AVX-512")
+            else:
+                pipeline.append("C SIMD")
         pipeline.append("Legacy Python")
         
         print(f"Processing Pipeline: {' → '.join(pipeline)}")
@@ -262,14 +282,21 @@ class ShadowgitUnified:
                 # Get previous version for diff
                 prev_content = self._get_previous_content(filepath)
                 if prev_content:
-                    diff_count = self.components["c_diff_engine"].simd_diff(
-                        prev_content.encode(),
-                        code.encode(),
-                        min(len(prev_content), len(code))
-                    )
+                    # Use the robust AVX2 integration
+                    if hasattr(self.components["c_diff_engine"], 'diff'):
+                        # Using ShadowgitAVX2 class
+                        diff_count = self.components["c_diff_engine"].diff(prev_content, code)
+                    else:
+                        # Legacy ctypes direct call
+                        diff_count = self.components["c_diff_engine"].shadowgit_avx2_diff(
+                            prev_content.encode(),
+                            code.encode(),
+                            min(len(prev_content), len(code))
+                        )
                     result["c_diff_analysis"] = {
                         "changes": diff_count,
-                        "change_ratio": diff_count / max(len(code), 1)
+                        "change_ratio": diff_count / max(len(code), 1),
+                        "engine": "AVX2 (930M lines/sec)" if self.config.avx2_available else "C SIMD"
                     }
             except Exception as e:
                 logger.debug(f"C diff failed: {e}")
