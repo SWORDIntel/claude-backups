@@ -65,6 +65,8 @@ agents/runtime/status.json
 config/shell-snapshots/
 config/todos/
 database/data/postgresql/
+database/data/postgresql_docker/
+database/data/*.log
 hooks/test_results/
 hook_profile.stats
 
@@ -84,3 +86,9 @@ database/data/postgresql/
 *.backup
 *pre-security
 
+
+# PostgreSQL Docker data - track exports only
+database/data/postgresql/
+!database/sql/exports/*.sql
+!database/sql/exports/csv/*.csv
+database/backups/

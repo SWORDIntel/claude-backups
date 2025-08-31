@@ -1482,6 +1482,144 @@ choose_database_deployment() {
     done
 }
 
+# Auto-import existing learning data if available
+import_existing_learning_data() {
+    local EXPORT_DIR="$PROJECT_ROOT/database/sql/exports"
+    local CSV_DIR="$EXPORT_DIR/csv"
+    local IMPORT_SCRIPT="$EXPORT_DIR/import_learning_data.sh"
+    
+    # Check if exports directory exists with data
+    if [[ ! -d "$EXPORT_DIR" ]]; then
+        return 0  # No exports directory, nothing to import
+    fi
+    
+    # Check for SQL dumps
+    local sql_files=($(ls "$EXPORT_DIR"/*.sql 2>/dev/null | head -5))
+    
+    # Check for CSV files
+    local csv_files=($(ls "$CSV_DIR"/*.csv 2>/dev/null | head -5))
+    
+    if [[ ${#sql_files[@]} -eq 0 ]] && [[ ${#csv_files[@]} -eq 0 ]]; then
+        return 0  # No data to import
+    fi
+    
+    info "Found existing learning data - importing automatically..."
+    echo "  SQL dumps: ${#sql_files[@]} files"
+    echo "  CSV exports: ${#csv_files[@]} files"
+    
+    # Import using existing import script if available
+    if [[ -f "$IMPORT_SCRIPT" ]] && [[ -x "$IMPORT_SCRIPT" ]]; then
+        info "Running automatic data import..."
+        cd "$EXPORT_DIR" || return 1
+        
+        # Run import script with timeout to avoid hanging
+        if timeout 60s bash "$IMPORT_SCRIPT" 2>&1 | while read line; do
+            echo "    $line"
+        done; then
+            success "Learning data imported successfully"
+        else
+            warning "Learning data import had issues (non-critical)"
+        fi
+        
+        cd "$PROJECT_ROOT" || true
+    else
+        # Fallback: manual CSV import for key tables
+        info "Performing manual CSV import..."
+        
+        if [[ -f "$CSV_DIR/agent_metrics.csv" ]] && [[ -s "$CSV_DIR/agent_metrics.csv" ]]; then
+            info "Importing agent metrics..."
+            
+            # Create learning database if not exists
+            docker exec claude-postgres psql -U claude_agent -c "CREATE DATABASE IF NOT EXISTS claude_learning;" 2>/dev/null || true
+            
+            # Import key CSV files
+            for csv_file in "$CSV_DIR"/*.csv; do
+                if [[ -f "$csv_file" ]] && [[ -s "$csv_file" ]]; then
+                    table_name=$(basename "$csv_file" .csv)
+                    echo -n "    Importing $table_name... "
+                    
+                    if docker exec -i claude-postgres psql -U claude_agent -d claude_learning -c "
+                        CREATE TABLE IF NOT EXISTS $table_name ();
+                        \\COPY $table_name FROM STDIN WITH CSV HEADER;" < "$csv_file" 2>/dev/null; then
+                        echo "✓"
+                    else
+                        echo "skipped"
+                    fi
+                fi
+            done
+            
+            success "CSV data import completed"
+        fi
+    fi
+    
+    return 0
+}
+
+# Auto-import existing learning data for native PostgreSQL
+import_existing_learning_data_native() {
+    local EXPORT_DIR="$PROJECT_ROOT/database/sql/exports"
+    local CSV_DIR="$EXPORT_DIR/csv"
+    local IMPORT_SCRIPT="$EXPORT_DIR/import_learning_data.sh"
+    
+    # Check if exports directory exists with data
+    if [[ ! -d "$EXPORT_DIR" ]]; then
+        return 0  # No exports directory, nothing to import
+    fi
+    
+    # Check for SQL dumps
+    local sql_files=($(ls "$EXPORT_DIR"/*.sql 2>/dev/null | head -5))
+    
+    # Check for CSV files
+    local csv_files=($(ls "$CSV_DIR"/*.csv 2>/dev/null | head -5))
+    
+    if [[ ${#sql_files[@]} -eq 0 ]] && [[ ${#csv_files[@]} -eq 0 ]]; then
+        return 0  # No data to import
+    fi
+    
+    info "Found existing learning data - importing to native PostgreSQL..."
+    echo "  SQL dumps: ${#sql_files[@]} files"
+    echo "  CSV exports: ${#csv_files[@]} files"
+    
+    # Import using existing import script if available
+    if [[ -f "$IMPORT_SCRIPT" ]] && [[ -x "$IMPORT_SCRIPT" ]]; then
+        info "Running automatic data import..."
+        cd "$EXPORT_DIR" || return 1
+        
+        # Run import script with timeout
+        if timeout 60s bash "$IMPORT_SCRIPT" 2>&1 | while read line; do
+            echo "    $line"
+        done; then
+            success "Learning data imported successfully"
+        else
+            warning "Learning data import had issues (non-critical)"
+        fi
+        
+        cd "$PROJECT_ROOT" || true
+    else
+        # Fallback: try to import SQL dumps directly
+        info "Attempting direct SQL import..."
+        
+        for sql_file in "${sql_files[@]}"; do
+            if [[ -f "$sql_file" ]]; then
+                db_name=$(basename "$sql_file" | cut -d_ -f1)
+                echo -n "    Importing $db_name... "
+                
+                # Try to create database and import
+                if createdb -h localhost -p 5433 -U "$USER" "$db_name" 2>/dev/null && \
+                   psql -h localhost -p 5433 -U "$USER" -d "$db_name" < "$sql_file" >/dev/null 2>&1; then
+                    echo "✓"
+                else
+                    echo "skipped"
+                fi
+            fi
+        done
+        
+        success "SQL import attempt completed"
+    fi
+    
+    return 0
+}
+
 # Setup Docker-based database and learning system
 setup_docker_database() {
     print_section "Setting up Docker Database System"
@@ -1541,6 +1679,9 @@ EOF
             if curl -sf http://localhost:8080/health >/dev/null 2>&1 && \
                curl -sf http://localhost:8081/health >/dev/null 2>&1; then
                 success "All services are healthy and running"
+                
+                # Auto-import existing learning data after services are ready
+                import_existing_learning_data
                 break
             fi
             printf "."
@@ -1775,6 +1916,9 @@ setup_native_database() {
         # Setup git hooks for automatic sync
         bash "$DB_DIR/scripts/learning_sync.sh" setup-hooks 2>/dev/null
     fi
+    
+    # Auto-import existing learning data after database setup
+    import_existing_learning_data_native
     
     success "Native PostgreSQL database setup completed"
 }
