@@ -1882,12 +1882,71 @@ setup_learning_system_docker() {
         
         success "Learning system Docker integration configured"
         export LEARNING_SYSTEM_STATUS="docker_configured"
+        configure_docker_autostart
         return 0
     else
         warning "launch-learning-system.sh not found, using basic Docker setup"
         setup_learning_system_native
         return $?
     fi
+}
+
+# Configure Docker containers for auto-restart on system reboot
+configure_docker_autostart() {
+    info "Configuring Docker containers for auto-restart on system reboot..."
+    
+    local containers=("claude-postgres" "claude-learning" "claude-bridge" "claude-prometheus")
+    local docker_cmd="${DOCKER_SUDO:-}"
+    
+    # Check if any containers exist
+    local container_found=false
+    for container in "${containers[@]}"; do
+        if ${docker_cmd} docker ps -a --format '{{.Names}}' | grep -q "^${container}$" 2>/dev/null; then
+            container_found=true
+            break
+        fi
+    done
+    
+    if [[ "$container_found" = false ]]; then
+        info "No Claude containers found - restart policy will be set when containers are created"
+        return 0
+    fi
+    
+    # Update restart policy for existing containers
+    local updated_count=0
+    for container in "${containers[@]}"; do
+        if ${docker_cmd} docker ps -a --format '{{.Names}}' | grep -q "^${container}$" 2>/dev/null; then
+            info "  • Updating restart policy for $container..."
+            if ${docker_cmd} docker update --restart=unless-stopped "$container" >/dev/null 2>&1; then
+                ((updated_count++))
+            else
+                warning "    Could not update restart policy for $container (may not be running)"
+            fi
+        fi
+    done
+    
+    # Verify configuration
+    if [[ $updated_count -gt 0 ]]; then
+        success "Updated restart policy for $updated_count containers"
+        info "Verifying restart policy configuration..."
+        
+        for container in "${containers[@]}"; do
+            if ${docker_cmd} docker ps -a --format '{{.Names}}' | grep -q "^${container}$" 2>/dev/null; then
+                local policy=$(${docker_cmd} docker inspect "$container" --format='{{.HostConfig.RestartPolicy.Name}}' 2>/dev/null || echo "unknown")
+                if [[ "$policy" == "unless-stopped" ]]; then
+                    success "  ✓ $container: restart policy = unless-stopped"
+                else
+                    warning "  ⚠ $container: restart policy = $policy (expected: unless-stopped)"
+                fi
+            fi
+        done
+    else
+        info "No existing containers needed restart policy update"
+    fi
+    
+    success "Docker auto-restart configuration complete"
+    info "Containers will automatically start after system reboot"
+    return 0
 }
 
 # Setup learning system natively (fallback)
@@ -1914,6 +1973,9 @@ setup_learning_system_native() {
             export LEARNING_SYSTEM_STATUS="native_partial"
         fi
     fi
+    
+    # Configure auto-restart for any existing containers
+    configure_docker_autostart
     
     return 0
 }

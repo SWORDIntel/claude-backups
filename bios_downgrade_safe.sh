@@ -111,7 +111,7 @@ verify_target_available() {
     log "Checking if BIOS $TARGET_BIOS is available..."
     
     # Get available versions
-    local available_versions=$(fwupdmgr get-releases 2>/dev/null | grep "New version:" | awk '{print $3}' || echo "")
+    local available_versions=$(fwupdmgr get-releases 2>/dev/null | grep "New version:" | sed 's/.*New version:[[:space:]]*//' || echo "")
     
     if [[ -z "$available_versions" ]]; then
         error_exit "Could not retrieve available BIOS versions"
