@@ -52,8 +52,11 @@ Welcome to the comprehensive documentation for the Claude Agent Framework. This 
 
 ### ✨ Features
 **Path:** `features/`
+- [`docker-autostart-installer-enhancement.md`](features/docker-autostart-installer-enhancement.md) - Docker container auto-restart configuration
 - [`docker-database-integration.md`](features/docker-database-integration.md) - Docker database integration
 - [`docgen-file-saving-enhancements.md`](features/docgen-file-saving-enhancements.md) - Documentation file saving
+- [`shadowgit-avx2-optimization.md`](features/shadowgit-avx2-optimization.md) - AVX2 diff engine optimization
+- [`tpm2-integration/`](features/tpm2-integration/) - TPM2 hardware security integration
 
 ### 🔧 Fixes & Updates
 **Path:** `fixes/`

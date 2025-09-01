@@ -1172,7 +1172,16 @@ export METEOR_LAKE_OPTIMIZATION=true
 
 ## Recent Updates
 
-### Shadowgit AVX2 Optimization Complete (2025-08-31) 🚀 LATEST
+### Docker Auto-Restart Configuration Added (2025-08-31) 🔄 LATEST
+- **Installer Enhancement**: Added `configure_docker_autostart()` function to claude-installer.sh
+- **Auto-Restart Policy**: All Claude containers now configured with `unless-stopped` policy
+- **Containers Affected**: claude-postgres, claude-prometheus, claude-learning, claude-bridge
+- **Benefits**: Learning system automatically starts after system reboots
+- **Backward Compatible**: Applies to existing containers and new installations
+- **Documentation**: Complete guide at `docs/features/docker-autostart-installer-enhancement.md`
+- **Status**: PRODUCTION READY - Integrated in installer v10.0
+
+### Shadowgit AVX2 Optimization Complete (2025-08-31) 🚀
 - **AVX2 Diff Engine**: High-performance vectorized implementation achieving 930M lines/sec
 - **Location**: `/home/john/shadowgit/c_src_avx2/` - Complete AVX2-optimized version
 - **Performance**: Nearly 1 billion lines per second on large files (10K+ lines)
@@ -1701,8 +1710,8 @@ docker ps | grep claude-postgres
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| PostgreSQL Docker | ✅ Running | Port 5433, pgvector installed |
-| Learning System | ✅ Initialized | 5 tables created, indexes configured |
+| PostgreSQL Docker | ✅ Running | Port 5433, pgvector installed, auto-restarts on reboot |
+| Learning System | ✅ Fully Functional | 5 tables, 9 records, auto-restart configured |
 | TPM Documentation | ✅ Complete | Ready for implementation |
 | Agent Registry | ✅ Active | 80 agents registered (includes hardware agents) |
 | OpenVINO Runtime | ✅ Deployed | CPU/GPU/NPU plugins at `/opt/openvino/` |
@@ -1724,7 +1733,7 @@ docker ps | grep claude-postgres
 
 ---
 
-*Last Updated: 2025-08-30*  
+*Last Updated: 2025-08-31*  
 *Framework Version: 8.0*  
 *Agent Count: 80 specialized agents (78 active + 2 templates)*  
 *Hardware Agents: 4 vendor-specific agents (HARDWARE, HARDWARE-DELL, HARDWARE-HP, HARDWARE-INTEL)*  
