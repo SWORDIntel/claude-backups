@@ -93,3 +93,4 @@ database/data/postgresql/
 !database/sql/exports/csv/*.csv
 database/backups/
 database/data/
+database/data/postgresql/

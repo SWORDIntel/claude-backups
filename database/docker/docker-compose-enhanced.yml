@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  postgres:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.postgres-learning
+    container_name: claude-postgres
+    user: "999:999"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-claude_agent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claude_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-claude_agents_auth}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # PostgreSQL performance tuning for Intel Meteor Lake
+      POSTGRES_SHARED_BUFFERS: 1GB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 62GB
+      POSTGRES_WORK_MEM: 64MB
+      POSTGRES_MAX_WORKER_PROCESSES: 20
+      POSTGRES_MAX_PARALLEL_WORKERS_PER_GATHER: 5
+      POSTGRES_MAX_PARALLEL_WORKERS: 10
+    volumes:
+      # Persistent data storage
+      - ./data:/var/lib/postgresql/data/pgdata
+      # Backup storage (created locally if doesn't exist)
+      - ./backups:/backups
+      # Logs
+      - ./logs:/var/log/postgresql
+      # Initialization scripts
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+      # SIMD optimized operations
+      - ../:/opt/enhanced_learning:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - claude_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-claude_agent} -d ${POSTGRES_DB:-claude_agents_auth}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    # Resource limits for optimal performance
+    deploy:
+      resources:
+        limits:
+          memory: 62G
+          cpus: '20'
+        reservations:
+          memory: 31G
+          cpus: '10'
+
+  # PgBouncer for connection pooling
+  pgbouncer:
+    image: pgbouncer/pgbouncer:1.21.0
+    container_name: claude-pgbouncer
+    environment:
+      DATABASES_HOST: postgres
+      DATABASES_PORT: 5432
+      DATABASES_USER: ${POSTGRES_USER:-claude_agent}
+      DATABASES_PASSWORD: ${POSTGRES_PASSWORD:-claude_secure_password}
+      DATABASES_DBNAME: ${POSTGRES_DB:-claude_agents_auth}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 50
+    ports:
+      - "6432:6432"
+    networks:
+      - claude_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Redis for caching (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: claude-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - claude_network
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+
+networks:
+  claude_network:
+    external: true
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data
+  redis_data:
+    driver: local

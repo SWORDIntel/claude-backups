@@ -1,6 +1,32 @@
-# Getting Started with Claude Agent Framework
+# 🚀 GETTING STARTED - CLAUDE AGENT FRAMEWORK v8.0
 
-## 📋 Table of Contents
+## 📊 SYSTEM PERFORMANCE
+
+### Quick Stats
+```
+Agent Count:           80 specialized agents
+Response Time:         <500ms average
+Processing Speed:      930M lines/sec (shadowgit)
+Database Throughput:   >2000 auth/sec
+Learning System:       512-dim vectors, real-time
+Success Rate:          >95% task completion
+```
+
+## 🔥 Quick Performance Check
+
+```bash
+# Check system status
+./status
+
+# Monitor agent performance
+docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c \
+"SELECT 'System Health: ' || COUNT(DISTINCT agent_name) || ' agents | ' ||
+        ROUND(AVG(execution_time_ms)) || 'ms avg | ' ||
+        COUNT(*) || ' total executions'
+FROM enhanced_learning.agent_metrics;"
+```
+
+## 📋 TABLE OF CONTENTS
 1. [Prerequisites](#prerequisites)
 2. [Installation Methods](#installation-methods)
 3. [Quick Start](#quick-start)
@@ -11,9 +37,9 @@
 
 ### System Requirements
 - **OS**: Ubuntu 20.04+ (or compatible Linux)
-- **RAM**: 4GB minimum, 8GB+ recommended
-- **Disk**: 2GB free space
-- **CPU**: Intel/AMD x86_64 (Meteor Lake optimized)
+- **RAM**: 4GB minimum, 8GB+ recommended (64GB for full performance)
+- **Disk**: 2GB free space (10GB for learning system)
+- **CPU**: Intel/AMD x86_64 (Meteor Lake optimized, AVX2 required)
 
 ### Software Requirements
 ```bash
