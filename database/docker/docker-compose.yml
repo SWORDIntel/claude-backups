@@ -133,10 +133,8 @@ services:
 
 networks:
   claude-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+    external:
+      name: claude-backups_claude_network
 
 volumes:
   redis-data:

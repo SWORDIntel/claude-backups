@@ -1,0 +1,32 @@
+FROM postgres:16-alpine
+
+# Install build dependencies and pgvector
+RUN apk add --no-cache \
+    build-base \
+    postgresql16-dev \
+    git \
+    cmake \
+    && cd /tmp \
+    && git clone --branch v0.7.4 https://github.com/pgvector/pgvector.git \
+    && cd pgvector \
+    && make \
+    && make install \
+    && cd / \
+    && rm -rf /tmp/pgvector \
+    && apk del build-base postgresql16-dev git cmake
+
+# Copy initialization scripts
+COPY init-learning-system.sql /docker-entrypoint-initdb.d/01-init.sql
+COPY enable-extensions.sql /docker-entrypoint-initdb.d/02-extensions.sql
+
+# Set default environment
+ENV POSTGRES_USER=claude
+ENV POSTGRES_PASSWORD=learning2025
+ENV POSTGRES_DB=learning_system
+ENV POSTGRES_HOST_AUTH_METHOD=trust
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 \
+    CMD pg_isready -U claude -d learning_system || exit 1
+
+EXPOSE 5432

@@ -1,5 +1,5 @@
-# PostgreSQL 17 with pgvector extension for Claude Agent Framework
-FROM postgres:17
+# PostgreSQL 16 with pgvector extension for Claude Agent Framework
+FROM postgres:16
 
 LABEL maintainer="Claude Agent Framework"
 LABEL description="PostgreSQL 17 with pgvector extension for agent learning system"

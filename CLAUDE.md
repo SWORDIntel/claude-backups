@@ -8,7 +8,7 @@
 **Status**: PRODUCTION - Neural Integration Complete (Ready for Reboot)  
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)  
 **Latest Feature**: Claude Ultimate Wrapper v13.1 with Automatic Agent Registration  
-**Database**: PostgreSQL 16/17 with pgvector extension, enhanced JSON, VACUUM improvements, and ML learning capabilities  
+**Database**: PostgreSQL 16 with pgvector extension (DOCKER CONTAINER ONLY - Port 5433)  
 **Agent Count**: 80 specialized agents detected in agents/ directory (78 active agents plus 2 templates)  
 **Wrapper Version**: claude-wrapper-ultimate.sh v13.1 (symlinked installation)  
 **Neural Checkpoint**: [CHECKPOINT_NEURAL_READY.md](CHECKPOINT_NEURAL_READY.md) - Complete state snapshot ready for hardware activation  
@@ -755,6 +755,37 @@ CLAUDE_AGENTS_ROOT=$(pwd) ./switch.sh status   # Show detailed system status
 
 ## Critical Context
 
+### 🚨 CRITICAL DATABASE REQUIREMENT 🚨
+**ALL PostgreSQL operations MUST use the Docker container on port 5433**
+- **NEVER install PostgreSQL locally or use system PostgreSQL**
+- **NEVER run psql commands outside the Docker container**
+- **ALWAYS use**: `docker exec claude-postgres psql -U claude_agent -d claude_agents_auth`
+- **Container Management**: Use `docker-compose` in `database/docker/` directory
+- **Data Persistence**: All data stored in Docker volumes only
+- **Extensions**: pgvector and all extensions installed IN the container
+- **Incompatibility Issues**: External operations cause version conflicts
+
+#### Docker Container Access Commands:
+```bash
+# Start container
+cd /home/john/claude-backups/database && docker-compose -f docker/docker-compose.yml up -d postgres
+
+# Access PostgreSQL
+docker exec -it claude-postgres psql -U claude_agent -d claude_agents_auth
+
+# Run SQL file
+docker exec -i claude-postgres psql -U claude_agent -d claude_agents_auth < file.sql
+
+# Check status
+docker ps | grep claude-postgres
+docker logs claude-postgres
+
+# Stop container (preserves data)
+docker-compose -f docker/docker-compose.yml stop postgres
+
+# Remove container and data (CAUTION)
+docker-compose -f docker/docker-compose.yml down -v
+```
 
 ## Agent Access Methods
 

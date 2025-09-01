@@ -92,3 +92,4 @@ database/data/postgresql/
 !database/sql/exports/*.sql
 !database/sql/exports/csv/*.csv
 database/backups/
+database/data/

@@ -1,6 +1,10 @@
 #!/bin/bash
 #
 # Check Learning System Status and Export Data
+# 
+# 🚨 DOCKER CONTAINER ONLY - DO NOT USE SYSTEM POSTGRESQL 🚨
+# This script ONLY works with the Docker container on port 5433
+# NEVER modify to use local PostgreSQL installations
 #
 
 echo "=== Claude Learning System Status Check ==="
