@@ -1,6 +1,6 @@
 # Learning Data Export Summary
 
-**Date**: Mon Sep  1 05:08:23 AM BST 2025  
+**Date**: Mon Sep  1 07:54:56 PM BST 2025  
 **Export Location**: /home/john/claude-backups/database/sql/exports
 
 ## Exported Files
@@ -9,10 +9,10 @@
 
 
 ### CSV Exports (For Analysis)
-- /home/john/claude-backups/database/sql/exports/csv/agent_metrics.csv (2.2K)
-- /home/john/claude-backups/database/sql/exports/csv/interaction_logs.csv (75)
-- /home/john/claude-backups/database/sql/exports/csv/learning_feedback.csv (61)
-- /home/john/claude-backups/database/sql/exports/csv/model_performance.csv (69)
+- /home/john/claude-backups/database/sql/exports/csv/agent_metrics.csv (0)
+- /home/john/claude-backups/database/sql/exports/csv/interaction_logs.csv (0)
+- /home/john/claude-backups/database/sql/exports/csv/learning_feedback.csv (0)
+- /home/john/claude-backups/database/sql/exports/csv/model_performance.csv (0)
 - /home/john/claude-backups/database/sql/exports/csv/task_embeddings.csv (0)
 
 ## How to Restore
