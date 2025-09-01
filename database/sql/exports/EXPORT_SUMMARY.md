@@ -1,6 +1,6 @@
 # Learning Data Export Summary
 
-**Date**: Mon Sep  1 01:26:03 AM BST 2025  
+**Date**: Mon Sep  1 01:32:42 AM BST 2025  
 **Export Location**: /home/john/claude-backups/database/sql/exports
 
 ## Exported Files
@@ -9,7 +9,7 @@
 
 
 ### CSV Exports (For Analysis)
-- /home/john/claude-backups/database/sql/exports/csv/agent_metrics.csv (1.5K)
+- /home/john/claude-backups/database/sql/exports/csv/agent_metrics.csv (1.7K)
 - /home/john/claude-backups/database/sql/exports/csv/interaction_logs.csv (75)
 - /home/john/claude-backups/database/sql/exports/csv/learning_feedback.csv (61)
 - /home/john/claude-backups/database/sql/exports/csv/model_performance.csv (69)
