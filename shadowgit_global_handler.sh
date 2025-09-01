@@ -86,14 +86,27 @@ integrate_learning_system() {
     fi
 }
 
-# 3. BINARY COMMUNICATIONS BRIDGE (with availability check)
+# 3. BINARY COMMUNICATIONS BRIDGE (with AVX-optimized version)
 integrate_binary_comms() {
+    # Try optimized version first, then fallback to original
+    local optimized_bridge="${CLAUDE_BACKUPS_DIR}/agents/src/c/git_bridge_optimized"
     local binary_bridge="${CLAUDE_BACKUPS_DIR}/agents/binary-communications-system/agent_bridge"
     
-    if [[ -x "$binary_bridge" ]]; then
-        log_event "INFO" "Binary communications bridge activation"
+    if [[ -x "$optimized_bridge" ]]; then
+        log_event "INFO" "AVX-optimized bridge activation"
         
-        # Send event through binary bridge with timeout
+        # Use optimized bridge in silent mode for git hooks
+        timeout 2s "$optimized_bridge" \
+            --event-type="git.$GIT_HOOK_TYPE" \
+            --repo-path="$REPO_PATH" \
+            --timestamp="$TIMESTAMP" \
+            2>/dev/null || {
+                log_event "WARN" "Optimized bridge communication failed, continuing"
+            }
+    elif [[ -x "$binary_bridge" ]]; then
+        log_event "INFO" "Binary communications bridge activation (fallback)"
+        
+        # Send event through original binary bridge with timeout
         timeout 2s "$binary_bridge" \
             --event-type "git.$GIT_HOOK_TYPE" \
             --repo-path "$REPO_PATH" \
@@ -102,7 +115,7 @@ integrate_binary_comms() {
                 log_event "WARN" "Binary bridge communication failed, continuing"
             }
     else
-        log_event "DEBUG" "Binary communications bridge not available"
+        log_event "DEBUG" "No binary communications bridge available"
     fi
 }
 
