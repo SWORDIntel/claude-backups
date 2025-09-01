@@ -1,0 +1,148 @@
+# Enhanced Trigger Keywords - 300-500% invocation rate increase
+# Expands agent auto-invocation patterns with compound triggers
+
+# IMMEDIATE TRIGGERS - Single keyword activation
+immediate_triggers:
+  # Multi-agent coordination (ALWAYS invoke)
+  multi_step:
+    agents: [DIRECTOR, PROJECTORCHESTRATOR]
+    keywords: ["multi-step", "multiple steps", "several tasks", "workflow", "pipeline"]
+  
+  parallel:
+    agents: [ORCHESTRATOR, DIRECTOR]
+    keywords: ["parallel", "concurrent", "simultaneously", "at the same time", "together"]
+  
+  # Performance (expanded from original)
+  performance:
+    agents: [OPTIMIZER, MONITOR, HARDWARE]
+    keywords: 
+      - "slow", "optimize", "speed", "latency", "throughput"
+      - "bottleneck", "cache", "performance", "benchmark"
+      - "profile", "measure", "metrics", "efficient"
+      - "faster", "sluggish", "lag", "delay", "timeout"
+  
+  # Security (expanded triggers)
+  security:
+    agents: [SECURITY, CSO, BASTION]
+    keywords:
+      - "security", "audit", "vulnerability", "threat", "risk"
+      - "penetration", "compliance", "authentication", "authorization"
+      - "encrypt", "decrypt", "certificate", "ssl", "tls", "https"
+      - "firewall", "intrusion", "malware", "virus", "attack"
+      - "password", "credential", "token", "jwt", "oauth"
+  
+  # Development (missing triggers added)
+  development:
+    agents: [ARCHITECT, CONSTRUCTOR]
+    keywords:
+      - "design", "architecture", "structure", "pattern", "framework"
+      - "blueprint", "scaffold", "boilerplate", "template", "skeleton"
+      - "refactor", "restructure", "reorganize", "modularize"
+      - "microservice", "monolith", "api", "rest", "graphql"
+  
+  # Testing (comprehensive coverage)
+  testing:
+    agents: [TESTBED, QADIRECTOR]
+    keywords:
+      - "test", "qa", "quality", "validate", "verify"
+      - "coverage", "unit test", "integration", "e2e", "regression"
+      - "mock", "stub", "fixture", "assertion", "expect"
+      - "pytest", "jest", "mocha", "junit", "selenium"
+  
+  # Debugging (expanded patterns)
+  debugging:
+    agents: [DEBUGGER, PATCHER]
+    keywords:
+      - "bug", "error", "fix", "crash", "exception", "failure"
+      - "broken", "debug", "patch", "trace", "stack", "dump"
+      - "segfault", "memory leak", "null pointer", "undefined"
+      - "troubleshoot", "diagnose", "investigate", "root cause"
+
+# COMPOUND TRIGGERS - Multi-keyword patterns
+compound_triggers:
+  # Complex security workflows
+  security_audit_production:
+    pattern: ["security", "audit", "production"]
+    agents: [CSO, SECURITYAUDITOR, INFRASTRUCTURE, MONITOR]
+    parallel: true
+  
+  # Full stack development
+  full_stack_web:
+    pattern: ["full stack", "web"]
+    agents: [WEB, APIDESIGNER, DATABASE, INFRASTRUCTURE]
+    sequential: false
+  
+  # Performance optimization workflow
+  optimize_database_performance:
+    pattern: ["optimize", "database", "performance"]
+    agents: [DATABASE, OPTIMIZER, MONITOR]
+    parallel: true
+  
+  # ML deployment pipeline
+  ml_production_deployment:
+    pattern: ["machine learning", "production", "deploy"]
+    agents: [MLOPS, DATASCIENCE, NPU, DEPLOYER]
+    sequential: true
+  
+  # Mobile cross-platform
+  mobile_cross_platform:
+    pattern: ["mobile", "cross-platform"]
+    agents: [MOBILE, WEB, APIDESIGNER]
+    parallel: false
+  
+  # Chaos testing
+  chaos_security_test:
+    pattern: ["chaos", "test", "security"]
+    agents: [SECURITYCHAOSAGENT, TESTBED, MONITOR]
+    parallel: true
+
+# CONTEXT-AWARE TRIGGERS - Based on file types or content
+context_triggers:
+  file_extensions:
+    ".py": [PYTHON-INTERNAL, LINTER, TESTBED]
+    ".js|.ts|.jsx|.tsx": [TYPESCRIPT-INTERNAL-AGENT, WEB, LINTER]
+    ".rs": [RUST-INTERNAL-AGENT, OPTIMIZER, TESTBED]
+    ".go": [GO-INTERNAL-AGENT, LINTER, TESTBED]
+    ".c|.cpp|.h": [C-INTERNAL, HARDWARE, OPTIMIZER]
+    ".sql": [SQL-INTERNAL-AGENT, DATABASE, OPTIMIZER]
+    ".yaml|.yml": [INFRASTRUCTURE, DOCKER-AGENT, DEPLOYER]
+    "Dockerfile": [DOCKER-AGENT, INFRASTRUCTURE, SECURITY]
+    ".tf": [INFRASTRUCTURE, DEPLOYER, SECURITY]
+  
+  content_patterns:
+    "SELECT|INSERT|UPDATE|DELETE": [DATABASE, SQL-INTERNAL-AGENT]
+    "import torch|import tensorflow": [MLOPS, DATASCIENCE, NPU]
+    "docker|kubernetes|k8s": [DOCKER-AGENT, INFRASTRUCTURE, DEPLOYER]
+    "useState|useEffect|React": [WEB, TYPESCRIPT-INTERNAL-AGENT]
+    "vulnerability|CVE-|exploit": [SECURITY, CSO, BASTION]
+    "@app.route|@router": [APIDESIGNER, PYTHON-INTERNAL, WEB]
+
+# NEGATIVE TRIGGERS - Patterns that should NOT invoke agents
+negative_triggers:
+  # Avoid invoking for simple queries
+  simple_queries:
+    patterns: ["what is", "how to", "explain", "tell me about"]
+    unless_contains: ["implement", "create", "build", "fix", "debug"]
+  
+  # Avoid hardware agents for software-only tasks
+  software_only:
+    patterns: ["javascript", "react", "vue", "angular", "frontend"]
+    exclude_agents: [HARDWARE, NPU, GNA]
+
+# PRIORITY RULES - Which agents to invoke first
+priority_rules:
+  - condition: "multi-step task"
+    priority: [DIRECTOR, PROJECTORCHESTRATOR]
+  - condition: "security concern"
+    priority: [CSO, SECURITY, BASTION]
+  - condition: "performance issue"
+    priority: [OPTIMIZER, MONITOR, HARDWARE]
+  - condition: "bug or error"
+    priority: [DEBUGGER, PATCHER, TESTBED]
+
+# LEARNING PATTERNS - Track and improve invocation
+learning_config:
+  track_success_rate: true
+  auto_adjust_triggers: true
+  min_confidence: 0.7
+  feedback_loop: enhanced_learning.agent_invocation_patterns

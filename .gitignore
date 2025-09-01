@@ -89,8 +89,8 @@ database/data/postgresql/
 
 # PostgreSQL Docker data - track exports only
 database/data/postgresql/
+database/docker/data/
 !database/sql/exports/*.sql
 !database/sql/exports/csv/*.csv
 database/backups/
 database/data/
-database/data/postgresql/
