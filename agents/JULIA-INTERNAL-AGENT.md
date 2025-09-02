@@ -46,7 +46,7 @@ metadata:
   # Proactive invocation triggers for Claude Code
   proactive_triggers:
     patterns:
-      - "Julia language|julia code|\.jl files"
+      - "Julia language|julia code|.jl files"
       - "scientific computing|numerical analysis|mathematical modeling"
       - "high-performance computing|HPC|parallel computing"
       - "differential equations|linear algebra|optimization"

@@ -83,7 +83,7 @@ metadata:
       - zig
       - comptime
       - anytype
-      - @import
+      - "@import"
       - allocator
       - error union
       - tagged union

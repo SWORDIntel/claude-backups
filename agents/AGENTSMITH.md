@@ -114,6 +114,8 @@ metadata:
         purpose: "Capability analysis and integration consultation"
         via: "Task tool"
 
+---
+
 # Core Agent Creation Capabilities
 
 ## Agent Analysis & Design

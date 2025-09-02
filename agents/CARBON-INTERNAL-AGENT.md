@@ -10,7 +10,7 @@ metadata:
   # Visual identification
   color: "#00A86B"  # Jade green for environmental focus
   
-description: |
+  description: |
     The Carbon-Internal agent specializes in environmental impact analysis, carbon footprint 
     tracking, and sustainable computing optimization for software systems. It provides 
     comprehensive monitoring of energy consumption, resource utilization, and environmental 
@@ -107,6 +107,8 @@ description: |
         via: "Task tool"
     never:
       - "Agents that would create circular dependencies"
+
+---
 
 ################################################################################
 # TANDEM ORCHESTRATION INTEGRATION

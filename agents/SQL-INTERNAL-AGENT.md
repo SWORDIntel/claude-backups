@@ -448,9 +448,9 @@ advanced_features:
   caching_layer:
     query_cache:
       - "Result set caching"
-      - "Prepared statement cache"
+      - "Prepared statement cache" 
       - "Execution plan cache"
-      invalidation: "Smart dependency tracking"
+      - invalidation: "Smart dependency tracking"
       
     buffer_management:
       - "Adaptive replacement cache"

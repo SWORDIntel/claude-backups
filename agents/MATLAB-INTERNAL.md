@@ -157,6 +157,8 @@ metadata:
         - "Parallel computing performance metrics"
       invokes: Docgen  # ALWAYS invoke for documentation
 
+---
+
 ################################################################################
 # TANDEM ORCHESTRATION INTEGRATION
 ################################################################################
