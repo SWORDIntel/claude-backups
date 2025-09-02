@@ -33,7 +33,7 @@ FROM enhanced_learning.shadowgit_events;"
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)  
 **Latest Feature**: Complete Optimization System (Trie, pgvector, Caching, Async Pipeline)  
 **Database**: PostgreSQL 16 with pgvector (DOCKER ONLY - Port 5433, auto-restart enabled)  
-**Agent Count**: 80 specialized agents (78 active + 2 templates)  
+**Agent Count**: 86 specialized agents (84 active + 2 templates)  
 **Learning Coverage**: ALL Git repositories system-wide via global hooks  
 **Neural Checkpoint**: [CHECKPOINT_NEURAL_READY.md](CHECKPOINT_NEURAL_READY.md) - Ready for activation  
 **OpenVINO Runtime**: 2025.4.0 with CPU/GPU/NPU at `/opt/openvino/`  
@@ -125,7 +125,7 @@ The wrapper automatically finds agents in:
 3. Current directory + `/agents`
 4. Fallback to `$HOME/agents`
 
-## Agent Ecosystem (76 Files, 74 Active Agents)
+## Agent Ecosystem (86 Files, 84 Active Agents)
 
 ### Command & Control (2 agents)
 - **DIRECTOR**: Strategic command and control (CRITICAL)

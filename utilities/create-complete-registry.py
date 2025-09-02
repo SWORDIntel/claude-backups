@@ -1,57 +1,45 @@
 #!/usr/bin/env python3
 """
-Create complete agent registry with all 70 agents
+Create clean agent registry with only UPPERCASE agents from actual files
 """
 
 import json
 from pathlib import Path
+import os
 
 def main():
-    # All agents from the provided list
-    agent_list = [
-        "androidmobile", "apidesigner", "architect", "apt41-defense-agent",
-        "apt41-redteam-agent", "assembly-internal-agent", "bastion", "bgp-blue-team",
-        "bgp-purple-team-agent", "bgp-red-team", "c-internal", "carbon-internal-agent",
-        "cisco-agent", "claudecode-promptinjector", "cognitive_defense_agent",
-        "constructor", "cpp_internal_agent", "cryptoexpert", "cso", "database",
-        "datascience", "ddwrt-agent", "debugger", "deployer", "director",
-        "docker-agent", "docgen", "ghost_protocol_agent", "gna", "go-internal-agent",
-        "infrastructure", "intergration", "iot-access-control-agent",
-        "java-internal-agent", "kotlin-internal-agent", "leadengineer", "linter",
-        "mlops", "monitor", "npu", "nsa", "optimizer", "oversight", "packager",
-        "patcher", "planner", "projectorchestrator", "prompt-defender",
-        "prompt-injector", "proxmox-agent", "psyops_agent", "pygui",
-        "python-internal", "qadirector", "quantumguard", "redteamorchestrator",
-        "researcher", "rust-internal-agent", "security", "securityauditor",
-        "securitychaosagent", "sql-internal-agent", "template", "testbed",
-        "tui", "typescript-internal-agent", "web", "wrapper-liberation",
-        "wrapper-liberation-pro", "zig-internal-agent"
-    ]
+    # Get actual agent files from the agents directory
+    agents_dir = Path("agents")
+    if not agents_dir.exists():
+        print("❌ agents/ directory not found")
+        return
+        
+    # Find all .md files, exclude non-agent files
+    exclude_patterns = ['README', 'Template', 'WHERE_I_AM', 'Agents Readme', 'TEMPLATE']
+    
+    agent_files = []
+    for md_file in agents_dir.glob("*.md"):
+        if not any(pattern in md_file.name for pattern in exclude_patterns):
+            agent_name = md_file.stem  # filename without .md
+            # Only include UPPERCASE agents
+            if agent_name.isupper():
+                agent_files.append(agent_name)
+    
+    print(f"📁 Found {len(agent_files)} valid UPPERCASE agent files")
     
     agents = {}
     
-    for agent_name in agent_list:
-        if agent_name == "template":  # Skip template
-            continue
-            
-        # Determine file format - UPPERCASE or lowercase with extensions
-        if "-" in agent_name or "_" in agent_name:
-            # Lowercase files like "apt41-defense-agent.md"
-            filename = f"{agent_name}.md"
-            display_name = format_display_name(agent_name)
-        else:
-            # UPPERCASE files like "DOCGEN.md"  
-            filename = f"{agent_name.upper()}.md"
-            display_name = agent_name.upper()
-        
+    # Process only the actual UPPERCASE agent files found
+    for agent_name in sorted(agent_files):
+        filename = f"{agent_name}.md"
         file_path = f"agents/{filename}"
         category = determine_category(agent_name)
         description = create_description(agent_name, category)
         
-        # Create agent info
+        # Create single agent entry - NO DUPLICATES
         agent_info = {
-            "name": display_name,
-            "display_name": display_name,
+            "name": agent_name,
+            "display_name": agent_name,
             "file_path": file_path,
             "original_filename": filename,
             "category": category,
@@ -60,52 +48,39 @@ def main():
             "tools": ["Task"]
         }
         
-        # Store with multiple case variations for maximum compatibility
-        agents[display_name] = agent_info  # DOCGEN
-        agents[display_name.lower()] = agent_info  # docgen
-        agents[agent_name] = agent_info  # original format
-        if agent_name != display_name.lower():
-            agents[agent_name.lower()] = agent_info
-        # Title case
-        agents[display_name.title()] = agent_info  # Docgen
+        # Store only UPPERCASE version - NO case variations
+        agents[agent_name] = agent_info
         
-    # Create registry
+    # Create clean registry
     registry = {
         "agents": agents,
-        "version": "3.0",
-        "total_agents": len(agent_list) - 1,  # -1 for template
-        "total_aliases": len(agents),
-        "updated": "2025-08-25",
-        "description": "Complete agent registry with case-insensitive lookup"
+        "metadata": {
+            "version": "9.0.0",
+            "total_agents": len(agent_files),
+            "generated": "2025-01-14",
+            "description": "Clean agent registry with only UPPERCASE agents"
+        }
     }
     
-    # Ensure cache directory exists
-    cache_dir = Path.home() / '.cache' / 'claude'
-    cache_dir.mkdir(parents=True, exist_ok=True)
+    # Save registry to config directory (not cache)
+    registry_file = Path("config/registered_agents.json")
+    registry_file.parent.mkdir(parents=True, exist_ok=True)
     
-    # Save registry
-    registry_file = cache_dir / 'registered_agents.json'
-    registry_file.write_text(json.dumps(registry, indent=2))
+    with open(registry_file, 'w') as f:
+        json.dump(registry, f, indent=2)
     
-    print(f"✅ Complete registry created!")
-    print(f"  • Unique agents: {len(agent_list) - 1}")
-    print(f"  • Total aliases: {len(agents)}")
+    print(f"✅ Clean registry created!")
+    print(f"  • Total agents: {len(agent_files)}")
     print(f"  • Registry file: {registry_file}")
+    print(f"  • No duplicates, UPPERCASE only")
     
-    # Test key agents
-    test_cases = [
-        'DOCGEN', 'docgen', 'Docgen',
-        'DIRECTOR', 'director', 'Director',
-        'SECURITY', 'security', 'Security',
-        'apt41-defense-agent', 'APT41DefenseAgent'
-    ]
+    # Show sample agents
+    print(f"\n📋 Sample agents registered:")
+    for i, agent in enumerate(sorted(agents.keys())[:10], 1):
+        print(f"  {i:2d}. {agent}")
     
-    print(f"\n🧪 Testing key lookups:")
-    for test in test_cases:
-        if test in agents:
-            print(f"  ✅ {test} -> {agents[test]['original_filename']}")
-        else:
-            print(f"  ❌ {test} not found")
+    if len(agents) > 10:
+        print(f"  ... and {len(agents) - 10} more")
 
 def format_display_name(agent_name):
     """Format agent name for display"""
@@ -121,67 +96,67 @@ def format_display_name(agent_name):
         return agent_name.upper()
 
 def determine_category(agent_name):
-    """Determine category from agent name"""
+    """Determine category from UPPERCASE agent name"""
     name_lower = agent_name.lower()
     
     # Security category
-    if any(word in name_lower for word in ['security', 'audit', 'crypto', 'quantum', 'defense', 'ghost', 'psyops', 'bastion']):
+    if any(word in name_lower for word in ['security', 'audit', 'crypto', 'quantum', 'defense', 'ghost', 'psyops', 'bastion', 'apt41', 'bgp', 'chaos', 'prompt']):
         return 'security'
     
     # Command & Control
-    elif any(word in name_lower for word in ['director', 'orchestrator', 'planner', 'cso']):
+    elif any(word in name_lower for word in ['director', 'orchestrator', 'planner', 'cso', 'oversight']):
         return 'command'
     
     # Development
-    elif any(word in name_lower for word in ['architect', 'constructor', 'debugger', 'linter', 'testbed', 'patcher']):
+    elif any(word in name_lower for word in ['architect', 'constructor', 'debugger', 'linter', 'testbed', 'patcher', 'agentsmith']):
         return 'development'
     
     # Infrastructure
-    elif any(word in name_lower for word in ['infrastructure', 'deployer', 'monitor', 'packager', 'docker', 'proxmox']):
+    elif any(word in name_lower for word in ['infrastructure', 'deployer', 'monitor', 'packager', 'docker', 'proxmox', 'ddwrt', 'cisco']):
         return 'infrastructure'
     
-    # Languages
-    elif any(word in name_lower for word in ['python', 'java', 'rust', 'internal', 'typescript', 'kotlin', 'assembly', 'cpp', 'carbon', 'zig']):
+    # Languages (INTERNAL agents)
+    elif 'internal' in name_lower or any(word in name_lower for word in ['python', 'java', 'rust', 'typescript', 'kotlin', 'assembly', 'cpp', 'carbon', 'zig', 'dart', 'php', 'sql', 'matlab', 'julia']):
         return 'languages'
     
     # Platforms
-    elif any(word in name_lower for word in ['web', 'mobile', 'android', 'gui', 'tui']):
+    elif any(word in name_lower for word in ['web', 'mobile', 'android', 'gui', 'tui', 'pygui']):
         return 'platforms'
     
-    # Network
-    elif any(word in name_lower for word in ['bgp', 'cisco', 'iot', 'ddwrt']):
-        return 'network'
-    
     # Data & ML
-    elif any(word in name_lower for word in ['datascience', 'mlops', 'sql', 'database']):
+    elif any(word in name_lower for word in ['datascience', 'mlops', 'database', 'researcher']):
         return 'data'
         
     # Hardware
-    elif any(word in name_lower for word in ['npu', 'gna', 'leadengineer']):
+    elif any(word in name_lower for word in ['npu', 'gna', 'leadengineer', 'hardware', 'optimizer']):
         return 'hardware'
     
     else:
         return 'specialized'
 
 def create_description(agent_name, category):
-    """Create description for agent"""
+    """Create description for UPPERCASE agent"""
+    name_lower = agent_name.lower()
+    
+    # Specific descriptions for key agents
     descriptions = {
-        'docgen': 'Documentation generation specialist',
-        'director': 'Strategic command and control',
-        'security': 'Comprehensive security analysis',
-        'architect': 'System design and architecture',
-        'debugger': 'Debug and troubleshooting specialist',
-        'monitor': 'System monitoring and observability',
-        'deployer': 'Deployment and release management',
-        'python-internal': 'Python development specialist',
-        'web': 'Web development and frameworks',
-        'database': 'Database design and optimization'
+        'DOCGEN': 'Documentation generation specialist',
+        'DIRECTOR': 'Strategic command and control',
+        'SECURITY': 'Comprehensive security analysis',
+        'ARCHITECT': 'System design and architecture',
+        'DEBUGGER': 'Debug and troubleshooting specialist',
+        'MONITOR': 'System monitoring and observability',
+        'DEPLOYER': 'Deployment and release management',
+        'PYTHON-INTERNAL': 'Python development specialist',
+        'WEB': 'Web development and frameworks',
+        'DATABASE': 'Database design and optimization',
+        'PROJECTORCHESTRATOR': 'Tactical coordination nexus'
     }
     
     if agent_name in descriptions:
         return descriptions[agent_name]
     else:
-        return f"{format_display_name(agent_name)} specialized agent"
+        return f"{agent_name} specialist"
 
 if __name__ == "__main__":
     main()

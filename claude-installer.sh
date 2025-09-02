@@ -1570,6 +1570,18 @@ check_docker_prerequisites() {
 
 # Choose database deployment method
 choose_database_deployment() {
+    # Auto-mode: Use Docker if available, otherwise native
+    if [[ "$AUTO_MODE" == "true" ]]; then
+        if [[ "$DOCKER_AVAILABLE" == "true" ]] && [[ "$COMPOSE_AVAILABLE" == "true" ]]; then
+            export DATABASE_DEPLOYMENT_METHOD="docker"
+            info "Auto-mode: Using Docker deployment (recommended)"
+        else
+            export DATABASE_DEPLOYMENT_METHOD="native"
+            info "Auto-mode: Using native installation (Docker unavailable)"
+        fi
+        return 0
+    fi
+    
     echo ""
     print_section "Database Deployment Options"
     
