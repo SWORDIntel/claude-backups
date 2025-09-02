@@ -1,0 +1,83 @@
+{
+  "current_speedup": 0.005506003227303809,
+  "target_speedup": 3.8,
+  "achievement_percentage": 0.14630237146835834,
+  "bottlenecks": [
+    "AVX-512 not available - limited to AVX2 (2x potential speedup lost)",
+    "Intel NPU not being utilized (10x AI acceleration potential)",
+    "io_uring async I/O not being utilized (3x I/O speedup potential)",
+    "Phase 3 async pipeline not integrated (10x orchestration speedup lost)",
+    "Small test files limit vectorization efficiency",
+    "Sequential processing not utilizing all 6 P-cores effectively"
+  ],
+  "optimizations": [
+    {
+      "name": "AVX-512 Vectorization Upgrade",
+      "potential_speedup": "2.0x",
+      "description": "Upgrade Shadowgit from AVX2 to AVX-512 when hardware supports it",
+      "implementation": "Modify shadowgit_avx2_diff.c to use 512-bit vector operations",
+      "impact": "High",
+      "effort": "Medium"
+    },
+    {
+      "name": "Intel NPU AI Acceleration",
+      "potential_speedup": "10.0x",
+      "description": "Implement AI-assisted diff pattern recognition using Intel NPU",
+      "implementation": "Create OpenVINO model for diff pattern prediction and line similarity",
+      "impact": "Very High",
+      "effort": "High"
+    },
+    {
+      "name": "Async I/O with io_uring",
+      "potential_speedup": "3.0x",
+      "description": "Replace synchronous file I/O with async io_uring operations",
+      "implementation": "Integrate io_uring for file reading in parallel with processing",
+      "impact": "High",
+      "effort": "Medium"
+    },
+    {
+      "name": "Multi-core Parallel Processing",
+      "potential_speedup": "4.0x",
+      "description": "Process multiple diffs in parallel across P-cores",
+      "implementation": "Implement work-stealing queue with P-core affinity",
+      "impact": "High",
+      "effort": "Low"
+    },
+    {
+      "name": "Memory Pool Optimization",
+      "potential_speedup": "1.5x",
+      "description": "Use memory pools to reduce allocation overhead",
+      "implementation": "Pre-allocate aligned memory pools for diff operations",
+      "impact": "Medium",
+      "effort": "Low"
+    }
+  ],
+  "recommendations": [
+    "CRITICAL: Fix baseline performance regression - should match AVX2 performance",
+    "1. IMMEDIATE: Implement parallel processing across all 6 P-cores",
+    "2. IMMEDIATE: Use memory pools to reduce allocation overhead",
+    "3. IMMEDIATE: Increase test file sizes to improve vectorization efficiency",
+    "4. SHORT-TERM: Integrate io_uring async I/O for 3x I/O speedup",
+    "5. SHORT-TERM: Enable Phase 3 async pipeline integration",
+    "6. SHORT-TERM: Implement work-stealing queue for better load balancing",
+    "7. LONG-TERM: Develop Intel NPU AI-assisted diff recognition (10x potential)",
+    "8. LONG-TERM: Prepare AVX-512 upgrade path for future hardware",
+    "9. LONG-TERM: Implement streaming diff for very large files"
+  ],
+  "hardware_utilization": {
+    "cpu_cores_available": 22,
+    "p_cores_available": 6,
+    "e_cores_available": 8,
+    "lp_e_cores_available": 2,
+    "avx512_available": false,
+    "npu_available": true,
+    "io_uring_available": true,
+    "current_utilization": {
+      "p_cores_used": 6,
+      "avx512_utilized": 0,
+      "npu_utilized": 0,
+      "io_uring_utilized": 0
+    }
+  },
+  "analysis_timestamp": 1756813924.792731
+}

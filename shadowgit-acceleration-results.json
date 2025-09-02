@@ -1,0 +1,35 @@
+{
+  "total_time": 3.0002949237823486,
+  "tasks_submitted": 21,
+  "final_metrics": {
+    "shadowgit_summary": {
+      "total_tasks": 21,
+      "completed_tasks": 21,
+      "runtime_seconds": 3.051994800567627,
+      "tasks_per_second": 6.88074566709429
+    },
+    "performance_metrics": {
+      "baseline_lines_per_sec": 930000000.0,
+      "current_lines_per_sec": 5120583.001392542,
+      "peak_lines_per_sec": 7952000.452945945,
+      "target_lines_per_sec": 3500000000.0,
+      "speedup_achieved": 0.005506003227303809,
+      "target_achievement_percent": 0.14630237146835834
+    },
+    "hardware_utilization": {
+      "avx512_tasks": 0,
+      "npu_tasks": 0,
+      "io_uring_operations": 0,
+      "c_library_available": true,
+      "phase3_components_available": true,
+      "integration_available": false
+    },
+    "system_status": {
+      "shadowgit_c_active": true,
+      "phase3_pipeline_active": false,
+      "monitoring_active": true,
+      "target_met": false
+    }
+  },
+  "success": false
+}
