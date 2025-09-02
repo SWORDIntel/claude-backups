@@ -1,20 +1,20 @@
 {
-  "total_time": 3.0011727809906006,
+  "total_time": 3.000927448272705,
   "tasks_submitted": 21,
   "final_metrics": {
     "shadowgit_summary": {
       "total_tasks": 21,
       "completed_tasks": 21,
-      "runtime_seconds": 3.075892686843872,
-      "tasks_per_second": 6.827286299623083
+      "runtime_seconds": 3.0658059120178223,
+      "tasks_per_second": 6.849748680332612
     },
     "performance_metrics": {
       "baseline_lines_per_sec": 930000000.0,
-      "current_lines_per_sec": 2484262.216041613,
-      "peak_lines_per_sec": 4284797.645075214,
+      "current_lines_per_sec": 2314247.8364357483,
+      "peak_lines_per_sec": 7293653.427470087,
       "target_lines_per_sec": 3500000000.0,
-      "speedup_achieved": 0.002671249694668401,
-      "target_achievement_percent": 0.0709789204583318
+      "speedup_achieved": 0.00248843853380188,
+      "target_achievement_percent": 0.06612136675530708
     },
     "hardware_utilization": {
       "avx512_tasks": 0,
