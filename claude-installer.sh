@@ -4142,7 +4142,7 @@ parse_arguments() {
                 exit 0
                 ;;
             *)
-                print_warning "Unknown option: $1"
+                warning "Unknown option: $1"
                 shift
                 ;;
         esac
