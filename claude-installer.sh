@@ -1572,6 +1572,7 @@ check_docker_prerequisites() {
 choose_database_deployment() {
     # Auto-mode: Use Docker if available, otherwise native
     if [[ "$AUTO_MODE" == "true" ]]; then
+        info "Auto-mode detected: AUTO_MODE=$AUTO_MODE"
         if [[ "$DOCKER_AVAILABLE" == "true" ]] && [[ "$COMPOSE_AVAILABLE" == "true" ]]; then
             export DATABASE_DEPLOYMENT_METHOD="docker"
             info "Auto-mode: Using Docker deployment (recommended)"
@@ -1602,9 +1603,18 @@ choose_database_deployment() {
     echo "   - Limited agent capabilities"
     echo ""
     
+    local attempt_count=0
+    local max_attempts=5
+    
     while true; do
         printf "Select deployment method [1-3]: "
-        read -r choice
+        
+        # Timeout mechanism to prevent infinite loops
+        if ! read -r -t 30 choice; then
+            warning "Input timeout. Defaulting to Docker deployment."
+            export DATABASE_DEPLOYMENT_METHOD="docker"
+            return 0
+        fi
         
         case "$choice" in
             1)
@@ -1626,7 +1636,19 @@ choose_database_deployment() {
                 return 0
                 ;;
             *)
+                ((attempt_count++))
                 warning "Invalid choice. Please select 1, 2, or 3."
+                
+                # Safety mechanism: default to Docker after multiple failed attempts
+                if [[ $attempt_count -ge $max_attempts ]]; then
+                    warning "Too many invalid attempts. Defaulting to Docker deployment."
+                    if [[ "$DOCKER_AVAILABLE" == "true" ]] && [[ "$COMPOSE_AVAILABLE" == "true" ]]; then
+                        export DATABASE_DEPLOYMENT_METHOD="docker"
+                    else
+                        export DATABASE_DEPLOYMENT_METHOD="native"
+                    fi
+                    return 0
+                fi
                 ;;
         esac
     done
@@ -4053,7 +4075,8 @@ parse_arguments() {
     SKIP_TESTS=false
     VERBOSE=false
     SKIP_WRAPPER_INTEGRATION=false
-    AUTO_MODE=false
+    # Check environment variable first, then default to false
+    AUTO_MODE="${AUTO_MODE:-false}"
     WITH_OPTIMIZER=true  # Default to installing Phase 3 optimizer
     
     while [[ $# -gt 0 ]]; do
