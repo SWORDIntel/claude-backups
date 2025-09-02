@@ -1,6 +1,6 @@
 # Learning Data Export Summary
 
-**Date**: Tue Sep  2 05:05:42 AM BST 2025  
+**Date**: Tue Sep  2 06:28:00 AM BST 2025  
 **Export Location**: /home/john/claude-backups/database/sql/exports
 
 ## Exported Files
