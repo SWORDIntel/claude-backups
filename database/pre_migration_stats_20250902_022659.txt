@@ -1,0 +1,10 @@
+    schemaname    |       tablename       | inserts | updates | deletes | live_rows | dead_rows | last_vacuum | last_analyze 
+------------------+-----------------------+---------+---------+---------+-----------+-----------+-------------+--------------
+ context_chopping | query_patterns        |       1 |       0 |       0 |         1 |         0 |             | 
+ context_chopping | context_chunks        |      26 |       0 |       0 |        16 |        10 |             | 
+ context_chopping | window_configurations |       0 |       0 |       0 |         0 |         0 |             | 
+ context_chopping | performance_stats     |       0 |       0 |       0 |         0 |         0 |             | 
+ context_chopping | learning_feedback     |       0 |       0 |       0 |         0 |         0 |             | 
+ context_chopping | shadowgit_analysis    |       0 |       0 |       0 |         0 |         0 |             | 
+(6 rows)
+

@@ -21,17 +21,19 @@ class CachedResponse:
     tokens_saved: int = 0
 
 class TokenOptimizer:
-    """Reduces token usage across agent interactions by 50-70%"""
+    """Reduces token usage across agent interactions by 50-70% with multi-level caching"""
     
-    def __init__(self, cache_size: int = 1000, ttl_seconds: int = 3600):
+    def __init__(self, cache_size: int = 1000, ttl_seconds: int = 3600, multilevel_cache=None):
         self.cache = OrderedDict()
         self.cache_size = cache_size
         self.ttl_seconds = ttl_seconds
+        self.multilevel_cache = multilevel_cache  # Integration with multi-level cache system
         self.stats = {
             "total_queries": 0,
             "cache_hits": 0,
             "tokens_saved": 0,
-            "compression_ratio": 0.0
+            "compression_ratio": 0.0,
+            "multilevel_cache_hits": 0
         }
         
         # Common verbose patterns to compress
@@ -104,11 +106,12 @@ class TokenOptimizer:
             key_data += json.dumps(context, sort_keys=True)
         return hashlib.md5(key_data.encode()).hexdigest()
     
-    def get_cached_response(self, query: str, context: Optional[Dict] = None) -> Optional[str]:
-        """Retrieve cached response if available"""
+    async def get_cached_response(self, query: str, context: Optional[Dict] = None) -> Optional[str]:
+        """Retrieve cached response if available (now supports multi-level caching)"""
         key = self.cache_key(query, context)
         self.stats["total_queries"] += 1
         
+        # Try local cache first (L1)
         if key in self.cache:
             cached = self.cache[key]
             
@@ -129,20 +132,46 @@ class TokenOptimizer:
                 # Expired
                 del self.cache[key]
         
+        # Try multi-level cache if available (L2/L3)
+        if self.multilevel_cache:
+            try:
+                cached_response = await self.multilevel_cache.get(f"token_opt:{key}")
+                if cached_response:
+                    self.stats["multilevel_cache_hits"] += 1
+                    # Promote to local cache
+                    self.cache_response(query, cached_response, context)
+                    return cached_response
+            except Exception as e:
+                # Fallback gracefully if multi-level cache fails
+                pass
+        
         return None
     
-    def cache_response(self, query: str, response: str, context: Optional[Dict] = None):
-        """Cache a response"""
+    async def cache_response(self, query: str, response: str, context: Optional[Dict] = None):
+        """Cache a response (now supports multi-level caching)"""
         key = self.cache_key(query, context)
         
         # Compress before caching
         compressed = self.compress_response(response)
         
-        # Add to cache
+        # Add to local cache
         self.cache[key] = CachedResponse(
             response=compressed,
             timestamp=time.time()
         )
+        
+        # Add to multi-level cache if available
+        if self.multilevel_cache:
+            try:
+                await self.multilevel_cache.put(
+                    f"token_opt:{key}", 
+                    compressed, 
+                    ttl_seconds=self.ttl_seconds,
+                    cache_level="L2"  # Store in L2 for sharing across instances
+                )
+            except Exception as e:
+                # Fallback gracefully if multi-level cache fails
+                pass
         
         # Enforce cache size limit (LRU)
         while len(self.cache) > self.cache_size:
@@ -233,11 +262,11 @@ class SmartTruncator:
 # Global optimizer instance
 token_optimizer = TokenOptimizer()
 
-def optimize_agent_response(agent_name: str, task: str, response: str) -> str:
-    """Main entry point for optimizing agent responses"""
+async def optimize_agent_response(agent_name: str, task: str, response: str) -> str:
+    """Main entry point for optimizing agent responses with multi-level caching"""
     
     # Check cache first
-    cached = token_optimizer.get_cached_response(f"{agent_name}:{task}")
+    cached = await token_optimizer.get_cached_response(f"{agent_name}:{task}")
     if cached:
         return f"[Cached] {cached}"
     
@@ -249,7 +278,7 @@ def optimize_agent_response(agent_name: str, task: str, response: str) -> str:
         compressed = SmartTruncator.truncate(compressed)
     
     # Cache for future
-    token_optimizer.cache_response(f"{agent_name}:{task}", compressed)
+    await token_optimizer.cache_response(f"{agent_name}:{task}", compressed)
     
     return compressed
 

@@ -14,6 +14,13 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 from pathlib import Path
 import subprocess
+import secrets
+from functools import lru_cache
+import logging
+
+# Security logging
+logging.basicConfig(level=logging.INFO)
+security_logger = logging.getLogger('security')
 
 @dataclass
 class ContextChunk:
@@ -41,14 +48,17 @@ class IntelligentContextChopper:
     """
     Intelligently chops large codebases into relevant context windows
     Uses shadowgit for 930M lines/sec analysis and ML for relevance scoring
+    Enhanced with multi-level caching for performance
     """
     
     def __init__(self, max_context_tokens: int = 8000, 
                  security_mode: bool = True,
-                 use_shadowgit: bool = True):
+                 use_shadowgit: bool = True,
+                 multilevel_cache=None):
         self.max_context_tokens = max_context_tokens
         self.security_mode = security_mode
         self.use_shadowgit = use_shadowgit
+        self.multilevel_cache = multilevel_cache  # Integration with multi-level cache
         
         # Context storage (could be PostgreSQL in production)
         self.context_store: Dict[str, ContextChunk] = {}
@@ -63,12 +73,15 @@ class IntelligentContextChopper:
         self.shadowgit_available = self._check_shadowgit()
         
         # Security patterns to exclude
+        # Compile security patterns for performance
         self.security_patterns = [
-            r'(api[_-]?key|secret|password|token|credential)',
-            r'(private[_-]?key|ssh[_-]?key|gpg[_-]?key)',
-            r'(aws[_-]?access|aws[_-]?secret)',
-            r'(database[_-]?url|connection[_-]?string)',
-            r'(\.env|config\.json|secrets\.)',
+            re.compile(r'(api[_-]?key|secret|password|token|credential)', re.IGNORECASE),
+            re.compile(r'(private[_-]?key|ssh[_-]?key|gpg[_-]?key)', re.IGNORECASE),
+            re.compile(r'(aws[_-]?access|aws[_-]?secret|azure[_-]?key)', re.IGNORECASE),
+            re.compile(r'(database[_-]?url|connection[_-]?string|mongodb://)', re.IGNORECASE),
+            re.compile(r'(\.env|config\.json|secrets\.|credentials\.)', re.IGNORECASE),
+            re.compile(r'(bearer\s+[a-zA-Z0-9\-\._~\+/]+)', re.IGNORECASE),
+            re.compile(r'(-----BEGIN[^-]+PRIVATE KEY-----)', re.IGNORECASE),
         ]
         
         # Context relevance patterns
@@ -201,13 +214,20 @@ class IntelligentContextChopper:
         return min(score / 100.0, 1.0)
     
     def security_filter(self, chunk: str) -> Tuple[bool, str]:
-        """Filter sensitive information for security"""
+        """Filter sensitive information for security with enhanced validation"""
         if not self.security_mode:
             return True, "unchecked"
         
-        # Check for security patterns
+        # Input validation
+        if not isinstance(chunk, str) or len(chunk) > 1000000:  # 1MB max chunk size
+            security_logger.warning(f"Invalid chunk size: {len(chunk) if isinstance(chunk, str) else 'non-string'}")
+            return False, "invalid"
+        
+        # Check for security patterns with compiled regex for performance
         for pattern in self.security_patterns:
             if re.search(pattern, chunk, re.IGNORECASE):
+                # Log security event
+                security_logger.info(f"Sensitive pattern detected and redacted: {pattern}")
                 # Redact sensitive parts
                 chunk = re.sub(pattern, "[REDACTED]", chunk, flags=re.IGNORECASE)
                 return True, "redacted"
@@ -271,9 +291,9 @@ class IntelligentContextChopper:
         
         return chunks
     
-    def select_optimal_context(self, query: str, 
-                              files: List[str],
-                              max_tokens: Optional[int] = None) -> ContextWindow:
+    async def select_optimal_context(self, query: str, 
+                                    files: List[str],
+                                    max_tokens: Optional[int] = None) -> ContextWindow:
         """Select optimal context window for query"""
         max_tokens = max_tokens or self.max_context_tokens
         
@@ -329,9 +349,9 @@ class IntelligentContextChopper:
         return window
     
     def _generate_chunk_id(self, file_path: str, line_start: int) -> str:
-        """Generate unique chunk ID"""
-        data = f"{file_path}:{line_start}"
-        return hashlib.md5(data.encode()).hexdigest()
+        """Generate unique chunk ID with secure hashing"""
+        data = f"{file_path}:{line_start}:{time.time_ns()}"
+        return hashlib.sha256(data.encode()).hexdigest()
     
     def _record_success_pattern(self, query: str, chunks: List[ContextChunk]):
         """Record successful context selection for learning"""
@@ -348,10 +368,24 @@ class IntelligentContextChopper:
         if len(self.success_patterns) > 1000:
             self.success_patterns = self.success_patterns[-1000:]
     
-    def get_context_for_request(self, query: str, 
-                               project_root: str = ".",
-                               file_extensions: List[str] = None) -> str:
-        """Main entry point: Get optimized context for a request"""
+    async def get_context_for_request(self, query: str, 
+                                      project_root: str = ".",
+                                      file_extensions: List[str] = None) -> str:
+        """Main entry point: Get optimized context for a request with multi-level caching"""
+        
+        # Generate cache key for this context request
+        cache_key_data = f"context:{query}:{project_root}:{str(file_extensions)}"
+        cache_key = hashlib.md5(cache_key_data.encode()).hexdigest()
+        
+        # Try multi-level cache first
+        if self.multilevel_cache:
+            try:
+                cached_context = await self.multilevel_cache.get(f"context_chopper:{cache_key}")
+                if cached_context:
+                    security_logger.info(f"Context cache hit for query: {query[:50]}...")
+                    return cached_context
+            except Exception as e:
+                security_logger.warning(f"Context cache error: {e}")
         
         # Default extensions
         if not file_extensions:
@@ -369,7 +403,7 @@ class IntelligentContextChopper:
         relevant_files = relevant_files[:20]  # Process top 20 files
         
         # Get optimal context window
-        window = self.select_optimal_context(query, relevant_files)
+        window = await self.select_optimal_context(query, relevant_files)
         
         # Format context for API
         context_parts = []
@@ -389,7 +423,22 @@ class IntelligentContextChopper:
             context_parts.append(f"Lines {chunk.start_line}-{chunk.end_line}:")
             context_parts.append(chunk.content)
         
-        return "\n".join(context_parts)
+        result = "\n".join(context_parts)
+        
+        # Cache the result in multi-level cache
+        if self.multilevel_cache and result:
+            try:
+                await self.multilevel_cache.put(
+                    f"context_chopper:{cache_key}", 
+                    result, 
+                    ttl_seconds=1800,  # 30 minutes for context
+                    cache_level="L2"   # Store in L2 for sharing
+                )
+                security_logger.info(f"Cached context for query: {query[:50]}...")
+            except Exception as e:
+                security_logger.warning(f"Failed to cache context: {e}")
+        
+        return result
     
     def export_learning_data(self) -> Dict:
         """Export learning data for PostgreSQL storage"""
