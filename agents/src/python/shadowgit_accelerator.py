@@ -34,6 +34,15 @@ from ctypes import Structure, c_char, c_char_p, c_int, c_uint64, c_double, c_boo
 # Add agents/src/python to path for Phase 3 components
 sys.path.insert(0, '/home/john/claude-backups/agents/src/python')
 
+# Import OpenVINO for neural acceleration
+try:
+    import openvino as ov
+    OPENVINO_AVAILABLE = True
+    print("OpenVINO loaded successfully - neural acceleration available")
+except ImportError as e:
+    OPENVINO_AVAILABLE = False
+    print(f"OpenVINO not available - falling back to CPU-only mode")
+
 # Import Phase 3 components
 try:
     from intel_npu_async_pipeline import AsyncPipelineOrchestrator, AsyncTask, ProcessingResult
@@ -230,6 +239,12 @@ class ShadowgitAccelerator:
         self.integrated_pipeline = None
         self.phase3_orchestrator = None
         
+        # OpenVINO neural acceleration
+        self.openvino_core = None
+        self.available_devices = []
+        if OPENVINO_AVAILABLE:
+            self._initialize_openvino()
+        
         # Phase 3 component integration
         if PHASE3_COMPONENTS_AVAILABLE:
             self._initialize_phase3_components()
@@ -264,6 +279,31 @@ class ShadowgitAccelerator:
                 "io_uring_operations": 0
             }
         }
+    
+    def _initialize_openvino(self):
+        """Initialize OpenVINO for neural acceleration"""
+        try:
+            self.openvino_core = ov.Core()
+            self.available_devices = self.openvino_core.available_devices
+            
+            print(f"OpenVINO devices detected: {self.available_devices}")
+            
+            # Check for NPU specifically
+            npu_available = any('NPU' in device for device in self.available_devices)
+            if npu_available:
+                print("✅ Intel NPU detected for neural acceleration")
+            
+            # Check for GPU
+            gpu_available = any('GPU' in device for device in self.available_devices)  
+            if gpu_available:
+                print("✅ Intel GPU detected for neural acceleration")
+                
+            logging.info(f"OpenVINO initialized with devices: {self.available_devices}")
+            
+        except Exception as e:
+            print(f"OpenVINO initialization failed: {e}")
+            logging.error(f"OpenVINO initialization failed: {e}")
+            self.openvino_core = None
     
     def _initialize_phase3_components(self):
         """Initialize Phase 3 async components"""
