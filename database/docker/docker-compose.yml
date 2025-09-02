@@ -14,7 +14,8 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - ../data/postgresql:/var/lib/postgresql/data/pgdata
-      - ../sql:/docker-entrypoint-initdb.d
+      - ./init-learning-system.sql:/docker-entrypoint-initdb.d/01-init-learning-system.sql
+      - ./enable-extensions.sql:/docker-entrypoint-initdb.d/00-enable-extensions.sql
       - /var/run/postgresql:/var/run/postgresql
     ports:
       - "5433:5432"
@@ -27,21 +28,23 @@ services:
       timeout: 5s
       retries: 5
 
-  # Python Learning System
+  # Enhanced Learning System with Real-time Sync
   learning-system:
     build:
-      context: .
-      dockerfile: Dockerfile.learning
+      context: ..
+      dockerfile: docker/Dockerfile.learning-enhanced
     container_name: claude-learning-system
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-claude_agent}:${POSTGRES_PASSWORD:-claude_secure_password}@postgres:5432/${POSTGRES_DB:-claude_agents_auth}
       REDIS_URL: redis://redis:6379/0
       PYTHONPATH: /app
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LEARNING_SYNC_ENABLED: "true"
     volumes:
       - ../../agents/src/python:/app/agents/src/python
       - ../learning_data:/app/learning_data
       - /var/run/postgresql:/var/run/postgresql
+      - ~/.claude-home/learning_logs:/app/learning_logs:ro
     ports:
       - "8080:8080"
     networks:

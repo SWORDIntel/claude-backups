@@ -103,6 +103,98 @@ log() {
     echo "$1"
 }
 
+# CLAUDE.md Integration Support Functions
+validate_claude_md_content() {
+    local file="$1"
+    
+    # Check if file is readable
+    [[ -r "$file" ]] || return 1
+    
+    # Check minimum file size (should be substantial)
+    local file_size=$(wc -c < "$file" 2>/dev/null || echo "0")
+    [[ "$file_size" -gt 1000 ]] || return 1
+    
+    # Check for key headers that should exist in CLAUDE.md
+    local required_headers=(
+        "# CLAUDE.md"
+        "## Project Overview"
+        "## Agent Ecosystem"
+        "## System Architecture"
+    )
+    
+    for header in "${required_headers[@]}"; do
+        if ! grep -q "^$header" "$file" 2>/dev/null; then
+            warning "Missing required header: $header"
+            return 1
+        fi
+    done
+    
+    # Check for malicious content patterns
+    local malicious_patterns=(
+        "rm -rf /"
+        "chmod 777"
+        "> /dev/sda"
+        "dd if="
+        "mkfs\."
+    )
+    
+    for pattern in "${malicious_patterns[@]}"; do
+        if grep -q "$pattern" "$file" 2>/dev/null; then
+            warning "Potentially malicious content detected: $pattern"
+            return 1
+        fi
+    done
+    
+    return 0
+}
+
+copy_claude_md_cross_platform() {
+    local source_file="$1"
+    local target_file="$2"
+    
+    # Ensure target directory exists
+    local target_dir=$(dirname "$target_file")
+    mkdir -p "$target_dir" || return 1
+    
+    # Cross-platform copy with error handling
+    if command -v rsync >/dev/null 2>&1; then
+        # Use rsync if available (preserves metadata better)
+        rsync -a "$source_file" "$target_file" 2>/dev/null
+    else
+        # Fallback to cp
+        cp "$source_file" "$target_file" 2>/dev/null
+    fi
+    
+    # Verify copy was successful
+    [[ -f "$target_file" ]] || return 1
+    
+    # Set appropriate permissions (cross-platform)
+    chmod 644 "$target_file" 2>/dev/null || true
+    
+    return 0
+}
+
+validate_claude_md_integration() {
+    local target_file="$1"
+    
+    # Check if file exists and is readable
+    [[ -r "$target_file" ]] || return 1
+    
+    # Validate content integrity
+    validate_claude_md_content "$target_file" || return 1
+    
+    # Check file permissions are appropriate
+    local perms=$(stat -c "%a" "$target_file" 2>/dev/null || stat -f "%A" "$target_file" 2>/dev/null || echo "000")
+    case "$perms" in
+        644|640|600) return 0 ;;
+        *) 
+            info "Adjusting CLAUDE.md permissions from $perms to 644"
+            chmod 644 "$target_file" 2>/dev/null || true
+            return 0
+            ;;
+    esac
+}
+
 # Progress bar
 show_progress() {
     CURRENT_STEP=$((CURRENT_STEP + 1))
@@ -771,12 +863,51 @@ install_agents() {
 install_global_claude_md() {
     print_section "Installing Global CLAUDE.md"
     
-    # Simply copy the repo's CLAUDE.md as a template
-    if [[ -f "$PROJECT_ROOT/CLAUDE.md" ]]; then
-        cp "$PROJECT_ROOT/CLAUDE.md" "$HOME_DIR/CLAUDE.md"
-        success "CLAUDE.md template copied to $HOME_DIR"
+    # Cross-platform CLAUDE.md integration with validation
+    local source_file="$PROJECT_ROOT/CLAUDE.md"
+    local target_file="$HOME_DIR/CLAUDE.md"
+    local backup_file="$HOME_DIR/CLAUDE.md.backup"
+    
+    # Validate source file exists and is readable
+    if [[ ! -f "$source_file" ]]; then
+        warning "CLAUDE.md not found in project root: $source_file"
+        return 1
+    fi
+    
+    # Validate source file content (basic checks)
+    if ! validate_claude_md_content "$source_file"; then
+        warning "CLAUDE.md validation failed - content appears corrupted"
+        return 1
+    fi
+    
+    # Cross-platform backup existing file
+    if [[ -f "$target_file" ]]; then
+        info "Backing up existing CLAUDE.md to $backup_file"
+        cp "$target_file" "$backup_file" || {
+            warning "Failed to backup existing CLAUDE.md"
+            return 1
+        }
+    fi
+    
+    # Cross-platform copy with validation
+    if copy_claude_md_cross_platform "$source_file" "$target_file"; then
+        success "CLAUDE.md successfully integrated to $target_file"
+        
+        # Validate copied file
+        if validate_claude_md_integration "$target_file"; then
+            success "CLAUDE.md integration validated successfully"
+        else
+            warning "CLAUDE.md integration validation failed"
+            # Restore backup if validation fails
+            if [[ -f "$backup_file" ]]; then
+                mv "$backup_file" "$target_file"
+                warning "Restored previous CLAUDE.md from backup"
+            fi
+            return 1
+        fi
     else
-        warning "CLAUDE.md not found in project root - skipping"
+        error "Failed to copy CLAUDE.md to $target_file"
+        return 1
     fi
     
     show_progress
@@ -878,6 +1009,13 @@ register_agents_with_task_tool() {
         success "Copied available-agents.txt from repo"
     else
         warning "No available-agents.txt found in repo - skipping"
+    fi
+    
+    # Verify CLAUDE.md is available for agent coordination
+    if [[ -f "$HOME_DIR/CLAUDE.md" ]]; then
+        info "✅ CLAUDE.md available for agent auto-invocation patterns"
+    else
+        warning "CLAUDE.md not found - agent auto-invocation may be limited"
     fi
     
     info "✅ All agents registered and available via Task tool"
@@ -4026,7 +4164,12 @@ main() {
     if [[ "$INSTALLATION_MODE" == "full" ]] || [[ "$INSTALLATION_MODE" == "custom" ]]; then
         install_hooks
         install_statusline
-        install_global_claude_md
+        
+        # Install CLAUDE.md with error handling
+        if ! install_global_claude_md; then
+            warning "CLAUDE.md integration failed, but continuing installation"
+        fi
+        
         setup_claude_directory
         register_agents_with_task_tool
         setup_precision_style
@@ -4041,7 +4184,12 @@ main() {
     elif [[ "$INSTALLATION_MODE" == "quick" ]]; then
         info "Quick mode: Skipping advanced features"
         install_hooks
-        install_global_claude_md
+        
+        # Install CLAUDE.md with error handling
+        if ! install_global_claude_md; then
+            warning "CLAUDE.md integration failed, but continuing installation"
+        fi
+        
         setup_claude_directory
         register_agents_with_task_tool
     fi

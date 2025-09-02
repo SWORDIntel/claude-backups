@@ -5,6 +5,14 @@
 export CLAUDE_HOME="$HOME/.claude-home"
 export CLAUDE_PROJECT_ROOT="PROJECT_ROOT_PLACEHOLDER"
 
+# Learning System Integration v3.1
+export LEARNING_CAPTURE_ENABLED="${LEARNING_CAPTURE_ENABLED:-true}"
+export LEARNING_DB_PORT="${LEARNING_DB_PORT:-5433}"
+export LEARNING_LOG_PATH="${CLAUDE_HOME}/learning_logs"
+
+# Ensure learning directories exist
+mkdir -p "$LEARNING_LOG_PATH" 2>/dev/null || true
+
 # Check if running from project with .claude directory
 if [[ -d "$CLAUDE_PROJECT_ROOT/.claude" ]]; then
     export CLAUDE_DIR="$CLAUDE_PROJECT_ROOT/.claude"
@@ -19,6 +27,68 @@ fi
 
 # Binary location
 CLAUDE_BINARY="BINARY_PLACEHOLDER"
+
+# Learning Capture Function
+capture_execution() {
+    if [[ "$LEARNING_CAPTURE_ENABLED" != "true" ]]; then
+        return 0
+    fi
+    
+    local start_time=$(date +%s.%N)
+    local session_id=$(uuidgen 2>/dev/null || echo "$(date +%s)-$$")
+    local prompt_hash=""
+    local agent_used="${CLAUDE_AGENT:-direct}"
+    
+    # Extract prompt hash if available
+    for arg in "$@"; do
+        if [[ "$arg" == /task* ]] || [[ "$arg" == task* ]]; then
+            prompt_hash=$(echo "$arg" | shasum -a 256 | cut -d' ' -f1 | head -c16)
+            break
+        fi
+    done
+    
+    # Log execution start
+    cat >> "$LEARNING_LOG_PATH/executions.jsonl" 2>/dev/null << EOF || true
+{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)","session_id":"$session_id","event":"start","agent":"$agent_used","prompt_hash":"$prompt_hash","args_count":$#}
+EOF
+    
+    # Execute command and capture result
+    local exit_code=0
+    "$@" || exit_code=$?
+    
+    local end_time=$(date +%s.%N)
+    local duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "0")
+    
+    # Log execution end
+    cat >> "$LEARNING_LOG_PATH/executions.jsonl" 2>/dev/null << EOF || true
+{"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)","session_id":"$session_id","event":"end","exit_code":$exit_code,"duration":$duration,"success":$([ $exit_code -eq 0 ] && echo "true" || echo "false")}
+EOF
+    
+    # Async database insert (non-blocking)
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -c "
+import sys, json, asyncio, asyncpg
+import logging
+logging.basicConfig(level=logging.ERROR)
+
+async def log_to_db():
+    try:
+        conn = await asyncpg.connect('postgresql://claude_agent:claude_secure_password@localhost:$LEARNING_DB_PORT/claude_agents_auth')
+        await conn.execute('''
+            INSERT INTO agent_metrics (agent_name, execution_time, success_rate, session_id, prompt_hash)
+            VALUES (\$1, \$2, \$3, \$4, \$5)
+        ''', '$agent_used', float('$duration'), $exit_code == 0, '$session_id', '$prompt_hash')
+        await conn.close()
+    except: pass
+
+try:
+    asyncio.run(log_to_db())
+except: pass
+" &
+    fi
+    
+    return $exit_code
+}
 
 # Find binary if needed
 if [[ ! -f "$CLAUDE_BINARY" ]]; then
@@ -112,7 +182,7 @@ case "$1" in
         export CLAUDE_AGENT_FILE="$AGENT_FILE"
         
         # Permission bypass always enabled for enhanced functionality
-        exec "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+        capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
         ;;
         
     --safe)
@@ -120,7 +190,7 @@ case "$1" in
         echo "Warning: --safe mode deprecated. Permission bypass always enabled for full functionality."
         echo "Running with permission bypass for optimal performance..."
         shift
-        exec "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+        capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
         ;;
         
     --orchestrator)
@@ -154,6 +224,6 @@ case "$1" in
         
     *)
         # Default: always run with permission bypass for enhanced functionality
-        exec "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+        capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
         ;;
 esac
