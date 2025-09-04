@@ -1,0 +1,4 @@
+e8a1ddaf566557c973a131d7db7b98e722e29279 325972957 backup_pre_reorganization_20250902_215612.tar.gz
+7fd9fee90bdce3b05bb5c2b08e67de9d1e1ee67a 645021904 backup_pre_reorganization_20250902_215706.tar.gz
+2dc4557dc153c7eb8fab2f1c93048d50c8a0c8e9 1336008 claude-backups-deprecated-archive-20250829_230730.tar.gz
+1461f8c862df8c3eae75e0ea376788b5b2602269 156400 dateutil-zoneinfo.tar.gz
