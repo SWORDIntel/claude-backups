@@ -1,6 +1,6 @@
 # Learning Data Export Summary
 
-**Date**: Tue Sep  2 09:15:56 PM BST 2025  
+**Date**: Thu Sep  4 02:16:23 AM BST 2025  
 **Export Location**: /home/john/claude-backups/database/sql/exports
 
 ## Exported Files
@@ -25,7 +25,7 @@ cd database/sql/exports
 
 ### To Local PostgreSQL
 ```bash
-psql -h localhost -p 5433 -U $USER -d claude_learning < claude_learning_20250902.sql
+psql -h localhost -p 5433 -U $USER -d claude_learning < claude_learning_20250904.sql
 ```
 
 ## Git Tracking
@@ -36,5 +36,5 @@ Binary database files are excluded to keep repository size manageable.
 To commit the latest export:
 ```bash
 git add database/sql/exports/*.sql
-git commit -m "backup: Learning data snapshot 20250902"
+git commit -m "backup: Learning data snapshot 20250904"
 ```
