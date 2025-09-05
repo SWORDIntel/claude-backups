@@ -94,3 +94,4 @@ database/docker/data/
 !database/sql/exports/csv/*.csv
 database/backups/
 database/data/
+config/projects/
