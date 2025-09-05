@@ -1,5 +1,5 @@
 {
-  "numStartups": 45,
+  "numStartups": 47,
   "installMethod": "native",
   "autoUpdates": true,
   "hasSeenTasksHint": true,
@@ -23,7 +23,7 @@
     "ide-upsell-external-terminal": 44,
     "image-paste": 39
   },
-  "promptQueueUseCount": 92,
+  "promptQueueUseCount": 98,
   "cachedStatsigGates": {
     "tengu_disable_bypass_permissions_mode": false
   },
@@ -1566,6 +1566,38 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "git push",
+          "pastedContents": {}
+        },
+        {
+          "display": "use the DEBUGGER agent",
+          "pastedContents": {}
+        },
+        {
+          "display": "use PATCHER And CONSTRUCTOR",
+          "pastedContents": {}
+        },
+        {
+          "display": "No AGENTSMITH is used to create the agents that is his goal,the template is a template and C-INTERNAL is the best reference considering that ZFS is built on C",
+          "pastedContents": {}
+        },
+        {
+          "display": "git pushRevuew the   Claude Ultimate Wrapper v13.1 for all of our enhanced functions including automatic invocation of the claude-code venv every lauch to enesure full intergration with all systems use CONSTRUCTOR,OPTIMIZER then DEEBUGGER",
+          "pastedContents": {}
+        },
+        {
+          "display": "Use AGENTSMITH as wel as Template.md C-INTERNAL to create a ZFS-INTERNAL.md agent",
+          "pastedContents": {}
+        },
+        {
+          "display": "What systems does claude-code have now",
+          "pastedContents": {}
+        },
+        {
+          "display": "git push",
+          "pastedContents": {}
+        },
+        {
           "display": "Add to claude.md along with the other systems",
           "pastedContents": {}
         },
@@ -1631,6 +1663,14 @@
     "/home/john/LAT5150DRVMIL": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "Do this carefully with PATCHER and CONSTRUCTOR agents,if done right we can leverge unparalleled performance gains",
+          "pastedContents": {}
+        },
+        {
+          "display": "To be clear livecd-gen includes numerous modules i would lijke included i would prefer tthe release of the LAT51450DRIMIL merged into that",
+          "pastedContents": {}
+        },
         {
           "display": "Document everything properly in the correct folders",
           "pastedContents": {}
@@ -1730,6 +1770,52 @@
     "/home/john": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "ls",
+          "pastedContents": {}
+        },
+        {
+          "display": "Double check   make deb-utils deb-kmod\n",
+          "pastedContents": {}
+        },
+        {
+          "display": "checking consistency of all components of python development environment... yes\nchecking for python3.12 module: setuptools... yes\nchecking for python3.12 module: cffi... yes\nchecking whether to enable pyzfs: ... yes\nchecking for sed --in-place... --in-place\nchecking for cppcheck... no\nchecking for shellcheck... yes\nchecking for checkbashisms... no\nchecking for parallel... yes\nError!\nconfigure: error: Bad value \"user,kernel\" for --with-config,\n                      user kernel|user|all|srpm\n\n",
+          "pastedContents": {}
+        },
+        {
+          "display": "6,16 it is ,we also need proxmox v.9 support",
+          "pastedContents": {}
+        },
+        {
+          "display": "➜   cd zfs-2.3.4\n  ./autogen.sh\n  ./configure --enable-systemd\n  make -j$(nproc)\n\ncd: no such file or directory: zfs-2.3.4\nzsh: no such file or directory: ./autogen.sh\nzsh: no such file or directory: ./configure\nmake: *** No targets specified and no makefile found.  Stop.\nDouble check the flags needed with RESEARCHER and give me comprehensive ocmmands",
+          "pastedContents": {}
+        },
+        {
+          "display": "[Pasted text #1 +37 lines] now download and rebuild zfs 2.3.4 from the release on github https://github.com/openzfs/zfs/releases/download/zfs-2.3.4/zfs-2.3.4.tar.gz so autogen configure and make then make debs then make install",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "~ \n➜   lsmod | grep zfs\n  modinfo zfs | grep version\n\nzfs                  6770688  0\nspl                   192512  1 zfs\nversion:        2.3.1-1ubuntu2\nsrcversion:     8E3846C17B94CF27E3D03A5\nvermagic:       6.14.0-29-generic SMP preempt mod_unload modversions \n\n~ \n➜   sudo zpool export -a\n\n[sudo] password for john: \n\n~ took 2s \n➜   sudo modprobe -r zfs\n  sudo modprobe -r spl\n\n\n~ \n➜  sudo find /lib/modules/$(uname -r) -name \"zfs.ko*\" -o -name \"spl.ko*\"\n\n/lib/modules/6.14.0-29-generic/kernel/zfs/zfs.ko.zst\n/lib/modules/6.14.0-29-generic/kernel/zfs/spl.ko.zst\n/lib/modules/6.14.0-29-generic/extra/zfs/spl.ko\n/lib/modules/6.14.0-29-generic/extra/zfs/zfs.ko\n\n~ \n➜   sudo rm -f /lib/modules/$(uname -r)/kernel/zfs/zfs.ko*\n  sudo rm -f /lib/modules/$(uname -r)/kernel/spl/spl.ko*\n\nzsh: no matches found: /lib/modules/6.14.0-29-generic/kernel/spl/spl.ko*\n\n~ \n➜ \n\n[I"
+            }
+          }
+        },
+        {
+          "display": "zfs                  6770688  0\nspl                   192512  1 zfs\nversion:        2.3.1-1ubuntu2\nsrcversion:     8E3846C17B94CF27E3D03A5\nvermagic:       6.14.0-29-generic SMP preempt mod_unload modver",
+          "pastedContents": {}
+        },
+        {
+          "display": "Merge all of the openvino scripts into one neat directory as well as intel AI",
+          "pastedContents": {}
+        },
+        {
+          "display": "i built from source",
+          "pastedContents": {}
+        },
+        {
+          "display": "➜ sudo zfs version\nzfs-2.3.4-1\nzfs-kmod-2.3.1-1ubuntu2\nwhy the discprency in verson",
+          "pastedContents": {}
+        },
         {
           "display": "crasheed",
           "pastedContents": {}
