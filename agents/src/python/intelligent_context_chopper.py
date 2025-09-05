@@ -48,6 +48,7 @@ class IntelligentContextChopper:
     """
     Intelligently chops large codebases into relevant context windows
     Uses shadowgit for 930M lines/sec analysis and ML for relevance scoring
+    Enhanced with rejection reduction capabilities for Claude Code optimization
     Enhanced with multi-level caching for performance
     """
     

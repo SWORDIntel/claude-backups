@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadowgit Neural Architecture - Dark Theme</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e0e6ed;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .metric-value {
+            font-size: 2em;
+            color: #00ff88;
+            font-weight: bold;
+        }
+        .metric-label {
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+        svg {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 136, 0.2));
+        }
+        .glow {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .neural-glow {
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Shadowgit Neural Architecture</h1>
+        
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-value">11</div>
+                <div class="metric-label">NPU TOPS</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">0.1W</div>
+                <div class="metric-label">GNA Always-On</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">500ms</div>
+                <div class="metric-label">Batch Latency</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">10x</div>
+                <div class="metric-label">Neural Speedup</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">24/7</div>
+                <div class="metric-label">GNA Surveillance</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">128MB</div>
+                <div class="metric-label">NPU Memory</div>
+            </div>
+        </div>
+
+        <svg viewBox="0 0 1400 1000" xmlns="http://www.w3.org/2000/svg">
+            <!-- Define gradients and filters -->
+            <defs>
+                <linearGradient id="neonGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00ff88;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#00cc66;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="neonBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#0099cc;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="neonPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="neonOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#ff4500;stop-opacity:1" />
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#00ff88" />
+                </marker>
+            </defs>
+            
+            <!-- Background zones with dark theme -->
+            <rect x="20" y="20" width="420" height="960" fill="#0f172a" stroke="#1e293b" stroke-width="2" rx="15" opacity="0.9"/>
+            <text x="230" y="50" text-anchor="middle" fill="#64748b" font-size="20" font-weight="bold">Development Layer</text>
+            
+            <rect x="460" y="20" width="420" height="960" fill="#1a1f3a" stroke="#2d3561" stroke-width="2" rx="15" opacity="0.9"/>
+            <text x="670" y="50" text-anchor="middle" fill="#00ff88" font-size="20" font-weight="bold">Neural Processing Layer</text>
+            
+            <rect x="900" y="20" width="480" height="960" fill="#0a0e27" stroke="#1e293b" stroke-width="2" rx="15" opacity="0.9"/>
+            <text x="1140" y="50" text-anchor="middle" fill="#00d4ff" font-size="20" font-weight="bold">Integration & Storage</text>
+            
+            <!-- File System & IDE -->
+            <g id="filesystem">
+                <rect x="50" y="100" width="180" height="80" fill="#1e293b" stroke="url(#neonGreen)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="140" y="130" text-anchor="middle" fill="#00ff88" font-size="16" font-weight="bold">File System</text>
+                <text x="140" y="150" text-anchor="middle" fill="#94a3b8" font-size="14">Source Code</text>
+                <text x="140" y="170" text-anchor="middle" fill="#64748b" font-size="12">*.py, *.js, *.ts, *.c</text>
+            </g>
+            
+            <g id="ide">
+                <rect x="250" y="100" width="170" height="80" fill="#1e293b" stroke="url(#neonPurple)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="335" y="130" text-anchor="middle" fill="#a855f7" font-size="16" font-weight="bold">VS Code/IDE</text>
+                <text x="335" y="150" text-anchor="middle" fill="#94a3b8" font-size="14">Save Events</text>
+                <text x="335" y="170" text-anchor="middle" fill="#64748b" font-size="12">Real-time Hooks</text>
+            </g>
+            
+            <!-- File Watcher with Neural Enhancement -->
+            <g id="watcher">
+                <rect x="50" y="220" width="370" height="120" fill="#1e293b" stroke="url(#neonOrange)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="235" y="250" text-anchor="middle" fill="#ff6b00" font-size="16" font-weight="bold">Neural File Watcher</text>
+                <text x="235" y="270" text-anchor="middle" fill="#94a3b8" font-size="14">chokidar + systemd + OpenVINO</text>
+                <text x="235" y="290" text-anchor="middle" fill="#64748b" font-size="12">500ms batch window</text>
+                <text x="235" y="310" text-anchor="middle" fill="#00ff88" font-size="12">✓ NPU Ready ✓ GNA Active</text>
+                <text x="235" y="330" text-anchor="middle" fill="#64748b" font-size="11">Monitors: *.py, *.js, *.ts, *.c, *.rs</text>
+            </g>
+            
+            <!-- Python Analyzer Enhanced -->
+            <g id="analyzer">
+                <rect x="50" y="380" width="370" height="140" fill="#1e293b" stroke="url(#neonBlue)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="235" y="410" text-anchor="middle" fill="#00d4ff" font-size="16" font-weight="bold">Neural Semantic Analyzer</text>
+                <text x="235" y="430" text-anchor="middle" fill="#94a3b8" font-size="14">AST + OpenVINO</text>
+                <text x="235" y="450" text-anchor="middle" fill="#00ff88" font-size="12">NPU: Complex Analysis</text>
+                <text x="235" y="470" text-anchor="middle" fill="#ff6b00" font-size="12">GNA: Pattern Detection</text>
+                <text x="235" y="490" text-anchor="middle" fill="#a855f7" font-size="12">CPU: Fallback Mode</text>
+                <text x="235" y="510" text-anchor="middle" fill="#64748b" font-size="11">Security • Complexity • Dependencies</text>
+            </g>
+            
+            <!-- NPU Acceleration (NEW) -->
+            <g id="npu" class="glow">
+                <rect x="490" y="100" width="370" height="160" fill="#1a1f3a" stroke="url(#neonGreen)" stroke-width="3" rx="10" filter="url(#glow)"/>
+                <text x="675" y="130" text-anchor="middle" fill="#00ff88" font-size="18" font-weight="bold">NPU Engine (11 TOPS)</text>
+                <text x="675" y="150" text-anchor="middle" fill="#94a3b8" font-size="14">Intel Core Ultra 200V</text>
+                <text x="675" y="175" text-anchor="middle" fill="#00d4ff" font-size="13">Active Analysis Mode</text>
+                <text x="675" y="195" text-anchor="middle" fill="#64748b" font-size="12">• Semantic understanding</text>
+                <text x="675" y="215" text-anchor="middle" fill="#64748b" font-size="12">• Code generation</text>
+                <text x="675" y="235" text-anchor="middle" fill="#64748b" font-size="12">• Security scanning</text>
+                <text x="675" y="255" text-anchor="middle" fill="#00ff88" font-size="11">128MB dedicated • INT8/FP16</text>
+            </g>
+            
+            <!-- GNA Always-On (NEW) -->
+            <g id="gna" class="glow">
+                <rect x="490" y="300" width="370" height="160" fill="#1a1f3a" stroke="url(#neonOrange)" stroke-width="3" rx="10" filter="url(#glow)"/>
+                <text x="675" y="330" text-anchor="middle" fill="#ff6b00" font-size="18" font-weight="bold">GNA Always-On (0.1W)</text>
+                <text x="675" y="350" text-anchor="middle" fill="#94a3b8" font-size="14">24/7 Surveillance Mode</text>
+                <text x="675" y="375" text-anchor="middle" fill="#00ff88" font-size="13">Continuous Monitoring</text>
+                <text x="675" y="395" text-anchor="middle" fill="#64748b" font-size="12">• Pattern baseline</text>
+                <text x="675" y="415" text-anchor="middle" fill="#64748b" font-size="12">• Anomaly detection</text>
+                <text x="675" y="435" text-anchor="middle" fill="#64748b" font-size="12">• Trend analysis</text>
+                <text x="675" y="455" text-anchor="middle" fill="#ff6b00" font-size="11">4MB memory • 10Hz scan rate</text>
+            </g>
+            
+            <!-- OpenVINO Runtime (NEW) -->
+            <g id="openvino">
+                <rect x="490" y="500" width="370" height="120" fill="#1a1f3a" stroke="url(#neonPurple)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="675" y="530" text-anchor="middle" fill="#a855f7" font-size="16" font-weight="bold">OpenVINO Runtime 2025</text>
+                <text x="675" y="550" text-anchor="middle" fill="#94a3b8" font-size="14">Model Optimization & Routing</text>
+                <text x="675" y="570" text-anchor="middle" fill="#64748b" font-size="12">• INT8 Quantization</text>
+                <text x="675" y="590" text-anchor="middle" fill="#64748b" font-size="12">• Dynamic device selection</text>
+                <text x="675" y="610" text-anchor="middle" fill="#64748b" font-size="12">• Automatic failover</text>
+            </g>
+            
+            <!-- C Performance Core -->
+            <g id="c-core">
+                <rect x="50" y="560" width="180" height="100" fill="#1e293b" stroke="#ef4444" stroke-width="2" rx="10"/>
+                <text x="140" y="590" text-anchor="middle" fill="#ef4444" font-size="16" font-weight="bold">C/SIMD Core</text>
+                <text x="140" y="610" text-anchor="middle" fill="#94a3b8" font-size="14">AVX-512 Diff</text>
+                <text x="140" y="630" text-anchor="middle" fill="#64748b" font-size="12">10x faster</text>
+                <text x="140" y="650" text-anchor="middle" fill="#00ff88" font-size="11">Binary protocol</text>
+            </g>
+            
+            <!-- Git Hooks -->
+            <g id="githook">
+                <rect x="240" y="560" width="180" height="100" fill="#1e293b" stroke="#eab308" stroke-width="2" rx="10"/>
+                <text x="330" y="590" text-anchor="middle" fill="#eab308" font-size="16" font-weight="bold">Git Hooks</text>
+                <text x="330" y="610" text-anchor="middle" fill="#94a3b8" font-size="14">pre-commit</text>
+                <text x="330" y="630" text-anchor="middle" fill="#64748b" font-size="12">AI messages</text>
+                <text x="330" y="650" text-anchor="middle" fill="#00ff88" font-size="11">NPU enhanced</text>
+            </g>
+            
+            <!-- Shadow Repository Enhanced -->
+            <g id="shadow-repo">
+                <rect x="930" y="100" width="420" height="160" fill="#0a0e27" stroke="url(#neonBlue)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="1140" y="130" text-anchor="middle" fill="#00d4ff" font-size="16" font-weight="bold">.shadowgit.git Neural Repository</text>
+                <text x="1140" y="150" text-anchor="middle" fill="#94a3b8" font-size="14">Memory-Mapped + Neural Metadata</text>
+                <text x="1140" y="175" text-anchor="middle" fill="#64748b" font-size="12">• Every save (~500ms batch)</text>
+                <text x="1140" y="195" text-anchor="middle" fill="#64748b" font-size="12">• Rich neural embeddings</text>
+                <text x="1140" y="215" text-anchor="middle" fill="#64748b" font-size="12">• GNA pattern history</text>
+                <text x="1140" y="235" text-anchor="middle" fill="#64748b" font-size="12">• NPU confidence scores</text>
+                <text x="1140" y="255" text-anchor="middle" fill="#00ff88" font-size="11">50MB ring buffer + 10MB neural cache</text>
+            </g>
+            
+            <!-- MCP Server Enhanced -->
+            <g id="mcp">
+                <rect x="930" y="300" width="420" height="140" fill="#0a0e27" stroke="#dc2626" stroke-width="2" rx="10"/>
+                <text x="1140" y="330" text-anchor="middle" fill="#dc2626" font-size="16" font-weight="bold">MCP Neural Server</text>
+                <text x="1140" y="350" text-anchor="middle" fill="#94a3b8" font-size="14">JSON-RPC + Binary Protocol</text>
+                <text x="1140" y="375" text-anchor="middle" fill="#64748b" font-size="12">Tools: semantic_search_neural</text>
+                <text x="1140" y="395" text-anchor="middle" fill="#64748b" font-size="12">pattern_analysis, gna_baseline</text>
+                <text x="1140" y="415" text-anchor="middle" fill="#64748b" font-size="12">npu_deep_scan, anomaly_detect</text>
+                <text x="1140" y="435" text-anchor="middle" fill="#00ff88" font-size="11">WebSocket + gRPC interfaces</text>
+            </g>
+            
+            <!-- Claude Desktop Integration -->
+            <g id="claude">
+                <rect x="930" y="480" width="200" height="120" fill="#0a0e27" stroke="url(#neonGreen)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="1030" y="510" text-anchor="middle" fill="#00ff88" font-size="16" font-weight="bold">Claude Desktop</text>
+                <text x="1030" y="530" text-anchor="middle" fill="#94a3b8" font-size="14">MCP Client</text>
+                <text x="1030" y="550" text-anchor="middle" fill="#64748b" font-size="12">Neural insights</text>
+                <text x="1030" y="570" text-anchor="middle" fill="#64748b" font-size="12">Pattern aware</text>
+                <text x="1030" y="590" text-anchor="middle" fill="#00ff88" font-size="11">90% token reduction</text>
+            </g>
+            
+            <!-- Agent System -->
+            <g id="agents">
+                <rect x="1150" y="480" width="200" height="120" fill="#0a0e27" stroke="#14b8a6" stroke-width="2" rx="10"/>
+                <text x="1250" y="510" text-anchor="middle" fill="#14b8a6" font-size="16" font-weight="bold">47 Agent System</text>
+                <text x="1250" y="530" text-anchor="middle" fill="#94a3b8" font-size="14">Neural Enhanced</text>
+                <text x="1250" y="550" text-anchor="middle" fill="#64748b" font-size="12">NPU routing</text>
+                <text x="1250" y="570" text-anchor="middle" fill="#64748b" font-size="12">GNA insights</text>
+                <text x="1250" y="590" text-anchor="middle" fill="#00ff88" font-size="11">10M msg/s</text>
+            </g>
+            
+            <!-- Regular Git -->
+            <g id="git">
+                <rect x="930" y="640" width="420" height="120" fill="#0a0e27" stroke="#16a34a" stroke-width="2" rx="10"/>
+                <text x="1140" y="670" text-anchor="middle" fill="#16a34a" font-size="16" font-weight="bold">Regular .git Repository</text>
+                <text x="1140" y="690" text-anchor="middle" fill="#94a3b8" font-size="14">Neural-Enhanced Commits</text>
+                <text x="1140" y="710" text-anchor="middle" fill="#64748b" font-size="12">AI-generated messages with confidence scores</text>
+                <text x="1140" y="730" text-anchor="middle" fill="#64748b" font-size="12">Pattern tags from GNA baseline</text>
+                <text x="1140" y="750" text-anchor="middle" fill="#00ff88" font-size="11">GitHub/GitLab compatible</text>
+            </g>
+            
+            <!-- Telemetry Dashboard (NEW) -->
+            <g id="telemetry">
+                <rect x="50" y="700" width="370" height="100" fill="#1e293b" stroke="url(#neonBlue)" stroke-width="2" rx="10" filter="url(#glow)"/>
+                <text x="235" y="730" text-anchor="middle" fill="#00d4ff" font-size="16" font-weight="bold">Neural Telemetry</text>
+                <text x="235" y="750" text-anchor="middle" fill="#94a3b8" font-size="14">Real-time Metrics</text>
+                <text x="235" y="770" text-anchor="middle" fill="#64748b" font-size="12">NPU: 11 TOPS | GNA: 0.1W | CPU: Idle</text>
+                <text x="235" y="790" text-anchor="middle" fill="#00ff88" font-size="11">Grafana + Prometheus</text>
+            </g>
+            
+            <!-- Model Store (NEW) -->
+            <g id="models">
+                <rect x="490" y="660" width="370" height="120" fill="#1a1f3a" stroke="#f59e0b" stroke-width="2" rx="10"/>
+                <text x="675" y="690" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="bold">Neural Model Store</text>
+                <text x="675" y="710" text-anchor="middle" fill="#94a3b8" font-size="14">Quantized Models (INT8)</text>
+                <text x="675" y="730" text-anchor="middle" fill="#64748b" font-size="12">• Code understanding (5MB)</text>
+                <text x="675" y="750" text-anchor="middle" fill="#64748b" font-size="12">• Pattern detection (2MB)</text>
+                <text x="675" y="770" text-anchor="middle" fill="#64748b" font-size="12">• Security scanner (8MB)</text>
+            </g>
+            
+            <!-- Connection arrows with neural flow -->
+            <!-- File changes to watcher -->
+            <path d="M 335 180 L 235 220" stroke="#00ff88" stroke-width="2" fill="none" marker-end="url(#arrowhead)" opacity="0.8"/>
+            
+            <!-- Watcher to analyzer -->
+            <path d="M 235 340 L 235 380" stroke="#00ff88" stroke-width="2" fill="none" marker-end="url(#arrowhead)" opacity="0.8"/>
+            
+            <!-- Analyzer to NPU -->
+            <path d="M 420 450 L 490 180" stroke="#00ff88" stroke-width="3" fill="none" marker-end="url(#arrowhead)" class="glow"/>
+            <text x="455" y="315" fill="#00ff88" font-size="11">Complex</text>
+            
+            <!-- Analyzer to GNA -->
+            <path d="M 420 450 L 490 380" stroke="#ff6b00" stroke-width="3" fill="none" marker-end="url(#arrowhead)" class="glow"/>
+            <text x="455" y="415" fill="#ff6b00" font-size="11">Continuous</text>
+            
+            <!-- NPU to Shadow Repo -->
+            <path d="M 860 180 L 930 180" stroke="#00d4ff" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+            
+            <!-- GNA to Shadow Repo -->
+            <path d="M 860 380 L 930 200" stroke="#ff6b00" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+            
+            <!-- OpenVINO orchestration -->
+            <path d="M 675 500 L 675 460" stroke="#a855f7" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+            <path d="M 675 500 L 675 260" stroke="#a855f7" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+            
+            <!-- Shadow to MCP -->
+            <path d="M 1140 260 L 1140 300" stroke="#dc2626" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+            
+            <!-- MCP to Claude -->
+            <path d="M 1030 440 L 1030 480" stroke="#00ff88" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+            
+            <!-- MCP to Agents -->
+            <path d="M 1250 440 L 1250 480" stroke="#14b8a6" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+            
+            <!-- Shadow to Git -->
+            <path d="M 1140 260 L 1140 640" stroke="#16a34a" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+            
+            <!-- Performance indicators -->
+            <circle cx="675" cy="180" r="5" fill="#00ff88" class="glow">
+                <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="675" cy="380" r="5" fill="#ff6b00" class="glow">
+                <animate attributeName="r" values="5;8;5" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            
+            <!-- Legend -->
+            <g id="legend">
+                <rect x="50" y="850" width="1300" height="100" fill="#0f172a" stroke="#1e293b" stroke-width="2" rx="10" opacity="0.9"/>
+                <text x="70" y="880" fill="#64748b" font-size="14" font-weight="bold">Data Flow:</text>
+                <line x1="150" y1="875" x2="200" y2="875" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="210" y="880" fill="#94a3b8" font-size="12">Active Processing</text>
+                
+                <line x1="350" y1="875" x2="400" y2="875" stroke="#ff6b00" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="410" y="880" fill="#94a3b8" font-size="12">Continuous Monitor</text>
+                
+                <line x1="550" y1="875" x2="600" y2="875" stroke="#a855f7" stroke-width="2" stroke-dasharray="5,5"/>
+                <text x="610" y="880" fill="#94a3b8" font-size="12">Control Signal</text>
+                
+                <text x="70" y="910" fill="#64748b" font-size="14" font-weight="bold">Power Usage:</text>
+                <text x="180" y="910" fill="#00ff88" font-size="12">NPU: 5-10W (burst)</text>
+                <text x="320" y="910" fill="#ff6b00" font-size="12">GNA: 0.1W (always)</text>
+                <text x="460" y="910" fill="#ef4444" font-size="12">CPU: 25-45W (peak)</text>
+                
+                <text x="70" y="940" fill="#64748b" font-size="14" font-weight="bold">Performance:</text>
+                <text x="180" y="940" fill="#00ff88" font-size="12">NPU: 11 TOPS</text>
+                <text x="300" y="940" fill="#ff6b00" font-size="12">GNA: 10Hz scan</text>
+                <text x="420" y="940" fill="#00d4ff" font-size="12">Latency: <100ms</text>
+                <text x="550" y="940" fill="#16a34a" font-size="12">Throughput: 10K files/min</text>
+            </g>
+        </svg>
+    </div>
+</body>
+</html>

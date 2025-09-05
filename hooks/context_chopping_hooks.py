@@ -20,6 +20,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'agents', 'src', '
 
 from intelligent_context_chopper import IntelligentContextChopper, ContextChunk
 from permission_fallback_system import PermissionFallbackSystem
+from rejection_reduction_integration import UnifiedClaudeOptimizer
 
 class ContextChoppingHookManager:
     """
