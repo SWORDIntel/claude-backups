@@ -1,11 +1,12 @@
 # Complete Agent Listing - Claude Agent Framework
-## 71 Agents Detected in agents/ Directory
+## 72 Agents Detected in agents/ Directory
 
 ### 📊 Summary Statistics
-- **Total Files**: 71
-- **Active Agents**: 69
+- **Total Files**: 72
+- **Active Agents**: 70
 - **Templates/Docs**: 2 (TEMPLATE.md, WHERE_I_AM.md)
 - **Categories**: 12+ specialized domains
+- **Latest Addition**: ZFS-INTERNAL (2025-01-05)
 
 ---
 
@@ -38,7 +39,7 @@
 7. **OPTIMIZER** - Performance engineering and optimization
 8. **QADIRECTOR** - Quality assurance leadership and strategy
 
-## 💻 Language-Specific Development (14)
+## 💻 Language-Specific & System Development (15)
 1. **C-INTERNAL** - Elite C/C++ systems engineer
 2. **PYTHON-INTERNAL** - Python execution environment
 3. **RUST-INTERNAL-AGENT** - Rust systems programming
@@ -49,10 +50,11 @@
 8. **ASSEMBLY-INTERNAL-AGENT** - Low-level assembly programming
 9. **CPP_INTERNAL_AGENT** - C++ specialized development
 10. **ZIG-INTERNAL-AGENT** - Zig language specialist
-11. **CARBON-INTERNAL-AGENT** - Carbon language analysis
-12. **CLAUDECODE-PROMPTINJECTOR** - Claude-specific prompt injection
-13. **WRAPPER-LIBERATION** - Wrapper liberation tools
-14. **WRAPPER-LIBERATION-PRO** - Advanced wrapper liberation
+11. **ZFS-INTERNAL** - Elite ZFS filesystem engineer (99.999% data integrity)
+12. **CARBON-INTERNAL-AGENT** - Carbon language analysis
+13. **CLAUDECODE-PROMPTINJECTOR** - Claude-specific prompt injection
+14. **WRAPPER-LIBERATION** - Wrapper liberation tools
+15. **WRAPPER-LIBERATION-PRO** - Advanced wrapper liberation
 
 ## 🌐 Specialized Platforms (7)
 1. **APIDESIGNER** - API architecture and contracts design
