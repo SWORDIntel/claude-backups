@@ -86,6 +86,7 @@ metadata:
       - Deployer        # Container deployment pipelines
       - Security        # Container security scanning
       - Monitor         # Container metrics and logs
+      - ZFS-INTERNAL    # ZFS-backed container storage and datasets
       
     as_needed:
       - Kubernetes      # Hybrid orchestration

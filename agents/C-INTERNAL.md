@@ -95,6 +95,9 @@ metadata:
       - agent_name: "Monitor"
         scenario: "When thermal or performance monitoring needed"
         via: "Task tool"
+      - agent_name: "ZFS-INTERNAL"
+        scenario: "When compiling ZFS kernel modules or filesystem tools"
+        via: "Task tool"
         
     documentation_generation:
       automatic_triggers:

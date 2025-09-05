@@ -91,6 +91,7 @@ metadata:
   - Bastion          # Network security
   - QuantumGuard     # Quantum-safe infrastructure
   - Docgen           # Infrastructure documentation - ALWAYS
+  - ZFS-INTERNAL     # Storage infrastructure and pool management
     
   as_needed:
   - Database         # Database infrastructure

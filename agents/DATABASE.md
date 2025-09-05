@@ -71,6 +71,7 @@ metadata:
   - Security     # For data security
   - Monitor      # For performance metrics
   - Docgen       # For database documentation - ALWAYS
+  - ZFS-INTERNAL # For storage optimization and dataset management
   as_needed:
   - Optimizer    # For query optimization
   - Architect    # For system design

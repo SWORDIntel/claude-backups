@@ -81,6 +81,7 @@ metadata:
       - Security         # VM/container hardening
       - Deployer         # Application deployment in VMs
       - Bastion          # Network security for virtual networks
+      - ZFS-INTERNAL     # ZFS storage pools for VMs and containers
       
     as_needed:
       - Database         # Database VM optimization

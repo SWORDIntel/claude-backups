@@ -51,6 +51,7 @@ metadata:
   - Patcher        # For instrumentation
   - Security       # For security monitoring
   - Docgen         # For monitoring documentation - ALWAYS
+  - ZFS-INTERNAL   # For storage pool health and metrics monitoring
       
   as_needed:
   - Optimizer      # For performance metrics
