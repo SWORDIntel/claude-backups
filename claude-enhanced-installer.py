@@ -85,6 +85,8 @@ class ClaudeEnhancedInstaller:
         self.project_root = self._detect_project_root()
         self.system_info = self._gather_system_info()
         self.installation_log = []
+        self.current_step = 0
+        self.total_steps = 0
 
         # Installation paths
         self.local_bin = self.system_info.home_dir / ".local" / "bin"
@@ -135,6 +137,28 @@ class ClaudeEnhancedInstaller:
             home_dir=Path.home(),
             user_name=os.environ.get("USER", "unknown")
         )
+
+    def _show_progress(self, message: str, step: Optional[int] = None) -> None:
+        """Show progress with step counter and progress bar"""
+        if step is not None:
+            self.current_step = step
+        else:
+            self.current_step += 1
+
+        if self.total_steps > 0:
+            progress = int((self.current_step / self.total_steps) * 50)
+            bar = "█" * progress + "░" * (50 - progress)
+            percentage = int((self.current_step / self.total_steps) * 100)
+            print(f"\r{Colors.CYAN}[{bar}] {percentage:3d}% {Colors.RESET}{message}", end="", flush=True)
+            if self.current_step >= self.total_steps:
+                print()  # New line when complete
+        else:
+            print(f"{Colors.CYAN}⚙ {Colors.RESET}{message}")
+
+    def _set_total_steps(self, total: int) -> None:
+        """Set total number of steps for progress tracking"""
+        self.total_steps = total
+        self.current_step = 0
 
     def _detect_shell(self) -> Tuple[ShellType, List[Path]]:
         """Detect current shell and configuration files"""
@@ -928,7 +952,13 @@ exec claude "$@"
             if self.install_agents_system():
                 success_count += 1
 
-        # Step 6: Create launch script
+        # Step 6: Install PICMCS v3.0 (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_picmcs_system():
+                success_count += 1
+
+        # Step 7: Create launch script
         total_steps += 1
         if self.create_launch_script():
             success_count += 1

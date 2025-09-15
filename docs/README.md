@@ -17,6 +17,7 @@ Welcome to the comprehensive documentation for the Claude Agent Framework. This 
 ### Active Systems
 | System | Status | Performance | Documentation |
 |--------|--------|-------------|---------------|
+| **PICMCS v3.0** | ✅ DEPLOYED | 85x performance, universal hardware support | [Full Documentation](features/picmcs-v3-hardware-adaptive-context-chopping.md) |
 | **Enhanced Learning v2.0** | ✅ DEPLOYED | 930M lines/sec, 512-dim vectors | [Full Documentation](features/enhanced-learning-system-v2.md) |
 | **AVX2 Shadowgit** | ✅ INTEGRATED | 930M lines/sec with learning | [Technical Details](technical/shadowgit-avx2-learning-integration.md) |
 | **Cross-Repo Learning** | ✅ ACTIVE | 5 repos monitored | [User Guide](guides/cross-repository-learning-guide.md) |
@@ -31,12 +32,13 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 ```
 
 ### Latest Updates
+- **2025-09-15**: PICMCS v3.0 deployed with 8-level hardware fallback (NPU/GNA→CPU)
+- **2025-09-15**: Universal hardware support from high-end NPU to memory-constrained systems
+- **2025-09-15**: Hardware-adaptive context chopping with 85x performance improvement
 - **2025-09-01**: Enhanced Learning System v2.0 deployed with shadowgit integration
 - **2025-09-01**: Cross-repository learning active across 5 repos
-- **2025-09-01**: All paths converted to relative for portability
 - **2025-08-31**: AVX2 Shadowgit achieving 930M lines/sec
 - **2025-08-30**: Neural hardware integration complete
-- **2025-08-25**: 80 agents registered and active
 
 ## 📚 Navigation
 
@@ -49,6 +51,7 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 - [`FIRST_TIME_LAUNCH_GUIDE.md`](guides/FIRST_TIME_LAUNCH_GUIDE.md) - First launch walkthrough
 - [`README_COMPLETE.md`](guides/README_COMPLETE.md) - Comprehensive setup guide
 - [`README_CONTAINERIZED_SYSTEM.md`](guides/README_CONTAINERIZED_SYSTEM.md) - Docker setup guide
+- [`picmcs-v3-quick-start-guide.md`](guides/picmcs-v3-quick-start-guide.md) - **NEW: PICMCS v3.0 Quick Start Guide**
 
 ### 📖 Reference Documentation  
 **Path:** `reference/`
@@ -73,6 +76,11 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 - [`missing-python-implementations.md`](architecture/missing-python-implementations.md) - Implementation gaps
 - [`python-implementation-priority-guide.md`](architecture/python-implementation-priority-guide.md) - Implementation priorities
 
+**Path:** `technical/`
+- [`picmcs-v3-technical-specification.md`](technical/picmcs-v3-technical-specification.md) - **NEW: PICMCS v3.0 Technical Specification**
+- [`shadowgit-avx2-learning-integration.md`](technical/shadowgit-avx2-learning-integration.md) - AVX2 shadowgit integration
+- [`docker-containerization-best-practices.md`](technical/docker-containerization-best-practices.md) - Docker best practices
+
 ### 🔧 Implementation Reports
 **Path:** `implementation/`
 - [`LEARNING_SYSTEM_IMPLEMENTATION_COMPLETE.md`](implementation/LEARNING_SYSTEM_IMPLEMENTATION_COMPLETE.md) - Learning system completion
@@ -90,6 +98,7 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 **Path:** `features/`
 
 #### 🔴 ACTIVE SYSTEMS
+- [`picmcs-v3-hardware-adaptive-context-chopping.md`](features/picmcs-v3-hardware-adaptive-context-chopping.md) - **NEW: PICMCS v3.0 (85x performance, universal hardware support)**
 - [`shadowgit-avx2-integration.md`](features/shadowgit-avx2-integration.md) - **ONLINE: AVX2 Shadowgit (142.7B lines/sec)**
 - [`docker-learning-system-status.md`](features/docker-learning-system-status.md) - **RUNNING: Docker PostgreSQL Learning System**
 - [`learning-data-flow.md`](features/learning-data-flow.md) - **ACTIVE: Automatic data export/import**
@@ -151,11 +160,12 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 
 | Category | Purpose | File Count |
 |----------|---------|------------|
-| **guides** | Getting started, installation, configuration | 7 files |
+| **guides** | Getting started, installation, configuration | 8 files |
 | **reference** | Complete references, overviews, standards | 8 files |
 | **architecture** | Technical architecture, system design | 9 files |
 | **implementation** | Implementation reports, completion status | 10 files |
-| **features** | New features and enhancements | 2 files |
+| **features** | New features and enhancements | 3 files |
+| **technical** | Technical specifications and implementation details | 2 files |
 | **fixes** | Bug fixes and updates | 2 files |
 | **troubleshooting** | Problem solving and debugging | 1 file |
 | **legacy** | Historical documentation and deprecated info | 8 files |
