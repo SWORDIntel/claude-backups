@@ -33,6 +33,12 @@ export PICMCS_AUTO_CHOPPING="${PICMCS_AUTO_CHOPPING:-true}"
 export PICMCS_HARDWARE_ADAPTIVE="${PICMCS_HARDWARE_ADAPTIVE:-true}"
 export PICMCS_PYTHON_PATH="$CLAUDE_PROJECT_ROOT/agents/src/python"
 
+# Full Self-Learning Integration v3.1
+export LEARNING_ML_ENABLED="${LEARNING_ML_ENABLED:-true}"
+export LEARNING_AGENT_SELECTION="${LEARNING_AGENT_SELECTION:-true}"
+export LEARNING_SUCCESS_PREDICTION="${LEARNING_SUCCESS_PREDICTION:-true}"
+export LEARNING_ADAPTIVE_STRATEGIES="${LEARNING_ADAPTIVE_STRATEGIES:-true}"
+
 # Ensure learning directories exist
 mkdir -p "$LEARNING_LOG_PATH" 2>/dev/null || true
 
@@ -181,6 +187,145 @@ except Exception as e:
     fi
 }
 
+# ML-Powered Agent Selection Function
+intelligent_agent_selection() {
+    if [[ "$LEARNING_AGENT_SELECTION" != "true" ]] || [[ ! -f "$PICMCS_PYTHON_PATH/postgresql_learning_system.py" ]]; then
+        return 0
+    fi
+
+    local task_description="$1"
+    local requested_agent="$2"
+
+    # Extract task type and complexity from description
+    local task_type="general"
+    local complexity="1.0"
+
+    # Simple task classification
+    if [[ "$task_description" =~ (security|audit|vulnerability|penetration) ]]; then
+        task_type="security_audit"
+        complexity="2.5"
+    elif [[ "$task_description" =~ (web|frontend|backend|api|database) ]]; then
+        task_type="web_development"
+        complexity="2.0"
+    elif [[ "$task_description" =~ (deploy|infrastructure|docker|kubernetes) ]]; then
+        task_type="deployment"
+        complexity="3.0"
+    elif [[ "$task_description" =~ (test|testing|qa|quality) ]]; then
+        task_type="testing"
+        complexity="1.5"
+    elif [[ "$task_description" =~ (debug|fix|error|bug) ]]; then
+        task_type="debugging"
+        complexity="2.8"
+    fi
+
+    # Get ML recommendations if available
+    if [[ "$LEARNING_ML_ENABLED" == "true" ]] && command -v python3 >/dev/null 2>&1; then
+        echo "🧠 Learning System: Analyzing optimal agent selection..." >&2
+
+        local recommended_agent
+        recommended_agent=$(python3 -c "
+import sys
+sys.path.insert(0, '$PICMCS_PYTHON_PATH')
+try:
+    from postgresql_learning_system import UltimatePostgreSQLLearningSystem
+    learning = UltimatePostgreSQLLearningSystem()
+    agents = learning.predict_optimal_agents('$task_type', complexity=$complexity)
+    if agents and len(agents) > 0:
+        print(agents[0] if isinstance(agents[0], str) else agents[0].get('name', '$requested_agent'))
+    else:
+        print('$requested_agent')
+except Exception as e:
+    print('$requested_agent', file=sys.stderr)
+" 2>/dev/null)
+
+        if [[ -n "$recommended_agent" ]] && [[ "$recommended_agent" != "$requested_agent" ]]; then
+            echo "💡 Learning System suggests: $recommended_agent (based on ${task_type} analysis)" >&2
+            echo "   Current request: $requested_agent" >&2
+            echo "   Task complexity: $complexity" >&2
+
+            # Optional: Auto-switch to recommended agent (can be disabled)
+            if [[ "$LEARNING_ADAPTIVE_STRATEGIES" == "true" ]]; then
+                echo "🔄 Auto-switching to learned optimal agent: $recommended_agent" >&2
+                export CLAUDE_RECOMMENDED_AGENT="$recommended_agent"
+            fi
+        fi
+    fi
+}
+
+# Success Prediction Function
+predict_task_success() {
+    if [[ "$LEARNING_SUCCESS_PREDICTION" != "true" ]] || [[ ! -f "$PICMCS_PYTHON_PATH/postgresql_learning_system.py" ]]; then
+        return 0
+    fi
+
+    local task_description="$1"
+    local agent_name="$2"
+
+    if command -v python3 >/dev/null 2>&1; then
+        local prediction_result
+        prediction_result=$(python3 -c "
+import sys
+sys.path.insert(0, '$PICMCS_PYTHON_PATH')
+try:
+    from postgresql_learning_system import UltimatePostgreSQLLearningSystem
+    learning = UltimatePostgreSQLLearningSystem()
+
+    # Basic task classification (same as above)
+    task_type = 'general'
+    complexity = 1.0
+
+    # Simple classification logic
+    task_lower = '$task_description'.lower()
+    if any(word in task_lower for word in ['security', 'audit', 'vulnerability']):
+        task_type = 'security_audit'
+        complexity = 2.5
+    elif any(word in task_lower for word in ['web', 'frontend', 'backend', 'api']):
+        task_type = 'web_development'
+        complexity = 2.0
+    elif any(word in task_lower for word in ['deploy', 'infrastructure']):
+        task_type = 'deployment'
+        complexity = 3.0
+    elif any(word in task_lower for word in ['test', 'testing']):
+        task_type = 'testing'
+        complexity = 1.5
+    elif any(word in task_lower for word in ['debug', 'fix', 'error']):
+        task_type = 'debugging'
+        complexity = 2.8
+
+    # Get success prediction (with fallback methods)
+    try:
+        success_rate = learning.predict_task_success(task_type, ['$agent_name'], complexity)
+        duration_estimate = learning.estimate_execution_duration(task_type, ['$agent_name'], complexity)
+    except:
+        success_rate = 0.75  # Default fallback
+        duration_estimate = 60.0
+
+    print(f'{success_rate:.2f}|{duration_estimate:.1f}')
+except Exception as e:
+    print('0.75|60.0')
+" 2>/dev/null)
+
+        if [[ -n "$prediction_result" ]]; then
+            local success_rate="${prediction_result%|*}"
+            local duration_estimate="${prediction_result#*|}"
+
+            echo "📊 Learning System Prediction:" >&2
+            echo "   Success Rate: ${success_rate}% (Agent: $agent_name)" >&2
+            echo "   Estimated Duration: ${duration_estimate}s" >&2
+
+            # Warn if success rate is low
+            if command -v bc >/dev/null 2>&1; then
+                if (( $(echo "$success_rate < 0.6" | bc -l 2>/dev/null || echo "0") )); then
+                    echo "⚠️  Warning: Low predicted success rate (${success_rate}%)" >&2
+                    echo "   Consider alternative agent or task approach" >&2
+                elif (( $(echo "$success_rate > 0.8" | bc -l 2>/dev/null || echo "1") )); then
+                    echo "✅ High confidence prediction (${success_rate}%)" >&2
+                fi
+            fi
+        fi
+    fi
+}
+
 # Validate binary exists
 if [[ "$CLAUDE_BINARY" =~ ^node ]]; then
     # For node commands, check if the js file exists
@@ -210,6 +355,10 @@ case "$1" in
         echo "Project: $CLAUDE_PROJECT_ROOT"
         echo "Permission Bypass: $PERMISSION_BYPASS"
         echo "PICMCS v3.0: $PICMCS_ENABLED (Auto-chopping: $PICMCS_AUTO_CHOPPING)"
+        echo "Learning System: $LEARNING_ML_ENABLED"
+        echo "  Agent Selection: $LEARNING_AGENT_SELECTION"
+        echo "  Success Prediction: $LEARNING_SUCCESS_PREDICTION"
+        echo "  Adaptive Strategies: $LEARNING_ADAPTIVE_STRATEGIES"
         
         if [[ -d "$CLAUDE_AGENTS_DIR" ]]; then
             COUNT=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l)
@@ -275,7 +424,22 @@ case "$1" in
         echo "Loading agent: $AGENT_NAME"
         export CLAUDE_AGENT="$AGENT_NAME"
         export CLAUDE_AGENT_FILE="$AGENT_FILE"
-        
+
+        # Full Self-Learning Integration
+        task_description="$*"
+
+        # ML-powered agent selection and recommendations
+        intelligent_agent_selection "$task_description" "$AGENT_NAME"
+
+        # Use recommended agent if available
+        if [[ -n "$CLAUDE_RECOMMENDED_AGENT" ]]; then
+            AGENT_NAME="$CLAUDE_RECOMMENDED_AGENT"
+            export CLAUDE_AGENT="$AGENT_NAME"
+        fi
+
+        # Success prediction analysis
+        predict_task_success "$task_description" "$AGENT_NAME"
+
         # PICMCS v3.0 context optimization for agent execution
         optimize_context "$@"
 
@@ -319,6 +483,10 @@ case "$1" in
         echo "  CLAUDE_PERMISSION_BYPASS=false  - Disable auto permission bypass"
         echo "  PICMCS_ENABLED=false           - Disable PICMCS v3.0 context optimization"
         echo "  PICMCS_AUTO_CHOPPING=false     - Disable automatic context chopping"
+        echo "  LEARNING_ML_ENABLED=false      - Disable machine learning features"
+        echo "  LEARNING_AGENT_SELECTION=false - Disable ML-powered agent recommendations"
+        echo "  LEARNING_SUCCESS_PREDICTION=false - Disable success rate prediction"
+        echo "  LEARNING_ADAPTIVE_STRATEGIES=false - Disable adaptive strategy selection"
         echo ""
         echo "Quick functions:"
         echo "  coder, director, architect, security"
