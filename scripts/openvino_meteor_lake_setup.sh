@@ -834,17 +834,55 @@ if [ -z "$OPENVINO_WELCOME_SHOWN" ] && [ "$DISABLE_OPENVINO_AUTO" != "1" ]; then
 fi
 EOF
     
-    # Backup existing bashrc
-    print_message "Backing up existing ~/.bashrc file..."
-    cp ~/.bashrc ~/.bashrc.backup.$(date +%Y%m%d_%H%M%S)
-    
-    # Add to bashrc if not already present
-    if ! grep -q "OpenVINO Environment Auto-Configuration" ~/.bashrc; then
-        echo "" >> ~/.bashrc
-        cat ~/openvino_bashrc_addon.tmp >> ~/.bashrc
-        print_message "Added OpenVINO auto-configuration to ~/.bashrc"
+    # Enhanced shell detection and configuration
+    local shell_profiles=()
+    local primary_shell=""
+
+    # Detect current shell and determine profiles
+    if [[ -n "$SHELL" ]]; then
+        case "$SHELL" in
+            */zsh)
+                primary_shell="zsh"
+                shell_profiles=("$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.profile")
+                ;;
+            */bash)
+                primary_shell="bash"
+                shell_profiles=("$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile")
+                ;;
+            *)
+                primary_shell="bash"
+                shell_profiles=("$HOME/.bashrc" "$HOME/.profile")
+                ;;
+        esac
     else
-        print_message "OpenVINO auto-configuration already in ~/.bashrc"
+        primary_shell="bash"
+        shell_profiles=("$HOME/.bashrc" "$HOME/.profile")
+    fi
+
+    print_message "Detected shell: $primary_shell"
+
+    # Add to all relevant shell profiles
+    local profiles_updated=0
+    for profile in "${shell_profiles[@]}"; do
+        if [[ -f "$profile" ]] && ! grep -q "OpenVINO Environment Auto-Configuration" "$profile"; then
+            # Backup the profile
+            cp "$profile" "${profile}.backup.$(date +%Y%m%d_%H%M%S)"
+            print_message "Backed up $profile"
+
+            # Add configuration
+            echo "" >> "$profile"
+            cat ~/openvino_bashrc_addon.tmp >> "$profile"
+            print_message "Added OpenVINO auto-configuration to $profile"
+            ((profiles_updated++))
+        elif [[ -f "$profile" ]]; then
+            print_message "OpenVINO auto-configuration already in $profile"
+        fi
+    done
+
+    if [[ $profiles_updated -eq 0 ]]; then
+        print_message "No shell profiles were updated (already configured or not found)"
+    else
+        print_message "Updated $profiles_updated shell profile(s)"
     fi
     
     # Clean up temp file

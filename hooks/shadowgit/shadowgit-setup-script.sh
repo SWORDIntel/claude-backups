@@ -197,8 +197,19 @@ install_openvino() {
     # Setup OpenVINO environment
     source /opt/intel/openvino_${OPENVINO_VERSION}/setupvars.sh
     
-    # Add to bashrc
-    echo "source /opt/intel/openvino_${OPENVINO_VERSION}/setupvars.sh" >> /etc/bash.bashrc
+    # Add to system shell profiles for all users
+    local system_profiles=(
+        "/etc/bash.bashrc"
+        "/etc/zsh/zshrc"
+        "/etc/profile"
+    )
+
+    for profile in "${system_profiles[@]}"; do
+        if [[ -f "$profile" ]] && ! grep -q "openvino_${OPENVINO_VERSION}" "$profile"; then
+            echo "source /opt/intel/openvino_${OPENVINO_VERSION}/setupvars.sh" >> "$profile"
+            print_success "Added OpenVINO setup to $profile"
+        fi
+    done
     
     print_success "OpenVINO ${OPENVINO_VERSION} installed"
 }

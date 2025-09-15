@@ -540,19 +540,54 @@ EOF
     
     print_success "Environment variables configured"
     
-    # Add to shell profile
-    local shell_profile="$HOME/.bashrc"
-    if [ -n "$ZSH_VERSION" ]; then
-        shell_profile="$HOME/.zshrc"
-    fi
-    
-    if ! grep -q "CLAUDE_NATURAL_INVOCATION" "$shell_profile" 2>/dev/null; then
-        echo "" >> "$shell_profile"
-        echo "# Claude Natural Agent Invocation" >> "$shell_profile"
-        echo "source $env_file" >> "$shell_profile"
-        print_success "Added to shell profile: $shell_profile"
+    # Enhanced shell detection and configuration
+    local shell_profiles=()
+    local primary_shell=""
+
+    # Detect current shell and determine profiles
+    if [[ -n "$SHELL" ]]; then
+        case "$SHELL" in
+            */zsh)
+                primary_shell="zsh"
+                shell_profiles=("$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.profile")
+                ;;
+            */bash)
+                primary_shell="bash"
+                shell_profiles=("$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile")
+                ;;
+            *)
+                primary_shell="bash"
+                shell_profiles=("$HOME/.bashrc" "$HOME/.profile")
+                ;;
+        esac
+    elif [[ -n "$ZSH_VERSION" ]]; then
+        primary_shell="zsh"
+        shell_profiles=("$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.profile")
     else
-        print_info "Shell profile already configured"
+        primary_shell="bash"
+        shell_profiles=("$HOME/.bashrc" "$HOME/.profile")
+    fi
+
+    print_info "Detected shell: $primary_shell"
+
+    # Add to relevant shell profiles
+    local profiles_updated=0
+    for profile in "${shell_profiles[@]}"; do
+        if [[ -f "$profile" ]] && ! grep -q "CLAUDE_NATURAL_INVOCATION" "$profile" 2>/dev/null; then
+            echo "" >> "$profile"
+            echo "# Claude Natural Agent Invocation" >> "$profile"
+            echo "source $env_file" >> "$profile"
+            print_success "Added to shell profile: $profile"
+            ((profiles_updated++))
+        elif [[ -f "$profile" ]]; then
+            print_info "Natural invocation already configured in: $profile"
+        fi
+    done
+
+    if [[ $profiles_updated -eq 0 ]]; then
+        print_info "All shell profiles already configured or no profiles found"
+    else
+        print_success "Updated $profiles_updated shell profile(s)"
     fi
 }
 

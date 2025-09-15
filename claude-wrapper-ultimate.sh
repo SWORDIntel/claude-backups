@@ -3,7 +3,24 @@
 
 # Configuration
 export CLAUDE_HOME="$HOME/.claude-home"
-export CLAUDE_PROJECT_ROOT="PROJECT_ROOT_PLACEHOLDER"
+
+# Dynamic project root detection
+if [[ -n "$CLAUDE_PROJECT_ROOT" ]]; then
+    # Use explicitly set project root
+    export CLAUDE_PROJECT_ROOT="$CLAUDE_PROJECT_ROOT"
+elif [[ -f "$(dirname "$0")/CLAUDE.md" ]]; then
+    # Script is in project directory
+    export CLAUDE_PROJECT_ROOT="$(dirname "$0")"
+elif [[ -f "$HOME/claude-backups/CLAUDE.md" ]]; then
+    # Standard location
+    export CLAUDE_PROJECT_ROOT="$HOME/claude-backups"
+elif [[ -f "$HOME/Documents/claude-backups/CLAUDE.md" ]]; then
+    # Alternative location
+    export CLAUDE_PROJECT_ROOT="$HOME/Documents/claude-backups"
+else
+    # Fallback
+    export CLAUDE_PROJECT_ROOT="$HOME"
+fi
 
 # Learning System Integration v3.1
 export LEARNING_CAPTURE_ENABLED="${LEARNING_CAPTURE_ENABLED:-true}"
@@ -25,8 +42,25 @@ else
     export CLAUDE_HOOKS_DIR="$HOME/.config/claude/hooks"
 fi
 
-# Binary location
-CLAUDE_BINARY="BINARY_PLACEHOLDER"
+# Binary location - dynamic detection
+CLAUDE_BINARY=""
+
+# Try to find claude binary
+if [[ -n "$CLAUDE_BINARY_PATH" ]]; then
+    CLAUDE_BINARY="$CLAUDE_BINARY_PATH"
+elif command -v claude >/dev/null 2>&1; then
+    CLAUDE_BINARY="$(command -v claude)"
+elif [[ -f "$HOME/.npm-global/bin/claude" ]]; then
+    CLAUDE_BINARY="$HOME/.npm-global/bin/claude"
+elif [[ -f "$HOME/.local/bin/claude" ]]; then
+    CLAUDE_BINARY="$HOME/.local/bin/claude"
+elif [[ -f "/usr/local/bin/claude" ]]; then
+    CLAUDE_BINARY="/usr/local/bin/claude"
+elif [[ -f "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" ]]; then
+    CLAUDE_BINARY="node $HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+else
+    CLAUDE_BINARY="claude"  # Hope it's in PATH
+fi
 
 # Learning Capture Function
 capture_execution() {
@@ -90,17 +124,11 @@ except: pass
     return $exit_code
 }
 
-# Find binary if needed
-if [[ ! -f "$CLAUDE_BINARY" ]]; then
-    for path in \
-        "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
-        "$HOME/.npm-global/bin/claude" \
-        "/usr/local/bin/claude"; do
-        if [[ -f "$path" ]]; then
-            CLAUDE_BINARY="$path"
-            break
-        fi
-    done
+# Validate binary exists
+if [[ "$CLAUDE_BINARY" != "claude" ]] && [[ ! -f "${CLAUDE_BINARY%% *}" ]]; then
+    echo "Warning: Claude binary not found at: $CLAUDE_BINARY" >&2
+    echo "Falling back to 'claude' command in PATH" >&2
+    CLAUDE_BINARY="claude"
 fi
 
 # Permission bypass always enabled for enhanced functionality

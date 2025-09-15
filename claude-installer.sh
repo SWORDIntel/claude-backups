@@ -641,31 +641,22 @@ install_nodejs_official() {
 
 # Helper function to add nvm to shell profile
 add_nvm_to_shell_profile() {
-    local shell_profiles=("$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile")
-    
-    for profile in "${shell_profiles[@]}"; do
-        if [[ -f "$profile" ]] && ! grep -q "NVM_DIR" "$profile"; then
-            cat >> "$profile" << 'EOF'
-
-# Node Version Manager
+    # Use enhanced shell profile management
+    local nvm_config='# NVM (Node Version Manager)
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-EOF
-        fi
-    done
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"'
+
+    add_to_shell_profiles "$nvm_config" "NVM_DIR"
 }
 
 # Helper function to add Node.js to shell profile
 add_nodejs_to_shell_profile() {
     local node_bin_path="$1"
-    local shell_profiles=("$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile")
-    
-    for profile in "${shell_profiles[@]}"; do
-        if [[ -f "$profile" ]] && ! grep -q "$node_bin_path" "$profile"; then
-            echo "export PATH=\"$node_bin_path:\$PATH\"" >> "$profile"
-        fi
-    done
+    local nodejs_config="# Node.js binary path
+export PATH=\"$node_bin_path:\$PATH\""
+
+    add_to_shell_profiles "$nodejs_config" "$node_bin_path"
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -4841,12 +4832,140 @@ setup_github_sync() {
     show_progress
 }
 
+# Enhanced Shell Detection Function (PYTHON-INTERNAL guided)
+detect_user_shell_comprehensive() {
+    local detected_shell=""
+    local shell_rc=""
+    local shell_profiles=()
+
+    # Method 1: Check current shell environment
+    if [[ -n "$SHELL" ]]; then
+        case "$SHELL" in
+            */zsh)   detected_shell="zsh" ;;
+            */bash)  detected_shell="bash" ;;
+            */fish)  detected_shell="fish" ;;
+            */csh)   detected_shell="csh" ;;
+            */tcsh)  detected_shell="tcsh" ;;
+            */dash)  detected_shell="dash" ;;
+            *)       detected_shell="unknown" ;;
+        esac
+    fi
+
+    # Method 2: Check process name if SHELL failed
+    if [[ -z "$detected_shell" || "$detected_shell" == "unknown" ]]; then
+        local current_process=$(ps -p $$ -o comm= 2>/dev/null | sed 's/^-//')
+        case "$current_process" in
+            zsh)   detected_shell="zsh" ;;
+            bash)  detected_shell="bash" ;;
+            fish)  detected_shell="fish" ;;
+            csh)   detected_shell="csh" ;;
+            tcsh)  detected_shell="tcsh" ;;
+            dash)  detected_shell="dash" ;;
+        esac
+    fi
+
+    # Method 3: Default to bash if still unknown
+    [[ -z "$detected_shell" || "$detected_shell" == "unknown" ]] && detected_shell="bash"
+
+    # Determine primary shell configuration file based on detected shell
+    case "$detected_shell" in
+        zsh)
+            shell_rc="$HOME/.zshrc"
+            shell_profiles=("$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.profile")
+            ;;
+        bash)
+            shell_rc="$HOME/.bashrc"
+            shell_profiles=("$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile")
+            ;;
+        fish)
+            shell_rc="$HOME/.config/fish/config.fish"
+            shell_profiles=("$HOME/.config/fish/config.fish" "$HOME/.profile")
+            ;;
+        csh|tcsh)
+            shell_rc="$HOME/.cshrc"
+            shell_profiles=("$HOME/.cshrc" "$HOME/.profile")
+            ;;
+        *)
+            shell_rc="$HOME/.profile"
+            shell_profiles=("$HOME/.profile")
+            ;;
+    esac
+
+    # Verify primary shell_rc exists, fallback to alternatives
+    if [[ ! -f "$shell_rc" ]]; then
+        for profile in "${shell_profiles[@]}"; do
+            if [[ -f "$profile" ]]; then
+                shell_rc="$profile"
+                break
+            fi
+        done
+    fi
+
+    # Create primary shell config if none exists
+    if [[ ! -f "$shell_rc" ]]; then
+        touch "$shell_rc" 2>/dev/null || {
+            # Fallback to .profile if we can't create the primary
+            shell_rc="$HOME/.profile"
+            touch "$shell_rc" 2>/dev/null || {
+                warning "Cannot create shell configuration file"
+                return 1
+            }
+        }
+    fi
+
+    # Export results for use by other functions
+    export DETECTED_SHELL="$detected_shell"
+    export PRIMARY_SHELL_RC="$shell_rc"
+    export ALL_SHELL_PROFILES=("${shell_profiles[@]}")
+
+    info "Detected shell: $detected_shell"
+    info "Primary config: $shell_rc"
+    return 0
+}
+
+# Enhanced shell profile management (PYTHON-INTERNAL approved)
+add_to_shell_profiles() {
+    local content="$1"
+    local marker="$2"
+    local profiles_updated=0
+
+    # Ensure shell detection has been run
+    [[ -z "$DETECTED_SHELL" ]] && detect_user_shell_comprehensive
+
+    # Add to primary shell config
+    if [[ -f "$PRIMARY_SHELL_RC" ]] && ! grep -q "$marker" "$PRIMARY_SHELL_RC" 2>/dev/null; then
+        echo "" >> "$PRIMARY_SHELL_RC"
+        echo "$content" >> "$PRIMARY_SHELL_RC"
+        ((profiles_updated++))
+    fi
+
+    # For comprehensive coverage, also add to standard profiles that exist
+    local standard_profiles=("$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile")
+    for profile in "${standard_profiles[@]}"; do
+        if [[ -f "$profile" ]] && [[ "$profile" != "$PRIMARY_SHELL_RC" ]] && ! grep -q "$marker" "$profile" 2>/dev/null; then
+            echo "" >> "$profile"
+            echo "$content" >> "$profile"
+            ((profiles_updated++))
+        fi
+    done
+
+    if [[ $profiles_updated -gt 0 ]]; then
+        success "Updated $profiles_updated shell profile(s) with $marker"
+        info "Restart your shell or run: source $PRIMARY_SHELL_RC"
+    else
+        info "Shell profiles already contain $marker or no profiles found"
+    fi
+
+    return 0
+}
+
 # 8. Setup environment
 setup_environment() {
     print_section "Configuring Environment"
-    
-    SHELL_RC="$HOME/.bashrc"
-    [[ -f "$HOME/.zshrc" ]] && SHELL_RC="$HOME/.zshrc"
+
+    # Use enhanced shell detection
+    detect_user_shell_comprehensive
+    SHELL_RC="$PRIMARY_SHELL_RC"
     
     # Remove old config
     sed -i '/# Claude Master System/,/# End Claude System/d' "$SHELL_RC" 2>/dev/null
@@ -5325,46 +5444,12 @@ setup_agent_activation() {
 # Setup shell integration for permanent activation
 setup_shell_integration() {
     info "Setting up shell integration for permanent activation..."
-    
-    local activation_line="source ~/.config/claude/activate-agents.sh"
-    local shells_updated=0
-    
-    # Update .bashrc if it exists
-    if [[ -f "$HOME/.bashrc" ]]; then
-        if ! grep -q "activate-agents.sh" "$HOME/.bashrc" 2>/dev/null; then
-            echo "" >> "$HOME/.bashrc"
-            echo "# Claude Agent System Activation" >> "$HOME/.bashrc"
-            echo "$activation_line" >> "$HOME/.bashrc"
-            ((shells_updated++))
-        fi
-    fi
-    
-    # Update .zshrc if it exists  
-    if [[ -f "$HOME/.zshrc" ]]; then
-        if ! grep -q "activate-agents.sh" "$HOME/.zshrc" 2>/dev/null; then
-            echo "" >> "$HOME/.zshrc"
-            echo "# Claude Agent System Activation" >> "$HOME/.zshrc"
-            echo "$activation_line" >> "$HOME/.zshrc"
-            ((shells_updated++))
-        fi
-    fi
-    
-    # Update .profile as fallback
-    if [[ -f "$HOME/.profile" ]]; then
-        if ! grep -q "activate-agents.sh" "$HOME/.profile" 2>/dev/null; then
-            echo "" >> "$HOME/.profile"
-            echo "# Claude Agent System Activation" >> "$HOME/.profile"
-            echo "$activation_line" >> "$HOME/.profile"
-            ((shells_updated++))
-        fi
-    fi
-    
-    if [[ $shells_updated -gt 0 ]]; then
-        success "Shell integration added to $shells_updated profile(s)"
-        info "Restart your shell or run: source ~/.config/claude/activate-agents.sh"
-    else
-        info "Shell integration already present or no shell profiles found"
-    fi
+
+    local activation_config="# Claude Agent System Activation
+source ~/.config/claude/activate-agents.sh"
+
+    # Use enhanced shell profile management
+    add_to_shell_profiles "$activation_config" "activate-agents.sh"
 }
 
 # 12. Setup C Diff Engine Compilation
