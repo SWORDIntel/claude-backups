@@ -17,7 +17,7 @@ Environment=TANDEM_CONFIG_DIR=/home/john/claude-backups/agents/src/python/config
 Environment=OPENVINO_AVAILABLE=0
 Environment=NPU_ACCELERATION_ENABLED=0
 Environment=INTEL_OPENVINO_DIR=
-ExecStartPre=/bin/bash -c "[ -f '/home/john/openvino_ml_env/bin/setupvars.sh' ] && source '/home/john/openvino_ml_env/bin/setupvars.sh' || true"
+ExecStartPre=/bin/bash -c "[ -f '/root/openvino_ml_env/bin/setupvars.sh' ] && source '/root/openvino_ml_env/bin/setupvars.sh' || true"
 ExecStartPre=/home/john/claude-backups/agents/src/python/venv_production/bin/python -c "import production_orchestrator; print('Tandem Orchestrator module check: OK')"
 ExecStart=/home/john/claude-backups/agents/src/python/venv_production/bin/python -m production_orchestrator --mode=production --config=/home/john/claude-backups/agents/src/python/config/production.yaml
 ExecReload=/bin/kill -HUP $MAINPID

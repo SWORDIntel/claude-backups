@@ -1707,18 +1707,7 @@
         "hooks/shadowgit/shadowgit-unified-system.py"
       ],
       "exampleFilesGeneratedAt": 1757059006902,
-      "lastCost": 13.755892849999999,
-      "lastAPIDuration": 3113601,
-      "lastToolDuration": 1824195,
-      "lastDuration": 4000378,
-      "lastLinesAdded": 2159,
-      "lastLinesRemoved": 917,
-      "lastTotalInputTokens": 15288,
-      "lastTotalOutputTokens": 21483,
-      "lastTotalCacheCreationInputTokens": 313593,
-      "lastTotalCacheReadInputTokens": 5674677,
-      "lastTotalWebSearchRequests": 0,
-      "lastSessionId": "6c6f4aaf-73b2-48e7-97c7-5bc9a39db5e3"
+      "lastTotalWebSearchRequests": 0
     },
     "/home/john/LAT5150DRVMIL": {
       "allowedTools": [],
@@ -2096,7 +2085,8 @@
   "s1mAccessCache": {
     "2cfbac83-d660-4b03-84ba-5429a8e65662": {
       "hasAccess": false,
-      "timestamp": 1757062809210
+      "hasAccessNotAsDefault": false,
+      "timestamp": 1757962606062
     }
   },
   "isQualifiedForDataSharing": false,

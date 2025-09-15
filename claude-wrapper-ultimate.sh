@@ -45,21 +45,26 @@ fi
 # Binary location - dynamic detection
 CLAUDE_BINARY=""
 
-# Try to find claude binary
+# Try to find claude binary (avoid self-referencing)
+SCRIPT_PATH="$(readlink -f "$0")"
 if [[ -n "$CLAUDE_BINARY_PATH" ]]; then
     CLAUDE_BINARY="$CLAUDE_BINARY_PATH"
-elif command -v claude >/dev/null 2>&1; then
-    CLAUDE_BINARY="$(command -v claude)"
-elif [[ -f "$HOME/.npm-global/bin/claude" ]]; then
-    CLAUDE_BINARY="$HOME/.npm-global/bin/claude"
-elif [[ -f "$HOME/.local/bin/claude" ]]; then
-    CLAUDE_BINARY="$HOME/.local/bin/claude"
-elif [[ -f "/usr/local/bin/claude" ]]; then
+elif [[ -f "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js" ]]; then
+    CLAUDE_BINARY="node /usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+elif [[ -f "/usr/local/bin/claude" ]] && [[ "$(readlink -f "/usr/local/bin/claude")" != "$SCRIPT_PATH" ]]; then
     CLAUDE_BINARY="/usr/local/bin/claude"
 elif [[ -f "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" ]]; then
     CLAUDE_BINARY="node $HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+elif command -v claude >/dev/null 2>&1; then
+    # Only use command if it's not this script
+    FOUND_CLAUDE="$(command -v claude)"
+    if [[ "$(readlink -f "$FOUND_CLAUDE")" != "$SCRIPT_PATH" ]]; then
+        CLAUDE_BINARY="$FOUND_CLAUDE"
+    else
+        CLAUDE_BINARY="node /usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+    fi
 else
-    CLAUDE_BINARY="claude"  # Hope it's in PATH
+    CLAUDE_BINARY="node /usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
 fi
 
 # Learning Capture Function
@@ -88,7 +93,12 @@ EOF
     
     # Execute command and capture result
     local exit_code=0
-    "$@" || exit_code=$?
+    if [[ "$1" =~ ^node ]]; then
+        # Handle node commands specially
+        eval "$@" || exit_code=$?
+    else
+        "$@" || exit_code=$?
+    fi
     
     local end_time=$(date +%s.%N)
     local duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "0")
@@ -125,10 +135,19 @@ except: pass
 }
 
 # Validate binary exists
-if [[ "$CLAUDE_BINARY" != "claude" ]] && [[ ! -f "${CLAUDE_BINARY%% *}" ]]; then
+if [[ "$CLAUDE_BINARY" =~ ^node ]]; then
+    # For node commands, check if the js file exists
+    JS_FILE="${CLAUDE_BINARY#node }"
+    JS_FILE="${JS_FILE# }"  # Remove leading space
+    if [[ ! -f "$JS_FILE" ]]; then
+        echo "Warning: Claude CLI script not found at: $JS_FILE" >&2
+        echo "Falling back to symlink" >&2
+        CLAUDE_BINARY="/usr/local/bin/claude"
+    fi
+elif [[ "$CLAUDE_BINARY" != "claude" ]] && [[ ! -f "$CLAUDE_BINARY" ]]; then
     echo "Warning: Claude binary not found at: $CLAUDE_BINARY" >&2
-    echo "Falling back to 'claude' command in PATH" >&2
-    CLAUDE_BINARY="claude"
+    echo "Falling back to symlink" >&2
+    CLAUDE_BINARY="/usr/local/bin/claude"
 fi
 
 # Permission bypass always enabled for enhanced functionality

@@ -637,8 +637,8 @@ The ultimate installation solution that combines all features from previous inst
 **After installation, claude command provides:**
 ```bash
 claude /task "create feature with tests"  # → Auto permission bypass + orchestration
-claude --unified-status                   # → Show system status  
-claude --unified-help                     # → Show unified features
+claude --status                          # → Show system status
+claude --help                            # → Show available features
 ```
 
 ### Legacy Installers (Still Supported)

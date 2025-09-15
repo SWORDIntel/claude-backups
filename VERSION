@@ -1,17 +1,17 @@
-7.0.0
-Release Date: 2025-08-20
+7.1.0
+Release Date: 2025-09-15
 Platform: Intel Core Ultra 7 155H (Meteor Lake)
 Status: PRODUCTION
-Claude Code: v1.0.77 (@anthropic-ai/claude-code)
+Claude Code: v1.0.113 (@anthropic-ai/claude-code)
 Repository: https://github.com/SWORDIntel/claude-backups
 
-Current State (2025-08-20):
-- AGENTS: 47 production agents with global access
+Current State (2025-09-15):
+- AGENTS: 91 production agents with global access
 - ORCHESTRATION: Tandem system with 85.7% success rate
 - DATABASE: PostgreSQL 17 with >2000 auth/sec
 - PROTOCOL: 4.2M msg/sec binary communications
 - INSTALLATION: Multiple methods (full, LiveCD, portable)
-- SYNC: Automatic 5-minute agent synchronization
+- UPGRADE: Comprehensive upgrade system for all modules
 - ACCESS: Global claude command from any directory
 
 Key Features:
@@ -21,6 +21,18 @@ Key Features:
 - Python venv support at ~/.local/share/claude/venv/
 - Enhanced installers with dynamic path detection
 - Comprehensive documentation and setup guides
+
+Changes in 7.1.0:
+- NEW: Comprehensive Upgrade System v1.0 for all Claude modules
+- NEW: Module-specific upgrade capabilities (Claude Code, Python installer, wrappers, agents, learning system, OpenVINO, database)
+- NEW: Backup and rollback capabilities with detailed logging
+- NEW: Dry-run mode for safe upgrade testing
+- NEW: Version detection and upgrade necessity analysis
+- NEW: Shell wrapper integration for --upgrade and --upgrade-module options
+- IMPROVED: Agent count increased to 91 specialized agents
+- IMPROVED: Claude Code updated to v1.0.113
+- ADDED: Cross-component compatibility checking
+- ADDED: Comprehensive upgrade documentation and examples
 
 Changes in 7.0.0:
 - NEW: Unified Installer v4.0 - The One True Installer

@@ -26,7 +26,7 @@ A **globally-integrated AI acceleration framework** that automatically enhances 
 # Install everything globally (one time only)
 git clone https://github.com/SWORDIntel/claude-backups.git
 cd claude-backups
-./claude-installer.sh --full
+./install
 
 # That's it! All subsystems now active across your entire system
 ```

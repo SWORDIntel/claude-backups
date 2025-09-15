@@ -1,0 +1,59 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════════════════════════
+# Claude Installation Shortcut
+# Quick installer launcher for the enhanced Python-based installer
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Colors for output
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+# Print header
+echo -e "${BOLD}${CYAN}Claude Enhanced Installer - Quick Launch${RESET}"
+echo -e "${CYAN}Launching Python-based installer with robust error handling...${RESET}"
+echo
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check for Python installer
+PYTHON_INSTALLER="$SCRIPT_DIR/claude-python-installer.sh"
+if [[ ! -f "$PYTHON_INSTALLER" ]]; then
+    echo -e "${YELLOW}Python installer not found. Trying alternative locations...${RESET}"
+
+    # Try different locations
+    for location in \
+        "$SCRIPT_DIR/claude-enhanced-installer.py" \
+        "$HOME/claude-backups/claude-python-installer.sh" \
+        "$HOME/Documents/Claude/claude-python-installer.sh"; do
+
+        if [[ -f "$location" ]]; then
+            if [[ "$location" == *.py ]]; then
+                echo -e "${GREEN}Found Python installer: $location${RESET}"
+                exec python3 "$location" "$@"
+            else
+                echo -e "${GREEN}Found installer: $location${RESET}"
+                exec "$location" "$@"
+            fi
+        fi
+    done
+
+    echo -e "${YELLOW}No installer found. Creating basic installation...${RESET}"
+
+    # Basic npm installation as fallback
+    echo "Installing Claude Code via npm..."
+    if command -v npm >/dev/null 2>&1; then
+        npm install -g @anthropic-ai/claude-code
+        echo -e "${GREEN}✓ Claude Code installed successfully${RESET}"
+        echo -e "${CYAN}You can now use 'claude' command${RESET}"
+    else
+        echo "Error: npm not found. Please install Node.js first."
+        exit 1
+    fi
+else
+    # Launch Python installer
+    exec "$PYTHON_INSTALLER" "$@"
+fi

@@ -1,45 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bash:*)",
-      "Bash(grep:*)",
-      "Read(//home/ubuntu/Downloads/**)",
-      "Bash(./claude-installer.sh:*)",
-      "Bash(python3:*)",
-      "Bash(timeout:*)",
-      "Bash(chmod:*)",
-      "Bash(pip install:*)",
-      "Bash(wc:*)",
-      "Bash(ls:*)",
-      "Bash(head:*)",
-      "Read(//home/ubuntu/**)",
-      "Bash(sudo apt-get:*)",
-      "Bash(sudo apt-get install:*)",
-      "Bash(xfce4-terminal:*)",
-      "Bash(dpkg:*)",
-      "Bash(apt list:*)",
-      "Bash(sudo apt:*)",
-      "Bash(command -v:*)",
-      "Bash(echo \"Current shell: $SHELL\")",
-      "Bash(echo:*)",
-      "Bash(/home/ubuntu/terminal-fix.sh:*)",
-      "Bash(/usr/bin/gnome-terminal:*)",
-      "Bash(sudo bash:*)",
-      "Bash(for file in *.md)",
-      "Bash(do if ! grep -q \"tools:\" \"$file\")",
-      "Bash(then echo \"MISSING tools section: $file\")",
-      "Bash(fi)",
-      "Bash(done)",
-      "Bash(do if ! grep -q \"Task.*MANDATORY\" \"$file\")",
-      "Bash(then echo \"Missing Task tool: $file\")",
-      "Bash(mv:*)",
-      "WebSearch"
+      "Read(//home/john/.claude-home/**)"
     ],
     "additionalDirectories": [
       "/home/ubuntu/Downloads",
       "/home/ubuntu",
       "/usr/bin"
-    ]
+    ],
+    "deny": [],
+    "ask": []
   },
   "claude_project_root": "auto",
   "self_contained": true,
