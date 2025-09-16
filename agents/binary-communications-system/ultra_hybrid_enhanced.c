@@ -1117,8 +1117,8 @@ static void run_enhanced_benchmark(int duration_seconds) {
     }
 #endif
     
-    // Cleanup - adapter handles all internal cleanup
-    ring_buffer_destroy_adapter(rb);
+    // Cleanup - use hybrid cleanup function
+    destroy_hybrid_ring_buffer(rb);
     
     for (int i = 0; i < pool->num_workers; i++) {
         free(pool->workers[i].local_queue->tasks);

@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "bridge_mode": "seamless",
+  "auto_detect_npu": true,
+  "performance_monitoring": {
+    "enabled": true,
+    "log_interval_seconds": 60,
+    "metrics_retention_hours": 24
+  },
+  "agent_selection": {
+    "use_npu_intelligence": true,
+    "fallback_to_rules": true,
+    "cache_selections": true,
+    "cache_ttl_seconds": 30
+  },
+  "message_routing": {
+    "use_npu_classification": true,
+    "enable_batching": true,
+    "priority_queues": true
+  }
+}

@@ -1,0 +1,83 @@
+# Kernel Options for Intel GNA/NPU Support on siduction
+# For Intel Core Ultra 7 155H (Meteor Lake)
+
+## Recommended Kernel Versions:
+- 6.12.x (Latest stable with full Meteor Lake support)
+- 6.11.x (Good NPU support, may lack some GNA features)
+- 6.10.x (Basic support, requires backports)
+- 6.8.x LTS (Long-term support, needs patches)
+
+## Option 1: Build Latest Mainline (RECOMMENDED)
+# Best hardware support for Meteor Lake
+wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.12.6.tar.xz
+# or latest RC for bleeding edge:
+wget https://git.kernel.org/torvalds/t/linux-6.13-rc3.tar.gz
+
+## Option 2: Intel Optimized Kernel
+# Intel's kernel with all accelerator patches
+git clone https://github.com/intel/linux-intel-lts.git
+cd linux-intel-lts
+git checkout lts-v6.6.65-intel
+
+## Option 3: Ubuntu HWE Kernel (Easy)
+# Pre-built with most drivers
+wget http://archive.ubuntu.com/ubuntu/pool/main/l/linux-oem-6.11/linux-image-6.11.0-1027-oem_6.11.0-1027.29_amd64.deb
+wget http://archive.ubuntu.com/ubuntu/pool/main/l/linux-oem-6.11/linux-modules-6.11.0-1027-oem_6.11.0-1027.29_amd64.deb
+
+## Option 4: Liquorix Kernel (Performance)
+# Performance-optimized with neural support
+curl -s 'https://liquorix.net/install-liquorix.sh' | sudo bash
+
+## Option 5: XanMod Kernel (Gaming/Desktop)
+# Desktop-optimized with accelerator support
+echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | sudo tee /etc/apt/sources.list.d/xanmod-release.list
+wget -qO - https://xanmod.org/archive-key.asc | sudo gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg
+sudo apt update && sudo apt install linux-xanmod-x64v4
+
+## Critical Kernel Modules Required:
+
+### NPU (Neural Processing Unit):
+- intel_vpu / ivpu - Main NPU driver
+- intel_vsc - Vision Sensing Controller
+- drm_accel - DRM acceleration framework
+- intel_mei_vsc_hw - MEI VSC hardware interface
+
+### GNA (Gaussian Neural Accelerator):
+- intel_gna - GNA 3.0 driver
+- mei_gsc - MEI GSC interface for GNA
+- intel_pmc_core - Power management
+
+### Supporting Infrastructure:
+- intel_lpss - Low Power Subsystem
+- intel_ish - Integrated Sensor Hub
+- intel_punit_ipc - P-Unit IPC interface
+- intel_hfi_thermal - Hardware Feedback Interface
+
+## Build Requirements:
+- CONFIG_DRM_ACCEL=y
+- CONFIG_DRM_ACCEL_IVPU=m
+- CONFIG_INTEL_GNA=m
+- CONFIG_INTEL_VSC=m
+- CONFIG_INTEL_MEI_VSC_HW=m
+- CONFIG_ZONE_DEVICE=y
+- CONFIG_HMM_MIRROR=y
+
+## Quick Test After Installation:
+ls /dev/accel*        # Should show /dev/accel/accel0
+ls /sys/class/accel/  # Should show accel devices
+lsmod | grep ivpu     # Should show intel_vpu module
+lsmod | grep gna      # Should show intel_gna module
+
+## Firmware Requirements:
+# Download Intel NPU firmware
+wget https://github.com/intel/ivpu-driver/releases/download/v1.6.0/vpu_37xx_v1.6.0.bin
+sudo cp vpu_37xx_v1.6.0.bin /lib/firmware/intel/vpu/
+sudo cp vpu_37xx_v1.6.0.bin /lib/firmware/intel/ivpu/
+
+# GNA firmware (if available)
+sudo apt install firmware-misc-nonfree intel-microcode
+
+## Post-Install Verification:
+dmesg | grep -E "ivpu|gna|accel|vpu"
+sudo intel_gpu_top  # Should show VPU usage
+ls -la /dev/dri/    # Should show renderD* devices

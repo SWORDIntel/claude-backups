@@ -1,0 +1,10 @@
+{
+  "host": "localhost",
+  "port": 5433,
+  "database": "claude_agents_auth",
+  "user": "postgres",
+  "password": "postgres",
+  "schema": "enhanced_learning",
+  "initialized": "2025-09-16T04:13:05+01:00",
+  "container": "claude-postgres"
+}

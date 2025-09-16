@@ -1,0 +1,23 @@
+{
+  "installMethod": "unknown",
+  "autoUpdates": true,
+  "cachedStatsigGates": {
+    "tengu_disable_bypass_permissions_mode": false
+  },
+  "firstStartTime": "2025-09-15T22:26:43.581Z",
+  "userID": "4564df075d49794dd2d852d28a215521bb8d8ce327258ee9f93f1524aaab5368",
+  "projects": {
+    "/home/john/claude-backups": {
+      "allowedTools": [],
+      "history": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": false,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false
+    }
+  }
+}

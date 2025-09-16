@@ -1,0 +1,29 @@
+{
+  "npu_device_path": "/dev/accel/accel0",
+  "npu_mode": "adaptive",
+  "performance_targets": {
+    "throughput_ops_per_sec": 20000,
+    "agent_selection_time_ms": 1.0,
+    "message_routing_time_ms": 0.5,
+    "npu_utilization_target": 0.75
+  },
+  "fallback_settings": {
+    "enable_cpu_fallback": true,
+    "fallback_error_threshold": 0.1,
+    "fallback_timeout_ms": 100
+  },
+  "optimization": {
+    "enable_adaptive_mode": true,
+    "enable_performance_monitoring": true,
+    "cache_predictions": true,
+    "batch_operations": true,
+    "batch_size": 32,
+    "batch_timeout_ms": 10
+  },
+  "hardware": {
+    "meteor_lake_optimization": true,
+    "use_p_cores_for_critical": true,
+    "use_e_cores_for_background": true,
+    "thermal_throttling_enabled": true
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "npu-orchestrator",
+  "description": "NPU Accelerated Orchestrator Service",
+  "python_path": "/home/john/claude-backups/agents/src/python",
+  "main_module": "npu_orchestrator_bridge",
+  "npu_mode": "adaptive",
+  "auto_start": false,
+  "restart_on_failure": true,
+  "log_level": "INFO"
+}

@@ -1,0 +1,12 @@
+{
+  "project_root": "/home/john/claude-backups",
+  "venv_path": "/home/john/claude-backups/agents/src/python/.venv",
+  "install_dir": "/home/john/.local/bin",
+  "openvino_version": "Unknown",
+  "npu_available": false,
+  "performance_target": 25000,
+  "fallback_enabled": true,
+  "health_check_interval": 30,
+  "build_timestamp": 1757979437.5989106,
+  "builder_version": "8.0.0"
+}

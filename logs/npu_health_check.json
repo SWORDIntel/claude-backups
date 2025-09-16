@@ -1,0 +1,33 @@
+{
+  "overall_health_score": 60,
+  "max_score": 100,
+  "health_percentage": 60.0,
+  "production_ready": false,
+  "hardware": {
+    "npu_detected": true,
+    "cpu_model": "Intel(R) Core(TM) Ultra 7 165H",
+    "supports_ai_boost": true,
+    "device_files": [
+      "/dev/accel"
+    ],
+    "pci_devices": [
+      "0000:00:08.0 System peripheral: Intel Corporation Meteor Lake-P Gaussian & Neural-Network Accelerator (rev 20)",
+      "0000:00:0b.0 Processing accelerators: Intel Corporation Meteor Lake NPU (rev 04)",
+      "0000:00:0e.0 RAID bus controller: Intel Corporation Volume Management Device NVMe RAID Controller Intel Corporation"
+    ]
+  },
+  "openvino": {
+    "openvino_installed": false,
+    "version": null,
+    "npu_plugin_available": false,
+    "available_devices": [],
+    "npu_device_name": null
+  },
+  "orchestrator": {
+    "orchestrator_found": true,
+    "executable": false,
+    "performance_baseline": 0,
+    "baseline_test_passed": true
+  },
+  "timestamp": 1757979738.0387714
+}

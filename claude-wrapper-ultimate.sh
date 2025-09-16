@@ -4,6 +4,27 @@
 # Configuration
 export CLAUDE_HOME="$HOME/.claude-home"
 
+# NPU Acceleration Integration (Added by CONSTRUCTOR v8.0)
+if [[ "${1:-}" == "--npu" ]] || [[ "${1:-}" == "npu" ]]; then
+    shift
+    NPU_LAUNCHER="/home/john/.local/bin/claude-npu"
+    if [[ -x "$NPU_LAUNCHER" ]]; then
+        echo "🚀 Launching with NPU acceleration..."
+        exec "$NPU_LAUNCHER" "$@"
+    else
+        echo "⚠️ NPU launcher not found, falling back to regular execution"
+    fi
+fi
+
+# Auto-detect NPU beneficial tasks
+if [[ "$*" =~ (performance|optimize|accelerate|speed|fast) ]]; then
+    NPU_LAUNCHER="/home/john/.local/bin/claude-npu"
+    if [[ -x "$NPU_LAUNCHER" ]]; then
+        echo "💡 Performance task detected. Use --npu for acceleration: claude --npu $*"
+    fi
+fi
+
+
 # Dynamic project root detection
 if [[ -n "$CLAUDE_PROJECT_ROOT" ]]; then
     # Use explicitly set project root
@@ -38,6 +59,42 @@ export LEARNING_ML_ENABLED="${LEARNING_ML_ENABLED:-true}"
 export LEARNING_AGENT_SELECTION="${LEARNING_AGENT_SELECTION:-true}"
 export LEARNING_SUCCESS_PREDICTION="${LEARNING_SUCCESS_PREDICTION:-true}"
 export LEARNING_ADAPTIVE_STRATEGIES="${LEARNING_ADAPTIVE_STRATEGIES:-true}"
+
+# Docker Learning System Integration
+export LEARNING_DOCKER_ENABLED="${LEARNING_DOCKER_ENABLED:-true}"
+export LEARNING_DOCKER_AUTO_START="${LEARNING_DOCKER_AUTO_START:-false}"
+export LEARNING_DOCKER_COMPOSE_PATH="$CLAUDE_PROJECT_ROOT/database/docker"
+
+# Docker Group Membership Check and Auto-Fix (CONSTRUCTOR + ARCHITECT coordination)
+check_docker_permissions() {
+    if ! command -v docker >/dev/null 2>&1; then
+        return 1  # Docker not installed
+    fi
+
+    # Check if user is in docker group
+    if ! groups | grep -q docker; then
+        echo "⚠️  Docker permission issue detected:" >&2
+        echo "   User $(whoami) is not in the docker group" >&2
+        echo "   This prevents the learning system from starting Docker containers" >&2
+        echo "" >&2
+        echo "🔧 To fix this issue, run the following command:" >&2
+        echo "   sudo usermod -a -G docker $(whoami)" >&2
+        echo "   newgrp docker  # Or log out and back in" >&2
+        echo "" >&2
+        echo "💡 The wrapper will continue with reduced functionality" >&2
+        return 2  # User not in docker group
+    fi
+
+    # Check if Docker socket is accessible
+    if [[ ! -w /var/run/docker.sock ]]; then
+        echo "⚠️  Docker socket permission issue:" >&2
+        echo "   Cannot write to /var/run/docker.sock" >&2
+        echo "   Learning system may not function properly" >&2
+        return 3  # Socket not writable
+    fi
+
+    return 0  # All good
+}
 
 # Ensure learning directories exist
 mkdir -p "$LEARNING_LOG_PATH" 2>/dev/null || true
@@ -120,7 +177,7 @@ EOF
 {"timestamp":"$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)","session_id":"$session_id","event":"end","exit_code":$exit_code,"duration":$duration,"success":$([ $exit_code -eq 0 ] && echo "true" || echo "false")}
 EOF
     
-    # Async database insert (non-blocking)
+    # Async database insert (non-blocking) - supports both Docker and local PostgreSQL
     if command -v python3 >/dev/null 2>&1; then
         python3 -c "
 import sys, json, asyncio, asyncpg
@@ -128,14 +185,23 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 async def log_to_db():
-    try:
-        conn = await asyncpg.connect('postgresql://claude_agent:claude_secure_password@localhost:$LEARNING_DB_PORT/claude_agents_auth')
-        await conn.execute('''
-            INSERT INTO agent_metrics (agent_name, execution_time, success_rate, session_id, prompt_hash)
-            VALUES (\$1, \$2, \$3, \$4, \$5)
-        ''', '$agent_used', float('$duration'), $exit_code == 0, '$session_id', '$prompt_hash')
-        await conn.close()
-    except: pass
+    # Try Docker PostgreSQL first, then fallback to local
+    connection_configs = [
+        'postgresql://claude_agent:claude_secure_password@localhost:$LEARNING_DB_PORT/claude_agents_auth',  # Docker
+        'postgresql://claude_agent:claude_secure_password@localhost:5432/claude_agents_auth'  # Local fallback
+    ]
+
+    for config in connection_configs:
+        try:
+            conn = await asyncpg.connect(config)
+            await conn.execute('''
+                INSERT INTO agent_metrics (agent_name, execution_time, success_rate, session_id, prompt_hash)
+                VALUES (\$1, \$2, \$3, \$4, \$5)
+            ''', '$agent_used', float('$duration'), $exit_code == 0, '$session_id', '$prompt_hash')
+            await conn.close()
+            break  # Success - stop trying other configs
+        except Exception as e:
+            continue  # Try next config
 
 try:
     asyncio.run(log_to_db())
@@ -144,6 +210,115 @@ except: pass
     fi
     
     return $exit_code
+}
+
+# Docker Learning System Management Functions
+check_docker_learning_system() {
+    if [[ "$LEARNING_DOCKER_ENABLED" != "true" ]]; then
+        return 0
+    fi
+
+    # Check Docker permissions first (CONSTRUCTOR fix)
+    local docker_perm_status
+    check_docker_permissions
+    docker_perm_status=$?
+
+    if [[ $docker_perm_status -eq 1 ]]; then
+        return 1  # Docker not installed
+    elif [[ $docker_perm_status -gt 1 ]]; then
+        # Docker available but permission issues - continue with warning
+        # Function already printed helpful error messages
+        :
+    fi
+
+    # Check if Docker Compose is available
+    local compose_cmd=""
+    if command -v docker-compose >/dev/null 2>&1; then
+        compose_cmd="docker-compose"
+    elif docker compose version >/dev/null 2>&1; then
+        compose_cmd="docker compose"
+    else
+        return 1
+    fi
+
+    # Check if Docker Compose path exists
+    if [[ ! -d "$LEARNING_DOCKER_COMPOSE_PATH" ]] || [[ ! -f "$LEARNING_DOCKER_COMPOSE_PATH/docker-compose.yml" ]]; then
+        return 1
+    fi
+
+    # Check if PostgreSQL container is running
+    if docker ps --format "table {{.Names}}" | grep -q "claude-postgres"; then
+        return 0
+    else
+        return 2  # Docker available but container not running
+    fi
+}
+
+start_docker_learning_system() {
+    if [[ "$LEARNING_DOCKER_ENABLED" != "true" ]]; then
+        return 0
+    fi
+
+    local status
+    check_docker_learning_system
+    status=$?
+
+    case $status in
+        0)
+            # Already running
+            return 0
+            ;;
+        1)
+            # Docker not available
+            echo "⚠️  Docker learning system: Docker/Docker Compose not available" >&2
+            return 1
+            ;;
+        2)
+            # Docker available but containers not running
+            if [[ "$LEARNING_DOCKER_AUTO_START" == "true" ]]; then
+                echo "🐳 Starting Docker learning system..." >&2
+
+                local compose_cmd=""
+                if command -v docker-compose >/dev/null 2>&1; then
+                    compose_cmd="docker-compose"
+                elif docker compose version >/dev/null 2>&1; then
+                    compose_cmd="docker compose"
+                fi
+
+                if [[ -n "$compose_cmd" ]] && [[ -d "$LEARNING_DOCKER_COMPOSE_PATH" ]]; then
+                    cd "$LEARNING_DOCKER_COMPOSE_PATH" || return 1
+
+                    # Start only the PostgreSQL container for learning
+                    if $compose_cmd up -d postgres >/dev/null 2>&1; then
+                        echo "✅ Docker learning system started successfully" >&2
+
+                        # Wait a moment for container to be ready
+                        sleep 2
+
+                        # Verify the container is healthy
+                        local attempts=0
+                        while [[ $attempts -lt 10 ]]; do
+                            if docker exec claude-postgres pg_isready -U claude_agent >/dev/null 2>&1; then
+                                echo "✅ PostgreSQL learning database ready" >&2
+                                return 0
+                            fi
+                            sleep 1
+                            ((attempts++))
+                        done
+
+                        echo "⚠️  PostgreSQL container started but not ready yet" >&2
+                        return 0
+                    else
+                        echo "❌ Failed to start Docker learning system" >&2
+                        return 1
+                    fi
+                fi
+            else
+                echo "💡 Docker learning system available but not auto-started. Set LEARNING_DOCKER_AUTO_START=true to enable." >&2
+                return 0
+            fi
+            ;;
+    esac
 }
 
 # PICMCS v3.0 Context Optimization Function
@@ -326,20 +501,53 @@ except Exception as e:
     fi
 }
 
-# Validate binary exists
-if [[ "$CLAUDE_BINARY" =~ ^node ]]; then
-    # For node commands, check if the js file exists
-    JS_FILE="${CLAUDE_BINARY#node }"
-    JS_FILE="${JS_FILE# }"  # Remove leading space
-    if [[ ! -f "$JS_FILE" ]]; then
-        echo "Warning: Claude CLI script not found at: $JS_FILE" >&2
-        echo "Falling back to symlink" >&2
-        CLAUDE_BINARY="/usr/local/bin/claude"
+# Enhanced Binary Validation with Proper Symlink Support (ARCHITECT fix)
+validate_claude_binary() {
+    local binary_path="$1"
+
+    if [[ "$binary_path" =~ ^node ]]; then
+        # For node commands, check if the js file exists
+        local js_file="${binary_path#node }"
+        js_file="${js_file# }"  # Remove leading space
+
+        if [[ -f "$js_file" ]]; then
+            return 0  # Valid node command
+        else
+            return 1  # JS file not found
+        fi
+    elif [[ "$binary_path" == "claude" ]]; then
+        # Generic command, should work if in PATH
+        return 0
+    elif [[ -f "$binary_path" ]]; then
+        # Regular file exists
+        return 0
+    elif [[ -L "$binary_path" ]]; then
+        # It's a symlink - check if target exists
+        local target
+        target=$(readlink -f "$binary_path" 2>/dev/null)
+        if [[ -n "$target" ]] && [[ -f "$target" ]]; then
+            return 0  # Valid symlink with existing target
+        else
+            return 2  # Broken symlink
+        fi
+    else
+        return 1  # File doesn't exist
     fi
-elif [[ "$CLAUDE_BINARY" != "claude" ]] && [[ ! -f "$CLAUDE_BINARY" ]]; then
-    echo "Warning: Claude binary not found at: $CLAUDE_BINARY" >&2
-    echo "Falling back to symlink" >&2
-    CLAUDE_BINARY="/usr/local/bin/claude"
+}
+
+# Validate binary exists with improved symlink handling
+if ! validate_claude_binary "$CLAUDE_BINARY"; then
+    local validation_result=$?
+
+    if [[ $validation_result -eq 2 ]]; then
+        echo "Warning: Claude binary symlink is broken: $CLAUDE_BINARY" >&2
+        echo "Target: $(readlink -f "$CLAUDE_BINARY" 2>/dev/null || echo "unknown")" >&2
+    else
+        echo "Warning: Claude binary not found: $CLAUDE_BINARY" >&2
+    fi
+
+    echo "Falling back to system claude command" >&2
+    CLAUDE_BINARY="claude"
 fi
 
 # Permission bypass always enabled for enhanced functionality
@@ -359,6 +567,42 @@ case "$1" in
         echo "  Agent Selection: $LEARNING_AGENT_SELECTION"
         echo "  Success Prediction: $LEARNING_SUCCESS_PREDICTION"
         echo "  Adaptive Strategies: $LEARNING_ADAPTIVE_STRATEGIES"
+        echo "Docker Learning: $LEARNING_DOCKER_ENABLED (Auto-start: $LEARNING_DOCKER_AUTO_START)"
+
+        # Docker learning system status
+        if [[ "$LEARNING_DOCKER_ENABLED" == "true" ]]; then
+            docker_status=0
+            check_docker_learning_system
+            docker_status=$?
+            case $docker_status in
+                0)
+                    echo "  Docker Status: ✅ Running (PostgreSQL ready)"
+                    # Show container details
+                    if command -v docker >/dev/null 2>&1; then
+                        container_id=$(docker ps --filter "name=claude-postgres" --format "{{.ID}}" 2>/dev/null | head -1)
+                        if [[ -n "$container_id" ]]; then
+                            container_uptime=$(docker ps --filter "name=claude-postgres" --format "{{.Status}}" 2>/dev/null | head -1)
+                            echo "    Container: $container_id ($container_uptime)"
+                            echo "    Database: postgresql://localhost:$LEARNING_DB_PORT/claude_agents_auth"
+                        fi
+                    fi
+                    ;;
+                1)
+                    echo "  Docker Status: ❌ Docker/Docker Compose not available"
+                    ;;
+                2)
+                    echo "  Docker Status: ⚠️  Available but containers not running"
+                    if [[ "$LEARNING_DOCKER_AUTO_START" == "true" ]]; then
+                        echo "    Auto-start: Will start on next execution"
+                    else
+                        echo "    Auto-start: Disabled (set LEARNING_DOCKER_AUTO_START=true to enable)"
+                    fi
+                    ;;
+                *)
+                    echo "  Docker Status: 🔍 Unknown status"
+                    ;;
+            esac
+        fi
         
         if [[ -d "$CLAUDE_AGENTS_DIR" ]]; then
             COUNT=$(find "$CLAUDE_AGENTS_DIR" -name "*.md" -o -name "*.MD" 2>/dev/null | wc -l)
@@ -443,6 +687,9 @@ case "$1" in
         # PICMCS v3.0 context optimization for agent execution
         optimize_context "$@"
 
+        # Initialize Docker learning system if enabled
+        start_docker_learning_system
+
         # Permission bypass always enabled for enhanced functionality
         capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
         ;;
@@ -452,6 +699,9 @@ case "$1" in
         echo "Warning: --safe mode deprecated. Permission bypass always enabled for full functionality."
         echo "Running with permission bypass for optimal performance..."
         shift
+        # Initialize Docker learning system if enabled
+        start_docker_learning_system
+
         # PICMCS v3.0 context optimization for safe mode
         optimize_context "$@"
         capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
@@ -487,12 +737,17 @@ case "$1" in
         echo "  LEARNING_AGENT_SELECTION=false - Disable ML-powered agent recommendations"
         echo "  LEARNING_SUCCESS_PREDICTION=false - Disable success rate prediction"
         echo "  LEARNING_ADAPTIVE_STRATEGIES=false - Disable adaptive strategy selection"
+        echo "  LEARNING_DOCKER_ENABLED=false  - Disable Docker learning system"
+        echo "  LEARNING_DOCKER_AUTO_START=true - Enable automatic Docker container startup"
         echo ""
         echo "Quick functions:"
         echo "  coder, director, architect, security"
         ;;
         
     *)
+        # Initialize Docker learning system if enabled
+        start_docker_learning_system
+
         # PICMCS v3.0 context optimization for all commands
         optimize_context "$@"
 

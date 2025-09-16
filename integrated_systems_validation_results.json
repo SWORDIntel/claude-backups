@@ -1,0 +1,108 @@
+{
+  "timestamp": 1757987905.5814972,
+  "systems_tested": [
+    "coordination_bridge",
+    "shadowgit_performance",
+    "integrated_performance"
+  ],
+  "performance_targets": {
+    "coordination_target_ops_per_sec": 50000,
+    "shadowgit_target_lines_per_sec": 11500000
+  },
+  "coordination_bridge": {
+    "simple_workflow": {
+      "ops_per_sec": 1192.8514799319812,
+      "success_rate": 1.0,
+      "execution_time_ms": 2.5149819994112477,
+      "total_time_ms": 5.343578006431926
+    },
+    "complex_workflow": {
+      "ops_per_sec": 8400.901784504978,
+      "tasks_completed": 50,
+      "total_tasks": 50,
+      "success_rate": 1.0,
+      "npu_utilization": 0,
+      "total_time_ms": 61.61789200268686
+    },
+    "summary": {
+      "bridge_metrics": {
+        "workflows_executed": 3,
+        "total_execution_time": 0.010999546000675764,
+        "average_ops_per_sec": 3855.945309341874,
+        "npu_utilization": 0,
+        "coordination_overhead": 0
+      },
+      "recent_performance": {
+        "workflows_count": 2,
+        "average_ops_per_sec": 4796.87663221848,
+        "average_success_rate": 1.0,
+        "total_tasks_executed": 53
+      },
+      "system_status": {
+        "npu_available": true,
+        "coordination_available": false,
+        "agents_cached": 89
+      }
+    }
+  },
+  "coordination_target_achieved": "False",
+  "shadowgit_performance": {
+    "operations_count": 8,
+    "test_time_ms": 2000.6282009999268,
+    "dashboard": {
+      "current_performance": {
+        "throughput_lines_per_sec": 483229.16666666674,
+        "vs_baseline": 15.895696271929827,
+        "vs_target": 4.201992753623189
+      },
+      "hardware_utilization": {
+        "npu_utilization": 37.5,
+        "avx2_utilization": 50.0,
+        "cpu_utilization": 12.5
+      },
+      "analysis": {
+        "bottlenecks": [
+          "Performance below baseline"
+        ],
+        "recommendations": [
+          "Investigate performance regression",
+          "Enable all acceleration modes (NPU + AVX2)"
+        ]
+      },
+      "system_status": {
+        "npu_available": true,
+        "monitoring_active": true,
+        "operations_recorded": 8,
+        "database_connected": false
+      }
+    },
+    "system_status": {
+      "npu_available": true,
+      "monitoring_active": true,
+      "database_connected": false
+    }
+  },
+  "shadowgit_target_progress": 4.201992753623189,
+  "integrated_performance": {
+    "workflow_performance": {
+      "ops_per_sec": 1974.08266358866,
+      "success_rate": 1.0,
+      "tasks_completed": 5
+    },
+    "git_performance": {
+      "operations_recorded": 8,
+      "monitoring_active": true
+    },
+    "integration_metrics": {
+      "total_execution_time_ms": 8.354773002793081,
+      "systems_coordinated": 2,
+      "integration_overhead_ms": 5.821951002872083
+    }
+  },
+  "validation_summary": {
+    "systems_operational": 3,
+    "coordination_available": true,
+    "shadowgit_available": true,
+    "integration_successful": true
+  }
+}

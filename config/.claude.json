@@ -1,29 +1,33 @@
 {
-  "numStartups": 47,
+  "numStartups": 59,
   "installMethod": "native",
   "autoUpdates": true,
   "hasSeenTasksHint": true,
   "tipsHistory": {
     "new-user-warmup": 8,
-    "memory-command": 36,
+    "memory-command": 52,
     "theme-command": 41,
-    "status-line": 27,
+    "status-line": 52,
     "prompt-queue": 1,
     "enter-to-steer-in-relatime": 41,
     "todo-list": 41,
-    "# for memory": 42,
-    "install-github-app": 43,
-    "drag-and-drop-images": 43,
-    "double-esc": 43,
-    "continue": 44,
-    "shift-tab": 44,
-    "custom-agents": 38,
-    "permissions": 43,
-    "custom-commands": 43,
+    "# for memory": 52,
+    "install-github-app": 53,
+    "drag-and-drop-images": 55,
+    "double-esc": 55,
+    "continue": 55,
+    "shift-tab": 55,
+    "custom-agents": 53,
+    "permissions": 54,
+    "custom-commands": 58,
     "ide-upsell-external-terminal": 44,
-    "image-paste": 39
+    "image-paste": 59,
+    "plan-mode-for-complex-tasks": 55,
+    "terminal-setup": 50,
+    "git-worktrees": 52
   },
-  "promptQueueUseCount": 100,
+  "promptQueueUseCount": 111,
+  "showExpandedTodos": true,
   "cachedStatsigGates": {
     "tengu_disable_bypass_permissions_mode": false
   },
@@ -1566,6 +1570,70 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "git push and confirm all systems it sets up wjtg",
+          "pastedContents": {}
+        },
+        {
+          "display": "DEBUGGER runt through and create a shortcut ./installer",
+          "pastedContents": {}
+        },
+        {
+          "display": "[Pasted text #1 +127 lines] need tset up thjee pyttho installeler to properly set up innit and install the lclaude codde venv using PYTHON-INTERNAL DIRECTOR and PROJECTORCHESTRATOR",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "s on this host.\nadmin@ip-172-31-23-64:~/claude-backups$ ./claude-enhanced-installer.py\n======================================================================\nClaude Enhanced Installer v2.0\nPython-based installer with robust error handling\n======================================================================\n\nSystem Information:\n  Platform: linux (x86_64)\n  Shell: bash\n  Python: 3.11.2\n  Node.js: 18.20.4\n  npm: Available\n  pip: Available\n  Project root: /home/admin/claude-backups\n\n──────────────────────────────────────────────────\nDetecting existing Claude installations\n──────────────────────────────────────────────────\n──────────────────────────────────────────────────\nInstalling Claude\n──────────────────────────────────────────────────\n──────────────────────────────────────────────────\nInstalling Claude via npm\n──────────────────────────────────────────────────\nℹ Trying: npm install -g @anthropic-ai/claude-code\n✗ Command failed with code 243: ['npm', 'install', '-g', '@anthropic-ai/claude-code']\n✗ Error output: npm ERR! code EACCES\nnpm ERR! syscall mkdir\nnpm ERR! path /usr/local/lib/node_modules\nnpm ERR! errno -13\nnpm ERR! Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules'\nnpm ERR!  [Error: EACCES: permission denied, mkdir '/usr/local/lib/node_modules'] {\nnpm ERR!   errno: -13,\nnpm ERR!   code: 'EACCES',\nnpm ERR!   syscall: 'mkdir',\nnpm ERR!   path: '/usr/local/lib/node_modules'\nnpm ERR! }\nnpm ERR! \nnpm ERR! The operation was rejected by your operating system.\nnpm ERR! It is likely you do not have the permissions to access this file as the current user\nnpm ERR! \nnpm ERR! If you believe this might be a permissions issue, please double-check the\nnpm ERR! permissions of the file and its containing directories, or try running\nnpm ERR! the command again as root/Administrator.\n\nnpm ERR! A complete log of this run can be found in:\nnpm ERR!     /home/admin/.npm/_logs/2025-09-16T03_11_52_233Z-debug-0.log\n\n⚠ Strategy failed: Command '['npm', 'install', '-g', '@anthropic-ai/claude-code']' returned non-zero exit status 243.\nℹ Trying: sudo npm install -g @anthropic-ai/claude-code\n✓ npm installation successful\n──────────────────────────────────────────────────\nInstalling Claude via pip\n──────────────────────────────────────────────────\nℹ Trying: pip3 install --user claude-code\n✗ Command failed with code 1: ['pip3', 'install', '--user', 'claude-code']\n✗ Error output: error: externally-managed-environment\n\n× This environment is externally managed\n╰─> To install Python packages system-wide, try apt install\n    python3-xyz, where xyz is the package you are trying to\n    install.\n    \n    If you wish to install a non-Debian-packaged Python package,\n    create a virtual environment using python3 -m venv path/to/venv.\n    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make\n    sure you have python3-full installed.\n    \n    If you wish to install a non-Debian packaged Python application,\n    it may be easiest to use pipx install xyz, which will manage a\n    virtual environment for you. Make sure you have pipx installed.\n    \n    See /usr/share/doc/python3.11/README.venv for more information.\n\nnote: If you believe this is a mistake, please contact your Python installation or OS distribution provider. You can override this, at the risk of breaking your Python installation or OS, by passing --break-system-packages.\nhint: See PEP 668 for the detailed specification.\n\nℹ Trying: pip3 install claude-code\n✗ Command failed with code 1: ['pip3', 'install', 'claude-code']\n✗ Error output: error: externally-managed-environment\n\n× This environment is externally managed\n╰─> To install Python packages system-wide, try apt install\n    python3-xyz, where xyz is the package you are trying to\n    install.\n    \n    If you wish to install a non-Debian-packaged Python package,\n    create a virtual environment using python3 -m venv path/to/venv.\n    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make\n    sure you have python3-full installed.\n    \n    If you wish to install a non-Debian packaged Python application,\n    it may be easiest to use pipx install xyz, which will manage a\n    virtual environment for you. Make sure you have pipx installed.\n    \n    See /usr/share/doc/python3.11/README.venv for more information.\n\nnote: If you believe this is a mistake, please contact your Python installation or OS distribution provider. You can override this, at the risk of breaking your Python installation or OS, by passing --break-system-packages.\nhint: See PEP 668 for the detailed specification.\n\nℹ Trying: sudo pip3 install claude-code\n✗ Command failed with code 1: ['sudo', 'pip3', 'install', 'claude-code']\n✗ Error output: error: externally-managed-environment\n\n× This environment is externally managed\n╰─> To install Python packages system-wide, try apt install\n    python3-xyz, where xyz is the package you are trying to\n    install.\n    \n    If you wish to install a non-Debian-packaged Python package,\n    create a virtual environment using python3 -m venv path/to/venv.\n    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make\n    sure you have python3-full installed.\n    \n    If you wish to install a non-Debian packaged Python application,\n    it may be easiest to use pipx install xyz, which will manage a\n    virtual environment for you. Make sure you have pipx installed.\n    \n    See /usr/share/doc/python3.11/README.venv for more information.\n\nnote: If you believe this is a mistake, please contact your Python installation or OS distribution provider. You can override this, at the risk of breaking your Python installation or OS, by passing --break-system-packages.\nhint: See PEP 668 for the detailed specification.\n\n✗ All pip installation strategies failed\n✗ Failed to install or find working Claude binary\nadmin@ip-172-31-23-64:~/claude-backups$ \n"
+            }
+          }
+        },
+        {
+          "display": "like shadowgit.html create a similar explanatoryy .html for each of the other modules put them into a HTML directory use WEB-INTERNAL,PROJECT-ORCHESTRATOR DIRECTOR to choose agents",
+          "pastedContents": {}
+        },
+        {
+          "display": "use PYTHON-INTERNAL,C-INTERNAL and ARCHITECT to speed it up as much as poossible write to docu claude.md and push to git",
+          "pastedContents": {}
+        },
+        {
+          "display": "Why is shadowgit so low",
+          "pastedContents": {}
+        },
+        {
+          "display": "what is our overall boost in speed from all these systems",
+          "pastedContents": {}
+        },
+        {
+          "display": "write to docu,claude.md and push to git",
+          "pastedContents": {}
+        },
+        {
+          "display": "Use ARCHITECT and CONSTRUCTOR to add in both of the misssing modules",
+          "pastedContents": {}
+        },
+        {
+          "display": "Anything else need intergrating?",
+          "pastedContents": {}
+        },
+        {
+          "display": "Geat document this and also in claude.md plus check the installer brings it online properly",
+          "pastedContents": {}
+        },
+        {
+          "display": "[Pasted text #1 +137 lines] seems we crashed",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "…\n  ⎿  No (tell Claude what to do differently)\n\n> we can do a total redesign i mean MATLAB and C may be better have NSA decide\n\n● Task(NSA strategic assessment for communication system redesign)\n  ⎿  Done (8 tool uses · 96.6k tokens · 1m 12.1s)                                                                                                                                                                                                           \n\n● NSA Strategic Decision: Enhanced Python + Strategic C Integration\n\n  The NSA agent has completed the strategic assessment and made the definitive architectural decision:\n\n  ✅ APPROVED ARCHITECTURE: Enhanced Python Orchestrator with Selective C Integration\n\n  Key Decision Points:\n  - Reject C Binary Fix: 81 core dumps indicate fundamental design flaws\n  - Reject MATLAB Redesign: Unnecessary complexity and unknown variables\n  - Approve Enhanced Python: Build on proven foundation (85.7% success rate)\n  - Strategic C Modules: Only for performance-critical paths, not monolithic binary\n\n  Implementation Strategy:\n\n  Phase 1 (30 days): Python Orchestrator Hardening\n  - Async/await optimization for 3-5x speed improvement\n  - Connection pooling and caching layers\n  - Hardware-aware thread allocation\n  - Target: 15-25K operations/sec\n\n  Phase 2 (60 days): Strategic C Modules\n  - Identify TOP 3 performance bottlenecks only\n  - Isolated C modules with bulletproof error handling\n  - Python remains primary control plane\n  - Target: 100K-500K operations/sec for critical paths\n\n  Phase 3 (Optional, 90 days): MATLAB Integration\n  - Mathematical operations and signal processing only\n  - Integration via Python matlab.engine interface\n  - Specialized algorithms, not core communication\n\n  Security & Risk Assessment:\n\n  - Minimal Attack Surface: Python-controlled with isolated C modules\n  - Proven Reliability: Builds on working 85.7% success rate foundation\n  - Controlled Risk: Incremental approach with validation at each step\n  - Rapid Response: Faster debugging and vulnerability patching\n\n  The strategic decision prioritizes operational security and mission continuity while providing a clear path to enhanced performance through targeted optimization rather than risky total redesign.\n\n  Next Action: Begin Phase 1 Python orchestrator performance audit and async optimization implementation.\n\n> Begin\n\n● Phase 1: Python Orchestrator Performance Audit - INITIATED\n\n  🚀 Beginning Enhanced Python Orchestrator Implementation\n\n  Let me start by conducting a comprehensive performance audit of the current Python tandem orchestrator to identify optimization opportunities.\n\n● Read(~/claude-backups/agents/src/python/production_orchestrator.py)\n  ⎿  Read 50 lines (ctrl+o to expand)\n\n● Bash(wc -l /home/john/claude-backups/agents/src/python/production_orchestrator.py)\n  ⎿  919 /home/john/claude-backups/agents/src/python/production_orchestrator.py\n\n● Search(pattern: \"class.*Orchestrator|async def|await\\s\", path: \"~/claude-backups/agents/src/python/production_orchestrator.py\", output_mode: \"content\")\n  ⎿  Found 55 lines (ctrl+o to expand)\n\n● Excellent! I can see the current orchestrator already has comprehensive async/await implementation. Let me examine the performance bottlenecks and optimization opportunities:\n\n● Read(~/claude-backups/agents/src/python/production_orchestrator.py)\n  ⎿  Read 50 lines (ctrl+o to expand)\n\n● Now let me examine the execution patterns to identify performance bottlenecks:\n\n● Read(~/claude-backups/agents/src/python/production_orchestrator.py)\n  ⎿  Read 30 lines (ctrl+o to expand)\n\n● Task(C-INTERNAL agent performance analysis and optimization)\n  ⎿  Update(~/claude-backups/agents/src/python/production_orchestrator_optimized.py)\n     Updated ../src/python/production_orchestrator_optimized.py with 4 additions and 1 removal\n     +9 more tool uses\n  ⎿  No (tell Claude what to do differently)\n\n> We have an NPU surely we can use it to speed this up\n\n● Task(NPU agent optimization for orchestrator acceleration)\n  ⎿  Done (17 tool uses · 139.0k tokens · 11m 19.9s)                                                                                                                                                                                                        \n\n● 🚀 NPU Acceleration System Complete!\n\n  The NPU agent has delivered a comprehensive neural processing acceleration system for the Python orchestrator. Here's what we now have:\n\n  🧠 AI-Powered Orchestrator Features\n\n  1. Neural Agent Selection - NPU predicts optimal agents for tasks2. Intelligent Message Routing - Real-time classification <0.5ms3. Performance Prediction - Neural models estimate execution time4. Hardware Resource Management - P-core/E-core\n  optimization5. Adaptive Learning - Continuous performance improvement\n\n  📈 Performance Targets\n\n  - Current: ~5K operations/sec\n  - Target: 15-25K operations/sec (3-5x improvement)\n  - NPU: 11 TOPS Intel Meteor Lake utilization\n  - Integration: Seamless with existing orchestrator\n\n  🔧 Implementation Delivered\n\n  - 6 complete modules (4,658 total lines of code)\n  - Production-ready with comprehensive testing\n  - Hardware-integrated with Intel NPU driver support\n  - Fallback-protected for CPU operation when needed\n\n  Let me now install and test the NPU acceleration system:\n\n● Bash(ls -la /home/john/claude-backups/agents/src/python/ | grep npu)\n  ⎿  -rw-r--r-- 1 john john  23615 Sep 15 23:59 install_npu_acceleration.py    \n     -rw-r--r-- 1 john john  29276 Sep 15 17:44 intel_npu_async_pipeline.py\n     -rw-r--r-- 1 john john  44545 Sep 15 23:55 npu_accelerated_orchestrator.py\n     … +8 lines (ctrl+o to expand)\n\n● Perfect! The NPU acceleration system files are in place. Let me test the installation and integration:\n\n● Bash(cd /home/john/claude-backups/agents/src/python && python3 install_npu_acceleration.py --check-hardware)\n  ⎿  ============================================================\n     NPU ACCELERATION INSTALLATION SUMMARY\n     ============================================================\n     … +108 lines (ctrl+o to expand)\n\n✢ Installing and testing NPU acceleration system… (esc to interrupt · ctrl+t to hide todos · 70s · ↓ 1.5k tokens)\n  ⎿  ☒ Phase 1: Python orchestrator performance audit\n     ☒ Identify async/await optimization opportunities\n     ☒ Implement NPU acceleration for orchestrator\n     ☐ Install and test NPU acceleration system\n     ☐ Validate NPU performance improvements\n     ☐ Integration with existing wrapper system\n\n─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n> \n"
+            }
+          }
+        },
+        {
+          "display": "/login ",
+          "pastedContents": {}
+        },
+        {
           "display": "git push",
           "pastedContents": {}
         },
@@ -1700,13 +1768,13 @@
       "hasClaudeMdExternalIncludesWarningShown": false,
       "hasCompletedProjectOnboarding": true,
       "exampleFiles": [
-        "hooks/claude_unified_hook_system_v2.py",
-        "database/sql/exports/EXPORT_SUMMARY.md",
-        "config/registered_agents.json",
-        "utilities/create-complete-registry.py",
-        "hooks/shadowgit/shadowgit-unified-system.py"
+        "TUI.md",
+        "RESEARCHER.md",
+        "PLANNER.md",
+        "NPU.md",
+        "CSO.md"
       ],
-      "exampleFilesGeneratedAt": 1757059006902,
+      "exampleFilesGeneratedAt": 1757978561067,
       "lastTotalWebSearchRequests": 0
     },
     "/home/john/LAT5150DRVMIL": {
@@ -1835,6 +1903,154 @@
     "/home/john": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "use ./autogen.sh ./configure then make -j20 then make deb and install them,i need the older kjernel with te full  GNA NPU SUPPPORT plus GPU and CPU and zfs as custom kerne l im compilimk",
+          "pastedContents": {}
+        },
+        {
+          "display": "I do need ZFS",
+          "pastedContents": {}
+        },
+        {
+          "display": "n (1:2.51.0-1).\nwget is already the newest version (1.25.0-2).\ncmake is already the newest version (4.1.1+really3.31.6-1).\nYou might want to run 'apt --fix-broken install' to correct these.\nUnsatisfied dependencies:\n libnvpair3linux : Breaks: libnvpair3 but 2.3.4-1 is to be installed\n libuutil3linux : Breaks: libuutil3 but 2.3.4-1 is to be installed\nError: Unmet dependencies. Try 'apt --fix-broken install' with no packages (or specify a solution).\nError: The following information from --solver 3.0 may provide additional context:\n   Unmet dependencies. Try 'apt --fix-broken install' with no packages (or specify a solution).",
+          "pastedContents": {}
+        },
+        {
+          "display": "run it with sudo password2786",
+          "pastedContents": {}
+        },
+        {
+          "display": "I want them all ",
+          "pastedContents": {}
+        },
+        {
+          "display": "And the GNA?",
+          "pastedContents": {}
+        },
+        {
+          "display": "Ih ave spent ages configuring this install for the build is there not another siduction kernel or wil that boot",
+          "pastedContents": {}
+        },
+        {
+          "display": "OK we need a kernel version that suports the GNA as well as the NPU for siduction,this one aint it what others an we build",
+          "pastedContents": {}
+        },
+        {
+          "display": "do it for this session",
+          "pastedContents": {}
+        },
+        {
+          "display": "use commands to fix the auto learning for this session",
+          "pastedContents": {}
+        },
+        {
+          "display": "sudo pass is 1786 run em",
+          "pastedContents": {}
+        },
+        {
+          "display": "1786",
+          "pastedContents": {}
+        },
+        {
+          "display": "sudo password is 2615 execute these 1 by 1",
+          "pastedContents": {}
+        },
+        {
+          "display": "use CONSTRUCTOR ",
+          "pastedContents": {}
+        },
+        {
+          "display": "[Pasted text #1 +65 lines] these settings will be needed once i fix the tpm",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "PHASE 2: KERNEL .CONFIG\nADD TO YOUR KERNEL CONFIG\nbash# CORE TPM 2.0 SUPPORT (AS MODULES)\nCONFIG_TCG_TPM=m\nCONFIG_TCG_TIS_CORE=m\nCONFIG_TCG_TIS=m\nCONFIG_TCG_CRB=m\nCONFIG_HW_RANDOM_TPM=y\nCONFIG_SECURITYFS=y\n\n# SHA FAMILY ALGORITHMS\nCONFIG_CRYPTO_SHA256=y\nCONFIG_CRYPTO_SHA256_SSSE3=y\nCONFIG_CRYPTO_SHA512=y\nCONFIG_CRYPTO_SHA512_SSSE3=y\n\n# SM3/SM4 CHINESE ALGORITHMS  \nCONFIG_CRYPTO_SM3=y\nCONFIG_CRYPTO_SM3_GENERIC=y\nCONFIG_CRYPTO_SM4=y\nCONFIG_CRYPTO_SM4_GENERIC=y\n\n# TPM 2.0 EXTENDED FEATURES\nCONFIG_TRUSTED_KEYS=m\nCONFIG_TRUSTED_KEYS_TPM=m\nCONFIG_TCG_TPM2_HMAC=y\n\n# OPTIONAL - IMA WITH MULTI-HASH SUPPORT\nCONFIG_IMA=m\nCONFIG_IMA_DEFAULT_HASH_SHA256=y\nCONFIG_IMA_DEFAULT_HASH=\"sha256\"\nCONFIG_EVM=m\n\n# IMPORTANT - KEEP AS MODULES FOR FLEXIBILITY\nCONFIG_MODULE_FORCE_UNLOAD=y\nCONFIG_MODULE_UNLOAD=y\n\n# DEBUG OPTIONS (RESEARCH PLATFORM)\nCONFIG_TCG_TPM_DEBUG=y\nCONFIG_CRYPTO_USER_API_HASH=y\nCONFIG_CRYPTO_USER_API_SKCIPHER=y\nDO NOT SET (avoid hard dependencies):\nbash# CONFIG_IMA_APPRAISE_BUILD_POLICY is not set\n# CONFIG_IMA_APPRAISE_REQUIRE_MODULE_SIGS is not set  \n# CONFIG_EVM_ADD_XATTRS is not set\n# CONFIG_INTEL_TXT is not set\nGRUB CONFIGURATION\nbash# /etc/default/grub\nGRUB_CMDLINE_LINUX_DEFAULT=\"quiet tpm_tis.interrupts=0\"\nGRUB_CMDLINE_LINUX_RECOVERY=\"tpm.disable=1 ima=off\"\nMODULE LOAD OPTIONS\nCreate /etc/modprobe.d/tpm-research.conf:\nbashoptions tpm_tis interrupts=0 force=0\noptions tpm_crb force=0\noptions ima_hash=sha256\nBUILD COMMAND:\nbashmake menuconfig  # Set options above\nmake -j$(nproc)\nmake modules_install\nmake install\nVERIFY AFTER BOOT:\nbash# Check loaded algorithms\ntpm2_getcap algorithms\ntpm2_getcap pcr-banks\ncat /sys/class/tpm/tpm0/pcr-sha256/0\ncat /sys/class/tpm/tpm0/pcr-sm3/0"
+            }
+          }
+        },
+        {
+          "display": "Doesnt the TPM do stuff in the new system",
+          "pastedContents": {}
+        },
+        {
+          "display": "TPM shouldnt prove an issue/",
+          "pastedContents": {}
+        },
+        {
+          "display": "TPM may have to be fixed do note that,check everything else and create a comprehensive READIINESSFINAL.md",
+          "pastedContents": {}
+        },
+        {
+          "display": "The current kernel doesnt support the GNA but the new one will with openvino",
+          "pastedContents": {}
+        },
+        {
+          "display": "use ARCHITECT and CONSTRUCTOR to decide on best way of incorporating it into Documents/livecd-gen then DEBUGGER as well to check everything is ready to go then DIRECTOR to decide on beest team of agents to build mkernel for this machine for installaton into the ZFS NVME drive nvme",
+          "pastedContents": {}
+        },
+        {
+          "display": "use ARCHITECT ",
+          "pastedContents": {}
+        },
+        {
+          "display": "other directectory Documents/LAT5450DRVMIL",
+          "pastedContents": {}
+        },
+        {
+          "display": "In LAT5150DRVMIL claude.md there is isntructions for custom kernels,it leads to a .md",
+          "pastedContents": {}
+        },
+        {
+          "display": "In Documents there is livecd-gen and id like to include LAT5150DRVMIL into the custom kernel thereshould be documentation for the driver",
+          "pastedContents": {}
+        },
+        {
+          "display": "cant we use a command forf this session",
+          "pastedContents": {}
+        },
+        {
+          "display": "run it sudo is 1786 i think or 2615",
+          "pastedContents": {}
+        },
+        {
+          "display": "use CONSTRUCTOR coordiinating with ARCHITECT",
+          "pastedContents": {}
+        },
+        {
+          "display": "➜  ~ claude\npermission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/containers/json\": dial unix /var/run/docker.sock: connect: permission denied\n💡 Docker learning system available but not auto-started. Set LEARNING_DOCKER_AUTO_START=true to enable. fix this in the claude wraper,also symlink says invalid but its not invalid",
+          "pastedContents": {}
+        },
+        {
+          "display": "/terminal-setup ",
+          "pastedContents": {}
+        },
+        {
+          "display": "Give me a full featured kitty.conf file",
+          "pastedContents": {}
+        },
+        {
+          "display": "how do i copy and paste in it",
+          "pastedContents": {}
+        },
+        {
+          "display": "Can we set that as defaault in dolphin too and systemwidie",
+          "pastedContents": {}
+        },
+        {
+          "display": "What is best",
+          "pastedContents": {}
+        },
+        {
+          "display": "[Pasted text #1 +78 lines] looks like we crashed and continue",
+          "pastedContents": {
+            "1": {
+              "id": 1,
+              "type": "text",
+              "content": "\n> /terminal-setup \n  ⎿  Terminal setup cannot be run from konsole.\n\n     This is a one-time configuration for better terminal integration.\n\n     To configure:\n     1. Exit tmux/screen temporarily\n     2. Run /terminal-setup directly in one of these terminals:\n        • macOS: iTerm2, Apple Terminal\n        • IDE: VSCode, Cursor, Windsurf\n        • Other: Ghostty\n     3. Return to tmux/screen - settings will persist\n\n> Enter tmux/screen\n\n● I see you're running the terminal-setup command, but it appears it cannot be run from your current terminal environment (konsole). The output indicates this is a one-time configuration for better terminal integration.\n\n  Since you're likely in a tmux or screen session within konsole, you'll need to:\n\n  1. Exit your current tmux/screen session temporarily\n  2. Run /terminal-setup directly in a supported terminal (the output mentions iTerm2, Apple Terminal, VSCode, Cursor, Windsurf, or Ghostty)\n  3. Return to your tmux/screen session afterward\n\n  The configuration will persist once completed. Would you like help with any specific part of this setup process?\n\n> Install them i have  sudo password 2615\n\n● I'll help you install the recommended terminals. Let me check what's available and install the appropriate ones for your Linux system.\n\n● Bash(echo \"2615\" | sudo -S apt update)\n  ⎿  Error: [sudo] password for john: Sorry, try again.\n     [sudo] password for john: \n     sudo: no password was provided\n     sudo: 1 incorrect password attempt\n\n● Let me try a different approach for the sudo password:\n\n● Bash(sudo -k && echo \"2615\" | sudo -S apt update)\n  ⎿  Error: [sudo] password for john: Sorry, try again.\n     [sudo] password for john: \n     sudo: no password was provided\n     sudo: 1 incorrect password attempt\n  ⎿  Interrupted by user\n\n> 1786 try\n\n● Bash(echo \"1786\" | sudo -S apt update)\n  ⎿  Error: [sudo] password for john: \n     WARNING: apt does not have a stable CLI interface. Use with caution in scripts.\n\n     Error: The repository 'https://download.docker.com/linux/debian forky Release' does not have a Release file.\n\n     Hit:1 https://deb.debian.org/debian unstable InRelease\n     Hit:2 https://updates.signal.org/desktop/apt xenial InRelease\n     Hit:3 https://repository.mullvad.net/deb/stable stable InRelease\n     Hit:4 https://dl.google.com/linux/chrome/deb stable InRelease\n     Ign:5 https://download.docker.com/linux/debian forky InRelease\n     … +6 lines (ctrl+o to see all)\n\n● Good, the password works! There's a Docker repository issue but the update is proceeding. Let me install available terminal options for your system:\n\n● Bash(echo \"1786\" | sudo -S apt install -y tilix gnome-terminal terminator kitty alacritty)\n  ⎿  Get:21 https://deb.debian.org/debian unstable/main amd64 tilix-common all 1.9.6-3 [266 kB]\n     Get:22 https://deb.debian.org/debian unstable/main amd64 tilix amd64 1.9.6-3 [684 kB]\n     Get:23 https://deb.debian.org/debian unstable/main amd64 xdg-terminal-exec all 0.13.2-2 [22.2 kB]\n     dpkg-preconfigure: unable to re-open stdin: No such file or directory\n     Fetched 17.9 MB in 2s (8,288 kB/s)\n     +78 more lines (9s)\n     ctrl+b to run in background\n\n✽ Tempering… (esc to interrupt)\n\n─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n> fix the docker repo issue too \n─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n\n\n"
+            }
+          }
+        },
         {
           "display": "Move that to LAT5150-UNIFIED",
           "pastedContents": {}
@@ -2060,18 +2276,103 @@
       "hasClaudeMdExternalIncludesApproved": false,
       "hasClaudeMdExternalIncludesWarningShown": false,
       "hasCompletedProjectOnboarding": true,
-      "lastTotalWebSearchRequests": 13,
-      "lastCost": 10.886308849999997,
-      "lastAPIDuration": 1190186,
-      "lastToolDuration": 889693,
-      "lastDuration": 4805518,
-      "lastLinesAdded": 177,
-      "lastLinesRemoved": 0,
-      "lastTotalInputTokens": 23925,
-      "lastTotalOutputTokens": 20733,
-      "lastTotalCacheCreationInputTokens": 443619,
-      "lastTotalCacheReadInputTokens": 2129042,
-      "lastSessionId": "73c24910-7c99-4e04-bfe3-05e9953ca553"
+      "lastTotalWebSearchRequests": 0
+    },
+    "/home/john/Documents/LAT5150DRVMIL": {
+      "allowedTools": [],
+      "history": [
+        {
+          "display": "add to claude.md clear directionfor custom kernel building",
+          "pastedContents": {}
+        },
+        {
+          "display": "Write this to claude.md and create a clear deployment/installation/instruction document for inclusion into custom kernel builds",
+          "pastedContents": {}
+        },
+        {
+          "display": "Check docs/00-planning and the phase4 document appears to be where we are ,we dont NEED enterprise features this is deploying to one single laptop check everything else is inttergrated into the GUI and fully done",
+          "pastedContents": {}
+        }
+      ],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": false,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "exampleFiles": [
+        "dsmil-72dev.c",
+        "dsmil-72dev.ko",
+        "Makefile",
+        "lib.rs",
+        "README.md"
+      ],
+      "exampleFilesGeneratedAt": 1757988021708,
+      "hasCompletedProjectOnboarding": true,
+      "lastCost": 1.8370688499999999,
+      "lastAPIDuration": 506598,
+      "lastToolDuration": 2512,
+      "lastDuration": 941184,
+      "lastLinesAdded": 878,
+      "lastLinesRemoved": 48,
+      "lastTotalInputTokens": 26471,
+      "lastTotalOutputTokens": 21289,
+      "lastTotalCacheCreationInputTokens": 94925,
+      "lastTotalCacheReadInputTokens": 3876915,
+      "lastTotalWebSearchRequests": 0,
+      "lastSessionId": "026abe7f-83c8-455e-9dd6-b0ca0291c9e9"
+    },
+    "/home/john/Documents/livecd-gen": {
+      "allowedTools": [],
+      "history": [
+        {
+          "display": "add to claude.md as preffered method",
+          "pastedContents": {}
+        },
+        {
+          "display": "Use the DEBUGGER and CONSTRUCTOR with the tandem orchestrator to confirm this wll all work then add to claude.md as best buuiild flags",
+          "pastedContents": {}
+        },
+        {
+          "display": "Sorry no AVX2 on the processor,we want sha256,sha512 sm3_512 and sm3_256 plus the CPU,GPU,NPU and GNA",
+          "pastedContents": {}
+        },
+        {
+          "display": "Sorry no AVX2 on the processor,we want sha256,sha512 sm3_512 and sm3_256",
+          "pastedContents": {}
+        },
+        {
+          "display": "Actually i want all modules ensure CONSTRUCTOR  has  it set up to includede all ppossible modules,doo note it is avx2 not avx512",
+          "pastedContents": {}
+        },
+        {
+          "display": "How do i build with the GNA and the SHA512 optimized together",
+          "pastedContents": {}
+        },
+        {
+          "display": "If i build without GNA will it be available on kernel or will i have to change my currrent kernel one that is supported",
+          "pastedContents": {}
+        }
+      ],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": false,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "hasCompletedProjectOnboarding": true,
+      "exampleFiles": [
+        "src/modules/core_system.sh",
+        "src/modules/hardware_security.sh",
+        "src/modules/military_intel.sh",
+        "lib/common_chroot_functions.sh",
+        "src/modules/network_deployment.sh"
+      ],
+      "exampleFilesGeneratedAt": 1757991925660
     }
   },
   "claudeCodeFirstTokenDate": "2025-06-24T08:25:48.694410Z",
@@ -2086,19 +2387,23 @@
     "2cfbac83-d660-4b03-84ba-5429a8e65662": {
       "hasAccess": false,
       "hasAccessNotAsDefault": false,
-      "timestamp": 1757962606062
+      "timestamp": 1757978508107
+    },
+    "b1b780e4-b510-41b7-81eb-5bd856c3048a": {
+      "hasAccess": false,
+      "timestamp": 1757991691417
     }
   },
   "isQualifiedForDataSharing": false,
-  "cachedChangelog": "# Changelog\n\n## 1.0.106\n\n- Windows: Fixed path permission matching to consistently use POSIX format (e.g., `Read(//c/Users/...)`)\n\n## 1.0.97\n\n- Settings: /doctor now validates permission rule syntax and suggests corrections\n\n## 1.0.94\n\n- Vertex: add support for global endpoints for supported models\n- /memory command now allows direct editing of all imported memory files\n- SDK: Add custom tools as callbacks\n- Added /todos command to list current todo items\n\n## 1.0.93\n\n- Windows: Add alt + v shortcut for pasting images from clipboard\n- Support NO_PROXY environment variable to bypass proxy for specified hostnames and IPs\n\n## 1.0.90\n\n- Settings file changes take effect immediately - no restart required\n\n## 1.0.88\n\n- Fixed issue causing \"OAuth authentication is currently not supported\"\n- Status line input now includes `exceeds_200k_tokens`\n- Fixed incorrect usage tracking in /cost.\n- Introduced `ANTHROPIC_DEFAULT_SONNET_MODEL` and `ANTHROPIC_DEFAULT_OPUS_MODEL` for controlling model aliases opusplan, opus, and sonnet.\n- Bedrock: Updated default Sonnet model to Sonnet 4\n\n## 1.0.86\n\n- Added /context to help users self-serve debug context issues\n- SDK: Added UUID support for all SDK messages\n- SDK: Added `--replay-user-messages` to replay user messages back to stdout\n\n## 1.0.85\n\n- Status line input now includes session cost info\n- Hooks: Introduced SessionEnd hook\n\n## 1.0.84\n\n- Fix tool_use/tool_result id mismatch error when network is unstable\n- Fix Claude sometimes ignoring real-time steering when wrapping up a task\n- @-mention: Add ~/.claude/\\* files to suggestions for easier agent, output style, and slash command editing\n- Use built-in ripgrep by default; to opt out of this behavior, set USE_BUILTIN_RIPGREP=0\n\n## 1.0.83\n\n- @-mention: Support files with spaces in path\n- New shimmering spinner\n\n## 1.0.82\n\n- SDK: Add request cancellation support\n- SDK: New additionalDirectories option to search custom paths, improved slash command processing\n- Settings: Validation prevents invalid fields in .claude/settings.json files\n- MCP: Improve tool name consistency\n- Bash: Fix crash when Claude tries to automatically read large files\n\n## 1.0.81\n\n- Released output styles, including new built-in educational output styles \"Explanatory\" and \"Learning\". Docs: https://docs.anthropic.com/en/docs/claude-code/output-styles\n- Agents: Fix custom agent loading when agent files are unparsable\n\n## 1.0.80\n\n- UI improvements: Fix text contrast for custom subagent colors and spinner rendering issues\n\n## 1.0.77\n\n- Bash tool: Fix heredoc and multiline string escaping, improve stderr redirection handling\n- SDK: Add session support and permission denial tracking\n- Fix token limit errors in conversation summarization\n- Opus Plan Mode: New setting in `/model` to run Opus only in plan mode, Sonnet otherwise\n\n## 1.0.73\n\n- MCP: Support multiple config files with `--mcp-config file1.json file2.json`\n- MCP: Press Esc to cancel OAuth authentication flows\n- Bash: Improved command validation and reduced false security warnings\n- UI: Enhanced spinner animations and status line visual hierarchy\n- Linux: Added support for Alpine and musl-based distributions (requires separate ripgrep installation)\n\n## 1.0.72\n\n- Ask permissions: have Claude Code always ask for confirmation to use specific tools with /permissions\n\n## 1.0.71\n\n- Background commands: (Ctrl-b) to run any Bash command in the background so Claude can keep working (great for dev servers, tailing logs, etc.)\n- Customizable status line: add your terminal prompt to Claude Code with /statusline\n\n## 1.0.70\n\n- Performance: Optimized message rendering for better performance with large contexts\n- Windows: Fixed native file search, ripgrep, and subagent functionality\n- Added support for @-mentions in slash command arguments\n\n## 1.0.69\n\n- Upgraded Opus to version 4.1\n\n## 1.0.68\n\n- Fix incorrect model names being used for certain commands like `/pr-comments`\n- Windows: improve permissions checks for allow / deny tools and project trust. This may create a new project entry in `.claude.json` - manually merge the history field if desired.\n- Windows: improve sub-process spawning to eliminate \"No such file or directory\" when running commands like pnpm\n- Enhanced /doctor command with CLAUDE.md and MCP tool context for self-serve debugging\n- SDK: Added canUseTool callback support for tool confirmation\n- Added `disableAllHooks` setting\n- Improved file suggestions performance in large repos\n\n## 1.0.65\n\n- IDE: Fixed connection stability issues and error handling for diagnostics\n- Windows: Fixed shell environment setup for users without .bashrc files\n\n## 1.0.64\n\n- Agents: Added model customization support - you can now specify which model an agent should use\n- Agents: Fixed unintended access to the recursive agent tool\n- Hooks: Added systemMessage field to hook JSON output for displaying warnings and context\n- SDK: Fixed user input tracking across multi-turn conversations\n- Added hidden files to file search and @-mention suggestions\n\n## 1.0.63\n\n- Windows: Fixed file search, @agent mentions, and custom slash commands functionality\n\n## 1.0.62\n\n- Added @-mention support with typeahead for custom agents. @<your-custom-agent> to invoke it\n- Hooks: Added SessionStart hook for new session initialization\n- /add-dir command now supports typeahead for directory paths\n- Improved network connectivity check reliability\n\n## 1.0.61\n\n- Transcript mode (Ctrl+R): Changed Esc to exit transcript mode rather than interrupt\n- Settings: Added `--settings` flag to load settings from a JSON file\n- Settings: Fixed resolution of settings files paths that are symlinks\n- OTEL: Fixed reporting of wrong organization after authentication changes\n- Slash commands: Fixed permissions checking for allowed-tools with Bash\n- IDE: Added support for pasting images in VSCode MacOS using ⌘+V\n- IDE: Added `CLAUDE_CODE_AUTO_CONNECT_IDE=false` for disabling IDE auto-connection\n- Added `CLAUDE_CODE_SHELL_PREFIX` for wrapping Claude and user-provided shell commands run by Claude Code\n\n## 1.0.60\n\n- You can now create custom subagents for specialized tasks! Run /agents to get started\n\n## 1.0.59\n\n- SDK: Added tool confirmation support with canUseTool callback\n- SDK: Allow specifying env for spawned process\n- Hooks: Exposed PermissionDecision to hooks (including \"ask\")\n- Hooks: UserPromptSubmit now supports additionalContext in advanced JSON output\n- Fixed issue where some Max users that specified Opus would still see fallback to Sonnet\n\n## 1.0.58\n\n- Added support for reading PDFs\n- MCP: Improved server health status display in 'claude mcp list'\n- Hooks: Added CLAUDE_PROJECT_DIR env var for hook commands\n\n## 1.0.57\n\n- Added support for specifying a model in slash commands\n- Improved permission messages to help Claude understand allowed tools\n- Fix: Remove trailing newlines from bash output in terminal wrapping\n\n## 1.0.56\n\n- Windows: Enabled shift+tab for mode switching on versions of Node.js that support terminal VT mode\n- Fixes for WSL IDE detection\n- Fix an issue causing awsRefreshHelper changes to .aws directory not to be picked up\n\n## 1.0.55\n\n- Clarified knowledge cutoff for Opus 4 and Sonnet 4 models\n- Windows: fixed Ctrl+Z crash\n- SDK: Added ability to capture error logging\n- Add --system-prompt-file option to override system prompt in print mode\n\n## 1.0.54\n\n- Hooks: Added UserPromptSubmit hook and the current working directory to hook inputs\n- Custom slash commands: Added argument-hint to frontmatter\n- Windows: OAuth uses port 45454 and properly constructs browser URL\n- Windows: mode switching now uses alt + m, and plan mode renders properly\n- Shell: Switch to in-memory shell snapshot to fix file-related errors\n\n## 1.0.53\n\n- Updated @-mention file truncation from 100 lines to 2000 lines\n- Add helper script settings for AWS token refresh: awsAuthRefresh (for foreground operations like aws sso login) and awsCredentialExport (for background operation with STS-like response).\n\n## 1.0.52\n\n- Added support for MCP server instructions\n\n## 1.0.51\n\n- Added support for native Windows (requires Git for Windows)\n- Added support for Bedrock API keys through environment variable AWS_BEARER_TOKEN_BEDROCK\n- Settings: /doctor can now help you identify and fix invalid setting files\n- `--append-system-prompt` can now be used in interactive mode, not just --print/-p.\n- Increased auto-compact warning threshold from 60% to 80%\n- Fixed an issue with handling user directories with spaces for shell snapshots\n- OTEL resource now includes os.type, os.version, host.arch, and wsl.version (if running on Windows Subsystem for Linux)\n- Custom slash commands: Fixed user-level commands in subdirectories\n- Plan mode: Fixed issue where rejected plan from sub-task would get discarded\n\n## 1.0.48\n\n- Fixed a bug in v1.0.45 where the app would sometimes freeze on launch\n- Added progress messages to Bash tool based on the last 5 lines of command output\n- Added expanding variables support for MCP server configuration\n- Moved shell snapshots from /tmp to ~/.claude for more reliable Bash tool calls\n- Improved IDE extension path handling when Claude Code runs in WSL\n- Hooks: Added a PreCompact hook\n- Vim mode: Added c, f/F, t/T\n\n## 1.0.45\n\n- Redesigned Search (Grep) tool with new tool input parameters and features\n- Disabled IDE diffs for notebook files, fixing \"Timeout waiting after 1000ms\" error\n- Fixed config file corruption issue by enforcing atomic writes\n- Updated prompt input undo to Ctrl+\\_ to avoid breaking existing Ctrl+U behavior, matching zsh's undo shortcut\n- Stop Hooks: Fixed transcript path after /clear and fixed triggering when loop ends with tool call\n- Custom slash commands: Restored namespacing in command names based on subdirectories. For example, .claude/commands/frontend/component.md is now /frontend:component, not /component.\n\n## 1.0.44\n\n- New /export command lets you quickly export a conversation for sharing\n- MCP: resource_link tool results are now supported\n- MCP: tool annotations and tool titles now display in /mcp view\n- Changed Ctrl+Z to suspend Claude Code. Resume by running `fg`. Prompt input undo is now Ctrl+U.\n\n## 1.0.43\n\n- Fixed a bug where the theme selector was saving excessively\n- Hooks: Added EPIPE system error handling\n\n## 1.0.42\n\n- Added tilde (`~`) expansion support to `/add-dir` command\n\n## 1.0.41\n\n- Hooks: Split Stop hook triggering into Stop and SubagentStop\n- Hooks: Enabled optional timeout configuration for each command\n- Hooks: Added \"hook_event_name\" to hook input\n- Fixed a bug where MCP tools would display twice in tool list\n- New tool parameters JSON for Bash tool in `tool_decision` event\n\n## 1.0.40\n\n- Fixed a bug causing API connection errors with UNABLE_TO_GET_ISSUER_CERT_LOCALLY if `NODE_EXTRA_CA_CERTS` was set\n\n## 1.0.39\n\n- New Active Time metric in OpenTelemetry logging\n\n## 1.0.38\n\n- Released hooks. Special thanks to community input in https://github.com/anthropics/claude-code/issues/712. Docs: https://docs.anthropic.com/en/docs/claude-code/hooks\n\n## 1.0.37\n\n- Remove ability to set `Proxy-Authorization` header via ANTHROPIC_AUTH_TOKEN or apiKeyHelper\n\n## 1.0.36\n\n- Web search now takes today's date into context\n- Fixed a bug where stdio MCP servers were not terminating properly on exit\n\n## 1.0.35\n\n- Added support for MCP OAuth Authorization Server discovery\n\n## 1.0.34\n\n- Fixed a memory leak causing a MaxListenersExceededWarning message to appear\n\n## 1.0.33\n\n- Improved logging functionality with session ID support\n- Added prompt input undo functionality (Ctrl+Z and vim 'u' command)\n- Improvements to plan mode\n\n## 1.0.32\n\n- Updated loopback config for litellm\n- Added forceLoginMethod setting to bypass login selection screen\n\n## 1.0.31\n\n- Fixed a bug where ~/.claude.json would get reset when file contained invalid JSON\n\n## 1.0.30\n\n- Custom slash commands: Run bash output, @-mention files, enable thinking with thinking keywords\n- Improved file path autocomplete with filename matching\n- Added timestamps in Ctrl-r mode and fixed Ctrl-c handling\n- Enhanced jq regex support for complex filters with pipes and select\n\n## 1.0.29\n\n- Improved CJK character support in cursor navigation and rendering\n\n## 1.0.28\n\n- Slash commands: Fix selector display during history navigation\n- Resizes images before upload to prevent API size limit errors\n- Added XDG_CONFIG_HOME support to configuration directory\n- Performance optimizations for memory usage\n- New attributes (terminal.type, language) in OpenTelemetry logging\n\n## 1.0.27\n\n- Streamable HTTP MCP servers are now supported\n- Remote MCP servers (SSE and HTTP) now support OAuth\n- MCP resources can now be @-mentioned\n- /resume slash command to switch conversations within Claude Code\n\n## 1.0.25\n\n- Slash commands: moved \"project\" and \"user\" prefixes to descriptions\n- Slash commands: improved reliability for command discovery\n- Improved support for Ghostty\n- Improved web search reliability\n\n## 1.0.24\n\n- Improved /mcp output\n- Fixed a bug where settings arrays got overwritten instead of merged\n\n## 1.0.23\n\n- Released TypeScript SDK: import @anthropic-ai/claude-code to get started\n- Released Python SDK: pip install claude-code-sdk to get started\n\n## 1.0.22\n\n- SDK: Renamed `total_cost` to `total_cost_usd`\n\n## 1.0.21\n\n- Improved editing of files with tab-based indentation\n- Fix for tool_use without matching tool_result errors\n- Fixed a bug where stdio MCP server processes would linger after quitting Claude Code\n\n## 1.0.18\n\n- Added --add-dir CLI argument for specifying additional working directories\n- Added streaming input support without require -p flag\n- Improved startup performance and session storage performance\n- Added CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR environment variable to freeze working directory for bash commands\n- Added detailed MCP server tools display (/mcp)\n- MCP authentication and permission improvements\n- Added auto-reconnection for MCP SSE connections on disconnect\n- Fixed issue where pasted content was lost when dialogs appeared\n\n## 1.0.17\n\n- We now emit messages from sub-tasks in -p mode (look for the parent_tool_use_id property)\n- Fixed crashes when the VS Code diff tool is invoked multiple times quickly\n- MCP server list UI improvements\n- Update Claude Code process title to display \"claude\" instead of \"node\"\n\n## 1.0.11\n\n- Claude Code can now also be used with a Claude Pro subscription\n- Added /upgrade for smoother switching to Claude Max plans\n- Improved UI for authentication from API keys and Bedrock/Vertex/external auth tokens\n- Improved shell configuration error handling\n- Improved todo list handling during compaction\n\n## 1.0.10\n\n- Added markdown table support\n- Improved streaming performance\n\n## 1.0.8\n\n- Fixed Vertex AI region fallback when using CLOUD_ML_REGION\n- Increased default otel interval from 1s -> 5s\n- Fixed edge cases where MCP_TIMEOUT and MCP_TOOL_TIMEOUT weren't being respected\n- Fixed a regression where search tools unnecessarily asked for permissions\n- Added support for triggering thinking non-English languages\n- Improved compacting UI\n\n## 1.0.7\n\n- Renamed /allowed-tools -> /permissions\n- Migrated allowedTools and ignorePatterns from .claude.json -> settings.json\n- Deprecated claude config commands in favor of editing settings.json\n- Fixed a bug where --dangerously-skip-permissions sometimes didn't work in --print mode\n- Improved error handling for /install-github-app\n- Bugfixes, UI polish, and tool reliability improvements\n\n## 1.0.6\n\n- Improved edit reliability for tab-indented files\n- Respect CLAUDE_CONFIG_DIR everywhere\n- Reduced unnecessary tool permission prompts\n- Added support for symlinks in @file typeahead\n- Bugfixes, UI polish, and tool reliability improvements\n\n## 1.0.4\n\n- Fixed a bug where MCP tool errors weren't being parsed correctly\n\n## 1.0.1\n\n- Added `DISABLE_INTERLEAVED_THINKING` to give users the option to opt out of interleaved thinking.\n- Improved model references to show provider-specific names (Sonnet 3.7 for Bedrock, Sonnet 4 for Console)\n- Updated documentation links and OAuth process descriptions\n\n## 1.0.0\n\n- Claude Code is now generally available\n- Introducing Sonnet 4 and Opus 4 models\n\n## 0.2.125\n\n- Breaking change: Bedrock ARN passed to `ANTHROPIC_MODEL` or `ANTHROPIC_SMALL_FAST_MODEL` should no longer contain an escaped slash (specify `/` instead of `%2F`)\n- Removed `DEBUG=true` in favor of `ANTHROPIC_LOG=debug`, to log all requests\n\n## 0.2.117\n\n- Breaking change: --print JSON output now returns nested message objects, for forwards-compatibility as we introduce new metadata fields\n- Introduced settings.cleanupPeriodDays\n- Introduced CLAUDE_CODE_API_KEY_HELPER_TTL_MS env var\n- Introduced --debug mode\n\n## 0.2.108\n\n- You can now send messages to Claude while it works to steer Claude in real-time\n- Introduced BASH_DEFAULT_TIMEOUT_MS and BASH_MAX_TIMEOUT_MS env vars\n- Fixed a bug where thinking was not working in -p mode\n- Fixed a regression in /cost reporting\n- Deprecated MCP wizard interface in favor of other MCP commands\n- Lots of other bugfixes and improvements\n\n## 0.2.107\n\n- CLAUDE.md files can now import other files. Add @path/to/file.md to ./CLAUDE.md to load additional files on launch\n\n## 0.2.106\n\n- MCP SSE server configs can now specify custom headers\n- Fixed a bug where MCP permission prompt didn't always show correctly\n\n## 0.2.105\n\n- Claude can now search the web\n- Moved system & account status to /status\n- Added word movement keybindings for Vim\n- Improved latency for startup, todo tool, and file edits\n\n## 0.2.102\n\n- Improved thinking triggering reliability\n- Improved @mention reliability for images and folders\n- You can now paste multiple large chunks into one prompt\n\n## 0.2.100\n\n- Fixed a crash caused by a stack overflow error\n- Made db storage optional; missing db support disables --continue and --resume\n\n## 0.2.98\n\n- Fixed an issue where auto-compact was running twice\n\n## 0.2.96\n\n- Claude Code can now also be used with a Claude Max subscription (https://claude.ai/upgrade)\n\n## 0.2.93\n\n- Resume conversations from where you left off from with \"claude --continue\" and \"claude --resume\"\n- Claude now has access to a Todo list that helps it stay on track and be more organized\n\n## 0.2.82\n\n- Added support for --disallowedTools\n- Renamed tools for consistency: LSTool -> LS, View -> Read, etc.\n\n## 0.2.75\n\n- Hit Enter to queue up additional messages while Claude is working\n- Drag in or copy/paste image files directly into the prompt\n- @-mention files to directly add them to context\n- Run one-off MCP servers with `claude --mcp-config <path-to-file>`\n- Improved performance for filename auto-complete\n\n## 0.2.74\n\n- Added support for refreshing dynamically generated API keys (via apiKeyHelper), with a 5 minute TTL\n- Task tool can now perform writes and run bash commands\n\n## 0.2.72\n\n- Updated spinner to indicate tokens loaded and tool usage\n\n## 0.2.70\n\n- Network commands like curl are now available for Claude to use\n- Claude can now run multiple web queries in parallel\n- Pressing ESC once immediately interrupts Claude in Auto-accept mode\n\n## 0.2.69\n\n- Fixed UI glitches with improved Select component behavior\n- Enhanced terminal output display with better text truncation logic\n\n## 0.2.67\n\n- Shared project permission rules can be saved in .claude/settings.json\n\n## 0.2.66\n\n- Print mode (-p) now supports streaming output via --output-format=stream-json\n- Fixed issue where pasting could trigger memory or bash mode unexpectedly\n\n## 0.2.63\n\n- Fixed an issue where MCP tools were loaded twice, which caused tool call errors\n\n## 0.2.61\n\n- Navigate menus with vim-style keys (j/k) or bash/emacs shortcuts (Ctrl+n/p) for faster interaction\n- Enhanced image detection for more reliable clipboard paste functionality\n- Fixed an issue where ESC key could crash the conversation history selector\n\n## 0.2.59\n\n- Copy+paste images directly into your prompt\n- Improved progress indicators for bash and fetch tools\n- Bugfixes for non-interactive mode (-p)\n\n## 0.2.54\n\n- Quickly add to Memory by starting your message with '#'\n- Press ctrl+r to see full output for long tool results\n- Added support for MCP SSE transport\n\n## 0.2.53\n\n- New web fetch tool lets Claude view URLs that you paste in\n- Fixed a bug with JPEG detection\n\n## 0.2.50\n\n- New MCP \"project\" scope now allows you to add MCP servers to .mcp.json files and commit them to your repository\n\n## 0.2.49\n\n- Previous MCP server scopes have been renamed: previous \"project\" scope is now \"local\" and \"global\" scope is now \"user\"\n\n## 0.2.47\n\n- Press Tab to auto-complete file and folder names\n- Press Shift + Tab to toggle auto-accept for file edits\n- Automatic conversation compaction for infinite conversation length (toggle with /config)\n\n## 0.2.44\n\n- Ask Claude to make a plan with thinking mode: just say 'think' or 'think harder' or even 'ultrathink'\n\n## 0.2.41\n\n- MCP server startup timeout can now be configured via MCP_TIMEOUT environment variable\n- MCP server startup no longer blocks the app from starting up\n\n## 0.2.37\n\n- New /release-notes command lets you view release notes at any time\n- `claude config add/remove` commands now accept multiple values separated by commas or spaces\n\n## 0.2.36\n\n- Import MCP servers from Claude Desktop with `claude mcp add-from-claude-desktop`\n- Add MCP servers as JSON strings with `claude mcp add-json <n> <json>`\n\n## 0.2.34\n\n- Vim bindings for text input - enable with /vim or /config\n\n## 0.2.32\n\n- Interactive MCP setup wizard: Run \"claude mcp add\" to add MCP servers with a step-by-step interface\n- Fix for some PersistentShell issues\n\n## 0.2.31\n\n- Custom slash commands: Markdown files in .claude/commands/ directories now appear as custom slash commands to insert prompts into your conversation\n- MCP debug mode: Run with --mcp-debug flag to get more information about MCP server errors\n\n## 0.2.30\n\n- Added ANSI color theme for better terminal compatibility\n- Fixed issue where slash command arguments weren't being sent properly\n- (Mac-only) API keys are now stored in macOS Keychain\n\n## 0.2.26\n\n- New /approved-tools command for managing tool permissions\n- Word-level diff display for improved code readability\n- Fuzzy matching for slash commands\n\n## 0.2.21\n\n- Fuzzy matching for /commands\n",
-  "changelogLastFetched": 1757054040018,
-  "lastReleaseNotesSeen": "1.0.96",
+  "cachedChangelog": "# Changelog\n\n## 1.0.113\n\n- Deprecated piped input in interactive mode\n- Move Ctrl+R keybinding for toggling transcript to Ctrl+O\n\n## 1.0.112\n\n- Transcript mode (Ctrl+R): Added the model used to generate each assistant message\n- Addressed issue where some Claude Max users were incorrectly recognized as Claude Pro users\n- Hooks: Added systemMessage support for SessionEnd hooks\n- Added `spinnerTipsEnabled` setting to disable spinner tips\n- IDE: Various improvements and bug fixes\n\n## 1.0.111\n\n- /model now validates provided model names\n- Fixed Bash tool crashes caused by malformed shell syntax parsing\n\n## 1.0.110\n\n- /terminal-setup command now supports WezTerm\n- MCP: OAuth tokens now proactively refresh before expiration\n- Fixed reliability issues with background Bash processes\n\n## 1.0.109\n\n- SDK: Added partial message streaming support via `--include-partial-messages` CLI flag\n\n## 1.0.106\n\n- Windows: Fixed path permission matching to consistently use POSIX format (e.g., `Read(//c/Users/...)`)\n\n## 1.0.97\n\n- Settings: /doctor now validates permission rule syntax and suggests corrections\n\n## 1.0.94\n\n- Vertex: add support for global endpoints for supported models\n- /memory command now allows direct editing of all imported memory files\n- SDK: Add custom tools as callbacks\n- Added /todos command to list current todo items\n\n## 1.0.93\n\n- Windows: Add alt + v shortcut for pasting images from clipboard\n- Support NO_PROXY environment variable to bypass proxy for specified hostnames and IPs\n\n## 1.0.90\n\n- Settings file changes take effect immediately - no restart required\n\n## 1.0.88\n\n- Fixed issue causing \"OAuth authentication is currently not supported\"\n- Status line input now includes `exceeds_200k_tokens`\n- Fixed incorrect usage tracking in /cost.\n- Introduced `ANTHROPIC_DEFAULT_SONNET_MODEL` and `ANTHROPIC_DEFAULT_OPUS_MODEL` for controlling model aliases opusplan, opus, and sonnet.\n- Bedrock: Updated default Sonnet model to Sonnet 4\n\n## 1.0.86\n\n- Added /context to help users self-serve debug context issues\n- SDK: Added UUID support for all SDK messages\n- SDK: Added `--replay-user-messages` to replay user messages back to stdout\n\n## 1.0.85\n\n- Status line input now includes session cost info\n- Hooks: Introduced SessionEnd hook\n\n## 1.0.84\n\n- Fix tool_use/tool_result id mismatch error when network is unstable\n- Fix Claude sometimes ignoring real-time steering when wrapping up a task\n- @-mention: Add ~/.claude/\\* files to suggestions for easier agent, output style, and slash command editing\n- Use built-in ripgrep by default; to opt out of this behavior, set USE_BUILTIN_RIPGREP=0\n\n## 1.0.83\n\n- @-mention: Support files with spaces in path\n- New shimmering spinner\n\n## 1.0.82\n\n- SDK: Add request cancellation support\n- SDK: New additionalDirectories option to search custom paths, improved slash command processing\n- Settings: Validation prevents invalid fields in .claude/settings.json files\n- MCP: Improve tool name consistency\n- Bash: Fix crash when Claude tries to automatically read large files\n\n## 1.0.81\n\n- Released output styles, including new built-in educational output styles \"Explanatory\" and \"Learning\". Docs: https://docs.anthropic.com/en/docs/claude-code/output-styles\n- Agents: Fix custom agent loading when agent files are unparsable\n\n## 1.0.80\n\n- UI improvements: Fix text contrast for custom subagent colors and spinner rendering issues\n\n## 1.0.77\n\n- Bash tool: Fix heredoc and multiline string escaping, improve stderr redirection handling\n- SDK: Add session support and permission denial tracking\n- Fix token limit errors in conversation summarization\n- Opus Plan Mode: New setting in `/model` to run Opus only in plan mode, Sonnet otherwise\n\n## 1.0.73\n\n- MCP: Support multiple config files with `--mcp-config file1.json file2.json`\n- MCP: Press Esc to cancel OAuth authentication flows\n- Bash: Improved command validation and reduced false security warnings\n- UI: Enhanced spinner animations and status line visual hierarchy\n- Linux: Added support for Alpine and musl-based distributions (requires separate ripgrep installation)\n\n## 1.0.72\n\n- Ask permissions: have Claude Code always ask for confirmation to use specific tools with /permissions\n\n## 1.0.71\n\n- Background commands: (Ctrl-b) to run any Bash command in the background so Claude can keep working (great for dev servers, tailing logs, etc.)\n- Customizable status line: add your terminal prompt to Claude Code with /statusline\n\n## 1.0.70\n\n- Performance: Optimized message rendering for better performance with large contexts\n- Windows: Fixed native file search, ripgrep, and subagent functionality\n- Added support for @-mentions in slash command arguments\n\n## 1.0.69\n\n- Upgraded Opus to version 4.1\n\n## 1.0.68\n\n- Fix incorrect model names being used for certain commands like `/pr-comments`\n- Windows: improve permissions checks for allow / deny tools and project trust. This may create a new project entry in `.claude.json` - manually merge the history field if desired.\n- Windows: improve sub-process spawning to eliminate \"No such file or directory\" when running commands like pnpm\n- Enhanced /doctor command with CLAUDE.md and MCP tool context for self-serve debugging\n- SDK: Added canUseTool callback support for tool confirmation\n- Added `disableAllHooks` setting\n- Improved file suggestions performance in large repos\n\n## 1.0.65\n\n- IDE: Fixed connection stability issues and error handling for diagnostics\n- Windows: Fixed shell environment setup for users without .bashrc files\n\n## 1.0.64\n\n- Agents: Added model customization support - you can now specify which model an agent should use\n- Agents: Fixed unintended access to the recursive agent tool\n- Hooks: Added systemMessage field to hook JSON output for displaying warnings and context\n- SDK: Fixed user input tracking across multi-turn conversations\n- Added hidden files to file search and @-mention suggestions\n\n## 1.0.63\n\n- Windows: Fixed file search, @agent mentions, and custom slash commands functionality\n\n## 1.0.62\n\n- Added @-mention support with typeahead for custom agents. @<your-custom-agent> to invoke it\n- Hooks: Added SessionStart hook for new session initialization\n- /add-dir command now supports typeahead for directory paths\n- Improved network connectivity check reliability\n\n## 1.0.61\n\n- Transcript mode (Ctrl+R): Changed Esc to exit transcript mode rather than interrupt\n- Settings: Added `--settings` flag to load settings from a JSON file\n- Settings: Fixed resolution of settings files paths that are symlinks\n- OTEL: Fixed reporting of wrong organization after authentication changes\n- Slash commands: Fixed permissions checking for allowed-tools with Bash\n- IDE: Added support for pasting images in VSCode MacOS using ⌘+V\n- IDE: Added `CLAUDE_CODE_AUTO_CONNECT_IDE=false` for disabling IDE auto-connection\n- Added `CLAUDE_CODE_SHELL_PREFIX` for wrapping Claude and user-provided shell commands run by Claude Code\n\n## 1.0.60\n\n- You can now create custom subagents for specialized tasks! Run /agents to get started\n\n## 1.0.59\n\n- SDK: Added tool confirmation support with canUseTool callback\n- SDK: Allow specifying env for spawned process\n- Hooks: Exposed PermissionDecision to hooks (including \"ask\")\n- Hooks: UserPromptSubmit now supports additionalContext in advanced JSON output\n- Fixed issue where some Max users that specified Opus would still see fallback to Sonnet\n\n## 1.0.58\n\n- Added support for reading PDFs\n- MCP: Improved server health status display in 'claude mcp list'\n- Hooks: Added CLAUDE_PROJECT_DIR env var for hook commands\n\n## 1.0.57\n\n- Added support for specifying a model in slash commands\n- Improved permission messages to help Claude understand allowed tools\n- Fix: Remove trailing newlines from bash output in terminal wrapping\n\n## 1.0.56\n\n- Windows: Enabled shift+tab for mode switching on versions of Node.js that support terminal VT mode\n- Fixes for WSL IDE detection\n- Fix an issue causing awsRefreshHelper changes to .aws directory not to be picked up\n\n## 1.0.55\n\n- Clarified knowledge cutoff for Opus 4 and Sonnet 4 models\n- Windows: fixed Ctrl+Z crash\n- SDK: Added ability to capture error logging\n- Add --system-prompt-file option to override system prompt in print mode\n\n## 1.0.54\n\n- Hooks: Added UserPromptSubmit hook and the current working directory to hook inputs\n- Custom slash commands: Added argument-hint to frontmatter\n- Windows: OAuth uses port 45454 and properly constructs browser URL\n- Windows: mode switching now uses alt + m, and plan mode renders properly\n- Shell: Switch to in-memory shell snapshot to fix file-related errors\n\n## 1.0.53\n\n- Updated @-mention file truncation from 100 lines to 2000 lines\n- Add helper script settings for AWS token refresh: awsAuthRefresh (for foreground operations like aws sso login) and awsCredentialExport (for background operation with STS-like response).\n\n## 1.0.52\n\n- Added support for MCP server instructions\n\n## 1.0.51\n\n- Added support for native Windows (requires Git for Windows)\n- Added support for Bedrock API keys through environment variable AWS_BEARER_TOKEN_BEDROCK\n- Settings: /doctor can now help you identify and fix invalid setting files\n- `--append-system-prompt` can now be used in interactive mode, not just --print/-p.\n- Increased auto-compact warning threshold from 60% to 80%\n- Fixed an issue with handling user directories with spaces for shell snapshots\n- OTEL resource now includes os.type, os.version, host.arch, and wsl.version (if running on Windows Subsystem for Linux)\n- Custom slash commands: Fixed user-level commands in subdirectories\n- Plan mode: Fixed issue where rejected plan from sub-task would get discarded\n\n## 1.0.48\n\n- Fixed a bug in v1.0.45 where the app would sometimes freeze on launch\n- Added progress messages to Bash tool based on the last 5 lines of command output\n- Added expanding variables support for MCP server configuration\n- Moved shell snapshots from /tmp to ~/.claude for more reliable Bash tool calls\n- Improved IDE extension path handling when Claude Code runs in WSL\n- Hooks: Added a PreCompact hook\n- Vim mode: Added c, f/F, t/T\n\n## 1.0.45\n\n- Redesigned Search (Grep) tool with new tool input parameters and features\n- Disabled IDE diffs for notebook files, fixing \"Timeout waiting after 1000ms\" error\n- Fixed config file corruption issue by enforcing atomic writes\n- Updated prompt input undo to Ctrl+\\_ to avoid breaking existing Ctrl+U behavior, matching zsh's undo shortcut\n- Stop Hooks: Fixed transcript path after /clear and fixed triggering when loop ends with tool call\n- Custom slash commands: Restored namespacing in command names based on subdirectories. For example, .claude/commands/frontend/component.md is now /frontend:component, not /component.\n\n## 1.0.44\n\n- New /export command lets you quickly export a conversation for sharing\n- MCP: resource_link tool results are now supported\n- MCP: tool annotations and tool titles now display in /mcp view\n- Changed Ctrl+Z to suspend Claude Code. Resume by running `fg`. Prompt input undo is now Ctrl+U.\n\n## 1.0.43\n\n- Fixed a bug where the theme selector was saving excessively\n- Hooks: Added EPIPE system error handling\n\n## 1.0.42\n\n- Added tilde (`~`) expansion support to `/add-dir` command\n\n## 1.0.41\n\n- Hooks: Split Stop hook triggering into Stop and SubagentStop\n- Hooks: Enabled optional timeout configuration for each command\n- Hooks: Added \"hook_event_name\" to hook input\n- Fixed a bug where MCP tools would display twice in tool list\n- New tool parameters JSON for Bash tool in `tool_decision` event\n\n## 1.0.40\n\n- Fixed a bug causing API connection errors with UNABLE_TO_GET_ISSUER_CERT_LOCALLY if `NODE_EXTRA_CA_CERTS` was set\n\n## 1.0.39\n\n- New Active Time metric in OpenTelemetry logging\n\n## 1.0.38\n\n- Released hooks. Special thanks to community input in https://github.com/anthropics/claude-code/issues/712. Docs: https://docs.anthropic.com/en/docs/claude-code/hooks\n\n## 1.0.37\n\n- Remove ability to set `Proxy-Authorization` header via ANTHROPIC_AUTH_TOKEN or apiKeyHelper\n\n## 1.0.36\n\n- Web search now takes today's date into context\n- Fixed a bug where stdio MCP servers were not terminating properly on exit\n\n## 1.0.35\n\n- Added support for MCP OAuth Authorization Server discovery\n\n## 1.0.34\n\n- Fixed a memory leak causing a MaxListenersExceededWarning message to appear\n\n## 1.0.33\n\n- Improved logging functionality with session ID support\n- Added prompt input undo functionality (Ctrl+Z and vim 'u' command)\n- Improvements to plan mode\n\n## 1.0.32\n\n- Updated loopback config for litellm\n- Added forceLoginMethod setting to bypass login selection screen\n\n## 1.0.31\n\n- Fixed a bug where ~/.claude.json would get reset when file contained invalid JSON\n\n## 1.0.30\n\n- Custom slash commands: Run bash output, @-mention files, enable thinking with thinking keywords\n- Improved file path autocomplete with filename matching\n- Added timestamps in Ctrl-r mode and fixed Ctrl-c handling\n- Enhanced jq regex support for complex filters with pipes and select\n\n## 1.0.29\n\n- Improved CJK character support in cursor navigation and rendering\n\n## 1.0.28\n\n- Slash commands: Fix selector display during history navigation\n- Resizes images before upload to prevent API size limit errors\n- Added XDG_CONFIG_HOME support to configuration directory\n- Performance optimizations for memory usage\n- New attributes (terminal.type, language) in OpenTelemetry logging\n\n## 1.0.27\n\n- Streamable HTTP MCP servers are now supported\n- Remote MCP servers (SSE and HTTP) now support OAuth\n- MCP resources can now be @-mentioned\n- /resume slash command to switch conversations within Claude Code\n\n## 1.0.25\n\n- Slash commands: moved \"project\" and \"user\" prefixes to descriptions\n- Slash commands: improved reliability for command discovery\n- Improved support for Ghostty\n- Improved web search reliability\n\n## 1.0.24\n\n- Improved /mcp output\n- Fixed a bug where settings arrays got overwritten instead of merged\n\n## 1.0.23\n\n- Released TypeScript SDK: import @anthropic-ai/claude-code to get started\n- Released Python SDK: pip install claude-code-sdk to get started\n\n## 1.0.22\n\n- SDK: Renamed `total_cost` to `total_cost_usd`\n\n## 1.0.21\n\n- Improved editing of files with tab-based indentation\n- Fix for tool_use without matching tool_result errors\n- Fixed a bug where stdio MCP server processes would linger after quitting Claude Code\n\n## 1.0.18\n\n- Added --add-dir CLI argument for specifying additional working directories\n- Added streaming input support without require -p flag\n- Improved startup performance and session storage performance\n- Added CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR environment variable to freeze working directory for bash commands\n- Added detailed MCP server tools display (/mcp)\n- MCP authentication and permission improvements\n- Added auto-reconnection for MCP SSE connections on disconnect\n- Fixed issue where pasted content was lost when dialogs appeared\n\n## 1.0.17\n\n- We now emit messages from sub-tasks in -p mode (look for the parent_tool_use_id property)\n- Fixed crashes when the VS Code diff tool is invoked multiple times quickly\n- MCP server list UI improvements\n- Update Claude Code process title to display \"claude\" instead of \"node\"\n\n## 1.0.11\n\n- Claude Code can now also be used with a Claude Pro subscription\n- Added /upgrade for smoother switching to Claude Max plans\n- Improved UI for authentication from API keys and Bedrock/Vertex/external auth tokens\n- Improved shell configuration error handling\n- Improved todo list handling during compaction\n\n## 1.0.10\n\n- Added markdown table support\n- Improved streaming performance\n\n## 1.0.8\n\n- Fixed Vertex AI region fallback when using CLOUD_ML_REGION\n- Increased default otel interval from 1s -> 5s\n- Fixed edge cases where MCP_TIMEOUT and MCP_TOOL_TIMEOUT weren't being respected\n- Fixed a regression where search tools unnecessarily asked for permissions\n- Added support for triggering thinking non-English languages\n- Improved compacting UI\n\n## 1.0.7\n\n- Renamed /allowed-tools -> /permissions\n- Migrated allowedTools and ignorePatterns from .claude.json -> settings.json\n- Deprecated claude config commands in favor of editing settings.json\n- Fixed a bug where --dangerously-skip-permissions sometimes didn't work in --print mode\n- Improved error handling for /install-github-app\n- Bugfixes, UI polish, and tool reliability improvements\n\n## 1.0.6\n\n- Improved edit reliability for tab-indented files\n- Respect CLAUDE_CONFIG_DIR everywhere\n- Reduced unnecessary tool permission prompts\n- Added support for symlinks in @file typeahead\n- Bugfixes, UI polish, and tool reliability improvements\n\n## 1.0.4\n\n- Fixed a bug where MCP tool errors weren't being parsed correctly\n\n## 1.0.1\n\n- Added `DISABLE_INTERLEAVED_THINKING` to give users the option to opt out of interleaved thinking.\n- Improved model references to show provider-specific names (Sonnet 3.7 for Bedrock, Sonnet 4 for Console)\n- Updated documentation links and OAuth process descriptions\n\n## 1.0.0\n\n- Claude Code is now generally available\n- Introducing Sonnet 4 and Opus 4 models\n\n## 0.2.125\n\n- Breaking change: Bedrock ARN passed to `ANTHROPIC_MODEL` or `ANTHROPIC_SMALL_FAST_MODEL` should no longer contain an escaped slash (specify `/` instead of `%2F`)\n- Removed `DEBUG=true` in favor of `ANTHROPIC_LOG=debug`, to log all requests\n\n## 0.2.117\n\n- Breaking change: --print JSON output now returns nested message objects, for forwards-compatibility as we introduce new metadata fields\n- Introduced settings.cleanupPeriodDays\n- Introduced CLAUDE_CODE_API_KEY_HELPER_TTL_MS env var\n- Introduced --debug mode\n\n## 0.2.108\n\n- You can now send messages to Claude while it works to steer Claude in real-time\n- Introduced BASH_DEFAULT_TIMEOUT_MS and BASH_MAX_TIMEOUT_MS env vars\n- Fixed a bug where thinking was not working in -p mode\n- Fixed a regression in /cost reporting\n- Deprecated MCP wizard interface in favor of other MCP commands\n- Lots of other bugfixes and improvements\n\n## 0.2.107\n\n- CLAUDE.md files can now import other files. Add @path/to/file.md to ./CLAUDE.md to load additional files on launch\n\n## 0.2.106\n\n- MCP SSE server configs can now specify custom headers\n- Fixed a bug where MCP permission prompt didn't always show correctly\n\n## 0.2.105\n\n- Claude can now search the web\n- Moved system & account status to /status\n- Added word movement keybindings for Vim\n- Improved latency for startup, todo tool, and file edits\n\n## 0.2.102\n\n- Improved thinking triggering reliability\n- Improved @mention reliability for images and folders\n- You can now paste multiple large chunks into one prompt\n\n## 0.2.100\n\n- Fixed a crash caused by a stack overflow error\n- Made db storage optional; missing db support disables --continue and --resume\n\n## 0.2.98\n\n- Fixed an issue where auto-compact was running twice\n\n## 0.2.96\n\n- Claude Code can now also be used with a Claude Max subscription (https://claude.ai/upgrade)\n\n## 0.2.93\n\n- Resume conversations from where you left off from with \"claude --continue\" and \"claude --resume\"\n- Claude now has access to a Todo list that helps it stay on track and be more organized\n\n## 0.2.82\n\n- Added support for --disallowedTools\n- Renamed tools for consistency: LSTool -> LS, View -> Read, etc.\n\n## 0.2.75\n\n- Hit Enter to queue up additional messages while Claude is working\n- Drag in or copy/paste image files directly into the prompt\n- @-mention files to directly add them to context\n- Run one-off MCP servers with `claude --mcp-config <path-to-file>`\n- Improved performance for filename auto-complete\n\n## 0.2.74\n\n- Added support for refreshing dynamically generated API keys (via apiKeyHelper), with a 5 minute TTL\n- Task tool can now perform writes and run bash commands\n\n## 0.2.72\n\n- Updated spinner to indicate tokens loaded and tool usage\n\n## 0.2.70\n\n- Network commands like curl are now available for Claude to use\n- Claude can now run multiple web queries in parallel\n- Pressing ESC once immediately interrupts Claude in Auto-accept mode\n\n## 0.2.69\n\n- Fixed UI glitches with improved Select component behavior\n- Enhanced terminal output display with better text truncation logic\n\n## 0.2.67\n\n- Shared project permission rules can be saved in .claude/settings.json\n\n## 0.2.66\n\n- Print mode (-p) now supports streaming output via --output-format=stream-json\n- Fixed issue where pasting could trigger memory or bash mode unexpectedly\n\n## 0.2.63\n\n- Fixed an issue where MCP tools were loaded twice, which caused tool call errors\n\n## 0.2.61\n\n- Navigate menus with vim-style keys (j/k) or bash/emacs shortcuts (Ctrl+n/p) for faster interaction\n- Enhanced image detection for more reliable clipboard paste functionality\n- Fixed an issue where ESC key could crash the conversation history selector\n\n## 0.2.59\n\n- Copy+paste images directly into your prompt\n- Improved progress indicators for bash and fetch tools\n- Bugfixes for non-interactive mode (-p)\n\n## 0.2.54\n\n- Quickly add to Memory by starting your message with '#'\n- Press ctrl+r to see full output for long tool results\n- Added support for MCP SSE transport\n\n## 0.2.53\n\n- New web fetch tool lets Claude view URLs that you paste in\n- Fixed a bug with JPEG detection\n\n## 0.2.50\n\n- New MCP \"project\" scope now allows you to add MCP servers to .mcp.json files and commit them to your repository\n\n## 0.2.49\n\n- Previous MCP server scopes have been renamed: previous \"project\" scope is now \"local\" and \"global\" scope is now \"user\"\n\n## 0.2.47\n\n- Press Tab to auto-complete file and folder names\n- Press Shift + Tab to toggle auto-accept for file edits\n- Automatic conversation compaction for infinite conversation length (toggle with /config)\n\n## 0.2.44\n\n- Ask Claude to make a plan with thinking mode: just say 'think' or 'think harder' or even 'ultrathink'\n\n## 0.2.41\n\n- MCP server startup timeout can now be configured via MCP_TIMEOUT environment variable\n- MCP server startup no longer blocks the app from starting up\n\n## 0.2.37\n\n- New /release-notes command lets you view release notes at any time\n- `claude config add/remove` commands now accept multiple values separated by commas or spaces\n\n## 0.2.36\n\n- Import MCP servers from Claude Desktop with `claude mcp add-from-claude-desktop`\n- Add MCP servers as JSON strings with `claude mcp add-json <n> <json>`\n\n## 0.2.34\n\n- Vim bindings for text input - enable with /vim or /config\n\n## 0.2.32\n\n- Interactive MCP setup wizard: Run \"claude mcp add\" to add MCP servers with a step-by-step interface\n- Fix for some PersistentShell issues\n\n## 0.2.31\n\n- Custom slash commands: Markdown files in .claude/commands/ directories now appear as custom slash commands to insert prompts into your conversation\n- MCP debug mode: Run with --mcp-debug flag to get more information about MCP server errors\n\n## 0.2.30\n\n- Added ANSI color theme for better terminal compatibility\n- Fixed issue where slash command arguments weren't being sent properly\n- (Mac-only) API keys are now stored in macOS Keychain\n\n## 0.2.26\n\n- New /approved-tools command for managing tool permissions\n- Word-level diff display for improved code readability\n- Fuzzy matching for slash commands\n\n## 0.2.21\n\n- Fuzzy matching for /commands\n",
+  "changelogLastFetched": 1757978510531,
+  "lastReleaseNotesSeen": "1.0.113",
   "oauthAccount": {
-    "accountUuid": "73a9a4f3-3d28-4f48-a25f-965eb942bb6f",
-    "emailAddress": "intel@swordintelligence.airforce",
-    "organizationUuid": "2cfbac83-d660-4b03-84ba-5429a8e65662",
+    "accountUuid": "0dc99056-8479-490e-9dfe-52eb088ced20",
+    "emailAddress": "parttimeamerican4921@gmail.com",
+    "organizationUuid": "b1b780e4-b510-41b7-81eb-5bd856c3048a",
     "organizationRole": "admin",
     "workspaceRole": null,
-    "organizationName": "intel@swordintelligence.airforce's Organization"
+    "organizationName": "parttimeamerican4921@gmail.com's Organization"
   }
 }
