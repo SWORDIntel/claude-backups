@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation & Configuration - Claude Agent Framework</title>
+    <link rel="stylesheet" href="../css/base-framework.css">
+    <style>
+        /* Installation specific styling */
+        .installation-hero {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(0, 255, 136, 0.15) 100%);
+            border: 2px solid var(--border-yellow);
+            border-radius: 20px;
+            padding: var(--spacing-xxl);
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .installation-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(234, 179, 8, 0.2), transparent);
+            animation: installProgress 4s ease-in-out infinite;
+        }
+
+        @keyframes installProgress {
+            0%, 100% { transform: translateX(0) scaleX(1); }
+            50% { transform: translateX(50%) scaleX(1.2); }
+        }
+
+        .installer-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .installer-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-yellow);
+            border-radius: 15px;
+            padding: var(--spacing-lg);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .installer-card:hover {
+            border-color: var(--neon-yellow);
+            background: rgba(234, 179, 8, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .installer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--neon-yellow);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .installer-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .installer-title {
+            color: var(--neon-yellow);
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .installer-badge {
+            background: var(--neon-yellow);
+            color: black;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: var(--spacing-sm);
+            display: inline-block;
+        }
+
+        .quick-start {
+            background: var(--bg-section);
+            border: 2px solid var(--border-green);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .quick-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .quick-step {
+            background: var(--bg-card);
+            border: 2px solid var(--border-green);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            background: var(--neon-green);
+            color: black;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-sm);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .configuration-options {
+            background: var(--bg-section);
+            border: 2px solid var(--border-blue);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .config-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .config-category {
+            background: var(--bg-card);
+            border: 2px solid var(--border-blue);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+        }
+
+        .config-title {
+            color: var(--neon-blue);
+            font-weight: bold;
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+        }
+
+        .config-icon {
+            margin-right: var(--spacing-sm);
+            font-size: 1.2em;
+        }
+
+        .config-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9em;
+        }
+
+        .config-option:last-child {
+            border-bottom: none;
+        }
+
+        .config-value {
+            color: var(--neon-blue);
+            font-weight: bold;
+        }
+
+        .troubleshooting {
+            background: var(--bg-section);
+            border: 2px solid var(--border-orange);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .troubleshooting-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .troubleshooting-item {
+            background: var(--bg-card);
+            border: 2px solid var(--border-orange);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+        }
+
+        .trouble-title {
+            color: var(--neon-orange);
+            font-weight: bold;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .system-requirements {
+            background: var(--bg-section);
+            border: 2px solid var(--border-purple);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .requirements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .requirement-item {
+            background: var(--bg-card);
+            border: 2px solid var(--border-purple);
+            border-radius: 10px;
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+
+        .req-title {
+            color: var(--neon-purple);
+            font-weight: bold;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .req-value {
+            color: var(--neon-purple);
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: var(--spacing-sm) 0;
+        }
+
+        .code-example {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--border-yellow);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            font-family: var(--font-mono);
+            overflow-x: auto;
+        }
+
+        .code-header {
+            color: var(--neon-yellow);
+            margin-bottom: var(--spacing-sm);
+            font-weight: bold;
+        }
+
+        .installation-tabs {
+            display: flex;
+            margin: var(--spacing-lg) 0;
+            border-bottom: 2px solid var(--border-green);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: var(--spacing-md) var(--spacing-lg);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: var(--neon-green);
+            border-bottom: 2px solid var(--neon-green);
+        }
+
+        .tab-content {
+            display: none;
+            padding: var(--spacing-lg) 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .nav-links {
+            margin-top: var(--spacing-xxl);
+            text-align: center;
+        }
+
+        .nav-link {
+            display: inline-block;
+            background: var(--bg-card);
+            border: 2px solid var(--border-yellow);
+            border-radius: 10px;
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin: 0 var(--spacing-sm);
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            border-color: var(--neon-yellow);
+            background: rgba(234, 179, 8, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .quick-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .installation-tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Installation & Configuration</h1>
+            <p class="subtitle">Complete Setup Guide for Claude Agent Framework</p>
+        </header>
+
+        <div class="installation-hero">
+            <div>
+                <h2>⚙️ Universal Installation System</h2>
+                <p class="hero-description">
+                    Comprehensive installation solution with 5 methods, automatic retry logic,
+                    cross-platform compatibility, and zero learning curve integration
+                </p>
+                <div style="margin-top: var(--spacing-lg);">
+                    <span class="performance-badge">5 Installation Methods</span>
+                    <span class="performance-badge">Cross-Platform Support</span>
+                    <span class="performance-badge">Auto-Retry Logic</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="installer-options">
+            <div class="installer-card">
+                <div class="installer-badge">RECOMMENDED</div>
+                <div class="installer-title">🚀 Unified Installer v4.0</div>
+                <p>The ultimate installation solution combining all features from previous installers</p>
+                <ul style="margin-top: var(--spacing-md); text-align: left;">
+                    <li>5 installation methods with 75+ retry attempts</li>
+                    <li>Intelligent mode detection and configuration</li>
+                    <li>Orchestration + permission bypass integration</li>
+                    <li>Zero learning curve - drop-in replacement</li>
+                </ul>
+            </div>
+
+            <div class="installer-card">
+                <div class="installer-badge">PORTABLE</div>
+                <div class="installer-title">📦 Portable Installation</div>
+                <p>Self-contained installation in ./claude-portable/ directory</p>
+                <ul style="margin-top: var(--spacing-md); text-align: left;">
+                    <li>No system modifications required</li>
+                    <li>Complete isolation from system Python</li>
+                    <li>Perfect for testing and development</li>
+                    <li>Easy cleanup and removal</li>
+                </ul>
+            </div>
+
+            <div class="installer-card">
+                <div class="installer-badge">QUICK</div>
+                <div class="installer-title">⚡ Quick System Installation</div>
+                <p>Smart installer with CPU detection and optimization</p>
+                <ul style="margin-top: var(--spacing-md); text-align: left;">
+                    <li>Automatic hardware optimization</li>
+                    <li>Intel Meteor Lake specific tuning</li>
+                    <li>AVX-512/NPU configuration</li>
+                    <li>Performance-oriented setup</li>
+                </ul>
+            </div>
+
+            <div class="installer-card">
+                <div class="installer-badge">LIVECD</div>
+                <div class="installer-title">💿 LiveCD Installation</div>
+                <p>Original installer with unified orchestration support</p>
+                <ul style="margin-top: var(--spacing-md); text-align: left;">
+                    <li>Designed for LiveCD environments</li>
+                    <li>Minimal dependency requirements</li>
+                    <li>Permission bypass by default</li>
+                    <li>Maximum compatibility</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="quick-start">
+            <h3>🚀 Quick Start (5 Minutes)</h3>
+            <div class="quick-steps">
+                <div class="quick-step">
+                    <div class="step-number">1</div>
+                    <h4>Download Repository</h4>
+                    <p>Clone or download the Claude agent framework</p>
+                </div>
+                <div class="quick-step">
+                    <div class="step-number">2</div>
+                    <h4>Run Installer</h4>
+                    <p>Execute ./claude-installer.sh --full</p>
+                </div>
+                <div class="quick-step">
+                    <div class="step-number">3</div>
+                    <h4>Verify Installation</h4>
+                    <p>Check status with claude --status</p>
+                </div>
+                <div class="quick-step">
+                    <div class="step-number">4</div>
+                    <h4>Start Using</h4>
+                    <p>Run claude /task "your first task"</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="installation-tabs">
+            <button class="tab-button active" onclick="showTab('unified')">Unified Installer</button>
+            <button class="tab-button" onclick="showTab('portable')">Portable</button>
+            <button class="tab-button" onclick="showTab('quick')">Quick Install</button>
+            <button class="tab-button" onclick="showTab('livecd')">LiveCD</button>
+        </div>
+
+        <div id="unified" class="tab-content active">
+            <div class="code-example">
+                <div class="code-header">🚀 Unified Installer v4.0 Commands</div>
+                <div style="color: var(--text-secondary);">
+# Quick installation (minimal components)<br>
+./claude-installer.sh --quick<br><br>
+
+# Full installation (all features: agents, orchestration, statusline, permission bypass)<br>
+./claude-installer.sh --full<br><br>
+
+# Portable installation (self-contained)<br>
+./claude-installer.sh --portable<br><br>
+
+# Custom installation (choose components)<br>
+./claude-installer.sh --custom<br><br>
+
+# Automated installation (no prompts)<br>
+./claude-installer.sh --full --auto<br><br>
+
+# Test installation (dry run)<br>
+./claude-installer.sh --full --dry-run --verbose<br><br>
+
+# After installation, claude command provides:<br>
+claude /task "create feature with tests"  # → Auto permission bypass + orchestration<br>
+claude --status                          # → Show system status<br>
+claude --help                            # → Show available features
+                </div>
+            </div>
+        </div>
+
+        <div id="portable" class="tab-content">
+            <div class="code-example">
+                <div class="code-header">📦 Portable Installation</div>
+                <div style="color: var(--text-secondary);">
+# Create portable installation<br>
+./claude-portable-launch.sh<br><br>
+
+# Creates self-contained installation in ./claude-portable/<br>
+# No system modifications required<br>
+# Complete isolation from system Python<br><br>
+
+# Usage after portable installation<br>
+cd claude-portable<br>
+./claude /task "your task here"<br><br>
+
+# Cleanup (remove entire directory)<br>
+rm -rf claude-portable
+                </div>
+            </div>
+        </div>
+
+        <div id="quick" class="tab-content">
+            <div class="code-example">
+                <div class="code-header">⚡ Quick System Installation</div>
+                <div style="color: var(--text-secondary);">
+# Smart installer with CPU detection<br>
+./claude-quick-launch-agents.sh<br><br>
+
+# Automatic features:<br>
+# - Hardware optimization for Intel Meteor Lake<br>
+# - AVX-512/NPU configuration<br>
+# - Performance-oriented setup<br>
+# - Agent ecosystem integration<br><br>
+
+# Usage after quick installation<br>
+claude /task "optimize my code"          # → Hardware-aware optimization<br>
+claude --agents                         # → List all 89 agents<br>
+claude status                           # → Show system health
+                </div>
+            </div>
+        </div>
+
+        <div id="livecd" class="tab-content">
+            <div class="code-example">
+                <div class="code-header">💿 LiveCD Installation</div>
+                <div style="color: var(--text-secondary);">
+# LiveCD installer with unified orchestration<br>
+./claude-livecd-unified-with-agents.sh --auto-mode<br><br>
+
+# Features:<br>
+# - Designed for LiveCD environments<br>
+# - Minimal dependency requirements<br>
+# - Permission bypass by default<br>
+# - Maximum compatibility<br><br>
+
+# Usage in LiveCD environment<br>
+claude --safe /task "secure task"       # → Safe mode (no permission bypass)<br>
+CLAUDE_PERMISSION_BYPASS=false claude /task "task"  # → Disable bypass<br>
+claude --unified-status                  # → Show unified system status
+                </div>
+            </div>
+        </div>
+
+        <div class="system-requirements">
+            <h3>💻 System Requirements</h3>
+            <div class="requirements-grid">
+                <div class="requirement-item">
+                    <div class="req-title">Operating System</div>
+                    <div class="req-value">Linux</div>
+                    <p>Ubuntu 20.04+ recommended</p>
+                </div>
+
+                <div class="requirement-item">
+                    <div class="req-title">Memory</div>
+                    <div class="req-value">4GB+</div>
+                    <p>8GB+ recommended for ML features</p>
+                </div>
+
+                <div class="requirement-item">
+                    <div class="req-title">Storage</div>
+                    <div class="req-value">2GB</div>
+                    <p>Free disk space for installation</p>
+                </div>
+
+                <div class="requirement-item">
+                    <div class="req-title">Python</div>
+                    <div class="req-value">3.8+</div>
+                    <p>3.10+ recommended</p>
+                </div>
+
+                <div class="requirement-item">
+                    <div class="req-title">Node.js</div>
+                    <div class="req-value">16+</div>
+                    <p>For Claude Code installation</p>
+                </div>
+
+                <div class="requirement-item">
+                    <div class="req-title">Docker</div>
+                    <div class="req-value">Optional</div>
+                    <p>For learning system (recommended)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="configuration-options">
+            <h3>⚙️ Configuration Options</h3>
+            <div class="config-categories">
+                <div class="config-category">
+                    <div class="config-title">
+                        <span class="config-icon">🔧</span>
+                        Environment Variables
+                    </div>
+                    <div class="config-option">
+                        <span>CLAUDE_PERMISSION_BYPASS</span>
+                        <span class="config-value">true/false</span>
+                    </div>
+                    <div class="config-option">
+                        <span>CLAUDE_ORCHESTRATION</span>
+                        <span class="config-value">true/false</span>
+                    </div>
+                    <div class="config-option">
+                        <span>CLAUDE_PROJECT_ROOT</span>
+                        <span class="config-value">path</span>
+                    </div>
+                    <div class="config-option">
+                        <span>CLAUDE_AGENTS_ROOT</span>
+                        <span class="config-value">path</span>
+                    </div>
+                </div>
+
+                <div class="config-category">
+                    <div class="config-title">
+                        <span class="config-icon">🚀</span>
+                        Performance Settings
+                    </div>
+                    <div class="config-option">
+                        <span>ENABLE_AVX512</span>
+                        <span class="config-value">true</span>
+                    </div>
+                    <div class="config-option">
+                        <span>METEOR_LAKE_OPTIMIZATION</span>
+                        <span class="config-value">true</span>
+                    </div>
+                    <div class="config-option">
+                        <span>NPU_ACCELERATION</span>
+                        <span class="config-value">auto</span>
+                    </div>
+                    <div class="config-option">
+                        <span>HARDWARE_DETECTION</span>
+                        <span class="config-value">enabled</span>
+                    </div>
+                </div>
+
+                <div class="config-category">
+                    <div class="config-title">
+                        <span class="config-icon">🗄️</span>
+                        Database Settings
+                    </div>
+                    <div class="config-option">
+                        <span>POSTGRES_PORT</span>
+                        <span class="config-value">5433</span>
+                    </div>
+                    <div class="config-option">
+                        <span>LEARNING_SYSTEM</span>
+                        <span class="config-value">enabled</span>
+                    </div>
+                    <div class="config-option">
+                        <span>VECTOR_DIMENSIONS</span>
+                        <span class="config-value">512</span>
+                    </div>
+                    <div class="config-option">
+                        <span>AUTO_RESTART</span>
+                        <span class="config-value">unless-stopped</span>
+                    </div>
+                </div>
+
+                <div class="config-category">
+                    <div class="config-title">
+                        <span class="config-icon">🔗</span>
+                        Agent Settings
+                    </div>
+                    <div class="config-option">
+                        <span>AGENT_COUNT</span>
+                        <span class="config-value">89</span>
+                    </div>
+                    <div class="config-option">
+                        <span>AUTO_INVOCATION</span>
+                        <span class="config-value">enabled</span>
+                    </div>
+                    <div class="config-option">
+                        <span>COORDINATION_MODE</span>
+                        <span class="config-value">intelligent</span>
+                    </div>
+                    <div class="config-option">
+                        <span>RESPONSE_TIMEOUT</span>
+                        <span class="config-value">500ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="troubleshooting">
+            <h3>🔧 Troubleshooting Guide</h3>
+            <div class="troubleshooting-grid">
+                <div class="troubleshooting-item">
+                    <div class="trouble-title">❌ Installation Fails</div>
+                    <p><strong>Solution:</strong> Use --verbose flag for detailed output</p>
+                    <div class="code-example">
+                        <div style="color: var(--text-secondary);">
+./claude-installer.sh --full --verbose<br>
+# Check /tmp/claude-install.log for errors<br>
+# Retry with --force-reinstall if needed
+                        </div>
+                    </div>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <div class="trouble-title">🐳 Docker Issues</div>
+                    <p><strong>Solution:</strong> Check Docker service and permissions</p>
+                    <div class="code-example">
+                        <div style="color: var(--text-secondary);">
+sudo systemctl start docker<br>
+sudo usermod -aG docker $USER<br>
+# Logout and login again<br>
+docker ps  # Test Docker access
+                        </div>
+                    </div>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <div class="trouble-title">🔒 Permission Errors</div>
+                    <p><strong>Solution:</strong> Use permission bypass or adjust permissions</p>
+                    <div class="code-example">
+                        <div style="color: var(--text-secondary);">
+claude --safe /task "your task"<br>
+# Or disable globally:<br>
+export CLAUDE_PERMISSION_BYPASS=false<br>
+claude /task "your task"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <div class="trouble-title">🤖 Agent Not Found</div>
+                    <p><strong>Solution:</strong> Refresh agent registry</p>
+                    <div class="code-example">
+                        <div style="color: var(--text-secondary);">
+claude --register-agents<br>
+claude --agents  # List all available agents<br>
+claude --fix     # Auto-detect and fix issues
+                        </div>
+                    </div>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <div class="trouble-title">📊 Performance Issues</div>
+                    <p><strong>Solution:</strong> Check hardware optimization settings</p>
+                    <div class="code-example">
+                        <div style="color: var(--text-secondary);">
+claude --status  # Check system status<br>
+# Enable hardware optimization:<br>
+export ENABLE_AVX512=true<br>
+export METEOR_LAKE_OPTIMIZATION=true
+                        </div>
+                    </div>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <div class="trouble-title">🗄️ Database Connection</div>
+                    <p><strong>Solution:</strong> Verify PostgreSQL container status</p>
+                    <div class="code-example">
+                        <div style="color: var(--text-secondary);">
+docker ps | grep claude-postgres<br>
+docker logs claude-postgres<br>
+# Restart if needed:<br>
+docker restart claude-postgres
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-example">
+            <div class="code-header">✅ Post-Installation Verification</div>
+            <div style="color: var(--text-secondary);">
+# Check installation status<br>
+claude --status<br><br>
+
+# List all available agents<br>
+claude --agents<br><br>
+
+# Test basic functionality<br>
+claude /task "Hello, Claude agent framework!"<br><br>
+
+# Test orchestration (if enabled)<br>
+claude /task "create a simple Python script with tests and documentation"<br><br>
+
+# Check database connection<br>
+docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c "SELECT 'Database connected successfully';"<br><br>
+
+# View system health<br>
+claude --unified-status
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">📊 Dashboard</a>
+            <a href="agent-ecosystem.html" class="nav-link">🤖 Agent Ecosystem</a>
+            <a href="database-systems.html" class="nav-link">🗄️ Database Systems</a>
+            <a href="openvino-runtime.html" class="nav-link">🚀 OpenVINO Runtime</a>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+
+            // Show selected tab and activate button
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

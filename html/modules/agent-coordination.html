@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Coordination - Claude Agent Framework</title>
+    <link rel="stylesheet" href="../css/base-framework.css">
+    <style>
+        /* Agent coordination specific styling */
+        .coordination-hero {
+            background: linear-gradient(135deg, rgba(0, 206, 209, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+            border: 2px solid var(--border-blue);
+            border-radius: 20px;
+            padding: var(--spacing-xxl);
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coordination-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 206, 209, 0.1), transparent);
+            animation: sweep 4s ease-in-out infinite;
+        }
+
+        @keyframes sweep {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(50%); }
+        }
+
+        .coordination-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .workflow-diagram {
+            background: var(--bg-section);
+            border: 2px solid var(--border-purple);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+            position: relative;
+        }
+
+        .workflow-layer {
+            margin: var(--spacing-lg) 0;
+            padding: var(--spacing-lg);
+            background: var(--bg-card);
+            border-left: 4px solid var(--neon-blue);
+            border-radius: 0 10px 10px 0;
+            position: relative;
+        }
+
+        .workflow-layer::before {
+            content: attr(data-layer);
+            position: absolute;
+            left: -4px;
+            top: -12px;
+            background: var(--bg-section);
+            color: var(--neon-blue);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .agent-network {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--spacing-sm);
+            margin: var(--spacing-md) 0;
+        }
+
+        .agent-node {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--border-blue);
+            border-radius: 8px;
+            padding: var(--spacing-sm);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .agent-node:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .agent-node.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: var(--neon-green);
+            animation: pulse 2s infinite;
+        }
+
+        .agent-category-security {
+            border-color: var(--neon-red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .agent-category-development {
+            border-color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .agent-category-infrastructure {
+            border-color: var(--neon-purple);
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .agent-name {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .coordination-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .metric-card-enhanced {
+            background: var(--bg-card);
+            border: 1px solid var(--border-green);
+            border-radius: 15px;
+            padding: var(--spacing-lg);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));
+        }
+
+        .metric-icon {
+            font-size: 2em;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .metric-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: var(--neon-green);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .metric-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .workflow-examples {
+            background: var(--bg-overlay);
+            border: 1px solid var(--border-orange);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .workflow-example {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border-left: 4px solid var(--neon-orange);
+        }
+
+        .workflow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+
+        .workflow-step {
+            background: rgba(255, 107, 0, 0.1);
+            border: 1px solid var(--border-orange);
+            border-radius: 20px;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: 0.85em;
+            color: var(--neon-orange);
+            position: relative;
+        }
+
+        .workflow-step::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .workflow-step:last-child::after {
+            display: none;
+        }
+
+        .performance-dashboard {
+            background: var(--bg-section);
+            border: 2px solid var(--border-green);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .performance-item {
+            text-align: center;
+            padding: var(--spacing-md);
+            background: rgba(0, 255, 136, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .performance-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--neon-green);
+            display: block;
+        }
+
+        .performance-label {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            margin-top: var(--spacing-xs);
+        }
+
+        .communication-protocol {
+            background: var(--bg-card);
+            border: 1px solid var(--border-purple);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .protocol-layer {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            margin: var(--spacing-sm) 0;
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--neon-purple);
+        }
+
+        .protocol-icon {
+            font-size: 1.5em;
+            color: var(--neon-purple);
+            width: 40px;
+            text-align: center;
+        }
+
+        .protocol-details {
+            flex: 1;
+        }
+
+        .protocol-name {
+            font-weight: 600;
+            color: var(--neon-purple);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .protocol-description {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .protocol-metric {
+            color: var(--neon-green);
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .orchestration-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .mode-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-blue);
+            border-radius: 15px;
+            padding: var(--spacing-lg);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.2);
+        }
+
+        .mode-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .mode-icon {
+            font-size: 2em;
+            color: var(--neon-blue);
+        }
+
+        .mode-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--neon-blue);
+        }
+
+        .mode-description {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .mode-features {
+            list-style: none;
+            padding: 0;
+        }
+
+        .mode-features li {
+            color: var(--text-secondary);
+            padding: var(--spacing-xs) 0;
+            position: relative;
+            padding-left: var(--spacing-md);
+        }
+
+        .mode-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        .real-time-monitor {
+            background: var(--bg-overlay);
+            border: 2px solid var(--border-green);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .monitor-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-green);
+            border-radius: 10px;
+            padding: var(--spacing-md);
+            text-align: center;
+            position: relative;
+        }
+
+        .monitor-status {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            animation: pulse 2s infinite;
+        }
+
+        .monitor-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--neon-green);
+            margin: var(--spacing-sm) 0;
+        }
+
+        .monitor-label {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="nav-header">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">🧠 Claude Agent Framework</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">Overview</a></li>
+                <li><a href="npu-acceleration.html">NPU Acceleration</a></li>
+                <li><a href="#" class="active">Agent Coordination</a></li>
+                <li><a href="shadowgit-performance.html">Performance</a></li>
+                <li><a href="installation.html">Installation</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="../index.html">🏠 Home</a> / <a href="../index.html#modules">Modules</a> / <span class="current">Agent Coordination</span>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="coordination-hero">
+            <div class="coordination-hero-content">
+                <h1>🎯 Multi-Agent Coordination System</h1>
+                <p style="font-size: 1.2em; color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
+                    Advanced orchestration managing <strong>89 specialized agents</strong><br>
+                    with <strong>4.2M messages/second</strong> throughput and <strong>200ns P99 latency</strong>
+                </p>
+
+                <div style="display: flex; justify-content: center; gap: var(--spacing-lg); flex-wrap: wrap;">
+                    <div class="performance-indicator perf-excellent">
+                        <span>🎭</span> PROJECTORCHESTRATOR Active
+                    </div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>📡</span> Binary Protocol Ready
+                    </div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>⚡</span> 95% Success Rate
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coordination Metrics -->
+        <section id="metrics" class="mb-xl">
+            <h2>📊 Coordination Performance</h2>
+            <div class="coordination-metrics">
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">🤖</div>
+                    <div class="metric-number">89</div>
+                    <div class="metric-subtitle">Active Agents</div>
+                    <div class="performance-indicator perf-excellent mt-sm">
+                        88 Active + 1 Template
+                    </div>
+                </div>
+
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">📡</div>
+                    <div class="metric-number">4.2M</div>
+                    <div class="metric-subtitle">Messages/Second</div>
+                    <div class="performance-indicator perf-excellent mt-sm">
+                        Binary Protocol Throughput
+                    </div>
+                </div>
+
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-number">200ns</div>
+                    <div class="metric-subtitle">P99 Latency</div>
+                    <div class="performance-indicator perf-excellent mt-sm">
+                        Ultra-Low Latency
+                    </div>
+                </div>
+
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">✅</div>
+                    <div class="metric-number">95%</div>
+                    <div class="metric-subtitle">Success Rate</div>
+                    <div class="performance-indicator perf-excellent mt-sm">
+                        Handoff Success
+                    </div>
+                </div>
+
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">🔄</div>
+                    <div class="metric-number">50K+</div>
+                    <div class="metric-subtitle">Operations/Second</div>
+                    <div class="performance-indicator perf-excellent mt-sm">
+                        Enhanced Coordination
+                    </div>
+                </div>
+
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">📈</div>
+                    <div class="metric-number">40%</div>
+                    <div class="metric-subtitle">Time Reduction</div>
+                    <div class="performance-indicator perf-excellent mt-sm">
+                        Development Efficiency
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agent Network Visualization -->
+        <section id="agent-network" class="mb-xl">
+            <h2>🌐 Agent Ecosystem</h2>
+            <p class="text-center mb-lg">Interactive visualization of the 89-agent coordination network</p>
+
+            <div class="workflow-diagram">
+                <h3 style="text-align: center; margin-bottom: var(--spacing-lg);">Agent Categories & Communication Paths</h3>
+
+                <div class="workflow-layer" data-layer="Command & Control (2 agents)">
+                    <div class="agent-network">
+                        <div class="agent-node active" data-agent="DIRECTOR">
+                            <div class="agent-name">DIRECTOR</div>
+                        </div>
+                        <div class="agent-node active" data-agent="PROJECTORCHESTRATOR">
+                            <div class="agent-name">PROJECTORCHESTRATOR</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workflow-layer" data-layer="Security Specialists (22 agents)">
+                    <div class="agent-network">
+                        <div class="agent-node agent-category-security" data-agent="SECURITY">
+                            <div class="agent-name">SECURITY</div>
+                        </div>
+                        <div class="agent-node agent-category-security" data-agent="BASTION">
+                            <div class="agent-name">BASTION</div>
+                        </div>
+                        <div class="agent-node agent-category-security" data-agent="CSO">
+                            <div class="agent-name">CSO</div>
+                        </div>
+                        <div class="agent-node agent-category-security" data-agent="CRYPTOEXPERT">
+                            <div class="agent-name">CRYPTOEXPERT</div>
+                        </div>
+                        <div class="agent-node agent-category-security" data-agent="GHOST-PROTOCOL">
+                            <div class="agent-name">GHOST-PROTOCOL</div>
+                        </div>
+                        <div class="agent-node agent-category-security" data-agent="COGNITIVE-DEFENSE">
+                            <div class="agent-name">COGNITIVE-DEFENSE</div>
+                        </div>
+                        <div style="padding: var(--spacing-xs); color: var(--text-muted); font-size: 0.8em; text-align: center;">
+                            + 16 more security agents...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workflow-layer" data-layer="Core Development (8 agents)">
+                    <div class="agent-network">
+                        <div class="agent-node agent-category-development" data-agent="ARCHITECT">
+                            <div class="agent-name">ARCHITECT</div>
+                        </div>
+                        <div class="agent-node agent-category-development" data-agent="CONSTRUCTOR">
+                            <div class="agent-name">CONSTRUCTOR</div>
+                        </div>
+                        <div class="agent-node agent-category-development" data-agent="DEBUGGER">
+                            <div class="agent-name">DEBUGGER</div>
+                        </div>
+                        <div class="agent-node agent-category-development" data-agent="TESTBED">
+                            <div class="agent-name">TESTBED</div>
+                        </div>
+                        <div class="agent-node agent-category-development" data-agent="LINTER">
+                            <div class="agent-name">LINTER</div>
+                        </div>
+                        <div class="agent-node agent-category-development" data-agent="OPTIMIZER">
+                            <div class="agent-name">OPTIMIZER</div>
+                        </div>
+                        <div class="agent-node agent-category-development" data-agent="PATCHER">
+                            <div class="agent-name">PATCHER</div>
+                        </div>
+                        <div class="agent-node agent-category-development" data-agent="QADIRECTOR">
+                            <div class="agent-name">QADIRECTOR</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workflow-layer" data-layer="Infrastructure & DevOps (8 agents)">
+                    <div class="agent-network">
+                        <div class="agent-node agent-category-infrastructure" data-agent="INFRASTRUCTURE">
+                            <div class="agent-name">INFRASTRUCTURE</div>
+                        </div>
+                        <div class="agent-node agent-category-infrastructure" data-agent="DEPLOYER">
+                            <div class="agent-name">DEPLOYER</div>
+                        </div>
+                        <div class="agent-node agent-category-infrastructure" data-agent="MONITOR">
+                            <div class="agent-name">MONITOR</div>
+                        </div>
+                        <div class="agent-node agent-category-infrastructure" data-agent="PACKAGER">
+                            <div class="agent-name">PACKAGER</div>
+                        </div>
+                        <div class="agent-node agent-category-infrastructure" data-agent="DOCKER-AGENT">
+                            <div class="agent-name">DOCKER-AGENT</div>
+                        </div>
+                        <div class="agent-node agent-category-infrastructure" data-agent="PROXMOX-AGENT">
+                            <div class="agent-name">PROXMOX-AGENT</div>
+                        </div>
+                        <div style="padding: var(--spacing-xs); color: var(--text-muted); font-size: 0.8em; text-align: center;">
+                            + 2 more infrastructure agents...
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; color: var(--text-muted); padding: var(--spacing-lg);">
+                    <strong>+ 49 more agents across 8 additional categories</strong><br>
+                    Language-Specific (11) • Specialized Platforms (7) • Data & ML (3)<br>
+                    Hardware & Acceleration (6) • Planning & Documentation (4) • Quality & Oversight (3)<br>
+                    Network & Systems (1) • Additional Utility Agents (6)
+                </div>
+            </div>
+        </section>
+
+        <!-- Orchestration Modes -->
+        <section id="orchestration-modes" class="mb-xl">
+            <h2>🎭 Orchestration Modes</h2>
+            <p class="text-center mb-lg">Intelligent execution strategies for different workflow requirements</p>
+
+            <div class="orchestration-modes">
+                <div class="mode-card">
+                    <div class="mode-header">
+                        <div class="mode-icon">🧠</div>
+                        <div class="mode-title">INTELLIGENT</div>
+                    </div>
+                    <div class="mode-description">
+                        NPU-accelerated coordination with predictive optimization and dynamic resource allocation.
+                    </div>
+                    <ul class="mode-features">
+                        <li>NPU-powered agent selection</li>
+                        <li>Predictive performance optimization</li>
+                        <li>Dynamic resource allocation</li>
+                        <li>Adaptive workflow optimization</li>
+                    </ul>
+                </div>
+
+                <div class="mode-card">
+                    <div class="mode-header">
+                        <div class="mode-icon">🔄</div>
+                        <div class="mode-title">REDUNDANT</div>
+                    </div>
+                    <div class="mode-description">
+                        Dual-layer execution for mission-critical workflows with automatic failover and validation.
+                    </div>
+                    <ul class="mode-features">
+                        <li>Parallel Python + C execution</li>
+                        <li>Automatic result validation</li>
+                        <li>Zero-downtime failover</li>
+                        <li>99.99% reliability target</li>
+                    </ul>
+                </div>
+
+                <div class="mode-card">
+                    <div class="mode-header">
+                        <div class="mode-icon">🤝</div>
+                        <div class="mode-title">CONSENSUS</div>
+                    </div>
+                    <div class="mode-description">
+                        Multi-agent consensus for complex decisions requiring distributed validation and agreement.
+                    </div>
+                    <ul class="mode-features">
+                        <li>Distributed decision making</li>
+                        <li>Consensus validation</li>
+                        <li>Conflict resolution</li>
+                        <li>Quality assurance</li>
+                    </ul>
+                </div>
+
+                <div class="mode-card">
+                    <div class="mode-header">
+                        <div class="mode-icon">⚡</div>
+                        <div class="mode-title">SPEED_CRITICAL</div>
+                    </div>
+                    <div class="mode-description">
+                        Maximum performance C layer execution for latency-sensitive real-time operations.
+                    </div>
+                    <ul class="mode-features">
+                        <li>Binary protocol communication</li>
+                        <li>Sub-millisecond latency</li>
+                        <li>Hardware-optimized execution</li>
+                        <li>Real-time guarantees</li>
+                    </ul>
+                </div>
+
+                <div class="mode-card">
+                    <div class="mode-header">
+                        <div class="mode-icon">🐍</div>
+                        <div class="mode-title">PYTHON_ONLY</div>
+                    </div>
+                    <div class="mode-description">
+                        Pure Python execution for complex logic, library integration, and development workflows.
+                    </div>
+                    <ul class="mode-features">
+                        <li>Full library ecosystem access</li>
+                        <li>Complex logic processing</li>
+                        <li>Flexible integration</li>
+                        <li>Development optimization</li>
+                    </ul>
+                </div>
+
+                <div class="mode-card">
+                    <div class="mode-header">
+                        <div class="mode-icon">🔄</div>
+                        <div class="mode-title">ADAPTIVE</div>
+                    </div>
+                    <div class="mode-description">
+                        Dynamic mode switching based on performance metrics, error rates, and resource availability.
+                    </div>
+                    <ul class="mode-features">
+                        <li>Real-time performance monitoring</li>
+                        <li>Automatic mode switching</li>
+                        <li>Resource optimization</li>
+                        <li>Continuous adaptation</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Communication Protocol -->
+        <section id="communication-protocol" class="mb-xl">
+            <h2>📡 Communication Protocol Stack</h2>
+
+            <div class="communication-protocol">
+                <h3 style="margin-bottom: var(--spacing-lg);">Binary Communication System Architecture</h3>
+
+                <div class="protocol-layer">
+                    <div class="protocol-icon">🎯</div>
+                    <div class="protocol-details">
+                        <div class="protocol-name">Task Tool Integration</div>
+                        <div class="protocol-description">Claude Code native agent invocation with zero configuration</div>
+                        <div class="protocol-metric">✓ 89 agents accessible</div>
+                    </div>
+                </div>
+
+                <div class="protocol-layer">
+                    <div class="protocol-icon">⚡</div>
+                    <div class="protocol-details">
+                        <div class="protocol-name">Binary Protocol Layer</div>
+                        <div class="protocol-description">Ultra-fast C-based message passing with shared memory optimization</div>
+                        <div class="protocol-metric">4.2M msg/sec • 200ns P99 latency</div>
+                    </div>
+                </div>
+
+                <div class="protocol-layer">
+                    <div class="protocol-icon">🌐</div>
+                    <div class="protocol-details">
+                        <div class="protocol-name">Network Communication</div>
+                        <div class="protocol-description">WebSocket + gRPC interfaces for distributed agent coordination</div>
+                        <div class="protocol-metric">JSON-RPC + Binary Protocol</div>
+                    </div>
+                </div>
+
+                <div class="protocol-layer">
+                    <div class="protocol-icon">🧠</div>
+                    <div class="protocol-details">
+                        <div class="protocol-name">NPU Acceleration Layer</div>
+                        <div class="protocol-description">AI-enhanced routing with neural agent selection and message classification</div>
+                        <div class="protocol-metric">11 TOPS NPU • Sub-millisecond selection</div>
+                    </div>
+                </div>
+
+                <div class="protocol-layer">
+                    <div class="protocol-icon">🔐</div>
+                    <div class="protocol-details">
+                        <div class="protocol-name">Security & Authentication</div>
+                        <div class="protocol-description">JWT tokens, TLS encryption, and role-based access control</div>
+                        <div class="protocol-metric">Enterprise-grade security</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflow Examples -->
+        <section id="workflow-examples" class="mb-xl">
+            <h2>🔄 Multi-Agent Workflow Examples</h2>
+
+            <div class="workflow-examples">
+                <h3 style="color: var(--neon-orange); margin-bottom: var(--spacing-lg);">Production Workflow Patterns</h3>
+
+                <div class="workflow-example">
+                    <h4 style="color: var(--neon-blue);">Security Audit Campaign</h4>
+                    <p>Comprehensive security analysis with redundant validation and automated remediation.</p>
+                    <div class="workflow-steps">
+                        <div class="workflow-step">DIRECTOR plans</div>
+                        <div class="workflow-step">SECURITY scans</div>
+                        <div class="workflow-step">SECURITYAUDITOR validates</div>
+                        <div class="workflow-step">CRYPTOEXPERT reviews</div>
+                        <div class="workflow-step">PATCHER fixes</div>
+                        <div class="workflow-step">TESTBED validates</div>
+                    </div>
+                </div>
+
+                <div class="workflow-example">
+                    <h4 style="color: var(--neon-blue);">Complete Development Cycle</h4>
+                    <p>End-to-end development from planning to deployment with quality assurance.</p>
+                    <div class="workflow-steps">
+                        <div class="workflow-step">PLANNER designs</div>
+                        <div class="workflow-step">ARCHITECT structures</div>
+                        <div class="workflow-step">CONSTRUCTOR builds</div>
+                        <div class="workflow-step">TESTBED tests</div>
+                        <div class="workflow-step">DEPLOYER releases</div>
+                        <div class="workflow-step">MONITOR tracks</div>
+                    </div>
+                </div>
+
+                <div class="workflow-example">
+                    <h4 style="color: var(--neon-blue);">Performance Optimization Pipeline</h4>
+                    <p>Intelligent performance analysis and optimization with hardware acceleration.</p>
+                    <div class="workflow-steps">
+                        <div class="workflow-step">MONITOR profiles</div>
+                        <div class="workflow-step">OPTIMIZER analyzes</div>
+                        <div class="workflow-step">NPU accelerates</div>
+                        <div class="workflow-step">HARDWARE optimizes</div>
+                        <div class="workflow-step">TESTBED validates</div>
+                    </div>
+                </div>
+
+                <div class="workflow-example">
+                    <h4 style="color: var(--neon-blue);">Documentation Generation</h4>
+                    <p>Automated documentation creation with multi-format output and quality review.</p>
+                    <div class="workflow-steps">
+                        <div class="workflow-step">RESEARCHER analyzes</div>
+                        <div class="workflow-step">DOCGEN creates</div>
+                        <div class="workflow-step">LINTER reviews</div>
+                        <div class="workflow-step">WEB formats</div>
+                        <div class="workflow-step">QADIRECTOR approves</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Real-Time Monitoring -->
+        <section id="real-time-monitoring" class="mb-xl">
+            <h2>📊 Real-Time Coordination Monitor</h2>
+
+            <div class="real-time-monitor">
+                <h3 style="text-align: center; margin-bottom: var(--spacing-lg);">Live System Status</h3>
+
+                <div class="monitor-grid">
+                    <div class="monitor-item">
+                        <div class="monitor-status"></div>
+                        <div class="monitor-value">89</div>
+                        <div class="monitor-label">Active Agents</div>
+                    </div>
+
+                    <div class="monitor-item">
+                        <div class="monitor-status"></div>
+                        <div class="monitor-value">4.2M</div>
+                        <div class="monitor-label">Messages/sec</div>
+                    </div>
+
+                    <div class="monitor-item">
+                        <div class="monitor-status"></div>
+                        <div class="monitor-value">200ns</div>
+                        <div class="monitor-label">P99 Latency</div>
+                    </div>
+
+                    <div class="monitor-item">
+                        <div class="monitor-status"></div>
+                        <div class="monitor-value">95%</div>
+                        <div class="monitor-label">Success Rate</div>
+                    </div>
+
+                    <div class="monitor-item">
+                        <div class="monitor-status"></div>
+                        <div class="monitor-value">12</div>
+                        <div class="monitor-label">Active Workflows</div>
+                    </div>
+
+                    <div class="monitor-item">
+                        <div class="monitor-status"></div>
+                        <div class="monitor-value">87%</div>
+                        <div class="monitor-label">Resource Efficiency</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Footer -->
+        <div class="text-center mt-xl" style="padding: var(--spacing-xl) 0; border-top: 1px solid var(--border-blue);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--spacing-md);">
+                <a href="npu-acceleration.html" class="btn">← NPU Acceleration</a>
+                <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+                    <a href="shadowgit-performance.html" class="btn btn-blue">Shadowgit Performance →</a>
+                    <a href="../index.html" class="btn">Back to Overview</a>
+                </div>
+            </div>
+
+            <p style="color: var(--text-muted); margin-top: var(--spacing-lg);">
+                <strong>Agent Coordination System</strong> - PROJECTORCHESTRATOR Management<br>
+                89 Agents • 4.2M msg/sec • 200ns P99 latency • 95% success rate
+            </p>
+        </div>
+    </div>
+
+    <!-- JavaScript Framework -->
+    <script src="../js/base-framework.js"></script>
+    <script>
+        // Page-specific functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // Agent node interactions
+            document.querySelectorAll('.agent-node').forEach(node => {
+                node.addEventListener('click', () => {
+                    // Toggle active state
+                    node.classList.toggle('active');
+
+                    // Show agent details (simulate)
+                    const agentName = node.dataset.agent;
+                    if (agentName) {
+                        console.log(`Agent selected: ${agentName}`);
+                        // Could show modal with agent details
+                    }
+                });
+            });
+
+            // Real-time monitoring simulation
+            const updateMonitoring = () => {
+                document.querySelectorAll('.monitor-value').forEach(element => {
+                    // Add subtle animation for live updates
+                    element.style.transition = 'color 0.3s ease';
+                    element.style.color = 'var(--neon-blue)';
+
+                    setTimeout(() => {
+                        element.style.color = 'var(--neon-green)';
+                    }, 300);
+                });
+            };
+
+            // Update every 3 seconds
+            setInterval(updateMonitoring, 3000);
+
+            // Workflow step animations
+            document.querySelectorAll('.workflow-example').forEach(example => {
+                example.addEventListener('mouseenter', () => {
+                    const steps = example.querySelectorAll('.workflow-step');
+                    steps.forEach((step, index) => {
+                        setTimeout(() => {
+                            step.style.backgroundColor = 'rgba(255, 107, 0, 0.3)';
+                            step.style.transform = 'scale(1.05)';
+                        }, index * 100);
+                    });
+                });
+
+                example.addEventListener('mouseleave', () => {
+                    const steps = example.querySelectorAll('.workflow-step');
+                    steps.forEach(step => {
+                        step.style.backgroundColor = '';
+                        step.style.transform = '';
+                    });
+                });
+            });
+
+            // Mode cards hover effects
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.borderColor = 'var(--neon-blue)';
+                    card.querySelector('.mode-icon').style.color = 'var(--neon-green)';
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.borderColor = '';
+                    card.querySelector('.mode-icon').style.color = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

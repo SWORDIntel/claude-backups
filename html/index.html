@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Agent Framework - Comprehensive Documentation</title>
+    <link rel="stylesheet" href="css/base-framework.css">
+    <style>
+        /* Additional styles for modal components */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 2px solid var(--border-blue);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-blue);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--neon-red);
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: var(--spacing-xs);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.1);
+            transform: scale(1.1);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading indicator */
+        .loading-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-card);
+            border: 2px solid var(--border-green);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-md);
+            z-index: 10000;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 136, 0.3);
+            border-top: 3px solid var(--neon-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--border-green);
+            border-radius: 6px;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: 0.8em;
+            color: var(--text-primary);
+            z-index: 1000;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: var(--border-green);
+        }
+
+        /* Module highlights */
+        .module-highlighted {
+            border-color: var(--neon-blue) !important;
+            transform: translateY(-3px) scale(1.02) !important;
+        }
+
+        /* Hero section */
+        .hero-section {
+            text-align: center;
+            margin-bottom: var(--spacing-xxl);
+            padding: var(--spacing-xxl) 0;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%);
+            border-radius: 20px;
+            border: 1px solid var(--border-green);
+        }
+
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-xl);
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--neon-green);
+            display: block;
+        }
+
+        .hero-stat-label {
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="nav-header">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">🧠 Claude Agent Framework</a>
+            <ul class="nav-menu">
+                <li><a href="#overview" class="active">Overview</a></li>
+                <li><a href="#modules" data-tooltip="Explore all system modules">Modules</a></li>
+                <li><a href="#performance" data-tooltip="Real-time performance metrics">Performance</a></li>
+                <li><a href="#architecture" data-tooltip="System architecture details">Architecture</a></li>
+                <li><a href="#installation" data-tooltip="Installation guides">Installation</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero-section" id="overview">
+            <h1>🚀 Claude Agent Framework v8.0</h1>
+            <p class="hero-subtitle">
+                Hardware-aware multi-agent orchestration with ML-powered continuous learning<br>
+                <strong>Production Status:</strong> <span class="status-active">Fully Operational</span>
+            </p>
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value">89</span>
+                    <span class="hero-stat-label">Active Agents</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">3.04M</span>
+                    <span class="hero-stat-label">Lines/sec</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">85x</span>
+                    <span class="hero-stat-label">Faster Context</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">98.1%</span>
+                    <span class="hero-stat-label">Cache Hit Rate</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Real-Time Metrics -->
+        <section id="performance" class="mb-xl">
+            <h2>📊 Real-Time System Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card" data-metric-id="shadowgit-performance">
+                    <div class="metric-value">3.04M</div>
+                    <div class="metric-label">Shadowgit Processing</div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>🟢</span> BASELINE
+                    </div>
+                </div>
+
+                <div class="metric-card" data-metric-id="learning-database">
+                    <div class="metric-value">5433</div>
+                    <div class="metric-label">Learning Database Port</div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>🟢</span> RUNNING
+                    </div>
+                </div>
+
+                <div class="metric-card" data-metric-id="cross-repo-tracking">
+                    <div class="metric-value">5</div>
+                    <div class="metric-label">Repositories Tracked</div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>🟢</span> ACTIVE
+                    </div>
+                </div>
+
+                <div class="metric-card" data-metric-id="ml-embeddings">
+                    <div class="metric-value">512</div>
+                    <div class="metric-label">ML Embedding Dimensions</div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>🟢</span> READY
+                    </div>
+                </div>
+
+                <div class="metric-card" data-metric-id="data-tables">
+                    <div class="metric-value">14</div>
+                    <div class="metric-label">Operational Tables</div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>🟢</span> COLLECTING
+                    </div>
+                </div>
+
+                <div class="metric-card" data-metric-id="simd-efficiency">
+                    <div class="metric-value">87%</div>
+                    <div class="metric-label">SIMD Efficiency</div>
+                    <div class="performance-indicator perf-excellent">
+                        <span>🟢</span> HIGH
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Module Overview -->
+        <section id="modules" class="mb-xl">
+            <h2>🔧 System Modules</h2>
+            <p class="text-center mb-lg">Explore the comprehensive architecture powering the Claude Agent Framework</p>
+
+            <div class="modules-grid">
+                <!-- NPU Acceleration Module -->
+                <div class="module-card" data-module-id="npu-acceleration">
+                    <div class="module-header">
+                        <div class="module-icon">🧠</div>
+                        <div>
+                            <div class="module-title">NPU Acceleration</div>
+                            <div class="module-description">Intel Neural Processing Unit optimization</div>
+                        </div>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">11</span>
+                            <span class="stat-label">TOPS</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">128MB</span>
+                            <span class="stat-label">Memory</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">INT8</span>
+                            <span class="stat-label">Precision</span>
+                        </div>
+                    </div>
+                    <a href="modules/npu-acceleration.html" class="btn btn-blue">Explore NPU →</a>
+                </div>
+
+                <!-- Agent Coordination Module -->
+                <div class="module-card" data-module-id="agent-coordination">
+                    <div class="module-header">
+                        <div class="module-icon">🎯</div>
+                        <div>
+                            <div class="module-title">Agent Coordination</div>
+                            <div class="module-description">Multi-agent orchestration and workflow management</div>
+                        </div>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">89</span>
+                            <span class="stat-label">Agents</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">4.2M</span>
+                            <span class="stat-label">msg/sec</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">200ns</span>
+                            <span class="stat-label">Latency</span>
+                        </div>
+                    </div>
+                    <a href="modules/agent-coordination.html" class="btn btn-blue">Explore Coordination →</a>
+                </div>
+
+                <!-- Shadowgit Performance Module -->
+                <div class="module-card" data-module-id="shadowgit-performance">
+                    <div class="module-header">
+                        <div class="module-icon">⚡</div>
+                        <div>
+                            <div class="module-title">Shadowgit Performance</div>
+                            <div class="module-description">High-performance Git operations with AVX2 optimization</div>
+                        </div>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">3.04M</span>
+                            <span class="stat-label">lines/sec</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">AVX2</span>
+                            <span class="stat-label">SIMD</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">930M</span>
+                            <span class="stat-label">diff/sec</span>
+                        </div>
+                    </div>
+                    <a href="modules/shadowgit-performance.html" class="btn btn-blue">Explore Performance →</a>
+                </div>
+
+                <!-- Docker Learning Module -->
+                <div class="module-card" data-module-id="docker-learning">
+                    <div class="module-header">
+                        <div class="module-icon">🐳</div>
+                        <div>
+                            <div class="module-title">Docker Learning</div>
+                            <div class="module-description">Containerized PostgreSQL learning system</div>
+                        </div>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">5433</span>
+                            <span class="stat-label">Port</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">pgvector</span>
+                            <span class="stat-label">Extension</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">Auto</span>
+                            <span class="stat-label">Restart</span>
+                        </div>
+                    </div>
+                    <a href="modules/docker-learning.html" class="btn btn-blue">Explore Docker →</a>
+                </div>
+
+                <!-- PICMCS Context Module -->
+                <div class="module-card" data-module-id="picmcs-context">
+                    <div class="module-header">
+                        <div class="module-icon">🎛️</div>
+                        <div>
+                            <div class="module-title">PICMCS Context</div>
+                            <div class="module-description">Intelligent Context Chopping with hardware fallback</div>
+                        </div>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">85x</span>
+                            <span class="stat-label">Faster</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">8</span>
+                            <span class="stat-label">Levels</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">Universal</span>
+                            <span class="stat-label">Fallback</span>
+                        </div>
+                    </div>
+                    <a href="modules/picmcs-context.html" class="btn btn-blue">Explore PICMCS →</a>
+                </div>
+
+                <!-- Learning System v2.0 Module -->
+                <div class="module-card" data-module-id="learning-system">
+                    <div class="module-header">
+                        <div class="module-icon">🤖</div>
+                        <div>
+                            <div class="module-title">Learning System v2.0</div>
+                            <div class="module-description">ML-powered agent performance analytics</div>
+                        </div>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">512</span>
+                            <span class="stat-label">Dimensions</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">Vector</span>
+                            <span class="stat-label">Search</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">Real-time</span>
+                            <span class="stat-label">Analytics</span>
+                        </div>
+                    </div>
+                    <a href="modules/learning-system.html" class="btn btn-blue">Explore Learning →</a>
+                </div>
+
+                <!-- Additional modules with compact cards -->
+                <div class="module-card" data-module-id="openvino-runtime">
+                    <div class="module-header">
+                        <div class="module-icon">🔬</div>
+                        <div>
+                            <div class="module-title">OpenVINO Runtime</div>
+                            <div class="module-description">AI acceleration with CPU/GPU/NPU support</div>
+                        </div>
+                    </div>
+                    <a href="modules/openvino-runtime.html" class="btn btn-blue">Explore OpenVINO →</a>
+                </div>
+
+                <div class="module-card" data-module-id="agent-ecosystem">
+                    <div class="module-header">
+                        <div class="module-icon">🌐</div>
+                        <div>
+                            <div class="module-title">Agent Ecosystem</div>
+                            <div class="module-description">89 specialized agents across 12 categories</div>
+                        </div>
+                    </div>
+                    <a href="modules/agent-ecosystem.html" class="btn btn-blue">Explore Agents →</a>
+                </div>
+
+                <div class="module-card" data-module-id="database-systems">
+                    <div class="module-header">
+                        <div class="module-icon">🗄️</div>
+                        <div>
+                            <div class="module-title">Database Systems</div>
+                            <div class="module-description">PostgreSQL 16/17 with enterprise performance</div>
+                        </div>
+                    </div>
+                    <a href="modules/database-systems.html" class="btn btn-blue">Explore Database →</a>
+                </div>
+
+                <div class="module-card" data-module-id="installation">
+                    <div class="module-header">
+                        <div class="module-icon">⚙️</div>
+                        <div>
+                            <div class="module-title">Installation</div>
+                            <div class="module-description">Unified installer with cross-platform support</div>
+                        </div>
+                    </div>
+                    <a href="modules/installation.html" class="btn btn-blue">Explore Installation →</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section id="quick-actions" class="text-center mb-xl">
+            <h3>Quick Actions</h3>
+            <div style="display: flex; justify-content: center; gap: var(--spacing-md); flex-wrap: wrap;">
+                <a href="#" class="btn" onclick="claudeFramework?.updateMetrics()">🔄 Refresh Metrics</a>
+                <a href="modules/architecture.html" class="btn btn-blue">🏗️ View Architecture</a>
+                <a href="modules/performance.html" class="btn">📊 Performance Dashboard</a>
+                <a href="https://github.com/SWORDIntel/claude-backups" class="btn btn-blue" target="_blank">📚 GitHub Repository</a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center mt-xl" style="padding: var(--spacing-xl) 0; border-top: 1px solid var(--border-green);">
+            <p style="color: var(--text-muted);">
+                Claude Agent Framework v8.0 - Production Ready<br>
+                <span style="color: var(--neon-green);">Status:</span> Fully Operational |
+                <span style="color: var(--neon-blue);">Last Updated:</span> 2025-09-16 |
+                <span style="color: var(--neon-purple);">Agents:</span> 89 Active
+            </p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Framework -->
+    <script src="js/base-framework.js"></script>
+    <script>
+        // Page-specific initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            // Register module data
+            if (window.ClaudeFramework?.instance()) {
+                const framework = window.ClaudeFramework.instance();
+
+                framework.registerModule('npu-acceleration', {
+                    title: 'NPU Acceleration',
+                    description: 'Intel Neural Processing Unit optimization providing 11 TOPS performance',
+                    details: '<p>Advanced neural processing capabilities with hardware-specific optimization.</p>'
+                });
+
+                framework.registerModule('agent-coordination', {
+                    title: 'Agent Coordination',
+                    description: 'Multi-agent orchestration managing 89 specialized agents',
+                    details: '<p>Sophisticated agent coordination with binary protocol communication.</p>'
+                });
+
+                // Add more module registrations...
+            }
+
+            // Update page title based on metrics
+            const updateTitle = () => {
+                const activeAgents = document.querySelector('[data-metric-id="cross-repo-tracking"] .metric-value')?.textContent || '89';
+                document.title = `Claude Framework (${activeAgents} Agents) - Documentation`;
+            };
+
+            updateTitle();
+            setInterval(updateTitle, 30000);
+        });
+    </script>
+</body>
+</html>

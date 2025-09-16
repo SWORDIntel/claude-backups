@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Ecosystem - Claude Agent Framework</title>
+    <link rel="stylesheet" href="../css/base-framework.css">
+    <style>
+        /* Agent Ecosystem specific styling */
+        .ecosystem-hero {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+            border: 2px solid var(--border-green);
+            border-radius: 20px;
+            padding: var(--spacing-xxl);
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ecosystem-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+            animation: agentSync 4s ease-in-out infinite;
+        }
+
+        @keyframes agentSync {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            50% { transform: translateX(50%) rotate(180deg); }
+        }
+
+        .ecosystem-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .overview-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-green);
+            border-radius: 15px;
+            padding: var(--spacing-lg);
+            text-align: center;
+            position: relative;
+        }
+
+        .overview-number {
+            color: var(--neon-green);
+            font-size: 3em;
+            font-weight: bold;
+            margin: var(--spacing-sm) 0;
+        }
+
+        .agent-categories {
+            margin: var(--spacing-xl) 0;
+        }
+
+        .category-section {
+            background: var(--bg-section);
+            border: 2px solid var(--border-blue);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .category-title {
+            color: var(--neon-blue);
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .category-count {
+            background: var(--neon-blue);
+            color: black;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .agent-card {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: var(--spacing-md);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .agent-card:hover {
+            border-color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .agent-name {
+            color: var(--neon-blue);
+            font-weight: bold;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .agent-description {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .coordination-matrix {
+            background: var(--bg-section);
+            border: 2px solid var(--border-purple);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .matrix-visualization {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            overflow-x: auto;
+        }
+
+        .matrix-row {
+            display: flex;
+            align-items: center;
+            margin: var(--spacing-sm) 0;
+            min-width: 600px;
+        }
+
+        .matrix-agent {
+            background: var(--neon-purple);
+            color: black;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            width: 120px;
+            text-align: center;
+            margin-right: var(--spacing-md);
+        }
+
+        .matrix-connections {
+            display: flex;
+            gap: var(--spacing-xs);
+            flex-wrap: wrap;
+        }
+
+        .matrix-connection {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid var(--border-purple);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        .workflow-examples {
+            background: var(--bg-section);
+            border: 2px solid var(--border-orange);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .workflow-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-orange);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+        }
+
+        .workflow-title {
+            color: var(--neon-orange);
+            font-weight: bold;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .workflow-steps {
+            list-style: none;
+            padding: 0;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            margin: var(--spacing-xs) 0;
+            font-size: 0.9em;
+        }
+
+        .step-arrow {
+            color: var(--neon-orange);
+            margin-right: var(--spacing-xs);
+        }
+
+        .performance-metrics {
+            background: var(--bg-section);
+            border: 2px solid var(--border-teal);
+            border-radius: 15px;
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .metrics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .metric-tile {
+            background: var(--bg-card);
+            border: 2px solid var(--border-teal);
+            border-radius: 10px;
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+
+        .metric-value {
+            color: var(--neon-teal);
+            font-size: 2em;
+            font-weight: bold;
+            margin: var(--spacing-sm) 0;
+        }
+
+        .code-example {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--border-green);
+            border-radius: 10px;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            font-family: var(--font-mono);
+            overflow-x: auto;
+        }
+
+        .code-header {
+            color: var(--neon-green);
+            margin-bottom: var(--spacing-sm);
+            font-weight: bold;
+        }
+
+        .nav-links {
+            margin-top: var(--spacing-xxl);
+            text-align: center;
+        }
+
+        .nav-link {
+            display: inline-block;
+            background: var(--bg-card);
+            border: 2px solid var(--border-green);
+            border-radius: 10px;
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin: 0 var(--spacing-sm);
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            border-color: var(--neon-green);
+            background: rgba(0, 255, 136, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Security category styling */
+        .category-security { border-color: var(--border-red); }
+        .category-security .category-title { color: var(--neon-red); }
+        .category-security .category-count { background: var(--neon-red); }
+
+        /* Development category styling */
+        .category-development { border-color: var(--border-blue); }
+        .category-development .category-title { color: var(--neon-blue); }
+        .category-development .category-count { background: var(--neon-blue); }
+
+        /* Infrastructure category styling */
+        .category-infrastructure { border-color: var(--border-orange); }
+        .category-infrastructure .category-title { color: var(--neon-orange); }
+        .category-infrastructure .category-count { background: var(--neon-orange); }
+
+        @media (max-width: 768px) {
+            .agents-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .matrix-row {
+                min-width: auto;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .matrix-agent {
+                width: 100%;
+                margin-bottom: var(--spacing-sm);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Agent Ecosystem</h1>
+            <p class="subtitle">89 Specialized Agents with Autonomous Coordination</p>
+        </header>
+
+        <div class="ecosystem-hero">
+            <div>
+                <h2>🤖 Complete Agent Framework</h2>
+                <p class="hero-description">
+                    Production-ready multi-agent orchestration system with hardware-aware execution,
+                    autonomous coordination, and comprehensive specialization across all domains
+                </p>
+                <div style="margin-top: var(--spacing-lg);">
+                    <span class="performance-badge">89 Total Agents</span>
+                    <span class="performance-badge">Task Tool Integration</span>
+                    <span class="performance-badge">Proactive Invocation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ecosystem-overview">
+            <div class="overview-card">
+                <div class="overview-number">89</div>
+                <h3>Total Agents</h3>
+                <p>88 Active + 1 Template</p>
+            </div>
+
+            <div class="overview-card">
+                <div class="overview-number">11</div>
+                <h3>Categories</h3>
+                <p>Specialized domains</p>
+            </div>
+
+            <div class="overview-card">
+                <div class="overview-number">95%</div>
+                <h3>Coordination Success</h3>
+                <p>Agent-to-agent communication</p>
+            </div>
+
+            <div class="overview-card">
+                <div class="overview-number">&lt;500ms</div>
+                <h3>Response Time</h3>
+                <p>Average agent invocation</p>
+            </div>
+        </div>
+
+        <div class="agent-categories">
+            <div class="category-section">
+                <div class="category-header">
+                    <div class="category-title">🕹️ Command & Control</div>
+                    <div class="category-count">2 agents</div>
+                </div>
+                <div class="agents-grid">
+                    <div class="agent-card">
+                        <div class="agent-name">DIRECTOR</div>
+                        <div class="agent-description">Strategic command and control coordination (CRITICAL)</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">PROJECTORCHESTRATOR</div>
+                        <div class="agent-description">Tactical coordination nexus for multi-agent workflows</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-section category-security">
+                <div class="category-header">
+                    <div class="category-title">🛡️ Security Specialists</div>
+                    <div class="category-count">22 agents</div>
+                </div>
+                <div class="agents-grid">
+                    <div class="agent-card">
+                        <div class="agent-name">SECURITY</div>
+                        <div class="agent-description">Comprehensive security analysis and vulnerability assessment</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">BASTION</div>
+                        <div class="agent-description">Defensive security specialist for system hardening</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">GHOST-PROTOCOL-AGENT</div>
+                        <div class="agent-description">Elite counter-intelligence & anti-surveillance (99.99% evasion)</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">COGNITIVE_DEFENSE_AGENT</div>
+                        <div class="agent-description">Cognitive warfare defense & manipulation detection (99.94%)</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">SECURITYCHAOSAGENT</div>
+                        <div class="agent-description">Distributed chaos testing for resilience validation</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">SECURITYAUDITOR</div>
+                        <div class="agent-description">Advanced security audits and compliance verification</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">CSO</div>
+                        <div class="agent-description">Chief Security Officer coordination and strategy</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">CRYPTOEXPERT</div>
+                        <div class="agent-description">Cryptography and encryption implementation</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-section category-development">
+                <div class="category-header">
+                    <div class="category-title">⚙️ Core Development</div>
+                    <div class="category-count">8 agents</div>
+                </div>
+                <div class="agents-grid">
+                    <div class="agent-card">
+                        <div class="agent-name">ARCHITECT</div>
+                        <div class="agent-description">System design and technical architecture planning</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">CONSTRUCTOR</div>
+                        <div class="agent-description">Project initialization and scaffolding specialist</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">PATCHER</div>
+                        <div class="agent-description">Precision code surgery and bug fixes</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">DEBUGGER</div>
+                        <div class="agent-description">Tactical failure analysis and error resolution</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">TESTBED</div>
+                        <div class="agent-description">Elite test engineering and quality validation</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">LINTER</div>
+                        <div class="agent-description">Senior code review specialist and style enforcement</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">OPTIMIZER</div>
+                        <div class="agent-description">Performance engineering and resource optimization</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">QADIRECTOR</div>
+                        <div class="agent-description">Quality assurance leadership and coordination</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-section category-infrastructure">
+                <div class="category-header">
+                    <div class="category-title">🏗️ Infrastructure & DevOps</div>
+                    <div class="category-count">8 agents</div>
+                </div>
+                <div class="agents-grid">
+                    <div class="agent-card">
+                        <div class="agent-name">INFRASTRUCTURE</div>
+                        <div class="agent-description">System setup and configuration management</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">DEPLOYER</div>
+                        <div class="agent-description">Deployment orchestration and release management</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">MONITOR</div>
+                        <div class="agent-description">Observability and performance monitoring systems</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">PACKAGER</div>
+                        <div class="agent-description">Package management and distribution systems</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">DOCKER-AGENT</div>
+                        <div class="agent-description">Container orchestration and Docker management</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">PROXMOX-AGENT</div>
+                        <div class="agent-description">Virtualization management and hypervisor control</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">CISCO-AGENT</div>
+                        <div class="agent-description">Cisco network configuration and management</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">DDWRT-AGENT</div>
+                        <div class="agent-description">Router firmware management and configuration</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-section">
+                <div class="category-header">
+                    <div class="category-title">💻 Language-Specific Development</div>
+                    <div class="category-count">11 agents</div>
+                </div>
+                <div class="agents-grid">
+                    <div class="agent-card">
+                        <div class="agent-name">C-INTERNAL</div>
+                        <div class="agent-description">Elite C/C++ systems engineer for low-level programming</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">PYTHON-INTERNAL</div>
+                        <div class="agent-description">Python execution environment and ecosystem specialist</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">RUST-INTERNAL-AGENT</div>
+                        <div class="agent-description">Rust systems programming and memory safety</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">GO-INTERNAL-AGENT</div>
+                        <div class="agent-description">Go backend development and concurrency</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">JAVA-INTERNAL-AGENT</div>
+                        <div class="agent-description">Java enterprise applications and JVM optimization</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">TYPESCRIPT-INTERNAL-AGENT</div>
+                        <div class="agent-description">TypeScript/JavaScript development and Node.js</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">ASSEMBLY-INTERNAL-AGENT</div>
+                        <div class="agent-description">Low-level assembly programming and hardware interfaces</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">SQL-INTERNAL-AGENT</div>
+                        <div class="agent-description">SQL database specialist with 100K+ QPS capability</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-section">
+                <div class="category-header">
+                    <div class="category-title">🚀 Hardware & Acceleration</div>
+                    <div class="category-count">6 agents</div>
+                </div>
+                <div class="agents-grid">
+                    <div class="agent-card">
+                        <div class="agent-name">HARDWARE</div>
+                        <div class="agent-description">Base low-level hardware control and register manipulation</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">HARDWARE-DELL</div>
+                        <div class="agent-description">Dell-specific optimization (Latitude, OptiPlex, iDRAC)</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">HARDWARE-HP</div>
+                        <div class="agent-description">HP enterprise specialist (ProBook, EliteBook, Sure Start)</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">HARDWARE-INTEL</div>
+                        <div class="agent-description">Intel Meteor Lake specialist (NPU, GNA, AVX-512)</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">GNA</div>
+                        <div class="agent-description">Gaussian Neural Accelerator integration</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-name">NPU</div>
+                        <div class="agent-description">Neural processing unit optimization and coordination</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="coordination-matrix">
+            <h3>🔗 Agent Coordination Matrix</h3>
+            <p style="margin-bottom: var(--spacing-lg);">
+                Key coordination pathways showing how agents invoke each other for complex workflows:
+            </p>
+
+            <div class="matrix-visualization">
+                <div class="matrix-row">
+                    <div class="matrix-agent">DIRECTOR</div>
+                    <div class="matrix-connections">
+                        <div class="matrix-connection">PROJECTORCHESTRATOR</div>
+                        <div class="matrix-connection">ARCHITECT</div>
+                        <div class="matrix-connection">SECURITY</div>
+                        <div class="matrix-connection">PLANNER</div>
+                    </div>
+                </div>
+
+                <div class="matrix-row">
+                    <div class="matrix-agent">SECURITY</div>
+                    <div class="matrix-connections">
+                        <div class="matrix-connection">SECURITYAUDITOR</div>
+                        <div class="matrix-connection">BASTION</div>
+                        <div class="matrix-connection">CRYPTOEXPERT</div>
+                        <div class="matrix-connection">GHOST-PROTOCOL</div>
+                    </div>
+                </div>
+
+                <div class="matrix-row">
+                    <div class="matrix-agent">ARCHITECT</div>
+                    <div class="matrix-connections">
+                        <div class="matrix-connection">CONSTRUCTOR</div>
+                        <div class="matrix-connection">DATABASE</div>
+                        <div class="matrix-connection">INFRASTRUCTURE</div>
+                        <div class="matrix-connection">TESTBED</div>
+                    </div>
+                </div>
+
+                <div class="matrix-row">
+                    <div class="matrix-agent">OPTIMIZER</div>
+                    <div class="matrix-connections">
+                        <div class="matrix-connection">HARDWARE-INTEL</div>
+                        <div class="matrix-connection">NPU</div>
+                        <div class="matrix-connection">MONITOR</div>
+                        <div class="matrix-connection">LEADENGINEER</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="workflow-examples">
+            <h3>🔄 Common Workflow Examples</h3>
+            <div class="workflow-grid">
+                <div class="workflow-card">
+                    <div class="workflow-title">🛡️ Security Audit Workflow</div>
+                    <ul class="workflow-steps">
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>CSO coordinates security assessment</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>SECURITY performs vulnerability scan</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>SECURITYAUDITOR validates findings</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>PATCHER implements security fixes</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>TESTBED validates security improvements</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="workflow-card">
+                    <div class="workflow-title">🏗️ Feature Development Workflow</div>
+                    <ul class="workflow-steps">
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>DIRECTOR creates strategic plan</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>ARCHITECT designs system structure</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>CONSTRUCTOR implements base framework</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>Language agents add implementation</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>TESTBED validates functionality</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="workflow-card">
+                    <div class="workflow-title">🚀 Deployment Pipeline</div>
+                    <ul class="workflow-steps">
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>INFRASTRUCTURE prepares environment</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>PACKAGER creates distribution packages</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>DEPLOYER manages rollout process</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>MONITOR tracks deployment metrics</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>SECURITY validates deployment safety</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="workflow-card">
+                    <div class="workflow-title">⚡ Performance Optimization</div>
+                    <ul class="workflow-steps">
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>MONITOR identifies bottlenecks</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>OPTIMIZER analyzes performance data</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>HARDWARE agents provide acceleration</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>NPU applies AI-based optimization</span>
+                        </li>
+                        <li class="workflow-step">
+                            <span class="step-arrow">→</span>
+                            <span>TESTBED validates improvements</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="performance-metrics">
+            <h3>📊 Ecosystem Performance Metrics</h3>
+            <div class="metrics-summary">
+                <div class="metric-tile">
+                    <h4>Response Time</h4>
+                    <div class="metric-value">&lt;500ms</div>
+                    <p>Average agent invocation</p>
+                </div>
+
+                <div class="metric-tile">
+                    <h4>Coordination Success</h4>
+                    <div class="metric-value">95%</div>
+                    <p>Multi-agent workflows</p>
+                </div>
+
+                <div class="metric-tile">
+                    <h4>Hardware Utilization</h4>
+                    <div class="metric-value">&gt;80%</div>
+                    <p>Resource optimization</p>
+                </div>
+
+                <div class="metric-tile">
+                    <h4>Error Recovery</h4>
+                    <div class="metric-value">&gt;99%</div>
+                    <p>Fault tolerance</p>
+                </div>
+
+                <div class="metric-tile">
+                    <h4>Code Coverage</h4>
+                    <div class="metric-value">&gt;85%</div>
+                    <p>Test validation</p>
+                </div>
+
+                <div class="metric-tile">
+                    <h4>Agent Count</h4>
+                    <div class="metric-value">89</div>
+                    <p>Total specialized agents</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-example">
+            <div class="code-header">🚀 Agent Invocation Examples</div>
+            <div style="color: var(--text-secondary);">
+# Task tool invocation (within Claude Code)<br>
+Task(subagent_type="general-purpose", prompt="Complex analysis task")<br>
+Task(subagent_type="statusline-setup", prompt="Configure status line")<br><br>
+
+# Global Agents Bridge (command line access)<br>
+claude-agent director "Create strategic plan"<br>
+claude-agent security "Audit for vulnerabilities"<br>
+claude-agent optimizer "Optimize performance"<br>
+claude-agent architect "Design system architecture"<br><br>
+
+# Enhanced wrapper integration<br>
+claude director "strategic planning"<br>
+claude security "vulnerability assessment"<br>
+claude list                     # List all agents<br>
+claude status                   # Show system health
+            </div>
+        </div>
+
+        <div class="code-example">
+            <div class="code-header">🔧 Agent Management Commands</div>
+            <div style="color: var(--text-secondary);">
+# List all available agents<br>
+claude-agent list<br><br>
+
+# Show bridge system status<br>
+claude-agent status<br><br>
+
+# Get agent information<br>
+claude --agent-info director<br><br>
+
+# Register agents manually<br>
+claude --register-agents<br><br>
+
+# Auto-detect and fix issues<br>
+claude --fix
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="../index.html" class="nav-link">📊 Dashboard</a>
+            <a href="agent-coordination.html" class="nav-link">🔗 Agent Coordination</a>
+            <a href="openvino-runtime.html" class="nav-link">🚀 OpenVINO Runtime</a>
+            <a href="installation.html" class="nav-link">⚙️ Installation</a>
+        </div>
+    </div>
+</body>
+</html>
