@@ -31,14 +31,21 @@ cd claude-backups
 # That's it! All subsystems now active across your entire system
 ```
 
-### 🐧 **Headless Debian/Ubuntu Installation**
-For headless servers with PEP 668 restrictions:
+### 🐧 **Smart Environment Detection**
+The installer automatically detects your environment and adapts:
 ```bash
-# Enhanced installer with full headless compatibility
-python3 claude-enhanced-installer.py --mode=full --auto
+# Automatic detection and optimization for any environment
+python3 claude-enhanced-installer.py --auto
 
-# Includes: Docker database, 60+ agents, learning system, PEP 668 fixes
+# Works on: Headless servers, KDE, GNOME, XFCE, Wayland, X11
+# Includes: Environment-specific packages and optimizations
 ```
+
+**Detected Environments:**
+- 🖥️  **Headless Server** - Docker database, server packages, full mode
+- 🎨 **KDE Plasma** - KDE integration, desktop packages
+- 🐧 **GNOME Desktop** - GNOME integration, GUI optimizations
+- 🌊 **Wayland/X11** - Display server specific configuration
 
 After installation, the installer will:
 1. ✅ Start Docker containers (PostgreSQL learning system)

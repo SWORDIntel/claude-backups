@@ -47,6 +47,15 @@ class ClaudeInstallation:
     details: Dict[str, any]
 
 
+class EnvironmentType(Enum):
+    HEADLESS = "headless"
+    KDE = "kde"
+    GNOME = "gnome"
+    XFCE = "xfce"
+    WAYLAND = "wayland"
+    X11 = "x11"
+    UNKNOWN_GUI = "unknown_gui"
+
 @dataclass
 class SystemInfo:
     """System information for installation decisions"""
@@ -61,6 +70,10 @@ class SystemInfo:
     has_sudo: bool
     home_dir: Path
     user_name: str
+    environment_type: EnvironmentType
+    display_server: Optional[str]
+    desktop_session: Optional[str]
+    has_systemd: bool
 
 
 class Colors:
@@ -123,6 +136,7 @@ class ClaudeEnhancedInstaller:
     def _gather_system_info(self) -> SystemInfo:
         """Gather comprehensive system information"""
         shell_type, shell_configs = self._detect_shell()
+        env_type, display_server, desktop_session = self._detect_environment()
 
         return SystemInfo(
             platform=platform.system().lower(),
@@ -135,7 +149,11 @@ class ClaudeEnhancedInstaller:
             pip_available=shutil.which("pip") is not None or shutil.which("pip3") is not None,
             has_sudo=self._check_sudo_available(),
             home_dir=Path.home(),
-            user_name=os.environ.get("USER", "unknown")
+            user_name=os.environ.get("USER", "unknown"),
+            environment_type=env_type,
+            display_server=display_server,
+            desktop_session=desktop_session,
+            has_systemd=self._check_systemd_available()
         )
 
     def _show_progress(self, message: str, step: Optional[int] = None) -> None:
@@ -238,6 +256,123 @@ class ClaudeEnhancedInstaller:
 
         try:
             result = subprocess.run(["sudo", "-n", "true"], capture_output=True, timeout=5)
+            return result.returncode == 0
+        except:
+            return False
+
+    def _check_systemd_available(self) -> bool:
+        """Check if systemd is available"""
+        try:
+            result = subprocess.run(["systemctl", "--version"], capture_output=True, timeout=5)
+            return result.returncode == 0
+        except:
+            return False
+
+    def _detect_environment(self) -> Tuple[EnvironmentType, Optional[str], Optional[str]]:
+        """Detect the current environment type (headless/KDE/GNOME/etc)"""
+
+        # Check environment variables for display servers
+        display = os.environ.get("DISPLAY")
+        wayland_display = os.environ.get("WAYLAND_DISPLAY")
+        xdg_session_type = os.environ.get("XDG_SESSION_TYPE", "").lower()
+        desktop_session = os.environ.get("DESKTOP_SESSION", "").lower()
+        xdg_current_desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        gdmsession = os.environ.get("GDMSESSION", "").lower()
+
+        # Determine display server
+        display_server = None
+        if wayland_display:
+            display_server = "wayland"
+        elif display:
+            display_server = "x11"
+        elif xdg_session_type in ["wayland", "x11"]:
+            display_server = xdg_session_type
+
+        # If no display server detected, likely headless
+        if not display_server and not display and not wayland_display:
+            # Double-check with additional methods
+            if self._is_headless_environment():
+                return EnvironmentType.HEADLESS, None, None
+
+        # Detect desktop environment
+        desktop_indicators = {
+            EnvironmentType.KDE: ["kde", "plasma", "kwin", "kwallet"],
+            EnvironmentType.GNOME: ["gnome", "ubuntu", "pop", "gdm"],
+            EnvironmentType.XFCE: ["xfce", "xubuntu"],
+        }
+
+        # Check desktop session and current desktop
+        session_info = f"{desktop_session} {xdg_current_desktop} {gdmsession}".lower()
+
+        for env_type, indicators in desktop_indicators.items():
+            if any(indicator in session_info for indicator in indicators):
+                if display_server == "wayland":
+                    return EnvironmentType.WAYLAND, display_server, desktop_session
+                else:
+                    return env_type, display_server, desktop_session
+
+        # Check for running desktop processes
+        desktop_processes = {
+            EnvironmentType.KDE: ["plasmashell", "kwin", "kdeconnectd"],
+            EnvironmentType.GNOME: ["gnome-shell", "gnome-session", "gsd-power"],
+            EnvironmentType.XFCE: ["xfce4-session", "xfwm4", "xfce4-panel"],
+        }
+
+        for env_type, processes in desktop_processes.items():
+            if self._check_processes_running(processes):
+                return env_type, display_server, desktop_session
+
+        # If we have a display server but couldn't identify desktop
+        if display_server:
+            if display_server == "wayland":
+                return EnvironmentType.WAYLAND, display_server, desktop_session
+            else:
+                return EnvironmentType.X11, display_server, desktop_session
+
+        # Default to headless if nothing else detected
+        return EnvironmentType.HEADLESS, None, None
+
+    def _is_headless_environment(self) -> bool:
+        """Additional checks to confirm headless environment"""
+        # Check if we're in a container
+        if Path("/.dockerenv").exists():
+            return True
+
+        # Check for SSH connection
+        if os.environ.get("SSH_CLIENT") or os.environ.get("SSH_TTY"):
+            return True
+
+        # Check if running on known cloud/VPS platforms
+        cloud_indicators = [
+            "/sys/devices/virtual/dmi/id/sys_vendor",
+            "/sys/devices/virtual/dmi/id/product_name"
+        ]
+
+        for indicator_path in cloud_indicators:
+            try:
+                content = Path(indicator_path).read_text().strip().lower()
+                if any(cloud in content for cloud in ["amazon", "google", "microsoft", "digitalocean", "linode", "vultr"]):
+                    return True
+            except:
+                pass
+
+        # Check if no graphics drivers are loaded
+        try:
+            result = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                gpu_modules = ["nvidia", "amdgpu", "radeon", "i915", "nouveau"]
+                if not any(module in result.stdout for module in gpu_modules):
+                    return True
+        except:
+            pass
+
+        return False
+
+    def _check_processes_running(self, process_names: List[str]) -> bool:
+        """Check if any of the given processes are running"""
+        try:
+            result = subprocess.run(["pgrep", "-f", "|".join(process_names)],
+                                  capture_output=True, timeout=5)
             return result.returncode == 0
         except:
             return False
@@ -1074,12 +1209,20 @@ exec claude "$@"
         try:
             # Check if Docker is available
             if not shutil.which("docker"):
-                self._print_info("Installing Docker...")
+                self._print_info("Installing Docker and environment-specific packages...")
 
-                # Install Docker using system package manager
+                # Get environment-specific packages
+                env_packages = self._get_environment_specific_packages()
+                docker_packages = ["docker.io", "docker-compose"]
+                all_packages = list(set(env_packages + docker_packages))  # Remove duplicates
+
+                self._print_info(f"📦 Installing packages for {self.system_info.environment_type.value} environment: {', '.join(all_packages)}")
+
+                # Install Docker and environment packages using system package manager
+                package_list = " ".join(all_packages)
                 docker_install_strategies = [
-                    ["sudo", "apt", "update", "&&", "sudo", "apt", "install", "-y", "docker.io", "docker-compose"],
-                    ["sudo", "apt-get", "update", "&&", "sudo", "apt-get", "install", "-y", "docker.io", "docker-compose"],
+                    ["sudo", "apt", "update", "&&", "sudo", "apt", "install", "-y"] + all_packages,
+                    ["sudo", "apt-get", "update", "&&", "sudo", "apt-get", "install", "-y"] + all_packages,
                     ["curl", "-fsSL", "https://get.docker.com", "-o", "get-docker.sh", "&&", "sudo", "sh", "get-docker.sh"]
                 ]
 
@@ -1520,6 +1663,12 @@ esac
         """Run the complete installation process"""
         self._print_header()
 
+        # Adapt installation based on detected environment
+        adapted_mode = self._adapt_installation_for_environment(mode)
+        if adapted_mode != mode:
+            self._print_info(f"📋 Installation mode adapted: {mode.value} → {adapted_mode.value}")
+            mode = adapted_mode
+
         success_count = 0
         total_steps = 0
 
@@ -1665,11 +1814,13 @@ esac
         # System info
         print(f"{Colors.BOLD}System Information:{Colors.RESET}")
         print(f"  Platform: {self.system_info.platform} ({self.system_info.architecture})")
+        print(f"  Environment: {self._format_environment_info()}")
         print(f"  Shell: {self.system_info.shell.value}")
         print(f"  Python: {self.system_info.python_version}")
         print(f"  Node.js: {self.system_info.node_version or 'Not available'}")
         print(f"  npm: {'Available' if self.system_info.npm_available else 'Not available'}")
         print(f"  pip: {'Available' if self.system_info.pip_available else 'Not available'}")
+        print(f"  Systemd: {'Available' if self.system_info.has_systemd else 'Not available'}")
         print(f"  Project root: {self.project_root}")
         print()
 
@@ -1692,6 +1843,84 @@ esac
 
     def _print_dim(self, message: str):
         print(f"{Colors.DIM}{message}{Colors.RESET}")
+
+    def _format_environment_info(self) -> str:
+        """Format environment information for display"""
+        env_type = self.system_info.environment_type
+
+        # Environment type with appropriate emoji
+        env_icons = {
+            EnvironmentType.HEADLESS: "🖥️  Headless Server",
+            EnvironmentType.KDE: "🎨 KDE Plasma",
+            EnvironmentType.GNOME: "🐧 GNOME Desktop",
+            EnvironmentType.XFCE: "🖱️  XFCE Desktop",
+            EnvironmentType.WAYLAND: "🌊 Wayland",
+            EnvironmentType.X11: "🪟 X11",
+            EnvironmentType.UNKNOWN_GUI: "❓ Unknown GUI"
+        }
+
+        env_display = env_icons.get(env_type, env_type.value.title())
+
+        # Add display server info if available
+        if self.system_info.display_server:
+            env_display += f" ({self.system_info.display_server})"
+
+        # Add session info if available
+        if self.system_info.desktop_session and self.system_info.desktop_session != "unknown":
+            env_display += f" [{self.system_info.desktop_session}]"
+
+        return env_display
+
+    def _adapt_installation_for_environment(self, mode: InstallationMode) -> InstallationMode:
+        """Adapt installation mode based on detected environment"""
+        env_type = self.system_info.environment_type
+
+        # Environment-specific adaptations
+        if env_type == EnvironmentType.HEADLESS:
+            self._print_info("🖥️  Headless environment detected - optimizing for server deployment")
+            # Force full mode for headless to ensure all server components
+            if mode == InstallationMode.QUICK:
+                self._print_info("📦 Upgrading to full installation for headless server optimization")
+                return InstallationMode.FULL
+
+        elif env_type in [EnvironmentType.KDE, EnvironmentType.GNOME, EnvironmentType.XFCE]:
+            self._print_info(f"🎨 Desktop environment detected ({env_type.value.upper()}) - enabling GUI optimizations")
+
+        elif env_type in [EnvironmentType.WAYLAND, EnvironmentType.X11]:
+            self._print_info(f"🪟 Display server detected ({self.system_info.display_server}) - configuring graphics support")
+
+        return mode
+
+    def _get_environment_specific_packages(self) -> List[str]:
+        """Get environment-specific package recommendations"""
+        env_type = self.system_info.environment_type
+        packages = []
+
+        if env_type == EnvironmentType.HEADLESS:
+            # Headless server packages
+            packages.extend([
+                "docker.io", "docker-compose",
+                "python3-venv", "python3-full",
+                "curl", "wget", "git",
+                "postgresql-client"  # For database connectivity
+            ])
+
+        elif env_type in [EnvironmentType.KDE, EnvironmentType.GNOME, EnvironmentType.XFCE]:
+            # Desktop environment packages
+            packages.extend([
+                "python3-venv", "python3-full",
+                "git", "curl", "wget"
+            ])
+
+            # Environment-specific packages
+            if env_type == EnvironmentType.KDE:
+                packages.extend(["kde-baseapps", "konsole"])
+            elif env_type == EnvironmentType.GNOME:
+                packages.extend(["gnome-terminal", "nautilus"])
+            elif env_type == EnvironmentType.XFCE:
+                packages.extend(["xfce4-terminal", "thunar"])
+
+        return packages
 
 
 def main():
