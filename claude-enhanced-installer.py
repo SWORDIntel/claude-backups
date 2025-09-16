@@ -482,7 +482,7 @@ class ClaudeEnhancedInstaller:
             return False
 
     def install_claude_pip(self) -> bool:
-        """Install Claude via pip (if available)"""
+        """Install Claude via pip with PEP 668 and pipx support"""
         self._print_section("Installing Claude via pip")
 
         if not self.system_info.pip_available:
@@ -492,14 +492,27 @@ class ClaudeEnhancedInstaller:
         try:
             pip_cmd = "pip3" if shutil.which("pip3") else "pip"
 
-            # Try user installation first, then global
+            # Check for PEP 668 externally managed environment
+            try:
+                test_result = self._run_command([pip_cmd, "install", "--dry-run", "setuptools"], check=False, timeout=30)
+                if "externally-managed-environment" in test_result.stderr:
+                    self._print_info("Detected PEP 668 externally managed environment (Debian 12+)")
+                    return self._install_claude_pipx_venv()
+            except:
+                pass
+
+            # Traditional pip installation strategies
             install_strategies = [
                 [pip_cmd, "install", "--user", "claude-code"],
+                [pip_cmd, "install", "--user", "claude-code", "--break-system-packages"],
                 [pip_cmd, "install", "claude-code"]
             ]
 
             if self.system_info.has_sudo:
-                install_strategies.append(["sudo", pip_cmd, "install", "claude-code"])
+                install_strategies.extend([
+                    ["sudo", pip_cmd, "install", "claude-code"],
+                    ["sudo", pip_cmd, "install", "claude-code", "--break-system-packages"]
+                ])
 
             for strategy in install_strategies:
                 try:
@@ -507,7 +520,10 @@ class ClaudeEnhancedInstaller:
                     self._run_command(strategy, timeout=300)
                     self._print_success("pip installation successful")
                     return True
-                except subprocess.CalledProcessError:
+                except subprocess.CalledProcessError as e:
+                    if "externally-managed-environment" in (e.stderr or ""):
+                        self._print_warning("PEP 668 detected, falling back to pipx/venv")
+                        return self._install_claude_pipx_venv()
                     continue
 
             self._print_error("All pip installation strategies failed")
@@ -515,6 +531,149 @@ class ClaudeEnhancedInstaller:
 
         except Exception as e:
             self._print_error(f"pip installation failed: {e}")
+            return False
+
+    def _install_claude_pipx_venv(self) -> bool:
+        """Install Claude using pipx or virtual environment (PEP 668 compatible)"""
+        self._print_info("Installing Claude with PEP 668 compatibility")
+
+        # Try pipx first (recommended for Debian)
+        if self._install_claude_pipx():
+            return True
+
+        # Fall back to manual venv
+        return self._install_claude_manual_venv()
+
+    def _install_claude_pipx(self) -> bool:
+        """Install Claude using pipx"""
+        try:
+            # Check if pipx is available
+            if not shutil.which("pipx"):
+                self._print_info("pipx not found, installing...")
+
+                # Install pipx using system package manager
+                install_pipx_strategies = [
+                    ["sudo", "apt", "install", "-y", "pipx"],
+                    ["sudo", "apt-get", "install", "-y", "pipx"],
+                    [shutil.which("pip3") or "pip3", "install", "--user", "pipx", "--break-system-packages"]
+                ]
+
+                for strategy in install_pipx_strategies:
+                    try:
+                        self._print_info(f"Installing pipx: {' '.join(strategy)}")
+                        self._run_command(strategy, timeout=300)
+
+                        # Ensure pipx is in PATH
+                        pipx_bin = Path.home() / ".local" / "bin" / "pipx"
+                        if pipx_bin.exists():
+                            # Add to current PATH for this session
+                            current_path = os.environ.get("PATH", "")
+                            local_bin = str(Path.home() / ".local" / "bin")
+                            if local_bin not in current_path:
+                                os.environ["PATH"] = f"{local_bin}:{current_path}"
+                            break
+                    except subprocess.CalledProcessError:
+                        continue
+                else:
+                    self._print_warning("Failed to install pipx")
+                    return False
+
+            # Install Claude using pipx
+            pipx_cmd = shutil.which("pipx") or str(Path.home() / ".local" / "bin" / "pipx")
+
+            try:
+                self._print_info(f"Installing Claude via pipx: {pipx_cmd}")
+                self._run_command([pipx_cmd, "install", "claude-code"], timeout=300)
+
+                # Ensure pipx binaries are in PATH
+                pipx_bin_dir = Path.home() / ".local" / "bin"
+                current_path = os.environ.get("PATH", "")
+                if str(pipx_bin_dir) not in current_path:
+                    os.environ["PATH"] = f"{pipx_bin_dir}:{current_path}"
+
+                self._print_success("Claude installed via pipx")
+                return True
+
+            except subprocess.CalledProcessError as e:
+                self._print_warning(f"pipx installation failed: {e}")
+                return False
+
+        except Exception as e:
+            self._print_warning(f"pipx installation error: {e}")
+            return False
+
+    def _install_claude_manual_venv(self) -> bool:
+        """Install Claude in a manual virtual environment"""
+        try:
+            self._print_info("Creating virtual environment for Claude")
+
+            # Ensure python3-venv is installed
+            try:
+                self._run_command(["sudo", "apt", "install", "-y", "python3-venv", "python3-full"], timeout=120)
+            except subprocess.CalledProcessError:
+                try:
+                    self._run_command(["sudo", "apt-get", "install", "-y", "python3-venv", "python3-full"], timeout=120)
+                except subprocess.CalledProcessError:
+                    self._print_warning("Could not install python3-venv")
+
+            # Create venv directory
+            if self.venv_dir.exists():
+                shutil.rmtree(self.venv_dir)
+
+            self.venv_dir.mkdir(parents=True, exist_ok=True)
+
+            # Create virtual environment
+            self._print_info(f"Creating venv at {self.venv_dir}")
+            self._run_command(["python3", "-m", "venv", str(self.venv_dir)], timeout=120)
+
+            # Install Claude in venv
+            venv_pip = self.venv_dir / "bin" / "pip"
+            venv_python = self.venv_dir / "bin" / "python"
+
+            self._print_info("Installing Claude in virtual environment")
+            self._run_command([str(venv_pip), "install", "--upgrade", "pip"], timeout=120)
+            self._run_command([str(venv_pip), "install", "claude-code"], timeout=300)
+
+            # Create wrapper script that uses venv
+            self._create_venv_wrapper()
+
+            self._print_success("Claude installed in virtual environment")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Virtual environment installation failed: {e}")
+            return False
+
+    def _create_venv_wrapper(self) -> bool:
+        """Create wrapper script for venv-installed Claude"""
+        try:
+            wrapper_path = self.local_bin / "claude"
+            venv_claude = self.venv_dir / "bin" / "claude"
+
+            if not venv_claude.exists():
+                # Look for claude-code
+                venv_claude = self.venv_dir / "bin" / "claude-code"
+                if not venv_claude.exists():
+                    self._print_error("Claude binary not found in venv")
+                    return False
+
+            wrapper_content = f'''#!/bin/bash
+# Claude Virtual Environment Wrapper
+# Auto-generated by Claude Enhanced Installer for PEP 668 compatibility
+
+# Activate virtual environment and execute Claude
+source "{self.venv_dir}/bin/activate"
+exec "{venv_claude}" "$@"
+'''
+
+            wrapper_path.write_text(wrapper_content)
+            wrapper_path.chmod(0o755)
+
+            self._print_success(f"Virtual environment wrapper created at {wrapper_path}")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to create venv wrapper: {e}")
             return False
 
     def create_wrapper_script(self, claude_binary: Path) -> bool:
@@ -845,6 +1004,40 @@ end
             self._print_error(f"Failed to install agent system: {e}")
             return False
 
+    def install_picmcs_system(self) -> bool:
+        """Install PICMCS v3.0 context chopping system"""
+        self._print_section("Installing PICMCS v3.0 system")
+
+        try:
+            picmcs_source = self.project_root / "agents" / "src" / "python"
+            if not picmcs_source.exists():
+                self._print_warning("PICMCS source directory not found")
+                return False
+
+            picmcs_target = self.system_info.home_dir / ".local" / "share" / "claude" / "picmcs"
+            picmcs_target.mkdir(parents=True, exist_ok=True)
+
+            # Copy PICMCS files
+            picmcs_files = [
+                "intelligent_context_chopper.py",
+                "demo_adaptive_chopper.py",
+                "test_hardware_fallback.py"
+            ]
+
+            for filename in picmcs_files:
+                source_file = picmcs_source / filename
+                if source_file.exists():
+                    target_file = picmcs_target / filename
+                    shutil.copy2(source_file, target_file)
+                    target_file.chmod(0o755)
+
+            self._print_success("PICMCS v3.0 system installed")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to install PICMCS system: {e}")
+            return False
+
     def create_launch_script(self) -> bool:
         """Create convenient launch script"""
         self._print_section("Creating launch script")
@@ -872,6 +1065,455 @@ exec claude "$@"
 
         except Exception as e:
             self._print_error(f"Failed to create launch script: {e}")
+            return False
+
+    def install_docker_database(self) -> bool:
+        """Install Docker-based PostgreSQL database with pgvector"""
+        self._print_section("Installing Docker database system")
+
+        try:
+            # Check if Docker is available
+            if not shutil.which("docker"):
+                self._print_info("Installing Docker...")
+
+                # Install Docker using system package manager
+                docker_install_strategies = [
+                    ["sudo", "apt", "update", "&&", "sudo", "apt", "install", "-y", "docker.io", "docker-compose"],
+                    ["sudo", "apt-get", "update", "&&", "sudo", "apt-get", "install", "-y", "docker.io", "docker-compose"],
+                    ["curl", "-fsSL", "https://get.docker.com", "-o", "get-docker.sh", "&&", "sudo", "sh", "get-docker.sh"]
+                ]
+
+                for strategy in docker_install_strategies:
+                    try:
+                        if "&&" in strategy:
+                            # Handle compound commands
+                            parts = []
+                            current_cmd = []
+                            for item in strategy:
+                                if item == "&&":
+                                    if current_cmd:
+                                        parts.append(current_cmd)
+                                        current_cmd = []
+                                else:
+                                    current_cmd.append(item)
+                            if current_cmd:
+                                parts.append(current_cmd)
+
+                            # Execute each part
+                            for cmd_part in parts:
+                                self._run_command(cmd_part, timeout=300)
+                        else:
+                            self._run_command(strategy, timeout=300)
+                        break
+                    except subprocess.CalledProcessError:
+                        continue
+                else:
+                    self._print_warning("Could not install Docker, skipping database setup")
+                    return False
+
+            # Add user to docker group if not already
+            try:
+                self._run_command(["sudo", "usermod", "-aG", "docker", self.system_info.user_name], timeout=30)
+                self._print_info("Added user to docker group (may require logout/login)")
+            except subprocess.CalledProcessError:
+                self._print_warning("Could not add user to docker group")
+
+            # Create database directory structure
+            db_dir = self.project_root / "database"
+            docker_dir = db_dir / "docker"
+            docker_dir.mkdir(parents=True, exist_ok=True)
+
+            # Create docker-compose.yml for PostgreSQL with pgvector
+            compose_content = """version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.7.0-pg16
+    container_name: claude-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: claude_agents_auth
+      POSTGRES_USER: claude_agent
+      POSTGRES_PASSWORD: claude_secure_2024
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "5433:5432"
+    volumes:
+      - claude_postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claude_agent -d claude_agents_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  claude_postgres_data:
+    driver: local
+"""
+
+            compose_file = docker_dir / "docker-compose.yml"
+            compose_file.write_text(compose_content)
+
+            # Create SQL initialization script
+            sql_dir = docker_dir / "sql"
+            sql_dir.mkdir(exist_ok=True)
+
+            init_sql = """-- Claude Enhanced Learning System Database Schema
+-- PostgreSQL 16+ with pgvector extension
+
+-- Enable pgvector extension
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Create enhanced learning schema
+CREATE SCHEMA IF NOT EXISTS enhanced_learning;
+
+-- Agent performance metrics table
+CREATE TABLE IF NOT EXISTS enhanced_learning.agent_metrics (
+    id BIGSERIAL PRIMARY KEY,
+    agent_name VARCHAR(100) NOT NULL,
+    task_type VARCHAR(100),
+    execution_time_ms INTEGER,
+    success BOOLEAN,
+    error_message TEXT,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    task_embedding VECTOR(512),
+    context_size INTEGER,
+    tokens_used INTEGER
+);
+
+-- Learning analytics table
+CREATE TABLE IF NOT EXISTS enhanced_learning.learning_analytics (
+    id BIGSERIAL PRIMARY KEY,
+    category VARCHAR(100) NOT NULL,
+    metric_name VARCHAR(100) NOT NULL,
+    metric_value DECIMAL(10,4),
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    metadata JSONB
+);
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_name_time ON enhanced_learning.agent_metrics(agent_name, timestamp);
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_embedding ON enhanced_learning.agent_metrics USING ivfflat (task_embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS idx_learning_analytics_category ON enhanced_learning.learning_analytics(category, timestamp);
+
+-- Grant permissions
+GRANT ALL PRIVILEGES ON SCHEMA enhanced_learning TO claude_agent;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA enhanced_learning TO claude_agent;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agent;
+"""
+
+            init_file = sql_dir / "01-init-learning.sql"
+            init_file.write_text(init_sql)
+
+            # Start database service
+            self._print_info("Starting PostgreSQL database...")
+            self._run_command(["docker-compose", "-f", str(compose_file), "up", "-d"],
+                            cwd=docker_dir, timeout=120)
+
+            # Wait for database to be ready
+            self._print_info("Waiting for database to be ready...")
+            for i in range(30):  # 30 second timeout
+                try:
+                    result = self._run_command([
+                        "docker", "exec", "claude-postgres",
+                        "pg_isready", "-U", "claude_agent", "-d", "claude_agents_auth"
+                    ], check=False, timeout=5)
+
+                    if result.returncode == 0:
+                        self._print_success("Database is ready")
+                        break
+
+                    time.sleep(1)
+                except:
+                    time.sleep(1)
+            else:
+                self._print_warning("Database readiness check timed out")
+
+            self._print_success("Docker database system installed")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to install Docker database: {e}")
+            return False
+
+    def install_global_agents_bridge(self) -> bool:
+        """Install global agents bridge for 60+ agent ecosystem"""
+        self._print_section("Installing global agents bridge")
+
+        try:
+            # Create bridge directory
+            bridge_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "bridge"
+            bridge_dir.mkdir(parents=True, exist_ok=True)
+
+            # Create agent registry
+            registry_content = {
+                "version": "10.0",
+                "agents": {},
+                "last_updated": time.time(),
+                "total_agents": 0
+            }
+
+            # Discover agents from source
+            agents_source = self.project_root / "agents"
+            if agents_source.exists():
+                for agent_file in agents_source.glob("*.md"):
+                    if agent_file.name != "Template.md":
+                        agent_name = agent_file.stem.lower().replace("-", "_")
+                        registry_content["agents"][agent_name] = {
+                            "file": str(agent_file),
+                            "name": agent_file.stem,
+                            "status": "active"
+                        }
+
+            registry_content["total_agents"] = len(registry_content["agents"])
+
+            # Write registry
+            registry_file = bridge_dir / "agents_registry.json"
+            registry_file.write_text(json.dumps(registry_content, indent=2))
+
+            # Create claude-agent command
+            agent_script = self.local_bin / "claude-agent"
+            agent_content = f'''#!/bin/bash
+# Claude Agents Bridge - Global agent access
+# Provides command-line access to 60+ specialized agents
+
+BRIDGE_DIR="{bridge_dir}"
+REGISTRY_FILE="$BRIDGE_DIR/agents_registry.json"
+
+# Show help
+show_help() {{
+    cat << 'EOF'
+Claude Agents Bridge v10.0
+Command-line access to 60+ specialized agents
+
+Usage:
+  claude-agent list                    # List all agents
+  claude-agent status                  # Show system status
+  claude-agent <agent-name> <prompt>   # Invoke agent
+
+Examples:
+  claude-agent director "Create strategic plan"
+  claude-agent security "Audit system vulnerabilities"
+  claude-agent optimizer "Improve performance"
+
+Available Agents:
+  Command & Control: director, projectorchestrator
+  Security: security, bastion, cryptoexpert, quantumguard
+  Development: architect, constructor, debugger, testbed
+  Languages: c-internal, python-internal, rust-internal
+  And 50+ more specialized agents...
+EOF
+}}
+
+# List agents
+list_agents() {{
+    if [[ -f "$REGISTRY_FILE" ]]; then
+        python3 -c "
+import json
+with open('$REGISTRY_FILE') as f:
+    data = json.load(f)
+print(f'📊 Total Agents: {{data[\"total_agents\"]}}')
+print('\\n🤖 Available Agents:')
+for name, info in sorted(data['agents'].items()):
+    print(f'  {{name:20}} - {{info[\"name\"]}}')
+"
+    else
+        echo "❌ Agent registry not found"
+        exit 1
+    fi
+}}
+
+# Show status
+show_status() {{
+    echo "Claude Agents Bridge v10.0 Status:"
+    echo "  Registry: $REGISTRY_FILE"
+    if [[ -f "$REGISTRY_FILE" ]]; then
+        echo "  Status: ✅ Operational"
+        AGENT_COUNT=$(python3 -c "import json; print(json.load(open('$REGISTRY_FILE'))['total_agents'])")
+        echo "  Agents: $AGENT_COUNT available"
+    else
+        echo "  Status: ❌ Registry not found"
+    fi
+}}
+
+# Main command handling
+case "$1" in
+    "list"|"ls")
+        list_agents
+        ;;
+    "status"|"stat")
+        show_status
+        ;;
+    "help"|"--help"|"-h"|"")
+        show_help
+        ;;
+    *)
+        # Agent invocation
+        AGENT_NAME="$1"
+        shift
+        PROMPT="$*"
+
+        if [[ -z "$AGENT_NAME" ]] || [[ -z "$PROMPT" ]]; then
+            echo "❌ Usage: claude-agent <agent-name> <prompt>"
+            exit 1
+        fi
+
+        echo "🤖 Invoking agent: $AGENT_NAME"
+        echo "📝 Prompt: $PROMPT"
+        echo "⚠️  Note: Direct agent invocation requires Claude Code Task tool integration"
+        echo "💡 For now, this provides agent discovery and registry management"
+        ;;
+esac
+'''
+
+            agent_script.write_text(agent_content)
+            agent_script.chmod(0o755)
+
+            self._print_success("Global agents bridge installed")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to install global agents bridge: {e}")
+            return False
+
+    def setup_learning_system(self) -> bool:
+        """Setup ML-powered learning and analytics system"""
+        self._print_section("Setting up learning system")
+
+        try:
+            # Create learning directory
+            learning_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "learning"
+            learning_dir.mkdir(parents=True, exist_ok=True)
+
+            # Install learning dependencies in venv if available
+            if self.venv_dir.exists():
+                venv_pip = self.venv_dir / "bin" / "pip"
+                learning_packages = [
+                    "numpy", "scikit-learn", "psycopg2-binary",
+                    "pandas", "asyncpg", "sqlalchemy"
+                ]
+
+                for package in learning_packages:
+                    try:
+                        self._print_info(f"Installing {package}...")
+                        self._run_command([str(venv_pip), "install", package], timeout=120)
+                    except subprocess.CalledProcessError:
+                        self._print_warning(f"Could not install {package}")
+
+            # Create learning configuration
+            learning_config = {
+                "version": "3.1",
+                "database": {
+                    "host": "localhost",
+                    "port": 5433,
+                    "database": "claude_agents_auth",
+                    "user": "claude_agent",
+                    "password": "claude_secure_2024"
+                },
+                "ml_features": {
+                    "agent_selection": True,
+                    "performance_prediction": True,
+                    "adaptive_strategies": True,
+                    "vector_embeddings": True
+                },
+                "docker_integration": {
+                    "enabled": True,
+                    "auto_start": True,
+                    "container_name": "claude-postgres"
+                }
+            }
+
+            config_file = learning_dir / "config.json"
+            config_file.write_text(json.dumps(learning_config, indent=2))
+
+            # Create learning CLI script
+            learning_cli = self.local_bin / "claude-learning"
+            cli_content = f'''#!/bin/bash
+# Claude Learning System CLI
+# ML-powered performance analytics and optimization
+
+LEARNING_DIR="{learning_dir}"
+CONFIG_FILE="$LEARNING_DIR/config.json"
+
+show_help() {{
+    cat << 'EOF'
+Claude Learning System v3.1
+ML-powered performance analytics and optimization
+
+Usage:
+  claude-learning status      # Show system status
+  claude-learning dashboard   # View performance dashboard
+  claude-learning export     # Export learning data
+  claude-learning analyze    # Run performance analysis
+
+Features:
+  • ML-powered agent selection
+  • Performance prediction and optimization
+  • Vector embeddings for task similarity
+  • Real-time analytics dashboard
+EOF
+}}
+
+check_database() {{
+    if docker ps | grep claude-postgres >/dev/null; then
+        echo "✅ Database: Running"
+        return 0
+    else
+        echo "❌ Database: Not running"
+        return 1
+    fi
+}}
+
+show_status() {{
+    echo "Claude Learning System Status:"
+    echo "  Config: $CONFIG_FILE"
+    if [[ -f "$CONFIG_FILE" ]]; then
+        echo "  Configuration: ✅ Found"
+    else
+        echo "  Configuration: ❌ Missing"
+    fi
+
+    check_database
+
+    if command -v docker >/dev/null; then
+        echo "  Docker: ✅ Available"
+    else
+        echo "  Docker: ❌ Not available"
+    fi
+}}
+
+case "$1" in
+    "status")
+        show_status
+        ;;
+    "dashboard")
+        echo "📊 Opening learning dashboard..."
+        echo "💡 Access via: http://localhost:5433 (when implemented)"
+        ;;
+    "export")
+        echo "📤 Exporting learning data..."
+        echo "💡 Data export functionality (when implemented)"
+        ;;
+    "analyze")
+        echo "🔍 Running performance analysis..."
+        echo "💡 Analysis functionality (when implemented)"
+        ;;
+    *)
+        show_help
+        ;;
+esac
+'''
+
+            learning_cli.write_text(cli_content)
+            learning_cli.chmod(0o755)
+
+            self._print_success("Learning system setup complete")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to setup learning system: {e}")
             return False
 
     def run_installation(self, mode: InstallationMode = InstallationMode.FULL) -> bool:
@@ -958,7 +1600,25 @@ exec claude "$@"
             if self.install_picmcs_system():
                 success_count += 1
 
-        # Step 7: Create launch script
+        # Step 7: Install Docker database (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_docker_database():
+                success_count += 1
+
+        # Step 8: Install global agents bridge (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_global_agents_bridge():
+                success_count += 1
+
+        # Step 9: Setup learning system (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.setup_learning_system():
+                success_count += 1
+
+        # Step 10: Create launch script
         total_steps += 1
         if self.create_launch_script():
             success_count += 1

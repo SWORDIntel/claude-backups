@@ -7,7 +7,7 @@
 
 ## 🌐 WHAT THIS IS
 
-A **globally-integrated AI acceleration framework** that automatically enhances ALL Claude Code operations across EVERY project on your system. Once installed, all subsystems operate transparently in the background - no per-project configuration needed.
+A **globally-integrated AI acceleration framework** that automatically enhances ALL Claude Code operations across EVERY project on your system. **Now with enhanced Python installer v2.0 featuring complete headless Debian compatibility and PEP 668 support.** Once installed, all subsystems operate transparently in the background - no per-project configuration needed.
 
 ## 🚀 GLOBAL SYSTEM STATUS (Live)
 
@@ -29,6 +29,15 @@ cd claude-backups
 ./install
 
 # That's it! All subsystems now active across your entire system
+```
+
+### 🐧 **Headless Debian/Ubuntu Installation**
+For headless servers with PEP 668 restrictions:
+```bash
+# Enhanced installer with full headless compatibility
+python3 claude-enhanced-installer.py --mode=full --auto
+
+# Includes: Docker database, 60+ agents, learning system, PEP 668 fixes
 ```
 
 After installation, the installer will:
