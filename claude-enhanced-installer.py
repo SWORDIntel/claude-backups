@@ -5,6 +5,7 @@ Python-based installer system with robust error handling and cross-platform supp
 """
 
 import argparse
+import getpass
 import json
 import os
 import pathlib
@@ -291,6 +292,52 @@ class ClaudeEnhancedInstaller:
             return result.returncode == 0
         except:
             return False
+
+    def _run_sudo_command(self, command: List[str], timeout: int = 30, purpose: str = "operation") -> subprocess.CompletedProcess:
+        """Run a command with sudo, prompting for password if needed"""
+        # If we're already root, no sudo needed
+        if os.geteuid() == 0:
+            return self._run_command(command[1:] if command[0] == "sudo" else command, timeout=timeout)
+
+        # First try without password (cached credentials)
+        try:
+            return self._run_command(command, timeout=timeout)
+        except subprocess.CalledProcessError:
+            pass
+
+        # If that fails, prompt for password
+        self._print_info(f"🔐 Administrator privileges required for {purpose}")
+        self._print_info("Please enter your password when prompted:")
+
+        try:
+            # Use sudo -S to read password from stdin
+            password = getpass.getpass("Password: ")
+
+            # Create the command with sudo -S
+            sudo_command = ["sudo", "-S"] + (command[1:] if command[0] == "sudo" else command)
+
+            # Run with password input
+            process = subprocess.Popen(
+                sudo_command,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            stdout, stderr = process.communicate(input=password + "\n", timeout=timeout)
+
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(process.returncode, sudo_command, stdout, stderr)
+
+            return subprocess.CompletedProcess(sudo_command, process.returncode, stdout, stderr)
+
+        except KeyboardInterrupt:
+            self._print_error("Operation cancelled by user")
+            raise
+        except subprocess.TimeoutExpired:
+            self._print_error(f"Command timed out after {timeout} seconds")
+            raise
 
     def _check_systemd_available(self) -> bool:
         """Check if systemd is available"""
@@ -1649,9 +1696,15 @@ exec claude "$@"
 
                             # Execute each part
                             for cmd_part in parts:
-                                self._run_command(cmd_part, timeout=300)
+                                if cmd_part and cmd_part[0] == "sudo":
+                                    self._run_sudo_command(cmd_part, timeout=300, purpose="installing Docker")
+                                else:
+                                    self._run_command(cmd_part, timeout=300)
                         else:
-                            self._run_command(strategy, timeout=300)
+                            if strategy and strategy[0] == "sudo":
+                                self._run_sudo_command(strategy, timeout=300, purpose="installing Docker")
+                            else:
+                                self._run_command(strategy, timeout=300)
                         break
                     except subprocess.CalledProcessError:
                         continue
@@ -1661,10 +1714,16 @@ exec claude "$@"
 
             # Add user to docker group if not already
             try:
-                self._run_command(["sudo", "usermod", "-aG", "docker", self.system_info.user_name], timeout=30)
+                self._run_sudo_command(
+                    ["sudo", "usermod", "-aG", "docker", self.system_info.user_name],
+                    timeout=30,
+                    purpose="adding user to docker group"
+                )
                 self._print_info("Added user to docker group (may require logout/login)")
-            except subprocess.CalledProcessError:
-                self._print_warning("Could not add user to docker group")
+            except subprocess.CalledProcessError as e:
+                self._print_warning(f"Could not add user to docker group: {e}")
+            except Exception as e:
+                self._print_warning(f"Docker group setup failed: {e}")
 
             # Create database directory structure
             db_dir = self.project_root / "database"
@@ -2080,6 +2139,369 @@ esac
             self._print_error(f"Failed to setup learning system: {e}")
             return False
 
+    def setup_auto_calibrating_think_mode(self) -> bool:
+        """Setup auto-calibrating think mode system with PostgreSQL integration"""
+        self._print_section("Setting up auto-calibrating think mode system")
+
+        try:
+            # Create think mode directory
+            think_mode_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "think_mode"
+            think_mode_dir.mkdir(parents=True, exist_ok=True)
+
+            # Copy think mode components from agents/src/python/
+            think_mode_source = self.project_root / "agents" / "src" / "python"
+            if not think_mode_source.exists():
+                self._print_warning("Think mode source directory not found, creating minimal setup")
+                return self._create_minimal_think_mode_setup(think_mode_dir)
+
+            # Components to copy
+            components = [
+                "auto_calibrating_think_mode.py",
+                "think_mode_calibration_schema.sql",
+                "claude_code_think_hooks.py",
+                "lightweight_think_mode_selector.py"
+            ]
+
+            copied_components = []
+            for component in components:
+                source_file = think_mode_source / component
+                target_file = think_mode_dir / component
+
+                if source_file.exists():
+                    try:
+                        import shutil
+                        shutil.copy2(source_file, target_file)
+                        copied_components.append(component)
+                        self._print_info(f"Copied {component}")
+                    except Exception as e:
+                        self._print_warning(f"Could not copy {component}: {e}")
+                else:
+                    self._print_warning(f"Component not found: {component}")
+
+            if not copied_components:
+                self._print_warning("No think mode components found, creating minimal setup")
+                return self._create_minimal_think_mode_setup(think_mode_dir)
+
+            # Install additional dependencies in venv if available
+            if self.venv_dir.exists():
+                venv_pip = self.venv_dir / "bin" / "pip"
+                think_mode_packages = [
+                    "psycopg2-binary", "numpy", "scikit-learn",
+                    "asyncio", "aiofiles", "asyncpg"
+                ]
+
+                for package in think_mode_packages:
+                    try:
+                        self._print_info(f"Installing {package} for think mode...")
+                        self._run_command([str(venv_pip), "install", package], timeout=120)
+                    except subprocess.CalledProcessError:
+                        self._print_warning(f"Could not install {package}")
+
+            # Deploy PostgreSQL schema if database is available
+            if self._check_docker_postgres():
+                self._deploy_think_mode_schema(think_mode_dir)
+
+            # Create think mode configuration
+            think_mode_config = {
+                "version": "1.0",
+                "auto_calibration": {
+                    "enabled": True,
+                    "learning_rate": 0.1,
+                    "adaptation_threshold": 0.05,
+                    "rollback_on_performance_drop": True
+                },
+                "database": {
+                    "host": "localhost",
+                    "port": 5433,
+                    "database": "claude_agents_auth",
+                    "user": "claude_agent",
+                    "password": "claude_secure_2024",
+                    "table_prefix": "think_mode_"
+                },
+                "complexity_scoring": {
+                    "keywords_weight": 0.2,
+                    "dependencies_weight": 0.3,
+                    "context_weight": 0.25,
+                    "reasoning_weight": 0.25,
+                    "min_think_threshold": 0.3
+                },
+                "claude_integration": {
+                    "hook_enabled": True,
+                    "decision_latency_ms": 500,
+                    "fallback_mode": "lightweight"
+                }
+            }
+
+            config_file = think_mode_dir / "config.json"
+            config_file.write_text(json.dumps(think_mode_config, indent=2))
+
+            # Create think mode CLI script
+            think_mode_cli = self.local_bin / "claude-think-mode"
+            cli_content = f'''#!/bin/bash
+# Claude Auto-Calibrating Think Mode System CLI
+# Intelligent complexity-aware think mode selection
+
+THINK_MODE_DIR="{think_mode_dir}"
+CONFIG_FILE="$THINK_MODE_DIR/config.json"
+
+show_help() {{
+    cat << 'EOF'
+Claude Auto-Calibrating Think Mode System v1.0
+Intelligent complexity-aware think mode selection
+
+Usage:
+  claude-think-mode status      # Show system status
+  claude-think-mode calibrate   # Run calibration cycle
+  claude-think-mode test        # Test think mode selection
+  claude-think-mode dashboard   # View analytics dashboard
+  claude-think-mode config      # Show configuration
+
+Features:
+  • Auto-calibrating complexity scoring (fixes 0.0-0.1 issue)
+  • PostgreSQL analytics integration (port 5433)
+  • Real-time decision feedback learning
+  • <500ms decision latency with NPU acceleration
+  • Automatic rollback for poor performance
+EOF
+}}
+
+check_database() {{
+    if docker ps | grep claude-postgres >/dev/null; then
+        echo "✅ Database: Running (PostgreSQL + pgvector)"
+        return 0
+    else
+        echo "❌ Database: Not running"
+        return 1
+    fi
+}}
+
+show_status() {{
+    echo "Claude Auto-Calibrating Think Mode Status:"
+    echo "  Config: $CONFIG_FILE"
+    if [[ -f "$CONFIG_FILE" ]]; then
+        echo "  Configuration: ✅ Found"
+        echo "  Components: {len(copied_components)} installed"
+    else
+        echo "  Configuration: ❌ Missing"
+    fi
+
+    check_database
+
+    if [[ -f "$THINK_MODE_DIR/auto_calibrating_think_mode.py" ]]; then
+        echo "  Think Mode Engine: ✅ Installed"
+    else
+        echo "  Think Mode Engine: ❌ Missing"
+    fi
+
+    if [[ -f "$THINK_MODE_DIR/claude_code_think_hooks.py" ]]; then
+        echo "  Claude Code Hooks: ✅ Installed"
+    else
+        echo "  Claude Code Hooks: ❌ Missing"
+    fi
+}}
+
+run_calibration() {{
+    echo "Running think mode calibration cycle..."
+    if [[ -f "$THINK_MODE_DIR/auto_calibrating_think_mode.py" ]]; then
+        cd "$THINK_MODE_DIR"
+        python3 auto_calibrating_think_mode.py --calibrate
+    else
+        echo "❌ Think mode engine not found"
+        exit 1
+    fi
+}}
+
+case "$1" in
+    status)     show_status ;;
+    calibrate)  run_calibration ;;
+    test)       echo "Running think mode selection test..."; cd "$THINK_MODE_DIR" && python3 lightweight_think_mode_selector.py --test ;;
+    dashboard)  echo "Opening analytics dashboard..."; cd "$THINK_MODE_DIR" && python3 auto_calibrating_think_mode.py --dashboard ;;
+    config)     cat "$CONFIG_FILE" ;;
+    help|--help|-h) show_help ;;
+    *)          show_help ;;
+esac
+'''
+
+            think_mode_cli.write_text(cli_content)
+            think_mode_cli.chmod(0o755)
+
+            self._print_success("Auto-calibrating think mode system setup complete")
+            self._print_info(f"Components installed: {', '.join(copied_components)}")
+            self._print_info("Use 'claude-think-mode status' to check system health")
+            self._print_info("Use 'claude-think-mode calibrate' to run initial calibration")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to setup auto-calibrating think mode system: {e}")
+            return False
+
+    def _check_docker_postgres(self) -> bool:
+        """Check if Docker PostgreSQL container is running"""
+        try:
+            result = self._run_command(["docker", "ps", "--filter", "name=claude-postgres", "--format", "{{.Names}}"],
+                                     check=False, timeout=10)
+            return result.returncode == 0 and "claude-postgres" in result.stdout
+        except:
+            return False
+
+    def _deploy_think_mode_schema(self, think_mode_dir: Path) -> bool:
+        """Deploy think mode PostgreSQL schema"""
+        try:
+            schema_file = think_mode_dir / "think_mode_calibration_schema.sql"
+            if not schema_file.exists():
+                self._print_warning("Think mode schema file not found, skipping database setup")
+                return False
+
+            self._print_info("Deploying think mode database schema...")
+
+            # Execute schema via docker exec
+            docker_cmd = [
+                "docker", "exec", "-i", "claude-postgres",
+                "psql", "-U", "claude_agent", "-d", "claude_agents_auth"
+            ]
+
+            with open(schema_file, 'r') as f:
+                schema_content = f.read()
+
+            process = subprocess.run(docker_cmd, input=schema_content, text=True, capture_output=True, timeout=30)
+            result = process
+
+            if result.returncode == 0:
+                self._print_success("Think mode database schema deployed successfully")
+                return True
+            else:
+                self._print_warning(f"Schema deployment failed: {result.stderr}")
+                return False
+
+        except Exception as e:
+            self._print_warning(f"Could not deploy think mode schema: {e}")
+            return False
+
+    def _create_minimal_think_mode_setup(self, think_mode_dir: Path) -> bool:
+        """Create minimal think mode setup when components are not available"""
+        try:
+            self._print_info("Creating minimal think mode setup...")
+
+            # Create minimal think mode selector
+            minimal_selector = think_mode_dir / "minimal_think_mode_selector.py"
+            minimal_content = '''#!/usr/bin/env python3
+"""
+Minimal Think Mode Selector - Fallback Implementation
+Auto-calibrating complexity scoring with basic heuristics
+"""
+
+import re
+import json
+from pathlib import Path
+
+class MinimalThinkModeSelector:
+    def __init__(self):
+        self.config_path = Path.home() / ".local/share/claude/think_mode/config.json"
+        self.load_config()
+
+    def load_config(self):
+        try:
+            if self.config_path.exists():
+                with open(self.config_path) as f:
+                    self.config = json.load(f)
+            else:
+                self.config = {
+                    "complexity_scoring": {
+                        "keywords_weight": 0.25,
+                        "dependencies_weight": 0.3,
+                        "context_weight": 0.25,
+                        "reasoning_weight": 0.2,
+                        "min_think_threshold": 0.35
+                    }
+                }
+        except:
+            self.config = {"complexity_scoring": {"min_think_threshold": 0.35}}
+
+    def calculate_complexity(self, prompt: str) -> float:
+        """Calculate complexity score using enhanced heuristics"""
+
+        # Multi-step indicators
+        multi_step_keywords = [
+            'first', 'then', 'next', 'after', 'finally', 'step by step',
+            'coordinate', 'integrate', 'combine', 'workflow', 'pipeline'
+        ]
+
+        # Technical complexity indicators
+        technical_keywords = [
+            'algorithm', 'database', 'architecture', 'security', 'performance',
+            'optimization', 'deployment', 'integration', 'coordination'
+        ]
+
+        # Reasoning complexity indicators
+        reasoning_keywords = [
+            'analyze', 'evaluate', 'compare', 'design', 'architect', 'plan',
+            'strategy', 'consider', 'balance', 'tradeoff'
+        ]
+
+        prompt_lower = prompt.lower()
+        word_count = len(prompt.split())
+
+        # Base complexity from length
+        length_score = min(word_count / 100, 0.5)
+
+        # Multi-step complexity
+        multi_step_score = sum(1 for kw in multi_step_keywords if kw in prompt_lower) * 0.1
+
+        # Technical complexity
+        technical_score = sum(1 for kw in technical_keywords if kw in prompt_lower) * 0.08
+
+        # Reasoning complexity
+        reasoning_score = sum(1 for kw in reasoning_keywords if kw in prompt_lower) * 0.06
+
+        # Agent coordination indicators
+        agent_score = 0.2 if any(word in prompt_lower for word in ['agent', 'coordinate', 'invoke']) else 0
+
+        total_score = length_score + multi_step_score + technical_score + reasoning_score + agent_score
+
+        # Cap at 1.0 and apply threshold
+        return min(total_score, 1.0)
+
+    def should_use_think_mode(self, prompt: str) -> bool:
+        """Determine if think mode should be enabled"""
+        complexity = self.calculate_complexity(prompt)
+        threshold = self.config.get("complexity_scoring", {}).get("min_think_threshold", 0.35)
+        return complexity >= threshold
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+        selector = MinimalThinkModeSelector()
+        test_prompts = [
+            "What is 2+2?",
+            "Design a multi-agent system with database integration and security",
+            "Coordinate CONSTRUCTOR and ARCHITECT agents for complex deployment"
+        ]
+
+        for prompt in test_prompts:
+            complexity = selector.calculate_complexity(prompt)
+            should_think = selector.should_use_think_mode(prompt)
+            print(f"Prompt: {prompt[:50]}...")
+            print(f"Complexity: {complexity:.3f}, Think Mode: {should_think}")
+            print()
+    else:
+        selector = MinimalThinkModeSelector()
+        prompt = input("Enter prompt to test: ")
+        result = selector.should_use_think_mode(prompt)
+        complexity = selector.calculate_complexity(prompt)
+        print(f"Complexity: {complexity:.3f}")
+        print(f"Think Mode Recommended: {result}")
+'''
+
+            minimal_selector.write_text(minimal_content)
+            minimal_selector.chmod(0o755)
+
+            self._print_success("Minimal think mode setup created")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to create minimal think mode setup: {e}")
+            return False
+
     def check_for_claude_updates(self) -> Optional[str]:
         """Check for available Claude Code updates"""
         try:
@@ -2252,7 +2674,7 @@ fi
                 if "claude-update-checker" not in current_cron:
                     # Add update check job
                     new_cron_line = f"0 8 * * 1 {update_script} >/dev/null 2>&1"
-                    updated_cron = current_cron + "\n" + new_cron_line
+                    updated_cron = current_cron.rstrip() + "\n" + new_cron_line + "\n"
 
                     # Install new crontab
                     process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True)
@@ -2297,7 +2719,7 @@ fi
 
                             if "claude-update-checker" not in current_cron:
                                 new_cron_line = f"0 8 * * 1 {update_script} >/dev/null 2>&1"
-                                updated_cron = current_cron + "\n" + new_cron_line
+                                updated_cron = current_cron.rstrip() + "\n" + new_cron_line + "\n"
 
                                 process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True)
                                 process.communicate(input=updated_cron)
@@ -2462,6 +2884,12 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.setup_learning_system():
+                success_count += 1
+
+        # Step 9.5: Setup auto-calibrating think mode system (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.setup_auto_calibrating_think_mode():
                 success_count += 1
 
         # Step 10: Setup update scheduler (if in full mode)

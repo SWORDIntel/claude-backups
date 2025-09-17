@@ -13,7 +13,7 @@ RESET='\033[0m'
 
 # Print header
 echo -e "${BOLD}${CYAN}Claude Enhanced Installer - Quick Launch${RESET}"
-echo -e "${CYAN}Launching Python-based installer with robust error handling...${RESET}"
+echo -e "${CYAN}Launching Python-based installer with Auto-Calibrating Think Mode...${RESET}"
 echo
 
 # Get script directory
@@ -24,9 +24,10 @@ PYTHON_INSTALLER="$SCRIPT_DIR/claude-python-installer.sh"
 if [[ ! -f "$PYTHON_INSTALLER" ]]; then
     echo -e "${YELLOW}Python installer not found. Trying alternative locations...${RESET}"
 
-    # Try different locations
+    # Try different locations (prioritize enhanced installer with auto-calibrating think mode)
     for location in \
         "$SCRIPT_DIR/claude-enhanced-installer.py" \
+        "$SCRIPT_DIR/claude-enhanced-installer-venv.py" \
         "$HOME/claude-backups/claude-python-installer.sh" \
         "$HOME/Documents/Claude/claude-python-installer.sh"; do
 
