@@ -17,7 +17,7 @@ A **globally-integrated AI acceleration framework** that automatically enhances 
 | **Learning System** | ✅ RUNNING | PostgreSQL:5433 | `claude-learning-system` anywhere |
 | **Phase 3 Optimizer** | ✅ DEPLOYED | 3.2M-8.1M lines/sec | Default in all operations |
 | **Shadowgit AVX2** | ✅ OPERATIONAL | 930M lines/sec | `shadowgit` globally |
-| **206+ Agents** | ✅ REGISTERED | All available | `claude-agent <name>` anywhere |
+| **89 Agents** | ✅ REGISTERED | All available | `claude-agent <name>` anywhere |
 | **Docker Services** | ✅ AUTO-START | Boot persistent | `unless-stopped` policy |
 
 ## 💫 ONE-TIME INSTALLATION, LIFETIME BENEFITS
@@ -51,7 +51,7 @@ After installation, the installer will:
 1. ✅ Start Docker containers (PostgreSQL learning system)
 2. ✅ Enable auto-restart on boot
 3. ✅ Activate neural acceleration
-4. ✅ Register all 206+ agents globally
+4. ✅ Register all 89 agents globally
 5. ✅ Install global commands in PATH
 
 ## 🎯 GLOBAL COMMANDS (Work From Anywhere)
@@ -59,7 +59,7 @@ After installation, the installer will:
 ### Core Intelligence
 ```bash
 claude                          # Full AI acceleration + learning + agents
-claude-agent list              # See all 206+ specialized agents
+claude-agent list              # See all 89 specialized agents
 claude-agent director "plan"   # Execute any agent task
 shadowgit file1 file2          # Hardware-accelerated diff (930M lines/sec)
 ```
