@@ -1,5 +1,5 @@
 {
-  "timestamp": 1757987905.5814972,
+  "timestamp": 1758078283.213873,
   "systems_tested": [
     "coordination_bridge",
     "shadowgit_performance",
@@ -11,44 +11,44 @@
   },
   "coordination_bridge": {
     "simple_workflow": {
-      "ops_per_sec": 1192.8514799319812,
+      "ops_per_sec": 1895.3130205824232,
       "success_rate": 1.0,
-      "execution_time_ms": 2.5149819994112477,
-      "total_time_ms": 5.343578006431926
+      "execution_time_ms": 1.582851997227408,
+      "total_time_ms": 1.8060119982692413
     },
     "complex_workflow": {
-      "ops_per_sec": 8400.901784504978,
+      "ops_per_sec": 10734.093949805821,
       "tasks_completed": 50,
       "total_tasks": 50,
       "success_rate": 1.0,
       "npu_utilization": 0,
-      "total_time_ms": 61.61789200268686
+      "total_time_ms": 5.046182999649318
     },
     "summary": {
       "bridge_metrics": {
         "workflows_executed": 3,
-        "total_execution_time": 0.010999546000675764,
-        "average_ops_per_sec": 3855.945309341874,
+        "total_execution_time": 0.007535222997830715,
+        "average_ops_per_sec": 5497.483744913164,
         "npu_utilization": 0,
         "coordination_overhead": 0
       },
       "recent_performance": {
         "workflows_count": 2,
-        "average_ops_per_sec": 4796.87663221848,
+        "average_ops_per_sec": 6314.703485194123,
         "average_success_rate": 1.0,
         "total_tasks_executed": 53
       },
       "system_status": {
         "npu_available": true,
-        "coordination_available": false,
-        "agents_cached": 89
+        "coordination_available": true,
+        "agents_cached": 90
       }
     }
   },
   "coordination_target_achieved": "False",
   "shadowgit_performance": {
     "operations_count": 8,
-    "test_time_ms": 2000.6282009999268,
+    "test_time_ms": 2000.3576309973141,
     "dashboard": {
       "current_performance": {
         "throughput_lines_per_sec": 483229.16666666674,
@@ -85,7 +85,7 @@
   "shadowgit_target_progress": 4.201992753623189,
   "integrated_performance": {
     "workflow_performance": {
-      "ops_per_sec": 1974.08266358866,
+      "ops_per_sec": 3863.044264351245,
       "success_rate": 1.0,
       "tasks_completed": 5
     },
@@ -94,9 +94,9 @@
       "monitoring_active": true
     },
     "integration_metrics": {
-      "total_execution_time_ms": 8.354773002793081,
+      "total_execution_time_ms": 1.4477940021606628,
       "systems_coordinated": 2,
-      "integration_overhead_ms": 5.821951002872083
+      "integration_overhead_ms": 0.15347800217568874
     }
   },
   "validation_summary": {
