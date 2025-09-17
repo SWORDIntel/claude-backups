@@ -2065,6 +2065,10 @@
       "allowedTools": [],
       "history": [
         {
+          "display": "Documented too and the HTML documentation and index.html plus claude.md updated?",
+          "pastedContents": {}
+        },
+        {
           "display": "AIM FOR dynami adjustment of   🔧 What would improve confidence\n\n  # The complexity scoring needs calibration:\n  # Current: Most tasks score 0.0-0.1 (too conservative)\n  # Better: Wider range 0.0-1.0 with proper weighting",
           "pastedContents": {}
         },
@@ -2524,10 +2528,6 @@
         {
           "display": "\nlrwxrwxrwx 1 root root       35 Sep  5 10:56 /usr/local/lib/libze_intel_npu.so -> /usr/local/lib/libze_intel_npu.so.1\n-rwxr-xr-x 1 root root 23540640 Sep  5 10:10 /usr/local/lib/libze_intel_npu.so.1\n-rwxr-xr-x 1 root root 23540640 Sep  5 10:10 /usr/local/lib/libze_intel_npu.so.1.23.0\n\n~/zfs-2.3.4 via C v13.3.0-gcc \n➜ \n",
           "pastedContents": {}
-        },
-        {
-          "display": "The NPU is crucial to the kernal",
-          "pastedContents": {}
         }
       ],
       "mcpContextUris": [],
@@ -2670,6 +2670,10 @@
     "/home/john/TSM": {
       "allowedTools": [],
       "history": [
+        {
+          "display": "Yes use COORDINATOR to plan it along with.. PROJECTORCHESTATOR to chose best agents",
+          "pastedContents": {}
+        },
         {
           "display": "Document in docs/ and claude.md then git push and tell me whats next so i can plan it",
           "pastedContents": {}
