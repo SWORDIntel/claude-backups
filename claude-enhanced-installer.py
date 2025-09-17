@@ -600,6 +600,111 @@ class ClaudeEnhancedInstaller:
         except:
             return False
 
+    def _find_npm_claude_alternative(self) -> Optional[Path]:
+        """Alternative method to find npm-installed Claude binary after successful npm install"""
+        try:
+            # Method 1: Check common npm global locations more thoroughly
+            possible_locations = []
+
+            # Try to get npm root and prefix
+            try:
+                npm_root_result = self._run_command(["npm", "root", "-g"], check=False, timeout=10)
+                if npm_root_result.returncode == 0:
+                    npm_root = Path(npm_root_result.stdout.strip())
+                    possible_locations.extend([
+                        npm_root / "@anthropic-ai" / "claude-code" / "cli.js",
+                        npm_root / "@anthropic-ai" / "claude-code" / "bin" / "claude",
+                        npm_root.parent / "bin" / "claude"
+                    ])
+            except:
+                pass
+
+            # Try npm prefix method
+            try:
+                npm_prefix_result = self._run_command(["npm", "config", "get", "prefix"], check=False, timeout=10)
+                if npm_prefix_result.returncode == 0:
+                    npm_prefix = Path(npm_prefix_result.stdout.strip())
+                    possible_locations.extend([
+                        npm_prefix / "bin" / "claude",
+                        npm_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "cli.js",
+                        npm_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude"
+                    ])
+            except:
+                pass
+
+            # Method 2: Check user npm global prefix
+            npm_global_prefix = self.system_info.home_dir / ".npm-global"
+            if npm_global_prefix.exists():
+                possible_locations.extend([
+                    npm_global_prefix / "bin" / "claude",
+                    npm_global_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "cli.js",
+                    npm_global_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude"
+                ])
+
+            # Method 3: Search PATH for claude binary and verify it's npm-installed
+            claude_in_path = shutil.which("claude")
+            if claude_in_path:
+                claude_path = Path(claude_in_path)
+                # Check if it's likely an npm installation
+                if "node_modules" in str(claude_path) or "npm" in str(claude_path):
+                    if self._test_claude_binary(claude_path):
+                        possible_locations.append(claude_path)
+
+            # Method 4: Check if binary was just installed and needs PATH refresh
+            # Update PATH to include common npm bin directories
+            current_path = os.environ.get("PATH", "")
+            npm_bin_dirs = [
+                str(self.system_info.home_dir / ".npm-global" / "bin"),
+                "/usr/local/bin",
+                str(Path("/usr/local/lib/node_modules/.bin")),
+            ]
+
+            for bin_dir in npm_bin_dirs:
+                if bin_dir not in current_path:
+                    os.environ["PATH"] = f"{bin_dir}:{current_path}"
+
+            # Re-check which command after PATH update
+            claude_in_path = shutil.which("claude")
+            if claude_in_path:
+                claude_path = Path(claude_in_path)
+                possible_locations.append(claude_path)
+
+            # Test all possible locations
+            for location in possible_locations:
+                if location and location.exists():
+                    if self._test_claude_binary(location):
+                        self._print_info(f"Found working npm binary at: {location}")
+                        return location
+
+            # Method 5: Last resort - check recently modified files in npm directories
+            try:
+                # Check for recently created claude executables
+                import time
+                current_time = time.time()
+                recent_threshold = current_time - 300  # 5 minutes ago
+
+                search_dirs = [
+                    Path("/usr/local/bin"),
+                    self.system_info.home_dir / ".npm-global" / "bin",
+                    Path("/usr/local/lib/node_modules"),
+                ]
+
+                for search_dir in search_dirs:
+                    if search_dir.exists():
+                        for file_path in search_dir.rglob("claude*"):
+                            if (file_path.is_file() and
+                                file_path.stat().st_mtime > recent_threshold and
+                                self._test_claude_binary(file_path)):
+                                self._print_info(f"Found recently created npm binary: {file_path}")
+                                return file_path
+            except:
+                pass
+
+        except Exception as e:
+            self._print_warning(f"Alternative npm detection failed: {e}")
+
+        return None
+
     def install_claude_npm(self) -> bool:
         """Install Claude via npm with comprehensive fallbacks"""
         self._print_section("Installing Claude via npm")
@@ -2216,21 +2321,53 @@ fi
         if not claude_binary:
             self._print_section("Installing Claude")
 
-            # Try npm first, then pip
+            npm_install_succeeded = False
+            pip_install_succeeded = False
+
+            # Try npm first
             if self.system_info.npm_available:
+                self._print_info("Attempting npm installation...")
                 if self.install_claude_npm():
-                    # Find the installed binary
+                    npm_install_succeeded = True
+                    self._print_success("npm installation completed successfully")
+
+                    # Find the installed binary - try multiple detection methods
                     npm_installation = self._check_npm_claude()
                     if npm_installation and npm_installation.working:
                         claude_binary = npm_installation.binary_path
                         success_count += 1
+                        self._print_success(f"npm installation verified: {claude_binary}")
+                    else:
+                        # npm installation succeeded but binary detection failed - try harder
+                        self._print_warning("npm installation succeeded but binary not detected via standard method")
 
-            if not claude_binary and self.system_info.pip_available:
+                        # Try alternative detection methods
+                        npm_binary = self._find_npm_claude_alternative()
+                        if npm_binary:
+                            claude_binary = npm_binary
+                            success_count += 1
+                            self._print_success(f"npm installation found via alternative method: {claude_binary}")
+                        else:
+                            self._print_warning("Could not locate npm-installed binary - this may require manual verification")
+                else:
+                    self._print_warning("npm installation failed")
+
+            # Only try pip if npm completely failed OR binary was not found
+            if not claude_binary and not npm_install_succeeded and self.system_info.pip_available:
+                self._print_info("Attempting pip installation...")
                 if self.install_claude_pip():
+                    pip_install_succeeded = True
+                    self._print_success("pip installation completed successfully")
+
                     pip_installation = self._check_pip_claude()
                     if pip_installation and pip_installation.working:
                         claude_binary = pip_installation.binary_path
                         success_count += 1
+                        self._print_success(f"pip installation verified: {claude_binary}")
+                    else:
+                        self._print_warning("pip installation succeeded but binary not detected")
+                else:
+                    self._print_warning("pip installation failed")
 
             total_steps += 1
 
