@@ -51,7 +51,7 @@ FROM enhanced_learning.shadowgit_events;"
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)
 **Latest Feature**: **Auto-Calibrating Think Mode System v1.0 - Self-Learning Complexity Scoring with 95%+ Accuracy via PostgreSQL Analytics**
 **Database**: PostgreSQL 16 with pgvector (DOCKER ONLY - Port 5433, auto-restart enabled)
-**Agent Count**: 89 agents (88 active + 1 template) - Complete ecosystem operational
+**Agent Count**: 90 agents (89 active + 1 template) - Complete ecosystem operational with C-MAKE-INTERNAL
 **Kernel Build**: Custom 6.12.6 with NPU (11 TOPS) + GNA (2 TOPS) + GPU (128 EUs) + ZFS 2.3.4
 **Learning Coverage**: ALL Git repositories system-wide via global hooks
 **NPU Integration**: **Intel AI Boost NPU** with OpenVINO 2025.3.0 runtime
@@ -223,8 +223,9 @@ The wrapper automatically finds agents in:
 - **CISCO-AGENT**: Cisco network configuration
 - **DDWRT-AGENT**: Router firmware management
 
-### Language-Specific Development (11 agents)
+### Language-Specific Development (12 agents)
 - **C-INTERNAL**: Elite C/C++ systems engineer
+- **C-MAKE-INTERNAL**: Elite CMake build system specialist
 - **CPP-INTERNAL-AGENT**: C++ development specialist
 - **PYTHON-INTERNAL**: Python execution environment
 - **RUST-INTERNAL-AGENT**: Rust systems programming
@@ -2101,7 +2102,7 @@ docker ps | grep claude-postgres
 
 *Last Updated: 2025-09-16*
 *Framework Version: 8.0*
-*Agent Count: 89 agents (88 active + 1 template)*
+*Agent Count: 90 agents (89 active + 1 template)*
 *Hardware Agents: 4 vendor-specific agents (HARDWARE, HARDWARE-DELL, HARDWARE-HP, HARDWARE-INTEL)*
 *OpenVINO Runtime: 2025.3.0 with Intel AI Boost NPU acceleration*
 *NPU Integration: 29,005 ops/sec orchestration + 15B lines/sec Shadowgit performance*
