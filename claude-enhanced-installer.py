@@ -2266,7 +2266,53 @@ fi
                     self._print_info("Update scheduler already installed")
 
             except subprocess.CalledProcessError:
-                self._print_warning("Could not setup cron job (crontab not available)")
+                # Try to install cron if not available
+                self._print_info("crontab not available, attempting to install cron...")
+                try:
+                    # Install cron via system package manager
+                    cron_install_strategies = [
+                        ["sudo", "apt", "install", "-y", "cron"],
+                        ["sudo", "apt-get", "install", "-y", "cron"],
+                        ["sudo", "yum", "install", "-y", "cronie"],
+                        ["sudo", "dnf", "install", "-y", "cronie"]
+                    ]
+
+                    for strategy in cron_install_strategies:
+                        try:
+                            self._run_command(strategy, timeout=120)
+                            self._print_success("cron installed successfully")
+
+                            # Start cron service if systemd is available
+                            if self.system_info.has_systemd:
+                                try:
+                                    self._run_command(["sudo", "systemctl", "enable", "cron"], check=False)
+                                    self._run_command(["sudo", "systemctl", "start", "cron"], check=False)
+                                    self._print_info("cron service enabled and started")
+                                except:
+                                    pass
+
+                            # Retry crontab setup
+                            result = self._run_command(["crontab", "-l"], check=False)
+                            current_cron = result.stdout if result.returncode == 0 else ""
+
+                            if "claude-update-checker" not in current_cron:
+                                new_cron_line = f"0 8 * * 1 {update_script} >/dev/null 2>&1"
+                                updated_cron = current_cron + "\n" + new_cron_line
+
+                                process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True)
+                                process.communicate(input=updated_cron)
+
+                                if process.returncode == 0:
+                                    self._print_success("Update scheduler installed after cron installation")
+                                else:
+                                    self._print_warning("Could not install cron job after cron installation")
+
+                            break
+
+                        except subprocess.CalledProcessError:
+                            continue
+                    else:
+                        self._print_warning("Could not install cron package")
 
             self._print_success("Update checker script created")
             return True
