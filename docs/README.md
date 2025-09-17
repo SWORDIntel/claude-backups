@@ -106,6 +106,9 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 - [`global-git-intelligence-system.md`](features/global-git-intelligence-system.md) - **NEW: Global Git Intelligence (85% operational)**
 - [`global-git-current-status.md`](features/global-git-current-status.md) - **NEW: Current deployment status report**
 
+#### 🚀 **Enhanced Python Installer v2.0 (LATEST)**
+- [`enhanced-python-installer-v2-complete.md`](features/enhanced-python-installer-v2-complete.md) - **NEW: Complete installer documentation**
+
 #### 📦 Integrations
 - [`docker-autostart-installer-enhancement.md`](features/docker-autostart-installer-enhancement.md) - Docker container auto-restart configuration
 - [`docker-database-integration.md`](features/docker-database-integration.md) - Docker database integration
@@ -137,9 +140,10 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 ## 🔍 Quick Access
 
 ### For New Users
-1. Start with [`guides/installation-guide.md`](guides/installation-guide.md)
-2. Read [`reference/PROJECT_OVERVIEW.md`](reference/PROJECT_OVERVIEW.md)
-3. Follow [`guides/FIRST_TIME_LAUNCH_GUIDE.md`](guides/FIRST_TIME_LAUNCH_GUIDE.md)
+1. **START HERE**: [`../HEADLESS_INSTALL_GUIDE.md`](../HEADLESS_INSTALL_GUIDE.md) - **NEW: Universal installation guide**
+2. **Enhanced Installer**: [`features/enhanced-python-installer-v2-complete.md`](features/enhanced-python-installer-v2-complete.md) - **Complete installer documentation**
+3. Read [`reference/PROJECT_OVERVIEW.md`](reference/PROJECT_OVERVIEW.md) - Project overview
+4. Follow [`guides/FIRST_TIME_LAUNCH_GUIDE.md`](guides/FIRST_TIME_LAUNCH_GUIDE.md) - First launch guide
 
 ### For Developers
 1. Review [`architecture/tandem-orchestration.md`](architecture/tandem-orchestration.md)
