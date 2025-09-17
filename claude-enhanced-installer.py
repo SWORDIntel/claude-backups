@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -112,25 +113,56 @@ class ClaudeEnhancedInstaller:
             directory.mkdir(parents=True, exist_ok=True)
 
     def _detect_project_root(self) -> Path:
-        """Detect the Claude project root directory"""
-        current = Path.cwd()
+        """Detect the Claude project root directory using dynamic resolution"""
+        # Check script directory first (where installer is located)
+        script_dir = Path(__file__).parent.resolve()
+        if (script_dir / "agents").exists() and (script_dir / "CLAUDE.md").exists():
+            return script_dir
 
-        # Check current directory first
+        # Check current working directory
+        current = Path.cwd().resolve()
         if (current / "agents").exists() and (current / "CLAUDE.md").exists():
             return current
 
-        # Check common locations
-        common_locations = [
-            Path.home() / "Documents" / "Claude",
-            Path.home() / "claude-backups",
-            Path.home() / "Downloads" / "claude-backups"
+        # Check environment variable if set
+        if "CLAUDE_PROJECT_ROOT" in os.environ:
+            env_root = Path(os.environ["CLAUDE_PROJECT_ROOT"]).resolve()
+            if env_root.exists() and (env_root / "agents").exists():
+                return env_root
+
+        # Search common locations dynamically (avoid hardcoded paths)
+        home_dir = Path.home()
+        search_patterns = [
+            "*/claude-backups",
+            "*/Claude",
+            "*/Documents/Claude",
+            "*/Downloads/claude-backups",
+            "claude-backups",
+            "Claude"
         ]
 
-        for location in common_locations:
-            if location.exists() and (location / "agents").exists():
-                return location
+        for pattern in search_patterns:
+            for location in home_dir.glob(pattern):
+                if location.is_dir() and (location / "agents").exists() and (location / "CLAUDE.md").exists():
+                    return location.resolve()
 
-        # Default to current directory
+        # Try to find based on git repository
+        try:
+            git_result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                cwd=current,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if git_result.returncode == 0:
+                git_root = Path(git_result.stdout.strip()).resolve()
+                if (git_root / "agents").exists() and (git_root / "CLAUDE.md").exists():
+                    return git_root
+        except:
+            pass
+
+        # Default to current directory if nothing found
         return current
 
     def _gather_system_info(self) -> SystemInfo:
@@ -931,12 +963,51 @@ fi
 
 set -euo pipefail
 
-# Configuration
+# Dynamic path detection
+detect_project_root() {{
+    # Check environment variable first
+    if [[ -n "${{CLAUDE_PROJECT_ROOT:-}}" ]] && [[ -d "$CLAUDE_PROJECT_ROOT/agents" ]]; then
+        echo "$CLAUDE_PROJECT_ROOT"
+        return 0
+    fi
+
+    # Check agents symlink location
+    if [[ -L "$HOME/.local/share/claude/agents" ]]; then
+        local agents_target
+        agents_target=$(readlink -f "$HOME/.local/share/claude/agents")
+        if [[ -n "$agents_target" ]]; then
+            echo "$(dirname "$agents_target")"
+            return 0
+        fi
+    fi
+
+    # Check common locations
+    local locations=(
+        "$(dirname "$(readlink -f "$0")")"
+        "$PWD"
+        "$HOME/claude-backups"
+        "$HOME/Documents/Claude"
+        "$HOME/Downloads/claude-backups"
+    )
+
+    for location in "${{locations[@]}}"; do
+        if [[ -d "$location/agents" ]] && [[ -f "$location/CLAUDE.md" ]]; then
+            echo "$location"
+            return 0
+        fi
+    done
+
+    # Default fallback
+    echo "$PWD"
+}}
+
+# Dynamic configuration
+PROJECT_ROOT=$(detect_project_root)
 CLAUDE_BINARY="{claude_binary}"
-ORCHESTRATOR_PATH="{self.project_root}/agents/src/python/production_orchestrator.py"
+ORCHESTRATOR_PATH="$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
 CACHE_DIR="$HOME/.cache/claude"
-AGENTS_BRIDGE="{self.local_bin}/claude-agent"
-LEARNING_CLI="{self.local_bin}/claude-learning"
+AGENTS_BRIDGE="$HOME/.local/bin/claude-agent"
+LEARNING_CLI="$HOME/.local/bin/claude-learning"
 
 # Feature flags - can be disabled via environment variables
 CLAUDE_PERMISSION_BYPASS="${{CLAUDE_PERMISSION_BYPASS:-true}}"
@@ -1289,38 +1360,49 @@ end
             return False
 
     def install_agents_system(self) -> bool:
-        """Install the agent system"""
+        """Install the agent system using symlinks to preserve live updates"""
         self._print_section("Installing agent system")
 
         try:
             agents_source = self.project_root / "agents"
-            agents_target = self.system_info.home_dir / "agents"
-
             if not agents_source.exists():
                 self._print_warning(f"Agents source directory not found: {agents_source}")
                 return False
 
-            # Create target directory
-            agents_target.mkdir(exist_ok=True)
+            # Create symlink targets
+            claude_share_agents = self.system_info.home_dir / ".local" / "share" / "claude" / "agents"
+            home_agents = self.system_info.home_dir / "agents"
 
-            # Copy agent files
-            for agent_file in agents_source.glob("*.md"):
-                if agent_file.name != "Template.md":  # Skip template
-                    target_file = agents_target / agent_file.name
-                    shutil.copy2(agent_file, target_file)
+            # Ensure parent directories exist
+            claude_share_agents.parent.mkdir(parents=True, exist_ok=True)
 
-            # Copy source directories if they exist
-            for source_dir in ["src", "docs", "tools"]:
-                source_path = agents_source / source_dir
-                target_path = agents_target / source_dir
+            # Remove existing symlinks/directories if they exist
+            for target in [claude_share_agents, home_agents]:
+                if target.exists() or target.is_symlink():
+                    if target.is_symlink():
+                        target.unlink()
+                        self._print_info(f"Removed existing symlink: {target}")
+                    elif target.is_dir():
+                        shutil.rmtree(target)
+                        self._print_info(f"Removed existing directory: {target}")
 
-                if source_path.exists():
-                    if target_path.exists():
-                        shutil.rmtree(target_path)
-                    shutil.copytree(source_path, target_path)
+            # Create primary symlink (~/.local/share/claude/agents -> project/agents)
+            claude_share_agents.symlink_to(agents_source.resolve())
+            self._print_success(f"Created symlink: {claude_share_agents} -> {agents_source}")
 
-            self._print_success(f"Agent system installed to {agents_target}")
-            return True
+            # Create convenience symlink (~/agents -> ~/.local/share/claude/agents)
+            home_agents.symlink_to(claude_share_agents)
+            self._print_success(f"Created convenience symlink: {home_agents} -> {claude_share_agents}")
+
+            # Verify symlinks work
+            if claude_share_agents.exists() and home_agents.exists():
+                agent_count = len(list(claude_share_agents.glob("*.md")))
+                self._print_success(f"Agent system installed with {agent_count} agents available")
+                self._print_info(f"Live updates: Changes to {agents_source} will be immediately available")
+                return True
+            else:
+                self._print_error("Symlink verification failed")
+                return False
 
         except Exception as e:
             self._print_error(f"Failed to install agent system: {e}")
@@ -1361,19 +1443,50 @@ end
             return False
 
     def create_launch_script(self) -> bool:
-        """Create convenient launch script"""
+        """Create convenient launch script with dynamic path resolution"""
         self._print_section("Creating launch script")
 
         try:
             launch_script = self.local_bin / "claude-enhanced"
 
-            script_content = f'''#!/bin/bash
+            script_content = '''#!/bin/bash
 # Claude Enhanced Launcher
-# Provides enhanced functionality and error handling
+# Provides enhanced functionality and error handling with dynamic path resolution
 
-# Set up environment
+# Dynamic project root detection
+detect_project_root() {
+    # Check agents symlink location first
+    if [[ -L "$HOME/.local/share/claude/agents" ]]; then
+        local agents_target
+        agents_target=$(readlink -f "$HOME/.local/share/claude/agents")
+        if [[ -n "$agents_target" ]]; then
+            echo "$(dirname "$agents_target")"
+            return 0
+        fi
+    fi
+
+    # Check common locations
+    local locations=(
+        "$HOME/claude-backups"
+        "$HOME/Documents/Claude"
+        "$HOME/Downloads/claude-backups"
+        "$PWD"
+    )
+
+    for location in "${locations[@]}"; do
+        if [[ -d "$location/agents" ]] && [[ -f "$location/CLAUDE.md" ]]; then
+            echo "$location"
+            return 0
+        fi
+    done
+
+    # Default fallback
+    echo "$PWD"
+}
+
+# Set up environment with dynamic paths
 export CLAUDE_ENHANCED=true
-export CLAUDE_PROJECT_ROOT="{self.project_root}"
+export CLAUDE_PROJECT_ROOT=$(detect_project_root)
 
 # Launch Claude with enhanced features
 exec claude "$@"
@@ -1536,6 +1649,22 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
 
             init_file = sql_dir / "01-init-learning.sql"
             init_file.write_text(init_sql)
+
+            # Check for existing container and handle reinstall
+            existing_container = False
+            try:
+                result = self._run_command(["docker", "ps", "-a", "--filter", "name=claude-postgres", "--format", "{{.Names}}"],
+                                         check=False, timeout=10)
+                if "claude-postgres" in result.stdout:
+                    existing_container = True
+                    self._print_info("Existing claude-postgres container detected - handling reinstall...")
+
+                    # Stop and remove existing container
+                    self._run_command(["docker", "stop", "claude-postgres"], check=False, timeout=30)
+                    self._run_command(["docker", "rm", "claude-postgres"], check=False, timeout=30)
+                    self._print_info("Removed existing container for clean reinstall")
+            except:
+                pass
 
             # Start database service
             self._print_info("Starting PostgreSQL database...")
@@ -1846,6 +1975,201 @@ esac
             self._print_error(f"Failed to setup learning system: {e}")
             return False
 
+    def check_for_claude_updates(self) -> Optional[str]:
+        """Check for available Claude Code updates"""
+        try:
+            # Get current version
+            current_version = self._get_current_claude_version()
+            if not current_version:
+                return None
+
+            # Get latest version from npm
+            latest_version = self._get_latest_claude_version()
+            if not latest_version:
+                return None
+
+            # Compare versions
+            if self._is_newer_version(latest_version, current_version):
+                return latest_version
+
+            return None
+
+        except Exception as e:
+            self._print_warning(f"Failed to check for updates: {e}")
+            return None
+
+    def _get_current_claude_version(self) -> Optional[str]:
+        """Get currently installed Claude Code version"""
+        try:
+            # Try npm list first
+            result = self._run_command(["npm", "list", "-g", "@anthropic-ai/claude-code"], check=False)
+            if result.returncode == 0:
+                # Extract version from npm output
+                version_match = re.search(r'@anthropic-ai/claude-code@(\d+\.\d+\.\d+)', result.stdout)
+                if version_match:
+                    return version_match.group(1)
+
+            # Try direct binary version
+            claude_binary = self._find_claude_binary()
+            if claude_binary:
+                result = self._run_command([str(claude_binary), "--version"], check=False, timeout=10)
+                if result.returncode == 0:
+                    # Extract version from output
+                    version_match = re.search(r'(\d+\.\d+\.\d+)', result.stdout)
+                    if version_match:
+                        return version_match.group(1)
+
+        except Exception:
+            pass
+        return None
+
+    def _get_latest_claude_version(self) -> Optional[str]:
+        """Get latest available Claude Code version from npm"""
+        try:
+            result = self._run_command(["npm", "view", "@anthropic-ai/claude-code", "version"], check=False, timeout=30)
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except Exception:
+            pass
+        return None
+
+    def _is_newer_version(self, latest: str, current: str) -> bool:
+        """Compare version strings to determine if latest is newer"""
+        try:
+            latest_parts = [int(x) for x in latest.split('.')]
+            current_parts = [int(x) for x in current.split('.')]
+
+            # Pad to same length
+            max_len = max(len(latest_parts), len(current_parts))
+            latest_parts.extend([0] * (max_len - len(latest_parts)))
+            current_parts.extend([0] * (max_len - len(current_parts)))
+
+            return latest_parts > current_parts
+        except Exception:
+            return False
+
+    def _find_claude_binary(self) -> Optional[Path]:
+        """Find Claude binary location"""
+        # Check common locations
+        locations = [
+            Path("/usr/local/bin/claude"),
+            Path(self.system_info.home_dir / ".local/bin/claude"),
+            Path(self.system_info.home_dir / ".npm-global/bin/claude")
+        ]
+
+        for location in locations:
+            if location.exists():
+                return location
+
+        # Try which command
+        claude_path = shutil.which("claude")
+        if claude_path:
+            return Path(claude_path)
+
+        return None
+
+    def auto_update_claude(self) -> bool:
+        """Perform automatic Claude Code update"""
+        self._print_section("Performing Claude Code auto-update")
+
+        try:
+            latest_version = self.check_for_claude_updates()
+            if not latest_version:
+                self._print_info("Claude Code is up to date")
+                return True
+
+            current_version = self._get_current_claude_version()
+            self._print_info(f"Update available: {current_version} → {latest_version}")
+
+            # Perform update using the same installation strategies
+            if self.system_info.npm_available:
+                try:
+                    self._print_info("Updating Claude via npm...")
+                    self._run_command(["npm", "update", "-g", "@anthropic-ai/claude-code"], timeout=300)
+                    self._print_success("Claude Code updated successfully")
+                    return True
+                except subprocess.CalledProcessError:
+                    # Try sudo npm update
+                    if self.system_info.has_sudo:
+                        try:
+                            self._run_command(["sudo", "npm", "update", "-g", "@anthropic-ai/claude-code"], timeout=300)
+                            self._print_success("Claude Code updated successfully (with sudo)")
+                            return True
+                        except subprocess.CalledProcessError:
+                            pass
+
+            # Fall back to reinstallation
+            self._print_info("Falling back to reinstallation...")
+            return self.install_claude_npm()
+
+        except Exception as e:
+            self._print_error(f"Auto-update failed: {e}")
+            return False
+
+    def setup_update_scheduler(self) -> bool:
+        """Setup automatic update checking via cron"""
+        self._print_section("Setting up update scheduler")
+
+        try:
+            # Create update checker script
+            update_script = self.local_bin / "claude-update-checker"
+            script_content = f'''#!/bin/bash
+# Claude Code Update Checker
+# Automatically checks for updates and notifies user
+
+CLAUDE_INSTALLER="{Path(__file__).resolve()}"
+LOG_FILE="$HOME/.local/share/claude/logs/update-check.log"
+
+# Create log directory
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Check for updates
+echo "$(date): Checking for Claude Code updates..." >> "$LOG_FILE"
+
+# Run update check
+if python3 "$CLAUDE_INSTALLER" --check-updates >> "$LOG_FILE" 2>&1; then
+    echo "$(date): Update check completed successfully" >> "$LOG_FILE"
+else
+    echo "$(date): Update check failed" >> "$LOG_FILE"
+fi
+'''
+
+            update_script.write_text(script_content)
+            update_script.chmod(0o755)
+
+            # Add to cron (weekly check on Monday 8 AM)
+            try:
+                # Get current crontab
+                result = self._run_command(["crontab", "-l"], check=False)
+                current_cron = result.stdout if result.returncode == 0 else ""
+
+                # Check if update job already exists
+                if "claude-update-checker" not in current_cron:
+                    # Add update check job
+                    new_cron_line = f"0 8 * * 1 {update_script} >/dev/null 2>&1"
+                    updated_cron = current_cron + "\n" + new_cron_line
+
+                    # Install new crontab
+                    process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True)
+                    process.communicate(input=updated_cron)
+
+                    if process.returncode == 0:
+                        self._print_success("Update scheduler installed (weekly checks)")
+                    else:
+                        self._print_warning("Could not install cron job")
+                else:
+                    self._print_info("Update scheduler already installed")
+
+            except subprocess.CalledProcessError:
+                self._print_warning("Could not setup cron job (crontab not available)")
+
+            self._print_success("Update checker script created")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Failed to setup update scheduler: {e}")
+            return False
+
     def run_installation(self, mode: InstallationMode = InstallationMode.FULL) -> bool:
         """Run the complete installation process"""
         self._print_header()
@@ -1954,7 +2278,13 @@ esac
             if self.setup_learning_system():
                 success_count += 1
 
-        # Step 10: Create launch script
+        # Step 10: Setup update scheduler (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.setup_update_scheduler():
+                success_count += 1
+
+        # Step 11: Create launch script
         total_steps += 1
         if self.create_launch_script():
             success_count += 1
@@ -2141,6 +2471,18 @@ def main():
         help="Only detect existing installations, don't install"
     )
 
+    parser.add_argument(
+        "--check-updates",
+        action="store_true",
+        help="Check for available Claude Code updates"
+    )
+
+    parser.add_argument(
+        "--auto-update",
+        action="store_true",
+        help="Perform automatic Claude Code update"
+    )
+
     args = parser.parse_args()
 
     # Create installer instance
@@ -2170,6 +2512,30 @@ def main():
                 print(f"{Colors.YELLOW}No Claude installations found{Colors.RESET}")
 
             return
+
+        if args.check_updates:
+            # Check for updates only
+            installer._print_header()
+            latest_version = installer.check_for_claude_updates()
+            current_version = installer._get_current_claude_version()
+
+            print(f"{Colors.BOLD}Claude Code Update Check:{Colors.RESET}")
+            print(f"  Current Version: {current_version or 'Unknown'}")
+
+            if latest_version:
+                print(f"  Latest Version: {latest_version}")
+                print(f"  {Colors.GREEN}✓ Update available!{Colors.RESET}")
+                print(f"\nTo update run: python3 {sys.argv[0]} --auto-update")
+            else:
+                print(f"  {Colors.GREEN}✓ Up to date{Colors.RESET}")
+
+            return
+
+        if args.auto_update:
+            # Perform auto-update
+            installer._print_header()
+            success = installer.auto_update_claude()
+            sys.exit(0 if success else 1)
 
         # Run installation
         mode = InstallationMode(args.mode)

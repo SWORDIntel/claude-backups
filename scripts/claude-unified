@@ -48,12 +48,54 @@ ORCHESTRATOR_PATH="$CLAUDE_PROJECT_ROOT/agents/src/python/production_orchestrato
 TANDEM_ORCHESTRATOR="$CLAUDE_PROJECT_ROOT/agents/src/python/tandem_orchestrator.py"
 
 # Feature flags
-PERMISSION_BYPASS="${CLAUDE_PERMISSION_BYPASS:-true}"
 ORCHESTRATION_ENABLED="${CLAUDE_ORCHESTRATION:-true}"
 AUTO_SUGGEST="${CLAUDE_AUTO_SUGGEST:-true}"
 LEARNING_MODE="${CLAUDE_LEARNING:-true}"
 DEBUG_MODE="${CLAUDE_DEBUG:-false}"
 SUGGESTION_TIMEOUT="${CLAUDE_TIMEOUT:-5}"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PERMISSION BYPASS LOGIC
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+should_bypass_permissions() {
+    # Check if explicitly disabled
+    if [[ "${CLAUDE_PERMISSION_BYPASS:-}" == "false" ]]; then
+        return 1
+    fi
+
+    # Check for SSH environment
+    if [[ -n "${SSH_CLIENT:-}" ]] || [[ -n "${SSH_TTY:-}" ]]; then
+        echo -e "${YELLOW}🔓 Auto permission bypass enabled (SSH environment detected)${NC}" >&2
+        return 0
+    fi
+
+    # Check for Docker container
+    if [[ -f "/.dockerenv" ]]; then
+        echo -e "${YELLOW}🔓 Auto permission bypass enabled (Docker container detected)${NC}" >&2
+        return 0
+    fi
+
+    # Check for other headless indicators
+    if [[ -z "${DISPLAY:-}" ]] && [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+        echo -e "${YELLOW}🔓 Auto permission bypass enabled (headless environment detected)${NC}" >&2
+        return 0
+    fi
+
+    # Check for LiveCD indicators (common mount patterns)
+    if mount | grep -q "on / type tmpfs\|on / type aufs\|on / type overlay"; then
+        echo -e "${YELLOW}🔓 Auto permission bypass enabled (LiveCD environment detected)${NC}" >&2
+        return 0
+    fi
+
+    # Default to bypass if CLAUDE_PERMISSION_BYPASS is true (default)
+    if [[ "${CLAUDE_PERMISSION_BYPASS:-true}" == "true" ]]; then
+        echo -e "${YELLOW}🔓 Auto permission bypass enabled (default mode)${NC}" >&2
+        return 0
+    fi
+
+    return 1
+}
 
 # Colors and icons
 readonly GREEN='\033[0;32m'
@@ -480,11 +522,30 @@ show_status() {
     echo -e "${CYAN}${BOLD}              Claude Ultimate System Status${NC}"
     echo -e "${CYAN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
     echo
-    
+
     local binary=$(find_claude_binary)
     echo "Binary: ${binary:-Not found}"
     echo "Project Root: $CLAUDE_PROJECT_ROOT"
-    echo "Permission Bypass: $PERMISSION_BYPASS"
+
+    # Show permission bypass status with environment detection
+    if should_bypass_permissions >/dev/null 2>&1; then
+        echo -e "Permission Bypass: ${GREEN}✓ Enabled${NC}"
+        # Check specific environment
+        if [[ -n "${SSH_CLIENT:-}" ]] || [[ -n "${SSH_TTY:-}" ]]; then
+            echo "  └─ Environment: SSH"
+        elif [[ -f "/.dockerenv" ]]; then
+            echo "  └─ Environment: Docker"
+        elif [[ -z "${DISPLAY:-}" ]] && [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+            echo "  └─ Environment: Headless"
+        elif mount | grep -q "on / type tmpfs\|on / type aufs\|on / type overlay"; then
+            echo "  └─ Environment: LiveCD"
+        else
+            echo "  └─ Environment: Default"
+        fi
+    else
+        echo -e "Permission Bypass: ${YELLOW}✗ Disabled${NC}"
+    fi
+
     echo "Orchestration: $ORCHESTRATION_ENABLED"
     echo "Learning Mode: $LEARNING_MODE"
     echo "Auto Suggest: $AUTO_SUGGEST"
@@ -627,7 +688,7 @@ main() {
             fi
             
             # Execute with Claude
-            if [[ "$PERMISSION_BYPASS" == "true" ]]; then
+            if should_bypass_permissions; then
                 exec "$binary" --dangerously-skip-permissions /task "$task_text"
             else
                 exec "$binary" /task "$task_text"
@@ -636,7 +697,7 @@ main() {
         *)
             # Default execution
             update_metrics "direct" "0"
-            if [[ "$PERMISSION_BYPASS" == "true" ]]; then
+            if should_bypass_permissions; then
                 exec "$binary" --dangerously-skip-permissions "$@"
             else
                 exec "$binary" "$@"

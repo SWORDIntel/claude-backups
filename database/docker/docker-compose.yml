@@ -1,144 +1,26 @@
 version: '3.8'
 
 services:
-  # PostgreSQL 16/17 with pgvector
   postgres:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.postgres
+    image: pgvector/pgvector:0.7.0-pg16
     container_name: claude-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-claude_agent}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claude_secure_password}
-      POSTGRES_DB: ${POSTGRES_DB:-claude_agents_auth}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - ../data/postgresql:/var/lib/postgresql/data/pgdata
-      - ./init-learning-system.sql:/docker-entrypoint-initdb.d/01-init-learning-system.sql
-      - ./enable-extensions.sql:/docker-entrypoint-initdb.d/00-enable-extensions.sql
-      - /var/run/postgresql:/var/run/postgresql
+      POSTGRES_DB: claude_agents_auth
+      POSTGRES_USER: claude_agent
+      POSTGRES_PASSWORD: claude_secure_2024
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     ports:
       - "5433:5432"
-    networks:
-      - claude-network
-    restart: unless-stopped
+    volumes:
+      - claude_postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-claude_agent} -d ${POSTGRES_DB:-claude_agents_auth}"]
+      test: ["CMD-SHELL", "pg_isready -U claude_agent -d claude_agents_auth"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Enhanced Learning System with Real-time Sync
-  learning-system:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.learning-enhanced
-    container_name: claude-learning-system
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-claude_agent}:${POSTGRES_PASSWORD:-claude_secure_password}@postgres:5432/${POSTGRES_DB:-claude_agents_auth}
-      REDIS_URL: redis://redis:6379/0
-      PYTHONPATH: /app
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      LEARNING_SYNC_ENABLED: "true"
-    volumes:
-      - ../../agents/src/python:/app/agents/src/python
-      - ../learning_data:/app/learning_data
-      - /var/run/postgresql:/var/run/postgresql
-      - ~/.claude-home/learning_logs:/app/learning_logs:ro
-    ports:
-      - "8080:8080"
-    networks:
-      - claude-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Agent Bridge Communication Hub
-  agent-bridge:
-    build:
-      context: .
-      dockerfile: Dockerfile.bridge
-    container_name: claude-agent-bridge
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-claude_agent}:${POSTGRES_PASSWORD:-claude_secure_password}@postgres:5432/${POSTGRES_DB:-claude_agents_auth}
-      LEARNING_SYSTEM_URL: http://learning-system:8080
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    volumes:
-      - ../../agents:/app/agents
-      - /var/run/postgresql:/var/run/postgresql
-    ports:
-      - "8081:8081"
-    networks:
-      - claude-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      learning-system:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Redis for caching
-  redis:
-    image: redis:7-alpine
-    container_name: claude-redis
-    ports:
-      - "6379:6379"
-    networks:
-      - claude-network
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Prometheus monitoring
-  prometheus:
-    image: prom/prometheus:v2.45.0
-    container_name: claude-prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    ports:
-      - "9091:9090"
-    networks:
-      - claude-network
-    depends_on:
-      - postgres
-      - learning-system
-      - agent-bridge
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-networks:
-  claude-network:
-    external:
-      name: claude-backups_claude_network
 
 volumes:
-  redis-data:
-  prometheus-data:
+  claude_postgres_data:
+    driver: local
