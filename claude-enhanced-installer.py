@@ -2314,6 +2314,9 @@ fi
                     else:
                         self._print_warning("Could not install cron package")
 
+                except Exception:
+                    self._print_warning("Failed to install cron package")
+
             self._print_success("Update checker script created")
             return True
 
@@ -2645,7 +2648,8 @@ def main():
     parser.add_argument(
         "--auto", "-a",
         action="store_true",
-        help="Auto mode - no user prompts"
+        default=True,
+        help="Auto mode - no user prompts (default: enabled)"
     )
 
     parser.add_argument(
@@ -2671,7 +2675,7 @@ def main():
     # Create installer instance
     installer = ClaudeEnhancedInstaller(
         verbose=args.verbose,
-        auto_mode=args.auto
+        auto_mode=True  # Always use auto mode by default
     )
 
     try:
