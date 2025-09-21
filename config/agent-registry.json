@@ -1,0 +1,995 @@
+{
+  "metadata": {
+    "version": "7.0",
+    "total_agents": 41,
+    "database_enabled": false,
+    "database_port": 5432,
+    "registry_status": "active",
+    "last_updated": "2025-09-21T01:38:54.716028",
+    "binary_protocol": false,
+    "python_fallback": true,
+    "generated_by": "dynamic_registry_generator",
+    "source_directory": "agents"
+  },
+  "agents": [
+    {
+      "name": "AGENTSMITH-DISASSEMBLER",
+      "uuid": "auto-agentsmith-disassembler-001",
+      "category": "GENERAL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/AGENTSMITH-DISASSEMBLER.md",
+      "file_name": "AGENTSMITH-DISASSEMBLER.md",
+      "last_modified": "2025-09-21T01:19:16.500230"
+    },
+    {
+      "name": "AGENTSMITH",
+      "uuid": "auto-agentsmith-001",
+      "category": "GENERAL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 9,
+      "capability_list": [
+        "Swift: \"iOS/macOS development, SwiftUI, Combine",
+        "Ruby: \"Rails, Sinatra, gem management, scripting",
+        "Scala: \"JVM integration, Akka, Spark, functional programming",
+        "Julia: \"Scientific computing, ML, numerical analysis",
+        "R: \"Statistics, data analysis, bioinformatics, visualization"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/AGENTSMITH.md",
+      "file_name": "AGENTSMITH.md",
+      "last_modified": "2025-09-15T17:44:33.225162"
+    },
+    {
+      "name": "APT41-DEFENSE-AGENT",
+      "uuid": "auto-apt41-defense-agent-001",
+      "category": "SECURITY",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 12,
+      "capability_list": [
+        "INTELLIGENT      # Python orchestrates, C executes",
+        "PYTHON_ONLY     # When C unavailable",
+        "REDUNDANT       # Both for critical operations",
+        "CONSENSUS       # Both must agree on detection",
+        "Full APT41 detection logic"
+      ],
+      "clusters": [
+        "security"
+      ],
+      "file_path": "agents/APT41-DEFENSE-AGENT.md",
+      "file_name": "APT41-DEFENSE-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.225162"
+    },
+    {
+      "name": "APT41-REDTEAM-AGENT",
+      "uuid": "auto-apt41-redteam-agent-001",
+      "category": "SECURITY",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 12,
+      "capability_list": [
+        "INTELLIGENT      # Python orchestrates, C executes",
+        "PYTHON_ONLY     # For complex attack chains",
+        "CONTROLLED      # Step-by-step with approval",
+        "ISOLATED       # Completely sandboxed",
+        "TTP orchestration"
+      ],
+      "clusters": [
+        "security"
+      ],
+      "file_path": "agents/APT41-REDTEAM-AGENT.md",
+      "file_name": "APT41-REDTEAM-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.225162"
+    },
+    {
+      "name": "ASSEMBLY-INTERNAL-AGENT",
+      "uuid": "a55e9b17-4321-4567-89ab-cdef01234567",
+      "category": "INTERNAL",
+      "priority": "CRITICAL",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 20,
+      "capability_list": [
+        "Peephole optimization",
+        "Instruction combining",
+        "Dead code elimination",
+        "Constant folding",
+        "Graph coloring"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/ASSEMBLY-INTERNAL-AGENT.md",
+      "file_name": "ASSEMBLY-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.556493"
+    },
+    {
+      "name": "BGP-PURPLE-TEAM-AGENT",
+      "uuid": "auto-bgp-purple-team-agent-001",
+      "category": "NETWORK_SYSTEMS",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "network"
+      ],
+      "file_path": "agents/BGP-PURPLE-TEAM-AGENT.md",
+      "file_name": "BGP-PURPLE-TEAM-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.225998"
+    },
+    {
+      "name": "C-INTERNAL",
+      "uuid": "auto-c-internal-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 14,
+      "capability_list": [
+        "INTELLIGENT      # Default: Python orchestrates, C executes",
+        "PYTHON_ONLY     # Fallback when C unavailable",
+        "REDUNDANT       # Both layers for critical operations",
+        "CONSENSUS       # Both must agree on results",
+        "Full C-INTERNAL functionality in Python"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/C-INTERNAL.md",
+      "file_name": "C-INTERNAL.md",
+      "last_modified": "2025-09-20T23:26:54.767931"
+    },
+    {
+      "name": "C-MAKE-INTERNAL",
+      "uuid": "auto-c-make-internal-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/C-MAKE-INTERNAL.md",
+      "file_name": "C-MAKE-INTERNAL.md",
+      "last_modified": "2025-09-17T10:19:22.375773"
+    },
+    {
+      "name": "CARBON-INTERNAL-AGENT",
+      "uuid": "auto-carbon-internal-agent-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 4,
+      "capability_list": [
+        "Package temperature",
+        "Core temperatures",
+        "PCH temperature",
+        "M.2 SSD temperature"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/CARBON-INTERNAL-AGENT.md",
+      "file_name": "CARBON-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.558012"
+    },
+    {
+      "name": "CHAOS-AGENT",
+      "uuid": "auto-chaos-agent-001",
+      "category": "GENERAL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 5,
+      "capability_list": [
+        "publish_subscribe",
+        "request_response",
+        "work_queues",
+        "broadcast",
+        "multicast"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/CHAOS-AGENT.md",
+      "file_name": "CHAOS-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.558438"
+    },
+    {
+      "name": "CISCO-AGENT",
+      "uuid": "auto-cisco-agent-001",
+      "category": "NETWORK_SYSTEMS",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 41,
+      "capability_list": [
+        "IOS image recovery via TFTP/FTP",
+        "Boot from USB/Flash recovery",
+        "Emergency boot procedures",
+        "Corrupted IOS restoration",
+        "Break sequence during boot (Ctrl+Break)"
+      ],
+      "clusters": [
+        "network"
+      ],
+      "file_path": "agents/CISCO-AGENT.md",
+      "file_name": "CISCO-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.226998"
+    },
+    {
+      "name": "COGNITIVE_DEFENSE_AGENT",
+      "uuid": "auto-cognitive_defense_agent-001",
+      "category": "SECURITY",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 42,
+      "capability_list": [
+        "linguistic_analysis: \"Loaded language, logical fallacies, persuasion patterns",
+        "behavioral_anomalies: \"Bot swarms, amplification patterns, coordinated behavior",
+        "temporal_analysis: \"Synchronized posting, campaign timing",
+        "network_topology: \"Inauthentic connections, influence networks",
+        "origin_tracing: \"Narrative source identification"
+      ],
+      "clusters": [
+        "security"
+      ],
+      "file_path": "agents/COGNITIVE_DEFENSE_AGENT.md",
+      "file_name": "COGNITIVE_DEFENSE_AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.226998"
+    },
+    {
+      "name": "CPP-GUI-INTERNAL",
+      "uuid": "auto-cpp-gui-internal-001",
+      "category": "PLATFORMS",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/CPP-GUI-INTERNAL.md",
+      "file_name": "CPP-GUI-INTERNAL.md",
+      "last_modified": "2025-09-15T17:44:33.226998"
+    },
+    {
+      "name": "CPP-INTERNAL-AGENT",
+      "uuid": "auto-cpp-internal-agent-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 8,
+      "capability_list": [
+        "Direct binary execution",
+        "JIT compilation",
+        "Dynamic library loading",
+        "Symbol resolution",
+        "Build system automation"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/CPP-INTERNAL-AGENT.md",
+      "file_name": "CPP-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.226998"
+    },
+    {
+      "name": "DART-INTERNAL-AGENT",
+      "uuid": "d4a2b8c1-f9e7-4d3a-b8c6-1a7f2e9d4b8c",
+      "category": "Language-Specific Development",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 20,
+      "capability_list": [
+        "Flutter cross-platform development",
+        "Advanced Dart language programming",
+        "State management architecture (BLoC, Provider, Riverpod)",
+        "Custom widget development and composition",
+        "Advanced animation and UI systems"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/DART-INTERNAL-AGENT.md",
+      "file_name": "DART-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.227998"
+    },
+    {
+      "name": "DISASSEMBLER",
+      "uuid": "d1s45m-b13r-an4l-y515-d1545m031001",
+      "category": "SECURITY",
+      "priority": "CRITICAL",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 12,
+      "capability_list": [
+        "binary_analysis",
+        "reverse_engineering",
+        "malware_analysis",
+        "ghidra_integration",
+        "hostile_file_analysis",
+        "vm_isolation",
+        "yara_rules",
+        "ioc_extraction",
+        "threat_intelligence",
+        "vulnerability_detection",
+        "exploit_analysis",
+        "security_coordination"
+      ],
+      "clusters": [
+        "security",
+        "analysis"
+      ],
+      "file_path": "agents/DISASSEMBLER.md",
+      "file_name": "DISASSEMBLER.md",
+      "last_modified": "2025-09-21T01:38:54.715995"
+    },
+    {
+      "name": "Real-time Monitoring & Diagnostics",
+      "uuid": "ddwr7-r0u7-3r55-h4x0-ddwr70000001",
+      "category": "INFRASTRUCTURE",
+      "priority": "HIGH",
+      "status": "",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 5,
+      "capability_list": [
+        "publish_subscribe",
+        "request_response",
+        "work_queues",
+        "broadcast",
+        "multicast"
+      ],
+      "clusters": [
+        "network"
+      ],
+      "file_path": "agents/DDWRT-AGENT.md",
+      "file_name": "DDWRT-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.561388"
+    },
+    {
+      "name": "DIRECTOR",
+      "uuid": "auto-director-001",
+      "category": "COMMAND_CONTROL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 17,
+      "capability_list": [
+        "INTELLIGENT      # Default: Python orchestrates, C executes",
+        "PYTHON_ONLY     # Fallback when C unavailable",
+        "REDUNDANT       # Both layers for critical decisions",
+        "CONSENSUS       # Both must agree on strategy",
+        "Full strategic planning in Python"
+      ],
+      "clusters": [
+        "management"
+      ],
+      "file_path": "agents/DIRECTOR.md",
+      "file_name": "DIRECTOR.md",
+      "last_modified": "2025-09-15T17:44:33.227998"
+    },
+    {
+      "name": "DOCKER-AGENT",
+      "uuid": "auto-docker-agent-001",
+      "category": "INFRASTRUCTURE",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 5,
+      "capability_list": [
+        "Combine RUN commands",
+        "Order by change frequency",
+        "Use specific versions",
+        "Minimize layer count",
+        "Leverage build cache"
+      ],
+      "clusters": [
+        "infrastructure"
+      ],
+      "file_path": "agents/DOCKER-AGENT.md",
+      "file_name": "DOCKER-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.228998"
+    },
+    {
+      "name": "GHOST-PROTOCOL-AGENT",
+      "uuid": "auto-ghost-protocol-agent-001",
+      "category": "SECURITY",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "security"
+      ],
+      "file_path": "agents/GHOST-PROTOCOL-AGENT.md",
+      "file_name": "GHOST-PROTOCOL-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.228998"
+    },
+    {
+      "name": "GO-INTERNAL-AGENT",
+      "uuid": "auto-go-internal-agent-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 10,
+      "capability_list": [
+        "Full Go toolchain automation",
+        "Async goroutine simulation",
+        "Module dependency resolution",
+        "Cross-compilation orchestration",
+        "High-speed Go compilation"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/GO-INTERNAL-AGENT.md",
+      "file_name": "GO-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.564352"
+    },
+    {
+      "name": "IOT-ACCESS-CONTROL-AGENT",
+      "uuid": "auto-iot-access-control-agent-001",
+      "category": "NETWORK_SYSTEMS",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "network"
+      ],
+      "file_path": "agents/IOT-ACCESS-CONTROL-AGENT.md",
+      "file_name": "IOT-ACCESS-CONTROL-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.229998"
+    },
+    {
+      "name": "JAVA-INTERNAL-AGENT",
+      "uuid": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+      "category": "INTERNAL",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 60,
+      "capability_list": [
+        "Java 8-21 features mastery",
+        "Lambda expressions and streams",
+        "Optional and CompletableFuture",
+        "Records and sealed classes",
+        "Pattern matching and switch expressions"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/JAVA-INTERNAL-AGENT.md",
+      "file_name": "JAVA-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.566013"
+    },
+    {
+      "name": "JULIA-INTERNAL-AGENT",
+      "uuid": "auto-julia-internal-agent-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/JULIA-INTERNAL-AGENT.md",
+      "file_name": "JULIA-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.229998"
+    },
+    {
+      "name": "Android Excellence",
+      "uuid": "k0tl1n-1nt3-rn4l-4g3n-t00000000001",
+      "category": "INTERNAL",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 5,
+      "capability_list": [
+        "request_response",
+        "streaming",
+        "batch_processing",
+        "async_execution",
+        "parallel_tasks"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/KOTLIN-INTERNAL-AGENT.md",
+      "file_name": "KOTLIN-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.566700"
+    },
+    {
+      "name": "MATLAB-INTERNAL",
+      "uuid": "auto-matlab-internal-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/MATLAB-INTERNAL.md",
+      "file_name": "MATLAB-INTERNAL.md",
+      "last_modified": "2025-09-15T17:44:33.230998"
+    },
+    {
+      "name": "ORCHESTRATOR",
+      "uuid": "auto-orchestrator-001",
+      "category": "COMMAND_CONTROL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 18,
+      "capability_list": [
+        "INTELLIGENT      # Default: Python coordinates, C routes messages",
+        "PYTHON_ONLY     # Fallback when C unavailable",
+        "REDUNDANT       # Both layers for critical coordination",
+        "SPEED_CRITICAL  # C only for maximum throughput",
+        "Full workflow coordination in Python"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/ORCHESTRATOR.md",
+      "file_name": "ORCHESTRATOR.md",
+      "last_modified": "2025-09-15T17:44:33.231998"
+    },
+    {
+      "name": "PHP-INTERNAL-AGENT",
+      "uuid": "p8h3p2l1-a9r7-4v5e-l1m8-3n7t2e9r4n6a",
+      "category": "Language-Specific Development",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 20,
+      "capability_list": [
+        "Modern PHP 8.3+ development with latest language features",
+        "Laravel framework mastery (10.x+ and 11.x) with advanced patterns",
+        "Advanced OOP, traits, enums, and PHP 8.3+ union/intersection types",
+        "High-performance web API development (REST, GraphQL, gRPC)",
+        "Enterprise database integration (MySQL, PostgreSQL, Redis, MongoDB)"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/PHP-INTERNAL-AGENT.md",
+      "file_name": "PHP-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.231998"
+    },
+    {
+      "name": "PROJECTORCHESTRATOR",
+      "uuid": "auto-projectorchestrator-001",
+      "category": "COMMAND_CONTROL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 18,
+      "capability_list": [
+        "INTELLIGENT      # Default: Python coordinates, C routes messages",
+        "PYTHON_ONLY     # Fallback when C unavailable",
+        "REDUNDANT       # Both layers for critical coordination",
+        "SPEED_CRITICAL  # C only for maximum throughput",
+        "Full workflow coordination in Python"
+      ],
+      "clusters": [
+        "management"
+      ],
+      "file_path": "agents/PROJECTORCHESTRATOR.md",
+      "file_name": "PROJECTORCHESTRATOR.md",
+      "last_modified": "2025-09-15T17:44:33.231998"
+    },
+    {
+      "name": "DR Planning",
+      "uuid": "pr0xm0x-v1r7-m4n4-g3r0-pr0xm0x0001",
+      "category": "INFRASTRUCTURE",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 5,
+      "capability_list": [
+        "publish_subscribe",
+        "request_response",
+        "work_queues",
+        "broadcast",
+        "multicast"
+      ],
+      "clusters": [
+        "infrastructure"
+      ],
+      "file_path": "agents/PROXMOX-AGENT.md",
+      "file_name": "PROXMOX-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.572201"
+    },
+    {
+      "name": "PSYOPS-AGENT",
+      "uuid": "auto-psyops-agent-001",
+      "category": "SECURITY",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 13,
+      "capability_list": [
+        "hero_journey: \"Position as protagonist",
+        "victim_narrative: \"Generate sympathy/support",
+        "threat_inflation: \"Amplify fear response",
+        "false_dichotomy: \"Binary choice manipulation",
+        "story_hijacking: \"Co-opt existing narratives"
+      ],
+      "clusters": [
+        "security"
+      ],
+      "file_path": "agents/PSYOPS-AGENT.md",
+      "file_name": "PSYOPS-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.232998"
+    },
+    {
+      "name": "PYTHON-INTERNAL",
+      "uuid": "auto-python-internal-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 16,
+      "capability_list": [
+        "async_programming:",
+        "parallel_processing:",
+        "memory_management:",
+        "metaprogramming:",
+        "performance_optimization:"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/PYTHON-INTERNAL.md",
+      "file_name": "PYTHON-INTERNAL.md",
+      "last_modified": "2025-09-20T23:26:19.757982"
+    },
+    {
+      "name": "QADIRECTOR",
+      "uuid": "auto-qadirector-001",
+      "category": "COMMAND_CONTROL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "strategic_planning",
+        "project_coordination",
+        "decision_making"
+      ],
+      "clusters": [
+        "management"
+      ],
+      "file_path": "agents/QADIRECTOR.md",
+      "file_name": "QADIRECTOR.md",
+      "last_modified": "2025-09-15T17:44:33.232998"
+    },
+    {
+      "name": "REDTEAMORCHESTRATOR",
+      "uuid": "auto-redteamorchestrator-001",
+      "category": "COMMAND_CONTROL",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 14,
+      "capability_list": [
+        "INTELLIGENT      # Default: Python orchestrates, C executes",
+        "PYTHON_ONLY     # Fallback when C unavailable",
+        "REDUNDANT       # Both layers for critical operations",
+        "CONSENSUS       # Both must agree on results",
+        "Full REDTEAMORCHESTRATOR functionality in Python"
+      ],
+      "clusters": [
+        "security"
+      ],
+      "file_path": "agents/REDTEAMORCHESTRATOR.md",
+      "file_name": "REDTEAMORCHESTRATOR.md",
+      "last_modified": "2025-09-15T17:44:33.233998"
+    },
+    {
+      "name": "Seamless FFI",
+      "uuid": "a7f3d8e2-9b4c-4e7a-8f5d-2c1b9e4a7f3d",
+      "category": "INTERNAL",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 24,
+      "capability_list": [
+        "Async/await with Tokio/async-std",
+        "Zero-copy serialization (serde, bincode)",
+        "Lock-free concurrent data structures",
+        "SIMD vectorization and intrinsics",
+        "Const generics and compile-time computation"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/RUST-INTERNAL-AGENT.md",
+      "file_name": "RUST-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.575300"
+    },
+    {
+      "name": "SECURITYCHAOSAGENT",
+      "uuid": "auto-securitychaosagent-001",
+      "category": "SECURITY",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 5,
+      "capability_list": [
+        "publish_subscribe",
+        "request_response",
+        "work_queues",
+        "broadcast",
+        "multicast"
+      ],
+      "clusters": [
+        "security"
+      ],
+      "file_path": "agents/SECURITYCHAOSAGENT.md",
+      "file_name": "SECURITYCHAOSAGENT.md",
+      "last_modified": "2025-09-20T23:09:01.576299"
+    },
+    {
+      "name": "OLAP and Data Warehousing",
+      "uuid": "5q1-1n73-rn41-4g3n-7v8-5q11n73rn41",
+      "category": "INTERNAL",
+      "priority": "CRITICAL",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 23,
+      "capability_list": [
+        "SQL parsing and validation",
+        "Query plan generation",
+        "ORM integration (SQLAlchemy)",
+        "Connection pool management",
+        "sqlparse: SQL parsing"
+      ],
+      "clusters": [
+        "data"
+      ],
+      "file_path": "agents/SQL-INTERNAL-AGENT.md",
+      "file_name": "SQL-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.576736"
+    },
+    {
+      "name": "TYPESCRIPT-INTERNAL-AGENT",
+      "uuid": "7f4e3c21-8b9a-4d52-b6f1-2a9c5e8d7b3f",
+      "category": "INTERNAL",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 30,
+      "capability_list": [
+        "TypeScript \u2192 JavaScript conversion",
+        "JSX/TSX transformation",
+        "Decorator processing",
+        "Module resolution",
+        "Source map generation"
+      ],
+      "clusters": [
+        "language_specialists"
+      ],
+      "file_path": "agents/TYPESCRIPT-INTERNAL-AGENT.md",
+      "file_name": "TYPESCRIPT-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-20T23:09:01.578487"
+    },
+    {
+      "name": "XML-INTERNAL",
+      "uuid": "77d904be-40dc-4bda-969e-d229e6c98863",
+      "category": "Language-Specific Development",
+      "priority": "HIGH",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/XML-INTERNAL.md",
+      "file_name": "XML-INTERNAL.md",
+      "last_modified": "2025-09-17T09:11:01.704108"
+    },
+    {
+      "name": "ZFS-INTERNAL",
+      "uuid": "auto-zfs-internal-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/ZFS-INTERNAL.md",
+      "file_name": "ZFS-INTERNAL.md",
+      "last_modified": "2025-09-20T23:26:56.863550"
+    },
+    {
+      "name": "ZIG-INTERNAL-AGENT",
+      "uuid": "auto-zig-internal-agent-001",
+      "category": "LANGUAGE_SPECIFIC",
+      "priority": "MEDIUM",
+      "status": "PRODUCTION",
+      "health": 100.0,
+      "active_tasks": 0,
+      "capabilities": 3,
+      "capability_list": [
+        "general_assistance",
+        "task_execution",
+        "problem_solving"
+      ],
+      "clusters": [
+        "general"
+      ],
+      "file_path": "agents/ZIG-INTERNAL-AGENT.md",
+      "file_name": "ZIG-INTERNAL-AGENT.md",
+      "last_modified": "2025-09-15T17:44:33.234998"
+    }
+  ],
+  "statistics": {
+    "total_agents": 40,
+    "healthy_agents": 40,
+    "available_agents": 40,
+    "unhealthy_agents": [],
+    "categories": {
+      "GENERAL": 3,
+      "SECURITY": 6,
+      "INTERNAL": 6,
+      "NETWORK_SYSTEMS": 3,
+      "LANGUAGE_SPECIFIC": 10,
+      "PLATFORMS": 1,
+      "Language-Specific Development": 3,
+      "INFRASTRUCTURE": 3,
+      "COMMAND_CONTROL": 5
+    },
+    "priorities": {
+      "MEDIUM": 31,
+      "CRITICAL": 2,
+      "HIGH": 7
+    },
+    "avg_health_score": 100.0,
+    "total_tasks_completed": 0,
+    "total_errors": 0,
+    "error_rate": 0,
+    "binary_protocol_active": false,
+    "orchestration_rules": 3
+  },
+  "configuration": {
+    "communication": {
+      "protocol": "ultra_fast_binary_v3",
+      "throughput": "4.2M_msg_sec",
+      "latency": "200ns_p99",
+      "fallback_mode": "python_async"
+    },
+    "orchestration": {
+      "clusters_enabled": true,
+      "health_monitoring": true,
+      "auto_scaling": false,
+      "coordination_patterns": [
+        "sequential",
+        "parallel",
+        "pipeline",
+        "hierarchical"
+      ]
+    },
+    "learning": {
+      "ml_enabled": true,
+      "adaptation_rate": 0.1,
+      "pattern_recognition": true,
+      "performance_optimization": true
+    }
+  }
+}

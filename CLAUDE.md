@@ -15,7 +15,7 @@
 | **Agent Processing** | **4.91ms single task** | 🟢 **OPTIMIZED** | Sub-5ms response times |
 | **Batch Throughput** | **21,645 ops/sec** | 🟢 **HIGH** | 1000-task concurrent processing |
 | **NPU Utilization** | **100%** | 🟢 **MAXIMUM** | Full hardware acceleration |
-| **Agent Discovery** | **89 agents** | 🟢 **COMPLETE** | Full ecosystem operational |
+| **Agent Discovery** | **90 agents** | 🟢 **COMPLETE** | Full ecosystem operational with DISASSEMBLER |
 | **Shadowgit Processing** | **15B lines/sec** | 🟢 **MAXIMUM** | C-INTERNAL + NPU + AVX2 (4,688x improvement) |
 | **Git Performance Monitor** | **Real-time** | 🟢 **ACTIVE** | Performance analytics + optimization recommendations |
 | **HTML Documentation** | **14 files** | 🟢 **DEPLOYED** | Interactive docs + think mode portal |
@@ -52,7 +52,7 @@ FROM enhanced_learning.shadowgit_events;"
 **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)
 **Latest Feature**: **DIRECTOR Operation Complete (2025-09-20) - Universal Path Portability + Critical System Restoration**
 **Database**: PostgreSQL 16 with pgvector (DOCKER ONLY - Port 5433, auto-restart enabled)
-**Agent Count**: 90 agents (89 active + 1 template) - Complete ecosystem operational with C-MAKE-INTERNAL
+**Agent Count**: 91 agents (90 active + 1 template) - Complete ecosystem operational with DISASSEMBLER
 **Kernel Build**: Custom 6.12.6 with NPU (11 TOPS) + GNA (2 TOPS) + GPU (128 EUs) + ZFS 2.3.4
 **Learning Coverage**: ALL Git repositories system-wide via global hooks
 **NPU Integration**: **Intel AI Boost NPU** with OpenVINO 2025.3.0 runtime
@@ -180,13 +180,14 @@ The wrapper automatically finds agents in:
 - **DIRECTOR**: Strategic command and control (CRITICAL)
 - **PROJECTORCHESTRATOR**: Tactical coordination nexus (CRITICAL)
 
-### Security Specialists (22 agents)
+### Security Specialists (23 agents)
 - **SECURITY**: Comprehensive security analysis
 - **BASTION**: Defensive security specialist
 - **SECURITYCHAOSAGENT**: Distributed chaos testing
 - **SECURITYAUDITOR**: Advanced security audits
 - **CSO**: Chief Security Officer coordination
 - **CRYPTOEXPERT**: Cryptography and encryption
+- **DISASSEMBLER**: Elite binary analysis and reverse engineering specialist
 - **QUANTUMGUARD**: Quantum security protocols
 - **REDTEAMORCHESTRATOR**: Red team operations
 - **APT41-DEFENSE-AGENT**: Advanced persistent threat defense
@@ -2152,7 +2153,7 @@ docker ps | grep claude-postgres
 
 *Last Updated: 2025-09-16*
 *Framework Version: 8.0*
-*Agent Count: 90 agents (89 active + 1 template)*
+*Agent Count: 91 agents (90 active + 1 template)*
 *Hardware Agents: 4 vendor-specific agents (HARDWARE, HARDWARE-DELL, HARDWARE-HP, HARDWARE-INTEL)*
 *OpenVINO Runtime: 2025.3.0 with Intel AI Boost NPU acceleration*
 *NPU Integration: 29,005 ops/sec orchestration + 15B lines/sec Shadowgit performance*
