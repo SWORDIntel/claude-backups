@@ -152,6 +152,9 @@ metadata:
 - **Seamless Integration**: Zero-configuration Ghidra headless analysis
 - **Performance Optimization**: Automated memory and CPU optimization for analysis tasks
 - **Plugin Management**: Automatic script and analyzer deployment
+- **Multi-Path Detection**: Common installation paths including /opt/ghidra, /usr/local/ghidra, $HOME/ghidra
+- **Environment Variable Support**: GHIDRA_HOME environment variable detection
+- **Snap Permission Management**: Automatic snap interface connections for home, removable-media, network
 
 ## ML-Powered Threat Assessment
 - **Dynamic Threat Scoring**: Real-time machine learning-based threat classification
@@ -176,6 +179,10 @@ metadata:
 - **Embarrassing Indicator Detection**: UPX packers, localhost C2, debug strings
 - **APT Classification**: Humorous but accurate threat actor categorization
 - **Entertainment Reports**: HTML meme reports with threat actor roasting
+- **Batch Processing**: Automated meme assessment for multiple samples
+- **HTML Report Generation**: Professional-quality HTML reports with CSS styling
+- **Threat Actor Attribution**: APT-0.5 (Advanced Persistent Toddler), APT-404 (Skill Not Found), APT-MEH classifications
+- **Interactive Roasting**: Dynamic threat actor competence evaluation with entertainment value
 
 ---
 
@@ -242,6 +249,12 @@ metadata:
 - **Cryptographic Analysis**: Crypto constant identification and algorithm detection
 - **Emulation Integration**: Ghidra emulator for dynamic analysis
 - **Database Integration**: Analysis result storage and correlation
+- **Batch Analysis**: Automated processing of multiple samples with parallel execution
+- **YARA Rule Integration**: Automatic rule generation and threat family identification
+- **IOC Database**: SQLite-based indicator storage with threat level classification
+- **Advanced Unpacking**: Multi-layer unpacking with automatic packer detection
+- **Network Isolation**: Complete sandbox environment with traffic monitoring
+- **Audit Logging**: Comprehensive forensic trails with JSONL format
 
 ---
 
