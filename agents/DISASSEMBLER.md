@@ -205,6 +205,8 @@ metadata:
 - **Decompilation**: High-level code reconstruction from assembly
 - **Signature Matching**: YARA rule integration for malware family identification
 - **Plugin Management**: Custom Ghidra plugin development and deployment
+- **Hook Integration**: Seamless integration with `hooks/disassembler-hook.py` for automated binary monitoring
+- **Bridge Coordination**: `hooks/disassembler-bridge.py` provides agent coordination and result processing
 
 ## Security Analysis
 - **Vulnerability Detection**: Buffer overflow, format string, integer overflow detection
@@ -223,10 +225,12 @@ metadata:
 4. **File System Monitoring**: Real-time file system change tracking
 
 ## Analysis Workflow
-1. **Initial Triage**: File type identification, entropy analysis, string extraction
-2. **Static Analysis**: Disassembly, control flow analysis, vulnerability scanning
-3. **Dynamic Analysis**: Sandboxed execution with behavior monitoring
-4. **Intelligence Generation**: IOC extraction, YARA rule creation, threat classification
+1. **Binary Detection**: Automated file monitoring via `hooks/disassembler-hook.py` with magic number detection
+2. **Initial Triage**: File type identification, entropy analysis, string extraction
+3. **Static Analysis**: Disassembly, control flow analysis, vulnerability scanning
+4. **Dynamic Analysis**: Sandboxed execution with behavior monitoring
+5. **Intelligence Generation**: IOC extraction, YARA rule creation, threat classification
+6. **Result Processing**: `hooks/disassembler-bridge.py` coordinates agent invocation and result aggregation
 
 ## Security Measures
 - **Air-Gapped Analysis**: Isolated networks for hostile sample analysis
@@ -392,10 +396,12 @@ metadata:
 
 ### 🟡 **DEPLOYMENT REQUIREMENTS**
 1. **ULTRATHINK Script**: Ensure `/home/john/claude-backups/hooks/ghidra-integration.sh` is executable
-2. **Ghidra Installation**: Snap, native, or Docker Ghidra installation required
-3. **File Permissions**: Verify script has proper execution permissions
-4. **Environment Variables**: Optional ULTRATHINK configuration variables
-5. **Disk Space**: Adequate space for analysis workspace and quarantine directories
+2. **Hook Integration**: Install `hooks/disassembler-hook.py` and `hooks/disassembler-bridge.py`
+3. **Ghidra Installation**: Snap, native, or Docker Ghidra installation required
+4. **File Permissions**: Verify all scripts have proper execution permissions (755)
+5. **Python Dependencies**: Optional `python-magic` for enhanced file type detection
+6. **Environment Variables**: Optional ULTRATHINK configuration variables
+7. **Disk Space**: Adequate space for analysis workspace and quarantine directories
 
 ### ⚠️ **TESTING RECOMMENDATIONS**
 1. **Simulation Mode Testing**: Test all capabilities in simulation mode first
@@ -403,6 +409,72 @@ metadata:
 3. **Security Control Validation**: Confirm all security measures function properly
 4. **Performance Testing**: Validate analysis pipeline performance
 5. **Integration Testing**: Test coordination with other security agents
+
+---
+
+# Hook Integration System
+
+## Automated Binary Monitoring
+
+The DISASSEMBLER agent includes a comprehensive hook system for automated binary file detection and analysis:
+
+### Core Components
+
+1. **`hooks/disassembler-hook.py`** - Primary binary monitoring hook
+   - Automatic binary file detection (ELF, PE, Mach-O, etc.)
+   - Magic number validation and MIME type checking
+   - SHA256-based analysis caching to prevent duplicate work
+   - Async execution for high-performance processing
+   - Integration with ghidra-integration.sh framework
+
+2. **`hooks/disassembler-bridge.py`** - Agent coordination bridge
+   - Seamless agent invocation through Task tool simulation
+   - Result processing and security scoring (0-100 scale)
+   - Batch processing capabilities for directory scanning
+   - Complexity assessment (low/medium/high)
+   - Error handling and comprehensive logging
+
+3. **`hooks/test-disassembler-integration.py`** - Integration testing suite
+   - Complete workflow validation
+   - File type detection verification
+   - Cache functionality testing
+   - Ghidra integration validation
+
+### Usage Examples
+
+```bash
+# Analyze a single binary file
+./hooks/disassembler-hook.py --file /path/to/binary
+
+# Monitor directory for new binaries
+./hooks/disassembler-hook.py --directory /usr/bin --recursive
+
+# Process through agent bridge with security scoring
+./hooks/disassembler-bridge.py --file /path/to/binary --output results.json
+
+# Show analysis cache summary
+./hooks/disassembler-hook.py --summary
+
+# Test complete integration
+./hooks/test-disassembler-integration.py
+```
+
+### Security Features
+
+- **File Type Validation**: Multiple detection methods prevent false positives
+- **Analysis Caching**: SHA256 hashing prevents duplicate analysis
+- **Error Handling**: Comprehensive exception management with detailed logging
+- **Result Processing**: Automated security scoring and complexity assessment
+- **Audit Trail**: Complete analysis history with timestamps and file hashes
+
+### Integration with ULTRATHINK v4.0
+
+The hook system seamlessly integrates with the ULTRATHINK framework:
+- Automatic invocation of 6-phase analysis pipeline
+- ML threat scoring coordination
+- C2 infrastructure extraction triggering
+- Memory forensics initiation for complex samples
+- Meme assessment for threat actor evaluation
 
 ---
 

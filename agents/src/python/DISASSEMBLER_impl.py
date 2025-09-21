@@ -466,6 +466,169 @@ rule Debug_Strings {
 # HARDWARE ACCELERATION ENGINE
 ################################################################################
 
+class HookIntegration:
+    """Integration with DISASSEMBLER hook system for automated binary monitoring"""
+
+    def __init__(self):
+        self.project_root = os.environ.get('CLAUDE_PROJECT_ROOT', '/home/john/claude-backups')
+        self.hooks_dir = os.path.join(self.project_root, 'hooks')
+        self.hook_script = os.path.join(self.hooks_dir, 'disassembler-hook.py')
+        self.bridge_script = os.path.join(self.hooks_dir, 'disassembler-bridge.py')
+        self.test_script = os.path.join(self.hooks_dir, 'test-disassembler-integration.py')
+        self.analysis_cache = os.path.join(self.hooks_dir, '.disassembler_cache.json')
+
+        # Hook system status
+        self.hook_available = False
+        self.bridge_available = False
+        self.cache_available = False
+
+        self._initialize_hook_system()
+
+    def _initialize_hook_system(self):
+        """Initialize and validate hook system components"""
+        try:
+            # Check for hook script
+            if os.path.exists(self.hook_script) and os.access(self.hook_script, os.X_OK):
+                self.hook_available = True
+
+            # Check for bridge script
+            if os.path.exists(self.bridge_script) and os.access(self.bridge_script, os.X_OK):
+                self.bridge_available = True
+
+            # Check for cache
+            if os.path.exists(self.analysis_cache):
+                self.cache_available = True
+
+        except Exception as e:
+            logging.warning(f"Hook system initialization failed: {e}")
+
+    def validate_hook_system(self) -> bool:
+        """Validate that hook integration system is properly configured"""
+        return self.hook_available and self.bridge_available
+
+    async def invoke_hook_analysis(self, file_path: str) -> Dict[str, Any]:
+        """Invoke the disassembler hook for file analysis"""
+        if not self.hook_available:
+            return {"status": "error", "error": "Hook system not available"}
+
+        try:
+            # Run the hook analysis
+            cmd = [self.hook_script, '--file', file_path]
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            stdout, stderr = await process.communicate()
+
+            if process.returncode == 0:
+                result = json.loads(stdout.decode())
+                return {"status": "success", "result": result}
+            else:
+                return {"status": "error", "error": stderr.decode()}
+
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+    async def invoke_bridge_processing(self, file_path: str) -> Dict[str, Any]:
+        """Invoke the disassembler bridge for advanced processing"""
+        if not self.bridge_available:
+            return {"status": "error", "error": "Bridge system not available"}
+
+        try:
+            # Run the bridge processing
+            cmd = [self.bridge_script, '--file', file_path]
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            stdout, stderr = await process.communicate()
+
+            if process.returncode == 0:
+                result = json.loads(stdout.decode())
+                return {"status": "success", "result": result}
+            else:
+                return {"status": "error", "error": stderr.decode()}
+
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+    def get_hook_status(self) -> Dict[str, Any]:
+        """Get comprehensive hook system status"""
+        status = {
+            "hook_system_available": self.validate_hook_system(),
+            "components": {
+                "hook_script": {
+                    "path": self.hook_script,
+                    "available": self.hook_available,
+                    "executable": os.access(self.hook_script, os.X_OK) if os.path.exists(self.hook_script) else False
+                },
+                "bridge_script": {
+                    "path": self.bridge_script,
+                    "available": self.bridge_available,
+                    "executable": os.access(self.bridge_script, os.X_OK) if os.path.exists(self.bridge_script) else False
+                },
+                "analysis_cache": {
+                    "path": self.analysis_cache,
+                    "available": self.cache_available,
+                    "size": os.path.getsize(self.analysis_cache) if self.cache_available else 0
+                }
+            },
+            "project_root": self.project_root,
+            "hooks_directory": self.hooks_dir
+        }
+
+        return status
+
+    def get_cache_summary(self) -> Dict[str, Any]:
+        """Get analysis cache summary"""
+        if not self.cache_available:
+            return {"status": "unavailable", "message": "Cache file not found"}
+
+        try:
+            with open(self.analysis_cache, 'r') as f:
+                cache_data = json.load(f)
+
+            return {
+                "status": "available",
+                "total_entries": len(cache_data),
+                "cache_file": self.analysis_cache,
+                "recent_analyses": list(cache_data.keys())[-5:] if cache_data else []
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+    async def monitor_directory(self, directory: str, recursive: bool = True) -> Dict[str, Any]:
+        """Monitor directory using hook system"""
+        if not self.hook_available:
+            return {"status": "error", "error": "Hook system not available"}
+
+        try:
+            cmd = [self.hook_script, '--directory', directory]
+            if recursive:
+                cmd.append('--recursive')
+
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            stdout, stderr = await process.communicate()
+
+            if process.returncode == 0:
+                result = json.loads(stdout.decode())
+                return {"status": "success", "result": result}
+            else:
+                return {"status": "error", "error": stderr.decode()}
+
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+
 class HardwareAccelerationEngine:
     """Hardware acceleration engine for NPU/GPU/GNA and multi-core optimization"""
 
@@ -1054,6 +1217,10 @@ class DISASSEMBLERBinaryAnalyzer:
         self.ultrathink = UltrathinkIntegration()
         self.ultrathink_enabled = os.path.exists(ULTRATHINK_SCRIPT_PATH)
 
+        # Hook Integration System
+        self.hook_integration = HookIntegration()
+        self.hook_enabled = self.hook_integration.validate_hook_system()
+
         # Hardware Acceleration and CRYPTD Analysis Integration
         self.hardware_engine = HardwareAccelerationEngine()
         self.cryptd_engine = CRYPTDAnalysisEngine(self.hardware_engine)
@@ -1076,7 +1243,10 @@ class DISASSEMBLERBinaryAnalyzer:
             'npu_acceleration', 'gpu_compute', 'gna_processing', 'multi_core_optimization',
             'cryptd_specific_analysis', 'xor_pattern_detection', 'entropy_analysis',
             'embedded_pe_detection', 'crypto_artifact_analysis', 'hardware_adaptive_analysis',
-            'parallel_batch_processing', 'real_time_threat_scoring', 'advanced_meme_assessment'
+            'parallel_batch_processing', 'real_time_threat_scoring', 'advanced_meme_assessment',
+            # Hook Integration System Capabilities
+            'hook_system_integration', 'automated_binary_monitoring', 'hook_analysis',
+            'bridge_processing', 'directory_monitoring', 'cache_management'
         ]
 
         # Enhanced capabilities with ULTRATHINK v4.0 integration
@@ -1121,7 +1291,14 @@ class DISASSEMBLERBinaryAnalyzer:
             'hardware_adaptive_fallback': True,
             'real_time_meme_scoring': True,
             'multi_installation_detection': True,
-            'snap_permission_automation': True
+            'snap_permission_automation': True,
+            # Hook Integration System Capabilities
+            'hook_system_integration': self.hook_enabled,
+            'automated_binary_monitoring': self.hook_enabled,
+            'hook_based_analysis': self.hook_enabled,
+            'bridge_coordination': self.hook_enabled,
+            'directory_monitoring': self.hook_enabled,
+            'analysis_cache_management': self.hook_enabled
         }
 
         # Performance metrics
@@ -1803,6 +1980,18 @@ class DISASSEMBLERBinaryAnalyzer:
         elif action == 'threat_actor_assessment':
             return await self._execute_threat_actor_assessment(context)
 
+        # Hook Integration System Commands
+        elif action == 'hook_system_integration':
+            return await self._execute_hook_system_integration(context)
+        elif action == 'hook_analysis':
+            return await self._execute_hook_analysis(context)
+        elif action == 'bridge_processing':
+            return await self._execute_bridge_processing(context)
+        elif action == 'directory_monitoring':
+            return await self._execute_directory_monitoring(context)
+        elif action == 'cache_management':
+            return await self._execute_cache_management(context)
+
         # Add action-specific results
         if action == 'binary_analysis':
             result['binary_analysis'] = {
@@ -2278,6 +2467,189 @@ class DISASSEMBLERBinaryAnalyzer:
             return {
                 'status': 'error',
                 'action': 'threat_actor_assessment',
+                'error': str(e)
+            }
+
+    # Hook Integration System Methods
+    async def _execute_hook_system_integration(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute hook system integration status and validation"""
+        try:
+            hook_status = self.hook_integration.get_hook_status()
+            cache_summary = self.hook_integration.get_cache_summary()
+
+            return {
+                'status': 'success',
+                'action': 'hook_system_integration',
+                'hook_system_status': hook_status,
+                'cache_summary': cache_summary,
+                'integration_enabled': self.hook_enabled,
+                'capabilities': {
+                    'automated_monitoring': hook_status['components']['hook_script']['available'],
+                    'bridge_processing': hook_status['components']['bridge_script']['available'],
+                    'cache_management': hook_status['components']['analysis_cache']['available']
+                }
+            }
+        except Exception as e:
+            logger.error(f"Hook system integration check failed: {e}")
+            return {
+                'status': 'error',
+                'action': 'hook_system_integration',
+                'error': str(e)
+            }
+
+    async def _execute_hook_analysis(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute hook-based analysis of a binary file"""
+        try:
+            file_path = context.get('file_path')
+            if not file_path:
+                return {
+                    'status': 'error',
+                    'action': 'hook_analysis',
+                    'error': 'file_path parameter required'
+                }
+
+            # Run hook analysis
+            hook_result = await self.hook_integration.invoke_hook_analysis(file_path)
+
+            if hook_result['status'] == 'success':
+                return {
+                    'status': 'success',
+                    'action': 'hook_analysis',
+                    'file_analyzed': file_path,
+                    'hook_result': hook_result['result'],
+                    'analysis_method': 'HOOK_INTEGRATION'
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'action': 'hook_analysis',
+                    'error': hook_result.get('error', 'Hook analysis failed')
+                }
+
+        except Exception as e:
+            logger.error(f"Hook analysis failed: {e}")
+            return {
+                'status': 'error',
+                'action': 'hook_analysis',
+                'error': str(e)
+            }
+
+    async def _execute_bridge_processing(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute bridge processing for advanced analysis coordination"""
+        try:
+            file_path = context.get('file_path')
+            if not file_path:
+                return {
+                    'status': 'error',
+                    'action': 'bridge_processing',
+                    'error': 'file_path parameter required'
+                }
+
+            # Run bridge processing
+            bridge_result = await self.hook_integration.invoke_bridge_processing(file_path)
+
+            if bridge_result['status'] == 'success':
+                result_data = bridge_result['result']
+                return {
+                    'status': 'success',
+                    'action': 'bridge_processing',
+                    'file_processed': file_path,
+                    'bridge_result': result_data,
+                    'security_score': result_data.get('summary', {}).get('security_score'),
+                    'complexity': result_data.get('summary', {}).get('complexity'),
+                    'analysis_method': 'BRIDGE_COORDINATION'
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'action': 'bridge_processing',
+                    'error': bridge_result.get('error', 'Bridge processing failed')
+                }
+
+        except Exception as e:
+            logger.error(f"Bridge processing failed: {e}")
+            return {
+                'status': 'error',
+                'action': 'bridge_processing',
+                'error': str(e)
+            }
+
+    async def _execute_directory_monitoring(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute directory monitoring for automated binary detection"""
+        try:
+            directory = context.get('directory', '.')
+            recursive = context.get('recursive', True)
+
+            # Run directory monitoring
+            monitor_result = await self.hook_integration.monitor_directory(directory, recursive)
+
+            if monitor_result['status'] == 'success':
+                results = monitor_result['result']
+                return {
+                    'status': 'success',
+                    'action': 'directory_monitoring',
+                    'directory_monitored': directory,
+                    'recursive': recursive,
+                    'binaries_found': len(results) if isinstance(results, list) else 0,
+                    'monitoring_results': results,
+                    'analysis_method': 'AUTOMATED_MONITORING'
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'action': 'directory_monitoring',
+                    'error': monitor_result.get('error', 'Directory monitoring failed')
+                }
+
+        except Exception as e:
+            logger.error(f"Directory monitoring failed: {e}")
+            return {
+                'status': 'error',
+                'action': 'directory_monitoring',
+                'error': str(e)
+            }
+
+    async def _execute_cache_management(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute cache management operations"""
+        try:
+            operation = context.get('operation', 'status')  # status, clear, summary
+
+            if operation == 'status' or operation == 'summary':
+                cache_summary = self.hook_integration.get_cache_summary()
+                return {
+                    'status': 'success',
+                    'action': 'cache_management',
+                    'operation': operation,
+                    'cache_summary': cache_summary
+                }
+            elif operation == 'clear':
+                # For security, don't implement cache clearing without explicit consent
+                if not self.user_consent_given:
+                    return {
+                        'status': 'error',
+                        'action': 'cache_management',
+                        'error': 'Cache clearing requires user consent for security'
+                    }
+
+                # Simulate cache clear operation
+                return {
+                    'status': 'success',
+                    'action': 'cache_management',
+                    'operation': 'clear',
+                    'message': 'Cache clearing would be performed (simulation mode)'
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'action': 'cache_management',
+                    'error': f'Unknown cache operation: {operation}'
+                }
+
+        except Exception as e:
+            logger.error(f"Cache management failed: {e}")
+            return {
+                'status': 'error',
+                'action': 'cache_management',
                 'error': str(e)
             }
 
