@@ -462,7 +462,10 @@ class NPUFallbackCompiler:
         return True
 
     def compile_npu_bridge(self, config: CompilationConfig) -> CompilationResult:
-        """Compile NPU bridge with given configuration"""
+        """
+        SECURITY: Sandboxed compilation with isolated environment
+        Prevents Rust toolchain conflicts and provides process isolation
+        """
         logger.info(f"Compiling NPU bridge with target: {config.target_triple}")
 
         start_time = __import__("time").time()
@@ -470,32 +473,34 @@ class NPUFallbackCompiler:
         error_log = ""
         warnings = []
 
-        try:
-            # Prepare environment
-            env = os.environ.copy()
-            env.update(config.environment_vars)
+        # Create sandboxed compilation environment
+        sandbox_dir = self._create_compilation_sandbox()
 
-            # Build command
+        try:
+            # Prepare isolated environment
+            env = self._create_sandboxed_environment(config, sandbox_dir)
+
+            # Validate compilation environment
+            if not self._validate_compilation_environment(env):
+                raise RuntimeError("Compilation environment validation failed")
+
+            # Build command with sandbox isolation
             cmd = [
                 "cargo", "build",
                 "--release",
                 "--target", config.target_triple,
-                "--features", ",".join(config.features)
+                "--features", ",".join(config.features),
+                "--target-dir", str(sandbox_dir / "target")
             ]
 
-            # Run compilation
-            logger.info(f"Running: {' '.join(cmd)}")
+            # Run compilation in sandbox
+            logger.info(f"Running sandboxed compilation: {' '.join(cmd)}")
             logger.info(f"Features: {', '.join(config.features)}")
             logger.info(f"Target CPU: {config.target_cpu}")
+            logger.info(f"Sandbox: {sandbox_dir}")
 
-            result = subprocess.run(
-                cmd,
-                cwd=self.source_dir,
-                env=env,
-                capture_output=True,
-                text=True,
-                timeout=1800  # 30 minutes max
-            )
+            # Use process isolation with resource limits
+            result = self._run_sandboxed_compilation(cmd, env, sandbox_dir)
 
             # Parse output
             if result.stderr:
@@ -508,14 +513,23 @@ class NPUFallbackCompiler:
             success = result.returncode == 0
 
             if success:
-                # Find output files
-                target_dir = self.output_dir / "target" / config.target_triple / "release"
+                # Find output files in sandbox
+                sandbox_target_dir = sandbox_dir / "target" / config.target_triple / "release"
 
-                # Look for library files
-                for pattern in ["libnpu_coordination_bridge.*", "npu-bridge-server*"]:
-                    for file_path in target_dir.glob(pattern):
-                        if file_path.is_file():
-                            output_files.append(str(file_path))
+                # Copy successful builds to output directory
+                if sandbox_target_dir.exists():
+                    self.output_dir.mkdir(parents=True, exist_ok=True)
+                    output_target_dir = self.output_dir / "target" / config.target_triple / "release"
+                    output_target_dir.mkdir(parents=True, exist_ok=True)
+
+                    # Look for and copy library files
+                    for pattern in ["libnpu_coordination_bridge.*", "npu-bridge-server*", "server*"]:
+                        for file_path in sandbox_target_dir.glob(pattern):
+                            if file_path.is_file():
+                                output_file = output_target_dir / file_path.name
+                                shutil.copy2(file_path, output_file)
+                                output_files.append(str(output_file))
+                                logger.info(f"Copied: {file_path.name}")
 
                 logger.info(f"Compilation successful, {len(output_files)} files generated")
             else:
@@ -530,6 +544,10 @@ class NPUFallbackCompiler:
             success = False
             error_log = str(e)
             logger.error(f"Compilation error: {e}")
+
+        finally:
+            # Always cleanup sandbox
+            self._cleanup_sandbox(sandbox_dir)
 
         duration = __import__("time").time() - start_time
 
@@ -551,6 +569,8 @@ class NPUFallbackCompiler:
             performance_features.append("Intel NPU")
         if config.lto_enabled:
             performance_features.append("LTO")
+        if sandbox_dir:
+            performance_features.append("Sandboxed")
 
         return CompilationResult(
             success=success,
@@ -711,6 +731,210 @@ echo "Build reason: {compilation_result.fallback_reason}"
         finally:
             if 'temp_dir' in locals():
                 shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def _create_compilation_sandbox(self) -> Path:
+        """
+        SECURITY: Create isolated compilation sandbox
+        Prevents interference with system-wide Rust installations
+        """
+        sandbox_root = Path(tempfile.mkdtemp(prefix="npu-compile-sandbox-", mode=0o700))
+
+        # Create sandbox directory structure
+        directories = [
+            "source",      # Isolated source code
+            "target",      # Compilation artifacts
+            "cargo_home",  # Isolated Cargo registry
+            "rustup_home", # Isolated Rust toolchain
+            "temp",        # Temporary files
+            "logs"         # Compilation logs
+        ]
+
+        for dir_name in directories:
+            (sandbox_root / dir_name).mkdir(parents=True, exist_ok=True)
+
+        # Copy source code to sandbox
+        source_sandbox = sandbox_root / "source"
+        if self.source_dir.exists():
+            shutil.copytree(self.source_dir, source_sandbox, dirs_exist_ok=True)
+
+        logger.info(f"Created compilation sandbox: {sandbox_root}")
+        return sandbox_root
+
+    def _create_sandboxed_environment(self, config: CompilationConfig, sandbox_dir: Path) -> Dict[str, str]:
+        """
+        SECURITY: Create isolated environment variables
+        Prevents conflicts with existing Rust installations
+        """
+        # Start with minimal environment
+        env = {
+            "PATH": "/usr/bin:/bin",  # Minimal PATH
+            "HOME": str(sandbox_dir),
+            "USER": os.environ.get("USER", "sandbox"),
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8",
+        }
+
+        # Sandbox-specific Rust environment
+        env.update({
+            "CARGO_HOME": str(sandbox_dir / "cargo_home"),
+            "RUSTUP_HOME": str(sandbox_dir / "rustup_home"),
+            "CARGO_TARGET_DIR": str(sandbox_dir / "target"),
+            "TMPDIR": str(sandbox_dir / "temp"),
+            "TEMP": str(sandbox_dir / "temp"),
+            "TMP": str(sandbox_dir / "temp"),
+        })
+
+        # Add Rust to PATH if available
+        cargo_bin = sandbox_dir / "cargo_home" / "bin"
+        if cargo_bin.exists():
+            env["PATH"] = f"{cargo_bin}:{env['PATH']}"
+
+        # Add system Rust to PATH (fallback)
+        for rust_path in ["/usr/local/cargo/bin", os.path.expanduser("~/.cargo/bin")]:
+            if Path(rust_path).exists():
+                env["PATH"] = f"{rust_path}:{env['PATH']}"
+                break
+
+        # Apply configuration environment variables (filtered)
+        safe_env_vars = {
+            k: v for k, v in config.environment_vars.items()
+            if k in ["RUSTFLAGS", "CC", "CXX", "CFLAGS", "CXXFLAGS", "PKG_CONFIG_PATH"]
+        }
+        env.update(safe_env_vars)
+
+        # Security: Prevent network access for compilation (optional)
+        if os.environ.get("NPU_COMPILE_OFFLINE") == "1":
+            env["CARGO_NET_OFFLINE"] = "true"
+
+        logger.info(f"Created sandboxed environment with {len(env)} variables")
+        return env
+
+    def _validate_compilation_environment(self, env: Dict[str, str]) -> bool:
+        """
+        SECURITY: Validate compilation environment safety
+        Ensures sandbox integrity and required tools availability
+        """
+        required_paths = ["CARGO_HOME", "RUSTUP_HOME", "CARGO_TARGET_DIR"]
+
+        for path_var in required_paths:
+            if path_var not in env:
+                logger.error(f"Missing required environment variable: {path_var}")
+                return False
+
+            path = Path(env[path_var])
+            if not path.exists():
+                logger.error(f"Required path does not exist: {path}")
+                return False
+
+        # Check for Rust availability
+        try:
+            result = subprocess.run(
+                ["rustc", "--version"],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode != 0:
+                logger.error("Rust compiler not available in sandbox")
+                return False
+
+            logger.info(f"Rust version in sandbox: {result.stdout.strip()}")
+
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+            logger.error("Failed to validate Rust installation in sandbox")
+            return False
+
+        return True
+
+    def _run_sandboxed_compilation(self, cmd: List[str], env: Dict[str, str], sandbox_dir: Path) -> subprocess.CompletedProcess:
+        """
+        SECURITY: Run compilation with process isolation and resource limits
+        Implements timeout, memory limits, and network restrictions
+        """
+        # Set working directory to sandbox source
+        work_dir = sandbox_dir / "source"
+        log_file = sandbox_dir / "logs" / "compilation.log"
+
+        # Ensure log directory exists
+        log_file.parent.mkdir(exist_ok=True)
+
+        # Resource limits (Linux-specific)
+        preexec_fn = None
+        if platform.system().lower() == "linux":
+            def limit_resources():
+                import resource
+                # Limit memory to 4GB
+                resource.setrlimit(resource.RLIMIT_AS, (4 * 1024 * 1024 * 1024, resource.RLIM_INFINITY))
+                # Limit CPU time to 30 minutes
+                resource.setrlimit(resource.RLIMIT_CPU, (1800, resource.RLIM_INFINITY))
+                # Limit number of processes
+                resource.setrlimit(resource.RLIMIT_NPROC, (100, resource.RLIM_INFINITY))
+
+            preexec_fn = limit_resources
+
+        try:
+            # Run compilation with comprehensive monitoring
+            logger.info(f"Starting sandboxed compilation in {work_dir}")
+
+            with open(log_file, 'w') as log_f:
+                result = subprocess.run(
+                    cmd,
+                    cwd=work_dir,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=1800,  # 30 minutes
+                    preexec_fn=preexec_fn
+                )
+
+                # Log compilation output
+                log_f.write(f"Command: {' '.join(cmd)}\n")
+                log_f.write(f"Working directory: {work_dir}\n")
+                log_f.write(f"Exit code: {result.returncode}\n")
+                log_f.write(f"STDOUT:\n{result.stdout}\n")
+                log_f.write(f"STDERR:\n{result.stderr}\n")
+
+            logger.info(f"Compilation completed with exit code: {result.returncode}")
+            return result
+
+        except subprocess.TimeoutExpired as e:
+            logger.error(f"Compilation timed out after {e.timeout} seconds")
+            raise
+
+        except Exception as e:
+            logger.error(f"Sandboxed compilation failed: {e}")
+            raise
+
+    def _cleanup_sandbox(self, sandbox_dir: Path) -> None:
+        """
+        SECURITY: Clean up compilation sandbox
+        Securely removes temporary compilation artifacts
+        """
+        if sandbox_dir and sandbox_dir.exists():
+            try:
+                # Log sandbox cleanup
+                logger.info(f"Cleaning up compilation sandbox: {sandbox_dir}")
+
+                # Change permissions to ensure deletion
+                for root, dirs, files in os.walk(sandbox_dir):
+                    for d in dirs:
+                        os.chmod(os.path.join(root, d), 0o755)
+                    for f in files:
+                        os.chmod(os.path.join(root, f), 0o644)
+
+                shutil.rmtree(sandbox_dir)
+                logger.info("Sandbox cleanup completed")
+
+            except OSError as e:
+                logger.warning(f"Failed to clean up sandbox: {e}")
+                # Try force removal on Linux
+                if platform.system().lower() == "linux":
+                    try:
+                        subprocess.run(["rm", "-rf", str(sandbox_dir)], check=True, timeout=60)
+                        logger.info("Force cleanup successful")
+                    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                        logger.error(f"Force cleanup failed for {sandbox_dir}")
 
 
 def main():

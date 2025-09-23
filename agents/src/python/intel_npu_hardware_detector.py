@@ -134,32 +134,169 @@ class IntelNPUDetector:
         return None
 
     def _detect_npu_via_pci(self) -> Optional[NPUCapabilities]:
-        """Detect NPU via PCI bus enumeration"""
+        """
+        SECURITY: Enhanced PCI detection with strict validation
+        Only accept verified Intel NPU device IDs, no fuzzy matching
+        """
         try:
+            # Use lspci with verbose mode for detailed validation
             result = subprocess.run(
-                ["lspci", "-nn", "-d", f"{self.INTEL_VENDOR_ID}:"],
-                capture_output=True, text=True, timeout=10
+                ["lspci", "-vvnn", "-d", f"{self.INTEL_VENDOR_ID}:"],
+                capture_output=True, text=True, timeout=15
             )
 
-            for line in result.stdout.split('\n'):
-                # Look for NPU-related PCI devices
-                if any(keyword in line.lower() for keyword in ["npu", "neural", "ai", "inference"]):
-                    # Extract PCI ID
-                    pci_match = re.search(r'\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]', line)
-                    if pci_match:
-                        vendor_id, device_id = pci_match.groups()
-                        if vendor_id.lower() == self.INTEL_VENDOR_ID:
-                            return self._create_npu_capabilities_from_pci(line, device_id)
+            if result.returncode != 0:
+                logger.warning("lspci command failed")
+                return None
 
-                # Check specific NPU device IDs
-                for device_id, model_name in self.INTEL_NPU_DEVICE_IDS.items():
-                    if device_id[2:].upper() in line.upper():
-                        return self._create_npu_capabilities_from_pci(line, device_id)
+            pci_devices = self._parse_pci_output_securely(result.stdout)
 
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
-            logger.debug("PCI detection failed")
+            for device in pci_devices:
+                # Strict device ID validation
+                if device.get("device_id") in self.INTEL_NPU_DEVICE_IDS:
+                    logger.info(f"Verified Intel NPU found: {device['device_id']} at {device['pci_address']}")
+                    return self._create_npu_capabilities_from_validated_pci(device)
 
-        return None
+            logger.info("No verified Intel NPU devices found via PCI")
+            return None
+
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
+            logger.warning(f"PCI detection failed: {e}")
+            return None
+
+    def _parse_pci_output_securely(self, pci_output: str) -> List[Dict[str, str]]:
+        """Securely parse lspci output with validation"""
+        devices = []
+        current_device = {}
+
+        for line in pci_output.split('\n'):
+            line = line.strip()
+            if not line:
+                if current_device:
+                    devices.append(current_device)
+                    current_device = {}
+                continue
+
+            # Parse PCI address and device info
+            pci_match = re.match(r'^([0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F])\s+.*\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]', line)
+            if pci_match:
+                pci_address, vendor_id, device_id = pci_match.groups()
+
+                # Validate vendor is Intel
+                if vendor_id.lower() == self.INTEL_VENDOR_ID:
+                    current_device = {
+                        "pci_address": pci_address,
+                        "vendor_id": vendor_id,
+                        "device_id": f"0x{device_id}",
+                        "raw_line": line,
+                        "validated": True
+                    }
+
+            # Extract additional device information
+            elif current_device and line.startswith("Subsystem:"):
+                subsystem_match = re.search(r'\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]', line)
+                if subsystem_match:
+                    current_device["subsystem_vendor"] = subsystem_match.group(1)
+                    current_device["subsystem_device"] = subsystem_match.group(2)
+
+        # Add final device
+        if current_device:
+            devices.append(current_device)
+
+        return devices
+
+    def _create_npu_capabilities_from_validated_pci(self, device: Dict[str, str]) -> NPUCapabilities:
+        """Create NPU capabilities from validated PCI device"""
+        device_id = device["device_id"]
+        model_name = self.INTEL_NPU_DEVICE_IDS.get(device_id, f"Intel NPU ({device_id})")
+
+        # Get additional device information from sysfs
+        sysfs_info = self._get_sysfs_device_info(device["pci_address"])
+
+        return NPUCapabilities(
+            model_name=model_name,
+            max_tops=self._get_npu_tops_for_device(device_id),
+            memory_mb=self._get_npu_memory_for_device(device_id),
+            driver_version=self._get_driver_version(),
+            device_path=f"/sys/bus/pci/devices/0000:{device['pci_address']}",
+            pci_id=device["pci_address"],
+            vendor_id=device["vendor_id"],
+            device_id=device_id,
+            subsystem_vendor=device.get("subsystem_vendor", "unknown"),
+            subsystem_device=device.get("subsystem_device", "unknown"),
+            supports_fp16=True,
+            supports_int8=True,
+            supports_int4=device_id in ["0x7d1d"],  # Meteor Lake supports INT4
+            max_batch_size=32,
+            thermal_design_power=self._get_npu_tdp_for_device(device_id),
+            base_frequency_mhz=1000,
+            boost_frequency_mhz=1400,
+            architecture=self._get_npu_architecture_for_device(device_id),
+            features=["inference", "validated_pci", "hardware_verified"]
+        )
+
+    def _get_sysfs_device_info(self, pci_address: str) -> Dict[str, str]:
+        """Get additional device information from sysfs"""
+        sysfs_path = Path(f"/sys/bus/pci/devices/0000:{pci_address}")
+        info = {}
+
+        try:
+            if (sysfs_path / "vendor").exists():
+                with open(sysfs_path / "vendor", 'r') as f:
+                    info["vendor"] = f.read().strip()
+
+            if (sysfs_path / "device").exists():
+                with open(sysfs_path / "device", 'r') as f:
+                    info["device"] = f.read().strip()
+
+            if (sysfs_path / "class").exists():
+                with open(sysfs_path / "class", 'r') as f:
+                    info["class"] = f.read().strip()
+
+        except (OSError, IOError):
+            pass
+
+        return info
+
+    def _get_npu_tops_for_device(self, device_id: str) -> float:
+        """Get TOPS rating for specific NPU device"""
+        tops_map = {
+            "0x7d1d": 11.0,   # Meteor Lake NPU (updated from Intel specs)
+            "0x643e": 45.0,   # Lunar Lake NPU
+            "0x4f80": 13.0,   # Arrow Lake NPU
+            "0x4f81": 13.0,   # Arrow Lake-H NPU
+        }
+        return tops_map.get(device_id, 11.0)
+
+    def _get_npu_memory_for_device(self, device_id: str) -> int:
+        """Get memory allocation for specific NPU device"""
+        memory_map = {
+            "0x7d1d": 256,    # Meteor Lake
+            "0x643e": 512,    # Lunar Lake
+            "0x4f80": 256,    # Arrow Lake
+            "0x4f81": 256,    # Arrow Lake-H
+        }
+        return memory_map.get(device_id, 256)
+
+    def _get_npu_tdp_for_device(self, device_id: str) -> float:
+        """Get TDP for specific NPU device"""
+        tdp_map = {
+            "0x7d1d": 4.5,    # Meteor Lake NPU
+            "0x643e": 6.0,    # Lunar Lake NPU
+            "0x4f80": 4.8,    # Arrow Lake NPU
+            "0x4f81": 5.5,    # Arrow Lake-H NPU
+        }
+        return tdp_map.get(device_id, 4.5)
+
+    def _get_npu_architecture_for_device(self, device_id: str) -> str:
+        """Get architecture name for specific NPU device"""
+        arch_map = {
+            "0x7d1d": "Meteor Lake",
+            "0x643e": "Lunar Lake",
+            "0x4f80": "Arrow Lake",
+            "0x4f81": "Arrow Lake-H",
+        }
+        return arch_map.get(device_id, "Intel NPU")
 
     def _detect_npu_via_device_nodes(self) -> Optional[NPUCapabilities]:
         """Detect NPU via device node enumeration"""
@@ -198,23 +335,11 @@ class IntelNPUDetector:
         return None
 
     def _infer_npu_from_cpu(self) -> Optional[NPUCapabilities]:
-        """Infer NPU presence from CPU model (Intel Meteor Lake)"""
-        cpuinfo = self.system_info.get("cpuinfo", "")
-
-        # Intel Core Ultra series typically includes NPU
-        cpu_patterns = [
-            r"Intel.*Core.*Ultra.*7.*155H",  # Intel Core Ultra 7 155H (Meteor Lake)
-            r"Intel.*Core.*Ultra.*5.*125H",  # Intel Core Ultra 5 125H (Meteor Lake)
-            r"Intel.*Core.*Ultra.*7.*165H",  # Intel Core Ultra 7 165H (Meteor Lake)
-            r"Intel.*13th.*Gen.*Core",      # 13th Gen might have NPU in some variants
-            r"Intel.*Meteor.*Lake",         # Direct Meteor Lake reference
-        ]
-
-        for pattern in cpu_patterns:
-            if re.search(pattern, cpuinfo, re.IGNORECASE):
-                logger.info(f"CPU suggests NPU presence: {pattern}")
-                return self._create_inferred_npu_capabilities(pattern)
-
+        """
+        SECURITY: Strict PCI validation only - no CPU inference
+        CPU inference is unreliable and creates false positives
+        """
+        logger.info("Skipping CPU inference - using strict PCI validation only")
         return None
 
     def _verify_device_is_intel_npu(self, device_path: Path) -> bool:
