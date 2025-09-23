@@ -273,7 +273,7 @@ class ProductionOrchestrator:
                 if not agents_dir.exists():
                     agents_dir = Path.home() / "Documents" / "Claude" / "agents"
                 if not agents_dir.exists():
-                    agents_dir = Path.home() / "Documents" / "claude-backups" / "agents"
+                    agents_dir = get_project_root() / "agents"
             
             # Initialize registry if available
             if REGISTRY_AVAILABLE:

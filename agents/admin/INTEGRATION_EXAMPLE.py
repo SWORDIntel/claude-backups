@@ -6,7 +6,7 @@ This demonstrates the auto-integration capability for future agents
 
 import asyncio
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents/src/python')
+sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python')
 
 # Import the auto-integration module
 from 03-BRIDGES.auto_integrate import integrate_with_claude_agent_system, auto_integration

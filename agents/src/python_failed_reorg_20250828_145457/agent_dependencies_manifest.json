@@ -15,6 +15,6 @@
         "OPTIMIZER": ["cython", "numba", "line-profiler", "memory-profiler"]
     },
     "python_version": "Python 3.12.3",
-    "install_location": "/home/ubuntu/Documents/Claude/agents/src/python",
+    "install_location": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python",
     "virtual_env": "/home/ubuntu/.local/share/claude/venv"
 }

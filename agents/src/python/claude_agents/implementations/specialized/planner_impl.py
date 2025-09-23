@@ -81,8 +81,8 @@ class PLANNERPythonExecutor:
     def _check_c_layer(self) -> bool:
         """Check if C acceleration layer is available"""
         try:
-            c_binary = Path("/home/ubuntu/Documents/Claude/agents/src/c/planner_agent")
-            shared_lib = Path("/home/ubuntu/Documents/Claude/agents/src/c/libplanner.so")
+            c_binary = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/planner_agent")
+            shared_lib = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/libplanner.so")
             return c_binary.exists() or shared_lib.exists()
         except:
             return False

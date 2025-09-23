@@ -77,6 +77,7 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 - [`python-implementation-priority-guide.md`](architecture/python-implementation-priority-guide.md) - Implementation priorities
 
 **Path:** `technical/`
+- [`dual-layer-agent-implementation-requirements.md`](technical/dual-layer-agent-implementation-requirements.md) - **NEW: Dual-Layer Agent Implementation Standard**
 - [`picmcs-v3-technical-specification.md`](technical/picmcs-v3-technical-specification.md) - **NEW: PICMCS v3.0 Technical Specification**
 - [`military-crypto-integration-architecture.md`](technical/military-crypto-integration-architecture.md) - **NEW: Military Crypto System Integration**
 - [`shadowgit-avx2-learning-integration.md`](technical/shadowgit-avx2-learning-integration.md) - AVX2 shadowgit integration

@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: RUST-HARDWARE-DEBUGGER
+  name: RUST-DEBUGGER
   version: 8.0.0
   uuid: ru57-h4rd-d3bu-9g3r-5p3c14l15700
   category: SPECIALIZED
@@ -572,7 +572,7 @@ The synthesis achieved:
 
 ## Unique Value Proposition
 
-RUST-HARDWARE-DEBUGGER fills a critical gap in the agent ecosystem by providing:
+RUST-DEBUGGER fills a critical gap in the agent ecosystem by providing:
 1. **Memory-safe hardware debugging** - First agent to guarantee memory safety at hardware boundary
 2. **Military-grade device control** - Only agent with DSMIL integration for 108 devices
 3. **Thermal-aware operation** - Adaptive debugging based on MIL-SPEC thermal profiles

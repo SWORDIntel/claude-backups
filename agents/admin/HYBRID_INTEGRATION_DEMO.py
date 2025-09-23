@@ -10,7 +10,7 @@ seamlessly upgrade to binary system performance.
 import asyncio
 import sys
 import time
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
 from 03-BRIDGES.claude_agent_bridge import task_agent_invoke, bridge
 from 08-ADMIN-TOOLS.DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster
@@ -224,14 +224,14 @@ class HybridAgentDemo:
         import os
         
         components = {
-            "Ultra-fast protocol definition": os.path.exists("/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_fast_protocol.h"),
-            "Binary protocol source": os.path.exists("/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"),
-            "C agent implementations": os.path.exists("/home/ubuntu/Documents/Claude/agents/src/c/director_agent.c"),
-            "Python integration layer": os.path.exists("/home/ubuntu/Documents/Claude/agents/src/python/ENHANCED_AGENT_INTEGRATION.py"),
-            "Agent discovery system": os.path.exists("/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"),
-            "Message router": os.path.exists("/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"),
-            "Monitoring system": os.path.exists("/home/ubuntu/Documents/Claude/agents/monitoring/prometheus.yml"),
-            "Test suite": os.path.exists("/home/ubuntu/Documents/Claude/agents/tests/run_all_tests.sh")
+            "Ultra-fast protocol definition": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../binary-communications-system/ultra_fast_protocol.h"),
+            "Binary protocol source": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../binary-communications-system/ultra_hybrid_enhanced.c"),
+            "C agent implementations": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/director_agent.c"),
+            "Python integration layer": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/ENHANCED_AGENT_INTEGRATION.py"),
+            "Agent discovery system": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/agent_discovery.c"),
+            "Message router": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/message_router.c"),
+            "Monitoring system": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../monitoring/prometheus.yml"),
+            "Test suite": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../tests/run_all_tests.sh")
         }
         
         return components

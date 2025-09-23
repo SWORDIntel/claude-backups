@@ -240,7 +240,7 @@ The enhanced router is ready for:
 
 ```bash
 # Test the enhanced router (recommended)
-cd /home/john/claude-backups/agents/src/c
+cd $HOME/claude-backups/agents/src/c
 make test-vectorized
 
 # Build enhanced system

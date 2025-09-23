@@ -418,7 +418,7 @@ async def main():
     print(report)
     
     # Save report
-    with open('/home/john/claude-backups/agents/src/python/core_test_report.txt', 'w') as f:
+    with open('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/core_test_report.txt', 'w') as f:
         f.write(report)
     
     # Summary

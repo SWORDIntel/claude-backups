@@ -15,6 +15,22 @@ import logging
 import asyncio
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_database_config
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_database_config():
+        return {
+            'host': 'localhost', 'port': 5433,
+            'database': 'claude_agents_auth',
+            'user': 'claude_agent', 'password': 'claude_auth_pass'
+        }
 
 # ML imports
 try:
@@ -69,14 +85,11 @@ class AdvancedLearningAnalytics:
         self.agent_profiles: Dict[str, AgentPerformanceProfile] = {}
         
     def _get_default_config(self) -> Dict[str, str]:
-        """Get default database configuration"""
-        return {
-            'host': 'localhost',
-            'port': '5433',
-            'database': 'claude_agents_auth',
-            'user': 'claude_agent',
-            'password': 'claude_secure_password'
-        }
+        """Get default database configuration using path utilities"""
+        config = get_database_config()
+        # Convert port to string for compatibility
+        config['port'] = str(config['port'])
+        return config
     
     def get_connection(self):
         """Get database connection"""
@@ -728,7 +741,7 @@ async def main():
             print(f"  {opportunity}")
     
     # Save full report
-    with open('/home/john/claude-backups/learning_analytics_report.json', 'w') as f:
+    with open('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}learning_analytics_report.json', 'w') as f:
         json.dump(report, f, indent=2, default=str)
     
     print(f"\n✅ Full report saved to learning_analytics_report.json")

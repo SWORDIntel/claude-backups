@@ -19,7 +19,7 @@ The Claude Agent System is a sophisticated multi-agent orchestration framework t
 ## 📁 Directory Structure
 
 ```
-/home/ubuntu/Documents/Claude/agents/
+$HOME/Documents/Claude/agents/
 ├── 00-STARTUP/                    # System initialization scripts
 │   └── BRING_ONLINE.sh            # Main startup orchestrator
 │
@@ -320,7 +320,7 @@ ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)'
 
 ```bash
 # Remove online flag and kill processes
-rm /home/ubuntu/Documents/Claude/agents/.online
+rm $HOME/Documents/Claude/agents/.online
 pkill -f ultra_hybrid_enhanced
 ```
 

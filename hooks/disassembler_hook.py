@@ -1,462 +1,379 @@
 #!/usr/bin/env python3
 """
-DISASSEMBLER Agent Integration Hook
-Monitors for binary files and triggers DISASSEMBLER agent analysis via ghidra-integration.sh
+DISASSEMBLER Hook - Production ULTRATHINK Integration
+Actual execution of ghidra-integration.sh, no mock data
 """
 
 import os
 import sys
-import asyncio
-import subprocess
-import logging
 import json
 import hashlib
-import time
+import subprocess
+import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-import mimetypes
-
-# Optional dependency for better file type detection
-try:
-    import magic
-    HAS_MAGIC = True
-except ImportError:
-    HAS_MAGIC = False
+from typing import Dict, Optional, List
+import time
 
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('/tmp/disassembler-hook.log'),
-        logging.StreamHandler()
-    ]
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('disassembler-hook')
 
 class DisassemblerHook:
     """
-    DISASSEMBLER Agent Integration Hook
-    Monitors for binary files and triggers analysis when appropriate
+    Production hook that executes actual ghidra-integration.sh
+    No mock data - real ULTRATHINK analysis
     """
-
+    
     def __init__(self, project_root: Optional[str] = None):
-        self.project_root = project_root or os.environ.get('CLAUDE_PROJECT_ROOT', '/home/john/claude-backups')
-        self.hooks_dir = os.path.join(self.project_root, 'hooks')
-        self.ghidra_script = os.path.join(self.hooks_dir, 'ghidra-integration.sh')
-        self.analysis_cache = os.path.join(self.hooks_dir, '.disassembler_cache.json')
-
-        # File type patterns for binary analysis
-        self.binary_extensions = {
-            '.exe', '.dll', '.so', '.dylib', '.bin', '.elf',
-            '.o', '.obj', '.lib', '.a', '.out', '.app'
-        }
-
-        # MIME types for binary files
-        self.binary_mimetypes = {
-            'application/x-executable',
-            'application/x-sharedlib',
-            'application/x-object',
-            'application/x-archive',
-            'application/x-mach-binary',
-            'application/octet-stream'
-        }
-
-        # Cache for analysis results
+        self.project_root = Path(project_root or os.environ.get('CLAUDE_PROJECT_ROOT', '/home/john/claude-backups'))
+        self.ghidra_script = self.project_root / 'hooks' / 'ghidra-integration.sh'
+        self.cache_file = self.project_root / '.disassembler_cache.json'
+        self.analysis_workspace = self.project_root / '.claude' / 'ghidra-workspace'
+        
+        # Validate ghidra-integration.sh exists
+        if not self.ghidra_script.exists():
+            logger.error(f"CRITICAL: ghidra-integration.sh not found at {self.ghidra_script}")
+            logger.error("Install ULTRATHINK framework first")
+            
+        # Make script executable
+        if self.ghidra_script.exists():
+            self.ghidra_script.chmod(0o755)
+            
+        # Create workspace
+        self.analysis_workspace.mkdir(parents=True, exist_ok=True)
+        
+        # Load cache
         self.cache = self._load_cache()
-
-        # Initialize magic for file type detection
-        if HAS_MAGIC:
-            try:
-                self.magic = magic.Magic(mime=True)
-            except Exception as e:
-                logger.warning(f"Could not initialize python-magic: {e}")
-                self.magic = None
-        else:
-            self.magic = None
-            logger.info("python-magic not available, using fallback file detection")
-
+        
+        # Binary signatures for detection
+        self.signatures = {
+            b'\x7fELF': 'ELF',
+            b'MZ': 'PE',  
+            b'\xca\xfe\xba\xbe': 'Mach-O 32',
+            b'\xcf\xfa\xed\xfe': 'Mach-O 64',
+            b'\xfe\xed\xfa\xce': 'Mach-O BE32',
+            b'\xfe\xed\xfa\xcf': 'Mach-O BE64'
+        }
+    
     def _load_cache(self) -> Dict:
-        """Load analysis cache from disk"""
-        try:
-            if os.path.exists(self.analysis_cache):
-                with open(self.analysis_cache, 'r') as f:
-                    return json.load(f)
-        except Exception as e:
-            logger.warning(f"Could not load cache: {e}")
+        """Load analysis cache"""
+        if self.cache_file.exists():
+            try:
+                return json.load(open(self.cache_file))
+            except:
+                pass
         return {}
-
+    
     def _save_cache(self):
-        """Save analysis cache to disk"""
+        """Save analysis cache"""
         try:
-            with open(self.analysis_cache, 'w') as f:
-                json.dump(self.cache, f, indent=2)
+            json.dump(self.cache, open(self.cache_file, 'w'), indent=2)
         except Exception as e:
-            logger.error(f"Could not save cache: {e}")
-
-    def _get_file_hash(self, filepath: str) -> str:
-        """Get SHA256 hash of file for caching"""
+            logger.error(f"Cache save failed: {e}")
+    
+    def is_binary(self, filepath: str) -> bool:
+        """Check if file is a binary executable"""
         try:
             with open(filepath, 'rb') as f:
-                return hashlib.sha256(f.read()).hexdigest()
-        except Exception as e:
-            logger.error(f"Could not hash file {filepath}: {e}")
-            return ""
-
-    def is_binary_file(self, filepath: str) -> bool:
-        """
-        Determine if file is a binary that should be analyzed
-
-        Args:
-            filepath: Path to file to check
-
-        Returns:
-            True if file should be analyzed by DISASSEMBLER
-        """
-        try:
-            if not os.path.isfile(filepath):
-                return False
-
-            # Check file extension
-            path = Path(filepath)
-            if path.suffix.lower() in self.binary_extensions:
-                return True
-
-            # Check MIME type with python-magic if available
-            if self.magic:
-                try:
-                    mime_type = self.magic.from_file(filepath)
-                    if mime_type in self.binary_mimetypes:
-                        return True
-                except Exception as e:
-                    logger.debug(f"Magic detection failed for {filepath}: {e}")
-
-            # Fallback to mimetypes module
-            mime_type, _ = mimetypes.guess_type(filepath)
-            if mime_type in self.binary_mimetypes:
-                return True
-
-            # Check if file is executable
-            if os.access(filepath, os.X_OK) and not filepath.endswith(('.sh', '.py', '.pl', '.rb', '.js')):
-                return True
-
-            # Check for ELF magic number
-            try:
+                header = f.read(4)
+            
+            # Check known signatures
+            for sig in self.signatures:
+                if header.startswith(sig):
+                    return True
+                    
+            # Check if executable
+            if os.access(filepath, os.X_OK):
+                # Verify it's not a script
                 with open(filepath, 'rb') as f:
-                    magic_bytes = f.read(4)
-                    if magic_bytes == b'\x7fELF':  # ELF magic
+                    chunk = f.read(512)
+                # Check for shebang
+                if not chunk.startswith(b'#!'):
+                    # High non-text ratio = binary
+                    text_chars = set(range(0x20, 0x7f)) | {0x09, 0x0a, 0x0d}
+                    nontext = sum(1 for b in chunk if b not in text_chars)
+                    if nontext / len(chunk) > 0.3:
                         return True
-                    if magic_bytes[:2] == b'MZ':   # PE magic
-                        return True
-                    if magic_bytes == b'\xcf\xfa\xed\xfe':  # Mach-O 32-bit
-                        return True
-                    if magic_bytes == b'\xcf\xfa\xed\xfe':  # Mach-O 64-bit
-                        return True
-            except Exception:
-                pass
-
-            return False
-
+                        
         except Exception as e:
-            logger.error(f"Error checking if {filepath} is binary: {e}")
-            return False
-
+            logger.debug(f"Binary check failed for {filepath}: {e}")
+        return False
+    
+    def _get_file_hash(self, filepath: str) -> str:
+        """SHA256 hash for caching"""
+        try:
+            sha256 = hashlib.sha256()
+            with open(filepath, 'rb') as f:
+                for chunk in iter(lambda: f.read(8192), b''):
+                    sha256.update(chunk)
+            return sha256.hexdigest()
+        except:
+            return ""
+    
     def should_analyze(self, filepath: str) -> bool:
-        """
-        Determine if file should be analyzed (not in cache or changed)
-
-        Args:
-            filepath: Path to file to check
-
-        Returns:
-            True if file should be analyzed
-        """
+        """Check if file needs analysis (not cached or changed)"""
         if not os.path.exists(filepath):
             return False
-
-        if not self.is_binary_file(filepath):
+            
+        if not self.is_binary(filepath):
             return False
-
+            
         # Check cache
         file_hash = self._get_file_hash(filepath)
         if not file_hash:
             return False
-
-        cache_key = os.path.abspath(filepath)
-        cached_entry = self.cache.get(cache_key)
-
-        if cached_entry and cached_entry.get('hash') == file_hash:
-            logger.debug(f"File {filepath} already analyzed (cached)")
+            
+        cached = self.cache.get(os.path.abspath(filepath))
+        if cached and cached.get('hash') == file_hash:
+            logger.info(f"Skipping {filepath} (cached)")
             return False
-
+            
         return True
-
-    async def invoke_disassembler_agent(self, filepath: str, analysis_type: str = "comprehensive") -> Dict:
+    
+    def analyze_with_ultrathink(self, filepath: str, mode: str = "comprehensive") -> Dict:
         """
-        Invoke DISASSEMBLER agent for file analysis
-
-        Args:
-            filepath: Path to file to analyze
-            analysis_type: Type of analysis to perform
-
-        Returns:
-            Analysis results from DISASSEMBLER agent
+        Execute actual ghidra-integration.sh ULTRATHINK analysis
+        
+        THIS IS THE REAL DEAL - NO MOCKS
         """
-        try:
-            # Prepare DISASSEMBLER agent invocation
-            agent_prompt = f"""
-            Analyze the binary file: {filepath}
-
-            Perform {analysis_type} analysis including:
-            - File format identification
-            - Architecture detection
-            - Entry point analysis
-            - String extraction
-            - Symbol table analysis
-            - Security analysis (stack canaries, DEP, ASLR)
-            - Vulnerability detection
-
-            Use ghidra-integration.sh for detailed disassembly when appropriate.
-
-            File details:
-            - Path: {filepath}
-            - Size: {os.path.getsize(filepath)} bytes
-            - Modified: {time.ctime(os.path.getmtime(filepath))}
-            """
-
-            # Note: In a real implementation, this would invoke the DISASSEMBLER agent
-            # via the Task tool or agent coordination system
-            logger.info(f"Would invoke DISASSEMBLER agent for: {filepath}")
-
-            # Get basic file info for mock response
-            file_stat = os.stat(filepath)
-
-            # Determine architecture and format from file command
-            try:
-                file_cmd = subprocess.run(['file', filepath], capture_output=True, text=True)
-                file_output = file_cmd.stdout.strip()
-            except Exception:
-                file_output = "Unknown file type"
-
-            # Mock agent response with some real data
-            result = {
-                "status": "analyzed",
-                "filepath": filepath,
-                "analysis_type": analysis_type,
-                "timestamp": time.time(),
-                "agent": "DISASSEMBLER",
-                "findings": {
-                    "file_format": file_output,
-                    "architecture": "x86-64" if "x86-64" in file_output else "unknown",
-                    "file_size": file_stat.st_size,
-                    "permissions": oct(file_stat.st_mode)[-3:],
-                    "security_features": ["NX", "PIE"] if "executable" in file_output else [],
-                    "vulnerabilities": [],
-                    "strings": [],
-                    "symbols": [],
-                    "complexity": "medium"
-                }
-            }
-
-            return result
-
-        except Exception as e:
-            logger.error(f"Error invoking DISASSEMBLER agent for {filepath}: {e}")
-            return {"status": "error", "error": str(e)}
-
-    async def run_ghidra_analysis(self, filepath: str) -> Dict:
-        """
-        Run Ghidra analysis via ghidra-integration.sh script
-
-        Args:
-            filepath: Path to file to analyze
-
-        Returns:
-            Ghidra analysis results
-        """
-        try:
-            if not os.path.exists(self.ghidra_script):
-                logger.warning(f"Ghidra script not found: {self.ghidra_script}")
-                return {"status": "skipped", "reason": "ghidra-integration.sh not found"}
-
-            # Run ghidra-integration.sh
-            cmd = [self.ghidra_script, filepath]
-            logger.info(f"Running Ghidra analysis: {' '.join(cmd)}")
-
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=self.hooks_dir
-            )
-
-            stdout, stderr = await process.communicate()
-
-            result = {
-                "status": "completed" if process.returncode == 0 else "failed",
-                "returncode": process.returncode,
-                "stdout": stdout.decode('utf-8', errors='ignore'),
-                "stderr": stderr.decode('utf-8', errors='ignore'),
-                "timestamp": time.time()
-            }
-
-            if process.returncode == 0:
-                logger.info(f"Ghidra analysis completed for {filepath}")
-            else:
-                logger.error(f"Ghidra analysis failed for {filepath}: {stderr.decode()}")
-
-            return result
-
-        except Exception as e:
-            logger.error(f"Error running Ghidra analysis for {filepath}: {e}")
-            return {"status": "error", "error": str(e)}
-
-    async def analyze_file(self, filepath: str) -> Dict:
-        """
-        Perform complete analysis of a binary file
-
-        Args:
-            filepath: Path to file to analyze
-
-        Returns:
-            Combined analysis results
-        """
-        if not self.should_analyze(filepath):
-            return {"status": "skipped", "reason": "not_required"}
-
-        logger.info(f"Starting analysis of: {filepath}")
-
-        try:
-            # Run DISASSEMBLER agent analysis
-            agent_result = await self.invoke_disassembler_agent(filepath)
-
-            # Run Ghidra analysis if available
-            ghidra_result = await self.run_ghidra_analysis(filepath)
-
-            # Combine results
-            combined_result = {
-                "filepath": filepath,
-                "timestamp": time.time(),
-                "hash": self._get_file_hash(filepath),
-                "agent_analysis": agent_result,
-                "ghidra_analysis": ghidra_result,
-                "status": "completed"
-            }
-
-            # Cache results
-            cache_key = os.path.abspath(filepath)
-            self.cache[cache_key] = combined_result
-            self._save_cache()
-
-            logger.info(f"Analysis completed for: {filepath}")
-            return combined_result
-
-        except Exception as e:
-            logger.error(f"Error analyzing {filepath}: {e}")
-            return {"status": "error", "error": str(e)}
-
-    async def monitor_directory(self, directory: str, recursive: bool = True) -> List[Dict]:
-        """
-        Monitor directory for binary files and analyze them
-
-        Args:
-            directory: Directory to monitor
-            recursive: Whether to scan recursively
-
-        Returns:
-            List of analysis results
-        """
-        results = []
-
-        try:
-            if recursive:
-                for root, dirs, files in os.walk(directory):
-                    for file in files:
-                        filepath = os.path.join(root, file)
-                        if self.should_analyze(filepath):
-                            result = await self.analyze_file(filepath)
-                            results.append(result)
-            else:
-                for file in os.listdir(directory):
-                    filepath = os.path.join(directory, file)
-                    if os.path.isfile(filepath) and self.should_analyze(filepath):
-                        result = await self.analyze_file(filepath)
-                        results.append(result)
-
-        except Exception as e:
-            logger.error(f"Error monitoring directory {directory}: {e}")
-
-        return results
-
-    def get_analysis_summary(self) -> Dict:
-        """Get summary of all cached analyses"""
-        try:
-            total_files = len(self.cache)
-            successful = len([v for v in self.cache.values() if v.get('status') == 'completed'])
-            failed = len([v for v in self.cache.values() if v.get('status') == 'error'])
-
+        if not self.ghidra_script.exists():
             return {
-                "total_analyzed": total_files,
-                "successful": successful,
-                "failed": failed,
-                "cache_size": total_files,
-                "last_analysis": max([v.get('timestamp', 0) for v in self.cache.values()] + [0])
+                "status": "error",
+                "error": "ghidra-integration.sh not found",
+                "solution": "Ensure ULTRATHINK framework is installed"
             }
+        
+        logger.info(f"Executing ULTRATHINK analysis on {filepath}")
+        
+        # Prepare environment
+        env = os.environ.copy()
+        env['ANALYSIS_WORKSPACE'] = str(self.analysis_workspace)
+        env['ULTRATHINK_MODE'] = mode
+        env['ENABLE_MEME_REPORTS'] = 'true'  # Always enable meme reports
+        env['ENABLE_ML_SCORING'] = 'true'
+        env['ENABLE_C2_EXTRACTION'] = 'true'
+        
+        # Execute ghidra-integration.sh
+        try:
+            cmd = [str(self.ghidra_script), 'analyze', filepath, mode]
+            logger.info(f"Running: {' '.join(cmd)}")
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout
+                env=env
+            )
+            
+            # Parse output
+            analysis_result = {
+                "status": "completed" if result.returncode == 0 else "failed",
+                "returncode": result.returncode,
+                "filepath": filepath,
+                "mode": mode,
+                "timestamp": time.time(),
+                "hash": self._get_file_hash(filepath)
+            }
+            
+            # Extract key results from output
+            if result.returncode == 0:
+                # Parse structured output
+                analysis_result.update(self._parse_ultrathink_output(result.stdout))
+                
+                # Find generated reports
+                analysis_result['reports'] = self._find_generated_reports(filepath)
+                
+                # Cache successful result
+                self.cache[os.path.abspath(filepath)] = analysis_result
+                self._save_cache()
+                
+                logger.info(f"ULTRATHINK analysis complete for {filepath}")
+            else:
+                analysis_result['error'] = result.stderr
+                logger.error(f"ULTRATHINK failed: {result.stderr}")
+            
+            return analysis_result
+            
+        except subprocess.TimeoutExpired:
+            logger.error(f"ULTRATHINK timeout for {filepath}")
+            return {"status": "timeout", "error": "Analysis exceeded 5 minutes"}
         except Exception as e:
-            logger.error(f"Error generating summary: {e}")
-            return {"error": str(e)}
+            logger.error(f"ULTRATHINK execution error: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    def _parse_ultrathink_output(self, output: str) -> Dict:
+        """Parse ULTRATHINK script output for structured data"""
+        result = {
+            "phases_completed": [],
+            "threat_score": 0,
+            "meme_score": 0,
+            "iocs": [],
+            "malware_family": "unknown"
+        }
+        
+        # Parse phase completions
+        for phase in ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6']:
+            if phase in output:
+                result['phases_completed'].append(phase)
+        
+        # Extract threat score
+        if 'Threat Score:' in output:
+            try:
+                score_line = [l for l in output.split('\n') if 'Threat Score:' in l][0]
+                result['threat_score'] = int(score_line.split(':')[1].split('/')[0].strip())
+            except:
+                pass
+        
+        # Extract meme score
+        if 'MEME SCORE:' in output:
+            try:
+                score_line = [l for l in output.split('\n') if 'MEME SCORE:' in l][0]
+                result['meme_score'] = int(score_line.split(':')[1].split('/')[0].strip())
+            except:
+                pass
+        
+        # Extract IOCs
+        if 'IOC:' in output:
+            for line in output.split('\n'):
+                if 'IOC:' in line:
+                    ioc = line.split('IOC:')[1].strip()
+                    result['iocs'].append(ioc)
+        
+        # Check for specific malware indicators
+        if 'CRYPTD' in output.upper():
+            result['malware_family'] = 'CRYPTD'
+        elif 'UPX' in output:
+            result['malware_family'] = 'UPX-packed'
+            
+        return result
+    
+    def _find_generated_reports(self, filepath: str) -> Dict:
+        """Find reports generated by ULTRATHINK"""
+        reports = {}
+        basename = os.path.basename(filepath)
+        
+        # Check for HTML reports
+        report_dirs = [
+            self.analysis_workspace / 'results',
+            self.analysis_workspace / 'analysis-reports'
+        ]
+        
+        for report_dir in report_dirs:
+            if report_dir.exists():
+                # Find matching reports
+                for report in report_dir.glob(f"*{basename}*.html"):
+                    reports[report.stem] = str(report)
+                    
+                # Check for meme report
+                meme_report = report_dir / 'meme_report.html'
+                if meme_report.exists():
+                    reports['meme_report'] = str(meme_report)
+                    
+        return reports
+    
+    def batch_analyze(self, directory: str, recursive: bool = True) -> List[Dict]:
+        """Analyze all binaries in directory"""
+        results = []
+        
+        path = Path(directory)
+        if not path.exists():
+            return [{"status": "error", "error": f"Directory not found: {directory}"}]
+        
+        # Find all binaries
+        pattern = '**/*' if recursive else '*'
+        for file_path in path.glob(pattern):
+            if file_path.is_file() and self.should_analyze(str(file_path)):
+                logger.info(f"Analyzing: {file_path}")
+                result = self.analyze_with_ultrathink(str(file_path))
+                results.append(result)
+                
+        return results
+    
+    def get_status(self) -> Dict:
+        """Check ULTRATHINK framework status"""
+        status = {
+            "ultrathink_installed": self.ghidra_script.exists(),
+            "ghidra_script": str(self.ghidra_script),
+            "workspace": str(self.analysis_workspace),
+            "workspace_exists": self.analysis_workspace.exists(),
+            "cache_size": len(self.cache),
+            "ghidra_available": False
+        }
+        
+        # Check if Ghidra is available
+        try:
+            # Try snap first
+            result = subprocess.run(['snap', 'list'], capture_output=True, text=True)
+            if 'ghidra' in result.stdout:
+                status['ghidra_available'] = True
+                status['ghidra_type'] = 'snap'
+            else:
+                # Check common paths
+                ghidra_paths = ['/opt/ghidra', '/usr/local/ghidra', 
+                               Path.home() / 'ghidra']
+                for path in ghidra_paths:
+                    if path.exists():
+                        status['ghidra_available'] = True
+                        status['ghidra_type'] = 'native'
+                        status['ghidra_path'] = str(path)
+                        break
+        except:
+            pass
+            
+        return status
 
 # CLI Interface
-async def main():
-    """Main CLI interface for DISASSEMBLER hook"""
+def main():
     import argparse
-
-    parser = argparse.ArgumentParser(description='DISASSEMBLER Agent Integration Hook')
-    parser.add_argument('--file', '-f', help='Analyze specific file')
-    parser.add_argument('--directory', '-d', help='Monitor directory for binary files')
-    parser.add_argument('--recursive', '-r', action='store_true', help='Recursive directory scan')
-    parser.add_argument('--summary', '-s', action='store_true', help='Show analysis summary')
-    parser.add_argument('--clear-cache', action='store_true', help='Clear analysis cache')
-    parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
-
+    
+    parser = argparse.ArgumentParser(description='DISASSEMBLER ULTRATHINK Hook')
+    parser.add_argument('--file', '-f', help='Analyze single file')
+    parser.add_argument('--directory', '-d', help='Analyze directory')
+    parser.add_argument('--recursive', '-r', action='store_true', help='Recursive scan')
+    parser.add_argument('--mode', '-m', default='comprehensive', 
+                       choices=['static', 'dynamic', 'comprehensive'],
+                       help='Analysis mode')
+    parser.add_argument('--status', '-s', action='store_true', help='Show status')
+    parser.add_argument('--clear-cache', action='store_true', help='Clear cache')
+    
     args = parser.parse_args()
-
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
+    
     hook = DisassemblerHook()
-
+    
+    if args.status:
+        status = hook.get_status()
+        print(json.dumps(status, indent=2))
+        if not status['ultrathink_installed']:
+            print("\nWARNING: ghidra-integration.sh not found!")
+            print("ULTRATHINK framework not installed")
+        if not status['ghidra_available']:
+            print("\nWARNING: Ghidra not detected!")
+            print("Install with: sudo snap install ghidra")
+        sys.exit(0)
+        
     if args.clear_cache:
         hook.cache = {}
         hook._save_cache()
-        print("Analysis cache cleared")
-        return
-
-    if args.summary:
-        summary = hook.get_analysis_summary()
-        print(json.dumps(summary, indent=2))
-        return
-
+        print("Cache cleared")
+        sys.exit(0)
+        
     if args.file:
-        result = await hook.analyze_file(args.file)
+        if not hook.is_binary(args.file):
+            print(f"Not a binary: {args.file}")
+            sys.exit(1)
+        result = hook.analyze_with_ultrathink(args.file, args.mode)
         print(json.dumps(result, indent=2))
-        return
-
-    if args.directory:
-        results = await hook.monitor_directory(args.directory, args.recursive)
+        
+    elif args.directory:
+        results = hook.batch_analyze(args.directory, args.recursive)
         print(json.dumps(results, indent=2))
-        return
-
-    # Default: monitor current directory
-    results = await hook.monitor_directory('.', False)
-    print(json.dumps(results, indent=2))
+        
+    else:
+        parser.print_help()
 
 if __name__ == '__main__':
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nDisassembler hook interrupted")
-        sys.exit(0)
-    except Exception as e:
-        logger.error(f"Fatal error: {e}")
-        sys.exit(1)
+    main()

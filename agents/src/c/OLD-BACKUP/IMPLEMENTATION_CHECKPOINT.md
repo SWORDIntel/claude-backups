@@ -3,7 +3,7 @@
 
 ### SESSION SUMMARY
 - **Session Start**: Previous context about optimizing ultra_hybrid_enhanced
-- **Work Location**: /home/ubuntu/Documents/Claude/agents/04-SOURCE/c-implementations/STUBS/
+- **Work Location**: $HOME/Documents/Claude/agents/04-SOURCE/c-implementations/STUBS/
 - **Major Discovery**: Most production agents (21/60) are just 1.6KB stubs with TODOs
 
 ### COMPLETED WORK THIS SESSION
@@ -13,37 +13,37 @@
    - Status: PRODUCTION READY ✅
    - Features: Real CPU profiling, hot path identification, benchmarking
    - Quality: Meets all goalposts (memory mgmt, threading, real functionality)
-   - Location: Moved to /home/ubuntu/Documents/Claude/agents/src/c/optimizer_agent.c
+   - Location: Moved to $HOME/Documents/Claude/agents/src/c/optimizer_agent.c
 
 2. **monitor_agent.c** (1000+ lines)
    - Status: PRODUCTION READY ✅
    - Features: Real /proc and /sys monitoring, Prometheus metrics export
    - Quality: Meets all goalposts
-   - Location: Moved to /home/ubuntu/Documents/Claude/agents/src/c/monitor_agent.c
+   - Location: Moved to $HOME/Documents/Claude/agents/src/c/monitor_agent.c
 
 3. **deployer_agent.c** (1155 lines)
    - Status: PRODUCTION READY ✅
    - Features: Docker deployment with simulation mode, blue-green/canary/rolling strategies
    - Quality: Meets all goalposts, works without Docker
-   - Location: Moved to /home/ubuntu/Documents/Claude/agents/src/c/deployer_agent.c
+   - Location: Moved to $HOME/Documents/Claude/agents/src/c/deployer_agent.c
 
 4. **infrastructure_agent.c** (1100+ lines)
    - Status: PRODUCTION READY ✅
    - Features: VM/Container management, Network config, Storage provisioning, Ansible automation
    - Quality: Real /proc monitoring, simulation for virtualization, thread-safe
-   - Location: Moved to /home/ubuntu/Documents/Claude/agents/src/c/infrastructure_agent.c
+   - Location: Moved to $HOME/Documents/Claude/agents/src/c/infrastructure_agent.c
 
 5. **web_agent.c** (1200+ lines)
    - Status: PRODUCTION READY ✅
    - Features: React/Vue/Angular development, component generation, build optimization
    - Quality: Real component code generation, Lighthouse metrics, HMR simulation
-   - Location: Moved to /home/ubuntu/Documents/Claude/agents/src/c/web_agent.c
+   - Location: Moved to $HOME/Documents/Claude/agents/src/c/web_agent.c
 
 6. **database_agent.c** (1200+ lines)
    - Status: PRODUCTION READY ✅
    - Features: Schema design, SQL generation, query optimization, migration management
    - Quality: Real SQL generation, connection pooling, query plan analysis
-   - Location: Moved to /home/ubuntu/Documents/Claude/agents/src/c/database_agent.c
+   - Location: Moved to $HOME/Documents/Claude/agents/src/c/database_agent.c
 
 #### ✅ USER FIXED (Already Production)
 - constructor_agent.c - FIXED with real build capabilities

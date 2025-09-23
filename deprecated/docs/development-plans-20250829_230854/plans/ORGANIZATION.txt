@@ -34,7 +34,7 @@ with existing scripts and references.
 
 ### Usage Examples:
 ```bash
-# From Claude main directory (/home/ubuntu/Documents/Claude/):
+# From Claude main directory ($HOME/Documents/Claude/):
 ./switch md                    # Switch to .md mode
 ./bring-online                 # Bring system online
 ./status                       # Check system status

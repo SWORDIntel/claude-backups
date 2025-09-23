@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
 class QuickVoice:
     def __init__(self):

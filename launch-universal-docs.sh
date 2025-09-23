@@ -125,8 +125,8 @@ show_help() {
     echo "EXAMPLES:"
     echo "  $0                                                    # Auto-detect and launch"
     echo "  $0 /path/to/docs                                     # Launch with specific directory"
-    echo "  $0 /home/ubuntu/Documents/ARTICBASTION/docs          # Test complex structure"
-    echo "  $0 /home/ubuntu/Documents/livecd-gen/docs            # Test another structure"
+    echo "  $0 $HOME/Documents/ARTICBASTION/docs          # Test complex structure"
+    echo "  $0 $HOME/Documents/livecd-gen/docs            # Test another structure"
     echo "  $0 --setup-only                                      # Setup environment only"
     echo "  $0 --status                                          # Show status information"
     echo "  $0 --test-all                                        # Test all available structures"
@@ -147,9 +147,9 @@ test_all_structures() {
     
     # Test directories
     test_dirs=(
-        "/home/ubuntu/Documents/claude-backups/docs"
-        "/home/ubuntu/Documents/ARTICBASTION/docs" 
-        "/home/ubuntu/Documents/livecd-gen/docs"
+        "$CLAUDE_PROJECT_ROOT/docs"
+        "$HOME/Documents/ARTICBASTION/docs" 
+        "$HOME/Documents/livecd-gen/docs"
     )
     
     for test_dir in "${test_dirs[@]}"; do
@@ -360,9 +360,9 @@ detect_docs_directory() {
     # Auto-detect candidates
     candidates=(
         "$PROJECT_ROOT/docs"
-        "/home/ubuntu/Documents/claude-backups/docs"
-        "/home/ubuntu/Documents/ARTICBASTION/docs"
-        "/home/ubuntu/Documents/livecd-gen/docs"
+        "$CLAUDE_PROJECT_ROOT/docs"
+        "$HOME/Documents/ARTICBASTION/docs"
+        "$HOME/Documents/livecd-gen/docs"
         "$(pwd)/docs"
         "$(pwd)/doc"
         "$(pwd)/documentation"
@@ -525,9 +525,9 @@ show_status() {
     echo -e "${GREEN}Available Documentation Directories:${NC}"
     local test_dirs=(
         "$PROJECT_ROOT/docs"
-        "/home/ubuntu/Documents/claude-backups/docs"
-        "/home/ubuntu/Documents/ARTICBASTION/docs"
-        "/home/ubuntu/Documents/livecd-gen/docs"
+        "$CLAUDE_PROJECT_ROOT/docs"
+        "$HOME/Documents/ARTICBASTION/docs"
+        "$HOME/Documents/livecd-gen/docs"
     )
     
     for test_dir in "${test_dirs[@]}"; do

@@ -114,7 +114,7 @@ database/scripts/learning_sync.sh import
 
 ### Full Installation (Recommended)
 ```bash
-cd /home/ubuntu/Documents/Claude
+cd $HOME/Documents/Claude
 ./installers/claude-installer.sh --full
 ```
 

@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-11.0.0-blue.svg)](VERSION)
 [![Status](https://img.shields.io/badge/status-production-green.svg)](CLAUDE.md)
-[![Agents](https://img.shields.io/badge/agents-84-orange.svg)](agents/)
+[![Agents](https://img.shields.io/badge/agents-90-orange.svg)](agents/)
 [![License](https://img.shields.io/badge/license-MIT-purple.svg)](LICENSE)
 
 ## 🌐 WHAT THIS IS
@@ -17,7 +17,7 @@ A **globally-integrated AI acceleration framework** that automatically enhances 
 | **Learning System** | ✅ RUNNING | PostgreSQL:5433 | `claude-learning-system` anywhere |
 | **Phase 3 Optimizer** | ✅ DEPLOYED | 3.2M-8.1M lines/sec | Default in all operations |
 | **Shadowgit AVX2** | ✅ OPERATIONAL | 930M lines/sec | `shadowgit` globally |
-| **89 Agents** | ✅ REGISTERED | All available | `claude-agent <name>` anywhere |
+| **90 Agents** | ✅ REGISTERED | All available | `claude-agent <name>` anywhere |
 | **Docker Services** | ✅ AUTO-START | Boot persistent | `unless-stopped` policy |
 
 ## 💫 ONE-TIME INSTALLATION, LIFETIME BENEFITS
@@ -51,7 +51,7 @@ After installation, the installer will:
 1. ✅ Start Docker containers (PostgreSQL learning system)
 2. ✅ Enable auto-restart on boot
 3. ✅ Activate neural acceleration
-4. ✅ Register all 89 agents globally
+4. ✅ Register all 90 agents globally
 5. ✅ Install global commands in PATH
 
 ## 🎯 GLOBAL COMMANDS (Work From Anywhere)
@@ -59,7 +59,7 @@ After installation, the installer will:
 ### Core Intelligence
 ```bash
 claude                          # Full AI acceleration + learning + agents
-claude-agent list              # See all 89 specialized agents
+claude-agent list              # See all 90 specialized agents
 claude-agent director "plan"   # Execute any agent task
 shadowgit file1 file2          # Hardware-accelerated diff (930M lines/sec)
 ```
@@ -81,7 +81,7 @@ claude-precision              # High-precision mode
 ## 🧠 AUTOMATIC GLOBAL SUBSYSTEMS
 
 ### 1. **OpenVINO Neural Acceleration** 
-**Location**: `/home/john/.local/share/claude/venv/`
+**Location**: `$HOME/.local/share/claude/venv/`
 - Auto-loads with every Claude command
 - Detects CPU, GPU, NPU hardware
 - 3.2M-8.1M lines/sec performance
@@ -101,12 +101,20 @@ claude-precision              # High-precision mode
 - io_uring async I/O (256 SQ entries)
 - Hardware acceleration (AVX2/AVX-512)
 
-### 4. **84 Specialized Agents**
-**Categories**: Security, Development, Infrastructure, ML, Hardware
+### 4. **90 Specialized Agents**
+**Categories**: Security, Development, Infrastructure, ML, Hardware, Data Processing
 - Global `claude-agent` command
 - Tandem Orchestration (Python+C)
 - Auto-discovery and registration
 - Task Tool integration
+
+#### 🆕 **Latest Addition: JSON-INTERNAL v8.0.0**
+**NPU-Accelerated JSON Processing**: 100K+ operations/sec
+- Intel NPU acceleration with CPU fallback
+- Multi-parser support (orjson, rapidjson, ijson)
+- Comprehensive error recovery and syntax repair
+- Schema validation with hardware acceleration
+- Streaming support for large JSON files
 
 ### 5. **Shadowgit Intelligence**
 **Performance**: 930M → 3.5B lines/sec pathway
@@ -156,13 +164,13 @@ These services start automatically on boot:
 ├── shadowgit                    # Accelerated Git operations
 └── claude-optimized            # Performance mode
 
-/home/john/claude-backups/       # Core framework
-├── agents/                      # 84 specialized agents
+$CLAUDE_PROJECT_ROOT/       # Core framework
+├── agents/                      # 90 specialized agents
 ├── database/docker/             # PostgreSQL containers
 ├── config/registered_agents.json # Agent registry
 └── agents/src/python/          # Orchestration system
 
-/home/john/.local/share/claude/venv/ # Neural runtime
+$HOME/.local/share/claude/venv/ # Neural runtime
 ├── lib/python3.*/site-packages/
 │   ├── openvino/               # Intel neural acceleration
 │   └── level_zero/             # GPU/NPU access layer
@@ -234,7 +242,7 @@ After one installation:
 ✅ **Hardware optimization** using ALL available resources  
 ✅ **Zero configuration** after initial setup  
 ✅ **Background services** that auto-start and self-manage  
-✅ **84 specialized agents** accessible from ANYWHERE  
+✅ **90 specialized agents** accessible from ANYWHERE  
 ✅ **Neural acceleration** via OpenVINO runtime  
 ✅ **Git intelligence** with ML-powered predictions  
 ✅ **PostgreSQL analytics** tracking performance  
@@ -243,7 +251,7 @@ After one installation:
 ## 📚 Documentation
 
 - [CLAUDE.md](CLAUDE.md) - Complete project context
-- [Agent Catalog](agents/) - All 84 agents
+- [Agent Catalog](agents/) - All 90 agents
 - [Learning System](docs/features/learning-system/) - ML analytics
 - [Performance Guide](docs/guides/performance/) - Optimization tips
 

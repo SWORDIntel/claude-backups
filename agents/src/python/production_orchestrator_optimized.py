@@ -686,7 +686,7 @@ class OptimizedProductionOrchestrator:
 
     async def _discover_agents_fallback(self) -> None:
         """Fallback agent discovery"""
-        agents_root = os.environ.get('CLAUDE_AGENTS_ROOT', '/home/john/claude-backups/agents')
+        agents_root = os.environ.get('CLAUDE_AGENTS_ROOT', '${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
         agents_dir = Path(agents_root)
 
         if agents_dir.exists():

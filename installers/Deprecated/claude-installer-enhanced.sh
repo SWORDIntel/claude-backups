@@ -5,7 +5,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 
 # Read the original installer first
-ORIGINAL_INSTALLER="/home/ubuntu/Downloads/claude-backups/claude-installer.sh"
+ORIGINAL_INSTALLER="$CLAUDE_PROJECT_ROOT/claude-installer.sh"
 
 if [[ ! -f "$ORIGINAL_INSTALLER" ]]; then
     echo "❌ Error: Original claude-installer.sh not found"

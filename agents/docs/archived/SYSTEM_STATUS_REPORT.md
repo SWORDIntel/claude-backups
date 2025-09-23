@@ -165,7 +165,7 @@
 
 To bring the system online:
 ```bash
-cd /home/ubuntu/Documents/Claude/agents
+cd $HOME/Documents/Claude/agents
 ./BRING_ONLINE.sh
 ```
 
@@ -177,7 +177,7 @@ ps aux | grep -E '(ultra_hybrid|agent_bridge|runtime)'
 
 To stop:
 ```bash
-rm /home/ubuntu/Documents/Claude/agents/.online
+rm $HOME/Documents/Claude/agents/.online
 pkill -f ultra_hybrid_enhanced
 ```
 

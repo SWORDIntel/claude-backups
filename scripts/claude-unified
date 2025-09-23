@@ -14,9 +14,21 @@
 
 set -euo pipefail
 
-# Configuration
-export CLAUDE_HOME="$HOME/.claude-home"
-export CLAUDE_PROJECT_ROOT="/home/john/claude-backups"
+# ═══════════════════════════════════════════════════════════════════════════════
+# PORTABLE CONFIGURATION - NO HARDCODED PATHS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Source portable path resolver
+SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")"
+if [[ -f "$SCRIPT_DIR/claude-path-resolver.sh" ]]; then
+    source "$SCRIPT_DIR/claude-path-resolver.sh" init
+elif [[ -f "$(dirname "$SCRIPT_DIR")/scripts/claude-path-resolver.sh" ]]; then
+    source "$(dirname "$SCRIPT_DIR")/scripts/claude-path-resolver.sh" init
+else
+    # Fallback path detection
+    export CLAUDE_PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+    export CLAUDE_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/claude"
+fi
 
 # Check if running from project with .claude directory
 if [[ -d "$CLAUDE_PROJECT_ROOT/.claude" ]]; then

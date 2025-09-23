@@ -69,9 +69,9 @@ if [[ -z "$TARGET_DIR" ]]; then
     # Auto-detect
     candidates=(
         "$SCRIPT_DIR/docs"
-        "/home/ubuntu/Documents/claude-backups/docs"
-        "/home/ubuntu/Documents/ARTICBASTION/docs"  
-        "/home/ubuntu/Documents/livecd-gen/docs"
+        "$CLAUDE_PROJECT_ROOT/docs"
+        "$HOME/Documents/ARTICBASTION/docs"  
+        "$HOME/Documents/livecd-gen/docs"
         "$(pwd)/docs"
         "$(pwd)"
     )
@@ -109,8 +109,8 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo
     echo "Examples:"
     echo "  $0                                              # Auto-detect docs"
-    echo "  $0 /home/ubuntu/Documents/ARTICBASTION/docs    # Complex structure"
-    echo "  $0 /home/ubuntu/Documents/livecd-gen/docs      # Another structure"
+    echo "  $0 $HOME/Documents/ARTICBASTION/docs    # Complex structure"
+    echo "  $0 $HOME/Documents/livecd-gen/docs      # Another structure"
     echo "  $0 /path/to/any/docs                           # Any docs folder"
     exit 0
 fi

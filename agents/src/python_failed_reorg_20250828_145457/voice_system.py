@@ -11,9 +11,9 @@ import asyncio
 from pathlib import Path
 
 # Add agents directory to path
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
-sys.path.append('/home/ubuntu/Documents/Claude/agents/03-BRIDGES')
-sys.path.append('/home/ubuntu/Documents/Claude/agents/04-SOURCE/python-modules')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
+sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../03-BRIDGES')
+sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../04-SOURCE/python-modules')
 
 from claude_agent_bridge import BinaryBridgeConnection, AgentConfig
 
@@ -21,7 +21,7 @@ class VoiceSystem:
     """Voice input system for agent control"""
     
     def __init__(self):
-        self.config_path = Path("/home/ubuntu/Documents/Claude/agents/05-CONFIG/voice_config.json")
+        self.config_path = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../05-CONFIG/voice_config.json")
         self.config = self.load_config()
         self.bridge = BinaryBridgeConnection()
         
@@ -87,7 +87,7 @@ def main():
     
     if not voice.is_enabled():
         print("⚠️  Voice system is disabled in configuration")
-        print("   Enable it in: /home/ubuntu/Documents/Claude/agents/05-CONFIG/voice_config.json")
+        print("   Enable it in: ${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../05-CONFIG/voice_config.json")
         return
     
     print("✅ Voice system ready")

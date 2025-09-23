@@ -204,9 +204,9 @@
     "Expand agent capabilities"
   ],
   "support_resources": {
-    "documentation": "/home/ubuntu/Documents/Claude/agents/PRODUCTION_DEPLOYMENT_SUMMARY.md",
+    "documentation": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../PRODUCTION_DEPLOYMENT_SUMMARY.md",
     "monitoring": "http://localhost:3000 (when monitoring stack active)",
-    "logs": "/home/ubuntu/Documents/Claude/agents/bridge_system.log",
-    "configuration": "/home/ubuntu/Documents/Claude/agents/transition_config.json"
+    "logs": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../bridge_system.log",
+    "configuration": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../transition_config.json"
   }
 }

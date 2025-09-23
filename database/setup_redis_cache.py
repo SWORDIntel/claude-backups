@@ -21,13 +21,42 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import logging
 
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import (
+        get_project_root, get_agents_dir, get_database_dir,
+        get_python_src_dir, get_shadowgit_paths, get_database_config
+    )
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+    def get_agents_dir():
+        return get_project_root() / 'agents'
+    def get_database_dir():
+        return get_project_root() / 'database'
+    def get_python_src_dir():
+        return get_agents_dir() / 'src' / 'python'
+    def get_shadowgit_paths():
+        home_dir = Path.home()
+        return {'root': home_dir / 'shadowgit'}
+    def get_database_config():
+        return {
+            'host': 'localhost', 'port': 5433,
+            'database': 'claude_agents_auth',
+            'user': 'claude_agent', 'password': 'claude_auth_pass'
+        }
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('redis_cache_setup')
 
 class RedisCacheSetup:
     """Redis cache setup and configuration manager"""
     
-    def __init__(self, config_dir: str = "/home/john/claude-backups/config"):
+    def __init__(self, config_dir: str = str(get_project_root() / "config"):
         self.config_dir = Path(config_dir)
         self.redis_instances = {
             'cache': {'port': 6379, 'db': 0, 'purpose': 'L2 Cache'},

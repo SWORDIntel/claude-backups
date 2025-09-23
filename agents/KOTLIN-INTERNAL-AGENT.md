@@ -701,7 +701,7 @@ documentation_generation:
 ################################################################################
 
 implementation_notes:
-  location: "/home/ubuntu/Documents/Claude/agents/"
+  location: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../"
   
   file_structure:
     main_file: "kotlin-internal.md"

@@ -3,7 +3,7 @@
 # Claude Agent System Status Monitor
 # Shows real-time status of all agent components
 
-AGENTS_DIR="/home/ubuntu/Documents/Claude/agents"
+AGENTS_DIR="${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
 BUILD_DIR="$AGENTS_DIR/build"
 
 # Colors

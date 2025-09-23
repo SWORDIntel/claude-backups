@@ -14,9 +14,20 @@ import json
 from datetime import datetime
 import psutil
 
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_python_src_dir
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_python_src_dir():
+        return Path(__file__).parent.parent.parent / 'agents' / 'src' / 'python'
+
 class MasterReorganizer:
     def __init__(self):
-        self.base_path = Path("/home/ubuntu/claude-backups/agents/src/python")
+        self.base_path = get_python_src_dir()
         self.start_time = time.time()
         self.steps_completed = []
         self.critical_services = []

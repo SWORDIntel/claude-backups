@@ -362,7 +362,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
     
     # Create PID file
-    pid_file = '/home/ubuntu/Documents/Claude/agents/.server_running'
+    pid_file = '${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../.server_running'
     with open(pid_file, 'w') as f:
         f.write(str(os.getpid()))
     

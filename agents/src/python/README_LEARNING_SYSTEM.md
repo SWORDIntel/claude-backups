@@ -42,7 +42,7 @@ The system uses the self-contained PostgreSQL database:
 ### Quick Setup
 ```bash
 # Run the PostgreSQL setup script
-cd /home/ubuntu/Documents/Claude/agents/src/python
+cd $HOME/Documents/Claude/agents/src/python
 python3 setup_learning_system.py
 
 # This will:

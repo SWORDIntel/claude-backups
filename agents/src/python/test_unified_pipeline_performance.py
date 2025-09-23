@@ -23,8 +23,38 @@ from unittest import IsolatedAsyncioTestCase
 import json
 import sys
 import os
+from pathlib import Path
 
 # Add the current directory to the path for imports
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import (
+        get_project_root, get_agents_dir, get_database_dir,
+        get_python_src_dir, get_shadowgit_paths, get_database_config
+    )
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+    def get_agents_dir():
+        return get_project_root() / 'agents'
+    def get_database_dir():
+        return get_project_root() / 'database'
+    def get_python_src_dir():
+        return get_agents_dir() / 'src' / 'python'
+    def get_shadowgit_paths():
+        home_dir = Path.home()
+        return {'root': home_dir / 'shadowgit'}
+    def get_database_config():
+        return {
+            'host': 'localhost', 'port': 5433,
+            'database': 'claude_agents_auth',
+            'user': 'claude_agent', 'password': 'claude_auth_pass'
+        }
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from unified_async_optimization_pipeline import (
@@ -115,7 +145,7 @@ class PipelinePerformanceTest(IsolatedAsyncioTestCase):
                 context={
                     'type': 'medium',
                     'id': i,
-                    'project_root': '/home/john/claude-backups',
+                    'project_root': str(get_project_root()),
                     'extensions': ['.py', '.sql']
                 },
                 priority=5,
@@ -131,7 +161,7 @@ class PipelinePerformanceTest(IsolatedAsyncioTestCase):
                 context={
                     'type': 'complex',
                     'id': i,
-                    'project_root': '/home/john/claude-backups',
+                    'project_root': str(get_project_root()),
                     'extensions': ['.py', '.js', '.md', '.sql', '.yaml'],
                     'security_level': 'high',
                     'optimization_level': 'aggressive'

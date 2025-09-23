@@ -1,5 +1,5 @@
 {
-  "agents_root": "/home/ubuntu/Documents/claude-backups/agents",
+  "agents_root": "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents",
   "execution_modes": [
     "INTELLIGENT",
     "PYTHON_ONLY",

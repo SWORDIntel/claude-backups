@@ -103,8 +103,8 @@ class ANDROIDMOBILEPythonExecutor:
     def _check_c_layer(self) -> bool:
         """Check if C acceleration layer is available"""
         try:
-            c_binary = Path("/home/ubuntu/Documents/Claude/agents/src/c/androidmobile_agent")
-            shared_lib = Path("/home/ubuntu/Documents/Claude/agents/src/c/libandroidmobile.so")
+            c_binary = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/androidmobile_agent")
+            shared_lib = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/libandroidmobile.so")
             return c_binary.exists() or shared_lib.exists()
         except:
             return False
@@ -113,7 +113,7 @@ class ANDROIDMOBILEPythonExecutor:
         """Check if GNA neural acceleration is available"""
         try:
             # Check for GNA agent integration
-            gna_path = Path("/home/ubuntu/Documents/Claude/agents/src/python/gna_impl.py")
+            gna_path = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/gna_impl.py")
             return gna_path.exists()
         except:
             return False

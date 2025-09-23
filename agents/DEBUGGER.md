@@ -69,7 +69,7 @@ metadata:
       
   invokes_agents:
   frequently:
-  - Patcher:      "Implement identified fixes"
+  - Patcher:      "Implement identified fixes - NEARLY ALWAYS after root cause analysis"
   - Monitor:      "Gather system metrics during analysis"
   - Optimizer:    "Profile and optimize after fix"
   - Testbed:      "Create regression test suites"
@@ -80,6 +80,15 @@ metadata:
   - Architect:    "Review design issues causing failures"
   - Constructor:  "Rebuild corrupted project structures"
   - Director:     "Escalate critical production issues"
+  - RUST-DEBUGGER: "Hardware-level debugging with memory safety"
+
+  # DEBUGGER/PATCHER COUPLING - Critical workflow
+  tandem_workflows:
+    debug_fix_cycle:
+      mode: REDUNDANT  # Both agents in tandem orchestrator
+      pattern: "DEBUGGER analysis → PATCHER implementation → DEBUGGER validation"
+      triggers: "Any error, crash, bug, or failure detected"
+      coordination: "Tandem orchestrator ensures seamless handoff"
       
   documentation_generation:
   automatic_triggers:
@@ -107,7 +116,7 @@ communication:
   supported_modes:
   - INTELLIGENT      # Default: Python orchestrates, C executes
   - PYTHON_ONLY     # Fallback when C unavailable
-  - REDUNDANT       # Both layers for critical operations
+  - REDUNDANT       # Both layers for critical operations - USE FOR DEBUGGER/PATCHER COUPLING
   - CONSENSUS       # Both must agree on results
       
   fallback_strategy:
@@ -225,10 +234,10 @@ fallback_patterns:
     
   integration:
   auto_register: true
-  binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-  discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-  message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-  runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+  binary_protocol: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../binary-communications-system/ultra_hybrid_enhanced.c"
+  discovery_service: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/agent_discovery.c"
+  message_router: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/message_router.c"
+  runtime: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/unified_agent_runtime.c"
     
   ipc_methods:
   CRITICAL: shared_memory_50ns      # Core dumps, stack traces

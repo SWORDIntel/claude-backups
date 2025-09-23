@@ -8,7 +8,7 @@
 ## What Was Done in This Session
 
 ### 1. Complete Directory Reorganization
-Reorganized entire `/home/ubuntu/Documents/Claude/agents/` structure from chaotic to organized:
+Reorganized entire `$HOME/Documents/Claude/agents/` structure from chaotic to organized:
 
 ```
 agents/
@@ -185,7 +185,7 @@ Location: `/agents/00-STARTUP/setup_agent_env.sh`
 After rebooting/new terminal:
 
 ```bash
-cd /home/ubuntu/Documents/Claude/agents
+cd $HOME/Documents/Claude/agents
 
 # Check what changed
 git status
@@ -224,17 +224,17 @@ git push origin main
 
 ```bash
 # Source environment
-source /home/ubuntu/Documents/Claude/agents/00-STARTUP/setup_agent_env.sh
+source $HOME/Documents/Claude/agents/00-STARTUP/setup_agent_env.sh
 
 # Test Python bridge
-python3 /home/ubuntu/Documents/Claude/agents/03-BRIDGES/unified_bridge.py
+python3 $HOME/Documents/Claude/agents/03-BRIDGES/unified_bridge.py
 
 # Try to build binary protocol
-cd /home/ubuntu/Documents/Claude/agents/02-BINARY-PROTOCOL
+cd $HOME/Documents/Claude/agents/02-BINARY-PROTOCOL
 ./build_enhanced_script.sh
 
 # Or use BRING_ONLINE
-cd /home/ubuntu/Documents/Claude/agents/00-STARTUP
+cd $HOME/Documents/Claude/agents/00-STARTUP
 ./BRING_ONLINE.sh
 ```
 

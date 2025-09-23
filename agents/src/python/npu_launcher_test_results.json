@@ -24,22 +24,22 @@
     },
     "File Existence: Configuration file": {
       "status": "PASS",
-      "details": "/home/john/claude-backups/config/npu_launcher.json",
+      "details": "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}config/npu_launcher.json",
       "timestamp": 1757979660.8321354
     },
     "File Existence: Documentation": {
       "status": "PASS",
-      "details": "/home/john/claude-backups/docs/npu_launcher_system.md",
+      "details": "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}docs/npu_launcher_system.md",
       "timestamp": 1757979660.832142
     },
     "File Existence: Constructor integration": {
       "status": "PASS",
-      "details": "/home/john/claude-backups/agents/src/python/npu_constructor_integration.py",
+      "details": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/npu_constructor_integration.py",
       "timestamp": 1757979660.8321483
     },
     "File Existence: NPU orchestrator": {
       "status": "PASS",
-      "details": "/home/john/claude-backups/agents/src/python/npu_optimized_final.py",
+      "details": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/npu_optimized_final.py",
       "timestamp": 1757979660.8321538
     },
     "Permissions: claude-npu": {

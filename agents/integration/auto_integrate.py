@@ -20,8 +20,8 @@ import hashlib
 import signal
 
 # Add paths for agent system
-sys.path.append('/home/ubuntu/Documents/Claude/agents/src/python')
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
 # Configure logging
 logging.basicConfig(
@@ -795,7 +795,7 @@ class EnhancedAutoIntegration:
         """Launch the binary communication system"""
         try:
             # Check if BRING_ONLINE.sh exists
-            bring_online_path = "/home/ubuntu/Documents/Claude/agents/BRING_ONLINE.sh"
+            bring_online_path = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../BRING_ONLINE.sh"
             
             if os.path.exists(bring_online_path):
                 logger.info("🚀 Launching binary communication system...")
@@ -808,7 +808,7 @@ class EnhancedAutoIntegration:
                     [bring_online_path],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    cwd="/home/ubuntu/Documents/Claude/agents"
+                    cwd="${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
                 )
                 
                 # Wait a moment for initialization

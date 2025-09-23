@@ -508,7 +508,7 @@ zol_integration:
         ./configure --with-linux=/usr/src/linux-headers-$KERNEL_VERSION
         
         # Compile with optimal flags
-        make -j$(nproc) CC=/home/john/c-toolchain/bin/gcc
+        make -j$(nproc) CC=$HOME/c-toolchain/bin/gcc
         make install
         
         # Update module dependencies

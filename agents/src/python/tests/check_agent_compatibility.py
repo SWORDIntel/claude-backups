@@ -56,7 +56,7 @@ def check_agent_frontmatter(file_path):
         return False, f"File read error: {e}"
 
 def main():
-    agents_dir = Path("/home/ubuntu/Documents/Claude/agents")
+    agents_dir = Path("${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents")
     
     # Get all .md files
     agent_files = list(agents_dir.glob("*.md"))

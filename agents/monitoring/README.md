@@ -26,7 +26,7 @@ The monitoring stack consists of:
 
 ```bash
 # Navigate to monitoring directory
-cd /home/ubuntu/Downloads/claude-backups-main/agents/monitoring
+cd $CLAUDE_PROJECT_ROOT-main/agents/monitoring
 
 # Start all monitoring services
 docker-compose -f docker-compose.monitoring.yml up -d

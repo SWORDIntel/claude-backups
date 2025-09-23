@@ -23,10 +23,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/agent_discovery.c"
+    message_router: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/message_router.c"
+    runtime: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns
@@ -127,7 +127,7 @@ def update_agent_file(filepath):
 def create_agent_c_implementation(agent_name):
     """Create a basic C implementation file for the agent if it doesn't exist"""
     
-    c_file = f"/home/ubuntu/Documents/Claude/agents/src/c/{agent_name.lower()}_agent.c"
+    c_file = f"${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/{agent_name.lower()}_agent.c"
     
     if os.path.exists(c_file):
         return
@@ -208,7 +208,7 @@ void {agent_name.lower()}_run({agent_name.lower()}_agent_t* agent) {{
 def update_makefile():
     """Update the Makefile to include all agent implementations"""
     
-    makefile_path = "/home/ubuntu/Documents/Claude/agents/src/c/Makefile"
+    makefile_path = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/Makefile"
     
     if not os.path.exists(makefile_path):
         # Create a basic Makefile
@@ -259,7 +259,7 @@ def main():
     print()
     
     # Change to agents directory
-    os.chdir("/home/ubuntu/Documents/Claude/agents")
+    os.chdir("${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents")
     
     # Find all agent .md files
     agent_files = glob.glob("*.md")

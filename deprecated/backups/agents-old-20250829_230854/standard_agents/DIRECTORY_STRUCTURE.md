@@ -3,7 +3,7 @@
 ## 🎯 **PRODUCTION ORGANIZATION**
 
 ```
-/home/ubuntu/Documents/Claude/agents/
+$HOME/Documents/Claude/agents/
 │
 ├── 📚 DOCUMENTATION (START HERE)
 │   ├── README.md                     # 🏠 Main documentation & quick start

@@ -132,7 +132,7 @@
   "audit_logging": {
     "enabled": true,
     "log_level": "INFO",
-    "log_file": "/var/log/claude-agents/security.log",
+    "log_file": "${CLAUDE_LOG_DIR:-/var/log/claude-agents/}security.log",
     "max_log_size_mb": 100,
     "max_log_files": 10,
     "buffer_size_entries": 10000,

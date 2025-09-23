@@ -34,7 +34,7 @@ class UltimateNPUOrchestrator:
     """Ultimate performance NPU orchestrator - 29K+ ops/sec target"""
 
     def __init__(self):
-        self.agents_dir = Path('/home/john/claude-backups/agents')
+        self.agents_dir = Path('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
         self.agent_cache = {}
         self.agent_lookup = {}
         self.npu_core = None

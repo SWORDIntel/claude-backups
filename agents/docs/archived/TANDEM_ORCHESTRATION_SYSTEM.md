@@ -326,7 +326,7 @@ data_workflow = StandardWorkflows.create_data_pipeline_workflow()
 
 ```python
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents/src/python')
+sys.path.append('$HOME/Documents/Claude/agents/src/python')
 
 from tandem_orchestrator import (
     TandemOrchestrator, 
@@ -508,7 +508,7 @@ async def interactive_documentation():
                 agent="docgen",
                 action="scan_codebase",
                 payload={
-                    "path": "/home/ubuntu/Documents/Claude/agents",
+                    "path": "$HOME/Documents/Claude/agents",
                     "extensions": [".py", ".c", ".md"]
                 }
             ),
@@ -723,7 +723,7 @@ PYTHON_ONLY: 30-50% Python, 0% C
 ps aux | grep agent_bridge
 
 # Start if needed
-cd /home/ubuntu/Documents/Claude/agents/binary-communications-system
+cd $HOME/Documents/Claude/agents/binary-communications-system
 ./agent_bridge &
 ```
 

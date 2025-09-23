@@ -241,7 +241,7 @@ await registry.coordinate_agents([
 {
   "version": "7.0.0",
   "socket_path": "/path/to/claude_agent_bridge.sock",
-  "agents_dir": "/home/ubuntu/Documents/Claude/agents",
+  "agents_dir": "$HOME/Documents/Claude/agents",
   "cpu_features": {
     "avx2": true,
     "avx512": false,

@@ -257,7 +257,7 @@ Orchestrator coordinates:
 ## 🗂️ Directory Structure
 
 ```
-/home/ubuntu/Documents/Claude/          [Project Root]
+$HOME/Documents/Claude/          [Project Root]
 ├── Core Files
 │   ├── CLAUDE.md                      # Project context (45KB)
 │   ├── CLAUDE_COMPREHENSIVE_GUIDE.md   # Complete guide
@@ -350,10 +350,10 @@ Agents are synchronized globally via cron job:
 
 ```bash
 # Cron job (runs every 5 minutes)
-*/5 * * * * /home/ubuntu/.local/bin/sync-claude-agents.sh
+*/5 * * * * $HOME/.local/bin/sync-claude-agents.sh
 
 # Manual sync
-/home/ubuntu/.local/bin/sync-claude-agents.sh
+$HOME/.local/bin/sync-claude-agents.sh
 
 # Check agent visibility
 ls ~/.claude/agents/*.md | wc -l  # Should show 47
@@ -363,7 +363,7 @@ ls ~/.claude/agents/*.md | wc -l  # Should show 47
 
 #### Environment Variables
 ```bash
-CLAUDE_PROJECT_ROOT="/home/ubuntu/Documents/Claude"
+CLAUDE_PROJECT_ROOT="$HOME/Documents/Claude"
 CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
 CLAUDE_PERMISSION_BYPASS=true        # LiveCD compatibility
 CLAUDE_ORCHESTRATION=true            # Enable orchestration
@@ -487,7 +487,7 @@ ls ~/.claude/agents/*.md | wc -l
 tail ~/.local/share/claude/agent-sync.log
 
 # Manual sync
-/home/ubuntu/.local/bin/sync-claude-agents.sh
+$HOME/.local/bin/sync-claude-agents.sh
 ```
 
 ---

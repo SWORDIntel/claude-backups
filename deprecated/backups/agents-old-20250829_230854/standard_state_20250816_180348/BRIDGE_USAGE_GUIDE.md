@@ -9,7 +9,7 @@ The bridge system provides immediate access to all agents while the binary syste
 ```python
 import asyncio
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('$HOME/Documents/Claude/agents')
 from claude_agent_bridge import task_agent_invoke
 
 async def use_director():
@@ -64,6 +64,6 @@ No code changes required - same API, better performance!
 
 ## Support
 
-- Config: `/home/ubuntu/Documents/Claude/agents/transition_config.json`
-- Logs: `/home/ubuntu/Documents/Claude/agents/bridge_system.log`
+- Config: `$HOME/Documents/Claude/agents/transition_config.json`
+- Logs: `$HOME/Documents/Claude/agents/bridge_system.log`
 - Monitor: `python3 bridge_monitor.py`

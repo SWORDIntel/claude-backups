@@ -59,7 +59,7 @@ Every agent now has:
 
 ### Start the Communication System
 ```bash
-cd /home/ubuntu/Documents/Claude/agents
+cd $HOME/Documents/Claude/agents
 ./BRING_ONLINE.sh
 ```
 

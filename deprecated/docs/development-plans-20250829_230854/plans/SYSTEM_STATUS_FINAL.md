@@ -26,7 +26,7 @@
 ## System Architecture
 
 ```
-/home/ubuntu/Documents/Claude/
+$HOME/Documents/Claude/
 ├── agents/
 │   ├── *.md                      # 31 agent definitions (all detected)
 │   ├── src/c/                    # Unified C source directory

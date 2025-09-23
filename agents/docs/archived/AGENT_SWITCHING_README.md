@@ -71,8 +71,8 @@ If something goes wrong:
 
 ```bash
 # Reset to standard agents
-rm -f /home/ubuntu/Documents/Claude/agents
-mv /home/ubuntu/Documents/Claude/agents_standard /home/ubuntu/Documents/Claude/agents
+rm -f $HOME/Documents/Claude/agents
+mv $HOME/Documents/Claude/agents_standard $HOME/Documents/Claude/agents
 
 # Claude Code will work normally again
 ```

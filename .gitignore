@@ -95,3 +95,13 @@ database/docker/data/
 database/backups/
 database/data/
 config/projects/
+
+# Emergency Prevention
+core.*
+*.iso
+*.img
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.tmp

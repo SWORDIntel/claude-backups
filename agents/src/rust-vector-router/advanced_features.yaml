@@ -199,7 +199,7 @@ monitoring:
     
   logging:
     level: "INFO"
-    file: "/var/log/claude-agents/advanced_features.log"
+    file: "${CLAUDE_LOG_DIR:-/var/log/claude-agents/}advanced_features.log"
     max_size_mb: 100
     rotation_count: 10
     

@@ -82,7 +82,7 @@ hardware:
 # Agent registry configuration
 agent_registry:
   auto_discovery: true
-  discovery_path: "/home/ubuntu/Documents/Claude/agents"
+  discovery_path: "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
   agent_files_pattern: "*.md"
   exclude_files: ["Template.md", "README.md"]
   health_check_enabled: true

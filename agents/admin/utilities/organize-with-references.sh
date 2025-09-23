@@ -25,7 +25,7 @@ check_file_references() {
     fi
     
     # Count references
-    local ref_count=$(grep -r "$file" /home/ubuntu/Documents/Claude --include="*.sh" --include="*.py" --include="*.md" 2>/dev/null | grep -v "organize-" | wc -l)
+    local ref_count=$(grep -r "$file" $HOME/Documents/Claude --include="*.sh" --include="*.py" --include="*.md" 2>/dev/null | grep -v "organize-" | wc -l)
     
     if [ $ref_count -gt 0 ]; then
         echo -e "  ${GREEN}Found $ref_count references - will create symlink${NC}"

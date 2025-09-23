@@ -77,7 +77,7 @@ class LearningMode(Enum):
 class OptimizationObjective(Enum):
     """Optimization objectives for learning"""
     SUCCESS_RATE = "success_rate"
-    EXECUTION_TIME = "execution_time"
+    EXECUTION_TIME = "execution_time_ms"
     RESOURCE_EFFICIENCY = "resource_efficiency"
     USER_SATISFACTION = "user_satisfaction"
     COST_OPTIMIZATION = "cost_optimization"

@@ -28,7 +28,7 @@
 ```python
 import asyncio
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('$HOME/Documents/Claude/agents')
 from claude_agent_bridge import task_agent_invoke
 
 # Strategic Planning
@@ -77,7 +77,7 @@ The ultra-high performance binary system (4.2M msg/sec) is building in backgroun
 | Python Integration | ✅ Ready |
 | Monitoring Stack | 🔧 Building |
 
-**Build Log**: `/home/ubuntu/Documents/Claude/agents/binary_build.log`
+**Build Log**: `$HOME/Documents/Claude/agents/binary_build.log`
 
 ---
 
@@ -107,10 +107,10 @@ The ultra-high performance binary system (4.2M msg/sec) is building in backgroun
 ## 📊 MONITORING & MANAGEMENT
 
 ### System Status Files:
-- **Configuration**: `/home/ubuntu/Documents/Claude/agents/transition_config.json`
-- **Bridge Logs**: `/home/ubuntu/Documents/Claude/agents/bridge_system.log`
-- **Binary Build Log**: `/home/ubuntu/Documents/Claude/agents/binary_build.log`
-- **Usage Guide**: `/home/ubuntu/Documents/Claude/agents/BRIDGE_USAGE_GUIDE.md`
+- **Configuration**: `$HOME/Documents/Claude/agents/transition_config.json`
+- **Bridge Logs**: `$HOME/Documents/Claude/agents/bridge_system.log`
+- **Binary Build Log**: `$HOME/Documents/Claude/agents/binary_build.log`
+- **Usage Guide**: `$HOME/Documents/Claude/agents/BRIDGE_USAGE_GUIDE.md`
 
 ### Monitoring:
 ```python
@@ -163,7 +163,7 @@ print(f"Binary system: {status['components_ready']} ready")
 python3 -c "import asyncio; from claude_agent_bridge import task_agent_invoke; asyncio.run(task_agent_invoke('DIRECTOR', 'System status check'))"
 
 # Monitor binary build
-tail -f /home/ubuntu/Documents/Claude/agents/binary_build.log
+tail -f $HOME/Documents/Claude/agents/binary_build.log
 
 # Run transition manager
 python3 BRIDGE_TO_BINARY_TRANSITION.py

@@ -141,30 +141,30 @@ The Claude Agent Communication System is a production-ready distributed AI frame
 ### 1. Build the System
 ```bash
 # Build complete system
-cd /home/ubuntu/Documents/Claude/agents/binary-communications-system
+cd $HOME/Documents/Claude/agents/binary-communications-system
 ./build_enhanced.sh --all
 
 # Build individual components
-cd /home/ubuntu/Documents/Claude/agents/src/c
+cd $HOME/Documents/Claude/agents/src/c
 make all
 ```
 
 ### 2. Run Tests
 ```bash
-cd /home/ubuntu/Documents/Claude/agents/tests
+cd $HOME/Documents/Claude/agents/tests
 ./run_all_tests.sh
 ```
 
 ### 3. Start the Runtime
 ```bash
-cd /home/ubuntu/Documents/Claude/agents
+cd $HOME/Documents/Claude/agents
 ./build/unified_agent_runtime --config config/agents.yaml
 ```
 
 ### 4. Monitor the System
 ```bash
 # Start monitoring stack
-cd /home/ubuntu/Documents/Claude/agents/monitoring
+cd $HOME/Documents/Claude/agents/monitoring
 docker-compose -f docker-compose.complete.yml up -d
 
 # Access dashboards

@@ -15,7 +15,7 @@
 ## Deliverables Completed
 
 ### 1. Database Architecture Design (PostgreSQL 17 Enhanced)
-**File**: `/home/ubuntu/Documents/Claude/database/docs/auth_database_architecture.md`
+**File**: `$HOME/Documents/Claude/database/docs/auth_database_architecture.md`
 - **66-page comprehensive database architecture document**
 - PostgreSQL 17 primary database + Redis caching layer design
 - Complete RBAC schema with 32 agent roles
@@ -24,7 +24,7 @@
 - Backup and recovery planning with incremental backup support
 
 ### 2. Production Database Schema (PostgreSQL 17 Optimized)
-**File**: `/home/ubuntu/Documents/Claude/database/sql/auth_db_setup.sql` 
+**File**: `$HOME/Documents/Claude/database/sql/auth_db_setup.sql` 
 - **1,189-line production SQL schema with PostgreSQL 17 enhancements**
 - Enhanced JSON constructors (JSON_ARRAY(), JSON_OBJECT()) for better performance
 - Compatible with existing `auth_security.h/.c` implementation
@@ -35,7 +35,7 @@
 - Built-in performance monitoring views
 
 ### 3. Performance Testing Suite
-**File**: `/home/ubuntu/Documents/Claude/database/tests/auth_db_performance_test.py`
+**File**: `$HOME/Documents/Claude/database/tests/auth_db_performance_test.py`
 - **545-line Python performance testing framework**
 - Tests all performance targets with real load simulation
 - Concurrent connection testing (600+ connections)
@@ -45,7 +45,7 @@
 - Redis caching performance validation
 
 ### 4. Redis Caching Implementation  
-**File**: `/home/ubuntu/Documents/Claude/database/python/auth_redis_setup.py`
+**File**: `$HOME/Documents/Claude/database/python/auth_redis_setup.py`
 - **673-line Redis caching layer**
 - Session storage with TTL management
 - JWT token blacklisting
@@ -54,7 +54,7 @@
 - Cache warming and maintenance strategies
 
 ### 5. Production Deployment System
-**File**: `/home/ubuntu/Documents/Claude/database/scripts/deploy_auth_database.sh` (executable)
+**File**: `$HOME/Documents/Claude/database/scripts/deploy_auth_database.sh` (executable)
 - **448-line automated deployment script**
 - PostgreSQL + Redis installation and configuration
 - Performance-optimized configurations

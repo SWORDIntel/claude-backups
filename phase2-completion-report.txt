@@ -19,11 +19,11 @@ PERFORMANCE IMPROVEMENTS
 
 FILES DEPLOYED
 =============
-• /home/john/.claude/system/modules/trie_keyword_matcher.py
-• /home/john/.claude/system/modules/trie_integration.py
-• /home/john/.claude/system/modules/claude_universal_optimizer_enhanced.py
-• /home/john/.claude/system/config/enhanced_trigger_keywords.yaml
-• /home/john/.claude/system/benchmark_trie.py
+• $HOME/.claude/system/modules/trie_keyword_matcher.py
+• $HOME/.claude/system/modules/trie_integration.py
+• $HOME/.claude/system/modules/claude_universal_optimizer_enhanced.py
+• $HOME/.claude/system/config/enhanced_trigger_keywords.yaml
+• $HOME/.claude/system/benchmark_trie.py
 
 INTEGRATION POINTS
 =================

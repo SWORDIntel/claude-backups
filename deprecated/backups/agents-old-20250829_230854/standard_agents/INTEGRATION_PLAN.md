@@ -48,11 +48,11 @@ MODE=${AGENT_MODE:-standard}  # Default to standard .md agents
 
 if [ "$MODE" = "binary" ]; then
     # Use binary communication system
-    export CLAUDE_AGENT_PATH="/home/ubuntu/Documents/Claude/agents/binary-communications-system"
+    export CLAUDE_AGENT_PATH="$HOME/Documents/Claude/agents/binary-communications-system"
     export USE_BINARY_PROTOCOL=1
 else
     # Use standard .md agents
-    export CLAUDE_AGENT_PATH="/home/ubuntu/Documents/Claude/agents"
+    export CLAUDE_AGENT_PATH="$HOME/Documents/Claude/agents"
     export USE_BINARY_PROTOCOL=0
 fi
 ```

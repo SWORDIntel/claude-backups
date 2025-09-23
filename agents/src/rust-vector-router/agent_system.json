@@ -1,7 +1,7 @@
 {
-  "socket_path": "/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/runtime/claude_agent_bridge.sock",
-  "runtime_dir": "/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/runtime",
-  "build_dir": "/home/ubuntu/Documents/Claude/agents/06-BUILD-RUNTIME/build",
+  "socket_path": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../06-BUILD-RUNTIME/runtime/claude_agent_bridge.sock",
+  "runtime_dir": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../06-BUILD-RUNTIME/runtime",
+  "build_dir": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../06-BUILD-RUNTIME/build",
   "cpu_features": {
     "avx2": true,
     "avx512": false,

@@ -7,7 +7,7 @@ set -e
 echo "🚀 Starting Python Orchestration System..."
 
 # Set environment
-export CLAUDE_AGENTS_ROOT="/home/ubuntu/Documents/claude-backups/agents"
+export CLAUDE_AGENTS_ROOT="${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
 export PYTHONPATH="${CLAUDE_AGENTS_ROOT}/src/python:${PYTHONPATH}"
 
 # Change to Python directory

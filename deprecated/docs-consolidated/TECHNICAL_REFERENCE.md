@@ -300,9 +300,9 @@ After=network.target postgresql.service
 Type=forking
 User=claude
 Group=claude
-WorkingDirectory=/home/ubuntu/Documents/Claude
-ExecStart=/home/ubuntu/Documents/Claude/bring-online
-ExecStop=/home/ubuntu/Documents/Claude/agents/system/shutdown.sh
+WorkingDirectory=$HOME/Documents/Claude
+ExecStart=$HOME/Documents/Claude/bring-online
+ExecStop=$HOME/Documents/Claude/agents/system/shutdown.sh
 Restart=on-failure
 RestartSec=10
 

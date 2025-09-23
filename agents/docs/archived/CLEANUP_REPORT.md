@@ -48,7 +48,7 @@ Successfully cleaned up and reorganized the agents directory structure, moving n
 ## Final Directory Structure
 
 ```
-/home/ubuntu/Documents/Claude/agents/
+$HOME/Documents/Claude/agents/
 ├── 00-STARTUP/                    # Startup and initialization scripts
 ├── 01-AGENTS-DEFINITIONS/         # Agent organization and templates
 ├── 02-BINARY-PROTOCOL/           # Binary communication system

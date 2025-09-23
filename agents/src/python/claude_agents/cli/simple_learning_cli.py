@@ -16,7 +16,7 @@ class SimpleLearningCLI:
     
     def __init__(self):
         self.db_config = {
-            'host': '/home/ubuntu/Documents/Claude/database/data/run',
+            'host': '${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}database/data/run',
             'port': 5433,
             'database': 'claude_auth',
             'user': 'claude_auth',

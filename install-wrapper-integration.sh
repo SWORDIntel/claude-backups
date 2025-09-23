@@ -54,17 +54,30 @@ log_brain() { echo -e "${MAGENTA}${BRAIN} $1${NC}"; }
 detect_project_root() {
     local current_dir="$(pwd)"
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    
+
+    # First check environment variable
+    if [[ -n "${CLAUDE_PROJECT_ROOT:-}" ]] && [[ -d "$CLAUDE_PROJECT_ROOT" ]]; then
+        if [[ -f "$CLAUDE_PROJECT_ROOT/CLAUDE.md" ]] || [[ -d "$CLAUDE_PROJECT_ROOT/agents" ]]; then
+            export PROJECT_ROOT="$CLAUDE_PROJECT_ROOT"
+            log_success "Project root from environment: $PROJECT_ROOT"
+            return 0
+        fi
+    fi
+
+    # Dynamic candidates based on script location and common patterns
     local candidates=(
         "$current_dir"
         "$script_dir"
-        "$HOME/Documents/Claude"
-        "$HOME/Documents/claude-backups"
-        "$HOME/Downloads/claude-backups"
-        "$HOME/claude-backups"
-        "$HOME/projects/claude"
+        "$(dirname "$script_dir")"  # Parent of script directory
     )
-    
+
+    # Add user home-based candidates dynamically
+    for pattern in "claude-*" "Claude" "Documents/claude-*" "Documents/Claude*" "Downloads/claude-*" "projects/claude*"; do
+        for candidate in "$HOME"/$pattern; do
+            [[ -d "$candidate" ]] && candidates+=("$candidate")
+        done
+    done
+
     for candidate in "${candidates[@]}"; do
         if [[ -d "$candidate" ]]; then
             local score=0
@@ -72,7 +85,7 @@ detect_project_root() {
             [[ -f "$candidate/CLAUDE.md" ]] && ((score += 2))
             [[ -f "$candidate/claude-wrapper-ultimate.sh" ]] && ((score += 2))
             [[ -d "$candidate/orchestration" ]] && ((score += 1))
-            
+
             if [[ $score -ge 3 ]]; then
                 export PROJECT_ROOT="$candidate"
                 log_success "Project root detected: $PROJECT_ROOT"
@@ -80,7 +93,7 @@ detect_project_root() {
             fi
         fi
     done
-    
+
     export PROJECT_ROOT="$current_dir"
     log_warning "Using current directory as project root: $PROJECT_ROOT"
 }
@@ -91,11 +104,11 @@ setup_environment() {
     
     detect_project_root
     
-    # Define installation paths
-    export LOCAL_BIN="$HOME/.local/bin"
-    export CACHE_DIR="$HOME/.cache/claude"
-    export CONFIG_DIR="$HOME/.config/claude"
-    export LOG_DIR="$HOME/.local/share/claude/logs"
+    # Define XDG-compliant installation paths
+    export LOCAL_BIN="${XDG_DATA_HOME:-$HOME/.local}/bin"
+    export CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude"
+    export CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude"
+    export LOG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/claude/logs"
     
     # Create necessary directories
     mkdir -p "$LOCAL_BIN" "$CACHE_DIR" "$CONFIG_DIR" "$LOG_DIR" 2>/dev/null || true

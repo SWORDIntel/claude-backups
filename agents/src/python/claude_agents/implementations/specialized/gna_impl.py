@@ -93,8 +93,8 @@ class TandemExecutor:
     def _check_c_layer(self) -> bool:
         """Check if C acceleration layer is available"""
         try:
-            binary_path = Path("/home/ubuntu/Documents/Claude/agents/src/c/gna_agent")
-            lib_path = Path("/home/ubuntu/Documents/Claude/agents/src/c/libgna.so")
+            binary_path = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/gna_agent")
+            lib_path = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/libgna.so")
             
             if binary_path.exists() or lib_path.exists():
                 # Test binary execution

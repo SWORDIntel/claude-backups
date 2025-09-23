@@ -4,7 +4,7 @@
 
 set -e
 
-REPO_ROOT="/home/john/claude-backups"
+REPO_ROOT="$HOME/claude-backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 ARCHIVE_NAME="claude-backups-deprecated-archive-$TIMESTAMP"
 ARCHIVE_DIR="/tmp/$ARCHIVE_NAME"
@@ -83,7 +83,7 @@ cat > "$ARCHIVE_DIR/manifests/ARCHIVE_MANIFEST.md" << EOF
 
 ## Related Files
 
-- **Main Repository**: /home/john/claude-backups/
+- **Main Repository**: $HOME/claude-backups/
 - **Production System**: Claude Unified Hook System v3.1-security-hardened
 - **Active Agents**: 76 specialized agents (74 active + 2 templates)
 

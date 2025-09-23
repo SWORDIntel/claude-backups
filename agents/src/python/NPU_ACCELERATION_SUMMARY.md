@@ -127,7 +127,7 @@ The NPU Acceleration System transforms the Python Tandem Orchestrator into an AI
 ### Quick Start
 ```bash
 # Install NPU acceleration
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 python3 install_npu_acceleration.py
 
 # Run demonstration

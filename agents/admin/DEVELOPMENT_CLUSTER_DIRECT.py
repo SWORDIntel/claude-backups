@@ -8,10 +8,22 @@ only supports built-in agents, not custom agents.
 """
 
 import os
+import sys
 import subprocess
 import json
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_project_root
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
 
 class LinterAgent:
     """Senior Code Review Specialist - Direct Implementation"""
@@ -570,7 +582,9 @@ if __name__ == "__main__":
     cluster = DevelopmentCluster()
     
     # Process current project
-    result = cluster.process_project("/home/ubuntu/Documents/Claude")
+    # Use dynamic project root detection
+    project_path = get_project_root()
+    result = cluster.process_project(str(project_path))
     
     print("\n" + "="*60)
     print("🎉 DEVELOPMENT CLUSTER PIPELINE COMPLETE!")

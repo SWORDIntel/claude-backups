@@ -13,8 +13,23 @@ Demonstrates:
 
 import asyncio
 import json
+import sys
 import time
 from pathlib import Path
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_project_root, get_shadowgit_paths
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+    def get_shadowgit_paths():
+        home_dir = Path.home()
+        return {'root': home_dir / 'shadowgit'}
 
 # Import all Git Intelligence components
 from git_intelligence_engine import GitIntelligenceAPI
@@ -25,7 +40,9 @@ from neural_code_reviewer import NeuralCodeReviewerAPI
 class GitIntelligenceDemo:
     """Comprehensive demonstration of Git Intelligence capabilities"""
     
-    def __init__(self, repo_path: str = "/home/john/claude-backups"):
+    def __init__(self, repo_path: str = None):
+        if repo_path is None:
+            repo_path = str(get_project_root())
         self.repo_path = repo_path
         self.demo_results = {}
     
@@ -435,7 +452,9 @@ def fetch_user_data(user_id: int) -> dict:
         print("\n  🚀 Testing AVX2 Shadowgit acceleration...")
         try:
             import sys
-            sys.path.append('/home/john/shadowgit')
+            shadowgit_paths = get_shadowgit_paths()
+            if shadowgit_paths['root'].exists():
+                sys.path.append(str(shadowgit_paths['root']))
             from shadowgit_avx2 import ShadowgitAVX2
             
             shadowgit = ShadowgitAVX2()
@@ -449,7 +468,7 @@ def fetch_user_data(user_id: int) -> dict:
         
         # OpenVINO Neural Acceleration
         print("\n  🧠 Testing OpenVINO neural acceleration...")
-        openvino_path = Path("/opt/openvino/")
+        openvino_path = Path("${OPENVINO_ROOT:-/opt/openvino/}")
         if openvino_path.exists():
             print("    ✅ OpenVINO runtime: Available")
             print("    🎯 Neural inference: <1ms target achieved")

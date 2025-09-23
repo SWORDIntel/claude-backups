@@ -369,7 +369,7 @@ def benchmark_comparison():
     ]
     
     # Initialize matcher
-    config_path = "/home/john/claude-backups/config/enhanced_trigger_keywords.yaml"
+    config_path = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}config/enhanced_trigger_keywords.yaml"
     matcher = TrieKeywordMatcher(config_path)
     
     # Run benchmark

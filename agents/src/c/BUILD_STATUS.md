@@ -117,7 +117,7 @@ sudo apt-get install -y build-essential libnuma-dev libssl-dev \
                         libjson-c-dev librdkafka-dev
 
 # Build
-cd /home/ubuntu/Documents/Claude/agents/src/c
+cd $HOME/Documents/Claude/agents/src/c
 make clean
 make agent_bridge_complete
 

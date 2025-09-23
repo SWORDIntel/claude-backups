@@ -24,6 +24,21 @@ from typing import Dict, List, Optional, Tuple, Any
 import yaml
 import re
 
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_project_root, get_agents_dir, get_python_src_dir
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+    def get_agents_dir():
+        return get_project_root() / 'agents'
+    def get_python_src_dir():
+        return get_agents_dir() / 'src' / 'python'
+
 class AgentSmithImplementation:
     """
     Elite agent creation specialist with autonomous design capabilities
@@ -41,10 +56,10 @@ class AgentSmithImplementation:
         self.integration_success_rate = 0.95  
         self.target_response_time = 0.200  # 200ms
         
-        # Framework paths
-        self.agents_dir = Path("/home/ubuntu/claude-backups/agents")
-        self.python_dir = Path("/home/ubuntu/claude-backups/agents/src/python")
-        self.template_path = Path("/home/ubuntu/claude-backups/agents/TEMPLATE.md")
+        # Framework paths - dynamic resolution
+        self.agents_dir = get_agents_dir()
+        self.python_dir = get_python_src_dir()
+        self.template_path = self.agents_dir / "TEMPLATE.md"
         
         # Agent categories for classification
         self.categories = {

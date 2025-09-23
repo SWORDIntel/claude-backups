@@ -750,7 +750,7 @@ class SafeAgentRegistrationSystem:
         possible_dirs = [
             Path.cwd() / "agents",
             Path.home() / "Documents" / "Claude" / "agents",
-            Path("/home/ubuntu/Documents/Claude/agents")
+            Path("${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents")
         ]
         
         for dir_path in possible_dirs:

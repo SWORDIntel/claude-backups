@@ -15,7 +15,7 @@ class VoiceToggle:
     
     __slots__ = []
     def __init__(self):
-        self.agents_dir = "/home/ubuntu/Documents/Claude/agents"
+        self.agents_dir = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
         self.config_file = os.path.join(self.agents_dir, "voice_config.json")
         self.voice_pid_file = os.path.join(self.agents_dir, ".voice_system.pid")
         

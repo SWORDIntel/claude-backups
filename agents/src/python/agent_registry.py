@@ -233,7 +233,7 @@ class PythonFallbackHandler:
         """Initialize Python agent implementations"""
         try:
             # Try to import existing bridge
-            sys.path.append('/home/john/claude-backups/agents')
+            sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
             from claude_agents.bridges.claude_agent_bridge import ClaudeAgentBridge
             from DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster
             
@@ -839,7 +839,7 @@ class OrchestrationEngine:
 class EnhancedAgentRegistry:
     """Production-ready agent registry with full integration"""
     
-    def __init__(self, agents_dir: str = "/home/john/claude-backups/agents"):
+    def __init__(self, agents_dir: str = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"):
         self.agents_dir = Path(agents_dir)
         self.agents: Dict[str, AgentMetadata] = {}
         self.capabilities_index: Dict[str, List[str]] = {}

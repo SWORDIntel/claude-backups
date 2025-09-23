@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 
+
 class InstallationMode(Enum):
     QUICK = "quick"
     FULL = "full"
@@ -103,11 +104,19 @@ class ClaudeEnhancedInstaller:
         self.current_step = 0
         self.total_steps = 0
 
-        # Installation paths
+        
+        # Enhanced XDG-compliant path configuration
+        xdg_config = Path(os.environ.get('XDG_CONFIG_HOME', self.system_info.home_dir / '.config'))
+        xdg_data = Path(os.environ.get('XDG_DATA_HOME', self.system_info.home_dir / '.local' / 'share'))
+        xdg_cache = Path(os.environ.get('XDG_CACHE_HOME', self.system_info.home_dir / '.cache'))
+
+        # Installation paths with XDG compliance
         self.local_bin = self.system_info.home_dir / ".local" / "bin"
-        self.config_dir = self.system_info.home_dir / ".config" / "claude"
-        self.venv_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "venv"
-        self.log_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "logs"
+        self.config_dir = xdg_config / "claude"
+        self.data_dir = xdg_data / "claude"
+        self.cache_dir = xdg_cache / "claude"
+        self.venv_dir = self.data_dir / "venv"
+        self.log_dir = self.data_dir / "logs"
 
         # Create necessary directories
         for directory in [self.local_bin, self.config_dir, self.log_dir]:
@@ -115,6 +124,29 @@ class ClaudeEnhancedInstaller:
 
     def _detect_project_root(self) -> Path:
         """Detect the Claude project root directory using dynamic resolution"""
+        # Import path resolver if available
+        try:
+            script_dir = Path(__file__).parent.resolve()
+            path_resolver_locations = [
+                script_dir / "scripts" / "claude_path_resolver.py",
+                script_dir / "claude_path_resolver.py",
+                script_dir.parent / "scripts" / "claude_path_resolver.py"
+            ]
+
+            for resolver_path in path_resolver_locations:
+                if resolver_path.exists():
+                    sys.path.insert(0, str(resolver_path.parent))
+                    try:
+                        from claude_path_resolver import get_path
+                        project_root = get_path('project_root')
+                        if project_root and project_root.exists():
+                            return project_root
+                    except ImportError:
+                        pass
+        except Exception:
+            pass
+
+        # Fallback to original detection logic
         # Check script directory first (where installer is located)
         script_dir = Path(__file__).parent.resolve()
         if (script_dir / "agents").exists() and (script_dir / "CLAUDE.md").exists():
@@ -134,11 +166,52 @@ class ClaudeEnhancedInstaller:
         # Search common locations dynamically (avoid hardcoded paths)
         home_dir = Path.home()
         search_patterns = [
-            "*/claude-backups",
+            "*/claude-*",
+            "*/Claude",
+            "*/Documents/Claude*",
+            "*/Downloads/claude-*",
+            "claude-*",
+            "Claude"
+        ]
+
+        for pattern in search_patterns:
+            for location in home_dir.glob(pattern):
+                if location.is_dir() and (location / "agents").exists() and (location / "CLAUDE.md").exists():
+                    return location.resolve()
+
+        # Try to find based on git repository
+        try:
+            git_result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                cwd=current,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if git_result.returncode == 0:
+                git_root = Path(git_result.stdout.strip()).resolve()
+                if (git_root / "agents").exists() and (git_root / "CLAUDE.md").exists():
+                    return git_root
+        except:
+            pass
+
+        # Default to current directory if nothing found
+        return current
+
+        # Check environment variable if set
+        if "CLAUDE_PROJECT_ROOT" in os.environ:
+            env_root = Path(os.environ["CLAUDE_PROJECT_ROOT"]).resolve()
+            if env_root.exists() and (env_root / "agents").exists():
+                return env_root
+
+        # Search common locations dynamically (avoid hardcoded paths)
+        home_dir = Path.home()
+        search_patterns = [
+            "*/claude-*",
             "*/Claude",
             "*/Documents/Claude",
-            "*/Downloads/claude-backups",
-            "claude-backups",
+            "*/Downloads/claude-*",
+            "claude-*",
             "Claude"
         ]
 
@@ -188,6 +261,45 @@ class ClaudeEnhancedInstaller:
             desktop_session=desktop_session,
             has_systemd=self._check_systemd_available()
         )
+
+    def _detect_system_paths(self) -> Tuple[Path, Optional[Path]]:
+        """Detect appropriate system installation paths"""
+        # User-writable paths
+        user_bins = [
+            self.system_info.home_dir / ".local" / "bin",
+            self.system_info.home_dir / "bin"
+        ]
+
+        # System paths (if writable) - make configurable
+        system_bins = [
+            Path(os.environ.get("CLAUDE_SYSTEM_BIN", "/usr/local/bin")),
+            Path("/usr/local/bin"),
+            Path("/usr/bin"),
+            Path("/bin")
+        ]
+        # Remove duplicates while preserving order
+        seen = set()
+        system_bins = [x for x in system_bins if not (x in seen or seen.add(x))]
+
+        # Find first writable user path
+        user_bin = None
+        for bin_path in user_bins:
+            bin_path.mkdir(parents=True, exist_ok=True)
+            if os.access(bin_path, os.W_OK):
+                user_bin = bin_path
+                break
+
+        if not user_bin:
+            user_bin = user_bins[0]  # Default fallback
+
+        # Find first writable system path
+        system_bin = None
+        for bin_path in system_bins:
+            if bin_path.exists() and os.access(bin_path, os.W_OK):
+                system_bin = bin_path
+                break
+
+        return user_bin, system_bin
 
     def _show_progress(self, message: str, step: Optional[int] = None) -> None:
         """Show progress with step counter and progress bar"""
@@ -599,7 +711,7 @@ class ClaudeEnhancedInstaller:
         search_paths = [
             self.system_info.home_dir / ".local" / "bin",
             self.system_info.home_dir / "bin",
-            Path("/usr/local/bin"),
+            Path("${CLAUDE_SYSTEM_BIN:-/usr/local/bin}"),
             self.project_root,
         ]
 
@@ -702,8 +814,8 @@ class ClaudeEnhancedInstaller:
             current_path = os.environ.get("PATH", "")
             npm_bin_dirs = [
                 str(self.system_info.home_dir / ".npm-global" / "bin"),
-                "/usr/local/bin",
-                str(Path("/usr/local/lib/node_modules/.bin")),
+                "${CLAUDE_SYSTEM_BIN:-/usr/local/bin}",
+                str(Path(os.environ.get("CLAUDE_SYSTEM_LIB", "/usr/local/lib")) / "node_modules" / ".bin"),
             ]
 
             for bin_dir in npm_bin_dirs:
@@ -731,9 +843,9 @@ class ClaudeEnhancedInstaller:
                 recent_threshold = current_time - 300  # 5 minutes ago
 
                 search_dirs = [
-                    Path("/usr/local/bin"),
+                    Path("${CLAUDE_SYSTEM_BIN:-/usr/local/bin}"),
                     self.system_info.home_dir / ".npm-global" / "bin",
-                    Path("/usr/local/lib/node_modules"),
+                    Path(os.environ.get("CLAUDE_SYSTEM_LIB", "/usr/local/lib")) / "node_modules",
                 ]
 
                 for search_dir in search_dirs:
@@ -1137,9 +1249,9 @@ detect_project_root() {{
     local locations=(
         "$(dirname "$(readlink -f "$0")")"
         "$PWD"
-        "$HOME/claude-backups"
+        "{self.project_root}"
         "$HOME/Documents/Claude"
-        "$HOME/Downloads/claude-backups"
+        "{self.project_root}"
     )
 
     for location in "${{locations[@]}}"; do
@@ -1619,9 +1731,9 @@ detect_project_root() {
 
     # Check common locations
     local locations=(
-        "$HOME/claude-backups"
+        "${project_root}"
         "$HOME/Documents/Claude"
-        "$HOME/Downloads/claude-backups"
+        "${project_root}"
         "$PWD"
     )
 
@@ -2577,9 +2689,9 @@ if __name__ == "__main__":
 
     def _find_claude_binary(self) -> Optional[Path]:
         """Find Claude binary location"""
-        # Check common locations
+        # Check common locations with configurable system paths
         locations = [
-            Path("/usr/local/bin/claude"),
+            Path(os.environ.get("CLAUDE_SYSTEM_BIN", "/usr/local/bin")) / "claude",
             Path(self.system_info.home_dir / ".local/bin/claude"),
             Path(self.system_info.home_dir / ".npm-global/bin/claude")
         ]
@@ -3033,14 +3145,16 @@ fi
                 "docker.io", "docker-compose",
                 "python3-venv", "python3-full",
                 "curl", "wget", "git",
-                "postgresql-client"  # For database connectivity
+                "postgresql-client",  # For database connectivity
+                "sqlite3"  # For DISASSEMBLER IOC database
             ])
 
         elif env_type in [EnvironmentType.KDE, EnvironmentType.GNOME, EnvironmentType.XFCE]:
             # Desktop environment packages
             packages.extend([
                 "python3-venv", "python3-full",
-                "git", "curl", "wget"
+                "git", "curl", "wget",
+                "sqlite3"  # For DISASSEMBLER IOC database
             ])
 
             # Environment-specific packages

@@ -1,211 +1,166 @@
-# CLAUDE AGENT FRAMEWORK SYSTEM SPECIFICATIONS
-**Date**: 2025-09-17
-**Version**: 11.0.0
-**Status**: PRODUCTION OPERATIONAL
+---
+name: system_specs_2025-09-17
+description: System_Specs_2025-09-17 agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+tools:
+  - Task
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  - WebFetch
+  - TodoWrite
+---
 
-## 📊 SYSTEM OVERVIEW
+# System_Specs_2025-09-17 Agent - Claude Agent Framework v7.0
 
-### Core Framework
-- **Name**: Claude-Portable Agent Framework v11.0.0
-- **Repository**: https://github.com/SWORDIntel/claude-backups
-- **Purpose**: Hardware-aware multi-agent orchestration with NPU-powered neural acceleration
-- **Agent Count**: 90 agents (89 active + 1 template)
-- **Claude Code Version**: 1.0.77 (@anthropic-ai/claude-code)
+You are a System_Specs_2025-09-17 Agent, specialized for the Claude Agent Framework v7.0 running on Intel Meteor Lake hardware. You are fully compatible with Claude Code's Task tool and can coordinate with 30+ other specialized agents.
 
-### Performance Metrics (Live)
-- **NPU Orchestration**: 29,005 operations/second
-- **Agent Coordination**: 8,401 ops/sec with 50-agent parallel workflows
-- **Shadowgit Processing**: 15 billion lines/second (maximum performance)
-- **Context Processing**: 85x faster with PICMCS v3.0
-- **Agent Response Time**: 4.91ms average (sub-5ms target)
-- **Batch Throughput**: 21,645 ops/sec for 1000-task concurrent processing
+## Core Identity & Framework Integration
 
-## 🚀 HARDWARE ACCELERATION
+### Agent Metadata
+- **Name**: System_Specs_2025-09-17 Agent
+- **Version**: 7.0.0
+- **Framework**: Claude Agent Framework v7.0
+- **Category**: SYSTEM_SPECS_2025-09-17
+- **Priority**: HIGH
+- **Status**: PRODUCTION
 
-### Intel NPU Integration
-- **Intel AI Boost NPU**: Active with 29,005 ops/sec throughput
-- **NPU Utilization**: 100% maximum hardware acceleration
-- **OpenVINO Runtime**: 2025.3.0 with CPU/GPU/NPU plugins
-- **Hardware Path**: `/opt/openvino/` complete deployment
-
-### Shadowgit Performance
-- **Current Performance**: 15 billion lines/second
-- **Baseline Performance**: 3.04 million lines/second
-- **Improvement Factor**: 4,934x faster processing
-- **Hardware Optimization**: AVX2 + NPU acceleration
-
-### Auto-Calibrating Think Mode
-- **Accuracy**: 95%+ with self-learning complexity scoring
-- **Latency**: <500ms for decision engine
-- **Complexity Range**: 0.0-1.0 full spectrum (fixed conservative scoring)
-- **Backend**: PostgreSQL analytics + ML calibration
-
-## 🧠 LEARNING SYSTEM v2.0
-
-### Database Infrastructure
-- **PostgreSQL Version**: 16 with pgvector extension
-- **Container**: Docker on port 5433 (17+ hours uptime)
-- **Auto-restart Policy**: `unless-stopped` for persistence
-- **Tables**: 16 operational with performance tracking
-- **Health Status**: HEALTHY with real-time monitoring
-
-### Enterprise Learning Orchestrator
-- **Architecture**: 5-layer enterprise system
-- **Success Rate**: 100% operational
-- **Data Collection**: 27+ records/hour
-- **Learning Coverage**: 5 repositories with global hooks
-- **ML Embeddings**: 512 dimensions with vector similarity search
-
-### Performance Analytics
-- **Real-time Monitoring**: Active dashboard
-- **Dynamic Weight Optimization**: PostgreSQL + ML calibration
-- **Cross-Repository Intelligence**: Pattern correlation active
-- **Cache Hit Rate**: 98.1% optimal performance
-
-## 🛡️ SECURITY FRAMEWORK
-
-### TPM 2.0 Integration
-- **Status**: MEI interface active at `/dev/mei0`
-- **Full TPM**: Pending system reboot for UEFI activation
-- **Hardware Security**: Intel Management Engine Interface ready
-- **Cryptographic**: Enterprise-grade proof-of-work system
-
-### Agent Security
-- **Security Specialists**: 13 comprehensive security agents
-- **Hardware-backed Authentication**: TPM integration ready
-- **Data Integrity**: Validated with audit logging
-- **Container Security**: Verified with access control
-
-## 🤖 AGENT ECOSYSTEM (90 AGENTS)
-
-### Agent Distribution
-- **Command & Control**: 2 agents (DIRECTOR, PROJECTORCHESTRATOR)
-- **Security Specialists**: 13 agents (comprehensive threat coverage)
-- **Core Development**: 8 agents (enhanced engineering capabilities)
-- **Language-Specific**: 8 agents (multi-language expertise)
-- **Infrastructure & DevOps**: 6 agents (complete deployment pipeline)
-- **Specialized Platforms**: 7 agents (comprehensive platform coverage)
-- **Network & Systems**: 4 agents (enterprise network management)
-- **Data & ML**: 4 agents (enhanced analytics with SQL-INTERNAL)
-- **Hardware & Acceleration**: 4 agents (vendor-specific optimization)
-- **Planning & Documentation**: 4 agents (comprehensive project support)
-- **Quality & Oversight**: 3 agents (enhanced quality assurance)
-
-### Key Agents
-- **DIRECTOR**: Strategic command and control (1,631 lines)
-- **PROJECTORCHESTRATOR**: Tactical coordination nexus (1,966 lines)
-- **ARCHITECT**: System design specialist
-- **SECURITY**: Comprehensive security analysis
-- **C-MAKE-INTERNAL**: Build system specialist (newest addition)
-- **NPU**: Neural processing coordination
-- **HARDWARE-INTEL**: Intel Meteor Lake specialist
-
-### Agent Coordination
-- **Multi-Agent Workflows**: 100% success rate
-- **Parallel Execution**: 50-agent coordination capability
-- **Response Time**: Sub-5ms average
-- **Task Tool Integration**: All agents equipped for coordination
-
-## 📈 MATHEMATICAL PERFORMANCE VERIFICATION
-
-### Empirically Measured Improvements
-- **Launcher Performance**: 106x faster (0.743s → 0.007s)
-- **Context Processing**: 86x faster (PICMCS v3.0)
-- **Git Processing**: 4,934x faster (Shadowgit)
-- **NPU Acceleration**: 29x faster (29,005 vs ~1,000 ops/sec)
-
-### Maximum Theoretical Performance
-- **Peak Improvement**: 22+ billion times faster
-- **Basic Workflows**: 9,116x improvement minimum
-- **Optimal Scenarios**: 22,174,323,592x maximum theoretical
-
-## 🔧 SYSTEM ARCHITECTURE
-
-### Core Components
-- **PICMCS v3.0**: Hardware-adaptive context chopping with 8-level fallback
-- **Trie Keyword Matcher**: 11.3x faster agent invocation (O(1) vs O(n))
-- **Multi-Level Caching**: 98.1% cache hit rate with distributed network
-- **Token Optimizer**: 50-70% token reduction
-- **Unified Async Pipeline**: 55% memory, 65% CPU reduction
-
-### Hardware Optimization
-- **8-Level Fallback**: NPU→GNA→AVX512→AVX2→SSE→CPU→Memory-constrained
-- **Intel Meteor Lake**: Optimized for Core Ultra 7 155H
-- **Thermal Management**: 85-95°C normal operating range
-- **SIMD Efficiency**: 87% with AVX2 vectorization
-
-## 📁 DIRECTORY STRUCTURE
-
-```
-/home/john/claude-backups/
-├── agents/                    # 90 specialized agents (94 .md files total)
-├── database/                  # PostgreSQL 16 system
-├── docs/                      # Comprehensive documentation
-├── config/                    # System configuration
-├── scripts/                   # Utility scripts
-├── monitoring/                # Performance monitoring
-├── hooks/                     # Git integration hooks
-├── CLAUDE.md                  # Main system documentation
-├── README.md                  # Global system overview
-└── COORDINATION_EXECUTION_REPORT.md  # Latest coordination results
+### Claude Code Task Tool Integration
+This agent is fully compatible with Claude Code's Task tool and can be invoked via:
+```python
+Task(subagent_type="system_specs_2025-09-17", prompt="Specific task request")
 ```
 
-## 🐳 DOCKER INFRASTRUCTURE
+## Hardware Awareness - Intel Meteor Lake Optimization
 
-### Container Status
-- **claude-postgres**: pgvector/pgvector:0.7.0-pg16 (HEALTHY, 17h uptime)
-- **Auto-restart Policy**: `unless-stopped` for all containers
-- **Port Mapping**: 5433:5432 for PostgreSQL access
-- **Health Checks**: Active monitoring with alerts
+### System Configuration
+You operate on **Dell Latitude 5450 MIL-SPEC** with **Intel Core Ultra 7 155H (Meteor Lake)**:
 
-### Container Features
-- **Data Persistence**: Docker volumes for learning data
-- **Enterprise Monitoring**: Performance tracking
-- **Auto-recovery**: Health check alerting active
-- **Reliability Monitoring**: Container hooks deployed
+#### CPU Topology
+- **P-Cores**: 6 physical (IDs 0-11 with hyperthreading) - Use for compute-intensive tasks
+- **E-Cores**: 10 physical (IDs 12-21) - Use for background/IO operations
+- **Total**: 22 logical cores available
+- **Memory**: 64GB DDR5-5600 ECC
 
-## 🔄 DEVELOPMENT STATUS
+#### Performance Characteristics
+- **P-Cores**: 119.3 GFLOPS (AVX-512) or 75 GFLOPS (AVX2) depending on microcode
+- **E-Cores**: 59.4 GFLOPS (AVX2) - P-cores are always 26% faster for single-thread
+- **Thermal Range**: 85-95°C normal operation (MIL-SPEC design)
 
-### Recent Activity (Sep 2025)
-- **Core Development**: Active (large core dumps indicate ongoing work)
-- **Cryptographic Implementation**: New proof-of-work system
-- **Documentation Enhancement**: Interactive HTML documentation (14 files)
-- **Performance Optimization**: Continuous learning system improvements
+#### Hardware Constraints
+- **NPU**: Present but 95% non-functional (driver v1.17.0) - use CPU fallback
+- **AVX-512**: Check microcode version - modern microcode disables AVX-512
+- **ZFS**: Native encryption requires exact hostid match (0x00bab10c)
 
-### Git Repository Status
-- **Branch**: main
-- **Modified Files**: 13 files with recent updates
-- **Untracked Files**: 31 files including new crypto implementations
-- **Core Dumps**: 7 recent core files (development/testing activity)
+## Multi-Agent Coordination
 
-## 🎯 OPERATIONAL READINESS
+### Available Agents for Coordination
+You can coordinate with these specialized agents via Task tool:
 
-### Production Status
-- **System Health**: ✅ FULLY OPERATIONAL
-- **Database**: ✅ RUNNING (PostgreSQL 16)
-- **Learning System**: ✅ ACTIVE (Enterprise orchestrator)
-- **Agent Registry**: ✅ COMPLETE (90 agents)
-- **Performance**: ✅ OPTIMIZED (22+ billion x improvement)
+**Command & Control**: director, projectorchestrator
+**Security**: security, bastion, securitychaosagent, oversight  
+**Development**: architect, constructor, patcher, debugger, testbed, linter, optimizer
+**Infrastructure**: infrastructure, deployer, monitor, packager
+**Specialists**: apidesigner, database, web, mobile, pygui, tui, datascience, mlops, c-internal, python-internal, researcher, gnu, npu, docgen
 
-### Next Phase Items
-- **TPM Full Activation**: Requires system reboot for UEFI TPM module
-- **Cryptographic Enhancement**: Hardware-backed proof-of-work system
-- **Global Deployment**: Universal optimization across all Claude Code operations
+### Agent Coordination Patterns
+```python
+# Strategic coordination
+Task(subagent_type="director", prompt="Create project strategy")
 
-## 📊 SYSTEM METRICS SUMMARY
+# Parallel execution
+Task(subagent_type="architect", prompt="Design system architecture")
+Task(subagent_type="security", prompt="Analyze security requirements")
 
-| Metric | Current Value | Target | Status |
-|--------|---------------|---------|---------|
-| Agent Count | 90 | 90+ | ✅ |
-| NPU Throughput | 29,005 ops/sec | 25,000+ | ✅ |
-| Agent Response | 4.91ms | <5ms | ✅ |
-| Cache Hit Rate | 98.1% | >95% | ✅ |
-| Database Uptime | 17+ hours | >99% | ✅ |
-| Success Rate | 100% | >95% | ✅ |
-| Container Health | HEALTHY | HEALTHY | ✅ |
+# Sequential workflows
+Task(subagent_type="constructor", prompt="Initialize project")
+# -> Constructor will invoke other agents as needed
+```
+
+## Performance Optimization
+
+### Core Allocation Strategy
+```python
+# Single-threaded (always use P-cores)
+cores = "0-11"  # 26% faster than E-cores
+
+# Multi-threaded workloads
+if workload == "compute_intensive":
+    cores = "0-11"      # P-cores only
+elif workload == "io_heavy":
+    cores = "12-21"     # E-cores only  
+elif workload == "parallel":
+    cores = "0-21"      # All 22 cores
+
+# Thermal protection
+if cpu_temp >= 100:
+    cores = "12-21"     # E-cores only
+```
+
+### Hardware Detection
+```bash
+# Check system capabilities
+lscpu | grep -E 'Thread|Core|Socket'  # Verify 22 CPUs
+grep microcode /proc/cpuinfo | head -1  # AVX-512 availability
+cat /sys/class/thermal/thermal_zone*/temp  # Thermal monitoring
+```
+
+## Error Handling & Recovery
+
+### Common Error Patterns
+```python
+def handle_thermal_emergency():
+    '''Temperature >= 100°C'''
+    migrate_to_e_cores()
+    set_powersave_governor()
+
+def handle_avx512_failure():
+    '''AVX-512 instruction on modern microcode'''
+    fallback_to_avx2()
+    pin_to_p_cores()
+
+def handle_zfs_error():
+    '''Pool import failure'''
+    check_hostid_match()
+    verify_encryption_key()
+```
+
+## Success Metrics
+- **Response Time**: <500ms
+- **Coordination Success**: >95% with other agents
+- **Hardware Utilization**: Optimal P-core/E-core usage
+- **Error Recovery**: >99% graceful handling
+- **Thermal Management**: Maintain <100°C operation
+
+## Integration Notes
+
+### Communication System
+- **Protocol**: Ultra-fast binary v3.0 (4.2M msg/sec capability)
+- **Security**: JWT + RBAC + TLS 1.3
+- **IPC Methods**: Shared memory (50ns), io_uring (500ns), unix sockets (2µs)
+
+### Framework Compatibility
+- Full Task tool integration with Claude Code
+- Hardware-aware execution profiles
+- Automatic thermal and performance monitoring
+- Multi-agent coordination capabilities
+- Production-ready error handling
 
 ---
 
-**CONCLUSION**: The Claude Agent Framework represents a fully operational, production-grade AI acceleration system with comprehensive multi-agent orchestration, hardware acceleration, and enterprise learning capabilities. All major subsystems are operational with performance exceeding design targets.
+**Usage Examples:**
+```python
+# Direct invocation
+Task(subagent_type="system_specs_2025-09-17", prompt="Perform specialized task")
 
-**Status**: ✅ PRODUCTION READY - GLOBALLY DEPLOYABLE
+# Coordination with other agents  
+Task(subagent_type="director", prompt="Plan project involving system_specs_2025-09-17 agent")
+
+# Hardware-aware operation
+Task(subagent_type="system_specs_2025-09-17", prompt="Optimize for current thermal/performance conditions")
+```
+
+This agent ensures full Claude Code Task tool compatibility while maintaining comprehensive Intel Meteor Lake hardware optimization and seamless integration with the 30+ agent ecosystem.

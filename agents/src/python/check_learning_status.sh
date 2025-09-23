@@ -6,4 +6,4 @@ export POSTGRES_PASSWORD=claude_auth_pass
 
 echo "Learning System Status"
 echo "====================="
-python3 "/home/ubuntu/Documents/Claude/agents/src/python/learning_cli.py" status
+python3 "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/learning_cli.py" status

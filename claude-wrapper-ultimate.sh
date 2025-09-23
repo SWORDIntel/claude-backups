@@ -1,29 +1,12 @@
 #!/bin/bash
 # Claude Master Wrapper v8.0 with Auto Permission Bypass
 
-# Configuration
-export CLAUDE_HOME="$HOME/.claude-home"
+# Configuration - use environment variable if set, otherwise default
+export CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude-home}"
 
-# NPU Acceleration Integration (Added by CONSTRUCTOR v8.0)
-if [[ "${1:-}" == "--npu" ]] || [[ "${1:-}" == "npu" ]]; then
-    shift
-    NPU_LAUNCHER="/home/john/.local/bin/claude-npu"
-    if [[ -x "$NPU_LAUNCHER" ]]; then
-        echo "🚀 Launching with NPU acceleration..."
-        exec "$NPU_LAUNCHER" "$@"
-    else
-        echo "⚠️ NPU launcher not found, falling back to regular execution"
-    fi
-fi
-
-# Auto-detect NPU beneficial tasks
-if [[ "$*" =~ (performance|optimize|accelerate|speed|fast) ]]; then
-    NPU_LAUNCHER="/home/john/.local/bin/claude-npu"
-    if [[ -x "$NPU_LAUNCHER" ]]; then
-        echo "💡 Performance task detected. Use --npu for acceleration: claude --npu $*"
-    fi
-fi
-
+# Support XDG Base Directory specification
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
 # Dynamic project root detection
 if [[ -n "$CLAUDE_PROJECT_ROOT" ]]; then
@@ -33,11 +16,14 @@ elif [[ -f "$(dirname "$0")/CLAUDE.md" ]]; then
     # Script is in project directory
     export CLAUDE_PROJECT_ROOT="$(dirname "$0")"
 elif [[ -f "$HOME/claude-backups/CLAUDE.md" ]]; then
-    # Standard location
+    # User's home claude-backups directory
     export CLAUDE_PROJECT_ROOT="$HOME/claude-backups"
 elif [[ -f "$HOME/Documents/claude-backups/CLAUDE.md" ]]; then
-    # Alternative location
+    # Documents subdirectory location
     export CLAUDE_PROJECT_ROOT="$HOME/Documents/claude-backups"
+elif [[ -f "$HOME/Documents/Claude/CLAUDE.md" ]]; then
+    # Alternative Documents/Claude location
+    export CLAUDE_PROJECT_ROOT="$HOME/Documents/Claude"
 else
     # Fallback
     export CLAUDE_PROJECT_ROOT="$HOME"
@@ -75,9 +61,10 @@ if [[ -d "$CLAUDE_PROJECT_ROOT/.claude" ]]; then
     export CLAUDE_CONFIG_DIR="$CLAUDE_DIR/config"
     export CLAUDE_HOOKS_DIR="$CLAUDE_DIR/hooks"
 else
-    export CLAUDE_AGENTS_DIR="$HOME/agents"
-    export CLAUDE_CONFIG_DIR="$HOME/.config/claude"
-    export CLAUDE_HOOKS_DIR="$HOME/.config/claude/hooks"
+    # Use XDG Base Directory specification for better portability
+    export CLAUDE_AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$XDG_DATA_HOME/claude/agents}"
+    export CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$XDG_CONFIG_HOME/claude}"
+    export CLAUDE_HOOKS_DIR="${CLAUDE_HOOKS_DIR:-$XDG_CONFIG_HOME/claude/hooks}"
 fi
 
 # Binary location - dynamic detection
@@ -87,22 +74,78 @@ CLAUDE_BINARY=""
 SCRIPT_PATH="$(readlink -f "$0")"
 if [[ -n "$CLAUDE_BINARY_PATH" ]]; then
     CLAUDE_BINARY="$CLAUDE_BINARY_PATH"
-elif [[ -f "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js" ]]; then
-    CLAUDE_BINARY="node /usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
-elif [[ -f "/usr/local/bin/claude" ]] && [[ "$(readlink -f "/usr/local/bin/claude")" != "$SCRIPT_PATH" ]]; then
-    CLAUDE_BINARY="/usr/local/bin/claude"
-elif [[ -f "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" ]]; then
-    CLAUDE_BINARY="node $HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js"
-elif command -v claude >/dev/null 2>&1; then
+else
+    # Define common installation paths to check
+    CLAUDE_PATHS=(
+        # Global npm installations
+        "/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+        "/usr/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+        # User-specific npm installations
+        "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+        "$HOME/.local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+        # XDG compliant paths
+        "$XDG_DATA_HOME/npm/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+        # Node version manager paths (if available)
+        "$HOME/.nvm/versions/node/*/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+        "$HOME/.volta/tools/image/node/*/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+    )
+
+    # Add NPM_CONFIG_PREFIX if set
+    if [[ -n "$NPM_CONFIG_PREFIX" ]]; then
+        CLAUDE_PATHS+=("$NPM_CONFIG_PREFIX/lib/node_modules/@anthropic-ai/claude-code/cli.js")
+    fi
+
+    # Try to find CLI script in order of preference
+    for path in "${CLAUDE_PATHS[@]}"; do
+        # Handle glob patterns for NVM/Volta
+        if [[ "$path" == *"*"* ]]; then
+            for expanded_path in $path; do
+                if [[ -f "$expanded_path" ]]; then
+                    CLAUDE_BINARY="node $expanded_path"
+                    break 2
+                fi
+            done
+        elif [[ -f "$path" ]]; then
+            CLAUDE_BINARY="node $path"
+            break
+        fi
+    done
+
+    # If no CLI script found, try binary paths
+    if [[ -z "$CLAUDE_BINARY" ]]; then
+        BINARY_PATHS=(
+            "/usr/local/bin/claude"
+            "/usr/bin/claude"
+            "$HOME/.local/bin/claude"
+            "$XDG_DATA_HOME/npm/bin/claude"
+        )
+
+        if [[ -n "$NPM_CONFIG_PREFIX" ]]; then
+            BINARY_PATHS+=("$NPM_CONFIG_PREFIX/bin/claude")
+        fi
+
+        for path in "${BINARY_PATHS[@]}"; do
+            if [[ -f "$path" ]] && [[ "$(readlink -f "$path")" != "$SCRIPT_PATH" ]]; then
+                CLAUDE_BINARY="$path"
+                break
+            fi
+        done
+    fi
+fi
+
+# Final fallback using command lookup
+if [[ -z "$CLAUDE_BINARY" ]] && command -v claude >/dev/null 2>&1; then
     # Only use command if it's not this script
     FOUND_CLAUDE="$(command -v claude)"
     if [[ "$(readlink -f "$FOUND_CLAUDE")" != "$SCRIPT_PATH" ]]; then
         CLAUDE_BINARY="$FOUND_CLAUDE"
     else
-        CLAUDE_BINARY="node /usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+        # Final ultimate fallback
+        CLAUDE_BINARY="claude"
     fi
-else
-    CLAUDE_BINARY="node /usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js"
+elif [[ -z "$CLAUDE_BINARY" ]]; then
+    # Ultimate fallback if nothing else worked
+    CLAUDE_BINARY="claude"
 fi
 
 # Learning Capture Function
@@ -470,12 +513,22 @@ if [[ "$CLAUDE_BINARY" =~ ^node ]]; then
     if [[ ! -f "$JS_FILE" ]]; then
         echo "Warning: Claude CLI script not found at: $JS_FILE" >&2
         echo "Falling back to symlink" >&2
-        CLAUDE_BINARY="/usr/local/bin/claude"
+        # Try to find a valid binary in PATH or common locations
+        if command -v claude >/dev/null 2>&1 && [[ "$(command -v claude)" != "$0" ]]; then
+            CLAUDE_BINARY="$(command -v claude)"
+        else
+            CLAUDE_BINARY="claude"  # Hope it's in PATH somewhere
+        fi
     fi
 elif [[ "$CLAUDE_BINARY" != "claude" ]] && [[ ! -f "$CLAUDE_BINARY" ]]; then
     echo "Warning: Claude binary not found at: $CLAUDE_BINARY" >&2
-    echo "Falling back to symlink" >&2
-    CLAUDE_BINARY="/usr/local/bin/claude"
+    echo "Falling back to available alternatives" >&2
+    # Try to find a valid binary in PATH or common locations
+    if command -v claude >/dev/null 2>&1 && [[ "$(command -v claude)" != "$0" ]]; then
+        CLAUDE_BINARY="$(command -v claude)"
+    else
+        CLAUDE_BINARY="claude"  # Hope it's in PATH somewhere
+    fi
 fi
 
 # Permission bypass always enabled for enhanced functionality
@@ -636,12 +689,32 @@ case "$1" in
         ;;
         
     --orchestrator)
-        # Launch Python orchestrator UI
-        ORCHESTRATOR_LAUNCHER="$HOME/.local/bin/python-orchestrator"
-        if [[ -f "$ORCHESTRATOR_LAUNCHER" ]]; then
-            exec "$ORCHESTRATOR_LAUNCHER"
+        # Launch Python orchestrator UI - check multiple locations
+        ORCHESTRATOR_PATHS=(
+            "$HOME/.local/bin/python-orchestrator"
+            "$CLAUDE_PROJECT_ROOT/python-orchestrator-launcher.sh"
+            "$CLAUDE_PROJECT_ROOT/agents/src/python/production_orchestrator.py"
+        )
+
+        ORCHESTRATOR_LAUNCHER=""
+        for path in "${ORCHESTRATOR_PATHS[@]}"; do
+            if [[ -f "$path" ]]; then
+                ORCHESTRATOR_LAUNCHER="$path"
+                break
+            fi
+        done
+
+        if [[ -n "$ORCHESTRATOR_LAUNCHER" ]]; then
+            if [[ "$ORCHESTRATOR_LAUNCHER" == *.py ]]; then
+                exec python3 "$ORCHESTRATOR_LAUNCHER"
+            else
+                exec "$ORCHESTRATOR_LAUNCHER"
+            fi
         else
-            echo "Python orchestrator not found. Please run installer to set it up."
+            echo "Python orchestrator not found in any standard location."
+            echo "Checked paths:"
+            printf "  • %s\n" "${ORCHESTRATOR_PATHS[@]}"
+            echo "Please run installer to set it up."
             exit 1
         fi
         ;;

@@ -9,11 +9,32 @@ echo "Claude Unified Hook System Installer"
 echo "Version: 3.1 (Optimized)"
 echo "==================================="
 
-# Find project root
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Find project root with portable detection
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Check if we're in the right project (validate with signature files)
+if [[ ! -f "$PROJECT_ROOT/CLAUDE.md" ]] && [[ ! -d "$PROJECT_ROOT/agents" ]]; then
+    # Try alternative detection methods
+    if [[ -n "${CLAUDE_PROJECT_ROOT:-}" ]] && [[ -d "$CLAUDE_PROJECT_ROOT" ]]; then
+        PROJECT_ROOT="$CLAUDE_PROJECT_ROOT"
+    else
+        # Search for project root
+        for candidate in "$HOME"/claude-* "$HOME"/Downloads/claude-* "$HOME"/Documents/claude-* "$HOME"/Documents/Claude; do
+            if [[ -f "$candidate/CLAUDE.md" ]] || [[ -d "$candidate/agents" ]]; then
+                PROJECT_ROOT="$candidate"
+                break
+            fi
+        done
+    fi
+fi
+
 HOOKS_DIR="$PROJECT_ROOT/hooks"
-CONFIG_DIR="$HOME/.config/claude"
-CACHE_DIR="$HOME/.cache/claude-agents"
+
+# XDG-compliant paths
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude-agents"
+USER_BIN="${XDG_DATA_HOME:-$HOME/.local}/bin"
 
 echo "Project root: $PROJECT_ROOT"
 
@@ -21,7 +42,7 @@ echo "Project root: $PROJECT_ROOT"
 echo "Creating directories..."
 mkdir -p "$CONFIG_DIR"
 mkdir -p "$CACHE_DIR"
-mkdir -p "$HOME/.local/bin"
+mkdir -p "$USER_BIN"
 
 # Backup old hook files (if they exist)
 if [ -d "$HOOKS_DIR/backup" ]; then
@@ -43,23 +64,55 @@ fi
 
 # Create main hook command
 echo "Creating unified hook command..."
-cat > "$HOME/.local/bin/claude-hooks" << 'EOF'
+cat > "$USER_BIN/claude-hooks" << EOF
 #!/usr/bin/env python3
 import sys
 import os
 import asyncio
 
-# Add hooks directory to path
-hooks_dir = os.path.expanduser("~/claude-backups/hooks")
-if os.path.exists(hooks_dir):
+# Portable hooks directory detection
+def find_hooks_directory():
+    # First check environment variable
+    if 'CLAUDE_PROJECT_ROOT' in os.environ:
+        hooks_dir = os.path.join(os.environ['CLAUDE_PROJECT_ROOT'], 'hooks')
+        if os.path.exists(hooks_dir):
+            return hooks_dir
+
+    # Try script-relative detection
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Look for project root indicators
+    search_dirs = []
+    current = os.path.expanduser('~')
+    for pattern in ['claude-*', 'Claude', 'Documents/claude-*', 'Documents/Claude*', 'Downloads/claude-*']:
+        import glob
+        matches = glob.glob(os.path.join(current, pattern))
+        search_dirs.extend(matches)
+
+    # Add current and parent directories
+    search_dirs.extend([
+        os.getcwd(),
+        os.path.dirname(script_dir),
+        os.path.dirname(os.path.dirname(script_dir))
+    ])
+
+    for candidate in search_dirs:
+        if os.path.isdir(candidate):
+            hooks_dir = os.path.join(candidate, 'hooks')
+            # Verify this is the right project
+            if (os.path.exists(hooks_dir) and
+                (os.path.exists(os.path.join(candidate, 'CLAUDE.md')) or
+                 os.path.exists(os.path.join(candidate, 'agents')))):
+                return hooks_dir
+
+    return None
+
+hooks_dir = find_hooks_directory()
+if hooks_dir:
     sys.path.insert(0, hooks_dir)
 else:
-    # Try to find it relative to this script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(script_dir))
-    hooks_dir = os.path.join(project_root, "hooks")
-    if os.path.exists(hooks_dir):
-        sys.path.insert(0, hooks_dir)
+    print("Error: Could not find Claude hooks directory", file=sys.stderr)
+    sys.exit(1)
 
 from claude_unified_hook_system import ClaudeUnifiedHooks, UnifiedConfig
 

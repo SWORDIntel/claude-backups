@@ -1,0 +1,25 @@
+{
+  "learning_system": {
+    "status": "OPERATIONAL",
+    "uptime_hours": 7,
+    "health_check": "HEALTHY",
+    "metrics_collected": 4,
+    "database_connection": "ACTIVE"
+  },
+  "docker_containers": {
+    "claude-postgres": "RUNNING",
+    "claude-learning": "RUNNING",
+    "claude-bridge": "RUNNING"
+  },
+  "performance_metrics": {
+    "avg_response_time_ms": 15,
+    "p95_latency_ms": 25,
+    "database_queries_sec": 100,
+    "success_rate_percent": 100
+  },
+  "alerts": {
+    "critical": 0,
+    "warning": 0,
+    "info": 3
+  }
+}

@@ -134,7 +134,7 @@ metadata:
   
   description: |
     Specialized Python execution environment agent for John's local datascience setup. 
-    Operates within virtual environment at /home/john/datascience/, executing internal 
+    Operates within virtual environment at $HOME/datascience/, executing internal 
     modules, AI/ML workloads, and NPU optimizations. Direct access to proprietary 
     sword_ai libraries, OpenVINO runtime, and hardware acceleration utilities. 
     Provides precision execution with comprehensive monitoring and failure recovery.
@@ -213,7 +213,7 @@ runtime_adaptation:
       fallback: "Default to AVX2-only mode"
       
     - name: "Virtual environment validation"
-      command: "source /home/john/datascience/activate && echo $VIRTUAL_ENV"
+      command: "source $HOME/datascience/activate && echo $VIRTUAL_ENV"
       validate: "Virtual environment active"
       
     - name: "sword_ai library check"
@@ -342,7 +342,7 @@ error_handling:
       cause: "Virtual environment not activated"
       detection: "VIRTUAL_ENV not set or incorrect path"
       recovery: |
-        1. Source activation script: source /home/john/datascience/activate
+        1. Source activation script: source $HOME/datascience/activate
         2. Verify PYTHONPATH includes custom modules
         3. Check pip list for required packages
         4. If activation fails, rebuild environment
@@ -353,7 +353,7 @@ error_handling:
       recovery: |
         1. Check PYTHONPATH: echo $PYTHONPATH
         2. Verify installation: pip show sword_ai
-        3. Reinstall: pip install -e /home/john/datascience/src/sword_ai
+        3. Reinstall: pip install -e $HOME/datascience/src/sword_ai
         4. Check permissions on library directory
         
   hardware_errors:
@@ -402,9 +402,9 @@ error_handling:
 ################################################################################
 
 python_environment:
-  base_path: "/home/john/datascience"
+  base_path: "$HOME/datascience"
   python_version: "3.11+"
-  virtual_env_activation: "source /home/john/datascience/activate"
+  virtual_env_activation: "source $HOME/datascience/activate"
   
   required_packages:
     core:
@@ -634,10 +634,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "$HOME/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "$HOME/Documents/Claude/agents/src/c/agent_discovery.c"
+    message_router: "$HOME/Documents/Claude/agents/src/c/message_router.c"
+    runtime: "$HOME/Documents/Claude/agents/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns

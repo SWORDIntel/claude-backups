@@ -1,0 +1,674 @@
+{
+  "/bin/ls": {
+    "filepath": "/bin/ls",
+    "timestamp": 1758433173.041777,
+    "hash": "833d6f9cf3ede2225d80eaa159ef78a141c92842a691179aec37d182cc808a5c",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "/bin/ls",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758433173.0310104,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "/bin/ls: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=0243f2a3ad64d635299a574bbc8ef951ddde9b21, for GNU/Linux 3.2.0, stripped",
+        "architecture": "x86-64",
+        "file_size": 158632,
+        "permissions": "755",
+        "security_features": [
+          "NX",
+          "PIE"
+        ],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: /bin/ls\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 06:39:33] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758433173.0416727
+    },
+    "status": "completed"
+  },
+  "/bin/echo": {
+    "filepath": "/bin/echo",
+    "timestamp": 1758434446.9255252,
+    "hash": "416903b966ea8a2fc3b11e09b03a30e09aaf3b2e8f5a581b4c1b80899edf545f",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "/bin/echo",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434446.9148228,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "/bin/echo: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=db16ee355b840b1cc2ee9f208f58ff691a9a015e, for GNU/Linux 3.2.0, stripped",
+        "architecture": "x86-64",
+        "file_size": 43432,
+        "permissions": "755",
+        "security_features": [
+          "NX",
+          "PIE"
+        ],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: /bin/echo\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:00:46] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434446.9253974
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/DEPLOYMENT_RESULTS_PHASE3.md": {
+    "filepath": "./DEPLOYMENT_RESULTS_PHASE3.md",
+    "timestamp": 1758434716.050421,
+    "hash": "641451e652eec2bc986d27bb93da92673c27ff0071e1d1862aa9517fd03b567e",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./DEPLOYMENT_RESULTS_PHASE3.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.0389469,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./DEPLOYMENT_RESULTS_PHASE3.md: Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 5965,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./DEPLOYMENT_RESULTS_PHASE3.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.0502608
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/Dockerfile.test": {
+    "filepath": "./Dockerfile.test",
+    "timestamp": 1758434716.0659866,
+    "hash": "8c91f435c2e89d0614a8100ab396e7539e0fff2ba60018fe89429bbc90851471",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./Dockerfile.test",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.0556872,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./Dockerfile.test: ASCII text",
+        "architecture": "unknown",
+        "file_size": 2171,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./Dockerfile.test\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.0658545
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/IMPLEMENTATION_PLAN.md": {
+    "filepath": "./IMPLEMENTATION_PLAN.md",
+    "timestamp": 1758434716.0817876,
+    "hash": "9db2a56d047fb62e2e6d5f635acc845056e907b4005185645313dec4d25782ae",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./IMPLEMENTATION_PLAN.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.0725899,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./IMPLEMENTATION_PLAN.md: Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 9573,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./IMPLEMENTATION_PLAN.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.0817008
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/IMPLEMENTATION_SUMMARY.md": {
+    "filepath": "./IMPLEMENTATION_SUMMARY.md",
+    "timestamp": 1758434716.1009827,
+    "hash": "9861f47d2bf3fe635d20f751badf8b3fb1100ebdabf05e4c521acd820e518bc1",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./IMPLEMENTATION_SUMMARY.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.090948,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./IMPLEMENTATION_SUMMARY.md: Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 11645,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./IMPLEMENTATION_SUMMARY.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.100826
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/Makefile": {
+    "filepath": "./Makefile",
+    "timestamp": 1758434716.119371,
+    "hash": "33e3cb245ff0f02739607753f5368a91cefdd1ae5a83b4d05d39acd8751e4089",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./Makefile",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.109712,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./Makefile: Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 11114,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./Makefile\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.1192584
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/OPTIMIZATION_REPORT.md": {
+    "filepath": "./OPTIMIZATION_REPORT.md",
+    "timestamp": 1758434716.1320584,
+    "hash": "8e6f529c1bbcd7e7aaddf54b69f5670c6dba2a918c986f5206333dadce38feed",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./OPTIMIZATION_REPORT.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.123332,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./OPTIMIZATION_REPORT.md: Python script, Unicode text, UTF-8 text executable",
+        "architecture": "unknown",
+        "file_size": 6870,
+        "permissions": "755",
+        "security_features": [
+          "NX",
+          "PIE"
+        ],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./OPTIMIZATION_REPORT.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.1319232
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/OPTIMIZATION_RESULTS.md": {
+    "filepath": "./OPTIMIZATION_RESULTS.md",
+    "timestamp": 1758434716.1466286,
+    "hash": "d67f91f2c8205f22e3ea797238eb183b48d1725f63f14435b71db45c92ab976f",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./OPTIMIZATION_RESULTS.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.1362903,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./OPTIMIZATION_RESULTS.md: Python script, Unicode text, UTF-8 text executable",
+        "architecture": "unknown",
+        "file_size": 8077,
+        "permissions": "755",
+        "security_features": [
+          "NX",
+          "PIE"
+        ],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./OPTIMIZATION_RESULTS.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.1465027
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/README_TESTS.md": {
+    "filepath": "./README_TESTS.md",
+    "timestamp": 1758434716.1648679,
+    "hash": "14930711b1617abe06d9a9630c9a68d104317f8ee9b3f6ea2155044b2590b298",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./README_TESTS.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.154863,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./README_TESTS.md: Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 11653,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./README_TESTS.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.16476
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/REFACTORING_COMPLETE.md": {
+    "filepath": "./REFACTORING_COMPLETE.md",
+    "timestamp": 1758434716.180801,
+    "hash": "e06dc35a0d0ba33c522a2d3a308152398d0ae5aeb8e83897ced50b0fbdbb36be",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./REFACTORING_COMPLETE.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.1711707,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./REFACTORING_COMPLETE.md: Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 6259,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./REFACTORING_COMPLETE.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.1806715
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/SECURITY_FIXES_IMPLEMENTED.md": {
+    "filepath": "./SECURITY_FIXES_IMPLEMENTED.md",
+    "timestamp": 1758434716.196241,
+    "hash": "93f43ebbd450246d3374f820c1d854f1182ebd17717607c8c727e923363ad322",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./SECURITY_FIXES_IMPLEMENTED.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.1852262,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./SECURITY_FIXES_IMPLEMENTED.md: Python script, Unicode text, UTF-8 text executable",
+        "architecture": "unknown",
+        "file_size": 9867,
+        "permissions": "755",
+        "security_features": [
+          "NX",
+          "PIE"
+        ],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./SECURITY_FIXES_IMPLEMENTED.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.196098
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/SECURITY_IMPLEMENTATION_COMPLETE.md": {
+    "filepath": "./SECURITY_IMPLEMENTATION_COMPLETE.md",
+    "timestamp": 1758434716.2098532,
+    "hash": "17dd0ebda2d4a49ada1f9439f994722daf9e8d6c8aefabc5cdf6af445594a9b0",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./SECURITY_IMPLEMENTATION_COMPLETE.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.1998591,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./SECURITY_IMPLEMENTATION_COMPLETE.md: HTML document, Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 5713,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./SECURITY_IMPLEMENTATION_COMPLETE.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.209715
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/SPECIALIZED_TESTS_README.md": {
+    "filepath": "./SPECIALIZED_TESTS_README.md",
+    "timestamp": 1758434716.2244728,
+    "hash": "881654486e80406fa22e26f5349e505b46b7383c675da184e069ea43d11a6fbe",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./SPECIALIZED_TESTS_README.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.2154484,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./SPECIALIZED_TESTS_README.md: Python script, Unicode text, UTF-8 text executable",
+        "architecture": "unknown",
+        "file_size": 11001,
+        "permissions": "755",
+        "security_features": [
+          "NX",
+          "PIE"
+        ],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./SPECIALIZED_TESTS_README.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.2243817
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/TEST_RESULTS_SUMMARY.md": {
+    "filepath": "./TEST_RESULTS_SUMMARY.md",
+    "timestamp": 1758434716.24277,
+    "hash": "18197edef09595ca9c2a777223f7a4d0cd303d906a10ec422be782b6704fe96a",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./TEST_RESULTS_SUMMARY.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.2324502,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./TEST_RESULTS_SUMMARY.md: Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 2678,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./TEST_RESULTS_SUMMARY.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.242628
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/UNIFIED_ARCHITECTURE.md": {
+    "filepath": "./UNIFIED_ARCHITECTURE.md",
+    "timestamp": 1758434716.2577834,
+    "hash": "0fb6c1d3f47f0437cad4c5af17727239fc65b326cf4b4f491e872ad5489d3bc5",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./UNIFIED_ARCHITECTURE.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.2477372,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./UNIFIED_ARCHITECTURE.md: Python script, Unicode text, UTF-8 text executable",
+        "architecture": "unknown",
+        "file_size": 7426,
+        "permissions": "755",
+        "security_features": [
+          "NX",
+          "PIE"
+        ],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./UNIFIED_ARCHITECTURE.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.257654
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/c_diff_engine_readme.md": {
+    "filepath": "./c_diff_engine_readme.md",
+    "timestamp": 1758434716.2710078,
+    "hash": "29f1babbda7e32767e36b4ee68b40bf0e65f3e907a529f78903d63ee89aef2af",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./c_diff_engine_readme.md",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.2614982,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./c_diff_engine_readme.md: JavaScript source, Unicode text, UTF-8 text",
+        "architecture": "unknown",
+        "file_size": 12175,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./c_diff_engine_readme.md\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.2708766
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/monitoring_config.json": {
+    "filepath": "./monitoring_config.json",
+    "timestamp": 1758434716.2837045,
+    "hash": "791cd6c66492a74d5b1645c87d39d7f0c7ca70fb944273a52d4d76e4f84d4bdb",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./monitoring_config.json",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.2740092,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./monitoring_config.json: JSON text data",
+        "architecture": "unknown",
+        "file_size": 270,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./monitoring_config.json\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.2835763
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/pytest.ini": {
+    "filepath": "./pytest.ini",
+    "timestamp": 1758434716.3020587,
+    "hash": "faaa9ef02c9a96ec2b96490c025d82e00fcc9b04de0e9e5a14cf25dfd1701a89",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./pytest.ini",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.2916892,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./pytest.ini: ASCII text",
+        "architecture": "unknown",
+        "file_size": 1379,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./pytest.ini\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.301953
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/requirements-test.txt": {
+    "filepath": "./requirements-test.txt",
+    "timestamp": 1758434716.3195581,
+    "hash": "2720782120dbcaea76e68aefecf5c1a857e74d4f06f133fec54b57587730162e",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./requirements-test.txt",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.3088002,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./requirements-test.txt: ASCII text",
+        "architecture": "unknown",
+        "file_size": 1938,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./requirements-test.txt\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.3194242
+    },
+    "status": "completed"
+  },
+  "/home/john/claude-backups/hooks/test_results.json": {
+    "filepath": "./test_results.json",
+    "timestamp": 1758434716.3320405,
+    "hash": "7ef963a10f64e8841e82c2fa102776f66b0f2aa768662b7370476c36f495fe4e",
+    "agent_analysis": {
+      "status": "analyzed",
+      "filepath": "./test_results.json",
+      "analysis_type": "comprehensive",
+      "timestamp": 1758434716.321988,
+      "agent": "DISASSEMBLER",
+      "findings": {
+        "file_format": "./test_results.json: JSON text data",
+        "architecture": "unknown",
+        "file_size": 220,
+        "permissions": "755",
+        "security_features": [],
+        "vulnerabilities": [],
+        "strings": [],
+        "symbols": [],
+        "complexity": "medium"
+      }
+    },
+    "ghidra_analysis": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "\u001b[0;31mError: Unknown command: ./test_results.json\u001b[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\\033[1;33m   ULTRATHINK MALWARE ANALYSIS SYSTEM v4.0          \\033[0m\n\\033[0;36m\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\\033[0m\n\nUsage: /home/john/claude-backups/hooks/ghidra-integration.sh [COMMAND] [OPTIONS]\n\nCommands:\n    analyze <file> [mode]     - Analyze single binary\n                               Modes: static, dynamic, comprehensive\n\n    batch <directory> [mode]  - Batch analyze directory\n\n    setup                    - Setup analysis environment\n\n    cleanup                  - Clean analysis environment\n\n    status                   - Show system status\n\n    help                     - Show this help\n\nAnalysis Phases:\n    1. Evasion Detection\n    2. Static Analysis (Ghidra)\n    3. Dynamic Analysis\n    4. C2 Extraction\n    5. ML Threat Scoring\n    6. Report Generation\n    7. MEME Report (if applicable)\n\nEnvironment Variables:\n    GHIDRA_HOME             - Ghidra installation path\n    ANALYSIS_WORKSPACE      - Analysis workspace\n    ENABLE_MEME_REPORTS     - Enable threat actor roasting\n\nExamples:\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze malware.exe comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh analyze suspicious.dll static\n    /home/john/claude-backups/hooks/ghidra-integration.sh batch /samples comprehensive\n    /home/john/claude-backups/hooks/ghidra-integration.sh status\n\n\\033[0;35mRemember: Friends don't let friends use UPX!\\033[0m\n[2025-09-21 07:05:16] [INFO] Cleaning up sandbox environment\n",
+      "stderr": "",
+      "timestamp": 1758434716.3319383
+    },
+    "status": "completed"
+  }
+}

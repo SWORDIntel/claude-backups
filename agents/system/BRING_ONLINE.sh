@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 # System paths
 PROJECT_ROOT="/home/ubuntu/Documents/claude-backups"
-AGENTS_DIR="/home/ubuntu/Documents/Claude/agents"
+AGENTS_DIR="${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
 BUILD_DIR="$AGENTS_DIR/build"
 CONFIG_DIR="$AGENTS_DIR/config"
 MONITORING_DIR="$AGENTS_DIR/monitoring"
@@ -465,8 +465,8 @@ After=network.target
 [Service]
 Type=forking
 User=ubuntu
-WorkingDirectory=/home/ubuntu/Documents/Claude/agents
-ExecStart=/home/ubuntu/Documents/Claude/agents/BRING_ONLINE.sh
+WorkingDirectory=${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents
+ExecStart=${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../BRING_ONLINE.sh
 ExecStop=/usr/bin/pkill -f unified_agent_runtime
 Restart=on-failure
 RestartSec=10
@@ -498,7 +498,7 @@ Automatically connects new agents to the communication system
 
 import sys
 import os
-sys.path.append('/home/ubuntu/Documents/Claude/agents/src/python')
+sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python')
 
 from ENHANCED_AGENT_INTEGRATION import AgentSystem, AgentMessage, Priority
 

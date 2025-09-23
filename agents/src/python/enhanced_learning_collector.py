@@ -19,6 +19,17 @@ from typing import Dict, Any, Optional, List, Tuple
 from uuid import uuid4
 import numpy as np
 
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_project_root
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+
 try:
     import psycopg2
     from psycopg2.extras import Json, RealDictCursor
@@ -473,7 +484,7 @@ async def main():
             'category': 'planning',
             'complexity': 0.8,
             'user_id': 'test_user',
-            'project_path': '/home/john/claude-backups'
+            'project_path': str(get_project_root())
         }
     )
     
@@ -498,7 +509,7 @@ async def main():
     # Track a Git operation
     await collector.track_git_operation(
         operation_type="diff",
-        repository_path="/home/john/claude-backups",
+        repository_path=str(get_project_root()),
         files_affected=10,
         lines_changed=500,
         shadowgit_performance=930000000.0

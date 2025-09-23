@@ -30,13 +30,13 @@ claude-dev-pipeline "path/to/your/code.py"
 
 ```bash
 # Start interactive voice interface
-python3 /home/ubuntu/Documents/Claude/agents/basic_voice_interface.py
+python3 $HOME/Documents/Claude/agents/basic_voice_interface.py
 
 # Quick single voice commands
 python3 -c "
 import asyncio
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('$HOME/Documents/Claude/agents')
 from claude_agent_bridge import task_agent_invoke
 
 async def voice_cmd():
@@ -62,7 +62,7 @@ asyncio.run(voice_cmd())
 
 ```bash
 # Start interactive voice interface
-python3 /home/ubuntu/Documents/Claude/agents/basic_voice_interface.py
+python3 $HOME/Documents/Claude/agents/basic_voice_interface.py
 
 # Then speak/type commands like:
 🎤 Voice Command: Claude, ask the director to plan deployment
@@ -95,7 +95,7 @@ asyncio.run(test())
 
 ### Test 2: Voice Command Processing  
 ```bash
-python3 /home/ubuntu/Documents/Claude/agents/basic_voice_interface.py
+python3 $HOME/Documents/Claude/agents/basic_voice_interface.py
 ```
 Then type: `Claude, ask the planner to create a project timeline`
 
@@ -155,7 +155,7 @@ You: "Computer, tell the architect to design a microservices API"
 ```bash
 # Manual load
 source ~/.bashrc
-export PYTHONPATH="/home/ubuntu/Documents/Claude/agents:$PYTHONPATH"
+export PYTHONPATH="$HOME/Documents/Claude/agents:$PYTHONPATH"
 ```
 
 ### If voice commands fail:
@@ -163,7 +163,7 @@ export PYTHONPATH="/home/ubuntu/Documents/Claude/agents:$PYTHONPATH"
 # Test basic agent access first
 python3 -c "
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('$HOME/Documents/Claude/agents')
 from claude_agent_bridge import task_agent_invoke
 print('Agents loaded successfully!')
 "

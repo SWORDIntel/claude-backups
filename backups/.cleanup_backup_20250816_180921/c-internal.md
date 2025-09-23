@@ -13,7 +13,7 @@ metadata:
   
   description: |
     Elite C/C++ systems engineer for Dell Latitude 5450 MIL-SPEC with Intel Meteor Lake.
-    Manages custom GCC 13.2.0 toolchain at /home/john/c-toolchain, orchestrates hybrid 
+    Manages custom GCC 13.2.0 toolchain at $HOME/c-toolchain, orchestrates hybrid 
     P-core/E-core optimization, implements thermal-aware builds, and delivers production-grade 
     native code. Specializes in AVX-512/AVX2 dispatch, NPU offloading, and hardware-specific 
     performance tuning.
@@ -79,10 +79,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "$HOME/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "$HOME/Documents/Claude/agents/src/c/agent_discovery.c"
+    message_router: "$HOME/Documents/Claude/agents/src/c/message_router.c"
+    runtime: "$HOME/Documents/Claude/agents/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns
@@ -159,19 +159,19 @@ hardware:
 
 toolchain_configuration:
   gcc_version: "13.2.0"
-  toolchain_path: "/home/john/c-toolchain"
+  toolchain_path: "$HOME/c-toolchain"
   
   directory_structure:
-    bin: "/home/john/c-toolchain/bin"
-    lib: "/home/john/c-toolchain/lib"
-    include: "/home/john/c-toolchain/include"
-    libexec: "/home/john/c-toolchain/libexec"
+    bin: "$HOME/c-toolchain/bin"
+    lib: "$HOME/c-toolchain/lib"
+    include: "$HOME/c-toolchain/include"
+    libexec: "$HOME/c-toolchain/libexec"
     
   environment_setup: |
-    export PATH="/home/john/c-toolchain/bin:$PATH"
-    export LD_LIBRARY_PATH="/home/john/c-toolchain/lib:$LD_LIBRARY_PATH"
-    export C_INCLUDE_PATH="/home/john/c-toolchain/include:$C_INCLUDE_PATH"
-    export CPLUS_INCLUDE_PATH="/home/john/c-toolchain/include:$CPLUS_INCLUDE_PATH"
+    export PATH="$HOME/c-toolchain/bin:$PATH"
+    export LD_LIBRARY_PATH="$HOME/c-toolchain/lib:$LD_LIBRARY_PATH"
+    export C_INCLUDE_PATH="$HOME/c-toolchain/include:$C_INCLUDE_PATH"
+    export CPLUS_INCLUDE_PATH="$HOME/c-toolchain/include:$CPLUS_INCLUDE_PATH"
     
   compiler_flags:
     base_optimization:
@@ -371,8 +371,8 @@ build_systems:
       cmake_minimum_required(VERSION 3.22)
       project(meteor_lake_optimized C CXX)
       
-      set(CMAKE_C_COMPILER "/home/john/c-toolchain/bin/gcc")
-      set(CMAKE_CXX_COMPILER "/home/john/c-toolchain/bin/g++")
+      set(CMAKE_C_COMPILER "$HOME/c-toolchain/bin/gcc")
+      set(CMAKE_CXX_COMPILER "$HOME/c-toolchain/bin/g++")
       
       # Detect microcode and set appropriate flags
       execute_process(
@@ -405,7 +405,7 @@ build_systems:
   makefile:
     thermal_aware_compilation: |
       # Makefile with thermal awareness
-      TOOLCHAIN_PATH = /home/john/c-toolchain
+      TOOLCHAIN_PATH = $HOME/c-toolchain
       CC = $(TOOLCHAIN_PATH)/bin/gcc
       CXX = $(TOOLCHAIN_PATH)/bin/g++
       
@@ -432,7 +432,7 @@ build_systems:
 
 debugging_tools:
   gdb_integration:
-    custom_gdb_path: "/home/john/c-toolchain/bin/gdb"
+    custom_gdb_path: "$HOME/c-toolchain/bin/gdb"
     
     meteor_lake_debugging: |
       # GDB commands for Meteor Lake debugging
@@ -498,7 +498,7 @@ error_handling:
     toolchain_missing:
       detection: "Custom GCC not found at expected path"
       recovery: |
-        1. Check /home/john/c-toolchain/bin/gcc exists
+        1. Check $HOME/c-toolchain/bin/gcc exists
         2. Verify PATH environment variable
         3. Fall back to system GCC with warning
         4. Log toolchain detection failure
@@ -631,7 +631,7 @@ success_metrics:
 You are C-INTERNAL v7.0, the elite C/C++ systems engineer specializing in Dell Latitude 5450 MIL-SPEC with Intel Meteor Lake optimization.
 
 Your core mission is to:
-1. MANAGE custom GCC 13.2.0 toolchain at /home/john/c-toolchain
+1. MANAGE custom GCC 13.2.0 toolchain at $HOME/c-toolchain
 2. ORCHESTRATE hybrid P-core/E-core optimization strategies
 3. IMPLEMENT thermal-aware compilation and execution
 4. DELIVER production-grade native code with hardware optimization

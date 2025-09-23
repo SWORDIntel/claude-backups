@@ -111,8 +111,8 @@ metadata:
 execution_engine:
   # Virtual Environment Management
   environment_management:
-  base_path: "/home/john/datascience"
-  activation_command: "source /home/john/datascience/activate"
+  base_path: "$HOME/datascience"
+  activation_command: "source $HOME/datascience/activate"
     
   venv_strategies:
   standard:
@@ -896,7 +896,7 @@ runtime_directives:
 ################################################################################
 
 implementation_notes:
-  location: "/home/ubuntu/Documents/Claude/agents/"
+  location: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../"
   
   file_structure:
   main_file: "python-internal.md"
@@ -913,7 +913,7 @@ implementation_notes:
   - "Agent discovery enabled"
       
   binary_layer:
-  - "C acceleration available at /home/ubuntu/Documents/Claude/agents/src/c/"
+  - "C acceleration available at ${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/"
   - "Message router integration active"
   - "Shared memory IPC configured"
       

@@ -15,10 +15,10 @@ metadata:
     Elite low-level hardware control specialist providing direct register access, microcode manipulation, and firmware interfaces with <100ns register access latency and 500K+ ops/sec throughput.
     Specializes in CPU microcode updates, MMIO operations, hardware security modules (TPM/SGX/TrustZone), and vendor-specific features (Intel ME/AMD PSP) with 99.9% modification success rate.
     Integrates with ASSEMBLY-INTERNAL for optimized machine code, NPU/GNA for AI acceleration, and INFRASTRUCTURE for system-wide hardware changes.
-    
+
     Core capabilities include hardware register manipulation, thermal/power management, bus protocols (PCIe/I2C/SPI), and interrupt/DMA control with real-time monitoring.
     Specializes in Intel Meteor Lake optimization (P-core/E-core scheduling), AVX-512 exploitation, and hardware security with mandatory safety validation.
-    Integrates with SECURITY for TPM operations, MONITOR for thermal tracking, and DEBUGGER for hardware fault analysis.
+    Integrates with SECURITY for TPM operations, MONITOR for thermal tracking, DEBUGGER for hardware fault analysis, and vendor-specific agents (HARDWARE-DELL, HARDWARE-HP, HARDWARE-INTEL) for OEM optimizations.
     
   # CRITICAL: Task tool compatibility for Claude Code
   tools:
@@ -54,16 +54,21 @@ metadata:
       - "TPM (operation|attestation|key|seal)"
       - "thermal (management|control|throttling)"
       - "(PCIe|I2C|SPI|USB) (protocol|interface|control)"
-      - "Intel (ME|Management Engine|TXT|SGX)"
+      - "Intel (ME|Management Engine|TXT|SGX|Meteor Lake|NPU|GNA)"
       - "AMD (PSP|Platform Security)"
       - "(DMA|interrupt) (handling|control)"
       - "performance counter (access|configuration)"
+      - "Dell (Latitude|OptiPlex|iDRAC|BIOS token|proprietary)"
+      - "HP (ProBook|EliteBook|Sure Start|iLO|WorkStation)"
+      - "(vendor|OEM) specific (hardware|feature|optimization)"
     always_when:
       - "ASSEMBLY-INTERNAL requires hardware register access"
       - "NPU/GNA needs hardware initialization"
       - "SECURITY requests TPM operations"
       - "INFRASTRUCTURE needs bus enumeration"
       - "Thermal throttling detected"
+      - "Vendor-specific hardware operations detected"
+      - "Dell/HP/Intel hardware optimization required"
     keywords:
       - "register"
       - "microcode"
@@ -77,6 +82,17 @@ metadata:
       - "CPUID"
       - "MSR"
       - "UEFI"
+      - "Dell"
+      - "HP"
+      - "Intel"
+      - "iDRAC"
+      - "iLO"
+      - "Latitude"
+      - "OptiPlex"
+      - "ProBook"
+      - "EliteBook"
+      - "Meteor Lake"
+      - "vendor-specific"
     
   # Agent coordination via Task tool
   invokes_agents:
@@ -94,6 +110,15 @@ metadata:
         purpose: "Hardware fault analysis and recovery"
         via: "Task tool"
     conditionally:
+      - agent_name: "HARDWARE-DELL"
+        condition: "Dell-specific hardware operations (Latitude, OptiPlex, iDRAC, BIOS tokens)"
+        via: "Task tool"
+      - agent_name: "HARDWARE-HP"
+        condition: "HP-specific hardware operations (ProBook, EliteBook, Sure Start, iLO)"
+        via: "Task tool"
+      - agent_name: "HARDWARE-INTEL"
+        condition: "Intel-specific hardware operations (Meteor Lake, NPU, GNA, AVX-512)"
+        via: "Task tool"
       - agent_name: "NPU"
         condition: "AI hardware acceleration needed"
         via: "Task tool"

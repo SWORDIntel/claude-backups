@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: JULIA-INTERNAL-AGENT
+  name: JULIA-INTERNAL
   version: 8.0.0
   uuid: fa8c9d2e-1b5f-4a7e-9c3d-2e8f5b1a7c4d
   category: INTERNAL
@@ -46,14 +46,16 @@ metadata:
   # Proactive invocation triggers for Claude Code
   proactive_triggers:
     patterns:
-      - "Julia language|julia code|.jl files"
-      - "scientific computing|numerical analysis|mathematical modeling"
-      - "high-performance computing|HPC|parallel computing"
-      - "differential equations|linear algebra|optimization"
-      - "LLVM compilation|just-in-time|JIT compilation"
-      - "GPU acceleration|CUDA|parallel processing"
-      - "machine learning performance|ML acceleration|neural networks"
-      - "statistical computing|data science pipelines"
+      - "Julia language|julia code|.jl files|Julia package"
+      - "scientific computing|numerical analysis|mathematical modeling|computational science"
+      - "high-performance computing|HPC|parallel computing|supercomputing"
+      - "differential equations|linear algebra|optimization|numerical methods"
+      - "LLVM compilation|just-in-time|JIT compilation|compile-time optimization"
+      - "GPU acceleration|CUDA|parallel processing|distributed computing"
+      - "machine learning performance|ML acceleration|neural networks|deep learning optimization"
+      - "statistical computing|data science pipelines|research computing|academic computing"
+      - "matrix operations|vector operations|numerical linear algebra"
+      - "finite element|Monte Carlo|simulation|modeling"
     always_when:
       - "Director requests scientific computing acceleration"
       - "DATASCIENCE requires >100x Python speedup"
@@ -62,7 +64,7 @@ metadata:
     keywords:
       - "julia"
       - "scientific"
-      - "numerical" 
+      - "numerical"
       - "performance"
       - "LLVM"
       - "vectorization"
@@ -70,6 +72,14 @@ metadata:
       - "optimization"
       - "differential"
       - "statistics"
+      - "simulation"
+      - "modeling"
+      - "computational"
+      - "research"
+      - "academic"
+      - "matrix"
+      - "vector"
+      - "algebra"
     
   # Agent coordination via Task tool
   invokes_agents:

@@ -362,7 +362,7 @@ Key configuration locations:
 
 ```bash
 # Core Settings
-CLAUDE_PROJECT_ROOT="/home/ubuntu/Documents/Claude"
+CLAUDE_PROJECT_ROOT="$HOME/Documents/Claude"
 CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
 CLAUDE_PERMISSION_BYPASS=true        # LiveCD compatibility
 CLAUDE_ORCHESTRATION=true            # Enable orchestration
@@ -499,7 +499,7 @@ If orchestration doesn't work:
 
 5. **Run setup again**:
    ```bash
-   /home/ubuntu/Documents/Claude/scripts/setup-tandem-for-claude.sh
+   $HOME/Documents/Claude/scripts/setup-tandem-for-claude.sh
    ```
 
 ### Agent Not Auto-Invoking
@@ -577,7 +577,7 @@ git push origin main
 ## Directory Structure
 
 ```
-/home/ubuntu/Documents/Claude/          [Project Root]
+$HOME/Documents/Claude/          [Project Root]
     │
     ├── Global Access Points
     │   ├── ~/.local/bin/claude          → Main command

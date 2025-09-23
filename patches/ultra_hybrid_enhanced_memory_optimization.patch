@@ -1,0 +1,147 @@
+--- agents/binary-communications-system/ultra_hybrid_enhanced.c.orig	2025-09-21 12:00:00.000000000 +0000
++++ agents/binary-communications-system/ultra_hybrid_enhanced.c	2025-09-21 12:30:00.000000000 +0000
+@@ -15,6 +15,7 @@
+ #include <sched.h>
+ #include <numa.h>
+ #include <immintrin.h>
++#include "../src/c/memory_pool_allocator.h"
+
+ // =============================================================================
+ // INTEL METEOR LAKE HYBRID ARCHITECTURE CONFIGURATION
+@@ -176,8 +177,10 @@
+         }
+     }
+
+-    g_system_caps.p_core_ids = calloc(g_system_caps.total_cores, sizeof(int));
+-    g_system_caps.e_core_ids = calloc(g_system_caps.total_cores, sizeof(int));
++    // Use cache-aligned allocation for core ID arrays
++    g_system_caps.p_core_ids = pool_calloc_aligned(g_system_caps.total_cores, sizeof(int), CACHE_LINE_SIZE);
++    g_system_caps.e_core_ids = pool_calloc_aligned(g_system_caps.total_cores, sizeof(int), CACHE_LINE_SIZE);
++
+     if (!g_system_caps.p_core_ids || !g_system_caps.e_core_ids) {
+         return HYBRID_STATUS_MEMORY_ERROR;
+     }
+@@ -206,7 +209,8 @@
+     // Configure NUMA topology if available
+     if (numa_available() >= 0) {
+         g_system_caps.numa_nodes = numa_max_node() + 1;
+-        g_system_caps.numa_node_map = calloc(g_system_caps.total_cores, sizeof(int));
++        // Use NUMA-aware allocation for NUMA node mapping
++        g_system_caps.numa_node_map = pool_calloc_numa(g_system_caps.total_cores, sizeof(int), 0);
+         if (g_system_caps.numa_node_map) {
+             for (int cpu = 0; cpu < g_system_caps.total_cores; cpu++) {
+                 g_system_caps.numa_node_map[cpu] = numa_node_of_cpu(cpu);
+@@ -414,7 +418,8 @@
+ }
+
+ hybrid_ring_buffer_t* create_hybrid_ring_buffer(uint32_t capacity, hybrid_buffer_type_t type) {
+-    hybrid_ring_buffer_t* hybrid = calloc(1, sizeof(hybrid_ring_buffer_t));
++    // Use cache-aligned allocation for ring buffer structure
++    hybrid_ring_buffer_t* hybrid = pool_calloc_aligned(1, sizeof(hybrid_ring_buffer_t), CACHE_LINE_SIZE);
+     if (!hybrid) return NULL;
+
+     hybrid->capacity = capacity;
+@@ -612,15 +617,17 @@
+ }
+
+ thread_pool_t* create_hybrid_thread_pool(uint32_t num_workers, thread_pool_config_t* config) {
+-    thread_pool_t* pool = calloc(1, sizeof(thread_pool_t));
++    // Use cache-aligned allocation for thread pool
++    thread_pool_t* pool = pool_calloc_aligned(1, sizeof(thread_pool_t), CACHE_LINE_SIZE);
+     if (!pool) return NULL;
+
+     pool->num_workers = num_workers;
+-    pool->workers = calloc(pool->num_workers, sizeof(worker_thread_t));
++    // Use NUMA-aware allocation for worker array
++    pool->workers = pool_calloc_numa(pool->num_workers, sizeof(worker_thread_t), get_optimal_numa_node());
+     if (!pool->workers) goto error;
+
+     // Create work-stealing queues for each worker
+-    work_stealing_queue_t** all_queues = calloc(pool->num_workers, sizeof(work_stealing_queue_t*));
++    work_stealing_queue_t** all_queues = POOL_CALLOC(pool->num_workers, sizeof(work_stealing_queue_t*));
+     if (!all_queues) goto error;
+
+     for (uint32_t i = 0; i < pool->num_workers; i++) {
+@@ -624,7 +631,8 @@
+         work_stealing_queue_t* queue = &pool->workers[i].queue;
+         queue->capacity = 4096;  // Power of 2 for efficient modulo
+         queue->mask = queue->capacity - 1;
+-        all_queues[i]->tasks = calloc(4096, sizeof(void*));
++        // Use cache-aligned allocation for task queue
++        all_queues[i]->tasks = pool_calloc_aligned(4096, sizeof(void*), CACHE_LINE_SIZE);
+         if (!all_queues[i]->tasks) goto error;
+
+         // Initialize atomic counters
+@@ -678,7 +686,8 @@
+
+ npu_status_t initialize_npu_context(void) {
+     if (!g_npu_ctx) {
+-        g_npu_ctx = calloc(1, sizeof(npu_context_t));
++        // Use cache-aligned allocation for NPU context
++        g_npu_ctx = pool_calloc_aligned(1, sizeof(npu_context_t), CACHE_LINE_SIZE);
+         if (!g_npu_ctx) {
+             return NPU_STATUS_MEMORY_ERROR;
+         }
+@@ -755,7 +764,8 @@
+
+ gna_status_t initialize_gna_context(void) {
+     if (!g_gna_ctx) {
+-        g_gna_ctx = calloc(1, sizeof(gna_context_t));
++        // Use cache-aligned allocation for GNA context
++        g_gna_ctx = pool_calloc_aligned(1, sizeof(gna_context_t), CACHE_LINE_SIZE);
+         if (!g_gna_ctx) {
+             return GNA_STATUS_MEMORY_ERROR;
+         }
+@@ -832,7 +842,8 @@
+
+ gpu_status_t initialize_gpu_context(void) {
+     if (!g_gpu_ctx) {
+-        g_gpu_ctx = calloc(1, sizeof(gpu_context_t));
++        // Use cache-aligned allocation for GPU context
++        g_gpu_ctx = pool_calloc_aligned(1, sizeof(gpu_context_t), CACHE_LINE_SIZE);
+         if (!g_gpu_ctx) {
+             return GPU_STATUS_MEMORY_ERROR;
+         }
+@@ -1200,6 +1211,11 @@
+ // SYSTEM INITIALIZATION AND CLEANUP
+ // =============================================================================
+
++static bool g_memory_pools_initialized = false;
++
+ hybrid_status_t initialize_hybrid_system(hybrid_system_config_t* config) {
++    // Initialize memory pool system first
++    if (!g_memory_pools_initialized && memory_pool_init() == 0) {
++        g_memory_pools_initialized = true;
++    }
++
+     if (!config) return HYBRID_STATUS_INVALID_INPUT;
+
+     // Initialize system capabilities
+@@ -1250,6 +1266,12 @@
+     cleanup_gna_context();
+     cleanup_gpu_context();
+     cleanup_hybrid_system_capabilities();
++
++    // Cleanup memory pools and show statistics
++    if (g_memory_pools_initialized) {
++        pool_print_stats();
++        memory_pool_cleanup();
++    }
+     return HYBRID_STATUS_SUCCESS;
+ }
+
+@@ -1300,6 +1322,15 @@
+     g_system_caps.initialized = false;
+     g_system_caps.p_core_count = 0;
+     g_system_caps.e_core_count = 0;
++
++    // Free core ID arrays
++    if (g_system_caps.p_core_ids) {
++        POOL_FREE(g_system_caps.p_core_ids);
++        g_system_caps.p_core_ids = NULL;
++    }
++    if (g_system_caps.e_core_ids) {
++        POOL_FREE(g_system_caps.e_core_ids);
++        g_system_caps.e_core_ids = NULL;
++    }
+ }

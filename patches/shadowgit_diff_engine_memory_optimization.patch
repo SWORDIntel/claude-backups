@@ -1,0 +1,139 @@
+--- hooks/shadowgit/c_diff_engine_impl.c.orig	2025-09-21 12:00:00.000000000 +0000
++++ hooks/shadowgit/c_diff_engine_impl.c	2025-09-21 12:30:00.000000000 +0000
+@@ -15,6 +15,7 @@
+ #include <immintrin.h>
+ #include <pthread.h>
+ #include <numa.h>
++#include "../../agents/src/c/memory_pool_allocator.h"
+
+ // =============================================================================
+ // SHADOWGIT AVX2 OPTIMIZED DIFF ENGINE IMPLEMENTATION
+@@ -389,10 +390,12 @@
+         return DIFF_STATUS_MEMORY_ERROR;
+     }
+
+-    const char** lines_arr_a = calloc(lines_a, sizeof(char*));
+-    const char** lines_arr_b = calloc(lines_b, sizeof(char*));
+-    size_t* lens_a = calloc(lines_a, sizeof(size_t));
+-    size_t* lens_b = calloc(lines_b, sizeof(size_t));
++    // Use NUMA-aware allocation for large line arrays to optimize memory bandwidth
++    int numa_node = get_optimal_numa_node();
++    const char** lines_arr_a = pool_calloc_numa(lines_a, sizeof(char*), numa_node);
++    const char** lines_arr_b = pool_calloc_numa(lines_b, sizeof(char*), numa_node);
++    size_t* lens_a = pool_calloc_numa(lines_a, sizeof(size_t), numa_node);
++    size_t* lens_b = pool_calloc_numa(lines_b, sizeof(size_t), numa_node);
+
+     if (!lines_arr_a || !lines_arr_b || !lens_a || !lens_b) {
+         goto cleanup;
+@@ -450,10 +453,10 @@
+     *num_changes = change_count;
+
+ cleanup:
+-    free((void*)lines_arr_a);
+-    free((void*)lines_arr_b);
+-    free(lens_a);
+-    free(lens_b);
++    POOL_FREE((void*)lines_arr_a);
++    POOL_FREE((void*)lines_arr_b);
++    POOL_FREE(lens_a);
++    POOL_FREE(lens_b);
+
+     return result;
+ }
+@@ -500,6 +503,11 @@
+ // SHADOWGIT SYSTEM INITIALIZATION
+ // =============================================================================
+
++static bool g_shadowgit_memory_initialized = false;
++
+ diff_status_t initialize_shadowgit_diff_engine(void) {
++    if (!g_shadowgit_memory_initialized && memory_pool_init() == 0) {
++        g_shadowgit_memory_initialized = true;
++    }
++
+     // Initialize AVX2 acceleration
+     if (!detect_avx2_support()) {
+         return DIFF_STATUS_HARDWARE_UNSUPPORTED;
+@@ -520,6 +528,12 @@
+ }
+
+ void cleanup_shadowgit_diff_engine(void) {
++    // Print memory pool statistics for performance analysis
++    if (g_shadowgit_memory_initialized) {
++        printf("\n=== Shadowgit Diff Engine Memory Statistics ===\n");
++        pool_print_stats();
++        memory_pool_cleanup();
++    }
+     // Cleanup would go here in full implementation
+ }
+
+@@ -600,7 +614,8 @@
+         return DIFF_STATUS_MEMORY_ERROR;
+     }
+
+-    diff_chunk_t* chunks = calloc(num_chunks, sizeof(diff_chunk_t));
++    // Use cache-aligned allocation for diff chunks
++    diff_chunk_t* chunks = pool_calloc_aligned(num_chunks, sizeof(diff_chunk_t), CACHE_LINE_SIZE);
+     if (!chunks) {
+         return DIFF_STATUS_MEMORY_ERROR;
+     }
+@@ -650,7 +665,7 @@
+         }
+     }
+
+-    free(chunks);
++    POOL_FREE(chunks);
+     return DIFF_STATUS_SUCCESS;
+ }
+
+@@ -700,7 +715,8 @@
+         return NULL;
+     }
+
+-    avx2_context_t* ctx = calloc(1, sizeof(avx2_context_t));
++    // Use cache-aligned allocation for AVX2 context
++    avx2_context_t* ctx = pool_calloc_aligned(1, sizeof(avx2_context_t), CACHE_LINE_SIZE);
+     if (!ctx) {
+         return NULL;
+     }
+@@ -715,7 +731,7 @@
+
+ void destroy_avx2_context(avx2_context_t* ctx) {
+     if (ctx) {
+-        free(ctx);
++        POOL_FREE(ctx);
+     }
+ }
+
+@@ -800,7 +816,8 @@
+         return DIFF_STATUS_MEMORY_ERROR;
+     }
+
+-    hash_table_t* table = calloc(1, sizeof(hash_table_t));
++    // Use cache-aligned allocation for hash table
++    hash_table_t* table = pool_calloc_aligned(1, sizeof(hash_table_t), CACHE_LINE_SIZE);
+     if (!table) {
+         return DIFF_STATUS_MEMORY_ERROR;
+     }
+@@ -808,7 +825,8 @@
+     table->size = 65536;  // 64K entries for good distribution
+     table->mask = table->size - 1;
+
+-    table->buckets = calloc(table->size, sizeof(hash_bucket_t));
++    // Use NUMA-aware allocation for hash buckets
++    table->buckets = pool_calloc_numa(table->size, sizeof(hash_bucket_t), get_optimal_numa_node());
+     if (!table->buckets) {
+-        free(table);
++        POOL_FREE(table);
+         return DIFF_STATUS_MEMORY_ERROR;
+     }
+@@ -850,8 +868,8 @@
+
+ void destroy_hash_table(hash_table_t* table) {
+     if (table) {
+-        free(table->buckets);
+-        free(table);
++        POOL_FREE(table->buckets);
++        POOL_FREE(table);
+     }
+ }

@@ -45,7 +45,7 @@ class EnhancedTriggerSystem:
     
     def __init__(self, config_path: str = None):
         if not config_path:
-            config_path = "/home/john/claude-backups/config/enhanced_trigger_keywords.yaml"
+            config_path = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}config/enhanced_trigger_keywords.yaml"
         
         self.trie_matcher = TrieKeywordMatcher(config_path)
         self.invocation_history: List[Dict] = []

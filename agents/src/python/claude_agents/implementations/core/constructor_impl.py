@@ -1396,7 +1396,7 @@ if __name__ == "__main__":
     
     async def _validate_security_configuration(self, project_path: Path) -> Dict[str, Any]:
         """Validate security configuration"""
-        security_files = ['config/security/auth_config.json', 'config/security/cors_config.json']
+        security_files = [os.path.join(os.environ.get('CLAUDE_AGENTS_ROOT', '.'), 'config', '$1'), os.path.join(os.environ.get('CLAUDE_AGENTS_ROOT', '.'), 'config', '$1')]
         existing_files = [f for f in security_files if (project_path / f).exists()]
         
         score = len(existing_files) / len(security_files) if security_files else 1.0
@@ -1410,7 +1410,7 @@ if __name__ == "__main__":
     
     async def _validate_performance_setup(self, project_path: Path) -> Dict[str, Any]:
         """Validate performance setup"""
-        perf_files = ['config/performance/baselines.json']
+        perf_files = [os.path.join(os.environ.get('CLAUDE_AGENTS_ROOT', '.'), 'config', '$1')]
         existing_files = [f for f in perf_files if (project_path / f).exists()]
         
         score = len(existing_files) / len(perf_files) if perf_files else 1.0

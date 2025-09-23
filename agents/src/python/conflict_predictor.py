@@ -29,8 +29,29 @@ from pathlib import Path
 import pickle
 import base64
 
-# Import Shadowgit AVX2 for high-speed diff analysis
-sys.path.append('/home/john/shadowgit')
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# Import Shadowgit AVX2 for high-speed diff analysis with dynamic path resolution
+try:
+    from path_utilities import get_shadowgit_paths
+    shadowgit_paths = get_shadowgit_paths()
+    if shadowgit_paths['root'].exists():
+        sys.path.append(str(shadowgit_paths['root']))
+except ImportError:
+    # Fallback - try to find shadowgit in common locations
+    home_dir = Path.home()
+    shadowgit_candidates = [
+        home_dir / 'shadowgit',
+        Path('/opt/shadowgit'),
+        project_root.parent / 'shadowgit'
+    ]
+    for shadowgit_path in shadowgit_candidates:
+        if shadowgit_path.exists():
+            sys.path.append(str(shadowgit_path))
+            break
+
 try:
     from shadowgit_avx2 import ShadowgitAVX2
     SHADOWGIT_AVAILABLE = True
@@ -246,7 +267,7 @@ class AdvancedConflictPredictor:
         """Initialize neural components for enhanced prediction"""
         try:
             # Check for OpenVINO availability
-            openvino_path = Path("/opt/openvino/")
+            openvino_path = Path("${OPENVINO_ROOT:-/opt/openvino/}")
             if openvino_path.exists():
                 # Initialize neural embedding model
                 await self._setup_neural_embeddings()
@@ -993,7 +1014,7 @@ async def main():
                 'source': {'lines_changed': 30, 'change_type': 'M', 'line_ranges': [(15, 25), (55, 65)]},
                 'authors': ['developer1@example.com', 'developer2@example.com']
             },
-            'config/settings.json': {
+            os.path.join(os.environ.get('CLAUDE_AGENTS_ROOT', '.'), 'config', '$1'): {
                 'target': {'lines_changed': 5, 'change_type': 'M', 'line_ranges': [(1, 5)]},
                 'source': {'lines_changed': 3, 'change_type': 'M', 'line_ranges': [(2, 4)]},
                 'authors': ['admin@example.com']

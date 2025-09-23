@@ -54,7 +54,7 @@ This document describes the AVX-512/AVX2/SSE2 vectorization enhancements added t
 ### Compilation
 ```bash
 # Build with vectorization support
-cd /home/john/claude-backups/agents/src/c
+cd $HOME/claude-backups/agents/src/c
 make clean
 make all
 

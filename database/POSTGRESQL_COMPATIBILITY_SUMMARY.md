@@ -7,7 +7,7 @@ Successfully updated the Python learning system to ensure seamless compatibility
 ## Key Changes Made
 
 ### 1. PostgreSQL 16/17 Compatible SQL Schema
-**File**: `/home/ubuntu/Documents/claude-backups/database/sql/learning_system_evolution_v31_pg16_compatible.sql`
+**File**: `$CLAUDE_PROJECT_ROOT/database/sql/learning_system_evolution_v31_pg16_compatible.sql`
 
 **Key Features**:
 - **Smart JSON Function Detection**: Uses `json_build_array()` and `json_build_object()` (available in PostgreSQL 9.4+) instead of PostgreSQL 17-only `JSON_ARRAY()` and `JSON_OBJECT()`
@@ -16,7 +16,7 @@ Successfully updated the Python learning system to ensure seamless compatibility
 - **Enhanced Compatibility Functions**: Added `get_compatible_json_array()` and `get_compatible_json_object()` with fallback logic
 
 ### 2. Enhanced Python Learning System
-**File**: `/home/ubuntu/Documents/claude-backups/agents/src/python/postgresql_learning_system.py`
+**File**: `$CLAUDE_PROJECT_ROOT/agents/src/python/postgresql_learning_system.py`
 
 **Key Enhancements**:
 - **Advanced Version Detection**: Detects PostgreSQL version and available JSON functions with enhanced error handling
@@ -29,7 +29,7 @@ Successfully updated the Python learning system to ensure seamless compatibility
 - **Comprehensive Compatibility Testing**: New `compatibility` command provides detailed feature analysis
 
 ### 3. Enhanced Database Management Script
-**File**: `/home/ubuntu/Documents/claude-backups/database/manage_database.sh`
+**File**: `$CLAUDE_PROJECT_ROOT/database/manage_database.sh`
 
 **Improvements**:
 - **Automatic PostgreSQL Version Detection**: Detects PostgreSQL 14-17 automatically

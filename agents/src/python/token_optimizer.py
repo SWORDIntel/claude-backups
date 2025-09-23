@@ -54,7 +54,7 @@ class TokenOptimizer:
             (r"Status: (FAILED|ERROR).*?\n", "✗\n"),
             
             # Compress file paths
-            (r"/home/[^/]+/claude-backups/", "./"),
+            (r"${CLAUDE_PROJECT_ROOT}", "./"),
             (r"/home/[^/]+/", "~/"),
             
             # Simplify agent responses
@@ -291,8 +291,8 @@ if __name__ == "__main__":
     Status: SUCCESS - The operation has been successfully completed without any errors.
     
     Here's how to proceed with the implementation:
-    1. First, you need to create the file at /home/john/claude-backups/agents/new_agent.py
-    2. Then, you should update the configuration at /home/john/claude-backups/config/settings.yaml
+    1. First, you need to create the file at ${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../new_agent.py
+    2. Then, you should update the configuration at ${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}config/settings.yaml
     3. Finally, you can run the tests to verify everything is working correctly.
     
     Agent OPTIMIZER reports: Performance analysis complete. No bottlenecks detected.

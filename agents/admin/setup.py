@@ -260,7 +260,7 @@ def generate_default_configs():
             'logging': {
                 'level': 'INFO',
                 'format': 'json',
-                'file': '/var/log/claude-agents/admin.log',
+                'file': '${CLAUDE_LOG_DIR:-/var/log/claude-agents/}admin.log',
                 'max_size_mb': 100,
                 'backup_count': 10
             }
@@ -398,7 +398,7 @@ def setup_logrotate():
     """Setup log rotation"""
     print("📜 Setting up log rotation...")
     
-    logrotate_config = """/var/log/claude-agents/*.log {
+    logrotate_config = """${CLAUDE_LOG_DIR:-/var/log/claude-agents/}*.log {
     daily
     rotate 30
     compress

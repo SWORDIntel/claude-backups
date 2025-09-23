@@ -4,7 +4,7 @@
 # Seamlessly integrates AI-Enhanced Router with existing build system
 # ============================================================================
 
-AGENTS_DIR="/home/ubuntu/Documents/Claude/agents"
+AGENTS_DIR="${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
 SRC_DIR="$AGENTS_DIR/src/c"
 BACKUP_SUFFIX=".pre_ai_$(date +%Y%m%d_%H%M%S)"
 

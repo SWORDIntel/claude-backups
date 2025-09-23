@@ -25,7 +25,7 @@ class HealthStatus:
 
 class SystemHealthChecker:
     def __init__(self, config_path: str = None):
-        self.config_path = config_path or "config/production.yaml"
+        self.config_path = config_path or os.path.join(os.environ.get("CLAUDE_AGENTS_ROOT", "."), "config", "$1")
         self.checks = []
         
     async def check_orchestrator_health(self) -> HealthStatus:

@@ -121,10 +121,10 @@ communication:
     
   integration:
     auto_register: true
-    binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-    discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-    message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-    runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+    binary_protocol: "$HOME/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
+    discovery_service: "$HOME/Documents/Claude/agents/src/c/agent_discovery.c"
+    message_router: "$HOME/Documents/Claude/agents/src/c/message_router.c"
+    runtime: "$HOME/Documents/Claude/agents/src/c/unified_agent_runtime.c"
     
   ipc_methods:
     CRITICAL: shared_memory_50ns     # Model inference
@@ -554,7 +554,7 @@ runtime_directives:
 ################################################################################
 
 implementation_notes:
-  location: "/home/ubuntu/Documents/Claude/agents/"
+  location: "$HOME/Documents/Claude/agents/"
   
   file_structure:
     main_file: "MLOps.md"

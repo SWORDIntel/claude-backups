@@ -50,7 +50,7 @@ The installer now installs **EVERYTHING** by default - no `--full` flag needed. 
 
 ```bash
 # Just run the installer - it does everything!
-cd /home/ubuntu/Documents/Claude
+cd $HOME/Documents/Claude
 ./installers/claude-installer.sh
 ```
 

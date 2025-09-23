@@ -32,7 +32,36 @@ import ctypes
 from ctypes import Structure, c_char, c_char_p, c_int, c_uint64, c_double, c_bool
 
 # Add agents/src/python to path for Phase 3 components
-sys.path.insert(0, '/home/john/claude-backups/agents/src/python')
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import (
+        get_project_root, get_agents_dir, get_database_dir,
+        get_python_src_dir, get_shadowgit_paths, get_database_config
+    )
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+    def get_agents_dir():
+        return get_project_root() / 'agents'
+    def get_database_dir():
+        return get_project_root() / 'database'
+    def get_python_src_dir():
+        return get_agents_dir() / 'src' / 'python'
+    def get_shadowgit_paths():
+        home_dir = Path.home()
+        return {'root': home_dir / 'shadowgit'}
+    def get_database_config():
+        return {
+            'host': 'localhost', 'port': 5433,
+            'database': 'claude_agents_auth',
+            'user': 'claude_agent', 'password': 'claude_auth_pass'
+        }
+sys.path.insert(0, str(get_project_root() / 'agents/src/python')
 
 # Import Phase 3 components
 try:
@@ -53,7 +82,7 @@ except ImportError:
     print("Phase 3 integration not available - running in standalone mode")
 
 # C library integration
-SHADOWGIT_LIB_PATH = "/home/john/claude-backups/shadowgit_phase3_integration.so"
+SHADOWGIT_LIB_PATH = str(get_project_root() / "shadowgit_phase3_integration.so"
 
 # C structures (matching the C code)
 class DiffResult(Structure):
@@ -136,7 +165,7 @@ class ShadowgitC:
     def _compile_library(self):
         """Compile the C integration library"""
         try:
-            source_file = "/home/john/claude-backups/shadowgit_phase3_integration.c"
+            source_file = str(get_project_root() / "shadowgit_phase3_integration.c"
             
             # Compilation command
             compile_cmd = [
@@ -770,7 +799,7 @@ async def main():
         results = await run_shadowgit_acceleration_test()
         
         # Save results
-        output_file = "/home/john/claude-backups/shadowgit-acceleration-results.json"
+        output_file = str(get_project_root() / "shadowgit-acceleration-results.json"
         with open(output_file, 'w') as f:
             json.dump(results, f, indent=2, default=str)
         

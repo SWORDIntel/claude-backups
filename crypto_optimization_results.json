@@ -1,0 +1,70 @@
+{
+  "optimization_timestamp": 1758589182.4563684,
+  "total_optimization_time": 1.4900333881378174,
+  "phases": {
+    "auto_start": {
+      "status": "failed",
+      "error": "Traceback (most recent call last):\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 327, in <module>\n    exit(asyncio.run(main()))\n         ~~~~~~~~~~~^^^^^^^^\n  File \"/usr/lib/python3.13/asyncio/runners.py\", line 195, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.13/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.13/asyncio/base_events.py\", line 725, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 308, in main\n    optimizer = CryptoAutoStartOptimizer()\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 20, in __init__\n    self.logger = self._setup_logging()\n                  ~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 29, in _setup_logging\n    logging.FileHandler('/var/log/crypto_auto_start_optimizer.log'),\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.13/logging/__init__.py\", line 1219, in __init__\n    StreamHandler.__init__(self, self._open())\n                                 ~~~~~~~~~~^^\n  File \"/usr/lib/python3.13/logging/__init__.py\", line 1248, in _open\n    return open_func(self.baseFilename, self.mode,\n                     encoding=self.encoding, errors=self.errors)\nPermissionError: [Errno 13] Permission denied: '/var/log/crypto_auto_start_optimizer.log'\n"
+    },
+    "performance_monitor": {
+      "status": "success",
+      "optimizations": [
+        "Async connection pooling (5-20 connections)",
+        "Batch metrics storage (50 records/batch)",
+        "ML-based performance prediction",
+        "Parallel system metrics collection",
+        "Advanced anomaly detection",
+        "Optimized monitoring interval (3 seconds)"
+      ]
+    },
+    "analytics_dashboard": {
+      "status": "failed",
+      "error": "ERROR:CryptoAnalytics:Dashboard initialization failed: Multiple exceptions: [Errno 111] Connect call failed ('::1', 5433, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 5433)\n"
+    },
+    "database_optimization": {
+      "status": "success",
+      "optimizations": {
+        "connection_pool": {
+          "min_size": 5,
+          "max_size": 20,
+          "command_timeout": 5
+        },
+        "query_optimization": {
+          "batch_size": 50,
+          "prepared_statements": true,
+          "connection_reuse": true
+        },
+        "monitoring": {
+          "interval_optimization": "3 seconds (was 5)",
+          "batch_processing": "enabled",
+          "async_operations": "enabled"
+        }
+      }
+    },
+    "system_optimization": {
+      "status": "success",
+      "optimizations": [
+        "CPU governor: powersave \u2192 performance (recommended)",
+        "Memory monitoring: available",
+        "Systemd service: resource limits applied",
+        "Process priority: optimized for crypto operations",
+        "I/O scheduling: optimized for database operations"
+      ],
+      "recommendations": [
+        "Consider running during off-peak hours for maximum performance",
+        "Monitor thermal throttling during intensive operations",
+        "Regular system maintenance for optimal performance"
+      ]
+    },
+    "integration_testing": {
+      "status": "partial",
+      "test_results": {
+        "crypto_binary": "failed",
+        "database_connection": "failed",
+        "service_status": "inactive"
+      },
+      "ready_for_production": false
+    }
+  },
+  "overall_status": "partial_success"
+}

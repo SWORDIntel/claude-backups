@@ -6,8 +6,8 @@ import sys
 import os
 
 # Add correct paths
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
-sys.path.append('/home/ubuntu/Documents/Claude/agents/03-BRIDGES')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
+sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../03-BRIDGES')
 
 from claude_agent_bridge import BinaryBridgeConnection, AgentConfig
 from agent_bridge_main import bridge, task_agent_invoke

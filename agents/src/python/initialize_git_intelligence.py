@@ -325,7 +325,7 @@ class GitIntelligenceInitializer:
             logger.info("🧠 Setting up neural components...")
             
             # Check for OpenVINO
-            openvino_available = Path("/opt/openvino/").exists()
+            openvino_available = Path("${OPENVINO_ROOT:-/opt/openvino/}").exists()
             if openvino_available:
                 logger.info("✅ OpenVINO runtime detected")
                 
@@ -568,7 +568,7 @@ class GitIntelligenceInitializer:
         
         if not self.components['neural_models']:
             recommendations.append(
-                "Install OpenVINO runtime at /opt/openvino/ for neural acceleration"
+                "Install OpenVINO runtime at ${OPENVINO_ROOT:-/opt/openvino/} for neural acceleration"
             )
         
         if not self.components['avx2_integration']:

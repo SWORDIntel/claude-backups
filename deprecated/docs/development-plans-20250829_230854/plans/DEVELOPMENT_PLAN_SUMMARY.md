@@ -79,10 +79,10 @@
 
 ## 📁 DOCUMENTATION LOCATIONS
 
-- **Full Strategy:** `/home/ubuntu/Documents/Claude/agents/ULTRATHINK_AGENT_DEVELOPMENT_STRATEGY.md`
-- **Quick Reference:** `/home/ubuntu/Documents/Claude/agents/DEVELOPMENT_PLAN_SUMMARY.md` (this file)
-- **Project Context:** `/home/ubuntu/Documents/Claude/CLAUDE.md`
-- **Test Results:** `/home/ubuntu/Documents/Claude/agents/binary-communications-system/full_system_test.c`
+- **Full Strategy:** `$HOME/Documents/Claude/agents/ULTRATHINK_AGENT_DEVELOPMENT_STRATEGY.md`
+- **Quick Reference:** `$HOME/Documents/Claude/agents/DEVELOPMENT_PLAN_SUMMARY.md` (this file)
+- **Project Context:** `$HOME/Documents/Claude/CLAUDE.md`
+- **Test Results:** `$HOME/Documents/Claude/agents/binary-communications-system/full_system_test.c`
 
 ---
 **Last Updated:** 2025-08-16  

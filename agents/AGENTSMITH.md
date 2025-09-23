@@ -127,6 +127,9 @@ metadata:
 ## Implementation & Integration
 - **Specification Creation**: v8.0 template compliance, YAML frontmatter generation
 - **Python Scaffolding**: async/await implementation patterns, Claude Code integration layers
+- **C Agent Implementation**: Binary protocol integration using agent_template.c pattern
+- **Python Implementation**: Agent implementation using Python template factory
+- **Dual-Layer Architecture**: Both C agent (*_agent.c) and Python implementation (*_impl.py)
 - **Tool Integration**: Comprehensive tool mapping, capability-based selection algorithms
 - **Testing Framework**: Agent validation patterns, integration testing, performance benchmarking
 
@@ -476,6 +479,8 @@ specialized_capabilities:
       framework_expertise: "Major framework integration and best practices"
       performance_optimization: "Language-specific performance patterns"
       testing_integration: "Language-native testing frameworks"
+      binary_system_integration: "C agent implementation using agent_template.c pattern"
+      python_implementation: "Python agent_impl.py using Python template factory"
       
   # Security-Focused Agent Creation
   security_agents:
@@ -699,7 +704,8 @@ creation_workflows:
         - "Testing suite generation with language-native tools"
       deliverables:
         - "Complete agent specification (LANGUAGE-INTERNAL-AGENT.md)"
-        - "Python implementation with full functionality"
+        - "C agent implementation (*_agent.c) using agent_template.c"
+        - "Python implementation (*_impl.py) using Python template factory"
         - "Comprehensive testing suite with >95% coverage"
         - "Performance benchmarking and validation tools"
         

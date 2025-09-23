@@ -662,7 +662,7 @@ runtime_directives:
 ################################################################################
 
 implementation_notes:
-  location: "${AGENT_HOME:-/home/ubuntu/Documents/Claude/agents}/"
+  location: "${AGENT_HOME:-$HOME/Documents/Claude/agents}/"
   
   file_structure:
     main_file: "GNA.md"

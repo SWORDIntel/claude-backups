@@ -243,7 +243,7 @@ asyncio.run(deploy())
 
 ### 1. Compile C Engine
 ```bash
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 make -f Makefile.shadowgit_max_perf
 ```
 

@@ -39,7 +39,7 @@
 #### 4. Shadowgit Integration ✓
 - **930M lines/sec**: Processing capability preserved
 - **Real-time Collection**: Memory-mapped ring buffer
-- **AVX2 Library**: /home/john/shadowgit/c_src_avx2/bin/libshadowgit_avx2.so
+- **AVX2 Library**: $HOME/shadowgit/c_src_avx2/bin/libshadowgit_avx2.so
 - **Data Flow**: Direct PostgreSQL ingestion
 
 #### 5. Learning Capabilities ✓

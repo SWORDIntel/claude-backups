@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=forking
 User=ubuntu
-WorkingDirectory=/home/ubuntu/Documents/Claude/agents
-ExecStart=/home/ubuntu/Documents/Claude/agents/BRING_ONLINE.sh
+WorkingDirectory=${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents
+ExecStart=${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../BRING_ONLINE.sh
 ExecStop=/usr/bin/pkill -f unified_agent_runtime
 Restart=on-failure
 RestartSec=10

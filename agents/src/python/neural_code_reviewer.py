@@ -353,7 +353,7 @@ class NeuralCodeReviewer:
         """Initialize neural model components"""
         try:
             # Check for OpenVINO availability
-            openvino_path = Path("/opt/openvino/")
+            openvino_path = Path("${OPENVINO_ROOT:-/opt/openvino/}")
             if openvino_path.exists():
                 # Initialize neural pattern recognition
                 await self._setup_neural_patterns()

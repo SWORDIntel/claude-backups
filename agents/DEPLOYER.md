@@ -83,10 +83,10 @@ communication:
     
   integration:
   auto_register: true
-  binary_protocol: "/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced.c"
-  discovery_service: "/home/ubuntu/Documents/Claude/agents/src/c/agent_discovery.c"
-  message_router: "/home/ubuntu/Documents/Claude/agents/src/c/message_router.c"
-  runtime: "/home/ubuntu/Documents/Claude/agents/src/c/unified_agent_runtime.c"
+  binary_protocol: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../binary-communications-system/ultra_hybrid_enhanced.c"
+  discovery_service: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/agent_discovery.c"
+  message_router: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/message_router.c"
+  runtime: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/unified_agent_runtime.c"
     
   ipc_methods:
   CRITICAL: shared_memory_50ns

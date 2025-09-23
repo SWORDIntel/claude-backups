@@ -27,7 +27,7 @@ class Config:
     """Centralized configuration for the agent system"""
     
     # Base directories
-    AGENTS_DIR = Path("/home/ubuntu/Documents/Claude/agents")
+    AGENTS_DIR = Path("${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents")
     RUNTIME_DIR = AGENTS_DIR / "06-BUILD-RUNTIME" / "runtime"
     BUILD_DIR = AGENTS_DIR / "06-BUILD-RUNTIME" / "build"
     CONFIG_DIR = AGENTS_DIR / "05-CONFIG"
@@ -308,7 +308,7 @@ class AgentBridge:
         )
         
         # Check if agent exists (use agents directory directly)
-        agents_dir = Path("/home/ubuntu/Documents/Claude/agents")
+        agents_dir = Path("${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents")
         agent_path = agents_dir / f"{agent_name}.md"
         if agent_path.exists():
             self.status_line.task_completed(agent_name)
@@ -330,7 +330,7 @@ class AgentBridge:
     def list_agents(self) -> List[str]:
         """List all available agents"""
         agents = []
-        agents_dir = Path("/home/ubuntu/Documents/Claude/agents")
+        agents_dir = Path("${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents")
         for agent_file in agents_dir.glob("*.md"):
             name = agent_file.stem
             if name not in ["Template", "README", "STATUSLINE_INTEGRATION"]:

@@ -14,7 +14,7 @@ metadata:
   description: |
     Elite C/C++ systems engineer with adaptive toolchain management for Dell Latitude 5450 
     MIL-SPEC with Intel Meteor Lake processor. Intelligently detects and utilizes custom GCC 
-    13.2.0 toolchain at /home/john/c-toolchain when available, with graceful fallback to 
+    13.2.0 toolchain at $HOME/c-toolchain when available, with graceful fallback to 
     system compiler. Orchestrates hybrid P-core/E-core optimization, implements thermal-aware 
     builds, and delivers production-grade native code with hardware-specific performance tuning.
     
@@ -123,8 +123,8 @@ toolchain_configuration:
   # Advanced toolchain detection with fallback logic
       
   detect_compiler() {
-      local CUSTOM_GCC="/home/john/c-toolchain/bin/gcc"
-      local CUSTOM_GXX="/home/john/c-toolchain/bin/g++"
+      local CUSTOM_GCC="$HOME/c-toolchain/bin/gcc"
+      local CUSTOM_GXX="$HOME/c-toolchain/bin/g++"
           
       # Check for custom toolchain
       if [[ -x "$CUSTOM_GCC" ]] && [[ -x "$CUSTOM_GXX" ]]; then
@@ -210,9 +210,9 @@ build_systems:
   project(AdaptiveOptimized C CXX)
       
   # Automatic compiler detection
-  if(EXISTS "/home/john/c-toolchain/bin/gcc")
-      set(CMAKE_C_COMPILER "/home/john/c-toolchain/bin/gcc")
-      set(CMAKE_CXX_COMPILER "/home/john/c-toolchain/bin/g++")
+  if(EXISTS "$HOME/c-toolchain/bin/gcc")
+      set(CMAKE_C_COMPILER "$HOME/c-toolchain/bin/gcc")
+      set(CMAKE_CXX_COMPILER "$HOME/c-toolchain/bin/g++")
       message(STATUS "Using custom toolchain")
   else()
       message(STATUS "Using system compiler: ${CMAKE_C_COMPILER}")
@@ -299,8 +299,8 @@ build_systems:
   # Advanced Makefile with automatic toolchain detection
       
   # Toolchain detection
-  CUSTOM_GCC := /home/john/c-toolchain/bin/gcc
-  CUSTOM_GXX := /home/john/c-toolchain/bin/g++
+  CUSTOM_GCC := $HOME/c-toolchain/bin/gcc
+  CUSTOM_GXX := $HOME/c-toolchain/bin/g++
       
   # Check for custom toolchain
   ifneq ($(wildcard $(CUSTOM_GCC)),)
@@ -1265,7 +1265,7 @@ requirements:
   - "POSIX-compliant system"
       
   optional:
-  - "Custom GCC 13.2.0 at /home/john/c-toolchain"
+  - "Custom GCC 13.2.0 at $HOME/c-toolchain"
   - "pkg-config for library detection"
   - "Performance tools (perf, valgrind)"
   - "Static analyzers (cppcheck, clang-tidy)"

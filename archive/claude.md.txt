@@ -617,8 +617,8 @@ Common agent chains based on invokes_agents relationships:
 ### ❌ NEVER DO THIS:
 ```bash
 # Hardcoded absolute paths
-/home/ubuntu/Downloads/claude-backups/docker-compose.yml
-/home/john/project/config/database.conf
+$CLAUDE_PROJECT_ROOT/docker-compose.yml
+$HOME/project/config/database.conf
 C:\Users\Admin\Projects\app\settings.ini
 ```
 

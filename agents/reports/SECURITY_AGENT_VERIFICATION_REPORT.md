@@ -70,10 +70,10 @@ The Security agent successfully integrates with the Production Orchestrator:
 
 **Files/Directories Created**:
 
-1. **Security Audit Output**: `/home/ubuntu/Documents/Claude/agents/security_audit_output/`
+1. **Security Audit Output**: `$HOME/Documents/Claude/agents/security_audit_output/`
    - `security_report_1755833156.json` (comprehensive vulnerability scan results)
 
-2. **Security Audit Scripts**: `/home/ubuntu/Documents/Claude/agents/security_audit_scripts/`
+2. **Security Audit Scripts**: `$HOME/Documents/Claude/agents/security_audit_scripts/`
    - `README.md` - Documentation and usage instructions
    - `audit_config.json` - Security audit configuration  
    - `scripts/vulnerability_scanner.py` - Executable vulnerability scanner
@@ -94,7 +94,7 @@ The Security agent successfully integrates with the Production Orchestrator:
 ```bash
 $ python3 security_audit_scripts/scripts/vulnerability_scanner.py /path/to/target
 {
-  "target": "/home/ubuntu/Documents/Claude/agents",
+  "target": "$HOME/Documents/Claude/agents",
   "timestamp": "Fri Aug 22 03:26:25 UTC 2025", 
   "vulnerabilities": []
 }

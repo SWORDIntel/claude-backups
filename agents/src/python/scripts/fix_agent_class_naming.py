@@ -16,7 +16,7 @@ from pathlib import Path
 def analyze_agent_class_names():
     """Analyze all agent implementation files to find actual class names"""
     agent_classes = {}
-    impl_dir = Path("/home/ubuntu/Documents/Claude/agents/src/python")
+    impl_dir = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python")
     
     for impl_file in impl_dir.glob("*_impl.py"):
         agent_name = impl_file.stem.replace("_impl", "")
@@ -97,7 +97,7 @@ def main():
     loader_code = generate_dynamic_loader_code(agent_classes)
     
     # Save the dynamic loader
-    output_file = Path("/home/ubuntu/Documents/Claude/agents/src/python/agent_dynamic_loader.py")
+    output_file = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/agent_dynamic_loader.py")
     with open(output_file, 'w') as f:
         f.write('"""Dynamic Agent Class Loader - Handles naming inconsistencies"""\n')
         f.write('import logging\nfrom typing import Dict, Any\n\n')

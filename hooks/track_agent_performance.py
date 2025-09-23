@@ -47,12 +47,10 @@ class AgentPerformanceTracker:
             
             # Insert into agent_metrics table
             sql = f"""
-                INSERT INTO learning.agent_metrics 
-                (agent_name, task_id, execution_start, execution_end, duration_ms, status, 
-                 error_message, project_path, git_operation_type)
-                VALUES ('{agent_name}', gen_random_uuid(), NOW() - INTERVAL '{execution_time_ms} milliseconds', 
-                        NOW(), {execution_time_ms}, '{('completed' if success else 'failed')}', 
-                        {error_msg_sql}, '{os.environ.get("CLAUDE_PROJECT_PATH", os.getcwd())}', '{task_type}')
+                INSERT INTO enhanced_learning.agent_metrics
+                (agent_name, task_type, execution_time_ms, success, error_message, timestamp)
+                VALUES ('{agent_name}', '{task_type}', {execution_time_ms}, {str(success).lower()},
+                        {error_msg_sql}, NOW())
             """
             
             return self.execute_sql(sql)

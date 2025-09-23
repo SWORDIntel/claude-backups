@@ -16,7 +16,36 @@ from pathlib import Path
 from typing import Dict, Any, List
 import sys
 
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import (
+        get_project_root, get_agents_dir, get_database_dir,
+        get_python_src_dir, get_shadowgit_paths, get_database_config
+    )
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+    def get_agents_dir():
+        return get_project_root() / 'agents'
+    def get_database_dir():
+        return get_project_root() / 'database'
+    def get_python_src_dir():
+        return get_agents_dir() / 'src' / 'python'
+    def get_shadowgit_paths():
+        home_dir = Path.home()
+        return {'root': home_dir / 'shadowgit'}
+    def get_database_config():
+        return {
+            'host': 'localhost', 'port': 5433,
+            'database': 'claude_agents_auth',
+            'user': 'claude_agent', 'password': 'claude_auth_pass'
+        }
+sys.path.append('$HOME/Documents/Claude/agents')
 from claude_agent_bridge import task_agent_invoke, bridge
 from DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster
 
@@ -177,8 +206,8 @@ class OptimalPathExecutor:
         
         # Test multiple files in parallel
         test_files = [
-            "/home/ubuntu/Documents/Claude/agents/claude_agent_bridge.py",
-            "/home/ubuntu/Documents/Claude/agents/DEVELOPMENT_CLUSTER_DIRECT.py"
+            "$HOME/Documents/Claude/agents/claude_agent_bridge.py",
+            "$HOME/Documents/Claude/agents/DEVELOPMENT_CLUSTER_DIRECT.py"
         ]
         
         start_time = time.time()
@@ -276,11 +305,11 @@ class OptimalPathExecutor:
         """Check the status of binary system build"""
         
         components = {
-            "ultra_fast_protocol": os.path.exists("/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced"),
-            "agent_runtime": os.path.exists("/home/ubuntu/Documents/Claude/agents/build/unified_agent_runtime"),
-            "c_implementations": len([f for f in os.listdir("/home/ubuntu/Documents/Claude/agents/src/c") if f.endswith('.o')]) > 10,
-            "python_integration": os.path.exists("/home/ubuntu/Documents/Claude/agents/src/python/ENHANCED_AGENT_INTEGRATION.py"),
-            "monitoring_stack": os.path.exists("/home/ubuntu/Documents/Claude/agents/monitoring/docker-compose.complete.yml")
+            "ultra_fast_protocol": os.path.exists("$HOME/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced"),
+            "agent_runtime": os.path.exists("$HOME/Documents/Claude/agents/build/unified_agent_runtime"),
+            "c_implementations": len([f for f in os.listdir("$HOME/Documents/Claude/agents/src/c") if f.endswith('.o')]) > 10,
+            "python_integration": os.path.exists("$HOME/Documents/Claude/agents/src/python/ENHANCED_AGENT_INTEGRATION.py"),
+            "monitoring_stack": os.path.exists("$HOME/Documents/Claude/agents/monitoring/docker-compose.complete.yml")
         }
         
         completed = sum(components.values())
@@ -304,7 +333,7 @@ class OptimalPathExecutor:
             if component == "ultra_fast_protocol":
                 # Build with fallback options
                 build_cmd = """
-                cd /home/ubuntu/Documents/Claude/agents/binary-communications-system
+                cd $HOME/Documents/Claude/agents/binary-communications-system
                 gcc -O1 -std=c11 -D_GNU_SOURCE -fPIC -o ultra_hybrid_enhanced ultra_hybrid_enhanced.c -lpthread -lm -lrt 2>/dev/null || echo "Built with warnings"
                 """
                 subprocess.run(build_cmd, shell=True, capture_output=True)
@@ -318,7 +347,7 @@ class OptimalPathExecutor:
     def create_minimal_runtime(self):
         """Create minimal agent runtime for testing"""
         
-        os.makedirs("/home/ubuntu/Documents/Claude/agents/build", exist_ok=True)
+        os.makedirs("$HOME/Documents/Claude/agents/build", exist_ok=True)
         
         minimal_runtime = """#!/usr/bin/env python3
 # Minimal Agent Runtime
@@ -348,9 +377,9 @@ if __name__ == "__main__":
     asyncio.run(runtime.start())
 """
         
-        with open("/home/ubuntu/Documents/Claude/agents/build/unified_agent_runtime", 'w') as f:
+        with open("$HOME/Documents/Claude/agents/build/unified_agent_runtime", 'w') as f:
             f.write(minimal_runtime)
-        os.chmod("/home/ubuntu/Documents/Claude/agents/build/unified_agent_runtime", 0o755)
+        os.chmod("$HOME/Documents/Claude/agents/build/unified_agent_runtime", 0o755)
     
     async def test_binary_performance(self):
         """Test binary system performance"""
@@ -379,7 +408,7 @@ if __name__ == "__main__":
         }
         
         # Save transition configuration
-        with open("/home/ubuntu/Documents/Claude/agents/transition_config.json", 'w') as f:
+        with open("$HOME/Documents/Claude/agents/transition_config.json", 'w') as f:
             json.dump(transition_config, f, indent=2)
         
         return transition_config
@@ -531,7 +560,7 @@ if __name__ == "__main__":
         }
         
         # Save deployment configuration
-        with open("/home/ubuntu/Documents/Claude/agents/production_deployment.json", 'w') as f:
+        with open("$HOME/Documents/Claude/agents/production_deployment.json", 'w') as f:
             json.dump(deployment_config, f, indent=2)
         
         return deployment_config
@@ -680,15 +709,15 @@ if __name__ == "__main__":
                 "Expand agent capabilities"
             ],
             "support_resources": {
-                "documentation": "/home/ubuntu/Documents/Claude/agents/PRODUCTION_DEPLOYMENT_SUMMARY.md",
+                "documentation": "$HOME/Documents/Claude/agents/PRODUCTION_DEPLOYMENT_SUMMARY.md",
                 "monitoring": "http://localhost:3000 (when monitoring stack active)",
-                "logs": "/home/ubuntu/Documents/Claude/agents/bridge_system.log",
-                "configuration": "/home/ubuntu/Documents/Claude/agents/transition_config.json"
+                "logs": "$HOME/Documents/Claude/agents/bridge_system.log",
+                "configuration": "$HOME/Documents/Claude/agents/transition_config.json"
             }
         }
         
         # Save completion report
-        with open("/home/ubuntu/Documents/Claude/agents/COMPLETION_REPORT.json", 'w') as f:
+        with open("$HOME/Documents/Claude/agents/COMPLETION_REPORT.json", 'w') as f:
             json.dump(completion_report, f, indent=2)
         
         print("🎉 OPTIMAL PATH EXECUTION COMPLETE!")

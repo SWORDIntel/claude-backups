@@ -157,8 +157,8 @@ class TandemExecutor:
         """Check if C acceleration layer is available"""
         try:
             # Check for DOCGEN binary
-            binary_path = Path("/home/ubuntu/Documents/Claude/agents/src/c/docgen_agent")
-            lib_path = Path("/home/ubuntu/Documents/Claude/agents/src/c/libdocgen.so")
+            binary_path = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/docgen_agent")
+            lib_path = Path("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/libdocgen.so")
             
             if binary_path.exists() or lib_path.exists():
                 # Test binary execution
@@ -185,7 +185,7 @@ class TandemExecutor:
             
             # Start binary bridge process
             self.binary_bridge = subprocess.Popen(
-                ["/home/ubuntu/Documents/Claude/agents/src/c/docgen_agent", "--daemon"],
+                ["${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/docgen_agent", "--daemon"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
@@ -316,7 +316,7 @@ class TandemExecutor:
             # Signal binary layer (would use proper IPC)
             # For now, simulate with subprocess
             result = subprocess.run(
-                ["/home/ubuntu/Documents/Claude/agents/src/c/docgen_agent", "--execute", str(shm_file)],
+                ["${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/docgen_agent", "--execute", str(shm_file)],
                 capture_output=True,
                 timeout=5,
                 text=True

@@ -8,6 +8,7 @@ import asyncio
 import asyncpg
 import json
 import logging
+import sys
 from typing import Dict, List, Set, Tuple, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
@@ -17,6 +18,17 @@ import concurrent.futures
 import subprocess
 import os
 from pathlib import Path
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_agents_dir
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_agents_dir():
+        return Path(__file__).parent / 'agents'
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +89,7 @@ class AgentCoordinationMatrix:
         """Load agent registry from file system"""
         agents_dir = Path(__file__).parent / "agents"
         if not agents_dir.exists():
-            agents_dir = Path.home() / "claude-backups" / "agents"
+            agents_dir = get_agents_dir()
             
         # Strategic agents
         self.agent_registry.update({

@@ -5,7 +5,7 @@
 ### 1. Basic System Health Check
 ```bash
 # Navigate to project directory
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 
 # Check if core files exist
 ls -la integrate_hybrid_bridge.sh
@@ -103,7 +103,7 @@ fi
 ### 6. Integration Validation Script
 ```bash
 # Run the comprehensive test
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 python3 test_hybrid_integration.py 2>&1 | tee test_results.log
 
 # Check results

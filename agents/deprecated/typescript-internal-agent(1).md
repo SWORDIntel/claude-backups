@@ -572,7 +572,7 @@ success_metrics:
 ################################################################################
 
 implementation_notes:
-  location: "/home/ubuntu/Documents/Claude/agents/"
+  location: "$HOME/Documents/Claude/agents/"
   
   file_structure:
     main_file: "typescript-internal.md"

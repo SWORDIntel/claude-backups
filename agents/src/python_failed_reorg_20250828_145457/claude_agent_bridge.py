@@ -741,7 +741,7 @@ class EnhancedAgentConfig:
     """Enhanced central configuration for agent system with full coordination"""
     
     # Base directories
-    AGENTS_DIR = Path("/home/ubuntu/Documents/Claude/agents")
+    AGENTS_DIR = Path("${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents")
     RUNTIME_DIR = AGENTS_DIR / "06-BUILD-RUNTIME" / "runtime"
     BUILD_DIR = AGENTS_DIR / "06-BUILD-RUNTIME" / "build"
     CONFIG_DIR = AGENTS_DIR / "05-CONFIG"

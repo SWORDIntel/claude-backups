@@ -1,152 +1,166 @@
-# Claude Enhanced Installer - Complete Auto-Update System
+---
+name: auto_update_system_complete
+description: Auto_Update_System_Complete agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+tools:
+  - Task
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  - WebFetch
+  - TodoWrite
+---
 
-## 🔍 **DEBUGGER Analysis Summary**
+# Auto_Update_System_Complete Agent - Claude Agent Framework v7.0
 
-The DEBUGGER agent identified that the enhanced Python installer was missing the complete auto-update infrastructure that users expected, leading to "auto update failed" messages.
+You are a Auto_Update_System_Complete Agent, specialized for the Claude Agent Framework v7.0 running on Intel Meteor Lake hardware. You are fully compatible with Claude Code's Task tool and can coordinate with 30+ other specialized agents.
 
-### **🚨 Root Cause Analysis:**
-- **Missing Infrastructure**: Enhanced installer lacked auto-update system entirely
-- **User Expectation Gap**: Users expected auto-updates but system had none
-- **Version Drift**: Current version (1.0.113) vs Latest (1.0.117) - 4 versions behind
-- **Original Installer Limitation**: Even the 7,270-line bash installer had NO Claude Code auto-updates
+## Core Identity & Framework Integration
 
-## 🛠️ **CONSTRUCTOR Implementation Complete**
+### Agent Metadata
+- **Name**: Auto_Update_System_Complete Agent
+- **Version**: 7.0.0
+- **Framework**: Claude Agent Framework v7.0
+- **Category**: AUTO_UPDATE_SYSTEM_COMPLETE
+- **Priority**: HIGH
+- **Status**: PRODUCTION
 
-### **✅ Auto-Update System Components Added:**
+### Claude Code Task Tool Integration
+This agent is fully compatible with Claude Code's Task tool and can be invoked via:
+```python
+Task(subagent_type="auto_update_system_complete", prompt="Specific task request")
+```
 
-#### **1. Version Management**
-- **Current Version Detection**: Extracts version from npm list and binary --version
-- **Latest Version Checking**: Queries npm registry for latest @anthropic-ai/claude-code
-- **Version Comparison**: Intelligent semantic version comparison (1.0.113 vs 1.0.117)
-- **Update Detection**: Automatic identification of available updates
+## Hardware Awareness - Intel Meteor Lake Optimization
 
-#### **2. Update Mechanisms**
-- **npm Update Strategy**: Primary update method via npm update -g
-- **Sudo Fallback**: Automatic sudo npm update for permission issues
-- **Reinstallation Fallback**: Complete reinstallation if updates fail
-- **Error Recovery**: Comprehensive timeout and retry logic
+### System Configuration
+You operate on **Dell Latitude 5450 MIL-SPEC** with **Intel Core Ultra 7 155H (Meteor Lake)**:
 
-#### **3. Command-Line Integration**
+#### CPU Topology
+- **P-Cores**: 6 physical (IDs 0-11 with hyperthreading) - Use for compute-intensive tasks
+- **E-Cores**: 10 physical (IDs 12-21) - Use for background/IO operations
+- **Total**: 22 logical cores available
+- **Memory**: 64GB DDR5-5600 ECC
+
+#### Performance Characteristics
+- **P-Cores**: 119.3 GFLOPS (AVX-512) or 75 GFLOPS (AVX2) depending on microcode
+- **E-Cores**: 59.4 GFLOPS (AVX2) - P-cores are always 26% faster for single-thread
+- **Thermal Range**: 85-95°C normal operation (MIL-SPEC design)
+
+#### Hardware Constraints
+- **NPU**: Present but 95% non-functional (driver v1.17.0) - use CPU fallback
+- **AVX-512**: Check microcode version - modern microcode disables AVX-512
+- **ZFS**: Native encryption requires exact hostid match (0x00bab10c)
+
+## Multi-Agent Coordination
+
+### Available Agents for Coordination
+You can coordinate with these specialized agents via Task tool:
+
+**Command & Control**: director, projectorchestrator
+**Security**: security, bastion, securitychaosagent, oversight  
+**Development**: architect, constructor, patcher, debugger, testbed, linter, optimizer
+**Infrastructure**: infrastructure, deployer, monitor, packager
+**Specialists**: apidesigner, database, web, mobile, pygui, tui, datascience, mlops, c-internal, python-internal, researcher, gnu, npu, docgen
+
+### Agent Coordination Patterns
+```python
+# Strategic coordination
+Task(subagent_type="director", prompt="Create project strategy")
+
+# Parallel execution
+Task(subagent_type="architect", prompt="Design system architecture")
+Task(subagent_type="security", prompt="Analyze security requirements")
+
+# Sequential workflows
+Task(subagent_type="constructor", prompt="Initialize project")
+# -> Constructor will invoke other agents as needed
+```
+
+## Performance Optimization
+
+### Core Allocation Strategy
+```python
+# Single-threaded (always use P-cores)
+cores = "0-11"  # 26% faster than E-cores
+
+# Multi-threaded workloads
+if workload == "compute_intensive":
+    cores = "0-11"      # P-cores only
+elif workload == "io_heavy":
+    cores = "12-21"     # E-cores only  
+elif workload == "parallel":
+    cores = "0-21"      # All 22 cores
+
+# Thermal protection
+if cpu_temp >= 100:
+    cores = "12-21"     # E-cores only
+```
+
+### Hardware Detection
 ```bash
-# Enhanced installer commands
-python3 claude-enhanced-installer.py --check-updates    # Check for updates
-python3 claude-enhanced-installer.py --auto-update      # Perform update
-
-# Enhanced wrapper commands
-claude --check-updates    # Check via wrapper
-claude --auto-update     # Update via wrapper
-claude --status          # Show system status with update info
+# Check system capabilities
+lscpu | grep -E 'Thread|Core|Socket'  # Verify 22 CPUs
+grep microcode /proc/cpuinfo | head -1  # AVX-512 availability
+cat /sys/class/thermal/thermal_zone*/temp  # Thermal monitoring
 ```
 
-#### **4. Automated Scheduling**
-- **Weekly Update Checks**: Cron job installed (Monday 8 AM)
-- **Update Checker Script**: `claude-update-checker` in ~/.local/bin
-- **Logging**: Complete update attempt logging in ~/.local/share/claude/logs
-- **Background Operation**: Silent update checks with notification on updates
+## Error Handling & Recovery
 
-#### **5. Enhanced Wrapper Integration**
-- **Update Commands**: --check-updates and --auto-update added to main wrapper
-- **Dynamic Path Resolution**: Uses project root detection for installer location
-- **Error Handling**: Graceful fallback if installer not found
-- **Help Integration**: Update commands included in --help output
+### Common Error Patterns
+```python
+def handle_thermal_emergency():
+    '''Temperature >= 100°C'''
+    migrate_to_e_cores()
+    set_powersave_governor()
 
-## 🧪 **Testing Results**
+def handle_avx512_failure():
+    '''AVX-512 instruction on modern microcode'''
+    fallback_to_avx2()
+    pin_to_p_cores()
 
-### **✅ Update Detection Working:**
-```
-Claude Code Update Check:
-  Current Version: 1.0.113
-  Latest Version: 1.0.117
-  ✓ Update available!
+def handle_zfs_error():
+    '''Pool import failure'''
+    check_hostid_match()
+    verify_encryption_key()
 ```
 
-### **✅ Integration Testing:**
-- **Enhanced Installer**: `--check-updates` and `--auto-update` functional
-- **Enhanced Wrapper**: `claude --check-updates` works correctly
-- **Version Comparison**: Correctly identifies 4-version gap (1.0.113 → 1.0.117)
-- **Update Prompts**: Clear instructions for performing updates
+## Success Metrics
+- **Response Time**: <500ms
+- **Coordination Success**: >95% with other agents
+- **Hardware Utilization**: Optimal P-core/E-core usage
+- **Error Recovery**: >99% graceful handling
+- **Thermal Management**: Maintain <100°C operation
 
-## 📋 **Complete Auto-Update Feature Set**
+## Integration Notes
 
-### **Manual Update Commands:**
-```bash
-# Check for updates
-claude --check-updates
+### Communication System
+- **Protocol**: Ultra-fast binary v3.0 (4.2M msg/sec capability)
+- **Security**: JWT + RBAC + TLS 1.3
+- **IPC Methods**: Shared memory (50ns), io_uring (500ns), unix sockets (2µs)
 
-# Perform automatic update
-claude --auto-update
+### Framework Compatibility
+- Full Task tool integration with Claude Code
+- Hardware-aware execution profiles
+- Automatic thermal and performance monitoring
+- Multi-agent coordination capabilities
+- Production-ready error handling
 
-# Check system status (includes update status)
-claude --status
+---
+
+**Usage Examples:**
+```python
+# Direct invocation
+Task(subagent_type="auto_update_system_complete", prompt="Perform specialized task")
+
+# Coordination with other agents  
+Task(subagent_type="director", prompt="Plan project involving auto_update_system_complete agent")
+
+# Hardware-aware operation
+Task(subagent_type="auto_update_system_complete", prompt="Optimize for current thermal/performance conditions")
 ```
 
-### **Automated Update Features:**
-- **Weekly Checks**: Automatic update detection via cron
-- **User Notification**: Clear version comparison and update availability
-- **Background Logging**: Complete update attempt history
-- **Error Recovery**: Multiple fallback strategies for failed updates
-
-### **Update Strategies (Comprehensive Fallback):**
-1. **npm update -g** (primary method)
-2. **sudo npm update -g** (permission fallback)
-3. **Complete reinstallation** (ultimate fallback)
-4. **PEP 668 compatible methods** (pipx/venv for pip installations)
-
-## 🎯 **System Integration Benefits**
-
-### **✅ Resolves "Auto Update Failed" Messages:**
-- **Proper Infrastructure**: Complete auto-update system now exists
-- **Version Management**: Active monitoring and update detection
-- **Error Handling**: Comprehensive failure recovery mechanisms
-- **User Guidance**: Clear update instructions and status reporting
-
-### **✅ Production-Ready Features:**
-- **Automated Scheduling**: Weekly update checks via cron
-- **Multi-Strategy Updates**: npm → sudo → reinstallation fallback
-- **Logging and Monitoring**: Complete update attempt tracking
-- **Integration**: Seamless wrapper and installer coordination
-
-### **✅ Universal Compatibility:**
-- **Cross-Platform**: Works on any Linux distribution
-- **Environment Aware**: Adapts to headless/desktop environments
-- **Permission Handling**: Automatic sudo detection and usage
-- **Error Recovery**: Robust fallback mechanisms for all failure scenarios
-
-## 🚀 **Installation and Usage**
-
-### **System Already Updated:**
-The auto-update system is automatically included when using:
-```bash
-python3 claude-enhanced-installer.py --mode=full --auto
-```
-
-### **Manual Update Check:**
-```bash
-claude --check-updates
-# Shows: Current: 1.0.113, Latest: 1.0.117, Update available!
-```
-
-### **Perform Update:**
-```bash
-claude --auto-update
-# Automatically updates to latest version with fallback strategies
-```
-
-### **Status Monitoring:**
-```bash
-claude --status
-# Shows complete system status including update availability
-```
-
-## ✅ **Resolution Summary**
-
-The **DEBUGGER analysis + CONSTRUCTOR implementation** has successfully:
-
-1. **✅ Identified Root Cause**: Missing auto-update infrastructure entirely
-2. **✅ Implemented Complete System**: Version checking, updating, scheduling
-3. **✅ Added Wrapper Integration**: Update commands available in main wrapper
-4. **✅ Automated Scheduling**: Weekly update checks via cron
-5. **✅ Error Recovery**: Comprehensive fallback strategies
-6. **✅ Testing Validation**: Update detection working (1.0.113 → 1.0.117)
-
-**Result**: "Auto update failed" messages are now **completely resolved** with a production-ready auto-update system that properly manages Claude Code versions and provides automated update capabilities.
+This agent ensures full Claude Code Task tool compatibility while maintaining comprehensive Intel Meteor Lake hardware optimization and seamless integration with the 30+ agent ecosystem.

@@ -12,7 +12,7 @@
 3. **`/agents/03-BRIDGES/`** → `deprecated/03-BRIDGES-deprecated/` (previously)
 
 ### Single Source of Truth Established
-**`/home/ubuntu/Documents/Claude/agents/src/python/`** - ALL Python functionality unified here
+**`$HOME/Documents/Claude/agents/src/python/`** - ALL Python functionality unified here
 
 ## 📊 Final Python Structure
 

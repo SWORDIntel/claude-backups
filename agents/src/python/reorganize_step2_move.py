@@ -12,6 +12,19 @@ import json
 from datetime import datetime
 import sys
 
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_python_src_dir, get_project_root
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_python_src_dir():
+        return Path(__file__).parent.parent.parent / 'agents' / 'src' / 'python'
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+
 class SafeReorganizer:
     def __init__(self, base_path: Path):
         self.base_path = base_path
@@ -282,7 +295,7 @@ __all__ = ['get_agent', 'list_agents']
                     init_file.write_text(f'"""{subdir.name.title()} Module"""\n\n')
                     
         # Also create __init__ for external orchestration directory
-        external_orch_dir = Path("/home/ubuntu/claude-backups/orchestration")
+        external_orch_dir = get_project_root() / "orchestration"
         if external_orch_dir.exists():
             external_init = external_orch_dir / "__init__.py"
             if not external_init.exists():
@@ -314,7 +327,7 @@ __all__ = [
         print("\n🔧 Updating orchestration system imports...")
         
         # Check orchestration directory
-        orch_dir = Path("/home/ubuntu/claude-backups/orchestration")
+        orch_dir = get_project_root() / "orchestration"
         if orch_dir.exists():
             print(f"   Found orchestration directory: {orch_dir}")
             
@@ -363,7 +376,7 @@ __all__ = [
 
 def main():
     """Main reorganization"""
-    base_path = Path("/home/ubuntu/claude-backups/agents/src/python")
+    base_path = get_python_src_dir()
     
     print("="*60)
     print("STEP 2: FILE REORGANIZATION")

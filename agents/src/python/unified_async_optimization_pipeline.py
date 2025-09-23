@@ -44,6 +44,35 @@ from intelligent_context_chopper import IntelligentContextChopper
 import resource
 from prometheus_client import Counter, Histogram, Gauge, start_http_server
 
+
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import (
+        get_project_root, get_agents_dir, get_database_dir,
+        get_python_src_dir, get_shadowgit_paths, get_database_config
+    )
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+    def get_agents_dir():
+        return get_project_root() / 'agents'
+    def get_database_dir():
+        return get_project_root() / 'database'
+    def get_python_src_dir():
+        return get_agents_dir() / 'src' / 'python'
+    def get_shadowgit_paths():
+        home_dir = Path.home()
+        return {'root': home_dir / 'shadowgit'}
+    def get_database_config():
+        return {
+            'host': 'localhost', 'port': 5433,
+            'database': 'claude_agents_auth',
+            'user': 'claude_agent', 'password': 'claude_auth_pass'
+        }
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('unified_pipeline')
 
@@ -336,7 +365,7 @@ class UnifiedAsyncPipeline:
     async def _init_trie_matcher(self):
         """Initialize trie keyword matcher"""
         config_path = self.config.get('trie_config_path', 
-            '/home/john/claude-backups/config/enhanced_trigger_keywords.yaml')
+            '${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}config/enhanced_trigger_keywords.yaml')
         self.trie_matcher = TrieKeywordMatcher(config_path)
         
     async def _init_cache_manager(self):
@@ -807,7 +836,7 @@ async def benchmark_pipeline():
                 request_id=f"test-{i}",
                 query=f"optimize database performance for user {i}",
                 context={
-                    'project_root': '/home/john/claude-backups',
+                    'project_root': str(get_project_root()),
                     'extensions': ['.py', '.md'],
                     'user_id': i
                 },

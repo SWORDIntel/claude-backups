@@ -32,7 +32,7 @@ import ctypes
 from ctypes import Structure, c_char, c_char_p, c_int, c_uint64, c_double, c_bool
 
 # Add agents/src/python to path for Phase 3 components
-sys.path.insert(0, '/home/john/claude-backups/agents/src/python')
+sys.path.insert(0, '${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python')
 
 # Import OpenVINO for neural acceleration
 try:
@@ -62,7 +62,7 @@ except ImportError:
     print("Phase 3 integration not available - running in standalone mode")
 
 # C library integration
-SHADOWGIT_LIB_PATH = "/home/john/claude-backups/shadowgit_phase3_integration.so"
+SHADOWGIT_LIB_PATH = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}shadowgit_phase3_integration.so"
 
 # C structures (matching the C code)
 class DiffResult(Structure):
@@ -145,7 +145,7 @@ class ShadowgitC:
     def _compile_library(self):
         """Compile the C integration library"""
         try:
-            source_file = "/home/john/claude-backups/shadowgit_phase3_integration.c"
+            source_file = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}shadowgit_phase3_integration.c"
             
             # Compilation command
             compile_cmd = [
@@ -810,7 +810,7 @@ async def main():
         results = await run_shadowgit_acceleration_test()
         
         # Save results
-        output_file = "/home/john/claude-backups/shadowgit-acceleration-results.json"
+        output_file = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}shadowgit-acceleration-results.json"
         with open(output_file, 'w') as f:
             json.dump(results, f, indent=2, default=str)
         

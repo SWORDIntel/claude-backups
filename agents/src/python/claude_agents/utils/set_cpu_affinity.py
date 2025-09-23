@@ -6,7 +6,7 @@ from pathlib import Path
 
 def set_process_affinity():
     """Set CPU affinity based on Meteor Lake configuration"""
-    config_file = Path(__file__).parent / "config/performance/meteor_lake_config.yaml"
+    config_file = Path(__file__).parent / os.path.join(os.environ.get("CLAUDE_AGENTS_ROOT", "."), "config", "$1")
     
     if not config_file.exists():
         print("Configuration file not found")

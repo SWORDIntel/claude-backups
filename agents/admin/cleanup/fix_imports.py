@@ -46,7 +46,7 @@ def fix_imports_in_file(file_path, moved_files_map):
     return False
 
 def main():
-    agents_dir = "/home/ubuntu/Documents/Claude/agents"
+    agents_dir = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
     
     # Map of moved files (old_path -> new_path relative to agents_dir)
     moved_files = {

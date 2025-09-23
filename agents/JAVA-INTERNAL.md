@@ -1,6 +1,6 @@
 ---
 metadata:
-  name: JAVA-INTERNAL-AGENT
+  name: JAVA-INTERNAL
   version: 8.0.0
   uuid: d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a
   category: INTERNAL
@@ -546,7 +546,7 @@ error_handling:
 ################################################################################
 
 implementation_notes:
-  location: "/home/ubuntu/Documents/Claude/agents/"
+  location: "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../"
   
   file_structure:
     main_file: "java-internal.md"

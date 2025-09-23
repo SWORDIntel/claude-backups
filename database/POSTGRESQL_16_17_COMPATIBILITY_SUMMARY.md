@@ -78,7 +78,7 @@
 
 ### Method 1: Universal Auto-Detection (RECOMMENDED)
 ```bash
-cd /home/ubuntu/Documents/claude-backups/database
+cd $CLAUDE_PROJECT_ROOT/database
 ./setup_learning_system_universal.sh
 ```
 
@@ -238,10 +238,10 @@ The Claude Agent Learning System demonstrates **exceptional backwards compatibil
 ---
 
 **Files Ready for Production:**
-- `/home/ubuntu/Documents/claude-backups/database/sql/postgresql_version_compatibility.sql`
-- `/home/ubuntu/Documents/claude-backups/database/sql/learning_system_schema_pg16_compatible.sql` 
-- `/home/ubuntu/Documents/claude-backups/database/sql/postgresql_version_migration.sql`
-- `/home/ubuntu/Documents/claude-backups/database/setup_learning_system_universal.sh`
+- `$CLAUDE_PROJECT_ROOT/database/sql/postgresql_version_compatibility.sql`
+- `$CLAUDE_PROJECT_ROOT/database/sql/learning_system_schema_pg16_compatible.sql` 
+- `$CLAUDE_PROJECT_ROOT/database/sql/postgresql_version_migration.sql`
+- `$CLAUDE_PROJECT_ROOT/database/setup_learning_system_universal.sh`
 
 **Installation**: Run `./setup_learning_system_universal.sh` for automatic setup and configuration.
 

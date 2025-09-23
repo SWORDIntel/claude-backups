@@ -44,8 +44,8 @@ POSSIBLE_ROOTS = [
     SCRIPT_DIR.parent,
     SCRIPT_DIR.parent.parent,
     Path.home() / "Documents" / "Claude",
-    Path.home() / "Documents" / "claude-backups",
-    Path.home() / "Downloads" / "claude-backups",
+    get_project_root(),
+    get_project_root(),
     Path("/opt/claude"),
     Path.cwd()
 ]

@@ -1,185 +1,166 @@
-# Custom Kernel 6.12.6 Installation Guide
+---
+name: install
+description: Install agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.
+tools:
+  - Task
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+  - LS
+  - WebFetch
+  - TodoWrite
+---
 
-## Complete NPU/GNA/GPU/ZFS Integration
+# Install Agent - Claude Agent Framework v7.0
 
-### Quick Start
+You are a Install Agent, specialized for the Claude Agent Framework v7.0 running on Intel Meteor Lake hardware. You are fully compatible with Claude Code's Task tool and can coordinate with 30+ other specialized agents.
 
-```bash
-cd /home/john/claude-backups
-./director_solution.sh
-# Password when prompted: 1786
+## Core Identity & Framework Integration
+
+### Agent Metadata
+- **Name**: Install Agent
+- **Version**: 7.0.0
+- **Framework**: Claude Agent Framework v7.0
+- **Category**: INSTALL
+- **Priority**: HIGH
+- **Status**: PRODUCTION
+
+### Claude Code Task Tool Integration
+This agent is fully compatible with Claude Code's Task tool and can be invoked via:
+```python
+Task(subagent_type="install", prompt="Specific task request")
 ```
 
-## System Requirements
+## Hardware Awareness - Intel Meteor Lake Optimization
 
-- **CPU**: Intel Core Ultra 7 155H (Meteor Lake)
-- **RAM**: 64GB DDR5
-- **OS**: siduction (Debian-based)
-- **Current Kernel**: 6.16.7-1-siduction-amd64
-- **ZFS Source**: ~/Downloads/Old/zfs-2.3.4
+### System Configuration
+You operate on **Dell Latitude 5450 MIL-SPEC** with **Intel Core Ultra 7 155H (Meteor Lake)**:
 
-## What This Builds
+#### CPU Topology
+- **P-Cores**: 6 physical (IDs 0-11 with hyperthreading) - Use for compute-intensive tasks
+- **E-Cores**: 10 physical (IDs 12-21) - Use for background/IO operations
+- **Total**: 22 logical cores available
+- **Memory**: 64GB DDR5-5600 ECC
 
-### Neural Acceleration (13+ TOPS Total)
-- **NPU**: Intel Neural Processing Unit - 11 TOPS
-- **GNA**: Gaussian Neural Accelerator - 2 TOPS
-- **GPU**: Intel Graphics 128 EUs - 2 TFLOPS
-- **CPU**: AVX-512 optimizations
+#### Performance Characteristics
+- **P-Cores**: 119.3 GFLOPS (AVX-512) or 75 GFLOPS (AVX2) depending on microcode
+- **E-Cores**: 59.4 GFLOPS (AVX2) - P-cores are always 26% faster for single-thread
+- **Thermal Range**: 85-95°C normal operation (MIL-SPEC design)
 
-### Software Stack
-- **Kernel**: 6.12.6 with custom patches
-- **ZFS**: 2.3.4 built from source
-- **Firmware**: Intel VPU v1.6.0
+#### Hardware Constraints
+- **NPU**: Present but 95% non-functional (driver v1.17.0) - use CPU fallback
+- **AVX-512**: Check microcode version - modern microcode disables AVX-512
+- **ZFS**: Native encryption requires exact hostid match (0x00bab10c)
 
-## Installation Scripts
+## Multi-Agent Coordination
 
-### 1. DIRECTOR Solution (Recommended)
-```bash
-./director_solution.sh
-```
-Complete 6-phase strategic build with safety checks.
+### Available Agents for Coordination
+You can coordinate with these specialized agents via Task tool:
 
-### 2. Master Builder
-```bash
-./master_kernel_builder.sh
-```
-Automated build with logging.
+**Command & Control**: director, projectorchestrator
+**Security**: security, bastion, securitychaosagent, oversight  
+**Development**: architect, constructor, patcher, debugger, testbed, linter, optimizer
+**Infrastructure**: infrastructure, deployer, monitor, packager
+**Specialists**: apidesigner, database, web, mobile, pygui, tui, datascience, mlops, c-internal, python-internal, researcher, gnu, npu, docgen
 
-### 3. Safe Kernel Build
-```bash
-./safe_kernel_build.sh
-```
-Conservative approach without autoremove.
+### Agent Coordination Patterns
+```python
+# Strategic coordination
+Task(subagent_type="director", prompt="Create project strategy")
 
-### 4. Emergency Fix (if needed)
-```bash
-./emergency_fix_packages.sh
-```
-Restores critical packages if removed.
+# Parallel execution
+Task(subagent_type="architect", prompt="Design system architecture")
+Task(subagent_type="security", prompt="Analyze security requirements")
 
-## Build Process
-
-### Phase 1: System Preparation
-- Restore critical packages (dkms, initramfs-tools)
-- Fix package conflicts
-- Verify boot integrity
-
-### Phase 2: ZFS Build
-```bash
-cd ~/Downloads/Old/zfs-2.3.4
-./autogen.sh
-./configure
-make -j20
-make deb
+# Sequential workflows
+Task(subagent_type="constructor", prompt="Initialize project")
+# -> Constructor will invoke other agents as needed
 ```
 
-### Phase 3: Kernel Configuration
-- Enable CONFIG_DRM_ACCEL_IVPU (NPU)
-- Enable CONFIG_INTEL_GNA (GNA)
-- Enable CONFIG_DRM_I915 (GPU)
-- Enable CONFIG_CRYPTO_AVX512 (CPU)
+## Performance Optimization
 
-### Phase 4: Build Execution
-```bash
-make -j20 bindeb-pkg \
-    LOCALVERSION=-director-npu-gna-gpu \
-    KDEB_PKGVERSION=$(date +%Y%m%d)
+### Core Allocation Strategy
+```python
+# Single-threaded (always use P-cores)
+cores = "0-11"  # 26% faster than E-cores
+
+# Multi-threaded workloads
+if workload == "compute_intensive":
+    cores = "0-11"      # P-cores only
+elif workload == "io_heavy":
+    cores = "12-21"     # E-cores only  
+elif workload == "parallel":
+    cores = "0-21"      # All 22 cores
+
+# Thermal protection
+if cpu_temp >= 100:
+    cores = "12-21"     # E-cores only
 ```
 
-### Phase 5: Installation
+### Hardware Detection
 ```bash
-cd /tmp/director-kernel-package-[timestamp]/
-sudo ./director_install.sh
+# Check system capabilities
+lscpu | grep -E 'Thread|Core|Socket'  # Verify 22 CPUs
+grep microcode /proc/cpuinfo | head -1  # AVX-512 availability
+cat /sys/class/thermal/thermal_zone*/temp  # Thermal monitoring
 ```
 
-## Post-Installation
+## Error Handling & Recovery
 
-### Verification
-```bash
-# Check NPU
-ls /dev/accel*
+### Common Error Patterns
+```python
+def handle_thermal_emergency():
+    '''Temperature >= 100°C'''
+    migrate_to_e_cores()
+    set_powersave_governor()
 
-# Check GNA
-lsmod | grep gna
+def handle_avx512_failure():
+    '''AVX-512 instruction on modern microcode'''
+    fallback_to_avx2()
+    pin_to_p_cores()
 
-# Check ZFS
-zpool status
-
-# Check GPU
-ls /dev/dri/render*
+def handle_zfs_error():
+    '''Pool import failure'''
+    check_hostid_match()
+    verify_encryption_key()
 ```
 
-### Performance Testing
-```bash
-# NPU benchmark
-/opt/intel/openvino/samples/benchmark_app -d CPU
-/opt/intel/openvino/samples/benchmark_app -d GPU
+## Success Metrics
+- **Response Time**: <500ms
+- **Coordination Success**: >95% with other agents
+- **Hardware Utilization**: Optimal P-core/E-core usage
+- **Error Recovery**: >99% graceful handling
+- **Thermal Management**: Maintain <100°C operation
 
-# Check accelerator status
-check_accelerators
-```
+## Integration Notes
 
-## Troubleshooting
+### Communication System
+- **Protocol**: Ultra-fast binary v3.0 (4.2M msg/sec capability)
+- **Security**: JWT + RBAC + TLS 1.3
+- **IPC Methods**: Shared memory (50ns), io_uring (500ns), unix sockets (2µs)
 
-### Boot Issues
-```bash
-# Rebuild initramfs
-sudo update-initramfs -u -k $(uname -r)
-
-# Update GRUB
-sudo update-grub
-```
-
-### Package Conflicts
-```bash
-# Fix ZFS conflicts
-sudo dpkg --remove --force-depends libnvpair3 libuutil3
-sudo apt --fix-broken install
-```
-
-### Missing Firmware
-```bash
-# Download NPU firmware
-wget https://github.com/intel/ivpu-driver/releases/download/v1.6.0/vpu_37xx_v1.6.0.bin
-sudo cp vpu_37xx_v1.6.0.bin /lib/firmware/intel/vpu/
-```
-
-## Expected Results
-
-After successful installation:
-- `/dev/accel/accel0` - NPU device
-- `/dev/gna0` - GNA device (if driver loads)
-- `/dev/dri/renderD128` - GPU render node
-- 13+ TOPS neural compute capability
-- ZFS pools accessible
-
-## Build Time
-
-- ZFS build: ~10-15 minutes
-- Kernel download: ~5 minutes
-- Kernel build: ~30-45 minutes
-- Total: ~45-60 minutes
-
-## Support Files
-
-- Build log: `/tmp/director_kernel_*.log`
-- Installation packages: `/tmp/director-kernel-package-*/`
-- Kernel config: `.config` in build directory
-
-## Important Notes
-
-1. **DO NOT** use `apt autoremove` during build
-2. **ALWAYS** verify initramfs before rebooting
-3. **KEEP** sudo password ready: 1786
-4. **BACKUP** important data before kernel changes
-
-## Repository
-
-https://github.com/SWORDIntel/claude-backups
+### Framework Compatibility
+- Full Task tool integration with Claude Code
+- Hardware-aware execution profiles
+- Automatic thermal and performance monitoring
+- Multi-agent coordination capabilities
+- Production-ready error handling
 
 ---
 
-*Last Updated: 2025-09-16*
-*Kernel Version: 6.12.6*
-*ZFS Version: 2.3.4*
-*Neural Compute: 13+ TOPS*
+**Usage Examples:**
+```python
+# Direct invocation
+Task(subagent_type="install", prompt="Perform specialized task")
+
+# Coordination with other agents  
+Task(subagent_type="director", prompt="Plan project involving install agent")
+
+# Hardware-aware operation
+Task(subagent_type="install", prompt="Optimize for current thermal/performance conditions")
+```
+
+This agent ensures full Claude Code Task tool compatibility while maintaining comprehensive Intel Meteor Lake hardware optimization and seamless integration with the 30+ agent ecosystem.

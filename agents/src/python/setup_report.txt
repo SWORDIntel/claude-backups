@@ -11,8 +11,8 @@ Dependencies Status:
   numpy                ✓ Available
 
 Configuration Files:
-  Trigger keywords: /home/john/claude-backups/agents/config/enhanced_trigger_keywords.yaml
-  Pipeline config:  /home/john/claude-backups/agents/config/unified_pipeline_config.json
+  Trigger keywords: $HOME/claude-backups/agents/config/enhanced_trigger_keywords.yaml
+  Pipeline config:  $HOME/claude-backups/agents/config/unified_pipeline_config.json
 
 Performance Targets:
   ✓ End-to-end latency: <100ms

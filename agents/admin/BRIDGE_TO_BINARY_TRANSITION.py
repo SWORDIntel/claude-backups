@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import sys
 
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 from 03-BRIDGES.claude_agent_bridge import task_agent_invoke, bridge
 
 class TransitionManager:
@@ -26,8 +26,8 @@ class TransitionManager:
     def __init__(self):
         self.bridge_active = True
         self.binary_ready = False
-        self.config_file = "/home/ubuntu/Documents/Claude/agents/transition_config.json"
-        self.binary_build_log = "/home/ubuntu/Documents/Claude/agents/binary_build.log"
+        self.config_file = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../transition_config.json"
+        self.binary_build_log = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../binary_build.log"
         
         # Load or create transition configuration
         self.config = self.load_config()
@@ -164,7 +164,7 @@ class TransitionManager:
             },
             "logging": {
                 "level": "info",
-                "file": "/home/ubuntu/Documents/Claude/agents/bridge_system.log"
+                "file": "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../bridge_system.log"
             }
         }
         
@@ -174,7 +174,7 @@ class TransitionManager:
 import time
 import json
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
 from 03-BRIDGES.claude_agent_bridge import bridge
 
@@ -199,7 +199,7 @@ class BridgeMonitor:
 monitor = BridgeMonitor()
 """
         
-        monitor_file = "/home/ubuntu/Documents/Claude/agents/bridge_monitor.py"
+        monitor_file = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../bridge_monitor.py"
         with open(monitor_file, 'w') as f:
             f.write(monitoring_script)
         
@@ -219,7 +219,7 @@ The bridge system provides immediate access to all agents while the binary syste
 ```python
 import asyncio
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 from 03-BRIDGES.claude_agent_bridge import task_agent_invoke
 
 async def use_director():
@@ -274,12 +274,12 @@ No code changes required - same API, better performance!
 
 ## Support
 
-- Config: `/home/ubuntu/Documents/Claude/agents/transition_config.json`
-- Logs: `/home/ubuntu/Documents/Claude/agents/bridge_system.log`
+- Config: `${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../transition_config.json`
+- Logs: `${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../bridge_system.log`
 - Monitor: `python3 bridge_monitor.py`
 """
         
-        with open("/home/ubuntu/Documents/Claude/agents/BRIDGE_USAGE_GUIDE.md", 'w') as f:
+        with open("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../BRIDGE_USAGE_GUIDE.md", 'w') as f:
             f.write(usage_doc)
     
     def start_background_binary_build(self):
@@ -289,7 +289,7 @@ No code changes required - same API, better performance!
 # Background Binary System Builder
 
 echo "🔧 Starting background binary system build..."
-cd /home/ubuntu/Documents/Claude/agents
+cd ${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents
 
 # Build components in order of dependency
 echo "Building ultra-fast protocol..."
@@ -318,7 +318,7 @@ echo "✅ Binary system build complete!"
 echo "$(date): Binary system ready for transition" >> {self.binary_build_log}
 """
         
-        build_script_file = "/home/ubuntu/Documents/Claude/agents/build_binary_background.sh"
+        build_script_file = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../build_binary_background.sh"
         with open(build_script_file, 'w') as f:
             f.write(build_script)
         os.chmod(build_script_file, 0o755)
@@ -343,10 +343,10 @@ echo "$(date): Binary system ready for transition" >> {self.binary_build_log}
         
         # Check components
         components = {
-            "binary_protocol": os.path.exists("/home/ubuntu/Documents/Claude/agents/binary-communications-system/ultra_hybrid_enhanced"),
-            "c_components": os.path.exists("/home/ubuntu/Documents/Claude/agents/src/c/director_agent.o"),
-            "runtime_system": os.path.exists("/home/ubuntu/Documents/Claude/agents/build/unified_agent_runtime"),
-            "monitoring": os.path.exists("/home/ubuntu/Documents/Claude/agents/monitoring/grafana_dashboard.json")
+            "binary_protocol": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../binary-communications-system/ultra_hybrid_enhanced"),
+            "c_components": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/c/director_agent.o"),
+            "runtime_system": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../build/unified_agent_runtime"),
+            "monitoring": os.path.exists("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../monitoring/grafana_dashboard.json")
         }
         
         ready_components = sum(components.values())

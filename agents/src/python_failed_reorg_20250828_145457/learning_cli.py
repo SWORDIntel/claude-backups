@@ -33,7 +33,7 @@ class LearningCLI:
         if IMPORTS_AVAILABLE and ULTIMATE_SYSTEM_AVAILABLE:
             # Use the ultimate learning system with local database
             db_config = {
-                'host': '/home/ubuntu/Documents/Claude/database/data/run',
+                'host': '${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}database/data/run',
                 'port': 5433,
                 'database': 'claude_auth',
                 'user': 'claude_auth',

@@ -15,7 +15,7 @@ class ClaudeBootInitializer:
     
     __slots__ = []
     def __init__(self):
-        self.agents_dir = "/home/ubuntu/Documents/Claude/agents"
+        self.agents_dir = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"
         self.claude_config_dir = os.path.expanduser("~/.claude")
         self.init_marker = os.path.join(self.claude_config_dir, ".agents_initialized")
         

@@ -1,15 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Read(//home/john/.claude-home/**)"
+      "Read(//home/john/.claude-home/**)",
+      "Bash(grep:*)",
+      "Read(//home/john/**)",
+      "Bash(libreoffice:*)"
     ],
+    "deny": [],
+    "ask": [],
     "additionalDirectories": [
       "/home/ubuntu/Downloads",
       "/home/ubuntu",
       "/usr/bin"
-    ],
-    "deny": [],
-    "ask": []
+    ]
   },
   "claude_project_root": "auto",
   "self_contained": true,

@@ -34,7 +34,7 @@ def comprehensive_performance_test():
     """Run comprehensive performance comparison"""
     
     # Initialize trie matcher
-    config_path = "/home/john/claude-backups/config/enhanced_trigger_keywords.yaml"
+    config_path = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}config/enhanced_trigger_keywords.yaml"
     trie_matcher = TrieKeywordMatcher(config_path)
     
     # Load config for linear matcher comparison
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     results = comprehensive_performance_test()
     
     # Save results
-    with open('/home/john/claude-backups/agents/src/python/trie_performance_results.json', 'w') as f:
+    with open('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/trie_performance_results.json', 'w') as f:
         json.dump(results, f, indent=2)
     
     print("\nResults saved to trie_performance_results.json")

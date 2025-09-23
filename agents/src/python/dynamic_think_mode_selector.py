@@ -316,7 +316,7 @@ class DynamicThinkModeSelector:
         }
 
         # Try to load from config file
-        config_path = 'config/think_mode_config.json'
+        config_path = os.path.join(os.environ.get('CLAUDE_AGENTS_ROOT', '.'), 'config', '$1')
         if os.path.exists(config_path):
             try:
                 with open(config_path, 'r') as f:

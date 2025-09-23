@@ -13,7 +13,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 # Base paths
-AGENTS_DIR="/home/ubuntu/Documents/Claude/agents"
+AGENTS_DIR="$HOME/Documents/Claude/agents"
 BACKUP_DIR="$AGENTS_DIR/.cleanup_backup_$(date +%Y%m%d_%H%M%S)"
 
 # Create backup
@@ -315,7 +315,7 @@ def fix_imports_in_file(file_path, moved_files_map):
     return False
 
 def main():
-    agents_dir = "/home/ubuntu/Documents/Claude/agents"
+    agents_dir = "$HOME/Documents/Claude/agents"
     
     # Map of moved files (old_path -> new_path relative to agents_dir)
     moved_files = {

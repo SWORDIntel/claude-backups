@@ -1,0 +1,699 @@
+{
+  "timestamp": "/home/john/claude-backups/agents",
+  "total_fixes": 136,
+  "fixes_by_type": {
+    "markdown": 30,
+    "python": 82,
+    "c": 1,
+    "config": 23
+  },
+  "fixes_applied": [
+    {
+      "file": "/home/john/claude-backups/agents/APIDESIGNER.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/ARCHITECT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/ASSEMBLY-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/CARBON-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/CHAOS-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/DATABASE.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/DATASCIENCE.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/DDWRT-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/DEBUGGER.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/DEPLOYER.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/DOCGEN.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/GNA.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/GO-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/JAVA-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/KOTLIN-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/LINTER.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/MLOPS.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/MONITOR.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/OVERSIGHT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/PLANNER.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/PROXMOX-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/PYTHON-INTERNAL.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/RUST-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/SECURITY.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/SECURITYCHAOSAGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/SQL-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/TESTBED.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/TUI.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/TYPESCRIPT-INTERNAL-AGENT.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/WHERE_I_AM.md",
+      "type": "markdown",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/fix_hardcoded_paths.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/BRIDGE_TO_BINARY_TRANSITION.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/CLAUDE_BOOT_INIT.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/HYBRID_INTEGRATION_DEMO.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/INTEGRATION_EXAMPLE.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/OPTIMAL_PATH_EXECUTION.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/UPDATE_AGENTS_INTEGRATION.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/setup.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/integration/auto_integrate.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/advanced_learning_analytics.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/agent_registry.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/conflict_predictor.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/enhanced_trigger_system.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/git_intelligence_demo.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/git_intelligence_engine.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/initialize_git_intelligence.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/intel_npu_async_pipeline.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/neural_code_reviewer.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/postgresql_performance_monitor.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/shadowgit_accelerator.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/shadowgit_phase3_unified.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/test_pipeline_core.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/token_optimizer.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/trie_keyword_matcher.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/trie_performance_test.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/unified_async_optimization_pipeline.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/npu_coordination_bridge.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/shadowgit_performance_integration.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/integrated_systems_test.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/npu_baseline_test.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/npu_optimized_final.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/npu_orchestrator_real.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/npu_orchestrator_ultimate.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/production_orchestrator_optimized.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/dynamic_think_mode_selector.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/production_agent_instrumentation.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/agent_path_resolver.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/VOICE_INPUT_SYSTEM.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/VOICE_TOGGLE.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/agent_protocol_server.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/agent_registry.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/androidmobile_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/binary_bridge_connector.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/bridge_health_monitor.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/check_agent_compatibility.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/claude_agent_bridge.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/constructor_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/docgen_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/fix_agent_class_naming.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/gna_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/health_check.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/learning_cli.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/planner_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/quick_voice.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/set_cpu_affinity.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/simple_learning_cli.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/voice_system.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/deprecated/tandem_orchestrator_old.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/setuptools/tests/test_core_metadata.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/deprecated/tandem_orchestrator_old.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/scripts/fix_agent_class_naming.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/tests/check_agent_compatibility.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/.venv/lib/python3.13/site-packages/setuptools/tests/test_core_metadata.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/bridges/agent_protocol_server.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/bridges/binary_bridge_connector.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/bridges/claude_agent_bridge.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/cli/learning_cli.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/cli/simple_learning_cli.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/core/health_check.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/orchestration/agent_registry.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/utils/set_cpu_affinity.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/voice/VOICE_TOGGLE.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/voice/quick_voice.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/voice/voice_system.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/implementations/core/constructor_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/implementations/infrastructure/bridge_health_monitor.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/implementations/platform/androidmobile_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/implementations/specialized/VOICE_INPUT_SYSTEM.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/implementations/specialized/docgen_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/implementations/specialized/gna_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/claude_agents/implementations/specialized/planner_impl.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/cleanup/fix_imports.py",
+      "type": "python",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/rust-vector-router/socket_config.h",
+      "type": "c",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/config/tandem_config.json",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/docs/COMPLETION_REPORT.json",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/agent_dependencies_manifest.json",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/npu_launcher_test_results.json",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/agent_dependencies_manifest.json",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/rust-vector-router/agent_system.json",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/rust-vector-router/security_config.json",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/rust-vector-router/advanced_features.yaml",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/config/production.yaml",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/config/logging.yaml",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/config/production.yaml",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/services/claude-agents.service",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/tandem-orchestrator.service",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/python-orchestrator-startup.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/path_discovery.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/system/BRING_ONLINE.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/system/STATUS.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/c/enable_ai_router.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/check_learning_status.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python/quick_learning_setup.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/check_learning_status.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/src/python_failed_reorg_20250828_145457/quick_learning_setup.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    },
+    {
+      "file": "/home/john/claude-backups/agents/admin/cleanup/cleanup_directory.sh",
+      "type": "config",
+      "changes": "hardcoded paths \u2192 dynamic resolution"
+    }
+  ],
+  "dynamic_patterns_created": [
+    "CLAUDE_PROJECT_ROOT environment variable support",
+    "CLAUDE_AGENTS_ROOT environment variable support",
+    "Dynamic path discovery based on file structure",
+    "Bash helper script (path_discovery.sh)",
+    "Python helper module (agent_path_resolver.py)"
+  ]
+}

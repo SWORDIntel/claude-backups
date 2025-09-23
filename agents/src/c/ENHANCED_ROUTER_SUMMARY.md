@@ -319,7 +319,7 @@ The implementation is production-ready and provides significant performance bene
 
 ```bash
 # Navigate to the C source directory
-cd /home/john/claude-backups/agents/src/c
+cd $HOME/claude-backups/agents/src/c
 
 # Check system capabilities
 make info

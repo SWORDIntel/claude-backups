@@ -3,7 +3,7 @@
 ## 🚀 30-Second Start
 
 ```bash
-cd /home/ubuntu/Documents/Claude/agents/src/python
+cd $HOME/Documents/Claude/agents/src/python
 python3 tandem_orchestrator.py
 ```
 

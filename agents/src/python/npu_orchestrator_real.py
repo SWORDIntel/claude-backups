@@ -27,7 +27,7 @@ class NPUAcceleratedOrchestrator:
     """Production NPU-accelerated orchestrator with Intel AI Boost"""
 
     def __init__(self):
-        self.agents_dir = Path('/home/john/claude-backups/agents')
+        self.agents_dir = Path('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
         self.agents = {}
         self.agent_embeddings = {}
         self.npu_core = None

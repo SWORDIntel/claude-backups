@@ -27,6 +27,17 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from path_utilities import get_project_root
+except ImportError:
+    # Fallback if path_utilities not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent
+
 # Import our cache system
 sys.path.append(str(Path(__file__).parent))
 from multilevel_cache_system import MultiLevelCacheManager, CacheLevel
@@ -391,7 +402,7 @@ class CachePerformanceBenchmark:
             # This will internally use caching
             context = await context_chopper.get_context_for_request(
                 query, 
-                project_root="/home/john/claude-backups",
+                project_root=str(get_project_root()),
                 file_extensions=['.py', '.md']
             )
             

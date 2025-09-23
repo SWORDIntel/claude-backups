@@ -16,7 +16,7 @@ from typing import Dict, Any, Optional, List
 import tempfile
 
 # Add agents to path
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
 class VoiceInputSystem:
     """Complete voice input system for agent interaction"""
@@ -113,7 +113,7 @@ Uses text input to simulate voice commands for agent interaction
 import asyncio
 import sys
 import re
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
 class BasicVoiceInterface:
     """Basic voice interface using text input"""
@@ -296,7 +296,7 @@ if __name__ == "__main__":
         interface.start_voice_interface()
 '''
         
-        basic_voice_file = "/home/ubuntu/Documents/Claude/agents/basic_voice_interface.py"
+        basic_voice_file = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../basic_voice_interface.py"
         with open(basic_voice_file, 'w') as f:
             f.write(basic_voice_script)
         os.chmod(basic_voice_file, 0o755)
@@ -340,7 +340,7 @@ if __name__ == "__main__":
             "phrase_timeout": 2
         }
         
-        config_file = "/home/ubuntu/Documents/Claude/agents/voice_config.json"
+        config_file = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../voice_config.json"
         with open(config_file, 'w') as f:
             json.dump(recognition_config, f, indent=2)
         
@@ -370,7 +370,7 @@ if __name__ == "__main__":
             }
         }
         
-        rules_file = "/home/ubuntu/Documents/Claude/agents/command_rules.json"
+        rules_file = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../command_rules.json"
         with open(rules_file, 'w') as f:
             json.dump(command_rules, f, indent=2)
         
@@ -391,7 +391,7 @@ if __name__ == "__main__":
         
         # Import the basic voice interface for testing
         try:
-            exec(open("/home/ubuntu/Documents/Claude/agents/basic_voice_interface.py").read())
+            exec(open("${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../basic_voice_interface.py").read())
             print("  ✅ Voice interface loaded successfully")
             
             # Test command parsing
@@ -417,12 +417,12 @@ if __name__ == "__main__":
 # Start voice interface
 claude-voice() {{
     echo "🎤 Starting Claude Voice Interface..."
-    python3 /home/ubuntu/Documents/Claude/agents/basic_voice_interface.py
+    python3 ${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../basic_voice_interface.py
 }}
 
 # Show voice examples
 claude-voice-help() {{
-    python3 /home/ubuntu/Documents/Claude/agents/basic_voice_interface.py examples
+    python3 ${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../basic_voice_interface.py examples
 }}
 
 # Quick voice command (single use)
@@ -437,10 +437,10 @@ claude-say() {{
     python3 -c "
 import asyncio
 import sys
-sys.path.append('/home/ubuntu/Documents/Claude/agents')
+sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
 async def quick_voice():
-    exec(open('/home/ubuntu/Documents/Claude/agents/basic_voice_interface.py').read())
+    exec(open('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../basic_voice_interface.py').read())
     interface = BasicVoiceInterface()
     result = await interface.process_voice_command('$1')
     
@@ -455,7 +455,7 @@ asyncio.run(quick_voice())
 }}
 """
         
-        shortcuts_file = "/home/ubuntu/Documents/Claude/agents/voice_shortcuts.sh"
+        shortcuts_file = "${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../voice_shortcuts.sh"
         with open(shortcuts_file, 'w') as f:
             f.write(shortcuts)
         os.chmod(shortcuts_file, 0o755)

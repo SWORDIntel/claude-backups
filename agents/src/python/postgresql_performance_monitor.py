@@ -444,7 +444,7 @@ class PostgreSQLPerformanceMonitor:
     def export_metrics_to_file(self, filename: str = None) -> str:
         """Export collected metrics to JSON file"""
         if filename is None:
-            filename = f"/home/john/claude-backups/postgresql_metrics_{int(time.time())}.json"
+            filename = f"${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}postgresql_metrics_{int(time.time())}.json"
         
         metrics_data = {
             "export_timestamp": time.time(),

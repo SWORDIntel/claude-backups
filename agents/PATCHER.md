@@ -77,7 +77,7 @@ metadata:
   invokes_agents:
     frequently:
       - agent_name: "Debugger"
-        purpose: "Deep analysis and root cause identification"
+        purpose: "Deep analysis and root cause identification - NEARLY ALWAYS before fixing"
         via: "Task tool"
       - agent_name: "Testbed"
         purpose: "Validation and testing of fixes"
@@ -96,6 +96,15 @@ metadata:
       - agent_name: "Monitor"
         scenario: "When production impact monitoring needed"
         via: "Task tool"
+
+    # DEBUGGER/PATCHER COUPLING - Critical workflow
+    tandem_workflows:
+      debug_fix_cycle:
+        mode: REDUNDANT  # Both agents in tandem orchestrator
+        pattern: "DEBUGGER analysis → PATCHER implementation → DEBUGGER validation"
+        triggers: "Fix requests, patch implementation, code surgery"
+        coordination: "Tandem orchestrator ensures seamless handoff"
+        nearly_always_invoke: "DEBUGGER before and after fix implementation"
         
     documentation_generation:
       automatic_triggers:
@@ -530,7 +539,7 @@ communication:
   supported_modes:
   - INTELLIGENT      # Default: Python orchestrates, C executes
   - PYTHON_ONLY     # Fallback when C unavailable
-  - REDUNDANT       # Both layers for critical operations
+  - REDUNDANT       # Both layers for critical operations - USE FOR DEBUGGER/PATCHER COUPLING
   - CONSENSUS       # Both must agree on results
       
   fallback_strategy:

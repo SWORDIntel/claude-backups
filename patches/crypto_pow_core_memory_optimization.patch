@@ -1,0 +1,176 @@
+--- crypto_pow_core.c.orig	2025-09-21 12:00:00.000000000 +0000
++++ crypto_pow_core.c	2025-09-21 12:30:00.000000000 +0000
+@@ -11,6 +11,7 @@
+ #define OPENSSL_SUPPRESS_DEPRECATED
+
+ #include "crypto_pow_architecture.h"
++#include "memory_pool_allocator.h"
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -43,7 +44,7 @@
+     }
+
+     mgr->allocation_capacity = 1024; // Initial capacity
+-    mgr->allocations = calloc(mgr->allocation_capacity, sizeof(secure_memory_t));
++    mgr->allocations = POOL_CALLOC(mgr->allocation_capacity, sizeof(secure_memory_t));
+     if (!mgr->allocations) {
+         pthread_mutex_destroy(&mgr->mutex);
+         return POW_STATUS_MEMORY_ERROR;
+@@ -61,7 +62,7 @@
+     // Find available slot or expand capacity
+     if (mgr->allocation_count >= mgr->allocation_capacity) {
+         size_t new_capacity = mgr->allocation_capacity * 2;
+-        secure_memory_t *new_allocations = realloc(mgr->allocations,
++        secure_memory_t *new_allocations = pool_realloc(mgr->allocations,
+                                                   new_capacity * sizeof(secure_memory_t));
+         if (!new_allocations) {
+             pthread_mutex_unlock(&mgr->mutex);
+@@ -73,7 +74,8 @@
+
+     // Allocate with sentinel protection
+     size_t total_size = size + 2 * sizeof(uint32_t);
+-    void *raw_ptr = malloc(total_size);
++    // Use NUMA-aware allocation for secure memory
++    void *raw_ptr = pool_malloc_numa(total_size, get_optimal_numa_node());
+     if (!raw_ptr) {
+         pthread_mutex_unlock(&mgr->mutex);
+         return NULL;
+@@ -132,7 +134,7 @@
+             allocation->is_cleared = true;
+
+             // Free raw allocation
+-            free(raw_ptr);
++            POOL_FREE(raw_ptr);
+
+             // Update tracking
+             mgr->total_allocated -= allocation->size;
+@@ -177,11 +179,11 @@
+             secure_clear_memory(mgr->allocations[i].ptr, mgr->allocations[i].size);
+         }
+         void *raw_ptr = (char*)mgr->allocations[i].ptr - sizeof(uint32_t);
+-        free(raw_ptr);
++        POOL_FREE(raw_ptr);
+     }
+
+-    free(mgr->allocations);
++    POOL_FREE(mgr->allocations);
+     mgr->allocations = NULL;
+     mgr->allocation_count = 0;
+     mgr->allocation_capacity = 0;
+@@ -482,7 +484,8 @@
+ pow_status_t ecdsa_sign_data(const unsigned char *data, size_t data_len,
+                             unsigned char **signature, size_t *signature_len) {
+     size_t max_sig_len = ECDSA_size(g_key_pair.ec_key);
+-    unsigned char *signature = malloc(signature_len);
++    // Use cache-aligned allocation for cryptographic operations
++    unsigned char *signature = pool_malloc_aligned(signature_len, CACHE_LINE_SIZE);
+     if (!signature) {
+         return POW_STATUS_MEMORY_ERROR;
+     }
+@@ -490,7 +493,7 @@
+     if (ECDSA_sign(0, data, data_len, signature, (unsigned int*)signature_len,
+                   g_key_pair.ec_key) != 1) {
+         ERR_print_errors_fp(stderr);
+-        free(signature);
++        POOL_FREE(signature);
+         return POW_STATUS_CRYPTO_ERROR;
+     }
+
+@@ -504,7 +507,7 @@
+         g_signature_cache.cache[g_signature_cache.count].signature_len = *signature_len;
+         g_signature_cache.count++;
+     }
+-    free(signature);
++    POOL_FREE(signature);
+     return POW_STATUS_SUCCESS;
+ }
+
+@@ -529,7 +532,8 @@
+ pow_status_t ecdsa_verify_signature(const unsigned char *data, size_t data_len,
+                                   const unsigned char *signature, size_t signature_len) {
+     size_t max_sig_len = ECDSA_size(g_key_pair.ec_key);
+-    unsigned char *signature = malloc(signature_len);
++    // Use cache-aligned allocation for verification operations
++    unsigned char *signature = pool_malloc_aligned(signature_len, CACHE_LINE_SIZE);
+     if (!signature) {
+         return POW_STATUS_MEMORY_ERROR;
+     }
+@@ -543,7 +547,7 @@
+         g_verification_cache.cache[g_verification_cache.count].data_len = data_len;
+         g_verification_cache.count++;
+     }
+-    free(signature);
++    POOL_FREE(signature);
+
+     if (result != 1) {
+         ERR_print_errors_fp(stderr);
+@@ -558,7 +562,7 @@
+         g_verification_cache.cache[g_verification_cache.count].signature_len = signature_len;
+         g_verification_cache.count++;
+     }
+-    free(signature);
++    POOL_FREE(signature);
+     return POW_STATUS_SUCCESS;
+ }
+
+@@ -642,7 +646,8 @@
+     mining_ctx.difficulty = difficulty;
+     mining_ctx.max_iterations = max_iterations;
+     mining_ctx.result_found = false;
+-    mining_ctx.threads = calloc(max_threads, sizeof(mining_thread_context_t));
++    // Use NUMA-aware allocation for mining threads
++    mining_ctx.threads = pool_calloc_numa(max_threads, sizeof(mining_thread_context_t), get_optimal_numa_node());
+     if (!mining_ctx.threads) {
+         return POW_STATUS_MEMORY_ERROR;
+     }
+@@ -673,7 +678,7 @@
+         if (pthread_join(mining_ctx.threads[i].thread, NULL) != 0) {
+             fprintf(stderr, "Failed to join thread %u\n", i);
+         }
+-            free(mining_ctx.threads);
++            POOL_FREE(mining_ctx.threads);
+             return POW_STATUS_THREAD_ERROR;
+         }
+
+@@ -750,7 +755,7 @@
+         }
+     }
+
+-    free(mining_ctx.threads);
++    POOL_FREE(mining_ctx.threads);
+     return mining_ctx.result_found ? POW_STATUS_SUCCESS : POW_STATUS_NOT_FOUND;
+ }
+
+@@ -963,7 +968,7 @@
+         }
+     }
+
+-        free(system->proofs);
++        POOL_FREE(system->proofs);
+         return POW_STATUS_SUCCESS;
+     }
+
+Only in crypto_pow_core.c: .memory_pool_init_call
+@@ -1000,6 +1005,11 @@
+ // =============================================================================
+
+ pow_status_t initialize_crypto_pow_system(crypto_pow_config_t *config) {
++    // Initialize memory pool system for optimized allocations
++    if (memory_pool_init() != 0) {
++        return POW_STATUS_MEMORY_ERROR;
++    }
++
+     CHECK_NULL_RETURN(config, POW_STATUS_INVALID_INPUT);
+
+     // Initialize OpenSSL
+@@ -1050,6 +1060,9 @@
+     EVP_cleanup();
+     ERR_free_strings();
+
++    // Cleanup memory pools and print statistics
++    pool_print_stats();
++    memory_pool_cleanup();
++
+     return POW_STATUS_SUCCESS;
+ }

@@ -377,7 +377,7 @@ async def main():
     validator.print_validation_report(results)
 
     # Save results to file
-    results_file = "/home/john/claude-backups/integrated_systems_validation_results.json"
+    results_file = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}integrated_systems_validation_results.json"
     with open(results_file, 'w') as f:
         json.dump(results, f, indent=2, default=str)
 
