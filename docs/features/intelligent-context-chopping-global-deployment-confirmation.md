@@ -15,7 +15,7 @@ The system is designed and deployed as a **universal optimization layer** that t
 ### 1️⃣ **Universal Wrapper System**
 ```bash
 # Global Claude command points to universal wrapper
-/usr/local/bin/claude -> /home/john/.local/bin/claude-ultimate
+/usr/local/bin/claude -> $HOME/.local/bin/claude-ultimate
 
 # Universal wrapper provides:
 - Automatic optimization injection

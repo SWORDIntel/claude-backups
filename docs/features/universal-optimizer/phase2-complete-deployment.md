@@ -260,7 +260,7 @@ System Health Score: 65/100 (improving)
 ```bash
 python3 -c "
 import sys
-sys.path.insert(0, '/home/john/.claude/system/modules')
+sys.path.insert(0, '$HOME/.claude/system/modules')
 from phase2_integration import get_phase2_system
 system = get_phase2_system()
 status = system.get_status()
@@ -275,7 +275,7 @@ for component, active in status['components'].items():
 # Clear all cache tiers
 python3 -c "
 import sys
-sys.path.insert(0, '/home/john/.claude/system/modules')
+sys.path.insert(0, '$HOME/.claude/system/modules')
 from universal_cache import get_universal_cache
 cache = get_universal_cache()
 cache.clear_expired()

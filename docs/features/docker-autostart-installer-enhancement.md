@@ -208,9 +208,9 @@ Or re-run the installer which will now apply this configuration.
 
 ## Related Files
 
-- `/home/john/claude-backups/claude-installer.sh` - Main installer with enhancement
-- `/home/john/claude-backups/docker-compose.yml` - Docker Compose configuration
-- `/home/john/claude-backups/database/check_learning_system.sh` - System status checker
+- `$HOME/claude-backups/claude-installer.sh` - Main installer with enhancement
+- `$HOME/claude-backups/docker-compose.yml` - Docker Compose configuration
+- `$HOME/claude-backups/database/check_learning_system.sh` - System status checker
 
 ## Changelog
 

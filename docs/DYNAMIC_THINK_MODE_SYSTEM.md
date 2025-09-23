@@ -111,7 +111,7 @@ Claude Execution → Performance Tracking → Learning Update → Response
 ### **Installation Process**
 ```bash
 # 1. Install think mode system
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 python3 lightweight_think_mode_selector.py
 
 # 2. Install Claude Code hooks
@@ -207,7 +207,7 @@ Performance Monitoring:    Real-time (no overhead)
 ### **Quick Start (5 minutes)**
 ```bash
 # 1. Navigate to claude-backups
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 
 # 2. Test lightweight system
 python3 lightweight_think_mode_selector.py

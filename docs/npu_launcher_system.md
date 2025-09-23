@@ -7,9 +7,9 @@ Provides Intel AI Boost NPU acceleration with comprehensive error handling and m
 
 ## Configuration
 
-- **Project Root**: `/home/john/claude-backups`
-- **Virtual Environment**: `/home/john/claude-backups/agents/src/python/.venv`
-- **Installation Directory**: `/home/john/.local/bin`
+- **Project Root**: `$HOME/claude-backups`
+- **Virtual Environment**: `$HOME/claude-backups/agents/src/python/.venv`
+- **Installation Directory**: `$HOME/.local/bin`
 - **OpenVINO Version**: `Unknown`
 - **NPU Available**: `False`
 - **Performance Target**: `25,000 ops/sec`
@@ -155,5 +155,5 @@ claude-npu --config
 
 For issues or questions:
 1. Run `claude-npu-health` for diagnostics
-2. Check logs at `/home/john/claude-backups/logs/npu_launcher.log`
-3. Review configuration at `/home/john/claude-backups/config/npu_launcher.json`
+2. Check logs at `$HOME/claude-backups/logs/npu_launcher.log`
+3. Review configuration at `$HOME/claude-backups/config/npu_launcher.json`

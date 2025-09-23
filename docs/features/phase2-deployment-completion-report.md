@@ -24,14 +24,14 @@ Phase 2 Context Chopping optimizations have been **successfully deployed** with 
 
 #### **RUST-INTERNAL Agent** ✅
 **Responsibility**: Semantic Context Clustering (DBSCAN)
-- **Implementation**: `/home/john/.claude/system/modules/semantic_clustering_engine.rs`
+- **Implementation**: `$HOME/.claude/system/modules/semantic_clustering_engine.rs`
 - **Technology**: DBSCAN clustering on 512-dimensional embeddings
 - **Performance**: 88% clustering accuracy
 - **Contribution**: High-performance clustering foundation
 
 #### **C-INTERNAL Agent** ✅  
 **Responsibility**: AVX2 Hardware Acceleration
-- **Implementation**: `/home/john/.claude/system/modules/optimizers/avx2_vector_operations.c`
+- **Implementation**: `$HOME/.claude/system/modules/optimizers/avx2_vector_operations.c`
 - **Technology**: Intel Meteor Lake AVX2 SIMD operations
 - **Performance**: 2.5x performance gain via hardware acceleration
 - **Contribution**: Vector processing optimization

@@ -27,7 +27,7 @@ sudo tpm2_getcap properties-fixed 2>&1 >> ~/tpm-integration-start.log || echo "T
 
 ```bash
 # Commit all current changes
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 git add -A
 git commit -m "checkpoint: Pre-TPM integration - system state before reboot"
 git push origin main
@@ -42,7 +42,7 @@ git checkout main
 
 ```bash
 # Make scripts executable
-cd /home/john/claude-backups/docs/features/tpm2-integration/scripts/
+cd $HOME/claude-backups/docs/features/tpm2-integration/scripts/
 chmod +x probe_tpm_capabilities.sh
 chmod +x tpm2_integration_demo.py
 
@@ -75,7 +75,7 @@ fi
 
 # Run capability probe
 echo -e "\n3. Running capability probe..."
-cd /home/john/claude-backups/docs/features/tpm2-integration/scripts/
+cd $HOME/claude-backups/docs/features/tpm2-integration/scripts/
 ./probe_tpm_capabilities.sh > ~/tpm-capabilities-post-reboot.log 2>&1
 echo "✓ Capability probe complete (see ~/tpm-capabilities-post-reboot.log)"
 
@@ -100,7 +100,7 @@ chmod +x ~/post-reboot-tpm-setup.sh
 # List current sessions/processes to restore after reboot
 cat > ~/pre-reboot-sessions.txt << EOF
 Current Working Sessions:
-- Claude-backups repository: /home/john/claude-backups
+- Claude-backups repository: $HOME/claude-backups
 - TPM integration docs: docs/features/tpm2-integration/
 - Important files:
   - Main integration guide: docs/features/tpm2-integration/README.md
@@ -108,7 +108,7 @@ Current Working Sessions:
   - Probe script: docs/features/tpm2-integration/scripts/probe_tpm_capabilities.sh
 
 Commands to run after reboot:
-1. cd /home/john/claude-backups
+1. cd $HOME/claude-backups
 2. ./post-reboot-tpm-setup.sh
 3. Review logs in home directory
 4. Continue with implementation
@@ -119,7 +119,7 @@ EOF
 
 ```bash
 # Create pre-integration backup
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 tar -czf ~/claude-backups-pre-tpm-$(date +%Y%m%d-%H%M%S).tar.gz \
     --exclude=venv \
     --exclude=node_modules \
@@ -184,7 +184,7 @@ After system restarts:
    ```
 4. **Run post-reboot script**:
    ```bash
-   cd /home/john/claude-backups
+   cd $HOME/claude-backups
    ~/post-reboot-tpm-setup.sh
    ```
 

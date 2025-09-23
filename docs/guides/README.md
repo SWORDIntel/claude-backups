@@ -149,7 +149,7 @@ export PATH="$HOME/.local/bin:$PATH"
 source ~/.bashrc
 
 # If agents not found
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 claude --register-agents
 
 # If permission issues

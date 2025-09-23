@@ -10,7 +10,7 @@
 
 1. **Shadowgit AVX2 Baseline**
    - Current: 930M lines/sec diff engine
-   - Location: `/home/john/shadowgit/c_src_avx2/`
+   - Location: `$HOME/shadowgit/c_src_avx2/`
    - Status: Production ready, working
 
 2. **Phase 3 Universal Optimizer Integration**
@@ -115,8 +115,8 @@ print(f"Acceleration: {result['performance']['acceleration']}")
 ### Direct Command Line
 ```bash
 # Use accelerated shadowgit with Phase 3
-cd /home/john/shadowgit/c_src_avx2
-make -f /home/john/claude-backups/Makefile.shadowgit all
+cd $HOME/shadowgit/c_src_avx2
+make -f $HOME/claude-backups/Makefile.shadowgit all
 ./shadowgit diff --phase3 file1.txt file2.txt
 ```
 

@@ -184,7 +184,7 @@ done
 ### File Structure Summary
 
 ```
-/home/john/claude-backups/
+$CLAUDE_PROJECT_ROOT/
 ├── shadowgit_phase3_integration.c      # C integration bridge (750+ lines)
 ├── shadowgit_accelerator.py            # Python orchestrator (650+ lines)
 ├── Makefile.shadowgit                  # Build system (200+ lines)

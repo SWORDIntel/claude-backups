@@ -120,7 +120,7 @@ When venv is activated:
 
 1. Run the installer to create the virtual environment:
    ```bash
-   cd /home/ubuntu/Documents/claude-backups
+   cd $CLAUDE_PROJECT_ROOT
    ./claude-installer.sh
    ```
 

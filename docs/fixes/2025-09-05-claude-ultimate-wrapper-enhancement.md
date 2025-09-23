@@ -4,7 +4,7 @@
 
 **Date**: 2025-09-05  
 **Agents**: PATCHER (surgical fixes) + CONSTRUCTOR (system building)  
-**Target**: `/home/john/.local/bin/claude-ultimate`  
+**Target**: `$HOME/.local/bin/claude-ultimate`  
 **Result**: Complete optimization system integration with 89 agent support
 
 ## ✂️ PATCHER Surgical Fixes Applied
@@ -94,7 +94,7 @@ validate_cache_system() {
 ## ✅ Verification Results
 
 ```bash
-$ /home/john/.local/bin/claude-ultimate --status
+$ $HOME/.local/bin/claude-ultimate --status
 
 Claude Ultimate Wrapper vv13.1 - FULL System Status
 ==========================================================

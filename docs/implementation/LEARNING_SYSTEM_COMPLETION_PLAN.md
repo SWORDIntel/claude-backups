@@ -42,7 +42,7 @@ learning-system:
 ```
 
 ### PHASE 2: API SERVER WRAPPER (8 hours)
-Create `/home/ubuntu/Documents/claude-backups/database/docker/learning_api_server.py`:
+Create `$CLAUDE_PROJECT_ROOT/database/docker/learning_api_server.py`:
 
 ```python
 from fastapi import FastAPI, HTTPException
@@ -134,7 +134,7 @@ curl -X POST http://localhost:8081/task \
 
 ### 1. Fix Volume Mounts
 ```bash
-cd /home/ubuntu/Documents/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 sed -i 's|./agents/src/python:/app/learning|./agents/src/python:/app/learning|' docker-compose.yml
 ```
 

@@ -24,7 +24,7 @@ Integration of Phase 3 Universal Optimizer (36.8x - 45.1x acceleration) with Sha
 ## Current System Assessment
 
 ### Shadowgit AVX2 Current State
-**Location**: `/home/john/shadowgit/c_src_avx2/`  
+**Location**: `$HOME/shadowgit/c_src_avx2/`  
 **Current Performance**: 930M lines/sec  
 
 #### Strengths

@@ -18,7 +18,7 @@
 ```bash
 check_prerequisites()
 ```
-- Validates Shadowgit AVX2 baseline at `/home/john/shadowgit/c_src_avx2/`
+- Validates Shadowgit AVX2 baseline at `$HOME/shadowgit/c_src_avx2/`
 - Checks hardware capabilities (AVX2, AVX-512, NPU)
 - Verifies Docker and memory requirements
 - Detects Intel Meteor Lake features
@@ -162,7 +162,7 @@ shadowgit diff file1.txt file2.txt
 shadowgit --phase3 diff large_file1.txt large_file2.txt
 
 # Run benchmarks
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 make -f Makefile.shadowgit benchmark
 python3 shadowgit_accelerator.py
 ```

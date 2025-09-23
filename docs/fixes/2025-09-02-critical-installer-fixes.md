@@ -55,13 +55,13 @@ fi
 
 ### 2. File Permissions Security Fix
 **Agent**: SECURITY  
-**File**: `/home/john/claude-backups/CLAUDE.md`  
+**File**: `$HOME/claude-backups/CLAUDE.md`  
 **Issue**: File created with dangerous 777 permissions  
 
 **Solution Applied**:
 ```bash
 # Corrected file permissions
-chmod 644 /home/john/claude-backups/CLAUDE.md
+chmod 644 $HOME/claude-backups/CLAUDE.md
 ```
 
 **Before**: `-rwxrwxrwx` (777) - All users could modify system documentation  
@@ -94,7 +94,7 @@ systemctl --user start shadowgit
 **Solution Applied**:
 ```bash
 # Verified actual agent count
-find /home/john/claude-backups/agents -maxdepth 1 -name "*.md" -not -name "Template.md" | wc -l
+find $HOME/claude-backups/agents -maxdepth 1 -name "*.md" -not -name "Template.md" | wc -l
 # Result: 86 agents (84 active + 2 templates)
 ```
 

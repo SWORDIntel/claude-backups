@@ -31,7 +31,7 @@ services:
 ```yaml
 # BAD - User-specific, non-portable
 volumes:
-  - /home/john/claude-backups/database/data:/var/lib/postgresql/data
+  - $HOME/claude-backups/database/data:/var/lib/postgresql/data
 ```
 
 #### ✅ USE: Relative or Environment-Based Paths

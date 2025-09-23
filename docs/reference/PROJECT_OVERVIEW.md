@@ -290,7 +290,7 @@ claude --fix                # Auto-fix issues
 
 #### Agents Not Found
 ```bash
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 claude --register-agents
 claude --status
 ```

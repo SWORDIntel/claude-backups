@@ -18,7 +18,7 @@ The bash output suppression issue was caused by:
 
 ### 1. Enhanced claude-wrapper-ultimate.sh (PRIMARY SOLUTION)
 
-**File**: `/home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh`
+**File**: `$CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh`
 
 **Key Modifications**:
 - **Direct I/O Environment Setup**: Added immediate export of critical I/O variables
@@ -49,7 +49,7 @@ exec "$claude_binary" "${args[@]}"
 
 ### 2. Wrapper Liberation Ultimate Script
 
-**File**: `/home/ubuntu/Downloads/claude-backups/scripts/wrapper-liberation-ultimate.sh`
+**File**: `$CLAUDE_PROJECT_ROOT/scripts/wrapper-liberation-ultimate.sh`
 
 **Features**:
 - **System Analysis**: Comprehensive hardware and path detection
@@ -59,7 +59,7 @@ exec "$claude_binary" "${args[@]}"
 
 ### 3. Direct Implementation Fix
 
-**File**: `/home/ubuntu/Downloads/claude-backups/claude-fixed`
+**File**: `$CLAUDE_PROJECT_ROOT/claude-fixed`
 
 **Features**:
 - **Minimal Wrapper**: Direct implementation without complex path discovery
@@ -68,7 +68,7 @@ exec "$claude_binary" "${args[@]}"
 
 ### 4. Enhanced Installation Script
 
-**File**: `/home/ubuntu/Downloads/claude-backups/scripts/full-wrapper-installation.sh`
+**File**: `$CLAUDE_PROJECT_ROOT/scripts/full-wrapper-installation.sh`
 
 **Features**:
 - **Pre-registration System**: Agent discovery at install time
@@ -131,25 +131,25 @@ exec "$claude_binary" "${args[@]}"
 ### Option 1: Use Enhanced Wrapper (RECOMMENDED)
 ```bash
 # The existing wrapper has been enhanced with bash output fixes
-/home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh /task "echo 'test'"
+$CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh /task "echo 'test'"
 ```
 
 ### Option 2: Install with Liberation Script
 ```bash
 # Run the comprehensive installation
-/home/ubuntu/Downloads/claude-backups/scripts/wrapper-liberation-ultimate.sh
+$CLAUDE_PROJECT_ROOT/scripts/wrapper-liberation-ultimate.sh
 ```
 
 ### Option 3: Use Direct Fix
 ```bash
 # Use the minimal direct implementation
-/home/ubuntu/Downloads/claude-backups/claude-fixed /task "echo 'test'"
+$CLAUDE_PROJECT_ROOT/claude-fixed /task "echo 'test'"
 ```
 
 ### Option 4: Install with Full Installer
 ```bash
 # Use the enhanced installation script
-/home/ubuntu/Downloads/claude-backups/scripts/full-wrapper-installation.sh
+$CLAUDE_PROJECT_ROOT/scripts/full-wrapper-installation.sh
 ```
 
 ## Expected Results

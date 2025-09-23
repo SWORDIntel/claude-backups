@@ -26,7 +26,7 @@ Network Overhead:      <100KB/s to database
 
 ```bash
 # Benchmark AVX2 performance
-cd /home/john/shadowgit
+cd $HOME/shadowgit
 ./benchmark_avx2.py --detailed
 
 # Monitor learning integration
@@ -50,7 +50,7 @@ This document details the technical integration between shadowgit's AVX2-optimiz
 
 ### 1. Shadowgit AVX2 Engine
 
-**Location**: `/home/john/shadowgit/c_src_avx2/`
+**Location**: `$HOME/shadowgit/c_src_avx2/`
 
 **Core Capabilities**:
 - **Throughput**: 930 million lines per second sustained
@@ -152,7 +152,7 @@ The Python collector interfaces with the C library:
 ```python
 class ShadowgitCollector:
     def __init__(self):
-        self.lib = ctypes.CDLL('/home/john/shadowgit/c_src_avx2/bin/libshadowgit_avx2.so')
+        self.lib = ctypes.CDLL('$HOME/shadowgit/c_src_avx2/bin/libshadowgit_avx2.so')
         self.mmap_file = mmap.mmap(-1, 64 * 1024 * 1024, access=mmap.ACCESS_WRITE)
         self.ring_buffer = RingBuffer(self.mmap_file)
         

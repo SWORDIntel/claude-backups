@@ -42,7 +42,7 @@ tpm2_getcap properties-fixed | grep TPM2_PT_MANUFACTURER
 
 ```bash
 # Execute post-reboot script
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 ~/post-reboot-tpm-setup.sh
 
 # Review output for any errors
@@ -54,7 +54,7 @@ cat ~/tpm-capabilities-post-reboot.log
 ### 1. Verify Algorithm Support
 
 ```bash
-cd /home/john/claude-backups/docs/features/tpm2-integration/scripts/
+cd $HOME/claude-backups/docs/features/tpm2-integration/scripts/
 
 # Test each discovered algorithm
 echo "Testing SHA3-256 (quantum-resistant)..."
@@ -109,7 +109,7 @@ tpm2_load -C claude_primary.ctx -r claude_sign.priv -u claude_sign.pub -c claude
 ### 1. Run Demo Script
 
 ```bash
-cd /home/john/claude-backups/docs/features/tpm2-integration/scripts/
+cd $HOME/claude-backups/docs/features/tpm2-integration/scripts/
 
 # Run with TPM access
 python3 tpm2_integration_demo.py
@@ -124,7 +124,7 @@ python3 tpm2_integration_demo.py
 
 ```python
 # Test TPM-secured hook processing
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 
 python3 << 'EOF'
 import sys

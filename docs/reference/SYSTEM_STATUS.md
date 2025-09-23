@@ -57,11 +57,11 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c \
 5. **Provides optimization recommendations** based on insights
 
 ### Active Repositories Being Monitored
-- `/home/john/claude-backups` - Claude framework
-- `/home/john/Z-FORGE` - Development projects  
-- `/home/john/LAT5150DRVMIL` - Hardware drivers
-- `/home/john/livecd-gen` - LiveCD generator
-- `/home/john/.oh-my-zsh` - Shell configuration
+- `$HOME/claude-backups` - Claude framework
+- `$HOME/Z-FORGE` - Development projects  
+- `$HOME/LAT5150DRVMIL` - Hardware drivers
+- `$HOME/livecd-gen` - LiveCD generator
+- `$HOME/.oh-my-zsh` - Shell configuration
 
 ## 📈 PERFORMANCE BENCHMARKS
 

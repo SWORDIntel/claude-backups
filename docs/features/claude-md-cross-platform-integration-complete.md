@@ -153,11 +153,11 @@ register_agents_with_task_tool  # Now includes CLAUDE.md verification
 ## Files Modified
 
 ### Primary Changes
-- `/home/john/claude-backups/claude-installer.sh` - Enhanced with 3 new functions and improved installation flow
+- `$HOME/claude-backups/claude-installer.sh` - Enhanced with 3 new functions and improved installation flow
 
 ### Supporting Files  
-- `/home/john/claude-backups/test_claude_md_integration.sh` - Test suite for validation
-- `/home/john/claude-backups/docs/features/claude-md-cross-platform-integration-complete.md` - This documentation
+- `$HOME/claude-backups/test_claude_md_integration.sh` - Test suite for validation
+- `$HOME/claude-backups/docs/features/claude-md-cross-platform-integration-complete.md` - This documentation
 
 ## Next Steps
 

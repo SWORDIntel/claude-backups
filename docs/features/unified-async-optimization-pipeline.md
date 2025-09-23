@@ -125,7 +125,7 @@ async def main():
         request_id="task-001",
         query="optimize database performance",
         context={
-            'project_root': '/home/john/claude-backups',
+            'project_root': '$HOME/claude-backups',
             'extensions': ['.py', '.sql', '.md']
         },
         max_tokens=8000,
@@ -280,7 +280,7 @@ pipeline_config = {
 # Falls back gracefully if shadowgit binary not found
 context_result = await context_chopper.get_context_for_request(
     query="fix authentication bug",
-    project_root="/home/john/claude-backups"
+    project_root="$HOME/claude-backups"
 )
 # Uses 930M lines/sec analysis when shadowgit available
 ```

@@ -3,7 +3,7 @@
 **Date**: 2025-09-01  
 **Time**: 02:45 UTC  
 **System**: Dell Latitude 5450 (Intel Core Ultra 7 155H)  
-**Repository**: /home/john/claude-backups
+**Repository**: $HOME/claude-backups
 
 ## Executive Summary
 
@@ -33,7 +33,7 @@ The Global Git Intelligence System has been successfully architected and partial
 #### 2. Git Configuration
 ```bash
 $ git config --global init.templatedir
-/home/john/.claude-global/git-template  ✅
+$HOME/.claude-global/git-template  ✅
 ```
 
 #### 3. PostgreSQL Global Schema
@@ -72,11 +72,11 @@ update_project_activity()                 ✅
 
 | Repository | Path | Hooks | Status |
 |-----------|------|-------|--------|
-| claude-backups | /home/john/claude-backups | Custom | ✅ Working |
-| livecd-gen | /home/john/livecd-gen | Global | ✅ Tested |
-| Z-FORGE | /home/john/Z-FORGE | None | ❌ Pending |
-| LAT5150DRVMIL | /home/john/LAT5150DRVMIL | None | ❌ Pending |
-| .oh-my-zsh | /home/john/.oh-my-zsh | None | ❌ Not needed |
+| claude-backups | $HOME/claude-backups | Custom | ✅ Working |
+| livecd-gen | $HOME/livecd-gen | Global | ✅ Tested |
+| Z-FORGE | $HOME/Z-FORGE | None | ❌ Pending |
+| LAT5150DRVMIL | $HOME/LAT5150DRVMIL | None | ❌ Pending |
+| .oh-my-zsh | $HOME/.oh-my-zsh | None | ❌ Not needed |
 
 ### 🔄 Pending Components
 
@@ -145,7 +145,7 @@ cpu_impact:
 All intelligence data is correctly stored within claude-backups:
 
 ```bash
-/home/john/claude-backups/
+$HOME/claude-backups/
 ├── shadowgit_global_handler.sh    # Source of truth ✅
 ├── database/
 │   ├── sql/
@@ -256,4 +256,4 @@ The design goal of portability has been achieved - the entire intelligence syste
 
 *Generated: 2025-09-01 02:45 UTC*  
 *System Version: 3.1.0*  
-*Report Location: `/home/john/claude-backups/docs/features/global-git-current-status.md`*
+*Report Location: `$HOME/claude-backups/docs/features/global-git-current-status.md`*

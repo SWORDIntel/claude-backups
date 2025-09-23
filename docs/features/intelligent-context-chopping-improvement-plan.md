@@ -13,7 +13,7 @@ This document outlines comprehensive improvement pathways for the Intelligent Co
 ## 📍 CURRENT SYSTEM STATUS
 
 ### Deployment Architecture
-- **Local Repository**: `/home/john/claude-backups/agents/src/python/intelligent_context_chopper.py`
+- **Local Repository**: `$HOME/claude-backups/agents/src/python/intelligent_context_chopper.py`
 - **Global System**: `~/.claude/system/modules/intelligent_context_chopper.py`
 - **Database**: PostgreSQL container on port 5433 with pgvector (512-dim embeddings)
 - **Cache System**: L1/L2/L3 multi-level caching with 98.1% hit rate
@@ -333,7 +333,7 @@ class AdaptivePatternLearner:
 ### Quick Start Implementation
 ```bash
 # 1. Create implementation branch
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 git checkout -b feature/context-chopping-v2
 
 # 2. Backup current system

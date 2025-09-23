@@ -184,10 +184,10 @@ The system automatically determines optimal acceleration strategies:
 
 ```bash
 # Initialize database schema
-docker exec -i claude-postgres psql -U claude_agent -d claude_agents_auth < /home/john/claude-backups/database/sql/team_gamma_learning_schema.sql
+docker exec -i claude-postgres psql -U claude_agent -d claude_agents_auth < $HOME/claude-backups/database/sql/team_gamma_learning_schema.sql
 
 # Test ML engine
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 python3 team_gamma_ml_engine.py
 
 # Test integration bridge

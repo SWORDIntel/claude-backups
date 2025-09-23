@@ -12,7 +12,7 @@
 #### Day 1: Hook System Integration
 ```bash
 # Morning: Setup TPM module
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 mkdir -p hooks/tpm
 cp docs/features/tpm2-integration/scripts/tpm2_integration_demo.py hooks/tpm/
 
@@ -123,7 +123,7 @@ cat > ~/.gitconfig.tpm << EOF
 [commit]
     gpgsign = true
 [gpg]
-    program = /home/john/claude-backups/hooks/tpm/git-tpm-sign.sh
+    program = $HOME/claude-backups/hooks/tpm/git-tpm-sign.sh
 EOF
 ```
 

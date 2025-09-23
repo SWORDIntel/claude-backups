@@ -39,7 +39,7 @@ The Claude Global Git Intelligence Bridge v10.0 is a high-performance, SIMD-opti
 
 ### Build from Source
 ```bash
-cd /home/john/claude-backups/agents/src/c
+cd $HOME/claude-backups/agents/src/c
 make -f Makefile.git_bridge clean
 make -f Makefile.git_bridge
 ```
@@ -85,7 +85,7 @@ When any of these are present, it operates in silent mode.
 The bridge is integrated with `shadowgit_global_handler.sh`:
 ```bash
 # Automatically used when available
-/home/john/claude-backups/shadowgit_global_handler.sh
+$HOME/claude-backups/shadowgit_global_handler.sh
 ```
 
 ## Architecture
@@ -220,10 +220,10 @@ done
 
 ## Files
 
-- **Source**: `/home/john/claude-backups/agents/src/c/git_bridge_avx_optimized.c`
-- **Makefile**: `/home/john/claude-backups/agents/src/c/Makefile.git_bridge`
-- **Binary**: `/home/john/claude-backups/agents/src/c/git_bridge_optimized`
-- **Integration**: `/home/john/claude-backups/shadowgit_global_handler.sh`
+- **Source**: `$HOME/claude-backups/agents/src/c/git_bridge_avx_optimized.c`
+- **Makefile**: `$HOME/claude-backups/agents/src/c/Makefile.git_bridge`
+- **Binary**: `$HOME/claude-backups/agents/src/c/git_bridge_optimized`
+- **Integration**: `$HOME/claude-backups/shadowgit_global_handler.sh`
 
 ## Status
 

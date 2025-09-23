@@ -99,7 +99,7 @@ chopper = IntelligentContextChopper(security_mode=True)
 # Test with large codebase
 context = chopper.get_context_for_request(
     query="Fix authentication bug in login system",
-    project_root="/home/john/claude-backups",
+    project_root="$HOME/claude-backups",
     file_extensions=['.py', '.md', '.yaml']
 )
 

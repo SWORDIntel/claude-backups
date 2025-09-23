@@ -85,7 +85,7 @@ All 21 integration tests pass:
 
 ### Full Installation (Recommended)
 ```bash
-cd /home/ubuntu/Documents/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 ./claude-installer.sh
 ```
 

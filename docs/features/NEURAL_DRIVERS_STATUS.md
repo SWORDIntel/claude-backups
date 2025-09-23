@@ -7,7 +7,7 @@
 ## ✅ Completed Pre-Reboot
 
 ### OpenVINO Neural Framework
-- ✅ **OpenVINO 2024.6.0** installed in official Claude venv (`/home/john/.local/share/claude/venv/`)
+- ✅ **OpenVINO 2024.6.0** installed in official Claude venv (`$HOME/.local/share/claude/venv/`)
 - ✅ **OpenVINO Dev tools** installed for model optimization
 - ✅ **Shadowgit integration** updated to use Claude venv OpenVINO
 - ✅ **Neural engine detection** functional (currently CPU-only)

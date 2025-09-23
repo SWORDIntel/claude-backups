@@ -24,7 +24,7 @@
 ```bash
 #!/bin/bash
 # Universal Claude Optimizer Wrapper
-CLAUDE_OPTIMIZER_ROOT="/home/john/claude-backups"
+CLAUDE_OPTIMIZER_ROOT="$HOME/claude-backups"
 export PYTHONPATH="$CLAUDE_OPTIMIZER_ROOT/agents/src/python:$PYTHONPATH"
 
 # Load optimization modules
@@ -92,7 +92,7 @@ docker run -d \
 
 # Apply optimized schema
 docker exec -i claude-universal-db psql -U claude -d claude_universal < \
-  /home/john/claude-backups/database/sql/final_comprehensive_schema.sql
+  $HOME/claude-backups/database/sql/final_comprehensive_schema.sql
 ```
 
 #### Afternoon (1200-1700)
@@ -129,7 +129,7 @@ docker exec -i claude-universal-db psql -U claude -d claude_universal < \
 # Global trie initialization
 from trie_keyword_matcher import TrieKeywordMatcher
 global_trie = TrieKeywordMatcher()
-global_trie.load_patterns("/home/john/claude-backups/config/enhanced_trigger_keywords.yaml")
+global_trie.load_patterns("$HOME/claude-backups/config/enhanced_trigger_keywords.yaml")
 # 11.3x performance improvement
 ```
 
@@ -331,7 +331,7 @@ graph TD
 ### Immediate Phase 1 Start
 ```bash
 # Initialize tactical execution
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 ./tools/start-universal-deployment.sh --phase 1 --agents all
 
 # Monitor progress

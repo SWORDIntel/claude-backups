@@ -1,7 +1,7 @@
 # TPM2 Integration Proposal for Claude-Backups Project
 
 **Date**: 2025-08-29  
-**Analysis**: Based on TPM2 tools discovered in `/home/john/livecd-gen/`  
+**Analysis**: Based on TPM2 tools discovered in `$HOME/livecd-gen/`  
 **Target**: Claude Agent Framework v7.0 with 76 specialized agents  
 **Hardware**: Intel Core Ultra 7 155H with TPM 2.0 (STMicroelectronics ST33TPHF2XSP)  
 
@@ -215,7 +215,7 @@ class TPMSecuredLearningSystem:
 
 3. **Create TPM security module**:
    ```bash
-   cp /home/john/livecd-gen/tpm-secure-boot-attestation.sh hooks/tpm_security.py
+   cp $HOME/livecd-gen/tpm-secure-boot-attestation.sh hooks/tpm_security.py
    # Convert to Python module for integration
    ```
 

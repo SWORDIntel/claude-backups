@@ -23,7 +23,7 @@
 - **Current Performance**: 3.2M lines/sec average, 8.1M peak (with OpenVINO)
 
 ### ✅ All Components Present
-- **Shadowgit AVX2 Binary**: FOUND and WORKING at /home/john/shadowgit/c_src_avx2/shadowgit
+- **Shadowgit AVX2 Binary**: FOUND and WORKING at $HOME/shadowgit/c_src_avx2/shadowgit
   - Baseline 930M lines/sec diff engine confirmed operational
   - Processing 7M+ lines/sec on test files
   - Phase 3 acceleration layer fully integrated
@@ -48,7 +48,7 @@ Current Status:
 shadowgit --benchmark
 
 # Test Phase 3 integration directly
-/home/john/claude-backups/shadowgit-phase3/shadowgit_phase3_test
+$HOME/claude-backups/shadowgit-phase3/shadowgit_phase3_test
 
 # Check PostgreSQL status
 docker ps | grep claude-postgres
@@ -63,7 +63,7 @@ shadowgit file1.txt file2.txt  # Will use Phase 3 acceleration
 shadowgit --no-phase3 file1.txt file2.txt  # Baseline 930M lines/sec
 
 # Direct AVX2 binary
-/home/john/shadowgit/c_src_avx2/shadowgit file1.txt file2.txt
+$HOME/shadowgit/c_src_avx2/shadowgit file1.txt file2.txt
 ```
 
 ## ✅ Integration Architecture Deployed

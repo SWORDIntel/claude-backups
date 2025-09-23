@@ -18,11 +18,11 @@ Every Git repository on your system is automatically monitored through:
 ### Monitored Repositories
 
 The system currently monitors:
-- `/home/john/claude-backups` - Claude agent framework
-- `/home/john/Z-FORGE` - Development projects
-- `/home/john/LAT5150DRVMIL` - Hardware drivers
-- `/home/john/livecd-gen` - LiveCD generator
-- `/home/john/.oh-my-zsh` - Shell configuration
+- `$HOME/claude-backups` - Claude agent framework
+- `$HOME/Z-FORGE` - Development projects
+- `$HOME/LAT5150DRVMIL` - Hardware drivers
+- `$HOME/livecd-gen` - LiveCD generator
+- `$HOME/.oh-my-zsh` - Shell configuration
 - **Any new repository** you create or clone
 
 ## What Gets Captured
@@ -117,7 +117,7 @@ tail -f ~/.claude-global/data/global-git.log | grep "claude-backups"
 
 ```bash
 # Launch interactive dashboard (if installed)
-cd /home/john/claude-backups/database
+cd $HOME/claude-backups/database
 python3 performance_dashboard.py
 ```
 

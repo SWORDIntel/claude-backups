@@ -26,7 +26,7 @@ Text Processing:       8 lines parallel
 
 ```bash
 # Run shadowgit benchmark
-cd /home/john/shadowgit
+cd $HOME/shadowgit
 python3 benchmark_avx2.py
 
 # Monitor real-time performance
@@ -181,7 +181,7 @@ metadata: {
 ### Building the AVX2 Library
 
 ```bash
-cd /home/john/shadowgit/c_src_avx2
+cd $HOME/shadowgit/c_src_avx2
 make clean && make
 
 # Verify compilation
@@ -204,7 +204,7 @@ if is_avx2_available():
 
 ```bash
 # Start shadowgit with AVX2 acceleration
-cd /home/john/shadowgit
+cd $HOME/shadowgit
 ./start_shadowgit.sh
 
 # Check status
@@ -342,22 +342,22 @@ The AVX2 integration for shadowgit has been a remarkable success, achieving perf
 
 ```bash
 # Build AVX2 library
-cd /home/john/shadowgit/c_src_avx2 && make
+cd $HOME/shadowgit/c_src_avx2 && make
 
 # Run benchmarks
-python3 /home/john/shadowgit/benchmark_avx2.py
+python3 $HOME/shadowgit/benchmark_avx2.py
 
 # Test integration
-python3 /home/john/shadowgit/test_avx2_integration.py
+python3 $HOME/shadowgit/test_avx2_integration.py
 
 # Start system
-/home/john/shadowgit/start_shadowgit.sh
+$HOME/shadowgit/start_shadowgit.sh
 
 # Check status
-/home/john/shadowgit/shadowgit_status.sh
+$HOME/shadowgit/shadowgit_status.sh
 
 # View logs
-tail -f /home/john/shadowgit/shadowgit.log
+tail -f $HOME/shadowgit/shadowgit.log
 ```
 
 ---

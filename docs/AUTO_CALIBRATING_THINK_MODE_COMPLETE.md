@@ -164,7 +164,7 @@ Learning Convergence: 95%+ accuracy after 100+ samples
 ### **Quick Start (5 minutes)**
 ```bash
 # 1. Navigate to system
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 
 # 2. Test auto-calibrating system
 python3 auto_calibrating_think_mode.py

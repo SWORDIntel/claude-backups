@@ -11,8 +11,8 @@ Successfully implemented a high-performance AVX2-optimized version of the shadow
 ## Implementation Details
 
 ### Location
-- **Primary Path**: `/home/john/shadowgit/c_src_avx2/`
-- **Original Path**: `/home/john/shadowgit/c_src/` (scalar version)
+- **Primary Path**: `$HOME/shadowgit/c_src_avx2/`
+- **Original Path**: `$HOME/shadowgit/c_src/` (scalar version)
 
 ### Core Components
 
@@ -102,7 +102,7 @@ shadowgit_avx2_diff_with_options("file1.txt", "file2.txt", &result, &opts);
 
 ```bash
 # Navigate to AVX2 implementation
-cd /home/john/shadowgit/c_src_avx2
+cd "$HOME/shadowgit/c_src_avx2"
 
 # Build release version
 make clean && make
@@ -143,7 +143,7 @@ Git Operation → Python Handler → AVX2 Diff Engine → Neural Processing
 
 ### AVX-512 Upgrade Path
 Once AVX-512 is restored via BIOS downgrade:
-1. Create `/home/john/shadowgit/c_src_avx512/`
+1. Create `$HOME/shadowgit/c_src_avx512/`
 2. Use 512-bit vectors for 16x parallel operations
 3. Expected performance: 2-4 billion lines/sec
 

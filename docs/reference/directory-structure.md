@@ -5,7 +5,7 @@
 This document provides a comprehensive overview of the Claude Agent Framework v7.0 directory structure, explaining the purpose and contents of each directory.
 
 ```
-/home/ubuntu/Downloads/claude-backups/
+$CLAUDE_PROJECT_ROOT/
 ├── 📄 Core Files
 │   ├── CLAUDE.md                    # Global project context and agent auto-invocation guide
 │   ├── README.md                    # Project overview and quick start
@@ -299,20 +299,20 @@ Data protection:
 ### Essential Files
 ```bash
 # Project documentation
-/home/ubuntu/Downloads/claude-backups/CLAUDE.md
-/home/ubuntu/Downloads/claude-backups/README.md
+$CLAUDE_PROJECT_ROOT/CLAUDE.md
+$CLAUDE_PROJECT_ROOT/README.md
 
 # Main wrapper
-/home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh
+$CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh
 
 # Installer
-/home/ubuntu/Downloads/claude-backups/claude-installer.sh
+$CLAUDE_PROJECT_ROOT/claude-installer.sh
 
 # Orchestrator
-/home/ubuntu/Downloads/claude-backups/agents/src/python/production_orchestrator.py
+$CLAUDE_PROJECT_ROOT/agents/src/python/production_orchestrator.py
 
 # Learning system
-/home/ubuntu/Downloads/claude-backups/integrated_learning_setup.py
+$CLAUDE_PROJECT_ROOT/integrated_learning_setup.py
 ```
 
 ### Agent Locations

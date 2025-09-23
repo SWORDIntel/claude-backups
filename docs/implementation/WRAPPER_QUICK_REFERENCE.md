@@ -2,7 +2,7 @@
 
 ## Installation (One Command)
 ```bash
-ln -sf /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh /home/ubuntu/.local/bin/claude && chmod +x /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh
+ln -sf $CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh $HOME/.local/bin/claude && chmod +x $CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh
 ```
 
 ## Essential Commands
@@ -84,7 +84,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ### Issue: Agents not found
 ```bash
 claude --register-agents
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 claude --status
 ```
 
@@ -122,9 +122,9 @@ The wrapper looks for agents in this order:
 
 | Component | Path |
 |-----------|------|
-| Wrapper Script | `/home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh` |
-| Symlink | `/home/ubuntu/.local/bin/claude` |
-| Agents Directory | `/home/ubuntu/Downloads/claude-backups/agents/` |
+| Wrapper Script | `$CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh` |
+| Symlink | `$HOME/.local/bin/claude` |
+| Agents Directory | `$CLAUDE_PROJECT_ROOT/agents/` |
 | Cache Directory | `~/.cache/claude/` |
 | Registry File | `~/.cache/claude/registered_agents.json` |
 

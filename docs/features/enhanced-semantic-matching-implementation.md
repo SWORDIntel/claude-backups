@@ -134,8 +134,8 @@ python3 test-enhanced-semantic-matching.py
 python3 docs/universal_docs_browser_enhanced.py docs/
 
 # Test with other repositories
-python3 docs/universal_docs_browser_enhanced.py /home/ubuntu/Documents/ARTICBASTION/docs
-python3 docs/universal_docs_browser_enhanced.py /home/ubuntu/Documents/livecd-gen/docs
+python3 docs/universal_docs_browser_enhanced.py $HOME/Documents/ARTICBASTION/docs
+python3 docs/universal_docs_browser_enhanced.py $HOME/Documents/livecd-gen/docs
 ```
 
 ## Status

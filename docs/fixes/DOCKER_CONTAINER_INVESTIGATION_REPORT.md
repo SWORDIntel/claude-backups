@@ -98,7 +98,7 @@ TOTAL TABLES: 10 tables across all schemas
 ERROR: relation "learning.agent_metrics" does not exist
 TIME RANGE: 2025-09-17 08:16:06 to 10:29:12
 AFFECTED OPERATIONS: Git hooks (pre-commit, post-commit, pre-push, post-checkout)
-REPOSITORIES: /home/john/SpyGram, /home/john/TSM, /home/john/VoiceStand
+REPOSITORIES: $HOME/SpyGram, $HOME/TSM, $HOME/VoiceStand
 ```
 
 ### Schema Evolution Issue

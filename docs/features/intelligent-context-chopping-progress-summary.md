@@ -15,7 +15,7 @@ The Intelligent Context Chopping system reduces large codebases to optimal conte
 **Objective**: Understand current system deployment and capabilities
 
 **Findings**:
-- ✅ System deployed both locally (`/home/john/claude-backups/`) and globally (`~/.claude/system/`)
+- ✅ System deployed both locally (`$HOME/claude-backups/`) and globally (`~/.claude/system/`)
 - ✅ PostgreSQL with pgvector (512-dim embeddings) operational on port 5433
 - ✅ Git hooks integrated for automatic processing
 - ✅ 98.1% cache hit rate across L1/L2/L3 levels
@@ -146,7 +146,7 @@ Performance Gains:
 
 ### Files Created:
 ```
-/home/john/claude-backups/
+$HOME/claude-backups/
 ├── implement_phase1_optimizations.py (Main implementation)
 ├── test_phase1_performance.py (Performance validation)
 ├── phase1_optimization_results.json (Results tracking)

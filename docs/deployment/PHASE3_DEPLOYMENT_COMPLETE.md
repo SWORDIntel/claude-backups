@@ -105,7 +105,7 @@ Claude Code System v10.0
 
 ### 2. Test Orchestrator
 ```bash
-python3 /home/john/claude-backups/phase2-orchestrator-test.py
+python3 $HOME/claude-backups/phase2-orchestrator-test.py
 # Should show: 84 agents discovered, bridge available
 ```
 

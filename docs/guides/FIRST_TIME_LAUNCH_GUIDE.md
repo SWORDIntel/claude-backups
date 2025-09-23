@@ -5,7 +5,7 @@
 ### **1. Activate Environment**
 ```bash
 # Navigate to project
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 
 # Activate virtual environment 
 source venv/bin/activate
@@ -23,7 +23,7 @@ python3 postgresql_learning_system.py dashboard
 ### **3. Launch Production Orchestrator** (New Terminal)
 ```bash
 # In a new terminal/tab
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 source venv/bin/activate
 cd agents/src/python
 
@@ -34,7 +34,7 @@ python3 production_orchestrator.py
 ### **4. Launch Hybrid Bridge Manager** (New Terminal)
 ```bash
 # In another new terminal/tab
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 source venv/bin/activate
 cd agents/src/python
 
@@ -47,7 +47,7 @@ python3 hybrid_bridge_manager.py
 ### **Phase 1: Environment Setup**
 ```bash
 # Ensure you're in the project root
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 
 # Verify virtual environment exists
 ls -la venv/
@@ -119,7 +119,7 @@ print('📊 System ready for queries and orchestration')
 #### **Start Docker Containers (if Docker available)**
 ```bash
 # Return to project root
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 
 # Check Docker status
 docker --version && docker-compose --version

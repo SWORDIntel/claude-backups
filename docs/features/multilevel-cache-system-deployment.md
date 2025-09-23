@@ -67,7 +67,7 @@ The system uses multiple Redis instances for different purposes:
 
 ```bash
 # Run the Redis setup script
-cd /home/john/claude-backups/database
+cd $HOME/claude-backups/database
 python3 setup_redis_cache.py
 ```
 
@@ -85,7 +85,7 @@ Ensure PostgreSQL is running with pgvector extension:
 docker ps | grep claude-postgres
 
 # If not running, start the container
-cd /home/john/claude-backups/database
+cd $HOME/claude-backups/database
 docker-compose -f docker/docker-compose.yml up -d postgres
 
 # Verify pgvector extension
@@ -342,7 +342,7 @@ print(f"  Target Achieved: {stats['target_hit_rate_achieved']}")
 ### Running Performance Benchmarks
 
 ```bash
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 python3 cache_performance_benchmark.py
 ```
 

@@ -62,7 +62,7 @@ The enhanced DOCGEN agent now:
 
 ## Files Modified
 
-- `/home/ubuntu/Documents/claude-backups/agents/DOCGEN.md` - Enhanced with mandatory file-saving requirements
+- `$CLAUDE_PROJECT_ROOT/agents/DOCGEN.md` - Enhanced with mandatory file-saving requirements
 
 ## Status
 

@@ -69,7 +69,7 @@ global_installation:  # Minimal footprint on host system
     - logs/              # Temporary logs (rotated)
 
 claude_backups_repository:  # All intelligence stays here
-  /home/john/claude-backups/:
+  $HOME/claude-backups/:
     - shadowgit_global_handler.sh    # Main handler script
     - database/sql/                   # Learning schemas
     - database/data/exports/          # Exported learning data
@@ -145,7 +145,7 @@ All hooks are symlinks to `shadowgit_global_handler.sh` which routes to appropri
 ```bash
 # Verify git template directory
 git config --global init.templatedir
-# Output: /home/john/.claude-global/git-template
+# Output: $HOME/.claude-global/git-template
 
 # Check hooks installation
 ls -la ~/.claude-global/git-template/hooks/
@@ -171,7 +171,7 @@ To integrate existing repositories:
 
 ```bash
 # Method 1: Use installer (recommended)
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 ./claude-installer.sh --install-global-git
 
 # Method 2: Manual per-repository
@@ -299,7 +299,7 @@ docker ps | grep claude-postgres
 # Should show container running on port 5433
 
 # If not running:
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 ./database/start_learning_database.sh
 ```
 
@@ -335,7 +335,7 @@ Logs in `~/.claude-global/logs/` should be rotated regularly:
 Learning data is automatically exported on git push. Manual export:
 
 ```bash
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 ./database/export_docker_learning_data.sh
 git add database/sql/exports/
 git commit -m "data: Manual learning data export"
@@ -346,7 +346,7 @@ git commit -m "data: Manual learning data export"
 When updating the handler script:
 
 ```bash
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 # Edit shadowgit_global_handler.sh
 cp shadowgit_global_handler.sh ~/.claude-global/git-template/hooks/
 # Changes apply immediately to all repositories
@@ -422,4 +422,4 @@ All intelligence data remains within the claude-backups repository, ensuring tha
 
 *Last Updated: 2025-09-01*  
 *System Version: 3.1.0*  
-*Documentation Location: `/home/john/claude-backups/docs/features/global-git-intelligence-system.md`*
+*Documentation Location: `$HOME/claude-backups/docs/features/global-git-intelligence-system.md`*

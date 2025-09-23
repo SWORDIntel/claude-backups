@@ -2,7 +2,7 @@
 
 **Date**: August 30, 2025  
 **Status**: ✅ INTEGRATED with Hook System  
-**Location**: `/home/john/claude-backups/hooks/shadowgit/`
+**Location**: `$HOME/claude-backups/hooks/shadowgit/`
 
 ## Executive Summary
 
@@ -70,7 +70,7 @@ The system supports:
 export CLAUDE_AGENT_NAME="GIT"
 export CLAUDE_TASK_TYPE="commit"
 export CLAUDE_START_TIME=$(date +%s.%N)
-python3 /home/john/claude-backups/hooks/track_agent_performance.py
+python3 $HOME/claude-backups/hooks/track_agent_performance.py
 ```
 
 Only tracks basic Git metrics, no neural acceleration.
@@ -82,7 +82,7 @@ Only tracks basic Git metrics, no neural acceleration.
 1. **Hook Enhancement**
    ```bash
    # Could add to post-commit:
-   python3 /home/john/claude-backups/hooks/shadowgit/shadowgit-unified-system.py \
+   python3 $HOME/claude-backups/hooks/shadowgit/shadowgit-unified-system.py \
        --hook-mode --operation=commit
    ```
 

@@ -78,6 +78,7 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 
 **Path:** `technical/`
 - [`picmcs-v3-technical-specification.md`](technical/picmcs-v3-technical-specification.md) - **NEW: PICMCS v3.0 Technical Specification**
+- [`military-crypto-integration-architecture.md`](technical/military-crypto-integration-architecture.md) - **NEW: Military Crypto System Integration**
 - [`shadowgit-avx2-learning-integration.md`](technical/shadowgit-avx2-learning-integration.md) - AVX2 shadowgit integration
 - [`docker-containerization-best-practices.md`](technical/docker-containerization-best-practices.md) - Docker best practices
 
@@ -99,6 +100,7 @@ docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SE
 
 #### 🔴 ACTIVE SYSTEMS
 - [`picmcs-v3-hardware-adaptive-context-chopping.md`](features/picmcs-v3-hardware-adaptive-context-chopping.md) - **NEW: PICMCS v3.0 (85x performance, universal hardware support)**
+- [`../docu/military-crypto-system/`](../docu/military-crypto-system/) - **NEW: Military-Grade Crypto System (1000+ vps, TPM2 acceleration)**
 - [`shadowgit-avx2-integration.md`](features/shadowgit-avx2-integration.md) - **ONLINE: AVX2 Shadowgit (142.7B lines/sec)**
 - [`docker-learning-system-status.md`](features/docker-learning-system-status.md) - **RUNNING: Docker PostgreSQL Learning System**
 - [`learning-data-flow.md`](features/learning-data-flow.md) - **ACTIVE: Automatic data export/import**

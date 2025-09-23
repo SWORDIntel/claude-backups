@@ -10,24 +10,24 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 
 # Solution 2: Recreate symlink
-ln -sf /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh ~/.local/bin/claude
-chmod +x /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh
+ln -sf $CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh ~/.local/bin/claude
+chmod +x $CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh
 
 # Solution 3: Use full path
-/home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh --help
+$CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh --help
 ```
 
 ### Issue: No agents found / 0 agents detected
 ```bash
 # Solution 1: Register agents manually
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 claude --register-agents
 
 # Solution 2: Check agents directory
 ls -la agents/*.md | wc -l  # Should show 71
 
 # Solution 3: Set agents directory explicitly
-export CLAUDE_AGENTS_DIR="/home/ubuntu/Downloads/claude-backups/agents"
+export CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
 claude --agents
 ```
 
@@ -81,7 +81,7 @@ CLAUDE_DEBUG=true claude --status
 claude --agents
 
 # Check agent count
-find /home/ubuntu/Downloads/claude-backups/agents -name "*.md" | wc -l
+find $CLAUDE_PROJECT_ROOT/agents -name "*.md" | wc -l
 
 # Verify agent registry
 cat ~/.cache/claude/registered_agents.json | python3 -m json.tool | head -20
@@ -117,7 +117,7 @@ npm --version   # Should be installed
 python3 --version  # Should be 3.8+
 
 # Manual installation
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 ln -sf $(pwd)/claude-wrapper-ultimate.sh ~/.local/bin/claude
 chmod +x claude-wrapper-ultimate.sh
 ```
@@ -129,7 +129,7 @@ ls -la ~/.local/bin/claude
 
 # Recreate with absolute path
 rm ~/.local/bin/claude
-ln -sf /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh ~/.local/bin/claude
+ln -sf $CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh ~/.local/bin/claude
 
 # Test symlink
 ~/.local/bin/claude --version
@@ -156,7 +156,7 @@ CLAUDE_DEBUG=true claude --register-agents 2>&1 | grep "Registering"
 pwd
 
 # Set correct directory
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 export CLAUDE_PROJECT_ROOT=$(pwd)
 export CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
 
@@ -326,7 +326,7 @@ rm -f ~/.local/bin/claude
 rm -f ~/.local/bin/claude-*
 
 # Reinstall
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 ./claude-installer.sh --full
 
 # Or manual
@@ -351,7 +351,7 @@ claude --safe [command]
 
 ### "No such file or directory"
 ```bash
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 pwd  # Verify location
 ls -la claude-wrapper-ultimate.sh
 ```
@@ -381,7 +381,7 @@ echo "Claude System Recovery Script"
 echo "=============================="
 
 # 1. Set paths
-export CLAUDE_ROOT="/home/ubuntu/Downloads/claude-backups"
+export CLAUDE_ROOT="$CLAUDE_PROJECT_ROOT"
 export PATH="$HOME/.local/bin:$PATH"
 
 # 2. Clean old installation
@@ -483,7 +483,7 @@ python3 --version
 claude --status
 env | grep CLAUDE
 ls -la ~/.local/bin/claude
-ls -la /home/ubuntu/Downloads/claude-backups/
+ls -la $CLAUDE_PROJECT_ROOT/
 
 # Error messages
 claude --debug [failing-command] 2>&1

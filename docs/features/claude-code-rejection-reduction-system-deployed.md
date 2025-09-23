@@ -229,7 +229,7 @@ The system includes 250+ test cases covering:
 
 ```bash
 # Run comprehensive test suite
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 python3 -m pytest tests/test_rejection_reduction.py -v --tb=short
 
 # Run performance benchmarks

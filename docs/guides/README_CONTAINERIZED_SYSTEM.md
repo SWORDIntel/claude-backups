@@ -11,7 +11,7 @@ Get the containerized PostgreSQL system running in under 5 minutes:
 
 ```bash
 # 1. Clone and navigate
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 
 # 2. Copy and customize environment
 cp .env.docker .env
@@ -100,7 +100,7 @@ sudo apt-get install -y lm-sensors htop iotop
 ### Method 1: Automated Setup (Recommended)
 ```bash
 # The system is ready to use - all files are already configured
-cd /home/ubuntu/Downloads/claude-backups
+cd $CLAUDE_PROJECT_ROOT
 
 # Verify installation
 ls -la docker-compose.yml

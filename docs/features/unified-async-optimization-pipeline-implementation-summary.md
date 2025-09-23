@@ -199,7 +199,7 @@ pipeline = await create_optimized_pipeline({
 request = OptimizationRequest(
     request_id="optimize-db",
     query="optimize database performance issues",
-    context={'project_root': '/home/john/claude-backups'}
+    context={'project_root': '$HOME/claude-backups'}
 )
 
 response = await pipeline.process_request(request)

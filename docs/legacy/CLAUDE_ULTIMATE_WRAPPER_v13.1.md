@@ -44,10 +44,10 @@ Preserves agent discovery by maintaining directory relationships:
 
 ```bash
 # Create symlink for global 'claude' command
-ln -sf /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh /home/ubuntu/.local/bin/claude
+ln -sf $CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh $HOME/.local/bin/claude
 
 # Make wrapper executable
-chmod +x /home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh
+chmod +x $CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh
 
 # Ensure ~/.local/bin is in PATH
 export PATH="$HOME/.local/bin:$PATH"  # Add to ~/.bashrc for persistence
@@ -195,7 +195,7 @@ claude --fix
 claude --register-agents
 
 # Check agents directory
-ls -la /home/ubuntu/Downloads/claude-backups/agents/
+ls -la $CLAUDE_PROJECT_ROOT/agents/
 ```
 
 #### Permission Issues
@@ -227,9 +227,9 @@ export CLAUDE_DEBUG=true
 ## Technical Details
 
 ### File Locations
-- **Wrapper**: `/home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh`
-- **Symlink**: `/home/ubuntu/.local/bin/claude`
-- **Agents**: `/home/ubuntu/Downloads/claude-backups/agents/`
+- **Wrapper**: `$CLAUDE_PROJECT_ROOT/claude-wrapper-ultimate.sh`
+- **Symlink**: `$HOME/.local/bin/claude`
+- **Agents**: `$CLAUDE_PROJECT_ROOT/agents/`
 - **Cache**: `~/.cache/claude/`
 - **Registry**: `~/.cache/claude/registered_agents.json`
 

@@ -14,7 +14,7 @@ The **PICMCS (Portable Intelligent Context Management and Chopping System) v3.0*
 ### Install PICMCS v3.0
 ```bash
 # Navigate to the implementation directory
-cd /home/john/claude-backups/agents/src/python
+cd "$CLAUDE_PROJECT_ROOT/agents/src/python"
 
 # Make executable
 chmod +x intelligent_context_chopper.py

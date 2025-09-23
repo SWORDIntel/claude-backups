@@ -67,7 +67,7 @@ docs/features/tpm2-integration/
 
 ### ✅ Completed Tasks
 1. **Research Phase**
-   - Analyzed TPM tools in `/home/john/livecd-gen`
+   - Analyzed TPM tools in `$HOME/livecd-gen`
    - Created comprehensive probe script
    - Discovered full hardware capabilities
 
@@ -113,7 +113,7 @@ docs/features/tpm2-integration/
 ### Before Reboot (Current Session)
 ```bash
 # 1. Final commit
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 git add -A
 git commit -m "feat: TPM2 integration complete - ready for implementation"
 git push
@@ -132,7 +132,7 @@ groups  # Should show 'tss'
 tpm2_getcap properties-fixed
 
 # 2. Run integration
-cd /home/john/claude-backups/docs/features/tpm2-integration/scripts/
+cd $HOME/claude-backups/docs/features/tpm2-integration/scripts/
 ./integrate_tpm2.sh
 
 # 3. Test implementation

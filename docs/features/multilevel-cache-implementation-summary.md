@@ -43,7 +43,7 @@ Multi-Level Cache Manager
 ### Core Components Implemented
 
 #### 1. AdaptiveLRUCache (L1)
-- **File**: `/home/john/claude-backups/agents/src/python/multilevel_cache_system.py`
+- **File**: `$HOME/claude-backups/agents/src/python/multilevel_cache_system.py`
 - **Lines**: 82-180
 - **Key Features**:
   - Self-adjusting capacity based on hit rate performance
@@ -53,7 +53,7 @@ Multi-Level Cache Manager
   - Comprehensive metrics tracking
 
 #### 2. DistributedRedisCache (L2)
-- **File**: `/home/john/claude-backups/agents/src/python/multilevel_cache_system.py`
+- **File**: `$HOME/claude-backups/agents/src/python/multilevel_cache_system.py`
 - **Lines**: 182-276
 - **Key Features**:
   - Async Redis operations with connection pooling
@@ -63,7 +63,7 @@ Multi-Level Cache Manager
   - Health monitoring and auto-recovery
 
 #### 3. PostgreSQLMaterializedViewCache (L3)
-- **File**: `/home/john/claude-backups/agents/src/python/multilevel_cache_system.py`
+- **File**: `$HOME/claude-backups/agents/src/python/multilevel_cache_system.py`
 - **Lines**: 278-398
 - **Key Features**:
   - Materialized views for complex queries
@@ -73,7 +73,7 @@ Multi-Level Cache Manager
   - Expired entry cleanup
 
 #### 4. MultiLevelCacheManager
-- **File**: `/home/john/claude-backups/agents/src/python/multilevel_cache_system.py`
+- **File**: `$HOME/claude-backups/agents/src/python/multilevel_cache_system.py`
 - **Lines**: 400-628
 - **Key Features**:
   - Unified cache interface across all levels
@@ -110,7 +110,7 @@ Multi-Level Cache Manager
 - Shared cache across multiple optimizer instances
 - 50-70% token reduction maintained with improved hit rates
 
-**Implementation**: Updated `/home/john/claude-backups/agents/src/python/token_optimizer.py`
+**Implementation**: Updated `$HOME/claude-backups/agents/src/python/token_optimizer.py`
 - Added multilevel_cache parameter to constructor
 - Enhanced get_cached_response() with L2/L3 fallback
 - Updated cache_response() to store in distributed cache
@@ -123,7 +123,7 @@ Multi-Level Cache Manager
 - Intelligent context invalidation on file changes
 - Significant performance improvement for repeated queries
 
-**Implementation**: Updated `/home/john/claude-backups/agents/src/python/intelligent_context_chopper.py`
+**Implementation**: Updated `$HOME/claude-backups/agents/src/python/intelligent_context_chopper.py`
 - Added multilevel_cache parameter to constructor
 - Enhanced get_context_for_request() with cache-first approach
 - Intelligent cache key generation based on query and file state
@@ -132,7 +132,7 @@ Multi-Level Cache Manager
 
 ### Redis Multi-Instance Setup
 
-**Implementation**: `/home/john/claude-backups/database/setup_redis_cache.py`
+**Implementation**: `$HOME/claude-backups/database/setup_redis_cache.py`
 
 **Features**:
 - Three optimized Redis instances:
@@ -165,7 +165,7 @@ Multi-Level Cache Manager
 
 ### Benchmark Suite
 
-**Implementation**: `/home/john/claude-backups/agents/src/python/cache_performance_benchmark.py`
+**Implementation**: `$HOME/claude-backups/agents/src/python/cache_performance_benchmark.py`
 
 **Test Coverage**:
 - ✅ Individual cache level performance
@@ -184,7 +184,7 @@ Multi-Level Cache Manager
 
 ### Quick Validation Results
 
-**Implementation**: `/home/john/claude-backups/agents/src/python/quick_cache_validation.py`
+**Implementation**: `$HOME/claude-backups/agents/src/python/quick_cache_validation.py`
 
 **Validation Results** (Simulated):
 - L1 Cache: 85.6% hit rate, 0.166ms avg latency (meets latency target)
@@ -197,7 +197,7 @@ Multi-Level Cache Manager
 
 ### Complete Documentation
 
-**Deployment Guide**: `/home/john/claude-backups/docs/features/multilevel-cache-system-deployment.md`
+**Deployment Guide**: `$HOME/claude-backups/docs/features/multilevel-cache-system-deployment.md`
 
 **Coverage**:
 - ✅ Prerequisites and system requirements
@@ -214,7 +214,7 @@ Multi-Level Cache Manager
 
 ```bash
 # 1. Setup Redis instances
-python3 /home/john/claude-backups/database/setup_redis_cache.py
+python3 $HOME/claude-backups/database/setup_redis_cache.py
 
 # 2. Initialize cache system
 from multilevel_cache_system import MultiLevelCacheManager
@@ -222,7 +222,7 @@ cache = MultiLevelCacheManager(config)
 await cache.initialize()
 
 # 3. Run performance validation
-python3 /home/john/claude-backups/agents/src/python/cache_performance_benchmark.py
+python3 $HOME/claude-backups/agents/src/python/cache_performance_benchmark.py
 ```
 
 ## Code Quality and Standards

@@ -460,7 +460,7 @@ services:
     container_name: agent-hardware
     privileged: true
     volumes:
-      - /home/john/claude-backups/agents:/agents:ro
+      - $HOME/claude-backups/agents:/agents:ro
     command: python3 /agents/agent-server.py --port 8001
     
   hardware-intel:
@@ -472,7 +472,7 @@ services:
       - render
     volumes:
       - /opt/openvino:/opt/openvino:ro
-      - /home/john/claude-backups/agents:/agents:ro
+      - $HOME/claude-backups/agents:/agents:ro
     command: python3 /agents/agent-server.py --port 8002 --agent HARDWARE-INTEL
     
   orchestrator:
@@ -482,7 +482,7 @@ services:
       - hardware-base
       - hardware-intel
     volumes:
-      - /home/john/claude-backups:/workspace:ro
+      - $HOME/claude-backups:/workspace:ro
     networks:
       - agents-net
     command: python3 /workspace/orchestration/docker-orchestrator.py

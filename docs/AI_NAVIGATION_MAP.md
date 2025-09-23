@@ -100,16 +100,16 @@ docker volume ls | grep claude
 
 ### Find Docker Commands
 ```bash
-grep -r "docker exec" /home/john/claude-backups/
-grep -r "docker-compose" /home/john/claude-backups/
-grep -r "5433" /home/john/claude-backups/  # Docker PostgreSQL port
+grep -r "docker exec" $HOME/claude-backups/
+grep -r "docker-compose" $HOME/claude-backups/
+grep -r "5433" $HOME/claude-backups/  # Docker PostgreSQL port
 ```
 
 ### Find Learning System Files
 ```bash
-find /home/john/claude-backups -name "*learning*.py"
-find /home/john/claude-backups -name "*docker*.yml"
-find /home/john/claude-backups -name "*.sql"
+find $HOME/claude-backups -name "*learning*.py"
+find $HOME/claude-backups -name "*docker*.yml"
+find $HOME/claude-backups -name "*.sql"
 ```
 
 ## 📊 Database Schema Location
@@ -132,7 +132,7 @@ find /home/john/claude-backups -name "*.sql"
 
 ### Start Learning System
 ```bash
-cd /home/john/claude-backups/database
+cd $HOME/claude-backups/database
 docker-compose -f docker/docker-compose.yml up -d
 ```
 

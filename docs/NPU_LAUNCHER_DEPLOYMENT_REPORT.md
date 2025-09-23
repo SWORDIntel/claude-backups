@@ -189,9 +189,9 @@ claude-npu --performance-test # Performance benchmark
 ```
 
 ### Log Files
-- **Main Log**: `/home/john/claude-backups/logs/npu_launcher.log`
-- **Health Results**: `/home/john/claude-backups/logs/npu_health_check.json`
-- **Configuration**: `/home/john/claude-backups/config/npu_launcher.json`
+- **Main Log**: `$HOME/claude-backups/logs/npu_launcher.log`
+- **Health Results**: `$HOME/claude-backups/logs/npu_health_check.json`
+- **Configuration**: `$HOME/claude-backups/config/npu_launcher.json`
 
 ### Troubleshooting
 1. **NPU Not Available**: System gracefully falls back to CPU mode

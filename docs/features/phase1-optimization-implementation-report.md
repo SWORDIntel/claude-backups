@@ -92,11 +92,11 @@ AVX2 Vector Operations Benchmark:
 ## 📁 FILES CREATED/MODIFIED
 
 ### New Files Created:
-1. `/home/john/claude-backups/implement_phase1_optimizations.py` - Main implementation script
-2. `/home/john/claude-backups/agents/src/python/integrated_context_optimizer.py` - Trie + Context integration
-3. `/home/john/claude-backups/agents/src/python/avx2_vector_operations.py` - AVX2 vector operations
-4. `/home/john/claude-backups/test_phase1_performance.py` - Performance validation
-5. `/home/john/claude-backups/phase1_optimization_results.json` - Results tracking
+1. `$HOME/claude-backups/implement_phase1_optimizations.py` - Main implementation script
+2. `$HOME/claude-backups/agents/src/python/integrated_context_optimizer.py` - Trie + Context integration
+3. `$HOME/claude-backups/agents/src/python/avx2_vector_operations.py` - AVX2 vector operations
+4. `$HOME/claude-backups/test_phase1_performance.py` - Performance validation
+5. `$HOME/claude-backups/phase1_optimization_results.json` - Results tracking
 
 ### Database Changes:
 - Added IVFFlat indexes to `git_intelligence` schema
@@ -175,7 +175,7 @@ Based on successful Phase 1 implementation, ready for:
 To verify optimizations are working:
 ```bash
 # Test AVX2 performance
-cd /home/john/claude-backups/agents/src/python
+cd $HOME/claude-backups/agents/src/python
 python3 avx2_vector_operations.py
 
 # Test integrated optimizer

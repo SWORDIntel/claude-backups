@@ -202,7 +202,7 @@ Hook System Status:
   • Performance: 127.3 ops/sec, 8.42ms latency
 
 ✓ Next Steps:
-  1. Add /home/john/.local/bin to your PATH if not already present
+  1. Add $HOME/.local/bin to your PATH if not already present
   2. Run: source ~/.bashrc  # or restart terminal
   3. Test: claude-enhanced --help
   4. Test hooks: claude-hooks --status
@@ -290,7 +290,7 @@ The 75% reduction in code size while adding major new features demonstrates the 
 
 ---
 
-**File**: `/home/john/claude-backups/claude-installer-refactored.sh`  
+**File**: `$HOME/claude-backups/claude-installer-refactored.sh`  
 **Version**: v11.0  
 **Status**: Production Ready  
 **Features**: Hook System Integration, TUI Dashboard, Performance Monitoring  

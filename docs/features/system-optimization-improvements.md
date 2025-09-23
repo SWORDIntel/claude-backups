@@ -189,7 +189,7 @@ GROUP BY metric_name;
 ### Quick Setup
 ```bash
 # Install improvements
-cd /home/john/claude-backups
+cd $HOME/claude-backups
 cp agents/src/python/*.py ~/.local/lib/python3.*/site-packages/
 
 # Update configuration

@@ -36,7 +36,7 @@ Pre-configured document sets for different user types:
 ### Starting the Browser
 ```bash
 # Navigate to docs directory
-cd /home/ubuntu/Documents/claude-backups/docs
+cd $CLAUDE_PROJECT_ROOT/docs
 
 # Run the browser
 python3 documentation_browser.py

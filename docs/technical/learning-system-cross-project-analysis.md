@@ -41,7 +41,7 @@ Schema: git_intelligence (17 tables)
 ### 2. **DEBUGGER ANALYSIS: Hook System Investigation**
 
 #### Global Hook Installation ✅ **CONFIRMED ACTIVE**
-- **Global Git Template**: `/home/john/.claude-global/git-template` configured
+- **Global Git Template**: `$HOME/.claude-global/git-template` configured
 - **Template Hooks**: All major hooks (post-commit, pre-commit, etc.) symlinked to `shadowgit_global_handler.sh`
 - **Cross-Project Coverage**: NEW repositories automatically get learning hooks
 
@@ -49,13 +49,13 @@ Schema: git_intelligence (17 tables)
 
 **Problem 1: Symlink Architecture Broken**
 ```bash
-Expected: /home/john/.config/claude/hooks -> /home/john/claude-backups/hooks (symlink)
-Actual:   /home/john/.config/claude/hooks = independent directory (NOT symlink)
+Expected: $HOME/.config/claude/hooks -> $HOME/claude-backups/hooks (symlink)
+Actual:   $HOME/.config/claude/hooks = independent directory (NOT symlink)
 ```
 
 **Problem 2: Dual Hook Systems**
-- **Claude-backups repo**: Uses `/home/john/claude-backups/hooks/` (730KB of hook files)
-- **Global config**: Uses `/home/john/.config/claude/hooks/` (1.7MB of hook files) 
+- **Claude-backups repo**: Uses `$HOME/claude-backups/hooks/` (730KB of hook files)
+- **Global config**: Uses `$HOME/.config/claude/hooks/` (1.7MB of hook files) 
 - **No synchronization** between the two hook directories
 
 **Problem 3: Data Collection Pipeline**
@@ -98,11 +98,11 @@ Result: NO data collection from cross-project activity
 ### **PHASE 1: Fix Symlink Architecture (HIGH PRIORITY)**
 ```bash
 # Replace broken directory with proper symlink
-rm -rf /home/john/.config/claude/hooks
-ln -sf /home/john/claude-backups/hooks /home/john/.config/claude/hooks
+rm -rf $HOME/.config/claude/hooks
+ln -sf $HOME/claude-backups/hooks $HOME/.config/claude/hooks
 
 # Verify symlink
-ls -la /home/john/.config/claude/hooks  # Should show symlink target
+ls -la $HOME/.config/claude/hooks  # Should show symlink target
 ```
 
 ### **PHASE 2: Integrate Global Hooks with Learning Database (CRITICAL)**

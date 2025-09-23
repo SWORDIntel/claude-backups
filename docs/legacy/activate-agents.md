@@ -36,7 +36,7 @@ The Claude Global Agents Bridge v10.0 is a unified coordination system that seam
 
 ```bash
 # Download the updated registration script
-cd /home/ubuntu/Documents/Claude
+cd $HOME/Documents/Claude
 wget <updated-script-url> -O register-custom-agents-v10.py
 
 # Make it executable
@@ -175,7 +175,7 @@ The system automatically selects the best execution path based on:
 ### C Binary Layer Not Available
 ```bash
 # Check if binary exists
-ls -la /home/ubuntu/Documents/Claude/agents/binary-communications-system/
+ls -la $HOME/Documents/Claude/agents/binary-communications-system/
 
 # Check if process is running
 ps aux | grep agent_bridge
@@ -187,10 +187,10 @@ export CLAUDE_EXECUTION_MODE=PYTHON_ONLY
 ### Tandem Orchestrator Issues
 ```bash
 # Verify orchestrator files
-ls -la /home/ubuntu/Documents/Claude/agents/src/python/
+ls -la $HOME/Documents/Claude/agents/src/python/
 
 # Test orchestrator directly
-python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.py --test
+python3 $HOME/Documents/Claude/agents/src/python/production_orchestrator.py --test
 ```
 
 ### Agent Not Found
@@ -199,7 +199,7 @@ python3 /home/ubuntu/Documents/Claude/agents/src/python/production_orchestrator.
 claude-install
 
 # Check agent file exists
-ls /home/ubuntu/Documents/Claude/agents/*.md
+ls $HOME/Documents/Claude/agents/*.md
 
 # View registry
 cat ~/.config/claude/project-agents.json | jq
@@ -253,7 +253,7 @@ export CLAUDE_TIMEOUT=300
 ## 🤝 Contributing
 
 To add a new agent:
-1. Create an `.md` file in `/home/ubuntu/Documents/Claude/agents/`
+1. Create an `.md` file in `$HOME/Documents/Claude/agents/`
 2. Include YAML frontmatter with metadata
 3. Specify supported execution modes
 4. Run `claude-install` to update registry

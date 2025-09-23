@@ -180,7 +180,7 @@ Configure in `~/.config/claude/natural-invocation.env` for pattern-based auto-tr
 
 ```bash
 # Core paths
-export CLAUDE_PROJECT_ROOT="/home/ubuntu/Downloads/claude-backups"
+export CLAUDE_PROJECT_ROOT="$CLAUDE_PROJECT_ROOT"
 export CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
 
 # Features

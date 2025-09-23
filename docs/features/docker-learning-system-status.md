@@ -57,7 +57,7 @@ docker exec claude-postgres psql -U claude_agent -d claude_learning -c "
 ### Git Push (Auto-Export)
 ```bash
 # Triggered by .git/hooks/pre-push
-/home/john/claude-backups/database/export_docker_learning_data.sh
+$CLAUDE_PROJECT_ROOT/database/export_docker_learning_data.sh
 
 # Exports to:
 database/sql/exports/csv/agent_metrics.csv
@@ -193,7 +193,7 @@ docker exec claude-postgres psql -U claude_agent -d claude_learning -c "\dx"
 CLAUDE_AGENT_NAME="TEST" \
 CLAUDE_TASK_TYPE="test_operation" \
 CLAUDE_START_TIME=$(date +%s.%N) \
-python3 /home/john/claude-backups/hooks/track_agent_performance.py
+python3 "$CLAUDE_PROJECT_ROOT/hooks/track_agent_performance.py"
 ```
 
 ### Fix Permission Issues

@@ -115,7 +115,7 @@ Proceed with installation? (y/n): y
 ### Minimal Setup (Wrapper Only)
 ```bash
 # Navigate to project
-cd /home/ubuntu/Downloads/claude-backups
+cd "$CLAUDE_PROJECT_ROOT"
 
 # Create symlink (preserves agent discovery)
 ln -sf $(pwd)/claude-wrapper-ultimate.sh ~/.local/bin/claude
@@ -184,7 +184,7 @@ CMD ["claude", "--status"]
 
 ### Git Pull Update
 ```bash
-cd /home/ubuntu/Downloads/claude-backups
+cd "$CLAUDE_PROJECT_ROOT"
 git pull origin main
 
 # Re-register agents if needed

@@ -9,7 +9,7 @@
 - **Default**: Auto-detected (current dir, script dir, common locations)
 - **Example**: 
 ```bash
-export CLAUDE_PROJECT_ROOT="/home/ubuntu/Downloads/claude-backups"
+export CLAUDE_PROJECT_ROOT="$(pwd)"  # or your project path
 ```
 
 #### CLAUDE_AGENTS_DIR
@@ -33,7 +33,7 @@ export CLAUDE_HOME="$HOME/.claude"
 - **Default**: Auto-detected (./venv, ./.venv, ../venv)
 - **Example**:
 ```bash
-export CLAUDE_VENV="/home/ubuntu/.local/share/claude/venv"
+export CLAUDE_VENV="$HOME/.local/share/claude/venv"
 ```
 
 ### Feature Flags
@@ -146,12 +146,12 @@ Add to your `~/.bashrc` for persistent settings:
 
 # Core paths
 export PATH="$HOME/.local/bin:$PATH"
-export CLAUDE_PROJECT_ROOT="/home/ubuntu/Downloads/claude-backups"
+export CLAUDE_PROJECT_ROOT="$(pwd)"  # or your project path
 export CLAUDE_HOME="$HOME/.claude-home"
 export CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
 
 # Virtual environment
-export CLAUDE_VENV="/home/ubuntu/.local/share/claude/venv"
+export CLAUDE_VENV="$HOME/.local/share/claude/venv"
 alias claude-venv='source $CLAUDE_VENV/bin/activate'
 
 # Feature flags
@@ -177,8 +177,8 @@ security() { claude agent security "$@"; }
 optimizer() { claude agent optimizer "$@"; }
 
 # GitHub sync shortcuts
-alias ghsync='/home/ubuntu/Downloads/claude-backups/github-sync.sh'
-alias ghstatus='/home/ubuntu/Downloads/claude-backups/github-sync.sh --status'
+alias ghsync='$CLAUDE_PROJECT_ROOT/github-sync.sh'
+alias ghstatus='$CLAUDE_PROJECT_ROOT/github-sync.sh --status'
 
 # Natural invocation (if configured)
 [[ -f ~/.config/claude/natural-invocation.env ]] && source ~/.config/claude/natural-invocation.env
