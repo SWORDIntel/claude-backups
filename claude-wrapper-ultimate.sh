@@ -48,6 +48,11 @@ export LEARNING_ADAPTIVE_STRATEGIES="${LEARNING_ADAPTIVE_STRATEGIES:-true}"
 
 # Docker Learning System Integration
 export LEARNING_DOCKER_ENABLED="${LEARNING_DOCKER_ENABLED:-true}"
+
+# Crypto POW System Integration v1.0
+export CRYPTO_POW_ENABLED="${CRYPTO_POW_ENABLED:-true}"
+export CRYPTO_POW_AUTO_START="${CRYPTO_POW_AUTO_START:-true}"
+export CRYPTO_POW_PATH="$CLAUDE_PROJECT_ROOT"
 export LEARNING_DOCKER_AUTO_START="${LEARNING_DOCKER_AUTO_START:-false}"
 export LEARNING_DOCKER_COMPOSE_PATH="$CLAUDE_PROJECT_ROOT/database/docker"
 
@@ -255,6 +260,33 @@ check_docker_learning_system() {
         return 0
     else
         return 2  # Docker available but container not running
+    fi
+}
+
+start_crypto_pow_system() {
+    if [[ "$CRYPTO_POW_ENABLED" != "true" ]]; then
+        return 0
+    fi
+
+    if [[ "$CRYPTO_POW_AUTO_START" != "true" ]]; then
+        echo "💡 Crypto POW system available but not auto-started. Set CRYPTO_POW_AUTO_START=true to enable." >&2
+        return 0
+    fi
+
+    echo "🔐 Starting Automated Cryptographic Proof-of-Work System..." >&2
+
+    # Start crypto system optimizer
+    if [[ -f "$CRYPTO_POW_PATH/crypto_system_optimizer.py" ]]; then
+        python3 "$CRYPTO_POW_PATH/crypto_system_optimizer.py" &
+        CRYPTO_PID=$!
+        echo "✅ Crypto POW system started (PID: $CRYPTO_PID)" >&2
+
+        # Store PID for cleanup
+        echo "$CRYPTO_PID" > "$CLAUDE_HOME/.crypto_pow.pid" 2>/dev/null || true
+        return 0
+    else
+        echo "❌ Crypto POW system not found at $CRYPTO_POW_PATH" >&2
+        return 1
     fi
 }
 
@@ -668,6 +700,9 @@ case "$1" in
         # PICMCS v3.0 context optimization for agent execution
         optimize_context "$@"
 
+        # Initialize Crypto POW system if enabled
+        start_crypto_pow_system
+
         # Initialize Docker learning system if enabled
         start_docker_learning_system
 
@@ -680,6 +715,9 @@ case "$1" in
         echo "Warning: --safe mode deprecated. Permission bypass always enabled for full functionality."
         echo "Running with permission bypass for optimal performance..."
         shift
+        # Initialize Crypto POW system if enabled
+        start_crypto_pow_system
+
         # Initialize Docker learning system if enabled
         start_docker_learning_system
 
@@ -740,12 +778,17 @@ case "$1" in
         echo "  LEARNING_ADAPTIVE_STRATEGIES=false - Disable adaptive strategy selection"
         echo "  LEARNING_DOCKER_ENABLED=false  - Disable Docker learning system"
         echo "  LEARNING_DOCKER_AUTO_START=true - Enable automatic Docker container startup"
+        echo "  CRYPTO_POW_ENABLED=true        - Enable cryptographic proof-of-work system"
+        echo "  CRYPTO_POW_AUTO_START=true     - Enable automatic crypto POW system startup"
         echo ""
         echo "Quick functions:"
         echo "  coder, director, architect, security"
         ;;
         
     *)
+        # Initialize Crypto POW system if enabled
+        start_crypto_pow_system
+
         # Initialize Docker learning system if enabled
         start_docker_learning_system
 

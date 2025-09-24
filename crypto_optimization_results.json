@@ -1,21 +1,21 @@
 {
-  "optimization_timestamp": 1758589182.4563684,
-  "total_optimization_time": 1.4900333881378174,
+  "optimization_timestamp": 1758694750.5960426,
+  "total_optimization_time": 2.541841983795166,
   "phases": {
     "auto_start": {
-      "status": "failed",
-      "error": "Traceback (most recent call last):\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 327, in <module>\n    exit(asyncio.run(main()))\n         ~~~~~~~~~~~^^^^^^^^\n  File \"/usr/lib/python3.13/asyncio/runners.py\", line 195, in run\n    return runner.run(main)\n           ~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.13/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/usr/lib/python3.13/asyncio/base_events.py\", line 725, in run_until_complete\n    return future.result()\n           ~~~~~~~~~~~~~^^\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 308, in main\n    optimizer = CryptoAutoStartOptimizer()\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 20, in __init__\n    self.logger = self._setup_logging()\n                  ~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/john/claude-backups/crypto_auto_start_optimizer.py\", line 29, in _setup_logging\n    logging.FileHandler('/var/log/crypto_auto_start_optimizer.log'),\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.13/logging/__init__.py\", line 1219, in __init__\n    StreamHandler.__init__(self, self._open())\n                                 ~~~~~~~~~~^^\n  File \"/usr/lib/python3.13/logging/__init__.py\", line 1248, in _open\n    return open_func(self.baseFilename, self.mode,\n                     encoding=self.encoding, errors=self.errors)\nPermissionError: [Errno 13] Permission denied: '/var/log/crypto_auto_start_optimizer.log'\n"
+      "status": "success",
+      "execution_time": 1758694749.2166977,
+      "optimizations_applied": [
+        "CPU governor optimization",
+        "Memory settings tuning",
+        "Thermal monitoring setup",
+        "Database connection pooling",
+        "Service startup sequence optimization"
+      ]
     },
     "performance_monitor": {
-      "status": "success",
-      "optimizations": [
-        "Async connection pooling (5-20 connections)",
-        "Batch metrics storage (50 records/batch)",
-        "ML-based performance prediction",
-        "Parallel system metrics collection",
-        "Advanced anomaly detection",
-        "Optimized monitoring interval (3 seconds)"
-      ]
+      "status": "failed",
+      "error": "Optimized monitor not found"
     },
     "analytics_dashboard": {
       "status": "failed",
