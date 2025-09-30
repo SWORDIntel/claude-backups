@@ -898,10 +898,13 @@ class ClaudeEnhancedInstaller:
             for strategy in install_strategies:
                 try:
                     self._print_info(f"Trying: {' '.join(strategy)}")
-                    self._run_command(strategy, timeout=300)
+                    if strategy[0] == 'sudo':
+                        self._run_sudo_command(strategy, timeout=300, purpose="installing npm package globally")
+                    else:
+                        self._run_command(strategy, timeout=300)
                     self._print_success("npm installation successful")
                     return True
-                except subprocess.CalledProcessError as e:
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                     self._print_warning(f"Strategy failed: {e}")
                     continue
 
@@ -948,13 +951,17 @@ class ClaudeEnhancedInstaller:
             for strategy in install_strategies:
                 try:
                     self._print_info(f"Trying: {' '.join(strategy)}")
-                    self._run_command(strategy, timeout=300)
+                    if strategy[0] == 'sudo':
+                        self._run_sudo_command(strategy, timeout=300, purpose="installing pip package globally")
+                    else:
+                        self._run_command(strategy, timeout=300)
                     self._print_success("pip installation successful")
                     return True
-                except subprocess.CalledProcessError as e:
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                     if "externally-managed-environment" in (e.stderr or ""):
                         self._print_warning("PEP 668 detected, falling back to pipx/venv")
                         return self._install_claude_pipx_venv()
+                    self._print_warning(f"Strategy failed: {e}")
                     continue
 
             self._print_error("All pip installation strategies failed")
