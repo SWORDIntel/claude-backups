@@ -405,15 +405,16 @@ class ClaudeEnhancedInstaller:
         except:
             return False
 
-    def _run_sudo_command(self, command: List[str], timeout: int = 30, purpose: str = "operation") -> subprocess.CompletedProcess:
+    def _run_sudo_command(self, command: List[str], timeout: int = 30, purpose: str = "operation", cwd: Optional[Path] = None) -> subprocess.CompletedProcess:
         """Run a command with sudo, prompting for password if needed"""
         # If we're already root, no sudo needed
         if os.geteuid() == 0:
-            return self._run_command(command[1:] if command[0] == "sudo" else command, timeout=timeout)
+            return self._run_command(command[1:] if command[0] == "sudo" else command, timeout=timeout, cwd=cwd)
 
         # First try without password (cached credentials)
         try:
-            return self._run_command(command, timeout=timeout)
+            # Use sudo -n for a non-interactive check
+            return self._run_command(["sudo", "-n"] + (command[1:] if command[0] == "sudo" else command), timeout=timeout, cwd=cwd)
         except subprocess.CalledProcessError:
             pass
 
@@ -434,7 +435,8 @@ class ClaudeEnhancedInstaller:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                cwd=cwd
             )
 
             stdout, stderr = process.communicate(input=password + "\n", timeout=timeout)
@@ -1630,6 +1632,48 @@ end
             self._print_error(f"Failed to update profile config: {e}")
             return False
 
+    def setup_python_venv(self) -> bool:
+        """Create a Python virtual environment and install dependencies."""
+        self._print_section("Setting up Python virtual environment")
+        try:
+            # Ensure python3-venv is installed
+            try:
+                self._run_command(["sudo", "apt", "install", "-y", "python3-venv"], timeout=120)
+            except subprocess.CalledProcessError:
+                try:
+                    self._run_command(["sudo", "apt-get", "install", "-y", "python3-venv"], timeout=120)
+                except subprocess.CalledProcessError:
+                    self._print_warning("Could not install python3-venv, which is required for virtual environments.")
+
+            # Create venv directory
+            if self.venv_dir.exists():
+                self._print_info(f"Virtual environment found at {self.venv_dir}. Skipping creation.")
+            else:
+                self.venv_dir.mkdir(parents=True, exist_ok=True)
+                # Create virtual environment
+                self._print_info(f"Creating venv at {self.venv_dir}")
+                self._run_command([sys.executable, "-m", "venv", str(self.venv_dir)], timeout=120)
+
+            # Install/upgrade dependencies
+            venv_pip = self.venv_dir / "bin" / "pip"
+            requirements_file = self.project_root / "requirements.txt"
+            if requirements_file.is_file():
+                self._print_info(f"Installing/upgrading dependencies from {requirements_file}...")
+                try:
+                    self._run_command([str(venv_pip), "install", "--upgrade", "pip"], timeout=120)
+                    self._run_command([str(venv_pip), "install", "-r", str(requirements_file)], timeout=1800)
+                    self._print_success("Dependencies from requirements.txt installed successfully.")
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+                    self._print_error(f"Failed to install dependencies: {e}")
+                    return False
+            else:
+                self._print_warning(f"requirements.txt not found at {requirements_file}. Skipping dependency installation.")
+
+            return True
+        except Exception as e:
+            self._print_error(f"Python venv setup failed: {e}")
+            return False
+
     def install_agents_system(self) -> bool:
         """Install the agent system using symlinks to preserve live updates"""
         self._print_section("Installing agent system")
@@ -1773,13 +1817,35 @@ exec claude "$@"
             self._print_error(f"Failed to create launch script: {e}")
             return False
 
+    def _get_docker_compose_command(self) -> Optional[List[str]]:
+        """Check for docker-compose or docker compose and return the command."""
+        # Try 'docker compose' (v2)
+        try:
+            if shutil.which("docker"):
+                result = self._run_command(["docker", "compose", "version"], check=False, timeout=10)
+                if result.returncode == 0:
+                    self._print_info("Found 'docker compose' (v2).")
+                    return ["docker", "compose"]
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+        # Try 'docker-compose' (v1)
+        if shutil.which("docker-compose"):
+            self._print_info("Found 'docker-compose' (v1).")
+            return ["docker-compose"]
+
+        self._print_warning("Neither 'docker compose' nor 'docker-compose' found.")
+        return None
+
     def install_docker_database(self) -> bool:
         """Install Docker-based PostgreSQL database with pgvector"""
         self._print_section("Installing Docker database system")
 
         try:
+            compose_cmd = self._get_docker_compose_command()
+
             # Check if Docker is available
-            if not shutil.which("docker"):
+            if not shutil.which("docker") or not compose_cmd:
                 self._print_info("Installing Docker and environment-specific packages...")
 
                 # Get environment-specific packages
@@ -1790,7 +1856,6 @@ exec claude "$@"
                 self._print_info(f"📦 Installing packages for {self.system_info.environment_type.value} environment: {', '.join(all_packages)}")
 
                 # Install Docker and environment packages using system package manager
-                package_list = " ".join(all_packages)
                 docker_install_strategies = [
                     ["sudo", "apt", "update", "&&", "sudo", "apt", "install", "-y"] + all_packages,
                     ["sudo", "apt-get", "update", "&&", "sudo", "apt-get", "install", "-y"] + all_packages,
@@ -1800,20 +1865,7 @@ exec claude "$@"
                 for strategy in docker_install_strategies:
                     try:
                         if "&&" in strategy:
-                            # Handle compound commands
-                            parts = []
-                            current_cmd = []
-                            for item in strategy:
-                                if item == "&&":
-                                    if current_cmd:
-                                        parts.append(current_cmd)
-                                        current_cmd = []
-                                else:
-                                    current_cmd.append(item)
-                            if current_cmd:
-                                parts.append(current_cmd)
-
-                            # Execute each part
+                            parts = [part.split() for part in " ".join(strategy).split(" && ")]
                             for cmd_part in parts:
                                 if cmd_part and cmd_part[0] == "sudo":
                                     self._run_sudo_command(cmd_part, timeout=300, purpose="installing Docker")
@@ -1831,6 +1883,13 @@ exec claude "$@"
                     self._print_warning("Could not install Docker, skipping database setup")
                     return False
 
+                # Re-check for compose command
+                compose_cmd = self._get_docker_compose_command()
+
+            if not compose_cmd:
+                self._print_error("Docker Compose is required but could not be found or installed.")
+                return False
+
             # Add user to docker group if not already
             try:
                 self._run_sudo_command(
@@ -1839,10 +1898,8 @@ exec claude "$@"
                     purpose="adding user to docker group"
                 )
                 self._print_info("Added user to docker group (may require logout/login)")
-            except subprocess.CalledProcessError as e:
+            except (subprocess.CalledProcessError, Exception) as e:
                 self._print_warning(f"Could not add user to docker group: {e}")
-            except Exception as e:
-                self._print_warning(f"Docker group setup failed: {e}")
 
             # Create database directory structure
             db_dir = self.project_root / "database"
@@ -1934,15 +1991,11 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
             init_file.write_text(init_sql)
 
             # Check for existing container and handle reinstall
-            existing_container = False
             try:
                 result = self._run_command(["docker", "ps", "-a", "--filter", "name=claude-postgres", "--format", "{{.Names}}"],
                                          check=False, timeout=10)
                 if "claude-postgres" in result.stdout:
-                    existing_container = True
                     self._print_info("Existing claude-postgres container detected - handling reinstall...")
-
-                    # Stop and remove existing container
                     self._run_command(["docker", "stop", "claude-postgres"], check=False, timeout=30)
                     self._run_command(["docker", "rm", "claude-postgres"], check=False, timeout=30)
                     self._print_info("Removed existing container for clean reinstall")
@@ -1951,8 +2004,8 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
 
             # Start database service
             self._print_info("Starting PostgreSQL database...")
-            self._run_command(["docker-compose", "-f", str(compose_file), "up", "-d"],
-                            cwd=docker_dir, timeout=120)
+            self._run_sudo_command(compose_cmd + ["-f", str(compose_file), "up", "-d"],
+                                   cwd=docker_dir, timeout=120, purpose="starting Docker database")
 
             # Wait for database to be ready
             self._print_info("Waiting for database to be ready...")
@@ -1962,11 +2015,9 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
                         "docker", "exec", "claude-postgres",
                         "pg_isready", "-U", "claude_agent", "-d", "claude_agents_auth"
                     ], check=False, timeout=5)
-
                     if result.returncode == 0:
                         self._print_success("Database is ready")
                         break
-
                     time.sleep(1)
                 except:
                     time.sleep(1)
@@ -2129,20 +2180,8 @@ esac
             learning_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "learning"
             learning_dir.mkdir(parents=True, exist_ok=True)
 
-            # Install learning dependencies in venv if available
-            if self.venv_dir.exists():
-                venv_pip = self.venv_dir / "bin" / "pip"
-                learning_packages = [
-                    "numpy", "scikit-learn", "psycopg2-binary",
-                    "pandas", "asyncpg", "sqlalchemy"
-                ]
-
-                for package in learning_packages:
-                    try:
-                        self._print_info(f"Installing {package}...")
-                        self._run_command([str(venv_pip), "install", package], timeout=120)
-                    except subprocess.CalledProcessError:
-                        self._print_warning(f"Could not install {package}")
+            # Learning dependencies are now installed via requirements.txt in setup_python_venv
+            self._print_info("Learning system dependencies are handled by the main venv setup.")
 
             # Create learning configuration
             learning_config = {
@@ -2301,20 +2340,8 @@ esac
                 self._print_warning("No think mode components found, creating minimal setup")
                 return self._create_minimal_think_mode_setup(think_mode_dir)
 
-            # Install additional dependencies in venv if available
-            if self.venv_dir.exists():
-                venv_pip = self.venv_dir / "bin" / "pip"
-                think_mode_packages = [
-                    "psycopg2-binary", "numpy", "scikit-learn",
-                    "asyncio", "aiofiles", "asyncpg"
-                ]
-
-                for package in think_mode_packages:
-                    try:
-                        self._print_info(f"Installing {package} for think mode...")
-                        self._run_command([str(venv_pip), "install", package], timeout=120)
-                    except subprocess.CalledProcessError:
-                        self._print_warning(f"Could not install {package}")
+            # Think mode dependencies are now installed via requirements.txt in setup_python_venv
+            self._print_info("Think mode dependencies are handled by the main venv setup.")
 
             # Deploy PostgreSQL schema if database is available
             if self._check_docker_postgres():
@@ -2783,7 +2810,12 @@ fi
             update_script.write_text(script_content)
             update_script.chmod(0o755)
 
-            # Add to cron (weekly check on Monday 8 AM)
+            # Add to cron if available
+            if not shutil.which("crontab"):
+                self._print_warning("`crontab` command not found. Skipping update scheduler setup.")
+                self._print_info("To enable automatic updates, please install a cron daemon (e.g., `sudo apt-get install cron`).")
+                return True
+
             try:
                 # Get current crontab
                 result = self._run_command(["crontab", "-l"], check=False)
@@ -2791,72 +2823,24 @@ fi
 
                 # Check if update job already exists
                 if "claude-update-checker" not in current_cron:
-                    # Add update check job
-                    new_cron_line = f"0 8 * * 1 {update_script} >/dev/null 2>&1"
-                    updated_cron = current_cron.rstrip() + "\n" + new_cron_line + "\n"
+                    new_cron_line = f"0 8 * * 1 {shlex.quote(str(update_script))} >/dev/null 2>&1"
+                    updated_cron = current_cron.strip() + "\n" + new_cron_line + "\n"
 
                     # Install new crontab
-                    process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True)
-                    process.communicate(input=updated_cron)
+                    process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True,
+                                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = process.communicate(input=updated_cron)
 
                     if process.returncode == 0:
-                        self._print_success("Update scheduler installed (weekly checks)")
+                        self._print_success("Update scheduler installed (weekly checks).")
                     else:
-                        self._print_warning("Could not install cron job")
+                        self._print_warning(f"Could not install cron job: {stderr.strip()}")
                 else:
-                    self._print_info("Update scheduler already installed")
-
-            except subprocess.CalledProcessError:
-                # Try to install cron if not available
-                self._print_info("crontab not available, attempting to install cron...")
-                try:
-                    # Install cron via system package manager
-                    cron_install_strategies = [
-                        ["sudo", "apt", "install", "-y", "cron"],
-                        ["sudo", "apt-get", "install", "-y", "cron"],
-                        ["sudo", "yum", "install", "-y", "cronie"],
-                        ["sudo", "dnf", "install", "-y", "cronie"]
-                    ]
-
-                    for strategy in cron_install_strategies:
-                        try:
-                            self._run_command(strategy, timeout=120)
-                            self._print_success("cron installed successfully")
-
-                            # Start cron service if systemd is available
-                            if self.system_info.has_systemd:
-                                try:
-                                    self._run_command(["sudo", "systemctl", "enable", "cron"], check=False)
-                                    self._run_command(["sudo", "systemctl", "start", "cron"], check=False)
-                                    self._print_info("cron service enabled and started")
-                                except:
-                                    pass
-
-                            # Retry crontab setup
-                            result = self._run_command(["crontab", "-l"], check=False)
-                            current_cron = result.stdout if result.returncode == 0 else ""
-
-                            if "claude-update-checker" not in current_cron:
-                                new_cron_line = f"0 8 * * 1 {update_script} >/dev/null 2>&1"
-                                updated_cron = current_cron.rstrip() + "\n" + new_cron_line + "\n"
-
-                                process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True)
-                                process.communicate(input=updated_cron)
-
-                                if process.returncode == 0:
-                                    self._print_success("Update scheduler installed after cron installation")
-                                else:
-                                    self._print_warning("Could not install cron job after cron installation")
-
-                            break
-
-                        except subprocess.CalledProcessError:
-                            continue
-                    else:
-                        self._print_warning("Could not install cron package")
-
-                except Exception:
-                    self._print_warning("Failed to install cron package")
+                    self._print_info("Update scheduler already installed.")
+            except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                self._print_warning(f"Could not set up cron job: {e}")
+                self._print_info("You can add the following line to your crontab manually:")
+                self._print_info(f"0 8 * * 1 {shlex.quote(str(update_script))} >/dev/null 2>&1")
 
             self._print_success("Update checker script created")
             return True
@@ -2877,6 +2861,13 @@ fi
 
         success_count = 0
         total_steps = 0
+
+        # Always set up the Python venv first
+        if not self.setup_python_venv():
+            self._print_error("Python virtual environment setup failed. Aborting installation.")
+            return False
+        success_count += 1
+        total_steps += 1
 
         # Step 1: Detect existing installations
         self._print_section("Detecting existing Claude installations")
