@@ -47,31 +47,58 @@ if [[ ! -f "$PYTHON_INSTALLER" ]]; then
     # Basic npm installation as fallback
     echo "Installing Claude Code via npm..."
     if command -v npm >/dev/null 2>&1; then
-        # Check if we can write to npm global directory
+        # Get npm global prefix
         NPM_PREFIX="$(npm config get prefix 2>/dev/null || echo '/usr/local')"
+        PACKAGE_PATH="$NPM_PREFIX/lib/node_modules/@anthropic-ai/claude-code"
 
-        if [[ ! -w "$NPM_PREFIX" ]] || [[ ! -w "$NPM_PREFIX/lib/node_modules" ]] 2>/dev/null; then
-            # Configure npm to use user-level directory
+        # Check if package already exists and is owned by root
+        NEEDS_USER_INSTALL=false
+        if [[ -d "$PACKAGE_PATH" ]]; then
+            OWNER=$(stat -c '%U' "$PACKAGE_PATH" 2>/dev/null || stat -f '%Su' "$PACKAGE_PATH" 2>/dev/null)
+            if [[ "$OWNER" == "root" ]] && [[ "$(whoami)" != "root" ]]; then
+                echo -e "${YELLOW}Found existing root-owned Claude Code installation${RESET}"
+                echo "Removing root-owned package to enable user-level installation..."
+                if sudo npm uninstall -g @anthropic-ai/claude-code >/dev/null 2>&1; then
+                    echo -e "${GREEN}✓ Removed root-owned package${RESET}"
+                else
+                    echo -e "${YELLOW}Warning: Could not remove root package, will install to user directory${RESET}"
+                fi
+                NEEDS_USER_INSTALL=true
+            fi
+        fi
+
+        # Test actual write capability by trying to create a test file
+        if [[ "$NEEDS_USER_INSTALL" == "false" ]]; then
+            TEST_FILE="$NPM_PREFIX/lib/node_modules/.npm-write-test-$$"
+            if ! touch "$TEST_FILE" 2>/dev/null; then
+                NEEDS_USER_INSTALL=true
+            else
+                rm -f "$TEST_FILE" 2>/dev/null
+            fi
+        fi
+
+        # Set up user-level npm if needed
+        if [[ "$NEEDS_USER_INSTALL" == "true" ]]; then
             echo "Setting up user-level npm directory to avoid permission issues..."
             if ! mkdir -p "$HOME/.npm-global"; then
                 echo -e "${YELLOW}Warning: Failed to create directory $HOME/.npm-global${RESET}"
-                echo "Attempting installation without custom prefix..."
+                echo "Will attempt installation with sudo..."
             elif ! npm config set prefix "$HOME/.npm-global"; then
                 echo -e "${YELLOW}Warning: Failed to configure npm prefix${RESET}"
-                echo "Continuing with default npm configuration..."
-            fi
+                echo "Will attempt installation with sudo..."
+            else
+                # Add to PATH if not already there
+                echo -e "${YELLOW}Adding npm global bin to PATH...${RESET}"
+                for config_file in "$HOME/.bashrc" "$HOME/.profile" "$HOME/.zshrc"; do
+                    if [[ -f "$config_file" ]] && ! grep -q '.npm-global/bin' "$config_file" 2>/dev/null; then
+                        echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$config_file"
+                    fi
+                done
 
-            # Add to PATH if not already there
-            echo -e "${YELLOW}Adding npm global bin to PATH...${RESET}"
-            for config_file in "$HOME/.bashrc" "$HOME/.profile" "$HOME/.zshrc"; do
-                if [[ -f "$config_file" ]] && ! grep -q '.npm-global/bin' "$config_file" 2>/dev/null; then
-                    echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> "$config_file"
+                # Update current session PATH if not already there
+                if [[ ":$PATH:" != *":$HOME/.npm-global/bin:"* ]]; then
+                    export PATH="$HOME/.npm-global/bin:$PATH"
                 fi
-            done
-
-            # Update current session PATH if not already there
-            if [[ ":$PATH:" != *":$HOME/.npm-global/bin:"* ]]; then
-                export PATH="$HOME/.npm-global/bin:$PATH"
             fi
         fi
 
@@ -81,21 +108,37 @@ if [[ ! -f "$PYTHON_INSTALLER" ]]; then
         if [[ $? -eq 0 ]]; then
             echo -e "${GREEN}✓ Claude Code installed successfully${RESET}"
             echo -e "${CYAN}You can now use 'claude' command${RESET}"
-            echo -e "${YELLOW}Note: You may need to restart your terminal or run: source ~/.bashrc${RESET}"
+            if [[ "$NEEDS_USER_INSTALL" == "true" ]]; then
+                echo -e "${YELLOW}Note: Installed to user directory. Restart your terminal or run: source ~/.bashrc${RESET}"
+            fi
         else
-            echo -e "${YELLOW}Installation failed. Trying with sudo...${RESET}"
+            echo -e "${YELLOW}Installation failed. Attempting with sudo...${RESET}"
 
             # Reset npm config to use system-wide settings for sudo
             npm config delete prefix 2>/dev/null
 
-            sudo npm install -g @anthropic-ai/claude-code
-            if [[ $? -eq 0 ]]; then
-                echo -e "${GREEN}✓ Claude Code installed successfully${RESET}"
+            # Try with sudo as last resort
+            if sudo npm install -g @anthropic-ai/claude-code; then
+                echo -e "${GREEN}✓ Claude Code installed successfully with sudo${RESET}"
                 echo -e "${CYAN}You can now use 'claude' command${RESET}"
-                echo -e "${YELLOW}Note: Installed to system-wide location with sudo${RESET}"
             else
-                echo -e "Error: Failed to install Claude Code even with elevated permissions"
-                echo -e "Please check npm installation and try manually: sudo npm install -g @anthropic-ai/claude-code"
+                echo -e "\n${YELLOW}═══════════════════════════════════════════════════${RESET}"
+                echo -e "${YELLOW}ERROR: Installation failed${RESET}"
+                echo -e "${YELLOW}═══════════════════════════════════════════════════${RESET}"
+                echo -e "\n${BOLD}Possible solutions:${RESET}"
+                echo -e "1. Clean up and try again:"
+                echo -e "   ${CYAN}sudo npm uninstall -g @anthropic-ai/claude-code${RESET}"
+                echo -e "   ${CYAN}rm -rf ~/.npm-global${RESET}"
+                echo -e "   ${CYAN}npm config delete prefix${RESET}"
+                echo -e "   ${CYAN}./install${RESET}"
+                echo -e "\n2. Manual installation to user directory:"
+                echo -e "   ${CYAN}mkdir -p ~/.npm-global${RESET}"
+                echo -e "   ${CYAN}npm config set prefix ~/.npm-global${RESET}"
+                echo -e "   ${CYAN}export PATH=~/.npm-global/bin:\$PATH${RESET}"
+                echo -e "   ${CYAN}npm install -g @anthropic-ai/claude-code${RESET}"
+                echo -e "\n3. System-wide installation (requires sudo):"
+                echo -e "   ${CYAN}sudo npm install -g @anthropic-ai/claude-code${RESET}"
+                echo -e "\n${YELLOW}═══════════════════════════════════════════════════${RESET}"
                 exit 1
             fi
         fi
