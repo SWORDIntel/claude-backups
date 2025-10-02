@@ -50,11 +50,14 @@ LIBS = $(OPENSSL_LIBS) $(PTHREAD_LIBS) $(REGEX_LIBS) $(MATH_LIBS)
 # INCLUDE PATHS AND DIRECTORIES
 # =============================================================================
 
+# Crypto POW module directory (relocated to hooks/crypto-pow/)
+CRYPTO_POW_DIR = hooks/crypto-pow
+
 # Include directories
-INCLUDES = -I. -I/usr/include/openssl -I/usr/include/pcre2
+INCLUDES = -I. -I$(CRYPTO_POW_DIR)/include -I/usr/include/openssl -I/usr/include/pcre2
 
 # Source directory
-SRC_DIR = .
+SRC_DIR = $(CRYPTO_POW_DIR)/src
 
 # Build directory
 BUILD_DIR = build
@@ -66,16 +69,16 @@ BIN_DIR = bin
 TEST_DIR = tests
 
 # =============================================================================
-# SOURCE FILES AND OBJECTS
+# SOURCE FILES AND OBJECTS (Updated for new crypto_pow location)
 # =============================================================================
 
-# Core source files
-CORE_SOURCES = crypto_pow_core.c
+# Core source files (now in hooks/crypto-pow/src/)
+CORE_SOURCES = $(SRC_DIR)/crypto_pow_core.c
 
-# Additional implementation files (to be created)
-PATTERN_SOURCES = crypto_pow_patterns.c
-BEHAVIORAL_SOURCES = crypto_pow_behavioral.c
-VERIFICATION_SOURCES = crypto_pow_verification.c
+# Additional implementation files
+PATTERN_SOURCES = $(SRC_DIR)/crypto_pow_patterns.c
+BEHAVIORAL_SOURCES = $(SRC_DIR)/crypto_pow_behavioral.c
+VERIFICATION_SOURCES = $(SRC_DIR)/crypto_pow_verification.c
 
 # All sources
 SOURCES = $(CORE_SOURCES) $(PATTERN_SOURCES) $(BEHAVIORAL_SOURCES) $(VERIFICATION_SOURCES)
@@ -138,21 +141,21 @@ $(BIN_DIR)/crypto_pow_verify_debug: $(ALL_OBJECTS) | $(BIN_DIR)
 	@echo "Debug build complete: $@"
 
 # Benchmark executable
-$(BIN_DIR)/crypto_pow_benchmark: $(ALL_OBJECTS) crypto_pow_benchmark.c | $(BIN_DIR)
+$(BIN_DIR)/crypto_pow_benchmark: $(ALL_OBJECTS) $(CRYPTO_POW_DIR)/examples/crypto_pow_benchmark.c | $(BIN_DIR)
 	@echo "Building benchmark executable..."
-	$(CC) $(CFLAGS) -o $@ $(ALL_OBJECTS) crypto_pow_benchmark.c $(LIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(ALL_OBJECTS) $(CRYPTO_POW_DIR)/examples/crypto_pow_benchmark.c $(LIBS)
 	@echo "Benchmark build complete: $@"
 
 # Test executable
-$(BIN_DIR)/crypto_pow_test: $(ALL_OBJECTS) crypto_pow_test.c | $(BIN_DIR)
+$(BIN_DIR)/crypto_pow_test: $(ALL_OBJECTS) $(CRYPTO_POW_DIR)/tests/crypto_pow_test.c | $(BIN_DIR)
 	@echo "Building test executable..."
-	$(CC) $(CFLAGS) -o $@ $(ALL_OBJECTS) crypto_pow_test.c $(LIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(ALL_OBJECTS) $(CRYPTO_POW_DIR)/tests/crypto_pow_test.c $(LIBS)
 	@echo "Test build complete: $@"
 
 # Security audit executable
 $(BIN_DIR)/crypto_pow_audit: $(ALL_OBJECTS) | $(BIN_DIR)
 	@echo "Building security audit executable..."
-	$(CC) $(CFLAGS) -o $@ $(ALL_OBJECTS) $(LIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(ALL_OBJECTS) $(LIBS)
 	@echo "Security audit build complete: $@"
 
 # =============================================================================
@@ -160,7 +163,7 @@ $(BIN_DIR)/crypto_pow_audit: $(ALL_OBJECTS) | $(BIN_DIR)
 # =============================================================================
 
 # Core implementation
-$(BUILD_DIR)/crypto_pow_core.o: crypto_pow_core.c crypto_pow_architecture.h | $(BUILD_DIR)
+$(BUILD_DIR)/crypto_pow_core.o: $(SRC_DIR)/crypto_pow_core.c $(CRYPTO_POW_DIR)/include/crypto_pow_architecture.h | $(BUILD_DIR)
 	@echo "Compiling core implementation..."
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 

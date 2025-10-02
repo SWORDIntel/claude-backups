@@ -12,7 +12,11 @@ import logging
 
 # Import our integrated systems
 from npu_coordination_bridge import NPUCoordinationBridge, CoordinationMode
-from shadowgit_performance_integration import ShadowgitPerformanceMonitor
+# Updated import path for relocated shadowgit module
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "hooks" / "shadowgit" / "python"))
+from performance_integration import ShadowgitPerformanceMonitor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

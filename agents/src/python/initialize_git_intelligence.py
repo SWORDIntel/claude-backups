@@ -375,6 +375,10 @@ class GitIntelligenceInitializer:
             if shadowgit_path.exists():
                 sys.path.append(str(shadowgit_path.parent))
                 try:
+                    # Updated to use new shadowgit module location
+                    from agent_path_resolver import get_shadowgit_root
+                    shadowgit_root = get_shadowgit_root()
+                    sys.path.insert(0, str(shadowgit_root / "python"))
                     from shadowgit_avx2 import ShadowgitAVX2
                     shadowgit = ShadowgitAVX2()
                     logger.info("✅ Shadowgit AVX2 integration verified")

@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 
 # Add necessary paths
 sys.path.insert(0, str(get_project_root()))
-sys.path.insert(0, str(get_project_root() / 'agents/src/python')
+sys.path.insert(0, str(get_project_root() / 'agents/src/python'))
 
 @dataclass
 class ShadowgitConfig:

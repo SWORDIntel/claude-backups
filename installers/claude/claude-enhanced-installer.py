@@ -1422,10 +1422,29 @@ main() {{
     # Build command with auto permission bypass
     local claude_args=()
 
-    # Add permission bypass if enabled
+    # Detect Claude version for feature compatibility
+    local claude_version=""
+    if command -v "$CLAUDE_BINARY" >/dev/null 2>&1; then
+        claude_version=$("$CLAUDE_BINARY" --version 2>/dev/null | grep -oP '\\d+\\.\\d+\\.\\d+' || echo "1.0.0")
+    fi
+
+    # Add permission bypass if enabled (support both old and new flags)
     if should_bypass_permissions; then
-        claude_args+=("--dangerously-skip-permissions")
-        log "Auto permission bypass enabled ({self.system_info.environment_type.value} environment detected)"
+        # Check if version 2.0+ for new permission mode flag
+        if [[ "$claude_version" == 2.* ]] || [[ "$claude_version" > "2." ]]; then
+            claude_args+=("--permission-mode" "bypassPermissions")
+            log "Permission bypass enabled (v2.0+ mode) - {self.system_info.environment_type.value} environment"
+        else
+            # Fallback to legacy flag for older versions
+            claude_args+=("--dangerously-skip-permissions")
+            log "Auto permission bypass enabled (legacy mode) - {self.system_info.environment_type.value} environment"
+        fi
+    fi
+
+    # Add checkpoint support for Claude 2.0+
+    if [[ "$claude_version" == 2.* ]] || [[ "$claude_version" > "2." ]]; then
+        # Enable checkpoints by default (can rewind with Esc Esc or /rewind)
+        export CLAUDE_CHECKPOINTS="${{CLAUDE_CHECKPOINTS:-true}}"
     fi
 
     # Add original arguments
@@ -1756,6 +1775,141 @@ end
         except Exception as e:
             self._print_error(f"Failed to install PICMCS system: {e}")
             return False
+
+    def install_shadowgit_module(self) -> bool:
+        """Install Shadowgit neural acceleration module with dependencies"""
+        self._print_section("Installing Shadowgit Module")
+
+        try:
+            shadowgit_dir = self.project_root / "hooks" / "shadowgit"
+
+            if not shadowgit_dir.exists():
+                self._print_warning("Shadowgit module not found - skipping")
+                return True  # Not critical for installation
+
+            # Install Python dependencies
+            requirements = [
+                ("openvino", "OpenVINO neural acceleration"),
+                ("psycopg2-binary", "PostgreSQL connectivity"),
+                ("numpy", "Numerical operations"),
+                ("watchdog", "File system monitoring"),
+            ]
+
+            self._print_info("Installing Shadowgit Python dependencies...")
+
+            pip_cmd = "pip3" if shutil.which("pip3") else "pip"
+            installed_count = 0
+
+            for package, description in requirements:
+                try:
+                    self._print_info(f"Installing {package} ({description})...")
+                    self._run_command([pip_cmd, "install", "--user", package], timeout=120)
+                    self._print_success(f"✓ {package}")
+                    installed_count += 1
+                except subprocess.CalledProcessError:
+                    self._print_warning(f"Could not install {package} (may already be installed)")
+
+            # Add shadowgit to shell PYTHONPATH
+            shadowgit_python = shadowgit_dir / "python"
+            if shadowgit_python.exists():
+                pythonpath_line = f'export PYTHONPATH="{shadowgit_python}:$PYTHONPATH"'
+
+                for config_file in self.system_info.shell_config_files:
+                    if config_file.exists():
+                        try:
+                            with open(config_file, 'r') as f:
+                                content = f.read()
+
+                            if str(shadowgit_python) not in content and "SHADOWGIT" not in content:
+                                with open(config_file, 'a') as f:
+                                    f.write(f'\n# Shadowgit Python module\n{pythonpath_line}\n')
+                                self._print_success(f"Added to {config_file.name}")
+                        except Exception as e:
+                            self._print_warning(f"Could not update {config_file.name}: {e}")
+
+            self._print_success(f"Shadowgit module installed ({installed_count} dependencies)")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Shadowgit installation failed: {e}")
+            return False
+
+    def install_crypto_pow_module(self) -> bool:
+        """Install Crypto POW module with cryptographic dependencies"""
+        self._print_section("Installing Crypto POW Module")
+
+        try:
+            crypto_pow_dir = self.project_root / "hooks" / "crypto-pow"
+
+            if not crypto_pow_dir.exists():
+                self._print_warning("Crypto POW module not found - skipping")
+                return True  # Not critical
+
+            # Install Python dependencies
+            requirements = [
+                ("asyncpg", "Async PostgreSQL driver"),
+                ("cryptography", "Cryptographic operations"),
+                ("pycryptodome", "Additional crypto functions"),
+            ]
+
+            self._print_info("Installing Crypto POW Python dependencies...")
+
+            pip_cmd = "pip3" if shutil.which("pip3") else "pip"
+            installed_count = 0
+
+            for package, description in requirements:
+                try:
+                    self._print_info(f"Installing {package} ({description})...")
+                    self._run_command([pip_cmd, "install", "--user", package], timeout=120)
+                    self._print_success(f"✓ {package}")
+                    installed_count += 1
+                except subprocess.CalledProcessError:
+                    self._print_warning(f"Could not install {package}")
+
+            self._print_success(f"Crypto POW module installed ({installed_count} dependencies)")
+            return True
+
+        except Exception as e:
+            self._print_error(f"Crypto POW installation failed: {e}")
+            return False
+
+    def compile_shadowgit_c_engine(self) -> bool:
+        """Compile Shadowgit C acceleration engine (optional)"""
+        self._print_section("Compiling Shadowgit C Engine")
+
+        try:
+            shadowgit_makefile = self.project_root / "hooks" / "shadowgit" / "Makefile"
+
+            if not shadowgit_makefile.exists():
+                self._print_warning("Shadowgit Makefile not found - skipping C compilation")
+                self._print_info("Python-only mode will be used")
+                return True  # Optional component
+
+            # Check if we have compiler
+            if not shutil.which("gcc") and not shutil.which("clang"):
+                self._print_warning("No C compiler found - skipping Shadowgit C engine")
+                self._print_info("Python fallback will be used")
+                return True
+
+            self._print_info("Compiling Shadowgit C acceleration engine...")
+
+            try:
+                self._run_command(
+                    ["make", "-f", str(shadowgit_makefile), "all"],
+                    cwd=str(shadowgit_makefile.parent),
+                    timeout=300
+                )
+                self._print_success("Shadowgit C engine compiled successfully")
+                self._print_info("AVX2/AVX-512 acceleration available")
+                return True
+            except subprocess.CalledProcessError as e:
+                self._print_warning("Shadowgit C compilation failed (optional feature)")
+                self._print_info("Python-only mode will still work")
+                return True  # Don't fail installation for optional component
+
+        except Exception as e:
+            self._print_warning(f"Shadowgit compilation skipped: {e}")
+            return True  # Don't fail installation
 
     def create_launch_script(self) -> bool:
         """Create convenient launch script with dynamic path resolution"""
@@ -2696,6 +2850,33 @@ if __name__ == "__main__":
             pass
         return None
 
+    def _detect_claude_features(self, version: str) -> Dict[str, bool]:
+        """Detect available features based on Claude Code version"""
+        try:
+            version_parts = [int(x) for x in version.split('.')]
+            major, minor = version_parts[0], version_parts[1] if len(version_parts) > 1 else 0
+
+            features = {
+                "checkpoints": major >= 2,  # 2.0+ has checkpointing
+                "permission_modes": major >= 2,  # 2.0+ has --permission-mode
+                "legacy_skip_permissions": True,  # All versions support legacy flag
+                "fork_session": major >= 2,  # 2.0+ has --fork-session
+                "agents_config": major >= 2,  # 2.0+ has --agents
+                "setting_sources": major >= 2,  # 2.0+ has --setting-sources
+                "mcp_strict": major >= 2,  # 2.0+ has --strict-mcp-config
+                "session_id": major >= 2,  # 2.0+ has --session-id
+                "vs_code_extension": major >= 2,  # 2.0+ has VS Code extension
+            }
+
+            return features
+        except Exception:
+            # Assume all features available if version detection fails
+            return {k: True for k in [
+                "checkpoints", "permission_modes", "legacy_skip_permissions",
+                "fork_session", "agents_config", "setting_sources",
+                "mcp_strict", "session_id", "vs_code_extension"
+            ]}
+
     def _get_latest_claude_version(self) -> Optional[str]:
         """Get latest available Claude Code version from npm"""
         try:
@@ -2976,6 +3157,24 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.install_picmcs_system():
+                success_count += 1
+
+        # Step 6.5: Install Shadowgit module (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_shadowgit_module():
+                success_count += 1
+
+        # Step 6.6: Install Crypto POW module (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_crypto_pow_module():
+                success_count += 1
+
+        # Step 6.7: Compile Shadowgit C engine (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.compile_shadowgit_c_engine():
                 success_count += 1
 
         # Step 7: Install Docker database (if in full mode)

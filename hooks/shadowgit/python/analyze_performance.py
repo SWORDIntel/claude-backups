@@ -76,8 +76,8 @@ class ShadowgitPerformanceAnalyzer:
         """Load test results from JSON files"""
         results = {}
         
-        # Load Shadowgit acceleration results
-        shadowgit_results_path = str(get_project_root() / "shadowgit-acceleration-results.json"
+        # Load Shadowgit acceleration results (updated path)
+        shadowgit_results_path = str(get_project_root() / "hooks/shadowgit/analysis/shadowgit-acceleration-results.json")
         if os.path.exists(shadowgit_results_path):
             try:
                 with open(shadowgit_results_path, 'r') as f:
@@ -86,7 +86,7 @@ class ShadowgitPerformanceAnalyzer:
                 print(f"Warning: Could not load Shadowgit results: {e}")
         
         # Load Phase 3 integration results
-        phase3_results_path = str(get_project_root() / "phase3-integration-results.json"
+        phase3_results_path = str(get_project_root() / "phase3-integration-results.json")
         if os.path.exists(phase3_results_path):
             try:
                 with open(phase3_results_path, 'r') as f:
@@ -336,7 +336,7 @@ class ShadowgitPerformanceAnalyzer:
             plt.tight_layout()
             
             # Save chart
-            output_path = str(get_project_root() / "shadowgit_performance_analysis.png"
+            output_path = str(get_project_root() / "hooks/shadowgit/analysis/shadowgit_performance_analysis.png")
             plt.savefig(output_path, dpi=150, bbox_inches='tight')
             print(f"Performance chart saved to: {output_path}")
             
@@ -401,7 +401,7 @@ class ShadowgitPerformanceAnalyzer:
     
     def generate_optimization_roadmap(self, analysis: PerformanceAnalysis):
         """Generate detailed optimization roadmap"""
-        roadmap_path = str(get_project_root() / "shadowgit_optimization_roadmap.md"
+        roadmap_path = str(get_project_root() / "hooks/shadowgit/docs/shadowgit_optimization_roadmap.md")
         
         with open(roadmap_path, 'w') as f:
             f.write("# Shadowgit Phase 3 Optimization Roadmap\n")

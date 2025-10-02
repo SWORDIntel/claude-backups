@@ -33,28 +33,26 @@ import base64
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import Shadowgit AVX2 for high-speed diff analysis with dynamic path resolution
+# Import Shadowgit AVX2 for high-speed diff analysis with updated path
 try:
-    from path_utilities import get_shadowgit_paths
-    shadowgit_paths = get_shadowgit_paths()
-    if shadowgit_paths['root'].exists():
-        sys.path.append(str(shadowgit_paths['root']))
+    from agent_path_resolver import get_shadowgit_root
+    shadowgit_root = get_shadowgit_root()
+    shadowgit_python = shadowgit_root / "python"
+    if shadowgit_python.exists():
+        sys.path.insert(0, str(shadowgit_python))
 except ImportError:
-    # Fallback - try to find shadowgit in common locations
-    home_dir = Path.home()
-    shadowgit_candidates = [
-        home_dir / 'shadowgit',
-        Path('/opt/shadowgit'),
-        project_root.parent / 'shadowgit'
-    ]
-    for shadowgit_path in shadowgit_candidates:
-        if shadowgit_path.exists():
-            sys.path.append(str(shadowgit_path))
-            break
+    # Fallback to new location
+    shadowgit_root = project_root.parent / 'hooks' / 'shadowgit'
+    shadowgit_python = shadowgit_root / "python"
+    if shadowgit_python.exists():
+        sys.path.insert(0, str(shadowgit_python))
 
 try:
-    from shadowgit_avx2 import ShadowgitAVX2
-    SHADOWGIT_AVAILABLE = True
+    # shadowgit_avx2 module not found in current repo - may need to be created or imported differently
+    # Commenting out for now to prevent import errors
+    # from shadowgit_avx2 import ShadowgitAVX2
+    SHADOWGIT_AVAILABLE = False
+    logging.info("Shadowgit AVX2 module not yet available in new structure")
 except ImportError:
     logging.warning("Shadowgit AVX2 not available, using fallback diff analysis")
     SHADOWGIT_AVAILABLE = False

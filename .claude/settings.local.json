@@ -4,7 +4,17 @@
       "Read(//home/john/.claude-home/**)",
       "Bash(grep:*)",
       "Read(//home/john/**)",
-      "Bash(libreoffice:*)"
+      "Bash(libreoffice:*)",
+      "Bash(claude:*)",
+      "WebSearch",
+      "Bash(node:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "Bash(dpkg:*)",
+      "Bash(awk:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": [],

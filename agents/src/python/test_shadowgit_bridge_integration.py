@@ -35,7 +35,12 @@ async def test_python_bridge():
     logger.info("Testing ShadowgitPythonBridge...")
 
     try:
-        from shadowgit_python_bridge import ShadowgitPythonBridge, quick_performance_test
+        # Updated import path for relocated shadowgit module
+        import sys
+        from pathlib import Path
+        shadowgit_python = Path(__file__).parent.parent.parent.parent / "hooks" / "shadowgit" / "python"
+        sys.path.insert(0, str(shadowgit_python))
+        from bridge import ShadowgitPythonBridge, quick_performance_test
 
         # Test bridge creation (without actual C library)
         bridge = ShadowgitPythonBridge()
@@ -80,7 +85,7 @@ async def test_npu_interface():
     logger.info("Testing ShadowgitNPUPython...")
 
     try:
-        from shadowgit_npu_python import ShadowgitNPUPython, NPUDevice, OptimizationStrategy
+        from npu_integration import ShadowgitNPUPython, NPUDevice, OptimizationStrategy
 
         # Test NPU interface creation
         npu = ShadowgitNPUPython(
@@ -132,7 +137,7 @@ async def test_integration_hub():
     logger.info("Testing ShadowgitIntegrationHub...")
 
     try:
-        from shadowgit_integration_hub import ShadowgitIntegrationHub, OperationMode, SystemComponent
+        from integration_hub import ShadowgitIntegrationHub, OperationMode, SystemComponent
 
         # Test hub creation
         hub = ShadowgitIntegrationHub(OperationMode.DEVELOPMENT)
@@ -182,7 +187,9 @@ async def test_deployment_system():
     logger.info("Testing ShadowgitDeployment...")
 
     try:
-        from shadowgit_deployment import ShadowgitDeployment, BuildConfiguration, DeploymentConfiguration, ValidationLevel
+        # Deployment is now in hooks/shadowgit/deployment/
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "hooks" / "shadowgit" / "deployment"))
+        from deployment import ShadowgitDeployment, BuildConfiguration, DeploymentConfiguration, ValidationLevel
 
         # Test deployment system creation
         build_config = BuildConfiguration(
@@ -248,8 +255,9 @@ async def test_integration_workflow():
     logger.info("Testing integrated workflow...")
 
     try:
-        from shadowgit_python_bridge import ShadowgitPythonBridge
-        from shadowgit_npu_python import ShadowgitNPUPython
+        # Already in sys.path from earlier imports
+        from bridge import ShadowgitPythonBridge
+        from npu_integration import ShadowgitNPUPython
 
         # Simulate integrated workflow
         start_time = time.time_ns()

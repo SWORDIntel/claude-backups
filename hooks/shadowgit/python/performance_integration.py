@@ -21,36 +21,40 @@ import numpy as np
 # Import existing components
 
 # Add project root to Python path for imports
-project_root = Path(__file__).parent.parent.parent
+# We're now in hooks/shadowgit/python/, so project root is 3 levels up
+project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "agents" / "src" / "python"))
 
 try:
-    from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+    from agent_path_resolver import (
+        get_project_root, get_agents_root, get_shadowgit_root
     )
 except ImportError:
-    # Fallback if path_utilities not available
+    # Fallback if agent_path_resolver not available
     def get_project_root():
-        return Path(__file__).parent.parent.parent
-    def get_agents_dir():
+        return Path(__file__).parent.parent.parent.parent
+    def get_agents_root():
         return get_project_root() / 'agents'
-    def get_database_dir():
-        return get_project_root() / 'database'
-    def get_python_src_dir():
-        return get_agents_dir() / 'src' / 'python'
-    def get_shadowgit_paths():
-        home_dir = Path.home()
-        return {'root': home_dir / 'shadowgit'}
-    def get_database_config():
-        return {
-            'host': 'localhost', 'port': 5433,
-            'database': 'claude_agents_auth',
-            'user': 'claude_agent', 'password': 'claude_auth_pass'
-        }
-sys.path.append(str(get_project_root()))
+    def get_shadowgit_root():
+        return get_project_root() / 'hooks' / 'shadowgit'
+
+def get_database_dir():
+    return get_project_root() / 'database'
+
+def get_python_src_dir():
+    return get_agents_root() / 'src' / 'python'
+
+def get_database_config():
+    return {
+        'host': 'localhost', 'port': 5433,
+        'database': 'claude_agents_auth',
+        'user': 'claude_agent', 'password': 'claude_auth_pass'
+    }
+
+# Import analyzer from current directory
 try:
-    from analyze_shadowgit_performance import PerformanceAnalysis
+    from analyze_performance import PerformanceAnalysis
     PERFORMANCE_ANALYZER_AVAILABLE = True
 except ImportError:
     PERFORMANCE_ANALYZER_AVAILABLE = False

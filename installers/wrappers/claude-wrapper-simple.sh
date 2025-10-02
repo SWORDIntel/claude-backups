@@ -113,8 +113,33 @@ detect_claude_binary() {
 CLAUDE_BINARY="$(detect_claude_binary)"
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PERMISSION BYPASS
+# VERSION DETECTION & PERMISSION BYPASS
 # ═══════════════════════════════════════════════════════════════════════════════
+
+detect_claude_version() {
+    local version="1.0.0"
+
+    if [[ "$CLAUDE_BINARY" =~ ^node ]]; then
+        local js_file="${CLAUDE_BINARY#node }"
+        js_file="${js_file# }"
+        version=$(node "$js_file" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.0.0")
+    elif command -v "$CLAUDE_BINARY" >/dev/null 2>&1; then
+        version=$("$CLAUDE_BINARY" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.0.0")
+    fi
+
+    echo "$version"
+}
+
+get_permission_args() {
+    local version=$(detect_claude_version)
+
+    # Claude 2.0+ uses new permission mode
+    if [[ "$version" == 2.* ]] || [[ "$version" > "2." ]]; then
+        echo "--permission-mode bypassPermissions"
+    else
+        echo "--dangerously-skip-permissions"
+    fi
+}
 
 should_bypass_permissions() {
     # Environment override
@@ -176,9 +201,10 @@ main() {
     # Prepare Claude command
     local claude_cmd=($CLAUDE_BINARY)
 
-    # Add permission bypass if needed
+    # Add permission bypass if needed (version-aware)
     if should_bypass_permissions; then
-        claude_cmd+=(--dangerously-skip-permissions)
+        local perm_args=($(get_permission_args))
+        claude_cmd+=("${perm_args[@]}")
     fi
 
     # Add user arguments

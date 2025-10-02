@@ -275,9 +275,10 @@ start_crypto_pow_system() {
 
     echo "🔐 Starting Automated Cryptographic Proof-of-Work System..." >&2
 
-    # Start crypto system optimizer
-    if [[ -f "$CRYPTO_POW_PATH/crypto_system_optimizer.py" ]]; then
-        python3 "$CRYPTO_POW_PATH/crypto_system_optimizer.py" &
+    # Start crypto system optimizer (updated path to hooks/crypto-pow/)
+    CRYPTO_POW_MODULE="$CLAUDE_PROJECT_ROOT/hooks/crypto-pow/crypto_system_optimizer.py"
+    if [[ -f "$CRYPTO_POW_MODULE" ]]; then
+        python3 "$CRYPTO_POW_MODULE" &
         CRYPTO_PID=$!
         echo "✅ Crypto POW system started (PID: $CRYPTO_PID)" >&2
 
@@ -563,18 +564,50 @@ elif [[ "$CLAUDE_BINARY" != "claude" ]] && [[ ! -f "$CLAUDE_BINARY" ]]; then
     fi
 fi
 
-# Permission bypass always enabled for enhanced functionality
-PERMISSION_BYPASS="true"
+# Detect Claude version for feature compatibility
+detect_claude_version() {
+    if [[ "$CLAUDE_BINARY" =~ ^node ]]; then
+        local js_file="${CLAUDE_BINARY#node }"
+        js_file="${js_file# }"
+        node "$js_file" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.0.0"
+    elif [[ -f "$CLAUDE_BINARY" ]]; then
+        "$CLAUDE_BINARY" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.0.0"
+    else
+        echo "1.0.0"
+    fi
+}
+
+CLAUDE_VERSION=$(detect_claude_version)
+
+# Permission bypass configuration (supports both v1 and v2+ modes)
+PERMISSION_BYPASS="${CLAUDE_PERMISSION_BYPASS:-true}"
+
+# Determine permission mode based on version
+get_permission_args() {
+    if [[ "$PERMISSION_BYPASS" != "true" ]]; then
+        return 0
+    fi
+
+    # Claude 2.0+ uses --permission-mode
+    if [[ "$CLAUDE_VERSION" == 2.* ]] || [[ "$CLAUDE_VERSION" > "2." ]]; then
+        echo "--permission-mode bypassPermissions"
+    else
+        # Legacy flag for older versions
+        echo "--dangerously-skip-permissions"
+    fi
+}
 
 # Commands
 case "$1" in
     --status|status)
         echo "Claude System Status"
         echo "===================="
+        echo "Version: $CLAUDE_VERSION"
         echo "Binary: $CLAUDE_BINARY"
         echo "Agents: $CLAUDE_AGENTS_DIR"
         echo "Project: $CLAUDE_PROJECT_ROOT"
-        echo "Permission Bypass: $PERMISSION_BYPASS"
+        echo "Permission Mode: $(get_permission_args || echo 'default')"
+        echo "Checkpoints: $([[ "$CLAUDE_VERSION" == 2.* ]] && echo "Available (Esc Esc or /rewind)" || echo "N/A")"
         echo "PICMCS v3.0: $PICMCS_ENABLED (Auto-chopping: $PICMCS_AUTO_CHOPPING)"
         echo "Learning System: $LEARNING_ML_ENABLED"
         echo "  Agent Selection: $LEARNING_AGENT_SELECTION"
@@ -706,14 +739,12 @@ case "$1" in
         # Initialize Docker learning system if enabled
         start_docker_learning_system
 
-        # Permission bypass always enabled for enhanced functionality
-        capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+        # Use version-appropriate permission bypass
+        capture_execution "$CLAUDE_BINARY" $(get_permission_args) "$@"
         ;;
         
     --safe)
-        # Note: Permission bypass is now always enabled for enhanced functionality
-        echo "Warning: --safe mode deprecated. Permission bypass always enabled for full functionality."
-        echo "Running with permission bypass for optimal performance..."
+        # Safe mode: run without permission bypass
         shift
         # Initialize Crypto POW system if enabled
         start_crypto_pow_system
@@ -723,7 +754,9 @@ case "$1" in
 
         # PICMCS v3.0 context optimization for safe mode
         optimize_context "$@"
-        capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+
+        # Run without any permission bypass flags
+        capture_execution "$CLAUDE_BINARY" "$@"
         ;;
         
     --orchestrator)
@@ -795,7 +828,7 @@ case "$1" in
         # PICMCS v3.0 context optimization for all commands
         optimize_context "$@"
 
-        # Default: always run with permission bypass for enhanced functionality
-        capture_execution "$CLAUDE_BINARY" --dangerously-skip-permissions "$@"
+        # Default: use version-appropriate permission bypass
+        capture_execution "$CLAUDE_BINARY" $(get_permission_args) "$@"
         ;;
 esac

@@ -108,5 +108,69 @@ def resolve_project_path(relative_path):
 def add_to_python_path():
     path_resolver.add_to_python_path()
 
+# New helpers for reorganized modules
+def get_shadowgit_root() -> Path:
+    """
+    Get shadowgit module root directory.
+    After reorganization, shadowgit is at: hooks/shadowgit/
+    """
+    project_root = get_project_root()
+    shadowgit_root = project_root / "hooks" / "shadowgit"
+
+    # Fallback to old location if new doesn't exist yet
+    if not shadowgit_root.exists():
+        shadowgit_root = project_root / "shadowgit"
+
+    # Add Python module to sys.path
+    shadowgit_python = shadowgit_root / "python"
+    if shadowgit_python.exists():
+        if str(shadowgit_python) not in sys.path:
+            sys.path.insert(0, str(shadowgit_python))
+
+    return shadowgit_root
+
+def get_crypto_pow_root() -> Path:
+    """
+    Get crypto POW module root directory.
+    After reorganization, crypto POW is at: hooks/crypto-pow/
+    """
+    project_root = get_project_root()
+    crypto_pow_root = project_root / "hooks" / "crypto-pow"
+
+    # Fallback to old location if new doesn't exist yet
+    if not crypto_pow_root.exists():
+        crypto_pow_root = project_root / "crypto"
+
+    # Add to sys.path if exists
+    if crypto_pow_root.exists():
+        if str(crypto_pow_root) not in sys.path:
+            sys.path.insert(0, str(crypto_pow_root))
+
+    return crypto_pow_root
+
+def get_shadowgit_paths() -> dict:
+    """
+    DEPRECATED: Legacy function for compatibility.
+    Use get_shadowgit_root() instead.
+
+    Returns dict with shadowgit path components.
+    """
+    import warnings
+    warnings.warn(
+        "get_shadowgit_paths() is deprecated. Use get_shadowgit_root() instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    shadowgit_root = get_shadowgit_root()
+    return {
+        "root": shadowgit_root,
+        "python": shadowgit_root / "python",
+        "src": shadowgit_root / "src",
+        "bin": shadowgit_root / "bin",
+        "analysis": shadowgit_root / "analysis",
+        "deployment": shadowgit_root / "deployment",
+    }
+
 # Auto-add to Python path when imported
 add_to_python_path()

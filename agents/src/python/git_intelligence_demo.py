@@ -22,14 +22,20 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from path_utilities import get_project_root, get_shadowgit_paths
-except ImportError:
-    # Fallback if path_utilities not available
-    def get_project_root():
-        return Path(__file__).parent.parent.parent
+    from agent_path_resolver import get_project_root, get_shadowgit_root
+    # Deprecated function - use get_shadowgit_root instead
     def get_shadowgit_paths():
-        home_dir = Path.home()
-        return {'root': home_dir / 'shadowgit'}
+        root = get_shadowgit_root()
+        return {'root': root, 'python': root / 'python', 'src': root / 'src'}
+except ImportError:
+    # Fallback if agent_path_resolver not available
+    def get_project_root():
+        return Path(__file__).parent.parent.parent.parent
+    def get_shadowgit_root():
+        return get_project_root() / 'hooks' / 'shadowgit'
+    def get_shadowgit_paths():
+        root = get_shadowgit_root()
+        return {'root': root}
 
 # Import all Git Intelligence components
 from git_intelligence_engine import GitIntelligenceAPI
@@ -455,6 +461,10 @@ def fetch_user_data(user_id: int) -> dict:
             shadowgit_paths = get_shadowgit_paths()
             if shadowgit_paths['root'].exists():
                 sys.path.append(str(shadowgit_paths['root']))
+            # Updated to use new shadowgit module location
+            from agent_path_resolver import get_shadowgit_root
+            shadowgit_root = get_shadowgit_root()
+            sys.path.insert(0, str(shadowgit_root / "python"))
             from shadowgit_avx2 import ShadowgitAVX2
             
             shadowgit = ShadowgitAVX2()

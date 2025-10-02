@@ -199,22 +199,105 @@ crypto/
 
 ---
 
-### shadowgit/
+### hooks/
 
-**Purpose**: Git operations with neural acceleration
+**Purpose**: Hook systems and automation modules
+
+#### hooks/crypto-pow/
+
+**Purpose**: Cryptographic proof-of-work verification system
 
 ```
-shadowgit/
-├── README.md                           # ShadowGit documentation
-├── shadowgit_accelerator.py           # Main accelerator (31KB)
-├── shadowgit_phase3_unified.py        # Phase 3 system (15KB)
-├── shadowgit_global_handler.sh        # Global handler (7.6KB)
-├── neural_git_accelerator.py          # Neural accelerator (29KB)
-├── deploy_shadowgit_phase3.sh         # Phase 3 deployment (21KB)
-└── analyze_shadowgit_performance.py   # Performance analysis (22KB)
+hooks/crypto-pow/
+├── README.md                      # Complete documentation
+├── include/                       # C headers
+│   ├── crypto_pow_architecture.h # Core architecture
+│   └── crypto_pow_verify.h       # Verification API
+├── src/                           # C implementation
+│   ├── crypto_pow_core.c         # Core functions
+│   ├── crypto_pow_patterns.c     # Pattern detection
+│   ├── crypto_pow_behavioral.c   # Behavioral analysis
+│   └── crypto_pow_verification.c # Verification logic
+├── examples/                      # Demo programs
+│   ├── crypto_pow_demo.c
+│   └── crypto_pow_demo_simple.c
+├── tests/                         # Test suite
+│   └── crypto_pow_test.c
+├── bin/                           # Compiled binaries
+├── results/                       # Performance data
+└── Python tools:
+    ├── crypto_system_optimizer.py        # System optimizer
+    ├── crypto_analytics_dashboard.py     # Analytics
+    ├── crypto_auto_start_optimizer.py    # Auto-start
+    ├── crypto_performance_monitor.py     # Monitoring
+    └── deploy-token-optimization.sh      # Deployment
 ```
 
-**Performance**: 930M → 3.5B lines/sec acceleration
+**Features**: RSA 4096, SHA256, adaptive POW, pattern matching
+
+#### hooks/shadowgit/
+
+**Purpose**: Neural-accelerated git monitoring with AVX-512/NPU
+
+```
+hooks/shadowgit/
+├── README.md                      # Complete guide
+├── Makefile                       # Build system
+├── global_handler.sh              # Global handler
+│
+├── python/                        # Python orchestration layer
+│   ├── __init__.py               # Module init
+│   ├── shadowgit_avx2.py         # AVX2 acceleration (NEW)
+│   ├── bridge.py                 # C library interface
+│   ├── npu_integration.py        # NPU acceleration
+│   ├── integration_hub.py        # System coordination
+│   ├── performance_integration.py # Performance monitoring
+│   ├── accelerator.py            # Main accelerator
+│   ├── phase3_unified.py         # Phase 3 system
+│   ├── neural_accelerator.py     # Neural engine
+│   └── analyze_performance.py    # Performance analysis
+│
+├── src/                           # C acceleration engines
+│   ├── phase3/                   # Phase 3 integration
+│   │   └── integration.c
+│   ├── accelerators/             # SIMD accelerators
+│   │   ├── avx512_upgrade.c
+│   │   └── performance.c
+│   ├── coordinators/             # Coordination layer
+│   │   └── shadowgit_performance_coordinator.c
+│   ├── npu/                      # NPU engine
+│   │   └── shadowgit_npu_engine.c
+│   └── performance/              # Maximum performance
+│       ├── shadowgit_maximum_performance.c
+│       └── shadowgit_maximum_performance.h
+│
+├── deployment/                    # Deployment automation
+│   ├── deployment.py             # Python deployment system
+│   └── deploy_phase3.sh          # Phase 3 deployment
+│
+├── analysis/                      # Performance analysis data
+│   ├── shadowgit-acceleration-results.json
+│   ├── shadowgit_performance_analysis.json
+│   └── shadowgit_performance_analysis.png
+│
+├── tests/                         # Test suite
+│   └── reports/                  # Test reports
+│       └── shadowgit_bridge_test_report.json
+│
+├── docs/                          # Documentation
+│   ├── SHADOWGIT_PYTHON_BRIDGE_SUMMARY.md
+│   ├── HOOK_SYSTEM_ANALYSIS.md
+│   └── AVX512_TEST_RESULTS.md
+│
+├── html/                          # Web interfaces
+│   ├── index.html                # Main page
+│   └── agent-dashboard.html      # Dashboard
+│
+└── archive/                       # Historical files
+    └── phase3/                   # Old phase 3 files
+```
+
+**Performance**: 930M → 15B lines/sec (AVX2 → AVX-512+NPU)
 
 ---
 
@@ -270,33 +353,83 @@ deployment/
 
 ---
 
-### testing/
+### tests/
 
-**Purpose**: Comprehensive test suites
+**Purpose**: Unified test suite (consolidated from root + testing/)
 
 ```
-testing/
-├── installer/                          # Installer tests
+tests/
+├── README.md                       # Test suite documentation
+│
+├── basic/                          # Simple smoke tests
+│   ├── test_simple.c
+│   └── bin/
+│
+├── hardware/                       # Hardware-specific tests
+│   ├── avx512/                    # AVX-512 tests
+│   │   ├── test_avx512.c
+│   │   └── bin/test_avx512
+│   ├── npu/                       # NPU tests
+│   └── openvino/                  # OpenVINO tests
+│
+├── crypto/                         # Cryptographic tests
+│   ├── test_crypto.c              # Crypto POW validation
+│   └── bin/test_crypto
+│
+├── performance/                    # Performance benchmarks
+│   ├── test_memory.c              # Memory tests
+│   └── bin/test_memory
+│
+├── shadowgit/                      # Shadowgit integration tests
+│   └── bin/
+│
+├── agents/                         # Agent system tests
+│   ├── test_agent_coordination.c
+│   ├── test_performance.c
+│   ├── test_rbac.c
+│   ├── test_security_file_creation.py
+│   └── run_all_tests.sh
+│
+├── database/                       # Database tests
+│   └── ...
+│
+├── docker/                         # Docker tests
+│   └── ...
+│
+├── installers/                     # Installer validation (merged from testing/installer)
 │   ├── test-enhanced-wrapper.sh
 │   ├── test-venv-installer.py
 │   ├── test-installer-integration.sh
 │   ├── test_installer_fix.py
 │   └── test-headless-install.py
 │
-├── learning/                           # Learning system tests
+├── integration/                    # Integration tests
+│   ├── test_hybrid_integration.py
+│   └── ...
+│
+├── environment/                    # Environment tests (from testing/environment)
+│   ├── test-environment-detection.py
+│   └── test-environment-simple.py
+│
+├── learning/                       # Learning system tests (from testing/learning)
 │   ├── test_learning_system_integration.sh
 │   ├── test-docker-autostart.sh
 │   └── validate_docker_learning_integration.sh
 │
-├── portability/                        # Portability tests
+├── portability/                    # Portability tests (from testing/portability)
 │   ├── validate_portability.py
-│   ├── validate_portability_focused.py
-│   ├── validate-portable-paths.sh
-│   ├── validate_portable_paths.sh
 │   ├── test-portable-paths.sh
 │   └── test-portable-wrapper.sh
 │
-├── environment/                        # Environment tests
+└── other/                          # Miscellaneous tests (from testing/other)
+    ├── phase2-orchestrator-test.py
+    ├── test-debug.sh
+    └── test_avx512_cores.sh
+```
+
+**Status**: Consolidated from 3 test directories into 1 unified structure
+
+---
 │   ├── test-environment-detection.py
 │   └── test-environment-simple.py
 │

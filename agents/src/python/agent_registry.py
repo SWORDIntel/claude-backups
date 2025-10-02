@@ -838,8 +838,18 @@ class OrchestrationEngine:
 
 class EnhancedAgentRegistry:
     """Production-ready agent registry with full integration"""
-    
-    def __init__(self, agents_dir: str = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"):
+
+    def __init__(self, agents_dir: str = None):
+        # Default to project agents directory using path resolver
+        if agents_dir is None:
+            try:
+                from agent_path_resolver import get_agents_root
+                agents_dir = str(get_agents_root())
+            except ImportError:
+                # Fallback to environment variable or relative path
+                import os
+                agents_dir = os.environ.get('CLAUDE_AGENTS_ROOT', str(Path(__file__).parent.parent.parent.parent / 'agents'))
+
         self.agents_dir = Path(agents_dir)
         self.agents: Dict[str, AgentMetadata] = {}
         self.capabilities_index: Dict[str, List[str]] = {}

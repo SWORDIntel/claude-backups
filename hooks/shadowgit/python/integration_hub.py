@@ -38,10 +38,10 @@ import subprocess
 import signal
 import sys
 
-# Import Shadowgit components
+# Import Shadowgit components (now using relative imports in same directory)
 try:
-    from shadowgit_python_bridge import ShadowgitPythonBridge, create_bridge, SystemStatus
-    from shadowgit_npu_python import ShadowgitNPUPython, create_npu_interface, NPUDevice
+    from bridge import ShadowgitPythonBridge, create_bridge, SystemStatus
+    from npu_integration import ShadowgitNPUPython, create_npu_interface, NPUDevice
     SHADOWGIT_COMPONENTS_AVAILABLE = True
 except ImportError as e:
     SHADOWGIT_COMPONENTS_AVAILABLE = False

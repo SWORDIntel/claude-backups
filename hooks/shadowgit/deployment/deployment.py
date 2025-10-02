@@ -39,11 +39,13 @@ from datetime import datetime, timedelta
 import tempfile
 import hashlib
 
-# Import Shadowgit components
+# Import Shadowgit components (updated for new location)
 try:
-    from shadowgit_integration_hub import ShadowgitIntegrationHub, create_integration_hub, OperationMode
-    from shadowgit_python_bridge import ShadowgitPythonBridge, create_bridge
-    from shadowgit_npu_python import ShadowgitNPUPython, create_npu_interface
+    # Use relative imports since we're now in hooks/shadowgit/deployment/
+    sys.path.insert(0, str(Path(__file__).parent.parent / "python"))
+    from integration_hub import ShadowgitIntegrationHub, create_integration_hub, OperationMode
+    from bridge import ShadowgitPythonBridge, create_bridge
+    from npu_integration import ShadowgitNPUPython, create_npu_interface
     SHADOWGIT_COMPONENTS_AVAILABLE = True
 except ImportError as e:
     SHADOWGIT_COMPONENTS_AVAILABLE = False

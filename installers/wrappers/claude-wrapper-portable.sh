@@ -11,44 +11,36 @@ set -euo pipefail
 # INITIALIZE PORTABLE PATH RESOLUTION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Source path resolver - try multiple locations
+# Source path resolver - try multiple locations (optional)
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")"
-PATH_RESOLVER_LOCATIONS=(
-    "$SCRIPT_DIR/claude-path-resolver.sh"
-    "$SCRIPT_DIR/scripts/claude-path-resolver.sh"
-    "$(dirname "$SCRIPT_DIR")/scripts/claude-path-resolver.sh"
-    "./scripts/claude-path-resolver.sh"
-    "./claude-path-resolver.sh"
-)
 
-for resolver in "${PATH_RESOLVER_LOCATIONS[@]}"; do
-    if [[ -f "$resolver" ]]; then
-        source "$resolver" init
-        break
-    fi
-done
+# Try to source path resolver, but don't fail if not found
+if [[ -f "$SCRIPT_DIR/../../scripts/claude-path-resolver.sh" ]]; then
+    source "$SCRIPT_DIR/../../scripts/claude-path-resolver.sh" init 2>/dev/null || true
+fi
 
-# Fallback path resolution if resolver not found
+# Always use fallback path resolution to ensure it works standalone
 if [[ -z "${CLAUDE_PROJECT_ROOT:-}" ]]; then
-    echo "Warning: Path resolver not found, using basic fallback detection"
-
     # Basic fallback detection
-    if [[ -f "$SCRIPT_DIR/CLAUDE.md" ]]; then
-        export CLAUDE_PROJECT_ROOT="$SCRIPT_DIR"
+    if [[ -f "$SCRIPT_DIR/../../CLAUDE.md" ]]; then
+        export CLAUDE_PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
     elif [[ -f "$(dirname "$SCRIPT_DIR")/CLAUDE.md" ]]; then
         export CLAUDE_PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+    elif [[ -f "$SCRIPT_DIR/CLAUDE.md" ]]; then
+        export CLAUDE_PROJECT_ROOT="$SCRIPT_DIR"
     else
         export CLAUDE_PROJECT_ROOT="$HOME"
     fi
-
-    export CLAUDE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude"
-    export CLAUDE_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/claude"
-    export CLAUDE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude"
-    export CLAUDE_LOG_DIR="$CLAUDE_DATA_DIR/logs"
-    export CLAUDE_AGENTS_DIR="$CLAUDE_PROJECT_ROOT/agents"
-    export CLAUDE_PYTHON_DIR="$CLAUDE_AGENTS_DIR/src/python"
-    export CLAUDE_DOCKER_DIR="$CLAUDE_PROJECT_ROOT/database/docker"
 fi
+
+# Set standard paths
+export CLAUDE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude"
+export CLAUDE_DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/claude"
+export CLAUDE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude"
+export CLAUDE_LOG_DIR="$CLAUDE_DATA_DIR/logs"
+export CLAUDE_AGENTS_DIR="${CLAUDE_AGENTS_DIR:-$CLAUDE_PROJECT_ROOT/agents}"
+export CLAUDE_PYTHON_DIR="${CLAUDE_PYTHON_DIR:-$CLAUDE_AGENTS_DIR/src/python}"
+export CLAUDE_DOCKER_DIR="${CLAUDE_DOCKER_DIR:-$CLAUDE_PROJECT_ROOT/database/docker}"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION WITH PORTABLE PATHS
@@ -178,8 +170,34 @@ capture_execution() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PERMISSION BYPASS SYSTEM
+# VERSION DETECTION & PERMISSION SYSTEM
 # ═══════════════════════════════════════════════════════════════════════════════
+
+detect_claude_version() {
+    local version="1.0.0"
+
+    if [[ "$CLAUDE_BINARY" =~ ^node ]]; then
+        local js_file="${CLAUDE_BINARY#node }"
+        js_file="${js_file# }"
+        version=$(node "$js_file" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.0.0")
+    elif command -v "$CLAUDE_BINARY" >/dev/null 2>&1; then
+        version=$("$CLAUDE_BINARY" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' || echo "1.0.0")
+    fi
+
+    echo "$version"
+}
+
+get_permission_args() {
+    local version=$(detect_claude_version)
+
+    # Claude 2.0+ uses new permission mode
+    if [[ "$version" == 2.* ]] || [[ "$version" > "2." ]]; then
+        echo "--permission-mode bypassPermissions"
+    else
+        # Legacy flag for older versions
+        echo "--dangerously-skip-permissions"
+    fi
+}
 
 should_bypass_permissions() {
     # Check environment override
@@ -307,9 +325,10 @@ main() {
     # Prepare Claude command
     local claude_cmd=($CLAUDE_BINARY)
 
-    # Add permission bypass if needed
+    # Add permission bypass if needed (version-aware)
     if should_bypass_permissions; then
-        claude_cmd+=(--dangerously-skip-permissions)
+        local perm_args=($(get_permission_args))
+        claude_cmd+=("${perm_args[@]}")
     fi
 
     # Add user arguments
