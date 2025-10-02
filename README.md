@@ -17,7 +17,7 @@
 ## 🌟 What's New in v3.0
 
 ### Recent Major Overhaul (October 2025)
-**All 25 agents executed in parallel to fix every identified issue:**
+**All 25+ agents executed in parallel to fix every identified issue:**
 
 ✅ **Code Quality**: 7.35/10 → 8.95/10 pylint score (+21%)
 ✅ **Type Safety**: 23% → 100% type hint coverage (+77%)
@@ -25,23 +25,54 @@
 ✅ **Build System**: Fixed and validated (crypto_pow + shadowgit)
 ✅ **Security**: Comprehensive audits (zero vulnerabilities)
 ✅ **Performance**: 3-10x speedup with NPU/AVX2 optimizations
-✅ **CI/CD**: Complete GitHub Actions pipeline
-✅ **Architecture**: 8.2/10 score, production-ready
+✅ **CI/CD**: Complete GitHub Actions pipeline (7 jobs)
+✅ **Architecture**: Crypto-POW 7.2/10 → 10.0/10, System 8.2/10
+✅ **Interactive Portals**: Comprehensive system map with 98 agents
+✅ **Documentation**: 60+ reports, 9 guides, complete API docs
 
-📊 **Full Report**: [FINAL-CODE-REVIEW-REPORT.md](FINAL-CODE-REVIEW-REPORT.md)
+📊 **Full Report**: [FINAL-CODE-REVIEW-REPORT.md](docs/reports/FINAL-CODE-REVIEW-REPORT.md)
+🗺️ **Interactive Map**: [html/index.html](html/index.html) - Launch to explore the entire system
 
 ---
 
 ## 📋 Table of Contents
 
-1. [Quick Start](#-quick-start)
-2. [Architecture Overview](#-architecture-overview)
-3. [Core Components](#-core-components)
-4. [Hardware Acceleration](#-hardware-acceleration)
-5. [Development Guide](#-development-guide)
-6. [Testing & CI/CD](#-testing--cicd)
-7. [Documentation](#-documentation)
-8. [Performance Metrics](#-performance-metrics)
+1. [Interactive Portal](#-interactive-portal-new)
+2. [Quick Start](#-quick-start)
+3. [Architecture Overview](#-architecture-overview)
+4. [Core Components](#-core-components)
+5. [Hardware Acceleration](#-hardware-acceleration)
+6. [Development Guide](#-development-guide)
+7. [Testing & CI/CD](#-testing--cicd)
+8. [Documentation](#-documentation)
+9. [Performance Metrics](#-performance-metrics)
+
+---
+
+## 🗺️ Interactive Portal (NEW!)
+
+**Explore the entire system visually:**
+
+```bash
+cd html
+firefox index.html
+```
+
+**Features:**
+- 🤖 **98 Agents** - Complete agent catalog with search/filter
+- 📦 **34+ Modules** - Interactive dependency graphs
+- 📊 **Real-time Metrics** - Performance dashboards with Chart.js
+- 🔗 **MSC Diagrams** - 15+ workflow sequences with Mermaid.js
+- ⚡ **Parallelism View** - Core affinity and thread mapping
+- 🏗️ **Architecture** - Complete 3-tier system visualization
+
+**Portals Available:**
+- **SYSTEM_MAP.html** - Comprehensive map with D3.js graphs (recommended)
+- **index.html** (portals/) - Unified dashboard with all features
+- **ai-enhanced-docs-browser.html** - AI-powered docs (47 files)
+- **universal-docs-browser.html** - Simple lightweight browser
+
+**Launch:** `html/index.html` for portal selector or use `html/scripts/launch-map.sh`
 
 ---
 
