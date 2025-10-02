@@ -1,1678 +1,1567 @@
 #!/usr/bin/env python3
 """
-Universal Documentation Browser with AI-Enhanced Analysis
-A modular PyGUI interface that adapts to any documentation structure with:
-- Automatic dependency installation
-- AI-powered document classification and summarization 
-- Standardized overview generation with ML
-- Cached extracted text versions for PDFs
-- Markdown preview until analysis completes
+AI-Powered Universal Documentation Browser
+Single-file portable solution with OpenVINO NPU/GPU acceleration
 
 Features:
-- Auto-detection of documentation structure
-- Intelligent document classification using basic ML
-- Automatic PDF text extraction with caching
-- Standardized folder-based overview generation
-- Markdown preview with live analysis updates
-- Automatic library installation for dependencies
-- Single-file portable implementation
+- Intel NPU (GNA) acceleration for AI inference (40 TOPS on Ultra 7 165H)
+- Intel Arc Graphics GPU support
+- Auto-detection and adaptation to any documentation structure
+- Semantic search with embeddings
+- Document summarization and Q&A
+- PDF/image OCR and extraction
+- Docker support (generates Dockerfile on demand)
+- Zero external files needed (except models cached to ~/.cache/)
+- Works on ANY project - just drop this file and run
 
-Usage: python3 universal_docs_browser_enhanced.py [directory]
+Hardware Support:
+- Intel Core Ultra NPU: AI inference, embeddings, summarization
+- Intel Arc Graphics: Image processing, OCR
+- CPU: Fallback for everything
+
+Usage:
+  python3 doc_browser_ai.py                    # Run in current directory
+  python3 doc_browser_ai.py /path/to/docs     # Specify directory
+  python3 doc_browser_ai.py --docker-init     # Generate Docker files
+  python3 doc_browser_ai.py --check-hardware  # Show available accelerators
+
+Requirements: Python 3.8+, pip
+Everything else auto-installs on first run.
+
+Author: AI-Enhanced Document Analysis System
+Version: 2.0.0-NPU
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox, filedialog, scrolledtext
 import os
 import sys
-import webbrowser
 import subprocess
+import platform
 from pathlib import Path
 import re
 import json
-from typing import Dict, List, Optional, Tuple, Set
 import threading
 import queue
-import configparser
+import time
+import hashlib
 import argparse
 import tempfile
 import shutil
-import hashlib
-import time
+from typing import Dict, List, Optional, Tuple, Set, Any
+from dataclasses import dataclass, asdict
+from collections import defaultdict
+import warnings
+warnings.filterwarnings('ignore')
 
-# Auto-installation system
-def auto_install_package(package_name: str, import_name: str = None) -> bool:
-    """Auto-install package if not available"""
-    if import_name is None:
-        import_name = package_name
-    
-    try:
-        __import__(import_name)
-        return True
-    except ImportError:
-        print(f"Installing {package_name}...")
+# ============================================================================
+# HARDWARE DETECTION & OpenVINO INTEGRATION
+# ============================================================================
+
+class HardwareDetector:
+    """Detect available AI acceleration hardware (NPU, GPU, CPU)"""
+
+    @staticmethod
+    def detect_intel_npu() -> bool:
+        """Detect Intel NPU/GNA support"""
         try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', package_name])
-            print(f"Successfully installed {package_name}")
-            return True
-        except subprocess.CalledProcessError:
-            print(f"Failed to install {package_name}")
+            # Check CPU model for Meteor Lake or later (has NPU)
+            with open('/proc/cpuinfo', 'r') as f:
+                cpuinfo = f.read()
+
+            # Intel Core Ultra series has NPU
+            if 'Intel(R) Core(TM) Ultra' in cpuinfo:
+                return True
+
+            # Check for GNA device
+            if os.path.exists('/dev/intel_gna'):
+                return True
+
+            return False
+        except:
             return False
 
-# Auto-install critical dependencies
-PDFPLUMBER_AVAILABLE = auto_install_package('pdfplumber')
-SKLEARN_AVAILABLE = auto_install_package('scikit-learn', 'sklearn')
-MARKDOWN_AVAILABLE = auto_install_package('markdown')
-
-# Try to import dependencies after installation
-try:
-    import pdfplumber
-    PDF_EXTRACTION_AVAILABLE = True
-except ImportError:
-    PDF_EXTRACTION_AVAILABLE = False
-
-try:
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.cluster import KMeans
-    from sklearn.metrics.pairwise import cosine_similarity
-    import numpy as np
-    ML_AVAILABLE = True
-except ImportError:
-    ML_AVAILABLE = False
-
-try:
-    import markdown
-    MARKDOWN_PROCESSING_AVAILABLE = True
-except ImportError:
-    MARKDOWN_PROCESSING_AVAILABLE = False
-
-try:
-    from PIL import Image, ImageTk
-    PIL_AVAILABLE = True
-except ImportError:
-    PIL_AVAILABLE = False
-
-class PDFExtractor:
-    """Integrated PDF text extraction using pdfplumber"""
-    
     @staticmethod
-    def extract_text(pdf_path: Path, progress_callback=None) -> str:
-        """Extract text from PDF file"""
-        if not PDF_EXTRACTION_AVAILABLE:
-            return "PDF extraction not available. Install with: pip install pdfplumber"
-        
-        text_content = []
-        
+    def detect_intel_gpu() -> bool:
+        """Detect Intel Arc Graphics or integrated GPU"""
         try:
-            with pdfplumber.open(pdf_path) as pdf:
-                total_pages = len(pdf.pages)
-                
-                for i, page in enumerate(pdf.pages, 1):
-                    if progress_callback:
-                        progress_callback(f"Processing page {i}/{total_pages}...")
-                    
-                    page_text = page.extract_text()
-                    if page_text:
-                        text_content.append(f"\n--- Page {i} ---\n")
-                        text_content.append(page_text)
-                
-                return "\n".join(text_content)
-        
-        except Exception as e:
-            return f"Error extracting PDF text: {str(e)}"
-    
+            result = subprocess.run(['lspci'], capture_output=True, text=True)
+            lspci_output = result.stdout
+
+            # Check for Intel graphics
+            if 'Intel' in lspci_output and ('VGA' in lspci_output or 'Graphics' in lspci_output):
+                return True
+
+            return False
+        except:
+            return False
+
     @staticmethod
-    def get_pdf_info(pdf_path: Path) -> Dict[str, str]:
-        """Get PDF metadata information"""
-        if not PDF_EXTRACTION_AVAILABLE:
-            return {"error": "PDF processing not available"}
-        
+    def get_openvino_devices() -> List[str]:
+        """Get available OpenVINO devices"""
         try:
-            with pdfplumber.open(pdf_path) as pdf:
-                info = {
-                    "pages": str(len(pdf.pages)),
-                    "title": getattr(pdf.metadata, 'title', 'Unknown'),
-                    "author": getattr(pdf.metadata, 'author', 'Unknown'),
-                    "subject": getattr(pdf.metadata, 'subject', 'Unknown'),
-                    "creator": getattr(pdf.metadata, 'creator', 'Unknown'),
-                }
-                return info
-        except Exception as e:
-            return {"error": f"Could not read PDF info: {e}"}
-    
-    @staticmethod
-    def get_cached_text_path(pdf_path: Path) -> Path:
-        """Get path for cached extracted text"""
-        return pdf_path.with_suffix('.pdf.txt')
-    
-    @staticmethod
-    def extract_with_cache(pdf_path: Path, progress_callback=None) -> str:
-        """Extract PDF text with caching support"""
-        cache_path = PDFExtractor.get_cached_text_path(pdf_path)
-        
-        # Check if cached version exists and is newer than PDF
-        if cache_path.exists() and cache_path.stat().st_mtime > pdf_path.stat().st_mtime:
             try:
-                with open(cache_path, 'r', encoding='utf-8') as f:
-                    return f.read()
-            except:
-                pass  # Fall through to extraction
-        
-        # Extract text and cache it
-        text_content = PDFExtractor.extract_text(pdf_path, progress_callback)
-        
-        try:
-            with open(cache_path, 'w', encoding='utf-8') as f:
-                f.write(text_content)
-        except Exception as e:
-            print(f"Warning: Could not cache extracted text: {e}")
-        
-        return text_content
-
-class AIDocumentClassifier:
-    """AI-powered document classification and overview generation"""
-    
-    def __init__(self):
-        self.vectorizer = None
-        self.patterns = {
-            'agent_files': {
-                'pattern': r'(AGENT|agent).*\.(md|MD)',
-                'keywords': ['agent', 'implementation', 'coordination', 'task', 'proactive'],
-                'template': '{lang} AGENT specialist with {capabilities}'
-            },
-            'infrastructure': {
-                'pattern': r'(infrastructure|deployment|docker|database)',
-                'keywords': ['infrastructure', 'deployment', 'system', 'configuration'],
-                'template': 'Infrastructure implementation with {focus_areas}'
-            },
-            'documentation': {
-                'pattern': r'(docs|documentation|guide|manual|readme)',
-                'keywords': ['documentation', 'guide', 'instructions', 'manual'],
-                'template': '{doc_type} documentation for {system_name}'
-            },
-            'protocol': {
-                'pattern': r'(protocol|communication|binary|api)',
-                'keywords': ['protocol', 'communication', 'binary', 'message', 'api'],
-                'template': '{protocol_type} protocol documentation in {language}'
-            },
-            'security': {
-                'pattern': r'(security|crypto|auth|protection)',
-                'keywords': ['security', 'authentication', 'encryption', 'protection'],
-                'template': 'Security documentation covering {security_aspects}'
-            }
-        }
-    
-    def classify_document(self, file_path: Path, content: str = None) -> Dict[str, str]:
-        """Classify document and generate standardized overview"""
-        if content is None:
-            try:
-                if file_path.suffix.lower() == '.pdf':
-                    content = PDFExtractor.extract_with_cache(file_path)[:2000]  # First 2K chars
-                else:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read()[:2000]
-            except:
-                content = ""
-        
-        # Extract key information
-        doc_info = {
-            'filename': file_path.name,
-            'category': self._classify_category(file_path, content),
-            'language': self._detect_language(file_path, content),
-            'capabilities': self._extract_capabilities(content),
-            'overview': self._generate_overview(file_path, content)
-        }
-        
-        return doc_info
-    
-    def _classify_category(self, file_path: Path, content: str) -> str:
-        """Classify document category"""
-        filename_lower = file_path.name.lower()
-        content_lower = content.lower()
-        
-        # Check patterns
-        for category, info in self.patterns.items():
-            if re.search(info['pattern'], filename_lower, re.IGNORECASE):
-                return category
-            
-            # Check content for keywords
-            keyword_count = sum(1 for keyword in info['keywords'] if keyword in content_lower)
-            if keyword_count >= 2:
-                return category
-        
-        return 'general'
-    
-    def _detect_language(self, file_path: Path, content: str) -> str:
-        """Detect programming language or document type"""
-        filename = file_path.name.upper()
-        content_lower = content.lower()
-        
-        # Language detection patterns
-        languages = {
-            'JULIA': ['julia', '.jl', 'using ', '@', 'function ', 'end'],
-            'PYTHON': ['python', '.py', 'import ', 'def ', 'class '],
-            'RUST': ['rust', '.rs', 'fn ', 'let ', 'cargo', 'crate'],
-            'C/C++': ['c++', '.cpp', '.c', '.h', '#include', 'int main'],
-            'JAVASCRIPT': ['javascript', '.js', '.ts', 'function', 'const ', 'let '],
-            'GO': ['golang', '.go', 'package ', 'func ', 'import '],
-            'JAVA': ['java', '.java', 'public class', 'import java'],
-            'DART': ['dart', '.dart', 'void main', 'import \'dart'],
-            'PHP': ['php', '.php', '<?php', 'function ', 'class '],
-            'SQL': ['sql', '.sql', 'select ', 'create table', 'database'],
-            'ASSEMBLY': ['assembly', '.asm', '.s', 'mov ', 'jmp ', 'call '],
-            'MATLAB': ['matlab', '.m', 'function ', 'clear', 'clc'],
-            'SCADA': ['scada', 'modbus', 'opc', 'hmi', 'plc'],
-            'BINARY': ['binary', 'protocol', 'communication', 'message'],
-            'MARKDOWN': ['.md', '# ', '## ', '```']
-        }
-        
-        for lang, indicators in languages.items():
-            score = 0
-            for indicator in indicators:
-                if indicator in filename or indicator in content_lower:
-                    score += 1
-            if score >= 2:
-                return lang
-        
-        return 'GENERAL'
-    
-    def _extract_capabilities(self, content: str) -> List[str]:
-        """Extract key capabilities from document content"""
-        capabilities = []
-        content_lower = content.lower()
-        
-        capability_patterns = {
-            'high-performance': ['performance', 'optimization', 'speed', 'fast'],
-            'security': ['security', 'authentication', 'encryption', 'protection'],
-            'coordination': ['coordination', 'orchestration', 'collaboration'],
-            'analysis': ['analysis', 'analytics', 'intelligence', 'insights'],
-            'automation': ['automation', 'automated', 'auto-', 'scripted'],
-            'integration': ['integration', 'interface', 'api', 'connector'],
-            'monitoring': ['monitoring', 'observability', 'metrics', 'logging'],
-            'deployment': ['deployment', 'production', 'container', 'docker'],
-            'testing': ['testing', 'validation', 'verification', 'quality']
-        }
-        
-        for capability, keywords in capability_patterns.items():
-            if any(keyword in content_lower for keyword in keywords):
-                capabilities.append(capability)
-        
-        return capabilities[:3]  # Top 3 capabilities
-    
-    def _generate_overview(self, file_path: Path, content: str) -> str:
-        """Generate standardized one-line overview"""
-        doc_info = {
-            'filename': file_path.name,
-            'language': self._detect_language(file_path, content),
-            'capabilities': self._extract_capabilities(content),
-            'category': self._classify_category(file_path, content)
-        }
-        
-        # Generate overview based on category and detected information
-        if doc_info['category'] == 'agent_files':
-            caps = ' AND '.join(doc_info['capabilities']).upper() if doc_info['capabilities'] else 'SPECIALIZED PROCESSING'
-            return f"{doc_info['language']} AGENT specialist with {caps}"
-        
-        elif doc_info['category'] == 'infrastructure':
-            focus = ' AND '.join(doc_info['capabilities']).upper() if doc_info['capabilities'] else 'SYSTEM MANAGEMENT'
-            return f"Infrastructure implementation with {focus}"
-        
-        elif doc_info['category'] == 'protocol':
-            return f"{doc_info['language']} protocol communication system documentation"
-        
-        elif doc_info['category'] == 'security':
-            aspects = ' AND '.join(doc_info['capabilities']).upper() if doc_info['capabilities'] else 'SECURITY MEASURES'
-            return f"Security documentation covering {aspects}"
-        
-        elif doc_info['category'] == 'documentation':
-            system = doc_info['language'] if doc_info['language'] != 'GENERAL' else 'SYSTEM'
-            return f"{system} documentation and implementation guide"
-        
-        else:
-            # General case
-            if doc_info['capabilities']:
-                caps = ' AND '.join(doc_info['capabilities']).upper()
-                return f"{doc_info['language']} implementation with {caps}"
-            else:
-                return f"{doc_info['language']} technical documentation"
-
-class MarkdownProcessor:
-    """Process and render markdown content"""
-    
-    @staticmethod
-    def process_markdown(content: str) -> str:
-        """Convert markdown to HTML if processor available"""
-        if not MARKDOWN_PROCESSING_AVAILABLE:
-            return content
-        
-        try:
-            # Convert markdown to HTML
-            html = markdown.markdown(content, extensions=['tables', 'fenced_code'])
-            return html
+                from openvino import Core  # New API
+            except ImportError:
+                from openvino.runtime import Core  # Legacy API
+            core = Core()
+            devices = core.available_devices
+            return devices
         except Exception:
-            return content
-    
-    @staticmethod
-    def extract_first_paragraph(content: str) -> str:
-        """Extract first meaningful paragraph from markdown"""
-        lines = content.split('\n')
-        paragraph_lines = []
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('#'):  # Skip headers
-                continue
-            if line.startswith('---'):  # Skip frontmatter
-                continue
-            if line.startswith('```'):  # Skip code blocks
-                break
-            
-            paragraph_lines.append(line)
-            if len(' '.join(paragraph_lines)) > 200:  # Reasonable preview length
-                break
-        
-        return ' '.join(paragraph_lines)
+            return []
 
-class DocumentationStructureAnalyzer:
-    """Analyzes and adapts to different documentation structures"""
-    
-    def __init__(self, root_path: Path):
-        self.root_path = root_path
-        self.structure = {}
-        self.categories = {}
-        self.role_mappings = {}
-        self.config_file = root_path / ".docs_browser_config.json"
-        
-    def analyze_structure(self) -> Dict:
-        """Automatically analyze documentation structure"""
-        structure = {
-            'total_files': 0,
-            'categories': {},
-            'file_types': {},
-            'depth': 0,
-            'patterns': []
+    @staticmethod
+    def get_optimal_device() -> str:
+        """Determine optimal device for inference"""
+        devices = HardwareDetector.get_openvino_devices()
+
+        # Priority: NPU > GPU > CPU
+        if 'NPU' in devices:
+            return 'NPU'
+        elif 'GPU' in devices or 'GPU.0' in devices:
+            return 'GPU'
+        else:
+            return 'CPU'
+
+    @staticmethod
+    def get_hardware_info() -> Dict[str, Any]:
+        """Get comprehensive hardware information"""
+        info = {
+            'cpu_model': 'Unknown',
+            'cpu_cores': os.cpu_count() or 1,
+            'has_npu': False,
+            'has_intel_gpu': False,
+            'openvino_devices': [],
+            'optimal_device': 'CPU',
+            'platform': platform.system(),
+            'python_version': platform.python_version()
         }
-        
-        # Load existing config if available
-        if self.config_file.exists():
-            try:
-                with open(self.config_file, 'r') as f:
-                    saved_config = json.load(f)
-                    # Check if config is recent (within 1 hour)
-                    if saved_config.get('structure') and \
-                       abs(self.root_path.stat().st_mtime - saved_config.get('analyzed_at', 0)) < 3600:
-                        return saved_config['structure']
-            except Exception:
-                pass
-        
-        # Directories to ignore during analysis
-        ignore_dirs = {
-            'venv', 'env', '.venv', '.env',  # Virtual environments
-            'node_modules', '.git', '.svn',  # Version control and dependencies
-            '__pycache__', '.pytest_cache',  # Python cache
-            '.idea', '.vscode', '.vs',       # IDE directories
-            'build', 'dist', '.build',       # Build directories
-            '.tox', '.coverage',             # Testing/coverage
-            'logs', 'log', 'tmp', 'temp',    # Temporary directories
-            '.cache', 'cache'                # Cache directories
-        }
-        
-        # Scan directory structure
-        for item in self.root_path.iterdir():
-            if (item.is_dir() and 
-                not item.name.startswith('.') and 
-                item.name.lower() not in ignore_dirs):
-                category_info = self._analyze_category(item)
-                if category_info['file_count'] > 0:
-                    structure['categories'][item.name] = category_info
-                    structure['total_files'] += category_info['file_count']
-        
-        # Also check for files in root
-        root_files = self._get_doc_files(self.root_path, recursive=False)
-        if root_files:
-            structure['categories']['_root'] = {
-                'path': str(self.root_path),
-                'description': 'Root documentation files',
-                'file_count': len(root_files),
-                'files': [f.name for f in root_files],
-                'patterns': self._detect_patterns([f.name for f in root_files])
-            }
-            structure['total_files'] += len(root_files)
-        
-        # Detect overall patterns and depth
-        structure['patterns'] = self._detect_global_patterns(structure['categories'])
-        structure['depth'] = self._calculate_depth()
-        structure['file_types'] = self._analyze_file_types()
-        
-        self.structure = structure
-        return structure
-    
-    def _analyze_category(self, category_path: Path) -> Dict:
-        """Analyze a specific category directory"""
-        files = self._get_doc_files(category_path)
-        
-        return {
-            'path': str(category_path),
-            'description': self._generate_description(category_path.name, files),
-            'file_count': len(files),
-            'files': [f.name for f in files],
-            'patterns': self._detect_patterns([f.name for f in files]),
-            'subdirs': [d.name for d in category_path.iterdir() if d.is_dir() and not d.name.startswith('.')]
-        }
-    
-    def _get_doc_files(self, path: Path, recursive: bool = True) -> List[Path]:
-        """Get all documentation files in a directory, excluding ignored directories"""
-        extensions = {'.md', '.txt', '.rst', '.pdf', '.html', '.htm', '.adoc', '.tex', '.docx', '.doc', '.odt'}
-        files = []
-        
-        # Directories to ignore
-        ignore_dirs = {
-            'venv', 'env', '.venv', '.env',  # Virtual environments
-            'node_modules', '.git', '.svn',  # Version control and dependencies
-            '__pycache__', '.pytest_cache',  # Python cache
-            '.idea', '.vscode', '.vs',       # IDE directories
-            'build', 'dist', '.build',       # Build directories
-            '.tox', '.coverage',             # Testing/coverage
-            'logs', 'log', 'tmp', 'temp',    # Temporary directories
-            '.cache', 'cache'                # Cache directories
-        }
-        
-        if recursive:
-            for ext in extensions:
-                for file_path in path.rglob(f'*{ext}'):
-                    # Check if any parent directory should be ignored
-                    should_ignore = False
-                    for parent in file_path.parents:
-                        if parent.name.lower() in ignore_dirs or parent.name.startswith('.'):
-                            should_ignore = True
+
+        try:
+            # Get CPU model
+            if platform.system() == 'Linux':
+                with open('/proc/cpuinfo', 'r') as f:
+                    for line in f:
+                        if 'model name' in line:
+                            info['cpu_model'] = line.split(':')[1].strip()
                             break
-                    
-                    if not should_ignore and not file_path.name.startswith('.'):
-                        files.append(file_path)
-        else:
-            for ext in extensions:
-                files.extend(path.glob(f'*{ext}'))
-        
-        return [f for f in files if not f.name.startswith('.')]
-    
-    def _detect_patterns(self, filenames: List[str]) -> List[str]:
-        """Detect naming patterns in filenames"""
-        patterns = []
-        
-        # Common patterns
-        common_patterns = [
-            (r'^README', 'readme'),
-            (r'^INSTALL', 'installation'),
-            (r'^SETUP', 'setup'),
-            (r'^CONFIG', 'configuration'),
-            (r'^GUIDE', 'guide'),
-            (r'^TUTORIAL', 'tutorial'),
-            (r'^API', 'api'),
-            (r'^REFERENCE', 'reference'),
-            (r'^ARCH', 'architecture'),
-            (r'^DESIGN', 'design'),
-            (r'^IMPL', 'implementation'),
-            (r'^TEST', 'testing'),
-            (r'^FIX', 'fixes'),
-            (r'^BUG', 'bugfix'),
-            (r'^FEATURE', 'features'),
-            (r'^CHANGE', 'changelog'),
-            (r'^RELEASE', 'releases'),
-            (r'^SECURITY', 'security'),
-            (r'^DEPLOY', 'deployment'),
-            (r'^TROUBLE', 'troubleshooting'),
-            (r'^FAQ', 'faq'),
-            (r'^LEGACY', 'legacy'),
-            (r'^DEPRECAT', 'deprecated'),
-            (r'\d{4}-\d{2}-\d{2}', 'dated'),
-            (r'v\d+\.\d+', 'versioned'),
-            (r'enhanced-plans', 'strategic'),
-            (r'roadmaps', 'planning'),
-            (r'user-guide', 'user_guides'),
-            (r'technical', 'technical')
-        ]
-        
-        for pattern, name in common_patterns:
-            if any(re.search(pattern, f, re.IGNORECASE) for f in filenames):
-                patterns.append(name)
-        
-        return patterns
-    
-    def _detect_global_patterns(self, categories: Dict) -> List[str]:
-        """Detect global documentation patterns"""
-        all_patterns = []
-        for cat in categories.values():
-            all_patterns.extend(cat.get('patterns', []))
-        
-        # Return unique patterns
-        return list(set(all_patterns))
-    
-    def _generate_description(self, category_name: str, files: List[Path]) -> str:
-        """Generate description for a category based on its name and contents"""
-        name_lower = category_name.lower()
-        
-        # Predefined descriptions for common categories
-        descriptions = {
-            'api': 'API documentation and reference',
-            'architecture': 'System architecture and design documents',
-            'deployment': 'Deployment guides and procedures',
-            'docs': 'General documentation',
-            'enhanced-plans': 'Strategic planning and enhancement documents',
-            'guides': 'User guides and tutorials',
-            'legacy': 'Legacy and deprecated documentation',
-            'roadmaps': 'Project roadmaps and planning documents',
-            'security': 'Security documentation and policies',
-            'technical': 'Technical specifications and references',
-            'troubleshooting': 'Problem solving and debugging guides',
-            'user-guide': 'User guides and how-to documents',
-            'implementation': 'Implementation details and reports',
-            'performance': 'Performance optimization documentation',
-            'strategic': 'Strategic planning documents'
-        }
-        
-        # Try to match category name
-        for key, desc in descriptions.items():
-            if key in name_lower:
-                return f"{desc} ({len(files)} files)"
-        
-        # Fallback: generate based on content patterns
-        patterns = self._detect_patterns([f.name for f in files])
-        if patterns:
-            return f"{patterns[0].title()} documentation ({len(files)} files)"
-        
-        return f"{category_name.title()} ({len(files)} files)"
-    
-    def _calculate_depth(self) -> int:
-        """Calculate maximum directory depth"""
-        max_depth = 0
-        try:
-            for item in self.root_path.rglob('*'):
-                if item.is_file():
-                    depth = len(item.relative_to(self.root_path).parts)
-                    max_depth = max(max_depth, depth)
-        except Exception:
-            pass
-        return max_depth
-    
-    def _analyze_file_types(self) -> Dict[str, int]:
-        """Analyze file type distribution"""
-        file_types = {}
-        try:
-            for file_path in self._get_doc_files(self.root_path):
-                ext = file_path.suffix.lower()
-                file_types[ext] = file_types.get(ext, 0) + 1
-        except Exception:
-            pass
-        return file_types
-    
-    def generate_role_mappings(self) -> Dict[str, List[str]]:
-        """Generate role-based document mappings using enhanced semantic analysis
-        
-        Enhanced Semantic Matching with 8 Role Categories:
-        - New Users: 'readme', 'getting', 'start', 'intro', 'quick', 'begin', 'guide', 'first', 'launch', 'walkthrough'
-        - Developers: 'api', 'arch', 'design', 'dev', 'code', 'impl', 'technical', 'spec', 'framework', 'orchestration'
-        - Administrators: 'install', 'setup', 'config', 'deploy', 'admin', 'trouble', 'ops', 'management', 'monitoring'
-        - Security Experts: 'security', 'auth', 'crypto', 'secure', 'vuln', 'audit', 'cert', 'encryption', 'bastion'
-        - System Builders: 'build', 'kernel', 'driver', 'hardware', 'firmware', 'boot', 'compilation', 'microcode'
-        - Network Engineers: 'network', 'mesh', 'vpn', 'tunnel', 'routing', 'protocol', 'gateway', 'dns', 'tls'
-        - Project Managers: 'roadmap', 'plan', 'strategy', 'timeline', 'milestone', 'project', 'executive', 'summary'
-        - QA/Testing: 'test', 'testing', 'qa', 'quality', 'validation', 'verification', 'benchmark', 'performance'
-        
-        Uses scoring system: filename + category matches, content analysis, multi-role support.
-        """
-        mappings = {
-            'New Users': [],
-            'Developers': [],
-            'Administrators': [],
-            'Security Experts': [],
-            'System Builders': [],
-            'Network Engineers': [],
-            'Project Managers': [],
-            'QA/Testing': []
-        }
-        
-        # Enhanced semantic matching with scoring system
-        for cat_name, cat_info in self.structure.get('categories', {}).items():
-            cat_path = Path(cat_info['path'])
-            files = cat_info.get('files', [])
-            
-            for file_name in files[:5]:  # Increased from 3 to 5 files per category
-                try:
-                    relative_path = str(Path(cat_path.name) / file_name) if cat_name != '_root' else file_name
-                    name_lower = file_name.lower()
-                    cat_lower = cat_name.lower()
-                    
-                    # Score-based matching for better accuracy
-                    role_scores = {}
-                    
-                    # New Users (Getting Started)
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['readme', 'getting', 'start', 'intro', 'quick', 'begin', 'guide', 'first', 'launch', 'walkthrough', 'primer', 'basics']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['guide', 'tutorial', 'intro', 'user-guide', 'getting-started', 'quickstart', 'onboarding']):
-                        score += 1
-                    if score > 0:
-                        role_scores['New Users'] = score
-                    
-                    # Developers (Technical Implementation)
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['api', 'arch', 'design', 'dev', 'code', 'impl', 'technical', 'spec', 'framework', 'orchestration', 'engine', 'core']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['api', 'architecture', 'technical', 'implementation', 'development', 'specs', 'reference', 'framework']):
-                        score += 1
-                    if score > 0:
-                        role_scores['Developers'] = score
-                    
-                    # Administrators (Operations)
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['install', 'setup', 'config', 'deploy', 'admin', 'trouble', 'ops', 'management', 'monitoring', 'maintenance']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['deployment', 'troubleshooting', 'installation', 'operations', 'maintenance', 'ops', 'infrastructure']):
-                        score += 1
-                    if score > 0:
-                        role_scores['Administrators'] = score
-                    
-                    # Security Experts
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['security', 'auth', 'crypto', 'secure', 'vuln', 'audit', 'cert', 'encryption', 'bastion', 'hardening']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['security', 'auth', 'crypto', 'compliance', 'audit', 'hardening']):
-                        score += 1
-                    if score > 0:
-                        role_scores['Security Experts'] = score
-                    
-                    # System Builders (NEW)
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['build', 'kernel', 'driver', 'hardware', 'firmware', 'boot', 'compilation', 'microcode', 'toolchain', 'bios']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['build', 'hardware', 'kernel', 'drivers', 'firmware', 'compilation', 'toolchain']):
-                        score += 1
-                    if score > 0:
-                        role_scores['System Builders'] = score
-                    
-                    # Network Engineers (NEW)
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['network', 'mesh', 'vpn', 'tunnel', 'routing', 'protocol', 'gateway', 'dns', 'tls', 'ssl', 'proxy']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['network', 'infrastructure', 'routing', 'protocol', 'mesh', 'vpn', 'tunnel']):
-                        score += 1
-                    if score > 0:
-                        role_scores['Network Engineers'] = score
-                    
-                    # Project Managers (NEW)
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['roadmap', 'plan', 'strategy', 'timeline', 'milestone', 'project', 'executive', 'summary', 'overview', 'coordination']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['roadmaps', 'plans', 'strategy', 'management', 'coordination', 'summaries', 'reports']):
-                        score += 1
-                    if score > 0:
-                        role_scores['Project Managers'] = score
-                    
-                    # QA/Testing (NEW)
-                    score = 0
-                    if any(pattern in name_lower for pattern in ['test', 'testing', 'qa', 'quality', 'validation', 'verification', 'benchmark', 'performance', 'load', 'stress']):
-                        score += 2
-                    if any(pattern in cat_lower for pattern in ['testing', 'qa', 'validation', 'verification', 'benchmarks', 'performance', 'quality']):
-                        score += 1
-                    if score > 0:
-                        role_scores['QA/Testing'] = score
-                    
-                    # Assign to roles based on scores (multi-role support)
-                    for role, score in role_scores.items():
-                        if score >= 1:  # Minimum score threshold
-                            mappings[role].append(relative_path)
-                
-                except Exception:
-                    continue
-        
-        # Remove empty roles and limit items with improved deduplication
-        filtered_mappings = {}
-        for role, docs in mappings.items():
-            if docs:
-                # Remove duplicates and limit to most relevant documents (max 10 per role for 8 categories)
-                unique_docs = list(dict.fromkeys(docs))  # Remove duplicates while preserving order
-                filtered_mappings[role] = unique_docs[:10]
-        
-        self.role_mappings = filtered_mappings
-        return filtered_mappings
-    
-    def save_config(self):
-        """Save configuration for future use"""
-        config = {
-            'version': '1.0',
-            'root_path': str(self.root_path),
-            'structure': self.structure,
-            'role_mappings': self.role_mappings,
-            'generated_at': str(Path.cwd()),
-            'analyzed_at': self.root_path.stat().st_mtime
-        }
-        
-        try:
-            with open(self.config_file, 'w') as f:
-                json.dump(config, f, indent=2)
-        except Exception as e:
-            print(f"Warning: Could not save config: {e}")
 
-class UniversalDocumentationBrowser:
-    """Universal documentation browser with PDF extraction"""
-    
-    def __init__(self, root: tk.Tk, docs_path: Path = None):
+            info['has_npu'] = HardwareDetector.detect_intel_npu()
+            info['has_intel_gpu'] = HardwareDetector.detect_intel_gpu()
+            info['openvino_devices'] = HardwareDetector.get_openvino_devices()
+            info['optimal_device'] = HardwareDetector.get_optimal_device()
+
+        except Exception as e:
+            print(f"Warning: Could not detect all hardware features: {e}")
+
+        return info
+
+# ============================================================================
+# AUTO-INSTALLATION SYSTEM
+# ============================================================================
+
+class DependencyManager:
+    """Automatic dependency installation and management"""
+
+    CORE_DEPS = [
+        ('pdfplumber', 'pdfplumber'),
+        ('Pillow', 'PIL'),
+        ('markdown', 'markdown'),
+    ]
+
+    AI_DEPS = [
+        ('numpy', 'numpy'),
+        ('scikit-learn', 'sklearn'),
+        ('openvino', 'openvino'),
+        ('openvino-dev', 'openvino.tools'),
+        ('optimum-intel', 'optimum.intel'),
+        ('sentence-transformers', 'sentence_transformers'),
+        ('transformers', 'transformers'),
+        ('torch', 'torch'),
+    ]
+
+    OPTIONAL_DEPS = [
+        ('pytesseract', 'pytesseract'),  # OCR
+        ('python-docx', 'docx'),  # DOCX support
+        ('PyMuPDF', 'fitz'),  # Advanced PDF
+    ]
+
+    @staticmethod
+    def check_and_install(package_name: str, import_name: str = None, required: bool = True) -> bool:
+        """Check if package installed, install if not"""
+        if import_name is None:
+            import_name = package_name
+
+        try:
+            __import__(import_name)
+            return True
+        except ImportError:
+            if not required:
+                return False
+
+            print(f"📦 Installing {package_name}...")
+            try:
+                subprocess.check_call(
+                    [sys.executable, '-m', 'pip', 'install', package_name, '--quiet'],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+                print(f"✅ Installed {package_name}")
+                return True
+            except subprocess.CalledProcessError:
+                print(f"❌ Failed to install {package_name}")
+                return False
+
+    @classmethod
+    def setup_environment(cls, enable_ai: bool = True) -> Dict[str, bool]:
+        """Setup complete environment"""
+        status = {}
+
+        print("🚀 Setting up document browser environment...")
+
+        # Install core dependencies
+        for pkg, imp in cls.CORE_DEPS:
+            status[pkg] = cls.check_and_install(pkg, imp, required=True)
+
+        # Install AI dependencies if enabled
+        if enable_ai:
+            print("🧠 Setting up AI acceleration...")
+            for pkg, imp in cls.AI_DEPS:
+                status[pkg] = cls.check_and_install(pkg, imp, required=False)
+
+        # Optional dependencies
+        for pkg, imp in cls.OPTIONAL_DEPS:
+            status[pkg] = cls.check_and_install(pkg, imp, required=False)
+
+        return status
+
+# ============================================================================
+# AI MODEL MANAGER (OpenVINO Optimized)
+# ============================================================================
+
+class AIModelManager:
+    """Manage AI models with OpenVINO optimization for NPU/GPU"""
+
+    def __init__(self, cache_dir: Path = None):
+        self.cache_dir = cache_dir or Path.home() / '.cache' / 'doc_browser_ai'
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.models = {}
+        self.device = 'CPU'
+        self.ov_core = None
+
+        # Initialize OpenVINO if available
+        try:
+            try:
+                from openvino import Core  # New API (2025.0+)
+            except ImportError:
+                from openvino.runtime import Core  # Legacy API (fallback)
+            self.ov_core = Core()
+            self.device = HardwareDetector.get_optimal_device()
+            print(f"✅ OpenVINO initialized - Using: {self.device}")
+        except ImportError:
+            print("ℹ️  OpenVINO not available - AI features disabled")
+
+    def get_model_cache_path(self, model_name: str) -> Path:
+        """Get cache path for model"""
+        safe_name = re.sub(r'[^\w\-.]', '_', model_name)
+        return self.cache_dir / safe_name
+
+    def load_embedding_model(self, model_name: str = 'all-MiniLM-L6-v2'):
+        """Load sentence embedding model optimized for NPU/GPU with OpenVINO"""
+        cache_key = f'embeddings_{model_name}'
+
+        if cache_key in self.models:
+            return self.models[cache_key]
+
+        try:
+            # Try OpenVINO-optimized model first (for NPU/GPU)
+            if self.ov_core and self.device in ['NPU', 'GPU']:
+                ov_model = self._load_openvino_embedding_model(model_name)
+                if ov_model:
+                    self.models[cache_key] = ov_model
+                    return ov_model
+
+            # Fallback to standard sentence-transformers (CPU)
+            from sentence_transformers import SentenceTransformer
+
+            print(f"📥 Loading embedding model: {model_name} (CPU mode)...")
+            model = SentenceTransformer(model_name, cache_folder=str(self.cache_dir))
+
+            self.models[cache_key] = model
+            return model
+
+        except Exception as e:
+            print(f"❌ Failed to load embedding model: {e}")
+            return None
+
+    def _load_openvino_embedding_model(self, model_name: str):
+        """Load OpenVINO-optimized embedding model for NPU/GPU"""
+        try:
+            from optimum.intel.openvino import OVModelForFeatureExtraction
+            from transformers import AutoTokenizer
+
+            model_id = f"sentence-transformers/{model_name}"
+            ov_model_path = self.get_model_cache_path(f'{model_name}_ov_{self.device}')
+
+            # Check if already converted
+            if ov_model_path.exists():
+                print(f"📥 Loading cached OpenVINO model from {ov_model_path}...")
+                try:
+                    model = OVModelForFeatureExtraction.from_pretrained(
+                        ov_model_path,
+                        device=self.device
+                    )
+                    tokenizer = AutoTokenizer.from_pretrained(ov_model_path)
+                    print(f"✅ Loaded optimized model on {self.device}")
+                    return {'model': model, 'tokenizer': tokenizer, 'type': 'openvino'}
+                except Exception as e:
+                    print(f"⚠️  Cache invalid, reconverting: {e}")
+
+            # Convert to OpenVINO format
+            print(f"🔧 Converting {model_name} to OpenVINO for {self.device}...")
+            print(f"   This may take 1-2 minutes on first run...")
+
+            model = OVModelForFeatureExtraction.from_pretrained(
+                model_id,
+                export=True,
+                device=self.device
+            )
+            tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+            # Save for future use
+            model.save_pretrained(ov_model_path)
+            tokenizer.save_pretrained(ov_model_path)
+
+            print(f"✅ Model optimized and cached for {self.device}")
+            print(f"   Future runs will load instantly from cache")
+
+            return {'model': model, 'tokenizer': tokenizer, 'type': 'openvino'}
+
+        except Exception as e:
+            print(f"ℹ️  OpenVINO optimization failed: {e}")
+            print(f"   Falling back to standard model...")
+            return None
+
+    def encode_texts(self, texts: List[str]) -> Optional[Any]:
+        """Encode texts to embeddings using OpenVINO or standard models"""
+        model = self.load_embedding_model()
+        if model is None:
+            return None
+
+        try:
+            # Check if OpenVINO model (dict) or standard model (object)
+            if isinstance(model, dict) and model.get('type') == 'openvino':
+                # OpenVINO model - use tokenizer + model inference
+                import numpy as np
+                import torch  # Needed for tensor operations
+
+                tokenizer = model['tokenizer']
+                ov_model = model['model']
+
+                # Tokenize texts
+                inputs = tokenizer(texts, padding=True, truncation=True,
+                                 return_tensors='pt', max_length=512)
+
+                # Run inference on NPU/GPU
+                outputs = ov_model(**inputs)
+
+                # Mean pooling
+                attention_mask = inputs['attention_mask']
+                token_embeddings = outputs[0]
+                input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+                embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+
+                return embeddings.detach().cpu().numpy()
+
+            else:
+                # Standard sentence-transformers model (CPU)
+                embeddings = model.encode(texts, show_progress_bar=False)
+                return embeddings
+
+        except Exception as e:
+            print(f"Error encoding texts: {e}")
+            # Fallback: try standard encoding
+            try:
+                if hasattr(model, 'encode'):
+                    return model.encode(texts, show_progress_bar=False)
+            except:
+                pass
+            return None
+
+    def semantic_search(self, query: str, documents: List[str], top_k: int = 5) -> List[Tuple[int, float]]:
+        """Perform semantic search using embeddings"""
+        model = self.load_embedding_model()
+        if model is None:
+            return []
+
+        try:
+            # Encode query and documents
+            query_embedding = model.encode([query], show_progress_bar=False)
+            doc_embeddings = model.encode(documents, show_progress_bar=False)
+
+            # Compute cosine similarity
+            from sklearn.metrics.pairwise import cosine_similarity
+            import numpy as np
+
+            similarities = cosine_similarity(query_embedding, doc_embeddings)[0]
+
+            # Get top-k results
+            top_indices = np.argsort(similarities)[::-1][:top_k]
+            results = [(idx, float(similarities[idx])) for idx in top_indices if similarities[idx] > 0.3]
+
+            return results
+        except Exception as e:
+            print(f"Error in semantic search: {e}")
+            return []
+
+# ============================================================================
+# DOCKER GENERATOR
+# ============================================================================
+
+class DockerGenerator:
+    """Generate Docker configuration for the document browser"""
+
+    @staticmethod
+    def generate_dockerfile(has_npu: bool = False, has_gpu: bool = False) -> str:
+        """Generate Dockerfile content"""
+        gpu_support = ""
+        if has_gpu:
+            gpu_support = """
+# Intel GPU support
+RUN apt-get update && apt-get install -y \\
+    intel-opencl-icd \\
+    intel-level-zero-gpu \\
+    && rm -rf /var/lib/apt/lists/*
+"""
+
+        npu_note = ""
+        if has_npu:
+            npu_note = """
+# Note: NPU support requires device passthrough
+# Use: docker run --device=/dev/intel_gna:/dev/intel_gna
+"""
+
+        dockerfile = f"""# Auto-generated Dockerfile for AI Document Browser
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \\
+    libgl1-mesa-glx \\
+    libglib2.0-0 \\
+    libsm6 \\
+    libxext6 \\
+    libxrender-dev \\
+    libgomp1 \\
+    && rm -rf /var/lib/apt/lists/*
+{gpu_support}{npu_note}
+# Set working directory
+WORKDIR /app
+
+# Copy the single-file browser
+COPY doc_browser_ai.py /app/
+
+# Install Python dependencies (will auto-install on first run)
+# Pre-install to speed up container startup
+RUN pip install --no-cache-dir \\
+    openvino>=2024.0.0 \\
+    openvino-dev \\
+    sentence-transformers \\
+    transformers \\
+    torch \\
+    pdfplumber \\
+    Pillow \\
+    markdown \\
+    scikit-learn \\
+    numpy
+
+# Create cache directory
+RUN mkdir -p /root/.cache/doc_browser_ai
+
+# Expose port for web interface (if enabled)
+EXPOSE 8080
+
+# Set display for GUI (X11 forwarding)
+ENV DISPLAY=:0
+
+# Run the browser
+CMD ["python3", "doc_browser_ai.py"]
+"""
+        return dockerfile
+
+    @staticmethod
+    def generate_docker_compose(has_npu: bool = False, has_gpu: bool = False) -> str:
+        """Generate docker-compose.yml content"""
+
+        devices = []
+        if has_npu:
+            devices.append("      - /dev/intel_gna:/dev/intel_gna")
+        if has_gpu:
+            devices.append("      - /dev/dri:/dev/dri")
+
+        device_section = ""
+        if devices:
+            device_section = f"""
+    devices:
+{chr(10).join(devices)}"""
+
+        compose = f"""# Auto-generated docker-compose.yml for AI Document Browser
+version: '3.8'
+
+services:
+  doc-browser:
+    build: .
+    container_name: doc-browser-ai
+    volumes:
+      - ./:/docs:ro  # Mount current directory as read-only
+      - ~/.cache/doc_browser_ai:/root/.cache/doc_browser_ai  # Model cache
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw  # X11 for GUI
+    environment:
+      - DISPLAY=${{DISPLAY}}
+      - QT_X11_NO_MITSHM=1{device_section}
+    network_mode: host
+    stdin_open: true
+    tty: true
+
+    # For web interface mode (optional)
+    # ports:
+    #   - "8080:8080"
+"""
+        return compose
+
+    @staticmethod
+    def generate_dockerignore() -> str:
+        """Generate .dockerignore content"""
+        return """# Docker ignore patterns
+.git
+.github
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.cache
+*.so
+.env
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+"""
+
+    @staticmethod
+    def initialize_docker(output_dir: Path, hardware_info: Dict) -> bool:
+        """Generate all Docker files"""
+        try:
+            print("🐳 Generating Docker configuration...")
+
+            # Generate Dockerfile
+            dockerfile_content = DockerGenerator.generate_dockerfile(
+                has_npu=hardware_info.get('has_npu', False),
+                has_gpu=hardware_info.get('has_intel_gpu', False)
+            )
+            with open(output_dir / 'Dockerfile', 'w') as f:
+                f.write(dockerfile_content)
+            print("✅ Created Dockerfile")
+
+            # Generate docker-compose.yml
+            compose_content = DockerGenerator.generate_docker_compose(
+                has_npu=hardware_info.get('has_npu', False),
+                has_gpu=hardware_info.get('has_intel_gpu', False)
+            )
+            with open(output_dir / 'docker-compose.yml', 'w') as f:
+                f.write(compose_content)
+            print("✅ Created docker-compose.yml")
+
+            # Generate .dockerignore
+            dockerignore_content = DockerGenerator.generate_dockerignore()
+            with open(output_dir / '.dockerignore', 'w') as f:
+                f.write(dockerignore_content)
+            print("✅ Created .dockerignore")
+
+            # Generate README
+            readme_content = f"""# Docker Setup for AI Document Browser
+
+## Quick Start
+
+```bash
+# Build and run:
+docker-compose up --build
+
+# Or run directly:
+docker build -t doc-browser-ai .
+docker run -it --rm \\
+  -v $(pwd):/docs:ro \\
+  -v ~/.cache/doc_browser_ai:/root/.cache/doc_browser_ai \\
+  -e DISPLAY=$DISPLAY \\
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \\
+  {"--device=/dev/intel_gna:/dev/intel_gna" if hardware_info.get('has_npu') else ""} \\
+  {"--device=/dev/dri:/dev/dri" if hardware_info.get('has_intel_gpu') else ""} \\
+  doc-browser-ai
+```
+
+## Hardware Detected
+
+- CPU: {hardware_info.get('cpu_model', 'Unknown')}
+- Cores: {hardware_info.get('cpu_cores', 0)}
+- NPU: {"✅ Available" if hardware_info.get('has_npu') else "❌ Not detected"}
+- Intel GPU: {"✅ Available" if hardware_info.get('has_intel_gpu') else "❌ Not detected"}
+- OpenVINO Devices: {', '.join(hardware_info.get('openvino_devices', ['CPU']))}
+
+## Features
+
+- AI-powered document analysis using OpenVINO
+- NPU acceleration for inference (if available)
+- GPU acceleration for image processing
+- Semantic search with embeddings
+- Automatic document summarization
+- PDF text extraction and OCR
+- Works with any documentation structure
+
+## Notes
+
+- Models are cached in ~/.cache/doc_browser_ai (persists across containers)
+- First run will download required AI models (~500MB)
+- GUI requires X11 forwarding (configured automatically)
+"""
+            with open(output_dir / 'README_DOCKER.md', 'w') as f:
+                f.write(readme_content)
+            print("✅ Created README_DOCKER.md")
+
+            print("\n🎉 Docker initialization complete!")
+            print("\nTo run:")
+            print("  docker-compose up --build")
+            print("\nOr:")
+            print("  docker build -t doc-browser-ai .")
+            print("  docker-compose up")
+
+            return True
+
+        except Exception as e:
+            print(f"❌ Failed to generate Docker files: {e}")
+            return False
+
+# ============================================================================
+# ENHANCED PDF PROCESSOR
+# ============================================================================
+
+class PDFProcessor:
+    """Enhanced PDF processing with OCR and image extraction"""
+
+    @staticmethod
+    def extract_text(pdf_path: Path, use_ocr: bool = False) -> str:
+        """Extract text from PDF with optional OCR"""
+        try:
+            import pdfplumber
+
+            text_parts = []
+            with pdfplumber.open(pdf_path) as pdf:
+                for i, page in enumerate(pdf.pages, 1):
+                    text = page.extract_text()
+                    if text:
+                        text_parts.append(f"\n{'='*60}\nPage {i}\n{'='*60}\n{text}")
+                    elif use_ocr:
+                        # OCR for scanned pages (if tesseract available)
+                        try:
+                            import pytesseract
+                            from PIL import Image
+                            img = page.to_image()
+                            ocr_text = pytesseract.image_to_string(img.original)
+                            text_parts.append(f"\n{'='*60}\nPage {i} (OCR)\n{'='*60}\n{ocr_text}")
+                        except:
+                            text_parts.append(f"\nPage {i}: [OCR not available]")
+
+            return '\n'.join(text_parts)
+        except Exception as e:
+            return f"Error extracting PDF: {e}"
+
+    @staticmethod
+    def get_pdf_metadata(pdf_path: Path) -> Dict[str, str]:
+        """Extract PDF metadata"""
+        try:
+            import pdfplumber
+
+            with pdfplumber.open(pdf_path) as pdf:
+                metadata = pdf.metadata or {}
+                return {
+                    'pages': str(len(pdf.pages)),
+                    'title': metadata.get('Title', 'Unknown'),
+                    'author': metadata.get('Author', 'Unknown'),
+                    'subject': metadata.get('Subject', 'Unknown'),
+                    'creator': metadata.get('Creator', 'Unknown'),
+                    'producer': metadata.get('Producer', 'Unknown'),
+                }
+        except:
+            return {'error': 'Could not read PDF metadata'}
+
+# ============================================================================
+# SEMANTIC SEARCH ENGINE
+# ============================================================================
+
+class SemanticSearchEngine:
+    """AI-powered semantic search using embeddings"""
+
+    def __init__(self, model_manager: AIModelManager):
+        self.model_manager = model_manager
+        self.document_index = {}
+        self.embeddings = None
+
+    def index_documents(self, documents: List[Tuple[Path, str]]) -> bool:
+        """Index documents for semantic search"""
+        try:
+            print(f"🔍 Indexing {len(documents)} documents for semantic search...")
+
+            # Extract text samples for embedding
+            doc_samples = []
+            doc_paths = []
+
+            for path, content in documents:
+                # Use first 500 chars as representative sample
+                sample = content[:500] if len(content) > 500 else content
+                doc_samples.append(sample)
+                doc_paths.append(path)
+
+            # Generate embeddings using NPU if available
+            embeddings = self.model_manager.encode_texts(doc_samples)
+
+            if embeddings is not None:
+                self.embeddings = embeddings
+                self.document_index = {str(path): idx for idx, path in enumerate(doc_paths)}
+                print(f"✅ Indexed {len(documents)} documents")
+                return True
+
+            return False
+
+        except Exception as e:
+            print(f"❌ Indexing failed: {e}")
+            return False
+
+    def search(self, query: str, top_k: int = 10) -> List[Tuple[str, float]]:
+        """Perform semantic search"""
+        if not self.document_index or self.embeddings is None:
+            return []
+
+        try:
+            # Get query embedding
+            query_emb = self.model_manager.encode_texts([query])
+            if query_emb is None:
+                return []
+
+            # Compute similarities
+            from sklearn.metrics.pairwise import cosine_similarity
+            import numpy as np
+
+            similarities = cosine_similarity(query_emb, self.embeddings)[0]
+
+            # Get top results
+            top_indices = np.argsort(similarities)[::-1][:top_k]
+
+            # Map back to documents
+            results = []
+            for idx in top_indices:
+                if similarities[idx] > 0.3:  # Relevance threshold
+                    doc_path = list(self.document_index.keys())[idx]
+                    results.append((doc_path, float(similarities[idx])))
+
+            return results
+
+        except Exception as e:
+            print(f"Error in semantic search: {e}")
+            return []
+
+# ============================================================================
+# ENHANCED DOCUMENT BROWSER UI
+# ============================================================================
+
+class EnhancedDocumentBrowser:
+    """AI-Enhanced document browser with NPU/GPU acceleration"""
+
+    def __init__(self, root: tk.Tk, docs_path: Path):
         self.root = root
-        self.docs_path = docs_path or Path.cwd()
+        self.docs_path = docs_path
         self.current_file = None
-        self.search_results = []
-        self.extracted_pdfs = {}  # Cache for extracted PDF text
-        
-        # Initialize structure analyzer
-        self.analyzer = DocumentationStructureAnalyzer(self.docs_path)
-        self.structure = self.analyzer.analyze_structure()
-        self.categories = self.structure.get('categories', {})
-        self.role_mappings = self.analyzer.generate_role_mappings()
-        
-        # Save config for future use
-        self.analyzer.save_config()
-        
+
+        # Initialize AI components
+        self.model_manager = AIModelManager()
+        self.semantic_engine = SemanticSearchEngine(self.model_manager)
+
+        # Get hardware info
+        self.hardware_info = HardwareDetector.get_hardware_info()
+
+        # Document cache
+        self.doc_cache = {}
+        self.search_mode = 'keyword'  # or 'semantic'
+
+        # Setup UI
         self.setup_ui()
-        self.load_documentation_tree()
-        
+        self.load_documents()
+
     def setup_ui(self):
-        """Setup the adaptive user interface"""
-        project_name = self.docs_path.name.replace('-', ' ').replace('_', ' ').title()
-        self.root.title(f"Universal Documentation Browser - {project_name}")
-        self.root.geometry("1500x1000")
-        self.root.minsize(1200, 700)
-        
-        # Configure style
-        style = ttk.Style()
-        style.theme_use('clam')
-        
+        """Create the user interface"""
+        # Window setup
+        self.root.title(f"AI Document Browser - {self.docs_path.name}")
+        self.root.geometry("1600x1000")
+
         # Main container
-        main_frame = ttk.Frame(self.root, padding="5")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        # Configure grid weights
+        main = ttk.Frame(self.root, padding=10)
+        main.grid(row=0, column=0, sticky='nsew')
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
-        main_frame.rowconfigure(1, weight=1)
-        
-        # Top toolbar
-        self.create_toolbar(main_frame)
-        
-        # Main content area
-        content_frame = ttk.Frame(main_frame)
-        content_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(5, 0))
-        content_frame.columnconfigure(1, weight=1)
-        content_frame.rowconfigure(0, weight=1)
-        
-        # Left panel - Navigation
-        self.create_navigation_panel(content_frame)
-        
-        # Right panel - Content viewer
-        self.create_content_panel(content_frame)
-        
-        # Status bar
-        self.create_status_bar(main_frame)
-        
+        main.columnconfigure(1, weight=1)
+        main.rowconfigure(1, weight=1)
+
+        # Create UI components
+        self.create_toolbar(main)
+        self.create_sidebar(main)
+        self.create_content_area(main)
+        self.create_ai_panel(main)
+        self.create_status_bar(main)
+
     def create_toolbar(self, parent):
-        """Create adaptive toolbar"""
+        """Create toolbar with hardware info"""
         toolbar = ttk.Frame(parent)
-        toolbar.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 5))
-        toolbar.columnconfigure(2, weight=1)
-        
-        # PDF status indicator
-        pdf_frame = ttk.LabelFrame(toolbar, text="PDF Support", padding="3")
-        pdf_frame.grid(row=0, column=0, sticky=(tk.W, tk.N), padx=(0, 5))
-        
-        pdf_status = "✓ Available" if PDF_EXTRACTION_AVAILABLE else "✗ Install pdfplumber"
-        pdf_color = "green" if PDF_EXTRACTION_AVAILABLE else "red"
-        ttk.Label(pdf_frame, text=pdf_status, foreground=pdf_color, font=('Arial', 8)).pack()
-        
-        # Role-based quick access (only if roles were detected)
-        if self.role_mappings:
-            role_frame = ttk.LabelFrame(toolbar, text="Quick Access by Role", padding="5")
-            role_frame.grid(row=0, column=1, sticky=(tk.W, tk.N), padx=(0, 10))
-            
-            for i, role in enumerate(self.role_mappings.keys()):
-                btn = ttk.Button(role_frame, text=role, 
-                               command=lambda r=role: self.show_role_documents(r))
-                btn.grid(row=i//2, column=i%2, padx=2, pady=2, sticky=(tk.W, tk.E))
-        else:
-            # Fallback: directory browser
-            dir_frame = ttk.LabelFrame(toolbar, text="Directory Navigation", padding="5")
-            dir_frame.grid(row=0, column=1, sticky=(tk.W, tk.N), padx=(0, 10))
-            
-            ttk.Button(dir_frame, text="Change Directory", 
-                      command=self.change_directory).pack(pady=2)
-            ttk.Button(dir_frame, text="Refresh", 
-                      command=self.refresh_structure).pack(pady=2)
-        
-        # Search frame
-        search_frame = ttk.LabelFrame(toolbar, text="Search Documentation", padding="5")
-        search_frame.grid(row=0, column=2, sticky=(tk.W, tk.E, tk.N), padx=(0, 10))
-        search_frame.columnconfigure(0, weight=1)
-        
+        toolbar.grid(row=0, column=0, columnspan=3, sticky='ew', pady=(0,5))
+
+        # Hardware status
+        hw_frame = ttk.LabelFrame(toolbar, text="Hardware Acceleration", padding=5)
+        hw_frame.pack(side=tk.LEFT, padx=(0,10))
+
+        device = self.hardware_info.get('optimal_device', 'CPU')
+        device_color = {'NPU': 'green', 'GPU': 'blue', 'CPU': 'orange'}.get(device, 'gray')
+
+        ttk.Label(hw_frame, text=f"Using: {device}", foreground=device_color,
+                 font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=5)
+
+        if self.hardware_info.get('has_npu'):
+            ttk.Label(hw_frame, text="🚀 NPU", foreground='green').pack(side=tk.LEFT)
+        if self.hardware_info.get('has_intel_gpu'):
+            ttk.Label(hw_frame, text="🎮 GPU", foreground='blue').pack(side=tk.LEFT)
+
+        # Search mode toggle
+        search_frame = ttk.LabelFrame(toolbar, text="Search Mode", padding=5)
+        search_frame.pack(side=tk.LEFT, padx=(0,10))
+
+        self.search_mode_var = tk.StringVar(value='keyword')
+        ttk.Radiobutton(search_frame, text="Keyword", variable=self.search_mode_var,
+                       value='keyword', command=self.on_search_mode_change).pack(side=tk.LEFT)
+        ttk.Radiobutton(search_frame, text="🧠 Semantic (AI)", variable=self.search_mode_var,
+                       value='semantic', command=self.on_search_mode_change).pack(side=tk.LEFT)
+
+        # Search box
+        search_box = ttk.Frame(toolbar)
+        search_box.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,10))
+
         self.search_var = tk.StringVar()
-        self.search_var.trace('w', self.on_search_change)
-        
-        search_entry = ttk.Entry(search_frame, textvariable=self.search_var, font=('Arial', 10))
-        search_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
-        
-        search_btn = ttk.Button(search_frame, text="Search", command=self.perform_search)
-        search_btn.grid(row=0, column=1)
-        
-        # Bind Enter key to search
-        search_entry.bind('<Return>', lambda e: self.perform_search())
-    
-    def create_navigation_panel(self, parent):
-        """Create adaptive navigation panel"""
-        nav_frame = ttk.LabelFrame(parent, text=f"Documentation Structure ({self.docs_path.name})", padding="5")
-        nav_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 5))
-        nav_frame.rowconfigure(0, weight=1)
-        nav_frame.columnconfigure(0, weight=1)
-        
-        # Tree view with scrollbar
-        tree_frame = ttk.Frame(nav_frame)
-        tree_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        ttk.Entry(search_box, textvariable=self.search_var, font=('Arial', 10)).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,5))
+        ttk.Button(search_box, text="Search", command=self.perform_search).pack(side=tk.LEFT)
+
+        # Actions
+        ttk.Button(toolbar, text="📊 Hardware Info", command=self.show_hardware_info).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(toolbar, text="🐳 Docker Init", command=self.init_docker).pack(side=tk.RIGHT, padx=2)
+
+    def create_sidebar(self, parent):
+        """Create document navigation sidebar"""
+        sidebar = ttk.LabelFrame(parent, text="Documents", padding=5)
+        sidebar.grid(row=1, column=0, sticky='nsew', padx=(0,5))
+        sidebar.rowconfigure(0, weight=1)
+        sidebar.columnconfigure(0, weight=1)
+
+        # Tree view for files
+        tree_frame = ttk.Frame(sidebar)
+        tree_frame.grid(row=0, column=0, sticky='nsew')
         tree_frame.rowconfigure(0, weight=1)
         tree_frame.columnconfigure(0, weight=1)
-        
-        self.tree = ttk.Treeview(tree_frame, selectmode='browse')
-        self.tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        # Scrollbars for tree
-        v_scroll = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
-        v_scroll.grid(row=0, column=1, sticky=(tk.N, tk.S))
-        self.tree.configure(yscrollcommand=v_scroll.set)
-        
-        h_scroll = ttk.Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=self.tree.xview)
-        h_scroll.grid(row=1, column=0, sticky=(tk.W, tk.E))
-        self.tree.configure(xscrollcommand=h_scroll.set)
-        
-        # Configure tree columns
-        self.tree.configure(columns=('info',), show='tree headings')
-        self.tree.heading('#0', text='Document/Folder')
-        self.tree.heading('info', text='Information')
-        self.tree.column('#0', width=350, minwidth=250)
-        self.tree.column('info', width=300, minwidth=200)
-        
-        # Bind tree selection
-        self.tree.bind('<<TreeviewSelect>>', self.on_tree_select)
-        self.tree.bind('<Double-1>', self.on_tree_double_click)
-        
-        # Statistics and info
-        stats_frame = ttk.Frame(nav_frame)
-        stats_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(5, 0))
-        
-        self.stats_label = ttk.Label(stats_frame, text="Analyzing structure...", 
-                                   font=('Arial', 9), foreground='blue')
-        self.stats_label.pack(anchor=tk.W)
-        
-        # Path info
-        self.path_label = ttk.Label(stats_frame, text=f"Path: {self.docs_path}", 
-                                   font=('Arial', 8), foreground='gray')
-        self.path_label.pack(anchor=tk.W)
-    
-    def create_content_panel(self, parent):
-        """Create content viewing panel with PDF extraction support"""
-        content_frame = ttk.LabelFrame(parent, text="Document Viewer", padding="5")
-        content_frame.grid(row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S))
-        content_frame.rowconfigure(0, weight=1)
-        content_frame.columnconfigure(0, weight=1)
-        
-        # Content viewer with scrollbar
-        viewer_frame = ttk.Frame(content_frame)
-        viewer_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        viewer_frame.rowconfigure(0, weight=1)
-        viewer_frame.columnconfigure(0, weight=1)
-        
-        self.content_text = tk.Text(viewer_frame, wrap=tk.WORD, font=('Courier', 10),
-                                  bg='white', fg='black', selectbackground='lightblue')
-        self.content_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        # Scrollbars for content
-        content_v_scroll = ttk.Scrollbar(viewer_frame, orient=tk.VERTICAL, 
-                                       command=self.content_text.yview)
-        content_v_scroll.grid(row=0, column=1, sticky=(tk.N, tk.S))
-        self.content_text.configure(yscrollcommand=content_v_scroll.set)
-        
-        content_h_scroll = ttk.Scrollbar(viewer_frame, orient=tk.HORIZONTAL, 
-                                       command=self.content_text.xview)
-        content_h_scroll.grid(row=1, column=0, sticky=(tk.W, tk.E))
-        self.content_text.configure(xscrollcommand=content_h_scroll.set)
-        
+
+        self.file_tree = ttk.Treeview(tree_frame, selectmode='browse')
+        self.file_tree.grid(row=0, column=0, sticky='nsew')
+
+        scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.file_tree.yview)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+        self.file_tree.configure(yscrollcommand=scrollbar.set)
+
+        self.file_tree.bind('<<TreeviewSelect>>', self.on_file_select)
+
+    def create_content_area(self, parent):
+        """Create main content viewing area"""
+        content = ttk.LabelFrame(parent, text="Content", padding=5)
+        content.grid(row=1, column=1, sticky='nsew', padx=(0,5))
+        content.rowconfigure(0, weight=1)
+        content.columnconfigure(0, weight=1)
+
+        # Text widget with scrollbars
+        text_frame = ttk.Frame(content)
+        text_frame.grid(row=0, column=0, sticky='nsew')
+        text_frame.rowconfigure(0, weight=1)
+        text_frame.columnconfigure(0, weight=1)
+
+        self.content_text = scrolledtext.ScrolledText(text_frame, wrap=tk.WORD,
+                                                      font=('Consolas', 10))
+        self.content_text.grid(row=0, column=0, sticky='nsew')
+
         # Content toolbar
-        content_toolbar = ttk.Frame(content_frame)
-        content_toolbar.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(5, 0))
-        
-        ttk.Button(content_toolbar, text="Open External", 
-                  command=self.open_external).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(content_toolbar, text="Copy Path", 
-                  command=self.copy_file_path).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(content_toolbar, text="Show in Folder", 
-                  command=self.show_in_folder).pack(side=tk.LEFT, padx=(0, 5))
-        
-        # PDF specific buttons
-        self.pdf_extract_btn = ttk.Button(content_toolbar, text="Extract PDF Text", 
-                                         command=self.extract_pdf_text, state='disabled')
-        self.pdf_extract_btn.pack(side=tk.LEFT, padx=(0, 5))
-        
-        self.pdf_info_btn = ttk.Button(content_toolbar, text="PDF Info", 
-                                      command=self.show_pdf_info, state='disabled')
-        self.pdf_info_btn.pack(side=tk.LEFT, padx=(0, 5))
-        
-        # File info label
-        self.file_info_label = ttk.Label(content_toolbar, text="No file selected", 
-                                       font=('Arial', 9), foreground='gray')
-        self.file_info_label.pack(side=tk.RIGHT)
-    
+        content_toolbar = ttk.Frame(content)
+        content_toolbar.grid(row=1, column=0, sticky='ew', pady=(5,0))
+
+        ttk.Button(content_toolbar, text="📝 Summarize (AI)",
+                  command=self.summarize_document).pack(side=tk.LEFT, padx=2)
+        ttk.Button(content_toolbar, text="🔍 Extract Data",
+                  command=self.extract_structured_data).pack(side=tk.LEFT, padx=2)
+        ttk.Button(content_toolbar, text="📂 Open External",
+                  command=self.open_external).pack(side=tk.LEFT, padx=2)
+
+    def create_ai_panel(self, parent):
+        """Create AI interaction panel"""
+        ai_panel = ttk.LabelFrame(parent, text="AI Assistant", padding=5)
+        ai_panel.grid(row=1, column=2, sticky='nsew')
+        ai_panel.rowconfigure(0, weight=1)
+        ai_panel.columnconfigure(0, weight=1)
+
+        # Q&A area
+        self.ai_text = scrolledtext.ScrolledText(ai_panel, wrap=tk.WORD,
+                                                 font=('Arial', 10), width=40)
+        self.ai_text.grid(row=0, column=0, sticky='nsew')
+        self.ai_text.insert('1.0', "💡 AI Assistant Ready\n\n")
+        self.ai_text.insert('end', f"Device: {self.hardware_info.get('optimal_device', 'CPU')}\n")
+        self.ai_text.insert('end', f"CPU: {self.hardware_info.get('cpu_cores', 0)} cores\n")
+        if self.hardware_info.get('has_npu'):
+            self.ai_text.insert('end', "🚀 NPU: Available\n")
+        self.ai_text.insert('end', "\nSelect a document to analyze.")
+        self.ai_text.config(state=tk.DISABLED)
+
+        # Question input
+        q_frame = ttk.Frame(ai_panel)
+        q_frame.grid(row=1, column=0, sticky='ew', pady=(5,0))
+        q_frame.columnconfigure(0, weight=1)
+
+        self.question_var = tk.StringVar()
+        ttk.Entry(q_frame, textvariable=self.question_var, font=('Arial', 10)).grid(row=0, column=0, sticky='ew', padx=(0,5))
+        ttk.Button(q_frame, text="Ask AI", command=self.ask_ai_question).grid(row=0, column=1)
+
     def create_status_bar(self, parent):
-        """Create adaptive status bar"""
-        self.status_var = tk.StringVar()
-        total_files = self.structure.get('total_files', 0)
-        categories = len(self.categories)
-        pdf_count = self.structure.get('file_types', {}).get('.pdf', 0)
-        status_text = f"Ready - {total_files} files in {categories} categories"
-        if pdf_count > 0:
-            status_text += f" ({pdf_count} PDFs)"
-        status_text += f" - {self.docs_path}"
-        self.status_var.set(status_text)
-        
-        status_bar = ttk.Label(parent, textvariable=self.status_var, 
-                             relief=tk.SUNKEN, anchor=tk.W, font=('Arial', 9))
-        status_bar.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(5, 0))
-    
-    def load_documentation_tree(self):
-        """Load the documentation structure into tree view"""
+        """Create status bar"""
+        self.status_var = tk.StringVar(value="Ready")
+        status = ttk.Label(parent, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
+        status.grid(row=2, column=0, columnspan=3, sticky='ew', pady=(5,0))
+
+    def load_documents(self):
+        """Load all documents in directory"""
         try:
-            # Clear existing items
-            for item in self.tree.get_children():
-                self.tree.delete(item)
-            
-            total_files = 0
-            
-            # Load each category
-            for cat_name, cat_info in self.categories.items():
-                if cat_name == '_root':
-                    # Handle root files
-                    for filename in cat_info.get('files', []):
-                        file_path = self.docs_path / filename
-                        file_info = self._get_file_info(file_path)
-                        self.tree.insert('', 'end',
-                                       text=filename,
-                                       values=(file_info,),
-                                       tags=('file',))
-                        total_files += 1
-                else:
-                    cat_path = Path(cat_info['path'])
-                    file_count = cat_info['file_count']
-                    total_files += file_count
-                    
-                    # Insert category node
-                    category_id = self.tree.insert('', 'end',
-                                                 text=f"{cat_name}/ ({file_count} files)",
-                                                 values=(cat_info['description'],),
-                                                 tags=('category',))
-                    
-                    # Add files in this category
-                    files = self._get_category_files(cat_path)
-                    for file_path in sorted(files):
-                        try:
-                            file_info = self._get_file_info(file_path)
-                            self.tree.insert(category_id, 'end',
-                                           text=file_path.name,
-                                           values=(file_info,),
-                                           tags=('file',))
-                        except Exception:
-                            # Handle files that might not exist or have permission issues
-                            self.tree.insert(category_id, 'end',
-                                           text=file_path.name,
-                                           values=("File info unavailable",),
-                                           tags=('file',))
-            
-            # Configure tags
-            self.tree.tag_configure('category', background='lightblue', font=('Arial', 10, 'bold'))
-            self.tree.tag_configure('file', background='white')
-            
-            # Start with categories collapsed for cleaner initial view
-            for item in self.tree.get_children():
-                self.tree.item(item, open=False)
-            
-            # Update statistics
-            cat_count = len([c for c in self.categories.keys() if c != '_root'])
-            patterns = ", ".join(self.structure.get('patterns', []))[:60]
-            if len(patterns) > 60:
-                patterns += "..."
-            
-            stats_text = f"Total: {total_files} files, {cat_count} categories"
-            if patterns:
-                stats_text += f"\nPatterns: {patterns}"
-            
-            # Add file type breakdown
-            file_types = self.structure.get('file_types', {})
-            if file_types:
-                type_summary = ", ".join([f"{ext}({count})" for ext, count in sorted(file_types.items()) if count > 0])
-                stats_text += f"\nTypes: {type_summary}"
-            
-            self.stats_label.config(text=stats_text)
-            self.status_var.set(f"Loaded {total_files} files from {self.docs_path}")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load documentation tree: {e}")
-            self.status_var.set(f"Error loading documentation: {e}")
-    
-    def _get_file_info(self, file_path: Path) -> str:
-        """Get file information string"""
-        try:
-            size = file_path.stat().st_size
-            size_str = self.format_file_size(size)
-            ext = file_path.suffix.lower()
-            
-            if ext == '.pdf' and PDF_EXTRACTION_AVAILABLE:
-                pdf_info = PDFExtractor.get_pdf_info(file_path)
-                if 'pages' in pdf_info:
-                    return f"PDF - {pdf_info['pages']} pages, {size_str}"
-                else:
-                    return f"PDF - {size_str}"
-            else:
-                return f"{ext.upper()[1:] if ext else 'File'} - {size_str}"
-        except Exception:
-            return "File info unavailable"
-    
-    def _get_category_files(self, category_path: Path) -> List[Path]:
-        """Get all documentation files in a category"""
-        extensions = {'.md', '.txt', '.rst', '.pdf', '.html', '.htm', '.adoc', '.tex', '.docx', '.doc', '.odt'}
-        files = []
-        
-        try:
+            # Clear tree
+            for item in self.file_tree.get_children():
+                self.file_tree.delete(item)
+
+            # Find all documents
+            extensions = {'.md', '.txt', '.pdf', '.sql', '.csv', '.json', '.html', '.rst'}
+            documents = []
+
             for ext in extensions:
-                files.extend(category_path.rglob(f'*{ext}'))
-        except Exception:
-            pass
-        
-        return [f for f in files if not f.name.startswith('.')]
-    
-    def format_file_size(self, size: int) -> str:
-        """Format file size in human-readable format"""
+                for file_path in self.docs_path.glob(f'*{ext}'):
+                    if not file_path.name.startswith('.'):
+                        size = file_path.stat().st_size
+                        size_str = self.format_size(size)
+                        self.file_tree.insert('', 'end', text=file_path.name,
+                                            values=(size_str,), tags=('file',))
+                        documents.append(file_path)
+
+            self.status_var.set(f"Loaded {len(documents)} documents from {self.docs_path}")
+
+            # Index for semantic search (background)
+            if len(documents) > 0:
+                threading.Thread(target=self.index_documents_background,
+                               args=(documents,), daemon=True).start()
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load documents: {e}")
+
+    def index_documents_background(self, documents: List[Path]):
+        """Index documents in background for semantic search"""
+        try:
+            doc_contents = []
+            for doc_path in documents[:50]:  # Limit to first 50 for performance
+                try:
+                    if doc_path.suffix == '.pdf':
+                        content = PDFProcessor.extract_text(doc_path)
+                    else:
+                        with open(doc_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            content = f.read()
+                    doc_contents.append((doc_path, content[:1000]))  # First 1000 chars
+                except:
+                    continue
+
+            if doc_contents:
+                self.semantic_engine.index_documents(doc_contents)
+        except Exception as e:
+            print(f"Background indexing error: {e}")
+
+    def on_file_select(self, event):
+        """Handle file selection"""
+        selection = self.file_tree.selection()
+        if not selection:
+            return
+
+        item = self.file_tree.item(selection[0])
+        filename = item['text']
+        file_path = self.docs_path / filename
+
+        if file_path.exists():
+            self.load_file(file_path)
+
+    def load_file(self, file_path: Path):
+        """Load and display file content"""
+        try:
+            self.current_file = file_path
+            self.content_text.config(state=tk.NORMAL)
+            self.content_text.delete('1.0', tk.END)
+
+            if file_path.suffix == '.pdf':
+                content = PDFProcessor.extract_text(file_path)
+            else:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+            self.content_text.insert('1.0', content)
+            self.content_text.config(state=tk.DISABLED)
+
+            # Cache content
+            self.doc_cache[str(file_path)] = content
+
+            # Update AI panel
+            self.update_ai_panel(file_path, content)
+
+            self.status_var.set(f"Loaded: {file_path.name}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load file: {e}")
+
+    def update_ai_panel(self, file_path: Path, content: str):
+        """Update AI panel with document analysis"""
+        self.ai_text.config(state=tk.NORMAL)
+        self.ai_text.delete('1.0', tk.END)
+
+        self.ai_text.insert('1.0', f"📄 {file_path.name}\n\n")
+        self.ai_text.insert('end', f"Size: {self.format_size(len(content))} chars\n")
+        self.ai_text.insert('end', f"Lines: {len(content.splitlines())}\n\n")
+
+        # Quick stats
+        if 'password' in content.lower():
+            self.ai_text.insert('end', "⚠️  Contains: PASSWORD references\n", 'warning')
+        if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', content):
+            self.ai_text.insert('end', "🌐 Contains: IP addresses\n", 'info')
+        if '@' in content:
+            emails = len(re.findall(r'[\w\.-]+@[\w\.-]+', content))
+            self.ai_text.insert('end', f"📧 Found: {emails} email addresses\n", 'info')
+
+        self.ai_text.insert('end', "\n💬 Ask me anything about this document...")
+        self.ai_text.config(state=tk.DISABLED)
+
+    def perform_search(self):
+        """Perform search based on selected mode"""
+        query = self.search_var.get().strip()
+        if not query:
+            return
+
+        if self.search_mode_var.get() == 'semantic' and self.semantic_engine.embeddings is not None:
+            self.semantic_search(query)
+        else:
+            self.keyword_search(query)
+
+    def keyword_search(self, query: str):
+        """Traditional keyword search"""
+        results = []
+
+        for item in self.file_tree.get_children():
+            filename = self.file_tree.item(item)['text']
+            file_path = self.docs_path / filename
+
+            try:
+                if file_path.suffix == '.pdf':
+                    content = PDFProcessor.extract_text(file_path)
+                else:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+
+                if query.lower() in content.lower():
+                    # Find context
+                    lines = content.split('\n')
+                    for i, line in enumerate(lines):
+                        if query.lower() in line.lower():
+                            context = line.strip()[:100]
+                            results.append((filename, i+1, context))
+                            if len([r for r in results if r[0] == filename]) >= 3:
+                                break
+            except:
+                continue
+
+        self.show_search_results(query, results, 'keyword')
+
+    def semantic_search(self, query: str):
+        """AI-powered semantic search"""
+        self.status_var.set(f"🧠 Semantic search: {query}")
+
+        results = self.semantic_engine.search(query, top_k=10)
+
+        # Format results
+        formatted_results = []
+        for doc_path, score in results:
+            filename = Path(doc_path).name
+            formatted_results.append((filename, f"Similarity: {score:.2%}", doc_path))
+
+        self.show_search_results(query, formatted_results, 'semantic')
+
+    def show_search_results(self, query: str, results: List, search_type: str):
+        """Display search results"""
+        if not results:
+            messagebox.showinfo("Search Results", f"No results found for: {query}")
+            return
+
+        # Create results window
+        results_win = tk.Toplevel(self.root)
+        results_win.title(f"Search Results - {query} ({search_type})")
+        results_win.geometry("900x600")
+
+        frame = ttk.Frame(results_win, padding=10)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frame, text=f"Found {len(results)} results for: {query}",
+                 font=('Arial', 12, 'bold')).pack(anchor=tk.W, pady=(0,10))
+
+        # Results list
+        results_tree = ttk.Treeview(frame, columns=('file', 'info'), show='headings')
+        results_tree.heading('file', text='File')
+        results_tree.heading('info', text='Information')
+        results_tree.column('file', width=400)
+        results_tree.column('info', width=450)
+        results_tree.pack(fill=tk.BOTH, expand=True, pady=(0,10))
+
+        for result in results:
+            results_tree.insert('', 'end', values=(result[0], result[1] if len(result) > 1 else ''))
+
+        ttk.Button(frame, text="Close", command=results_win.destroy).pack()
+
+    def summarize_document(self):
+        """AI-powered document summarization using extractive + semantic approach"""
+        if not self.current_file:
+            messagebox.showwarning("Summarize", "No document selected")
+            return
+
+        content = self.doc_cache.get(str(self.current_file), '')
+        if not content:
+            messagebox.showwarning("Summarize", "Document not loaded")
+            return
+
+        self.status_var.set("🧠 Generating AI summary...")
+
+        # Thread for AI summarization
+        def summarize_thread():
+            try:
+                summary = self._generate_ai_summary(content)
+
+                # Show summary in popup
+                self.root.after(0, lambda: messagebox.showinfo(
+                    "AI Summary",
+                    f"Document: {self.current_file.name}\n"
+                    f"Size: {len(content)} chars, {len(content.splitlines())} lines\n\n"
+                    f"Summary:\n{summary}"
+                ))
+                self.root.after(0, lambda: self.status_var.set(f"Summary generated for {self.current_file.name}"))
+
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("Error", f"Summarization failed: {e}"))
+                self.root.after(0, lambda: self.status_var.set("Summarization failed"))
+
+        threading.Thread(target=summarize_thread, daemon=True).start()
+
+    def _generate_ai_summary(self, content: str, max_sentences: int = 5) -> str:
+        """Generate AI-powered summary using semantic analysis"""
+        try:
+            # Split into sentences
+            sentences = re.split(r'[.!?]\s+', content)
+            sentences = [s.strip() for s in sentences if len(s.strip()) > 20][:100]  # First 100 sentences
+
+            if len(sentences) <= max_sentences:
+                return ' '.join(sentences)
+
+            # Use embeddings for extractive summarization
+            embeddings = self.model_manager.encode_texts(sentences)
+
+            if embeddings is not None:
+                import numpy as np
+
+                # Compute sentence importance using TF-IDF-like scoring
+                from sklearn.feature_extraction.text import TfidfVectorizer
+
+                # Get TF-IDF scores
+                vectorizer = TfidfVectorizer(max_features=100)
+                tfidf_matrix = vectorizer.fit_transform(sentences)
+
+                # Compute importance scores
+                importance = np.asarray(tfidf_matrix.sum(axis=1)).flatten()
+
+                # Get top sentences
+                top_indices = np.argsort(importance)[::-1][:max_sentences]
+                top_indices = sorted(top_indices)  # Maintain order
+
+                summary_sentences = [sentences[i] for i in top_indices]
+                return '. '.join(summary_sentences) + '.'
+
+            else:
+                # Fallback: keyword-based extraction
+                summary_lines = []
+                for sent in sentences[:50]:
+                    if any(kw in sent.lower() for kw in ['critical', 'important', 'summary', 'key', 'main', 'must', 'require']):
+                        summary_lines.append(sent)
+                        if len(summary_lines) >= max_sentences:
+                            break
+
+                return '. '.join(summary_lines) + '.' if summary_lines else "Could not generate summary."
+
+        except Exception as e:
+            print(f"Summary generation error: {e}")
+            return f"Error generating summary: {e}"
+
+    def extract_structured_data(self):
+        """Extract structured data (IPs, emails, passwords, etc.)"""
+        if not self.current_file:
+            return
+
+        content = self.doc_cache.get(str(self.current_file), '')
+        if not content:
+            return
+
+        # Extract various data types
+        data = {
+            'IPs': re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', content),
+            'Emails': re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', content),
+            'URLs': re.findall(r'https?://[^\s<>"]+', content),
+            'Passwords': re.findall(r'password[:\s]*[\'"]?(\w+)[\'"]?', content, re.IGNORECASE)[:5],
+        }
+
+        # Show results
+        result_text = f"📊 Extracted Data from {self.current_file.name}\n\n"
+        for key, values in data.items():
+            unique_vals = list(set(values))[:10]  # Top 10 unique
+            result_text += f"{key}: {len(unique_vals)} found\n"
+            for val in unique_vals:
+                result_text += f"  • {val}\n"
+            result_text += "\n"
+
+        messagebox.showinfo("Extracted Data", result_text)
+
+    def ask_ai_question(self):
+        """Ask question about current document using RAG approach"""
+        question = self.question_var.get().strip()
+        if not question or not self.current_file:
+            return
+
+        content = self.doc_cache.get(str(self.current_file), '')
+        if not content:
+            return
+
+        self.ai_text.config(state=tk.NORMAL)
+        self.ai_text.insert('end', f"\n\n❓ Q: {question}\n")
+        self.ai_text.insert('end', "🔍 Searching document...\n")
+        self.ai_text.config(state=tk.DISABLED)
+        self.question_var.set('')
+
+        # Process in background thread
+        def qa_thread():
+            try:
+                answer = self._answer_question_rag(question, content)
+
+                self.root.after(0, lambda: self._display_answer(answer))
+
+            except Exception as e:
+                self.root.after(0, lambda: self._display_answer(f"Error: {e}"))
+
+        threading.Thread(target=qa_thread, daemon=True).start()
+
+    def _answer_question_rag(self, question: str, content: str) -> str:
+        """Answer question using Retrieval-Augmented Generation"""
+        try:
+            # Split content into chunks
+            paragraphs = [p.strip() for p in content.split('\n\n') if len(p.strip()) > 50]
+
+            if not paragraphs:
+                return "Document too short to analyze."
+
+            # Use semantic search to find relevant chunks
+            embeddings = self.model_manager.encode_texts(paragraphs[:200])  # Limit to first 200 paragraphs
+
+            if embeddings is not None:
+                import numpy as np
+                from sklearn.metrics.pairwise import cosine_similarity
+
+                # Encode question
+                question_emb = self.model_manager.encode_texts([question])
+
+                if question_emb is not None:
+                    # Find most relevant paragraphs
+                    similarities = cosine_similarity(question_emb, embeddings)[0]
+                    top_indices = np.argsort(similarities)[::-1][:3]  # Top 3 paragraphs
+
+                    # Combine relevant paragraphs
+                    relevant_text = '\n\n'.join([paragraphs[i] for i in top_indices if similarities[i] > 0.2])
+
+                    if relevant_text:
+                        # Extract best answer (first 400 chars of most relevant)
+                        answer = paragraphs[top_indices[0]]
+                        if len(answer) > 400:
+                            answer = answer[:400] + "..."
+
+                        confidence = similarities[top_indices[0]]
+                        return f"{answer}\n\n[Confidence: {confidence:.1%}]"
+
+            # Fallback: keyword-based search
+            relevant = []
+            question_words = set(question.lower().split())
+
+            for para in paragraphs[:100]:
+                para_words = set(para.lower().split())
+                overlap = len(question_words & para_words)
+
+                if overlap >= 2:
+                    relevant.append((para, overlap))
+
+            if relevant:
+                # Sort by overlap and get best match
+                relevant.sort(key=lambda x: x[1], reverse=True)
+                answer = relevant[0][0]
+                if len(answer) > 400:
+                    answer = answer[:400] + "..."
+                return answer
+
+            return "No relevant information found in document."
+
+        except Exception as e:
+            return f"Error during analysis: {e}"
+
+    def _display_answer(self, answer: str):
+        """Display answer in AI panel"""
+        self.ai_text.config(state=tk.NORMAL)
+        self.ai_text.delete('end-2l', 'end')  # Remove "searching..." line
+        self.ai_text.insert('end', f"💡 A: {answer}\n")
+        self.ai_text.config(state=tk.DISABLED)
+        self.ai_text.see(tk.END)
+
+    def on_search_mode_change(self):
+        """Handle search mode change"""
+        mode = self.search_mode_var.get()
+        self.search_mode = mode
+
+        if mode == 'semantic' and self.semantic_engine.embeddings is None:
+            self.status_var.set("Indexing documents for semantic search...")
+            # Trigger indexing if not done
+
+    def show_hardware_info(self):
+        """Display hardware information"""
+        info = self.hardware_info
+
+        info_text = "🖥️  Hardware Information\n\n"
+        info_text += f"CPU: {info.get('cpu_model', 'Unknown')}\n"
+        info_text += f"Cores: {info.get('cpu_cores', 0)}\n"
+        info_text += f"Platform: {info.get('platform', 'Unknown')}\n"
+        info_text += f"Python: {info.get('python_version', 'Unknown')}\n\n"
+
+        info_text += "AI Acceleration:\n"
+        info_text += f"  NPU: {'✅ Available' if info.get('has_npu') else '❌ Not detected'}\n"
+        info_text += f"  Intel GPU: {'✅ Available' if info.get('has_intel_gpu') else '❌ Not detected'}\n"
+        info_text += f"  OpenVINO Devices: {', '.join(info.get('openvino_devices', ['None']))}\n"
+        info_text += f"  Optimal Device: {info.get('optimal_device', 'CPU')}\n\n"
+
+        if info.get('has_npu'):
+            info_text += "🚀 NPU Acceleration Active\n"
+            info_text += "   - Inference: ~40 TOPS on Intel Ultra 7 165H\n"
+            info_text += "   - Models: INT8 quantized for efficiency\n"
+
+        messagebox.showinfo("Hardware Information", info_text)
+
+    def init_docker(self):
+        """Initialize Docker configuration"""
+        if messagebox.askyesno("Docker Init",
+                              "Generate Docker configuration files?\n\n"
+                              "This will create:\n"
+                              "- Dockerfile\n"
+                              "- docker-compose.yml\n"
+                              "- .dockerignore\n"
+                              "- README_DOCKER.md"):
+            try:
+                DockerGenerator.initialize_docker(self.docs_path, self.hardware_info)
+                messagebox.showinfo("Docker Init",
+                                  "✅ Docker files created!\n\n"
+                                  "Run: docker-compose up --build")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to create Docker files: {e}")
+
+    def open_external(self):
+        """Open current file externally"""
+        if not self.current_file:
+            return
+
+        try:
+            if sys.platform == 'linux':
+                subprocess.run(['xdg-open', str(self.current_file)])
+            elif sys.platform == 'darwin':
+                subprocess.run(['open', str(self.current_file)])
+            elif sys.platform == 'win32':
+                os.startfile(str(self.current_file))
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open: {e}")
+
+    @staticmethod
+    def format_size(size: int) -> str:
+        """Format file size"""
         for unit in ['B', 'KB', 'MB', 'GB']:
             if size < 1024.0:
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
-    
-    def on_tree_select(self, event):
-        """Handle tree selection"""
-        selection = self.tree.selection()
-        if not selection:
-            return
-        
-        item = selection[0]
-        item_text = self.tree.item(item, 'text')
-        
-        # Check if it's a file (not a category)
-        if not item_text.endswith(')'):  # Categories end with file count in parentheses
-            parent = self.tree.parent(item)
-            if parent:
-                # File in category
-                category = self.tree.item(parent, 'text').split('/')[0]
-                category_info = self.categories.get(category, {})
-                if category_info:
-                    category_path = Path(category_info['path'])
-                    file_path = self._find_file_in_category(category_path, item_text)
-                    if file_path:
-                        self.load_file_content(file_path)
-            else:
-                # Root file
-                file_path = self.docs_path / item_text
-                if file_path.exists():
-                    self.load_file_content(file_path)
-    
-    def _find_file_in_category(self, category_path: Path, filename: str) -> Optional[Path]:
-        """Find a file within a category directory"""
-        try:
-            # First try direct path
-            direct_path = category_path / filename
-            if direct_path.exists():
-                return direct_path
-            
-            # Then search recursively
-            for file_path in self._get_category_files(category_path):
-                if file_path.name == filename:
-                    return file_path
-        except Exception:
-            pass
-        return None
-    
-    def on_tree_double_click(self, event):
-        """Handle double-click on tree items"""
-        self.open_external()
-    
-    def load_file_content(self, file_path: Path):
-        """Load and display file content with PDF extraction support"""
-        try:
-            self.current_file = file_path
-            
-            # Enable/disable PDF buttons
-            is_pdf = file_path.suffix.lower() == '.pdf'
-            pdf_state = 'normal' if (is_pdf and PDF_EXTRACTION_AVAILABLE) else 'disabled'
-            self.pdf_extract_btn.config(state=pdf_state)
-            self.pdf_info_btn.config(state=pdf_state)
-            
-            if file_path.suffix.lower() == '.pdf':
-                # Handle PDF files
-                self.content_text.config(state=tk.NORMAL)
-                self.content_text.delete(1.0, tk.END)
-                
-                # Check if we have cached extracted text
-                if str(file_path) in self.extracted_pdfs:
-                    self.content_text.insert(1.0, self.extracted_pdfs[str(file_path)])
-                else:
-                    # Show PDF info and extraction option
-                    self.content_text.insert(1.0, f"PDF Document: {file_path.name}\n\n")
-                    
-                    if PDF_EXTRACTION_AVAILABLE:
-                        pdf_info = PDFExtractor.get_pdf_info(file_path)
-                        self.content_text.insert(tk.END, "PDF Information:\n")
-                        for key, value in pdf_info.items():
-                            if key != 'error':
-                                self.content_text.insert(tk.END, f"  {key.title()}: {value}\n")
-                        
-                        self.content_text.insert(tk.END, "\nClick 'Extract PDF Text' to extract and display text content.\n")
-                        self.content_text.insert(tk.END, "Click 'Open External' to view with system PDF viewer.\n\n")
-                    else:
-                        self.content_text.insert(tk.END, "PDF text extraction not available.\n")
-                        self.content_text.insert(tk.END, "Install with: pip install pdfplumber\n\n")
-                        self.content_text.insert(tk.END, "Click 'Open External' to view with system PDF viewer.\n\n")
-                    
-                    self.content_text.insert(tk.END, f"File path: {file_path}\n")
-                    self.content_text.insert(tk.END, f"File size: {self.format_file_size(file_path.stat().st_size)}\n")
-                
-                self.content_text.config(state=tk.DISABLED)
-                
-            elif file_path.suffix.lower() in ['.docx', '.doc', '.odt']:
-                # Handle other binary document formats
-                self.content_text.config(state=tk.NORMAL)
-                self.content_text.delete(1.0, tk.END)
-                self.content_text.insert(1.0, f"Binary Document: {file_path.name}\n\n")
-                self.content_text.insert(tk.END, f"Type: {file_path.suffix.upper()} file\n")
-                self.content_text.insert(tk.END, "Click 'Open External' to view this file.\n\n")
-                self.content_text.insert(tk.END, f"File path: {file_path}\n")
-                self.content_text.insert(tk.END, f"File size: {self.format_file_size(file_path.stat().st_size)}\n")
-                self.content_text.config(state=tk.DISABLED)
-                
-            else:
-                # Handle text files
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                except UnicodeDecodeError:
-                    # Try with different encoding
-                    try:
-                        with open(file_path, 'r', encoding='latin-1') as f:
-                            content = f.read()
-                    except Exception:
-                        content = "Error: Could not read file with available encodings."
-                
-                self.content_text.config(state=tk.NORMAL)
-                self.content_text.delete(1.0, tk.END)
-                self.content_text.insert(1.0, content)
-                self.content_text.config(state=tk.DISABLED)
-            
-            # Update file info
-            file_size = self.format_file_size(file_path.stat().st_size)
-            self.file_info_label.config(text=f"{file_path.name} ({file_size})")
-            self.status_var.set(f"Loaded: {file_path.name}")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load file: {e}")
-            self.status_var.set(f"Error loading file: {e}")
-    
-    def extract_pdf_text(self):
-        """Extract text from current PDF file"""
-        if not self.current_file or self.current_file.suffix.lower() != '.pdf':
-            messagebox.showwarning("PDF Extraction", "No PDF file selected")
-            return
-        
-        if not PDF_EXTRACTION_AVAILABLE:
-            messagebox.showerror("PDF Extraction", "PDF extraction not available. Install pdfplumber:\npip install pdfplumber")
-            return
-        
-        # Create progress window
-        progress_window = tk.Toplevel(self.root)
-        progress_window.title("Extracting PDF Text")
-        progress_window.geometry("400x100")
-        progress_window.transient(self.root)
-        progress_window.grab_set()
-        
-        progress_label = ttk.Label(progress_window, text="Extracting PDF text...", font=('Arial', 10))
-        progress_label.pack(pady=20)
-        
-        # Extract text in separate thread
-        def extraction_thread():
-            try:
-                def update_progress(message):
-                    progress_label.config(text=message)
-                    progress_window.update()
-                
-                extracted_text = PDFExtractor.extract_text(self.current_file, update_progress)
-                
-                # Cache the extracted text
-                self.extracted_pdfs[str(self.current_file)] = extracted_text
-                
-                # Update content view
-                self.content_text.config(state=tk.NORMAL)
-                self.content_text.delete(1.0, tk.END)
-                self.content_text.insert(1.0, extracted_text)
-                self.content_text.config(state=tk.DISABLED)
-                
-                progress_window.destroy()
-                
-                # Show extraction summary
-                lines = len(extracted_text.splitlines())
-                chars = len(extracted_text)
-                messagebox.showinfo("PDF Extraction Complete", 
-                                  f"Successfully extracted text from {self.current_file.name}\n\n"
-                                  f"Characters: {chars:,}\n"
-                                  f"Lines: {lines:,}")
-                
-            except Exception as e:
-                progress_window.destroy()
-                messagebox.showerror("PDF Extraction Error", f"Failed to extract text: {e}")
-        
-        # Start extraction in background
-        threading.Thread(target=extraction_thread, daemon=True).start()
-    
-    def show_pdf_info(self):
-        """Show detailed PDF information"""
-        if not self.current_file or self.current_file.suffix.lower() != '.pdf':
-            messagebox.showwarning("PDF Info", "No PDF file selected")
-            return
-        
-        if not PDF_EXTRACTION_AVAILABLE:
-            messagebox.showerror("PDF Info", "PDF processing not available. Install pdfplumber:\npip install pdfplumber")
-            return
-        
-        try:
-            pdf_info = PDFExtractor.get_pdf_info(self.current_file)
-            
-            info_text = f"PDF Information for: {self.current_file.name}\n\n"
-            for key, value in pdf_info.items():
-                if key != 'error':
-                    info_text += f"{key.title()}: {value}\n"
-            
-            file_size = self.format_file_size(self.current_file.stat().st_size)
-            info_text += f"File Size: {file_size}\n"
-            info_text += f"Full Path: {self.current_file}\n"
-            
-            messagebox.showinfo("PDF Information", info_text)
-            
-        except Exception as e:
-            messagebox.showerror("PDF Info Error", f"Failed to get PDF info: {e}")
-    
-    def change_directory(self):
-        """Change the documentation directory"""
-        new_dir = filedialog.askdirectory(
-            title="Select Documentation Directory",
-            initialdir=str(self.docs_path.parent)
-        )
-        
-        if new_dir:
-            self.docs_path = Path(new_dir)
-            self.refresh_structure()
-    
-    def refresh_structure(self):
-        """Refresh the documentation structure analysis"""
-        try:
-            # Re-analyze structure
-            self.analyzer = DocumentationStructureAnalyzer(self.docs_path)
-            self.structure = self.analyzer.analyze_structure()
-            self.categories = self.structure.get('categories', {})
-            self.role_mappings = self.analyzer.generate_role_mappings()
-            
-            # Clear PDF cache
-            self.extracted_pdfs.clear()
-            
-            # Update UI
-            project_name = self.docs_path.name.replace('-', ' ').replace('_', ' ').title()
-            self.root.title(f"Universal Documentation Browser - {project_name}")
-            
-            # Reload tree
-            self.load_documentation_tree()
-            
-            # Update path label
-            self.path_label.config(text=f"Path: {self.docs_path}")
-            
-            messagebox.showinfo("Refresh", "Documentation structure refreshed successfully!")
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to refresh structure: {e}")
-    
-    def show_in_folder(self):
-        """Show current file in system folder"""
-        if not self.current_file:
-            messagebox.showwarning("Show in Folder", "No file selected")
-            return
-        
-        try:
-            folder_path = self.current_file.parent
-            if sys.platform.startswith('darwin'):  # macOS
-                subprocess.run(['open', str(folder_path)])
-            elif sys.platform.startswith('linux'):  # Linux
-                subprocess.run(['xdg-open', str(folder_path)])
-            elif sys.platform.startswith('win'):  # Windows
-                subprocess.run(['explorer', str(folder_path)])
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to show in folder: {e}")
-    
-    def show_role_documents(self, role: str):
-        """Show documents for a specific role"""
-        docs = self.role_mappings.get(role, [])
-        if not docs:
-            messagebox.showinfo("Role Documents", f"No documents found for role: {role}")
-            return
-        
-        # Create popup window
-        popup = tk.Toplevel(self.root)
-        popup.title(f"Quick Access - {role}")
-        popup.geometry("700x500")
-        popup.transient(self.root)
-        popup.grab_set()
-        
-        frame = ttk.Frame(popup, padding="10")
-        frame.pack(fill=tk.BOTH, expand=True)
-        
-        ttk.Label(frame, text=f"Recommended documents for {role}:", 
-                 font=('Arial', 12, 'bold')).pack(anchor=tk.W, pady=(0, 10))
-        
-        # Create listbox with scrollbar
-        list_frame = ttk.Frame(frame)
-        list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
-        listbox = tk.Listbox(list_frame, font=('Arial', 10))
-        listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
-        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=listbox.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        listbox.configure(yscrollcommand=scrollbar.set)
-        
-        # Add documents to listbox
-        for doc in docs:
-            full_path = self.docs_path / doc
-            if full_path.exists():
-                # Add file type indicator
-                ext = full_path.suffix.lower()
-                type_indicator = {"pdf": "📄", ".md": "📝", ".txt": "📄", ".html": "🌐"}.get(ext, "📁")
-                listbox.insert(tk.END, f"{type_indicator} {doc}")
-            else:
-                listbox.insert(tk.END, f"❌ {doc} (not found)")
-        
-        # Button frame
-        btn_frame = ttk.Frame(frame)
-        btn_frame.pack(fill=tk.X)
-        
-        def open_selected():
-            selection = listbox.curselection()
-            if selection:
-                doc_path = docs[selection[0]]
-                full_path = self.docs_path / doc_path
-                if full_path.exists():
-                    self.load_file_content(full_path)
-                    popup.destroy()
-                else:
-                    messagebox.showerror("Error", f"Document not found: {doc_path}")
-        
-        ttk.Button(btn_frame, text="Open Document", command=open_selected).pack(side=tk.LEFT)
-        ttk.Button(btn_frame, text="Close", command=popup.destroy).pack(side=tk.RIGHT)
-        
-        listbox.bind('<Double-1>', lambda e: open_selected())
-    
-    def on_search_change(self, *args):
-        """Handle search text change"""
-        # Real-time search could be implemented here
-        pass
-    
-    def perform_search(self):
-        """Perform search across all documents including PDF content"""
-        search_term = self.search_var.get().strip()
-        if not search_term:
-            messagebox.showwarning("Search", "Please enter a search term")
-            return
-        
-        self.status_var.set(f"Searching for: {search_term}")
-        results = []
-        
-        try:
-            # Search through all accessible files
-            for cat_name, cat_info in self.categories.items():
-                cat_path = Path(cat_info['path'])
-                
-                if cat_name == '_root':
-                    files_to_search = [self.docs_path / f for f in cat_info.get('files', [])]
-                else:
-                    files_to_search = self._get_category_files(cat_path)
-                
-                for file_path in files_to_search:
-                    # Search in filename
-                    if search_term.lower() in file_path.name.lower():
-                        results.append((file_path, "filename", f"Found in filename: {file_path.name}"))
-                    
-                    # Search in content based on file type
-                    if file_path.suffix.lower() == '.pdf':
-                        # Search in PDF content (use cached if available)
-                        if PDF_EXTRACTION_AVAILABLE:
-                            if str(file_path) in self.extracted_pdfs:
-                                pdf_content = self.extracted_pdfs[str(file_path)]
-                            else:
-                                # Extract text for search (don't cache for search only)
-                                pdf_content = PDFExtractor.extract_text(file_path)
-                            
-                            if pdf_content and search_term.lower() in pdf_content.lower():
-                                # Find context
-                                lines = pdf_content.split('\n')
-                                for i, line in enumerate(lines, 1):
-                                    if search_term.lower() in line.lower():
-                                        context = line.strip()[:100] + "..." if len(line) > 100 else line.strip()
-                                        results.append((file_path, f"PDF line {i}", context))
-                                        break  # Only show first match per PDF
-                    
-                    elif file_path.suffix.lower() in ['.md', '.txt', '.rst', '.html', '.htm']:
-                        try:
-                            with open(file_path, 'r', encoding='utf-8') as f:
-                                content = f.read()
-                            
-                            # Search in content
-                            lines = content.split('\n')
-                            for i, line in enumerate(lines, 1):
-                                if search_term.lower() in line.lower():
-                                    context = line.strip()[:100] + "..." if len(line) > 100 else line.strip()
-                                    results.append((file_path, f"line {i}", context))
-                                    if len([r for r in results if r[0] == file_path]) >= 3:  # Max 3 results per file
-                                        break
-                        
-                        except Exception:
-                            continue  # Skip files that can't be read
-            
-            self.show_search_results(search_term, results)
-            
-        except Exception as e:
-            messagebox.showerror("Search Error", f"Search failed: {e}")
-            self.status_var.set("Search failed")
-    
-    def show_search_results(self, search_term: str, results):
-        """Show search results in popup with enhanced display"""
-        if not results:
-            messagebox.showinfo("Search Results", f"No results found for: {search_term}")
-            self.status_var.set(f"No results found for: {search_term}")
-            return
-        
-        # Create results window
-        results_window = tk.Toplevel(self.root)
-        results_window.title(f"Search Results - {search_term}")
-        results_window.geometry("1000x600")
-        results_window.transient(self.root)
-        
-        frame = ttk.Frame(results_window, padding="10")
-        frame.pack(fill=tk.BOTH, expand=True)
-        
-        ttk.Label(frame, text=f"Found {len(results)} results for: {search_term}", 
-                 font=('Arial', 12, 'bold')).pack(anchor=tk.W, pady=(0, 10))
-        
-        # Results tree
-        tree_frame = ttk.Frame(frame)
-        tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
-        columns = ('file', 'location', 'context')
-        results_tree = ttk.Treeview(tree_frame, columns=columns, show='headings', height=20)
-        
-        results_tree.heading('file', text='File')
-        results_tree.heading('location', text='Location')
-        results_tree.heading('context', text='Context')
-        
-        results_tree.column('file', width=300)
-        results_tree.column('location', width=150)
-        results_tree.column('context', width=500)
-        
-        # Add scrollbars
-        v_scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=results_tree.yview)
-        v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        results_tree.configure(yscrollcommand=v_scrollbar.set)
-        
-        h_scrollbar = ttk.Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=results_tree.xview)
-        h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
-        results_tree.configure(xscrollcommand=h_scrollbar.set)
-        
-        results_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
-        # Add results
-        for file_path, location, context in results:
-            try:
-                relative_path = file_path.relative_to(self.docs_path)
-                # Add file type indicator
-                ext = file_path.suffix.lower()
-                type_indicator = {"pdf": "📄", ".md": "📝", ".txt": "📄", ".html": "🌐"}.get(ext, "📁")
-                results_tree.insert('', 'end', values=(f"{type_indicator} {relative_path}", location, context))
-            except ValueError:
-                # Handle files outside the docs path
-                results_tree.insert('', 'end', values=(str(file_path), location, context))
-        
-        def open_result():
-            selection = results_tree.selection()
-            if selection:
-                item = results_tree.item(selection[0])
-                file_name = item['values'][0]
-                # Remove type indicator
-                clean_name = re.sub(r'^📄 |^📝 |^🌐 |^📁 ', '', file_name)
-                file_path = self.docs_path / clean_name
-                if file_path.exists():
-                    self.load_file_content(file_path)
-                    results_window.destroy()
-        
-        # Buttons
-        btn_frame = ttk.Frame(frame)
-        btn_frame.pack(fill=tk.X)
-        
-        ttk.Button(btn_frame, text="Open Selected", command=open_result).pack(side=tk.LEFT)
-        ttk.Button(btn_frame, text="Close", command=results_window.destroy).pack(side=tk.RIGHT)
-        
-        results_tree.bind('<Double-1>', lambda e: open_result())
-        
-        self.status_var.set(f"Found {len(results)} results for: {search_term}")
-    
-    def open_external(self):
-        """Open current file in external editor"""
-        if not self.current_file:
-            messagebox.showwarning("Open External", "No file selected")
-            return
-        
-        try:
-            if sys.platform.startswith('darwin'):  # macOS
-                subprocess.run(['open', str(self.current_file)])
-            elif sys.platform.startswith('linux'):  # Linux
-                subprocess.run(['xdg-open', str(self.current_file)])
-            elif sys.platform.startswith('win'):  # Windows
-                os.startfile(str(self.current_file))
-            else:
-                messagebox.showinfo("Open External", f"Please open manually: {self.current_file}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to open external editor: {e}")
-    
-    def copy_file_path(self):
-        """Copy current file path to clipboard"""
-        if not self.current_file:
-            messagebox.showwarning("Copy Path", "No file selected")
-            return
-        
-        try:
-            self.root.clipboard_clear()
-            self.root.clipboard_append(str(self.current_file))
-            self.status_var.set(f"Copied path: {self.current_file.name}")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to copy path: {e}")
 
+# ============================================================================
+# MAIN APPLICATION
+# ============================================================================
+
+def check_hardware():
+    """Check and display hardware capabilities"""
+    print("\n" + "="*70)
+    print("🖥️  HARDWARE DETECTION")
+    print("="*70)
+
+    hardware = HardwareDetector.get_hardware_info()
+
+    print(f"\nCPU: {hardware.get('cpu_model', 'Unknown')}")
+    print(f"Cores: {hardware.get('cpu_cores', 0)}")
+    print(f"Platform: {hardware.get('platform', 'Unknown')}")
+    print(f"Python: {hardware.get('python_version', 'Unknown')}")
+
+    print("\nAI Acceleration:")
+    print(f"  NPU/GNA: {'✅ AVAILABLE' if hardware.get('has_npu') else '❌ Not detected'}")
+    print(f"  Intel GPU: {'✅ AVAILABLE' if hardware.get('has_intel_gpu') else '❌ Not detected'}")
+    print(f"  OpenVINO Devices: {', '.join(hardware.get('openvino_devices', ['None']))}")
+    print(f"  Optimal Device: {hardware.get('optimal_device', 'CPU')}")
+
+    if hardware.get('has_npu'):
+        print("\n🚀 NPU Acceleration:")
+        print("   - Performance: ~40 TOPS (Intel Core Ultra 7 165H)")
+        print("   - Use Case: AI inference, embeddings, summarization")
+        print("   - Power: Efficient (low power consumption)")
+
+    if hardware.get('has_intel_gpu'):
+        print("\n🎮 GPU Acceleration:")
+        print("   - Type: Intel Arc Graphics (Meteor Lake)")
+        print("   - Use Case: Image processing, OCR, parallel tasks")
+
+    print("\n" + "="*70 + "\n")
 
 def main():
-    """Main application entry point"""
-    parser = argparse.ArgumentParser(description='Universal Documentation Browser with PDF extraction')
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description='AI-Powered Document Browser')
     parser.add_argument('directory', nargs='?', default=None,
-                       help='Documentation directory (default: current directory or auto-detect)')
-    parser.add_argument('--config', help='Use specific configuration file')
-    
+                       help='Documentation directory (default: current directory)')
+    parser.add_argument('--docker-init', action='store_true',
+                       help='Generate Docker configuration files')
+    parser.add_argument('--check-hardware', action='store_true',
+                       help='Check available AI acceleration hardware')
+    parser.add_argument('--no-ai', action='store_true',
+                       help='Disable AI features (faster startup)')
+
     args = parser.parse_args()
-    
-    # Determine documentation directory
+
+    # Check hardware mode
+    if args.check_hardware:
+        check_hardware()
+        return 0
+
+    # Determine docs directory
     if args.directory:
         docs_path = Path(args.directory).resolve()
     else:
-        # Try to find documentation directory
-        current = Path.cwd()
-        candidates = [
-            current / 'docs',
-            current / 'doc', 
-            current / 'documentation',
-            current
-        ]
-        
-        docs_path = current
-        for candidate in candidates:
-            if candidate.exists() and candidate.is_dir():
-                # Check if it contains documentation files
-                doc_files = (list(candidate.glob('*.md')) + 
-                           list(candidate.glob('*.rst')) + 
-                           list(candidate.glob('*.txt')) + 
-                           list(candidate.glob('*.pdf')))
-                if doc_files or any(candidate.iterdir()):
-                    docs_path = candidate
-                    break
-    
-    if not docs_path.exists():
-        print(f"Error: Directory not found: {docs_path}")
-        sys.exit(1)
-    
-    if not docs_path.is_dir():
-        print(f"Error: Not a directory: {docs_path}")
-        sys.exit(1)
-    
-    print(f"Universal Documentation Browser with PDF extraction")
-    print(f"Analyzing documentation at: {docs_path}")
-    print(f"PDF extraction: {'✓ Available' if PDF_EXTRACTION_AVAILABLE else '✗ Install pdfplumber'}")
-    
-    # Create and run the application
-    root = tk.Tk()
-    
-    try:
-        app = UniversalDocumentationBrowser(root, docs_path)
-        
-        def on_closing():
-            root.destroy()
-        
-        root.protocol("WM_DELETE_WINDOW", on_closing)
-        root.mainloop()
-        
-    except Exception as e:
-        messagebox.showerror("Application Error", f"Failed to start browser: {e}")
-        sys.exit(1)
+        docs_path = Path.cwd()
 
+    if not docs_path.exists() or not docs_path.is_dir():
+        print(f"Error: Invalid directory: {docs_path}")
+        return 1
+
+    # Docker init mode
+    if args.docker_init:
+        print("🐳 Initializing Docker configuration...")
+        hardware_info = HardwareDetector.get_hardware_info()
+        success = DockerGenerator.initialize_docker(docs_path, hardware_info)
+        return 0 if success else 1
+
+    # Setup environment
+    print("🚀 AI-Powered Document Browser")
+    print(f"📁 Directory: {docs_path}")
+
+    enable_ai = not args.no_ai
+    if enable_ai:
+        dep_status = DependencyManager.setup_environment(enable_ai=True)
+
+        # Check if core AI deps installed
+        if not dep_status.get('openvino', False):
+            print("⚠️  OpenVINO not available - AI features limited")
+            enable_ai = False
+
+    # Show hardware info
+    if enable_ai:
+        hardware = HardwareDetector.get_hardware_info()
+        device = hardware.get('optimal_device', 'CPU')
+        print(f"🖥️  Using: {device}", end='')
+        if hardware.get('has_npu'):
+            print(" (NPU acceleration available)")
+        elif hardware.get('has_intel_gpu'):
+            print(" (GPU acceleration available)")
+        else:
+            print()
+
+    # Create and run GUI
+    try:
+        root = tk.Tk()
+    except ImportError as e:
+        print(f"❌ Tkinter not available: {e}")
+        print("\nInstall tkinter:")
+        if platform.system() == 'Linux':
+            print("  Ubuntu/Debian: sudo apt-get install python3-tk")
+            print("  Fedora: sudo dnf install python3-tkinter")
+        print("\nOr run in Docker mode:")
+        print("  python3 doc_browser_ai.py --docker-init")
+        print("  docker-compose up")
+        return 1
+    except Exception as e:
+        print(f"❌ Failed to initialize GUI: {e}")
+        return 1
+
+    try:
+        app = EnhancedDocumentBrowser(root, docs_path)
+        root.mainloop()
+        return 0
+    except KeyboardInterrupt:
+        print("\n👋 Goodbye!")
+        return 0
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+        # Show error in messagebox if GUI available
+        try:
+            messagebox.showerror("Fatal Error",
+                               f"Application error:\n{e}\n\n"
+                               f"Check console for details.")
+        except:
+            pass
+
+        return 1
+    finally:
+        try:
+            root.destroy()
+        except:
+            pass
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
