@@ -199,18 +199,34 @@ class DependencyManager:
             if not required:
                 return False
 
-            print(f"📦 Installing {package_name}...")
+            # Try regular pip first (silent)
             try:
                 subprocess.check_call(
                     [sys.executable, '-m', 'pip', 'install', package_name, '--quiet'],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL
                 )
-                print(f"✅ Installed {package_name}")
                 return True
             except subprocess.CalledProcessError:
-                print(f"❌ Failed to install {package_name}")
-                return False
+                # Try with --break-system-packages
+                try:
+                    subprocess.check_call(
+                        [sys.executable, '-m', 'pip', 'install', package_name, '--break-system-packages', '--quiet'],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
+                    return True
+                except subprocess.CalledProcessError:
+                    # Last resort: try with user install
+                    try:
+                        subprocess.check_call(
+                            [sys.executable, '-m', 'pip', 'install', '--user', package_name, '--quiet'],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                        return True
+                    except subprocess.CalledProcessError:
+                        return False
 
     @classmethod
     def setup_environment(cls, enable_ai: bool = True) -> Dict[str, bool]:
@@ -219,20 +235,34 @@ class DependencyManager:
 
         print("🚀 Setting up document browser environment...")
 
+        total_deps = len(cls.CORE_DEPS) + (len(cls.AI_DEPS) if enable_ai else 0) + len(cls.OPTIONAL_DEPS)
+        current = 0
+
         # Install core dependencies
         for pkg, imp in cls.CORE_DEPS:
-            status[pkg] = cls.check_and_install(pkg, imp, required=True)
+            current += 1
+            print(f"   [{current}/{total_deps}] Checking {pkg}...", end=' ', flush=True)
+            result = cls.check_and_install(pkg, imp, required=True)
+            status[pkg] = result
+            print("✅" if result else "⏭️")
 
         # Install AI dependencies if enabled
         if enable_ai:
-            print("🧠 Setting up AI acceleration...")
+            print("\n🧠 Setting up AI acceleration...")
             for pkg, imp in cls.AI_DEPS:
-                status[pkg] = cls.check_and_install(pkg, imp, required=False)
+                current += 1
+                print(f"   [{current}/{total_deps}] Checking {pkg}...", end=' ', flush=True)
+                result = cls.check_and_install(pkg, imp, required=False)
+                status[pkg] = result
+                print("✅" if result else "⏭️")
 
-        # Optional dependencies
+        # Optional dependencies (silent)
         for pkg, imp in cls.OPTIONAL_DEPS:
-            status[pkg] = cls.check_and_install(pkg, imp, required=False)
+            current += 1
+            result = cls.check_and_install(pkg, imp, required=False)
+            status[pkg] = result
 
+        print(f"\n✅ Environment ready ({sum(1 for v in status.values() if v)}/{len(status)} packages available)\n")
         return status
 
 # ============================================================================
@@ -803,10 +833,13 @@ class EnhancedDocumentBrowser:
         self.load_documents()
 
     def setup_ui(self):
-        """Create the user interface"""
+        """Create the user interface with dark mode"""
         # Window setup
         self.root.title(f"AI Document Browser - {self.docs_path.name}")
         self.root.geometry("1600x1000")
+
+        # Configure dark mode theme
+        self.setup_dark_theme()
 
         # Main container
         main = ttk.Frame(self.root, padding=10)
@@ -822,6 +855,75 @@ class EnhancedDocumentBrowser:
         self.create_content_area(main)
         self.create_ai_panel(main)
         self.create_status_bar(main)
+
+    def setup_dark_theme(self):
+        """Configure dark mode theme for the application"""
+        # Dark theme colors
+        self.colors = {
+            'bg': '#1e1e1e',           # Dark background
+            'fg': '#d4d4d4',           # Light text
+            'select_bg': '#264f78',    # Selection background
+            'select_fg': '#ffffff',    # Selection text
+            'border': '#3e3e3e',       # Borders
+            'button_bg': '#2d2d2d',    # Button background
+            'button_fg': '#cccccc',    # Button text
+            'highlight': '#007acc',    # Highlight color
+            'success': '#4ec9b0',      # Success/NPU color
+            'warning': '#ce9178',      # Warning color
+            'error': '#f48771',        # Error color
+            'code_bg': '#252526',      # Code background
+            'comment': '#6a9955',      # Comments
+        }
+
+        # Configure ttk styles
+        style = ttk.Style()
+        style.theme_use('clam')
+
+        # Configure all ttk widgets for dark mode
+        style.configure('.',
+                       background=self.colors['bg'],
+                       foreground=self.colors['fg'],
+                       bordercolor=self.colors['border'],
+                       darkcolor=self.colors['bg'],
+                       lightcolor=self.colors['border'],
+                       troughcolor=self.colors['bg'],
+                       fieldbackground=self.colors['code_bg'],
+                       selectbackground=self.colors['select_bg'],
+                       selectforeground=self.colors['select_fg'])
+
+        style.configure('TFrame', background=self.colors['bg'])
+        style.configure('TLabel', background=self.colors['bg'], foreground=self.colors['fg'])
+        style.configure('TLabelframe', background=self.colors['bg'], foreground=self.colors['fg'],
+                       bordercolor=self.colors['border'])
+        style.configure('TLabelframe.Label', background=self.colors['bg'], foreground=self.colors['highlight'])
+
+        style.configure('TButton',
+                       background=self.colors['button_bg'],
+                       foreground=self.colors['button_fg'],
+                       bordercolor=self.colors['border'],
+                       focuscolor=self.colors['highlight'])
+
+        style.map('TButton',
+                 background=[('active', self.colors['select_bg']),
+                            ('pressed', self.colors['highlight'])])
+
+        style.configure('Treeview',
+                       background=self.colors['code_bg'],
+                       foreground=self.colors['fg'],
+                       fieldbackground=self.colors['code_bg'],
+                       bordercolor=self.colors['border'])
+
+        style.map('Treeview',
+                 background=[('selected', self.colors['select_bg'])],
+                 foreground=[('selected', self.colors['select_fg'])])
+
+        style.configure('TEntry',
+                       fieldbackground=self.colors['code_bg'],
+                       foreground=self.colors['fg'],
+                       insertcolor=self.colors['fg'])
+
+        # Configure root window
+        self.root.configure(bg=self.colors['bg'])
 
     def create_toolbar(self, parent):
         """Create toolbar with hardware info"""
@@ -900,9 +1002,20 @@ class EnhancedDocumentBrowser:
         text_frame.rowconfigure(0, weight=1)
         text_frame.columnconfigure(0, weight=1)
 
-        self.content_text = scrolledtext.ScrolledText(text_frame, wrap=tk.WORD,
-                                                      font=('Consolas', 10))
+        self.content_text = scrolledtext.ScrolledText(
+            text_frame,
+            wrap=tk.WORD,
+            font=('Consolas', 10),
+            bg=self.colors['code_bg'],
+            fg=self.colors['fg'],
+            insertbackground=self.colors['fg'],
+            selectbackground=self.colors['select_bg'],
+            selectforeground=self.colors['select_fg']
+        )
         self.content_text.grid(row=0, column=0, sticky='nsew')
+
+        # Configure text tags for markdown syntax highlighting
+        self.setup_markdown_highlighting()
 
         # Content toolbar
         content_toolbar = ttk.Frame(content)
@@ -923,8 +1036,17 @@ class EnhancedDocumentBrowser:
         ai_panel.columnconfigure(0, weight=1)
 
         # Q&A area
-        self.ai_text = scrolledtext.ScrolledText(ai_panel, wrap=tk.WORD,
-                                                 font=('Arial', 10), width=40)
+        self.ai_text = scrolledtext.ScrolledText(
+            ai_panel,
+            wrap=tk.WORD,
+            font=('Arial', 10),
+            width=40,
+            bg=self.colors['code_bg'],
+            fg=self.colors['fg'],
+            insertbackground=self.colors['fg'],
+            selectbackground=self.colors['select_bg'],
+            selectforeground=self.colors['select_fg']
+        )
         self.ai_text.grid(row=0, column=0, sticky='nsew')
         self.ai_text.insert('1.0', "💡 AI Assistant Ready\n\n")
         self.ai_text.insert('end', f"Device: {self.hardware_info.get('optimal_device', 'CPU')}\n")
@@ -950,7 +1072,7 @@ class EnhancedDocumentBrowser:
         status.grid(row=2, column=0, columnspan=3, sticky='ew', pady=(5,0))
 
     def load_documents(self):
-        """Load all documents in directory"""
+        """Load all documents in directory with intelligent categorization"""
         try:
             # Clear tree
             for item in self.file_tree.get_children():
@@ -958,26 +1080,130 @@ class EnhancedDocumentBrowser:
 
             # Find all documents
             extensions = {'.md', '.txt', '.pdf', '.sql', '.csv', '.json', '.html', '.rst'}
-            documents = []
+            all_documents = []
 
             for ext in extensions:
                 for file_path in self.docs_path.glob(f'*{ext}'):
                     if not file_path.name.startswith('.'):
-                        size = file_path.stat().st_size
-                        size_str = self.format_size(size)
-                        self.file_tree.insert('', 'end', text=file_path.name,
-                                            values=(size_str,), tags=('file',))
-                        documents.append(file_path)
+                        all_documents.append(file_path)
 
-            self.status_var.set(f"Loaded {len(documents)} documents from {self.docs_path}")
+            # Intelligently categorize documents
+            categories = self._categorize_documents(all_documents)
+
+            # Insert categories and files
+            for category_name, files in sorted(categories.items()):
+                if category_name == 'Uncategorized':
+                    # Add uncategorized files directly to root
+                    for file_path in sorted(files, key=lambda f: f.name.lower()):
+                        size_str = self.format_size(file_path.stat().st_size)
+                        file_type = self._get_file_type_icon(file_path)
+                        self.file_tree.insert('', 'end',
+                                            text=f"{file_type} {file_path.name}",
+                                            values=(size_str,),
+                                            tags=('file',))
+                else:
+                    # Create category folder
+                    category_id = self.file_tree.insert('', 'end',
+                                                       text=f"📁 {category_name} ({len(files)})",
+                                                       values=('',),
+                                                       tags=('category',))
+
+                    # Add files in this category
+                    for file_path in sorted(files, key=lambda f: f.name.lower()):
+                        size_str = self.format_size(file_path.stat().st_size)
+                        file_type = self._get_file_type_icon(file_path)
+                        self.file_tree.insert(category_id, 'end',
+                                            text=f"{file_type} {file_path.name}",
+                                            values=(size_str,),
+                                            tags=('file',))
+
+            # Configure tags for dark mode
+            self.file_tree.tag_configure('category',
+                                        background=self.colors['select_bg'],
+                                        foreground=self.colors['select_fg'],
+                                        font=('Arial', 10, 'bold'))
+            self.file_tree.tag_configure('file',
+                                        background=self.colors['code_bg'],
+                                        foreground=self.colors['fg'])
+
+            self.status_var.set(f"Loaded {len(all_documents)} documents in {len(categories)} categories")
 
             # Index for semantic search (background)
-            if len(documents) > 0:
+            if len(all_documents) > 0:
                 threading.Thread(target=self.index_documents_background,
-                               args=(documents,), daemon=True).start()
+                               args=(all_documents,), daemon=True).start()
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load documents: {e}")
+
+    def _categorize_documents(self, documents: List[Path]) -> Dict[str, List[Path]]:
+        """Intelligently categorize documents by content and naming patterns"""
+        categories = defaultdict(list)
+
+        # Define category patterns (order matters - first match wins)
+        patterns = [
+            ('🔐 Security & Credentials', [
+                r'security|credential|password|access|auth|threat|attack|vulnerability',
+                r'ssh|root|admin|takeover|breach|hack'
+            ]),
+            ('📊 Analysis & Reports', [
+                r'analysis|report|assessment|audit|review',
+                r'crack.*time|realistic|actual'
+            ]),
+            ('🌐 Network & URLs', [
+                r'network|url|website|domain|email|ip',
+                r'escalation.*server|pathway'
+            ]),
+            ('📚 Documentation', [
+                r'documentation|readme|guide|manual',
+                r'database.*doc|action.*plan'
+            ]),
+            ('🐳 Docker & Deployment', [
+                r'docker|dockerfile|compose|deployment'
+            ]),
+            ('💾 Database Files', [
+                r'\.sql$|database.*content'
+            ]),
+            ('📄 Quick Reference', [
+                r'quick|summary|reference|checklist',
+                r'urls.*quick|credentials.*quick'
+            ]),
+        ]
+
+        for doc_path in documents:
+            filename_lower = doc_path.name.lower()
+            categorized = False
+
+            # Try to match patterns
+            for category_name, pattern_list in patterns:
+                for pattern in pattern_list:
+                    if re.search(pattern, filename_lower):
+                        categories[category_name].append(doc_path)
+                        categorized = True
+                        break
+                if categorized:
+                    break
+
+            # If no match, add to uncategorized
+            if not categorized:
+                categories['Uncategorized'].append(doc_path)
+
+        return dict(categories)
+
+    def _get_file_type_icon(self, file_path: Path) -> str:
+        """Get emoji icon for file type"""
+        ext = file_path.suffix.lower()
+        icons = {
+            '.md': '📝',
+            '.pdf': '📄',
+            '.sql': '🗄️',
+            '.txt': '📃',
+            '.csv': '📊',
+            '.json': '🔧',
+            '.html': '🌐',
+            '.rst': '📰',
+        }
+        return icons.get(ext, '📄')
 
     def index_documents_background(self, documents: List[Path]):
         """Index documents in background for semantic search"""
@@ -1006,7 +1232,16 @@ class EnhancedDocumentBrowser:
             return
 
         item = self.file_tree.item(selection[0])
-        filename = item['text']
+        item_text = item['text']
+
+        # Skip if it's a category folder
+        if item_text.startswith('📁'):
+            return
+
+        # Remove file type icon from filename
+        filename = re.sub(r'^[📝📄🗄️📃📊🔧🌐📰]\s+', '', item_text)
+
+        # Try to find the file
         file_path = self.docs_path / filename
 
         if file_path.exists():
@@ -1021,11 +1256,17 @@ class EnhancedDocumentBrowser:
 
             if file_path.suffix == '.pdf':
                 content = PDFProcessor.extract_text(file_path)
+                self.content_text.insert('1.0', content)
             else:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
 
-            self.content_text.insert('1.0', content)
+                # Apply markdown highlighting if .md file
+                if file_path.suffix.lower() == '.md':
+                    self.render_markdown_with_highlighting(content)
+                else:
+                    self.content_text.insert('1.0', content)
+
             self.content_text.config(state=tk.DISABLED)
 
             # Cache content
@@ -1348,6 +1589,151 @@ class EnhancedDocumentBrowser:
         self.ai_text.insert('end', f"💡 A: {answer}\n")
         self.ai_text.config(state=tk.DISABLED)
         self.ai_text.see(tk.END)
+
+    def setup_markdown_highlighting(self):
+        """Configure text tags for markdown syntax highlighting"""
+        # Headers
+        self.content_text.tag_configure('h1', foreground='#569cd6', font=('Consolas', 16, 'bold'))
+        self.content_text.tag_configure('h2', foreground='#4ec9b0', font=('Consolas', 14, 'bold'))
+        self.content_text.tag_configure('h3', foreground='#4fc1ff', font=('Consolas', 12, 'bold'))
+
+        # Code blocks
+        self.content_text.tag_configure('code_block',
+                                       background='#1a1a1a',
+                                       foreground='#ce9178',
+                                       font=('Consolas', 9))
+
+        # Inline code
+        self.content_text.tag_configure('inline_code',
+                                       background='#2d2d2d',
+                                       foreground='#ce9178',
+                                       font=('Consolas', 10))
+
+        # Lists
+        self.content_text.tag_configure('list_item', foreground='#dcdcaa')
+
+        # Bold
+        self.content_text.tag_configure('bold', font=('Consolas', 10, 'bold'), foreground='#ffffff')
+
+        # Italic
+        self.content_text.tag_configure('italic', font=('Consolas', 10, 'italic'), foreground='#c586c0')
+
+        # Links
+        self.content_text.tag_configure('link', foreground='#3794ff', underline=True)
+
+        # Blockquotes
+        self.content_text.tag_configure('blockquote', foreground='#6a9955', font=('Consolas', 10, 'italic'))
+
+        # Tables
+        self.content_text.tag_configure('table', background='#2d2d2d', foreground='#dcdcaa')
+
+        # Warnings/alerts
+        self.content_text.tag_configure('warning', foreground='#ce9178', background='#3d2817')
+        self.content_text.tag_configure('info', foreground='#4fc1ff', background='#17344a')
+        self.content_text.tag_configure('success', foreground='#4ec9b0', background='#1a3a2e')
+        self.content_text.tag_configure('error', foreground='#f48771', background='#3d1f1f')
+
+    def render_markdown_with_highlighting(self, content: str):
+        """Render markdown with intelligent syntax highlighting"""
+        lines = content.split('\n')
+        in_code_block = False
+        code_block_start = None
+
+        for i, line in enumerate(lines):
+            line_start = self.content_text.index(tk.END)
+
+            # Code blocks
+            if line.strip().startswith('```'):
+                if not in_code_block:
+                    in_code_block = True
+                    code_block_start = line_start
+                    self.content_text.insert(tk.END, line + '\n', 'code_block')
+                else:
+                    in_code_block = False
+                    self.content_text.insert(tk.END, line + '\n', 'code_block')
+                continue
+
+            if in_code_block:
+                self.content_text.insert(tk.END, line + '\n', 'code_block')
+                continue
+
+            # Headers
+            if line.startswith('# '):
+                self.content_text.insert(tk.END, line + '\n', 'h1')
+            elif line.startswith('## '):
+                self.content_text.insert(tk.END, line + '\n', 'h2')
+            elif line.startswith('### '):
+                self.content_text.insert(tk.END, line + '\n', 'h3')
+
+            # Lists
+            elif re.match(r'^[\s]*[-*+]\s', line) or re.match(r'^[\s]*\d+\.\s', line):
+                self.content_text.insert(tk.END, line + '\n', 'list_item')
+
+            # Blockquotes
+            elif line.startswith('>'):
+                self.content_text.insert(tk.END, line + '\n', 'blockquote')
+
+            # Table rows
+            elif '|' in line and line.count('|') >= 2:
+                self.content_text.insert(tk.END, line + '\n', 'table')
+
+            # Regular text with inline formatting
+            else:
+                self._insert_line_with_inline_formatting(line + '\n')
+
+    def _insert_line_with_inline_formatting(self, line: str):
+        """Insert line with inline markdown formatting (bold, italic, code, links)"""
+        pos = 0
+        original_line = line
+
+        # Parse inline formatting
+        # Inline code: `code`
+        inline_code_pattern = r'`([^`]+)`'
+        # Bold: **text** or __text__
+        bold_pattern = r'\*\*([^\*]+)\*\*|__([^_]+)__'
+        # Italic: *text* or _text_
+        italic_pattern = r'\*([^\*]+)\*|_([^_]+)_'
+        # Links: [text](url) or just URLs
+        link_pattern = r'\[([^\]]+)\]\(([^\)]+)\)|https?://[^\s<>"]+'
+
+        # Collect all matches with positions
+        matches = []
+
+        for match in re.finditer(inline_code_pattern, line):
+            matches.append(('inline_code', match.start(), match.end(), match.group(1)))
+
+        for match in re.finditer(bold_pattern, line):
+            text = match.group(1) or match.group(2)
+            matches.append(('bold', match.start(), match.end(), text))
+
+        for match in re.finditer(link_pattern, line):
+            if match.group(0).startswith('['):
+                text = match.group(1)
+            else:
+                text = match.group(0)
+            matches.append(('link', match.start(), match.end(), text))
+
+        # Sort by position
+        matches.sort(key=lambda x: x[1])
+
+        # Insert text with formatting
+        if not matches:
+            self.content_text.insert(tk.END, line)
+            return
+
+        last_end = 0
+        for tag, start, end, text in matches:
+            # Insert text before match
+            if start > last_end:
+                self.content_text.insert(tk.END, line[last_end:start])
+
+            # Insert formatted text
+            self.content_text.insert(tk.END, text, tag)
+            last_end = end
+
+        # Insert remaining text
+        if last_end < len(line):
+            self.content_text.insert(tk.END, line[last_end:])
 
     def on_search_mode_change(self):
         """Handle search mode change"""
