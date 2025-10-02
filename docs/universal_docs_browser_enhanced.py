@@ -172,12 +172,13 @@ class DependencyManager:
     AI_DEPS = [
         ('numpy', 'numpy'),
         ('scikit-learn', 'sklearn'),
-        ('openvino', 'openvino'),
-        ('openvino-dev', 'openvino.tools'),
-        ('optimum-intel', 'optimum.intel'),
-        ('sentence-transformers', 'sentence_transformers'),
-        ('transformers', 'transformers'),
-        ('torch', 'torch'),
+        # Note: Large packages below are optional - browser works without them
+        # They enable semantic search but aren't required for core functionality
+        # ('openvino', 'openvino'),  # Already installed globally
+        # ('optimum-intel', 'optimum.intel'),  # 500MB+ package
+        # ('sentence-transformers', 'sentence_transformers'),  # 200MB+ package
+        # ('transformers', 'transformers'),  # 300MB+ package
+        # ('torch', 'torch'),  # 800MB+ package
     ]
 
     OPTIONAL_DEPS = [
