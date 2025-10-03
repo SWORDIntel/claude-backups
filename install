@@ -241,7 +241,7 @@ if [[ ! -f "$PYTHON_INSTALLER" ]]; then
 
         # RACE-001 FIX: Test write capability with mktemp
         if [[ "$NEEDS_USER_INSTALL" == "false" ]]; then
-            local test_file
+            test_file=""
             if test_file=$(mktemp "$NPM_PREFIX/lib/node_modules/.npm-write-test.XXXXXX" 2>/dev/null); then
                 CLEANUP_FILES+=("$test_file")
                 rm -f "$test_file" 2>/dev/null
@@ -268,10 +268,11 @@ if [[ ! -f "$PYTHON_INSTALLER" ]]; then
                     # RACE-002 FIX: Use flock for atomic config updates
                     for config_file in "$HOME/.bashrc" "$HOME/.profile" "$HOME/.zshrc"; do
                         if [[ -f "$config_file" ]]; then
-                            local backup="${config_file}.backup-$(date +%s)"
+                            backup=""
+                            backup="${config_file}.backup-$(date +%s)"
                             cp "$config_file" "$backup" 2>/dev/null
 
-                            local lockfile="${config_file}.lock"
+                            lockfile="${config_file}.lock"
                             (
                                 if flock -x -w 10 200 2>/dev/null; then
                                     if ! grep -qF '.npm-global/bin' "$config_file" 2>/dev/null; then
@@ -294,9 +295,7 @@ if [[ ! -f "$PYTHON_INSTALLER" ]]; then
         fi
 
         # Install Claude Code
-        npm install -g @anthropic-ai/claude-code
-
-        if [[ $? -eq 0 ]]; then
+        if npm install -g @anthropic-ai/claude-code; then
             echo -e "${GREEN}✓ Claude Code installed successfully${RESET}"
             echo -e "${CYAN}You can now use 'claude' command${RESET}"
             if [[ "$NEEDS_USER_INSTALL" == "true" ]]; then

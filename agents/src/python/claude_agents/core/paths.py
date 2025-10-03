@@ -35,46 +35,48 @@ class ClaudePaths:
         xdg_cache = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache'))
         self.cache_home = Path(os.environ.get('CLAUDE_CACHE_HOME', xdg_cache / 'claude'))
 
-        # Ensure directories exist
+        # Ensure base directories exist
         for dir_path in [self.data_home, self.config_home, self.state_home, self.cache_home]:
             dir_path.mkdir(parents=True, exist_ok=True)
+
+    def ensure_directories(self):
+        """Create all required directories for modules"""
+        for path in [
+            self.ghidra_scripts,
+            self.analysis_workspace,
+            self.hostile_samples,
+            self.quarantine,
+            self.reports,
+            self.yara_rules,
+            self.venv_path,
+            self.c_toolchain
+        ]:
+            path.mkdir(parents=True, exist_ok=True)
 
     # Security executor paths
     @property
     def ghidra_scripts(self):
-        path = self.data_home / 'ghidra-workspace/scripts'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.data_home / 'ghidra-workspace/scripts'
 
     @property
     def analysis_workspace(self):
-        path = self.data_home / 'ghidra-workspace'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.data_home / 'ghidra-workspace'
 
     @property
     def hostile_samples(self):
-        path = self.data_home / 'hostile-samples'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.data_home / 'hostile-samples'
 
     @property
     def quarantine(self):
-        path = self.data_home / 'quarantine'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.data_home / 'quarantine'
 
     @property
     def reports(self):
-        path = self.data_home / 'analysis-reports'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.data_home / 'analysis-reports'
 
     @property
     def yara_rules(self):
-        path = self.config_home / 'yara-rules'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.config_home / 'yara-rules'
 
     # Module paths
     @property
@@ -99,15 +101,11 @@ class ClaudePaths:
 
     @property
     def venv_path(self):
-        path = self.data_home / 'datascience'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.data_home / 'datascience'
 
     @property
     def c_toolchain(self):
-        path = self.data_home / 'c-toolchain'
-        path.mkdir(parents=True, exist_ok=True)
-        return path
+        return self.data_home / 'c-toolchain'
 
     @property
     def obsidian_vault(self):

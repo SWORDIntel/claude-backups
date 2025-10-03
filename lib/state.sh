@@ -9,7 +9,6 @@ set -euo pipefail
 
 # State file location
 readonly STATE_FILE="${STATE_FILE:-$HOME/.claude-install-state.json}"
-readonly STATE_LOCK="${STATE_FILE}.lock"
 readonly STATE_VERSION="1.0"
 
 # Initialize state management
@@ -86,7 +85,7 @@ state_unlock() {
 # Cleanup on exit
 state_cleanup_on_exit() {
     # Remove all locks for this PID
-    find "$(dirname "$STATE_FILE")" -name "*.lock" -type d 2>/dev/null | while read lock; do
+    find "$(dirname "$STATE_FILE")" -name "*.lock" -type d 2>/dev/null | while read -r lock; do
         if [[ -f "$lock/pid" ]] && [[ "$(cat "$lock/pid")" == "$$" ]]; then
             rm -rf "$lock"
         fi
