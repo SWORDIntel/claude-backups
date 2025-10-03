@@ -41,7 +41,7 @@
 #define PYID_VERSION 0x0700             // v7.0
 #define MAX_CONCURRENT_TASKS 32         // Python GIL limits true concurrency
 #define MAX_ENV_VARS 64                 // Environment variables to track
-#define VENV_PATH "/home/john/datascience"
+// VENV_PATH now defined in paths.h - use claude_init_paths() to initialize
 #define PYTHON_CMD "python3.11"
 #define THERMAL_THRESHOLD_NORMAL 95    // 95°C normal operation limit
 #define THERMAL_THRESHOLD_EMERGENCY 100 // 100°C emergency limit

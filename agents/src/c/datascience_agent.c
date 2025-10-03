@@ -605,7 +605,8 @@ static int validate_python_environment(void) {
         printf("[DataScience] Virtual environment detected: %s\n", venv_path);
     } else {
         printf("[DataScience] Warning: No virtual environment detected\n");
-        strcpy(g_state.python_state.python_env_path, "/home/john/datascience");
+        claude_init_paths();
+        strcpy(g_state.python_state.python_env_path, VENV_PATH);
     }
     
     // Test critical package imports
@@ -1126,7 +1127,7 @@ int datascience_agent_init(void) {
         snprintf(g_state.obsidian_vault_path, sizeof(g_state.obsidian_vault_path), 
                  "%s/Documents/Obsidian/DataScience", home);
     } else {
-        strcpy(g_state.obsidian_vault_path, "/home/john/Documents/Obsidian/DataScience");
+        strcpy(g_state.obsidian_vault_path, OBSIDIAN_VAULT_PATH);
     }
     
     // Initialize hardware optimization

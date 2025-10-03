@@ -81,7 +81,7 @@
 #define MICROCODE_MODERN_MIN 0x42a  // AVX-512 disabled
 
 // Custom toolchain path
-#define CUSTOM_TOOLCHAIN_PATH "/home/john/c-toolchain"
+// CUSTOM_TOOLCHAIN_PATH now defined in paths.h - use claude_init_paths() to initialize
 #define GCC_VERSION "13.2.0"
 
 // ============================================================================
