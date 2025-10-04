@@ -28,6 +28,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <errno.h>
+#include <numa.h>
+#include <numaif.h>
 #include "compatibility_layer.h"
 #include <sched.h>
 #include <x86intrin.h>

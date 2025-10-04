@@ -29,7 +29,10 @@
       "Bash(for module in agent-coordination agent-ecosystem shadowgit-performance database-systems npu-acceleration learning-system openvino-runtime picmcs-context installation docker-learning)",
       "Bash(do echo \"=== $module ===\")",
       "Bash(head:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(for:*)",
+      "Bash(while read file)",
+      "Bash(do echo \"=== $f ===\")"
     ],
     "deny": [],
     "ask": [],

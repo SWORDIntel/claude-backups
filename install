@@ -2,6 +2,10 @@
 # ═══════════════════════════════════════════════════════════════════════════
 # Claude Installation Script - Security Hardened v2.0
 # Implements: Path validation, sudo hardening, install locking, audit trail
+#
+# NOTE: For complete installation of all 10 modules (Shadowgit, NPU, OpenVINO,
+#       Database, Learning System, etc.), use: ./install-complete.sh
+#       This script installs Claude Code CLI only.
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -157,8 +161,9 @@ request_shell_config_consent() {
 # ═══════════════════════════════════════════════════════════════════════════
 
 # Print header
-echo -e "${BOLD}${CYAN}Claude Enhanced Installer - Quick Launch${RESET}"
-echo -e "${CYAN}Launching Python-based installer with Auto-Calibrating Think Mode...${RESET}"
+echo -e "${BOLD}${CYAN}Claude Code CLI - Quick Install${RESET}"
+echo -e "${CYAN}For complete system installation (all 10 modules), use: ./install-complete.sh${RESET}"
+echo -e "${CYAN}This script installs Claude Code CLI only${RESET}"
 echo
 
 # Check for Python installer
