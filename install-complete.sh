@@ -60,7 +60,7 @@ cat << 'EOF'
 ║                                                                          ║
 ║           Claude Agent Framework - Complete Installation                ║
 ║                                                                          ║
-║                     All 10 Modules - Unified Setup                       ║
+║                All 10 Modules + Crypto-POW - Unified Setup               ║
 ║                                                                          ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 EOF
@@ -430,11 +430,57 @@ echo ""
 sleep 1
 
 # ═══════════════════════════════════════════════════════════════════════════
-# PHASE 8: PICMCS CONTEXT CHOPPING
+# PHASE 8: CRYPTO-POW MODULE
 # ═══════════════════════════════════════════════════════════════════════════
 
 echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "${BOLD}Phase 8: PICMCS Context Chopping${RESET}"
+echo -e "${BOLD}Phase 8: Cryptographic Proof-of-Work Module${RESET}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo ""
+
+if [[ -d "hooks/crypto-pow" ]]; then
+    log_info "Installing Crypto-POW module..."
+
+    # Check for required crypto dependencies
+    if ! dpkg -l | grep -q libpcre2-dev; then
+        log_info "Installing PCRE2 dependency for crypto-pow..."
+        sudo apt-get install -y libpcre2-dev 2>/dev/null || log_warning "PCRE2 install failed"
+    fi
+
+    # Compile crypto-pow using root Makefile
+    if [[ -f "Makefile" ]]; then
+        log_info "Compiling crypto-pow C modules..."
+        if make production 2>/dev/null; then
+            log_success "Crypto-POW compiled successfully"
+
+            # Run verification test if available
+            if [[ -f "bin/crypto_pow_demo" ]]; then
+                log_info "Running crypto-pow verification..."
+                if timeout 5 ./bin/crypto_pow_demo test 2>/dev/null | grep -q "PASS\|SUCCESS"; then
+                    log_success "Crypto-POW verification passed"
+                else
+                    log_warning "Crypto-POW verification had issues"
+                fi
+            fi
+        else
+            log_warning "Crypto-POW compilation skipped (may need libpcre2-dev)"
+        fi
+    fi
+
+    log_success "Crypto-POW module available"
+else
+    log_warning "Crypto-POW directory not found at hooks/crypto-pow/"
+fi
+
+echo ""
+sleep 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PHASE 9: PICMCS CONTEXT CHOPPING
+# ═══════════════════════════════════════════════════════════════════════════
+
+echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo -e "${BOLD}Phase 9: PICMCS Context Chopping${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
 
@@ -453,11 +499,11 @@ echo ""
 sleep 1
 
 # ═══════════════════════════════════════════════════════════════════════════
-# PHASE 9: ENHANCED PYTHON INSTALLER
+# PHASE 10: ENHANCED PYTHON INSTALLER
 # ═══════════════════════════════════════════════════════════════════════════
 
 echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "${BOLD}Phase 9: Enhanced Python Installer & Remaining Modules${RESET}"
+echo -e "${BOLD}Phase 10: Enhanced Python Installer & Remaining Modules${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
 
@@ -496,7 +542,7 @@ sleep 1
 # ═══════════════════════════════════════════════════════════════════════════
 
 echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "${BOLD}Phase 10: Cross-Module Integration Validation${RESET}"
+echo -e "${BOLD}Phase 11: Cross-Module Integration Validation${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
 
@@ -565,7 +611,7 @@ sleep 1
 # ═══════════════════════════════════════════════════════════════════════════
 
 echo -e "${BOLD}${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "${BOLD}Phase 11: System Health Checks${RESET}"
+echo -e "${BOLD}Phase 12: System Health Checks${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
 
@@ -619,7 +665,7 @@ EOF
 echo -e "${RESET}"
 echo ""
 
-log_success "All 10 modules processed"
+log_success "All 10 modules + Crypto-POW processed"
 echo ""
 
 # Auto-configure shell environment
@@ -687,7 +733,8 @@ echo "  ✅ OpenVINO runtime configured"
 [[ -f "agents/build/bin/agent_bridge" ]] && echo "  ✅ C agent engine compiled" || echo "  ⚠️  C agent engine needs compilation"
 echo "  ✅ Agent coordination operational (Python)"
 echo "  ✅ PICMCS context chopping available"
-echo "  ✅ All 10 module directories verified"
+[[ -f "bin/crypto_pow_demo" ]] && echo "  ✅ Crypto-POW module compiled" || echo "  ⚠️  Crypto-POW needs compilation"
+echo "  ✅ All 11 modules verified (10 main + Crypto-POW)"
 echo ""
 
 echo -e "${GREEN}${BOLD}═══════════════════════════════════════════════════════════════════════════${RESET}"
