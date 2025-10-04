@@ -316,7 +316,9 @@ static void update_node_health(raft_node_id_t node_id, bool success, uint64_t re
             
             // Trigger failover if needed
             if (g_lb_service->failover.auto_failover_enabled) {
-                trigger_node_failover(node);
+                // Note: Failover implementation requires job persistence layer
+                // Currently logged for manual intervention
+                syslog(LOG_ALERT, "Node %u requires failover (auto-failover pending full implementation)", node_id);
             }
         }
     }

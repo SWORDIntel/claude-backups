@@ -1,6 +1,9 @@
 # Cryptographic Proof-of-Work Verification System - Build System
 # Enterprise-Grade C Implementation with Zero Fake Code Tolerance
 
+# Detect CPU profile before including profile system
+COMPILER_PROFILE ?= $(shell scripts/detect-cpu-profile.sh --profile 2>/dev/null || echo "generic")
+
 # Include compiler profile system (auto-detects CPU and sets PROD_FLAGS)
 include Makefile.profiles
 

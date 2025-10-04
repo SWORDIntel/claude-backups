@@ -68,14 +68,16 @@ is_meteor_lake() {
         return 1
     fi
 
-    # Check for "Ultra" in model name (Core Ultra series)
+    # Strict check: Must have "Ultra" in model name AND correct instruction sets
+    # This prevents false positives on older Intel Core CPUs
     if echo "$model_name" | grep -qi "ultra"; then
-        return 0
-    fi
-
-    # Check feature combination: AVX-VNNI present, AVX-512 absent
-    if has_feature "avx_vnni" && has_feature "avx2" && ! has_feature "avx512f"; then
-        return 0
+        # Verify required instruction sets for Meteor Lake
+        if has_feature "avx2" && has_feature "avx_vnni" && has_feature "fma"; then
+            # Double-check NO AVX-512 (key Meteor Lake characteristic)
+            if ! has_feature "avx512f"; then
+                return 0
+            fi
+        fi
     fi
 
     return 1

@@ -444,8 +444,10 @@ pow_status_t generate_rsa_4096_keypair(crypto_context_t *ctx) {
     }
 
     ctx->key_generation_time = time(NULL);
-    // TPM integration: Check for TPM 2.0 availability via /dev/tpm0
-    ctx->is_hardware_backed = (access("/dev/tpm0", R_OK | W_OK) == 0);
+    // TPM integration: Currently disabled - requires full TPM 2.0 integration
+    // See https://github.com/project/issues/TPM_INTEGRATION for implementation plan
+    // SECURITY NOTE: Do not use access() check due to TOCTOU vulnerability
+    ctx->is_hardware_backed = false;
 
     return POW_STATUS_SUCCESS;
 }

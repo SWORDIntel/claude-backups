@@ -10,9 +10,9 @@
 #   your_target:
 #       $(CC) $(PROD_FLAGS) -o $@ $^
 
-# Detect CPU profile if not manually specified
+# Use CPU profile from parent Makefile or auto-detect
 ifndef COMPILER_PROFILE
-    COMPILER_PROFILE := $(shell scripts/detect-cpu-profile.sh --profile)
+    COMPILER_PROFILE := $(shell scripts/detect-cpu-profile.sh --profile 2>/dev/null || echo "generic")
 endif
 
 # Validate profile exists, fallback to generic if not

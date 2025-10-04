@@ -829,9 +829,21 @@ dist_net_error_t dist_net_init(raft_node_id_t local_node_id,
     pthread_mutex_init(&g_dist_service->service_lock, NULL);
 
     // Load cluster configuration from file if it exists
-    const char* config_file = "/etc/claude-agents/cluster.conf";
+    // Note: load_cluster_config_from_file() must implement secure parsing
+    // with bounds checking to prevent buffer overflow (see security audit)
+    const char* config_file = getenv("CLAUDE_CLUSTER_CONFIG");
+    if (config_file == NULL) {
+        config_file = "/etc/claude-agents/cluster.conf";
+    }
+
     if (access(config_file, R_OK) == 0) {
-        load_cluster_config_from_file(config_file, &ctx->config);
+        // Verify file is not a symlink (prevent symlink attacks)
+        struct stat st;
+        if (lstat(config_file, &st) == 0 && S_ISREG(st.st_mode)) {
+            load_cluster_config_from_file(config_file, &ctx->config);
+        } else {
+            syslog(LOG_WARNING, "Config file is not a regular file: %s", config_file);
+        }
     }
 
     printf("[DIST] Distributed networking service initialized (Node ID: %u, NUMA: %d)\n", 
