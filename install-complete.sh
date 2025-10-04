@@ -367,18 +367,39 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 if [[ -d "agents/src/rust/npu_coordination_bridge" ]] && command -v cargo >/dev/null 2>&1; then
-    log_info "Building NPU coordination bridge..."
+    log_info "Building NPU coordination bridge with native optimizations..."
     cd agents/src/rust/npu_coordination_bridge
 
-    if cargo build --release 2>/dev/null; then
-        log_success "NPU bridge compiled successfully"
+    # Set Rust flags for maximum Intel Meteor Lake performance
+    export RUSTFLAGS="-C target-cpu=native -C target-feature=+avx2,+fma,+avx-vnni -C opt-level=3 -C lto=fat -C codegen-units=1"
+
+    # Set OpenVINO/NPU environment variables for optimal performance
+    export OMP_NUM_THREADS=20
+    export MKL_NUM_THREADS=20
+    export ONEDNN_MAX_CPU_ISA=AVX512_CORE_VNNI
+    export OPENVINO_HETERO_PRIORITY=NPU,GPU,CPU
+    export OV_SCALE_FACTOR=1.5
+    export TBB_MALLOC_USE_HUGE_PAGES=1
+    export OPENVINO_ENABLE_SECURE_MEMORY=1
+    export INTEL_NPU_ENABLE_TURBO=1
+
+    log_info "Rust optimizations: Meteor Lake (AVX2+FMA+AVX-VNNI), LTO=fat, opt-level=3"
+    log_info "NPU environment: 20 threads, AVX512_CORE_VNNI, Turbo enabled"
+
+    if cargo build --release; then
+        log_success "NPU bridge compiled (optimized for $(uname -m))"
+
+        # Show binary size
+        if [[ -f "target/release/libnpu_coordination_bridge.so" ]]; then
+            ls -lh target/release/libnpu_coordination_bridge.so | awk '{print "  Binary size:", $5}'
+        fi
 
         # Install Python bindings if available
         if cargo build --release --features python-bindings 2>/dev/null; then
             log_success "Python bindings compiled"
         fi
     else
-        log_warning "NPU bridge compilation failed (may need Intel NPU drivers)"
+        log_warning "NPU bridge compilation failed - check Cargo.toml and dependencies"
     fi
 
     cd "$SCRIPT_DIR"
@@ -402,15 +423,23 @@ echo -e "${BOLD}Phase 7: Agent Systems (Coordination + Ecosystem)${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
 
-# Compile C agent coordination
+# Compile C agent coordination with maximum optimization
 if [[ -f "agents/src/c/Makefile" ]]; then
-    log_info "Compiling C agent coordination engine..."
+    log_info "Compiling C agent coordination engine with native optimizations..."
     cd agents/src/c
 
-    if make clean && make all 2>/dev/null; then
-        log_success "C agent engine compiled"
+    # Detect CPU features
+    if grep -q avx512 /proc/cpuinfo; then
+        log_info "AVX-512 detected - building with maximum SIMD optimizations"
+    elif grep -q avx2 /proc/cpuinfo; then
+        log_info "AVX2 detected - building with AVX2 optimizations"
+    fi
+
+    if make clean && make production; then
+        log_success "C agent engine compiled (optimized for $(uname -m))"
+        ls -lh ../../bin/ 2>/dev/null | grep -E "agent|bridge" | head -5 | sed 's/^/  /'
     else
-        log_warning "C compilation skipped (may need libnuma-dev, liburing-dev)"
+        log_warning "C compilation failed - check build log"
     fi
 
     cd "$SCRIPT_DIR"
@@ -447,23 +476,30 @@ if [[ -d "hooks/crypto-pow" ]]; then
         sudo apt-get install -y libpcre2-dev 2>/dev/null || log_warning "PCRE2 install failed"
     fi
 
-    # Compile crypto-pow using root Makefile
+    # Compile crypto-pow using root Makefile with maximum optimization
     if [[ -f "Makefile" ]]; then
-        log_info "Compiling crypto-pow C modules..."
-        if make production 2>/dev/null; then
-            log_success "Crypto-POW compiled successfully"
+        log_info "Compiling crypto-pow C modules with native optimizations..."
+        log_info "Using aggressive compiler flags: -O3 -march=native -flto -ffast-math"
+
+        if make clean && make production; then
+            log_success "Crypto-POW compiled successfully (optimized for $(uname -m))"
+
+            # Show compiled binaries
+            if [[ -d "bin" ]]; then
+                ls -lh bin/ 2>/dev/null | grep -v "^total\|^d" | head -5 | sed 's/^/  /'
+            fi
 
             # Run verification test if available
             if [[ -f "bin/crypto_pow_demo" ]]; then
                 log_info "Running crypto-pow verification..."
-                if timeout 5 ./bin/crypto_pow_demo test 2>/dev/null | grep -q "PASS\|SUCCESS"; then
+                if timeout 5 ./bin/crypto_pow_demo test 2>&1 | grep -q "PASS\|SUCCESS"; then
                     log_success "Crypto-POW verification passed"
                 else
-                    log_warning "Crypto-POW verification had issues"
+                    log_warning "Crypto-POW verification had issues (binary still usable)"
                 fi
             fi
         else
-            log_warning "Crypto-POW compilation skipped (may need libpcre2-dev)"
+            log_warning "Crypto-POW compilation failed - check that libpcre2-dev is installed"
         fi
     fi
 

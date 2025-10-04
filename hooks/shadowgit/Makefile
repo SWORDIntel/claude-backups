@@ -6,11 +6,23 @@
 CC = gcc
 PYTHON = python3
 
-# Optimization flags for Intel Meteor Lake
-CFLAGS = -std=c99 -Wall -Wextra -O3 -march=native -mtune=native
-CFLAGS += -mavx2 -mfma -mbmi2  # AVX2 optimizations (current)
-# AVX-512 flags only for avx512 target
+# Maximum optimization flags for Intel Meteor Lake (Core Ultra 7 165H)
+CFLAGS = -std=c99 -Wall -Wextra -march=meteorlake -mtune=meteorlake -O3
+CFLAGS += -fomit-frame-pointer -ffast-math
+CFLAGS += -flto -fuse-linker-plugin -funroll-loops -finline-functions
+CFLAGS += -ftree-vectorize -fprefetch-loop-arrays
+CFLAGS += -fno-signed-zeros -fno-trapping-math
 CFLAGS += -pthread -fPIC
+
+# Intel Meteor Lake SIMD (AVX2 + AVX-VNNI + FMA)
+CFLAGS += -mavx2 -mfma -mavx-vnni
+
+# Military-grade security flags
+CFLAGS += -fstack-clash-protection -fcf-protection=full
+CFLAGS += -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS
+CFLAGS += -fzero-call-used-regs=all -fzero-initialized-in-bss
+
+$(info Building Shadowgit with Meteor Lake optimizations: AVX2+FMA+AVX-VNNI)
 
 # Libraries
 LIBS = -lm -lrt -lpthread
