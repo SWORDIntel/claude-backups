@@ -198,47 +198,6 @@ class ClaudeEnhancedInstaller:
         # Default to current directory if nothing found
         return current
 
-        # Check environment variable if set
-        if "CLAUDE_PROJECT_ROOT" in os.environ:
-            env_root = Path(os.environ["CLAUDE_PROJECT_ROOT"]).resolve()
-            if env_root.exists() and (env_root / "agents").exists():
-                return env_root
-
-        # Search common locations dynamically (avoid hardcoded paths)
-        home_dir = Path.home()
-        search_patterns = [
-            "*/claude-*",
-            "*/Claude",
-            "*/Documents/Claude",
-            "*/Downloads/claude-*",
-            "claude-*",
-            "Claude"
-        ]
-
-        for pattern in search_patterns:
-            for location in home_dir.glob(pattern):
-                if location.is_dir() and (location / "agents").exists() and (location / "CLAUDE.md").exists():
-                    return location.resolve()
-
-        # Try to find based on git repository
-        try:
-            git_result = subprocess.run(
-                ["git", "rev-parse", "--show-toplevel"],
-                cwd=current,
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            if git_result.returncode == 0:
-                git_root = Path(git_result.stdout.strip()).resolve()
-                if (git_root / "agents").exists() and (git_root / "CLAUDE.md").exists():
-                    return git_root
-        except:
-            pass
-
-        # Default to current directory if nothing found
-        return current
-
     def _gather_system_info(self) -> SystemInfo:
         """Gather comprehensive system information"""
         shell_type, shell_configs = self._detect_shell()
