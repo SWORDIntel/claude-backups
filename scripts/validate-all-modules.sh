@@ -56,10 +56,29 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}1-2. Agent Coordination & Ecosystem${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -f "integration/agent_coordination_matrix.py" ]] && check_pass "agent_coordination_matrix.py exists" || check_fail "agent_coordination_matrix.py MISSING"
-[[ -f "agents/src/c/agent_coordination.c" ]] && check_pass "C coordination engine exists" || check_warn "C engine not found"
-[[ -f "agents/src/python/enhanced_coordination_matrix.py" ]] && check_pass "Enhanced coordination exists" || check_warn "Enhanced coordination not found"
-[[ -d "agents" ]] && [[ $(find agents -name "*.md" | wc -l) -ge 80 ]] && check_pass "98+ agent definitions found" || check_warn "Agent definitions incomplete"
+if [[ -f "integration/agent_coordination_matrix.py" ]]; then
+    check_pass "agent_coordination_matrix.py exists"
+else
+    check_fail "agent_coordination_matrix.py MISSING"
+fi
+
+if [[ -f "agents/src/c/agent_coordination.c" ]]; then
+    check_pass "C coordination engine exists"
+else
+    check_warn "C engine not found"
+fi
+
+if [[ -f "agents/src/python/enhanced_coordination_matrix.py" ]]; then
+    check_pass "Enhanced coordination exists"
+else
+    check_warn "Enhanced coordination not found"
+fi
+
+if [[ -d "agents" ]] && [[ $(find agents -name "*.md" | wc -l) -ge 80 ]]; then
+    check_pass "98+ agent definitions found"
+else
+    check_warn "Agent definitions incomplete"
+fi
 
 # Test Python import
 if python3 -c "import sys; sys.path.insert(0, 'integration'); from agent_coordination_matrix import AgentCoordinationMatrix" 2>/dev/null; then
@@ -77,9 +96,21 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}3. Database Systems (PostgreSQL 16 + pgvector)${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -f "database/docker-compose.yml" ]] && check_pass "docker-compose.yml exists" || check_fail "Docker config MISSING"
-[[ -f "database/init/002_vector_extension.sql" ]] && check_pass "pgvector schema exists" || check_fail "pgvector schema MISSING"
-[[ -d "database/scripts" ]] && check_pass "Database scripts directory exists" || check_warn "Scripts directory not found"
+if [[ -f "database/docker-compose.yml" ]]; then
+    check_pass "docker-compose.yml exists"
+else
+    check_fail "Docker config MISSING"
+fi
+if [[ -f "database/init/002_vector_extension.sql" ]]; then
+    check_pass "pgvector schema exists"
+else
+    check_fail "pgvector schema MISSING"
+fi
+if [[ -d "database/scripts" ]]; then
+    check_pass "Database scripts directory exists"
+else
+    check_warn "Scripts directory not found"
+fi
 
 if command -v docker >/dev/null 2>&1; then
     if docker ps | grep -q claude_postgres; then
@@ -104,10 +135,26 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}4-5. Learning System v2.0 & Docker Integration${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -f "learning-system/docker-compose.yml" ]] && check_pass "Learning docker-compose exists" || check_fail "Docker config MISSING"
-[[ -d "learning-system/src" ]] && check_pass "Learning source code exists" || check_fail "Source code MISSING"
-[[ -f "learning-system/requirements.txt" ]] && check_pass "Python dependencies defined" || check_warn "requirements.txt not found"
-[[ $(find learning-system/src -name "*.py" | wc -l) -ge 10 ]] && check_pass "Learning Python modules found" || check_warn "Incomplete Python implementation"
+if [[ -f "learning-system/docker-compose.yml" ]]; then
+    check_pass "Learning docker-compose exists"
+else
+    check_fail "Docker config MISSING"
+fi
+if [[ -d "learning-system/src" ]]; then
+    check_pass "Learning source code exists"
+else
+    check_fail "Source code MISSING"
+fi
+if [[ -f "learning-system/requirements.txt" ]]; then
+    check_pass "Python dependencies defined"
+else
+    check_warn "requirements.txt not found"
+fi
+if [[ $(find learning-system/src -name "*.py" | wc -l) -ge 10 ]]; then
+    check_pass "Learning Python modules found"
+else
+    check_warn "Incomplete Python implementation"
+fi
 
 if command -v docker >/dev/null 2>&1; then
     if docker ps | grep -q claude_learning; then
@@ -132,7 +179,11 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}6. PICMCS Context Chopping${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -f "hooks/context_chopping_hooks.py" ]] && check_pass "PICMCS hooks exist" || check_fail "PICMCS hooks MISSING"
+if [[ -f "hooks/context_chopping_hooks.py" ]]; then
+    check_pass "PICMCS hooks exist"
+else
+    check_fail "PICMCS hooks MISSING"
+fi
 
 if python3 -c "exec(open('hooks/context_chopping_hooks.py').read())" 2>/dev/null; then
     check_pass "PICMCS hooks are valid Python"
@@ -149,11 +200,31 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}7. Shadowgit Performance Engine${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -d "hooks/shadowgit" ]] && check_pass "Shadowgit directory exists" || check_fail "Shadowgit directory MISSING"
-[[ -f "hooks/shadowgit/Makefile" ]] && check_pass "Shadowgit Makefile exists" || check_warn "Makefile not found"
-[[ -f "hooks/shadowgit/python/shadowgit_avx2.py" ]] && check_pass "AVX2 module exists" || check_fail "AVX2 module MISSING"
-[[ -f "hooks/shadowgit/c_diff_engine_impl.c" ]] && check_pass "C engine exists" || check_warn "C engine not found"
-[[ -d "hooks/shadowgit/python" ]] && [[ $(find hooks/shadowgit/python -name "*.py" | wc -l) -ge 10 ]] && check_pass "Python modules complete" || check_warn "Incomplete Python modules"
+if [[ -d "hooks/shadowgit" ]]; then
+    check_pass "Shadowgit directory exists"
+else
+    check_fail "Shadowgit directory MISSING"
+fi
+if [[ -f "hooks/shadowgit/Makefile" ]]; then
+    check_pass "Shadowgit Makefile exists"
+else
+    check_warn "Makefile not found"
+fi
+if [[ -f "hooks/shadowgit/python/shadowgit_avx2.py" ]]; then
+    check_pass "AVX2 module exists"
+else
+    check_fail "AVX2 module MISSING"
+fi
+if [[ -f "hooks/shadowgit/c_diff_engine_impl.c" ]]; then
+    check_pass "C engine exists"
+else
+    check_warn "C engine not found"
+fi
+if [[ -d "hooks/shadowgit/python" ]] && [[ $(find hooks/shadowgit/python -name "*.py" | wc -l) -ge 10 ]]; then
+    check_pass "Python modules complete"
+else
+    check_warn "Incomplete Python modules"
+fi
 
 # Test Python import
 if python3 -c "import sys; sys.path.insert(0, 'hooks/shadowgit/python'); from shadowgit_avx2 import ShadowGitAVX2" 2>/dev/null; then
@@ -171,10 +242,26 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}8. NPU Acceleration (Rust Bridge)${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -d "agents/src/rust/npu_coordination_bridge" ]] && check_pass "NPU bridge directory exists" || check_fail "NPU bridge MISSING"
-[[ -f "agents/src/rust/npu_coordination_bridge/Cargo.toml" ]] && check_pass "Cargo.toml exists" || check_fail "Cargo.toml MISSING"
-[[ -f "agents/src/rust/npu_coordination_bridge/src/lib.rs" ]] && check_pass "Rust library source exists" || check_fail "lib.rs MISSING"
-[[ -f "agents/src/rust/npu_coordination_bridge/src/python_bindings.rs" ]] && check_pass "Python bindings exist" || check_warn "Python bindings not found"
+if [[ -d "agents/src/rust/npu_coordination_bridge" ]]; then
+    check_pass "NPU bridge directory exists"
+else
+    check_fail "NPU bridge MISSING"
+fi
+if [[ -f "agents/src/rust/npu_coordination_bridge/Cargo.toml" ]]; then
+    check_pass "Cargo.toml exists"
+else
+    check_fail "Cargo.toml MISSING"
+fi
+if [[ -f "agents/src/rust/npu_coordination_bridge/src/lib.rs" ]]; then
+    check_pass "Rust library source exists"
+else
+    check_fail "lib.rs MISSING"
+fi
+if [[ -f "agents/src/rust/npu_coordination_bridge/src/python_bindings.rs" ]]; then
+    check_pass "Python bindings exist"
+else
+    check_warn "Python bindings not found"
+fi
 
 if [[ -f "agents/src/rust/npu_coordination_bridge/target/release/libnpu_coordination_bridge.so" ]]; then
     check_pass "NPU bridge compiled (shared library found)"
@@ -193,9 +280,21 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}9. OpenVINO Runtime${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -d "openvino/scripts" ]] && check_pass "OpenVINO scripts directory exists" || check_fail "OpenVINO scripts MISSING"
-[[ -f "openvino/scripts/openvino-quick-test.sh" ]] && check_pass "Quick test script exists" || check_warn "Quick test not found"
-[[ -f "openvino/scripts/setup-openvino-bashrc.sh" ]] && check_pass "Setup script exists" || check_warn "Setup script not found"
+if [[ -d "openvino/scripts" ]]; then
+    check_pass "OpenVINO scripts directory exists"
+else
+    check_fail "OpenVINO scripts MISSING"
+fi
+if [[ -f "openvino/scripts/openvino-quick-test.sh" ]]; then
+    check_pass "Quick test script exists"
+else
+    check_warn "Quick test not found"
+fi
+if [[ -f "openvino/scripts/setup-openvino-bashrc.sh" ]]; then
+    check_pass "Setup script exists"
+else
+    check_warn "Setup script not found"
+fi
 
 if command -v ov-info >/dev/null 2>&1; then
     check_pass "OpenVINO system installation detected"
@@ -212,9 +311,21 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}10. Installation System${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-[[ -f "./install" ]] && check_pass "Basic installer exists" || check_warn "Basic installer not found"
-[[ -f "installers/claude/claude-enhanced-installer.py" ]] && check_pass "Enhanced Python installer exists" || check_warn "Enhanced installer not found"
-[[ -f "./install-complete.sh" ]] && check_pass "Master orchestrator exists" || check_warn "Master orchestrator not found"
+if [[ -f "./install" ]]; then
+    check_pass "Basic installer exists"
+else
+    check_warn "Basic installer not found"
+fi
+if [[ -f "installers/claude/claude-enhanced-installer.py" ]]; then
+    check_pass "Enhanced Python installer exists"
+else
+    check_warn "Enhanced installer not found"
+fi
+if [[ -f "./install-complete.sh" ]]; then
+    check_pass "Master orchestrator exists"
+else
+    check_warn "Master orchestrator not found"
+fi
 
 # Check for installation methods in enhanced installer
 if [[ -f "installers/claude/claude-enhanced-installer.py" ]]; then
@@ -244,11 +355,23 @@ if command -v docker >/dev/null 2>&1; then
 fi
 
 # Check library structure
-[[ -f "lib/state.sh" ]] && check_pass "State management library exists" || check_warn "state.sh not found"
-[[ -f "lib/env.sh" ]] && check_pass "Environment library exists" || check_warn "env.sh not found"
+if [[ -f "lib/state.sh" ]]; then
+    check_pass "State management library exists"
+else
+    check_warn "state.sh not found"
+fi
+if [[ -f "lib/env.sh" ]]; then
+    check_pass "Environment library exists"
+else
+    check_warn "env.sh not found"
+fi
 
 # Check build system
-[[ -f "Makefile" ]] && check_pass "Root Makefile exists" || check_warn "Root Makefile not found"
+if [[ -f "Makefile" ]]; then
+    check_pass "Root Makefile exists"
+else
+    check_warn "Root Makefile not found"
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════
 # SUMMARY
