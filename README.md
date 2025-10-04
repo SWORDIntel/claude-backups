@@ -32,7 +32,7 @@
 - `./scripts/validate-all-modules.sh` - Integration validation
 - `./scripts/health-check-all.sh` - System health monitoring
 
-📊 **Module Status**: [MODULE_INTEGRATION_COMPLETE.md](MODULE_INTEGRATION_COMPLETE.md)
+📊 **Module Status**: [MODULE_INTEGRATION_COMPLETE.md](docs/implementation/MODULE_INTEGRATION_COMPLETE.md)
 🗺️ **Module Guide**: [html/modules/README.md](html/modules/README.md)
 
 ### Recent Major Overhaul (October 2025)
@@ -479,7 +479,7 @@ claude-backups/
 └── TESTING.md                  # Complete testing guide
 ```
 
-**Full Structure**: [DIRECTORY-STRUCTURE.md](DIRECTORY-STRUCTURE.md)
+**Full Structure**: [DIRECTORY-STRUCTURE.md](docs/architecture/DIRECTORY-STRUCTURE.md)
 
 ---
 
@@ -1254,9 +1254,9 @@ python3 tests/integration/test_shadowgit_imports.py
 ## 🔗 Quick Links
 
 ### Essential Documentation
-- [Directory Structure](DIRECTORY-STRUCTURE.md) - Complete navigation guide
+- [Directory Structure](docs/architecture/DIRECTORY-STRUCTURE.md) - Complete navigation guide
 - [Testing Guide](TESTING.md) - How to run tests
-- [Final Code Review](FINAL-CODE-REVIEW-REPORT.md) - Complete overhaul summary
+- [Final Code Review](docs/reports/FINAL-CODE-REVIEW-REPORT.md) - Complete overhaul summary
 
 ### API Documentation
 - [ShadowGit AVX2 API](hooks/shadowgit/docs/API-shadowgit-avx2.md) - NPU/AVX2 acceleration
