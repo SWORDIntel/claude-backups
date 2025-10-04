@@ -100,8 +100,9 @@ which = "4.4"
 # Examples and benchmarks removed for build simplicity
 
 [profile.release]
-lto = "fat"
-codegen-units = 1
+opt-level = 2      # Stable optimization for better compile times
+lto = "thin"       # Fast incremental LTO (changed from "fat")
+codegen-units = 4  # Parallel codegen (changed from 1)
 panic = "abort"
 strip = "symbols"
 

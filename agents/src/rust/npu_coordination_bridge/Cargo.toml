@@ -3,7 +3,7 @@ name = "npu-coordination-bridge"
 version = "2.0.0"
 edition = "2021"
 authors = ["Claude Agent Framework"]
-description = "High-performance NPU coordination bridge with Intel Meteor Lake optimization"
+description = "High-performance NPU coordination bridge with hardware-aware optimization"
 
 [lib]
 name = "npu_coordination_bridge"
@@ -60,3 +60,10 @@ required-features = ["benchmarks"]
 [[bin]]
 name = "server"
 path = "src/bin/server.rs"
+
+[profile.release]
+opt-level = 2      # Stable optimization (95% of -O3 performance)
+lto = "thin"       # Fast incremental LTO (5-10x faster than "fat")
+codegen-units = 4  # Parallelized codegen for faster builds
+strip = true       # Strip symbols for smaller binary
+panic = "abort"    # Abort on panic for smaller binary

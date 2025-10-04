@@ -371,7 +371,8 @@ if [[ -d "agents/src/rust/npu_coordination_bridge" ]] && command -v cargo >/dev/
     cd agents/src/rust/npu_coordination_bridge
 
     # Set Rust flags for maximum Intel Meteor Lake performance
-    export RUSTFLAGS="-C target-cpu=native -C target-feature=+avx2,+fma,+avx-vnni -C opt-level=3 -C lto=fat -C codegen-units=1"
+    # Use stable Rust optimization flags (portable across different CPUs)
+    export RUSTFLAGS="-C target-cpu=native -C opt-level=2 -C lto=thin"
 
     # Set OpenVINO/NPU environment variables for optimal performance
     export OMP_NUM_THREADS=20
