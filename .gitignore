@@ -17,12 +17,23 @@ claude-code
 *~
 .DS_Store
 
-# Build outputs
+# Build outputs and artifacts
 *.o
 *.so
 *.a
+*.lo
+*.la
+*.dylib
+*.dll
+*.exe
 build/
 dist/
+bin/
+lib/*.so
+lib/*.a
+target/
+cmake-build-*/
+*.out
 
 # IDE files
 .vscode/
@@ -37,7 +48,7 @@ __pycache__/
 **/*.pyc
 **/*.pyo
 
-# Python virtual environments
+# Python virtual environments (comprehensive)
 venv/
 env/
 .env
@@ -49,6 +60,10 @@ virtualenv/
 ENV/
 venv*/
 env*/
+.Python
+**/venv/
+**/env/
+**/.venv
 
 # Python package management
 .Python
@@ -105,3 +120,37 @@ __pycache__/
 *.pyo
 *.log
 *.tmp
+
+# Rust build artifacts
+target/
+Cargo.lock
+**/.cargo/
+**/target/
+
+# Compiled binaries (system-specific)
+bin/
+!bin/.gitkeep
+build/
+!build/.gitkeep
+
+# Agent build outputs
+agents/build/
+agents/bin/
+agents/src/rust/*/target/
+agents/src/c/*.o
+agents/src/c/bin/
+
+# Hooks build outputs
+hooks/*/bin/
+hooks/*/build/
+hooks/*/*.o
+hooks/*/*.so
+
+# Installation artifacts
+installation.log
+install*.log
+*.test.log
+
+# System-specific configs
+.env.local
+.env.*.local
