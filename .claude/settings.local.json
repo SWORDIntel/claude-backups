@@ -32,7 +32,13 @@
       "Bash(done)",
       "Bash(for:*)",
       "Bash(while read file)",
-      "Bash(do echo \"=== $f ===\")"
+      "Bash(do echo \"=== $f ===\")",
+      "Read(//tmp/**)",
+      "Bash(docker ps:*)",
+      "Bash(lscpu:*)",
+      "Read(//proc/**)",
+      "Bash(docker:*)",
+      "Read(//run/media/john/DATA/Active Measures/**)"
     ],
     "deny": [],
     "ask": [],

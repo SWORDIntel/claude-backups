@@ -34,7 +34,7 @@ AGENTS_PYTHON_DIR = /home/john/claude-backups/agents/src/python
 
 # Source files
 SHADOWGIT_SOURCES = $(SHADOWGIT_DIR)/shadowgit_avx2_diff.c
-INTEGRATION_SOURCES = shadowgit_phase3_integration.c
+INTEGRATION_SOURCES = src/phase3/integration.c
 HEADERS = $(SHADOWGIT_DIR)/shadowgit_avx2_diff.h
 
 # Targets
