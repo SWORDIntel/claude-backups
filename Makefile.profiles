@@ -1,0 +1,66 @@
+# Makefile.profiles - Auto-detecting Compiler Profile System
+#
+# This file auto-detects CPU capabilities and loads the appropriate
+# compiler optimization profile. Profiles can be manually overridden
+# by setting COMPILER_PROFILE environment variable.
+#
+# Usage in your Makefile:
+#   include Makefile.profiles
+#
+#   your_target:
+#       $(CC) $(PROD_FLAGS) -o $@ $^
+
+# Detect CPU profile if not manually specified
+ifndef COMPILER_PROFILE
+    COMPILER_PROFILE := $(shell scripts/detect-cpu-profile.sh --profile)
+endif
+
+# Validate profile exists, fallback to generic if not
+PROFILE_FILE := build-profiles/$(COMPILER_PROFILE).mk
+ifeq (,$(wildcard $(PROFILE_FILE)))
+    $(warning Profile '$(COMPILER_PROFILE)' not found at $(PROFILE_FILE))
+    $(warning Falling back to generic profile)
+    COMPILER_PROFILE := generic
+    PROFILE_FILE := build-profiles/generic.mk
+endif
+
+# Include the selected profile
+-include $(PROFILE_FILE)
+
+# Verify profile was loaded correctly
+ifndef CPU_ARCH
+    $(error Failed to load compiler profile from $(PROFILE_FILE))
+endif
+
+# Display loaded profile information
+$(info ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━)
+$(info 🎯 Compiler Profile: $(COMPILER_PROFILE))
+$(info 🔧 CPU Architecture: $(CPU_ARCH))
+$(info 🚀 Optimization Flags: $(PROD_FLAGS))
+$(info ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━)
+
+# Export variables for use in sub-makes and recipes
+export COMPILER_PROFILE
+export PROD_FLAGS
+export CPU_ARCH
+
+# Provide target to show CPU info
+.PHONY: show-cpu-info
+show-cpu-info:
+	@echo ""
+	@scripts/detect-cpu-profile.sh --info
+	@echo ""
+
+# Provide target to test compilation flags
+.PHONY: test-compiler-flags
+test-compiler-flags:
+	@echo "Testing compiler with profile: $(COMPILER_PROFILE)"
+	@echo "Flags: $(PROD_FLAGS)"
+	@echo ""
+	@echo "Creating test program..."
+	@echo 'int main() { return 0; }' > /tmp/compiler_test.c
+	@echo "Compiling with detected flags..."
+	@$(CC) $(PROD_FLAGS) -v /tmp/compiler_test.c -o /tmp/compiler_test 2>&1 | tail -20
+	@rm -f /tmp/compiler_test.c /tmp/compiler_test
+	@echo ""
+	@echo "✓ Compilation successful with $(COMPILER_PROFILE) profile"
