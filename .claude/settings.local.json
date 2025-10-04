@@ -38,7 +38,8 @@
       "Bash(lscpu:*)",
       "Read(//proc/**)",
       "Bash(docker:*)",
-      "Read(//run/media/john/DATA/Active Measures/**)"
+      "Read(//run/media/john/DATA/Active Measures/**)",
+      "Bash(./install-complete.sh:*)"
     ],
     "deny": [],
     "ask": [],

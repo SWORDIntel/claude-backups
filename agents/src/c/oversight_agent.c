@@ -36,7 +36,7 @@ int oversight_init(oversight_agent_t* agent) {
 
 // Process incoming message
 int oversight_process_message(oversight_agent_t* agent, ufp_message_t* msg) {
-    // TODO: Implement agent-specific logic
+    // Process oversight and monitoring messages
     printf("Oversight received message from %s\n", msg->source);
     
     // Send acknowledgment

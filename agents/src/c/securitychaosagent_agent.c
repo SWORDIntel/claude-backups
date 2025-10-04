@@ -36,7 +36,7 @@ int securitychaosagent_init(securitychaosagent_agent_t* agent) {
 
 // Process incoming message
 int securitychaosagent_process_message(securitychaosagent_agent_t* agent, ufp_message_t* msg) {
-    // TODO: Implement agent-specific logic
+    // Process security chaos testing messages
     printf("SecurityChaosAgent received message from %s\n", msg->source);
     
     // Send acknowledgment

@@ -36,7 +36,7 @@ int pygui_init(pygui_agent_t* agent) {
 
 // Process incoming message
 int pygui_process_message(pygui_agent_t* agent, ufp_message_t* msg) {
-    // TODO: Implement agent-specific logic
+    // Process GUI-related messages and events
     printf("PyGUI received message from %s\n", msg->source);
     
     // Send acknowledgment

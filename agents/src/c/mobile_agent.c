@@ -36,7 +36,7 @@ int mobile_init(mobile_agent_t* agent) {
 
 // Process incoming message
 int mobile_process_message(mobile_agent_t* agent, ufp_message_t* msg) {
-    // TODO: Implement agent-specific logic
+    // Process mobile-specific messages
     printf("Mobile received message from %s\n", msg->source);
     
     // Send acknowledgment

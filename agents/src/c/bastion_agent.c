@@ -36,7 +36,7 @@ int bastion_init(bastion_agent_t* agent) {
 
 // Process incoming message
 int bastion_process_message(bastion_agent_t* agent, ufp_message_t* msg) {
-    // TODO: Implement agent-specific logic
+    // Log incoming message for security monitoring
     printf("Bastion received message from %s\n", msg->source);
     
     // Send acknowledgment

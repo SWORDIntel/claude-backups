@@ -316,7 +316,7 @@ static void update_node_health(raft_node_id_t node_id, bool success, uint64_t re
             
             // Trigger failover if needed
             if (g_lb_service->failover.auto_failover_enabled) {
-                // TODO: Implement failover trigger
+                trigger_node_failover(node);
             }
         }
     }

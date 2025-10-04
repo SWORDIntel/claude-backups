@@ -827,9 +827,13 @@ dist_net_error_t dist_net_init(raft_node_id_t local_node_id,
     g_dist_service->election_timeout_ms = RAFT_ELECTION_TIMEOUT_MIN_MS;
     
     pthread_mutex_init(&g_dist_service->service_lock, NULL);
-    
-    // TODO: Load cluster configuration from file
-    
+
+    // Load cluster configuration from file if it exists
+    const char* config_file = "/etc/claude-agents/cluster.conf";
+    if (access(config_file, R_OK) == 0) {
+        load_cluster_config_from_file(config_file, &ctx->config);
+    }
+
     printf("[DIST] Distributed networking service initialized (Node ID: %u, NUMA: %d)\n", 
            local_node_id, numa_node);
     

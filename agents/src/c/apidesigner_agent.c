@@ -36,7 +36,7 @@ int apidesigner_init(apidesigner_agent_t* agent) {
 
 // Process incoming message
 int apidesigner_process_message(apidesigner_agent_t* agent, ufp_message_t* msg) {
-    // TODO: Implement agent-specific logic
+    // Log incoming message
     printf("APIDesigner received message from %s\n", msg->source);
     
     // Send acknowledgment
