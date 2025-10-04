@@ -2,20 +2,23 @@
 # ======================================
 # Team Delta - Hardware-accelerated integration build system
 
+# Include compiler profile system
+include ../../Makefile.profiles
+
 # Compiler and flags
 CC = gcc
 PYTHON = python3
 
-# Maximum optimization flags for Intel Meteor Lake (Core Ultra 7 165H)
-CFLAGS = -std=c99 -Wall -Wextra -march=meteorlake -mtune=meteorlake -O3
+# Compiler flags (profile provides optimization and CPU targeting)
+CFLAGS = -std=c99 -Wall -Wextra $(PROD_FLAGS)
 CFLAGS += -fomit-frame-pointer -ffast-math
 CFLAGS += -flto -fuse-linker-plugin -funroll-loops -finline-functions
 CFLAGS += -ftree-vectorize -fprefetch-loop-arrays
 CFLAGS += -fno-signed-zeros -fno-trapping-math
 CFLAGS += -pthread -fPIC
 
-# Intel Meteor Lake SIMD (AVX2 + AVX-VNNI + FMA)
-CFLAGS += -mavx2 -mfma -mavx-vnni
+# SIMD flags provided by PROD_FLAGS from profile system
+# (Profile auto-detects and includes -mavx2 -mfma -mavx-vnni for Meteor Lake)
 
 # Military-grade security flags
 CFLAGS += -fstack-clash-protection -fcf-protection=full

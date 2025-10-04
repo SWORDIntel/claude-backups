@@ -3,22 +3,35 @@
 # Agents are modular and loaded separately
 # Single unified source directory: src/c/
 
+# Include compiler profile system
+include ../../../Makefile.profiles
+
 CC := gcc
 AR := ar
 STRIP := strip
 
-# Compiler flags
+# Compiler flags (profile provides -march/-mtune optimization)
 CFLAGS := -std=c11 -D_GNU_SOURCE -Wall -Wextra
-CFLAGS += -march=native -mtune=native -pthread
+CFLAGS += -pthread
 CFLAGS += -I.
 # Add json-c includes if available
 CFLAGS += $(shell pkg-config --cflags json-c 2>/dev/null || echo "")
+
+# Conditional liburing detection
+HAS_LIBURING := $(shell pkg-config --exists liburing 2>/dev/null && echo yes)
+ifeq ($(HAS_LIBURING),yes)
+    CFLAGS += -DHAVE_LIBURING
+    LDFLAGS += -luring
+    $(info [INFO] liburing detected - enabling io_uring support)
+else
+    $(info [INFO] liburing not found - using standard I/O)
+endif
 
 # Optimization
 ifdef DEBUG
     CFLAGS += -g3 -O0 -DDEBUG
 else
-    CFLAGS += -O2 -DNDEBUG -fomit-frame-pointer -flto
+    CFLAGS += $(PROD_FLAGS) -DNDEBUG -fomit-frame-pointer
 endif
 
 # Enhanced vectorization support with runtime detection

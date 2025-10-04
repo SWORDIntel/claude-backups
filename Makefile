@@ -1,6 +1,9 @@
 # Cryptographic Proof-of-Work Verification System - Build System
 # Enterprise-Grade C Implementation with Zero Fake Code Tolerance
 
+# Include compiler profile system (auto-detects CPU and sets PROD_FLAGS)
+include Makefile.profiles
+
 # =============================================================================
 # COMPILER AND BUILD CONFIGURATION
 # =============================================================================
@@ -13,15 +16,15 @@ BASE_CFLAGS = -std=c11 -Wall -Wextra -Werror -Wpedantic \
               -fstack-protector-strong -D_FORTIFY_SOURCE=2 \
               -Wformat -Wformat-security -fPIE
 
-# Intel hardware optimization flags
-INTEL_FLAGS = -march=native -mtune=native -mavx2 -maes -mrdrnd
+# Intel hardware optimization flags (profile provides -march/-mtune)
+INTEL_FLAGS = -mavx2 -maes -mrdrnd
 
 # Security hardening flags
 SECURITY_FLAGS = -fstack-clash-protection -fcf-protection=full \
                  -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 
-# Performance optimization flags
-PERF_FLAGS = -O3 -flto -funroll-loops -finline-functions
+# Performance optimization flags (use profile-based optimization)
+PERF_FLAGS = $(PROD_FLAGS) -funroll-loops -finline-functions
 
 # Debug flags
 DEBUG_FLAGS = -g -O0 -DDEBUG -fsanitize=address -fsanitize=undefined \
