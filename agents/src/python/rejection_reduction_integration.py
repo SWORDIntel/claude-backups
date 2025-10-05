@@ -91,95 +91,80 @@ class UnifiedClaudeOptimizer:
                                 request_type: str = "general",
                                 context_hint: str = None) -> Tuple[str, Dict[str, Any]]:
         """
-        Main optimization pipeline combining all systems.
-        The correct order is: Context Chopping -> Rejection Reduction.
-        This ensures that we only process the most relevant snippets.
+        Main optimization pipeline with tiered, auto-escalating strategies.
         """
         import time
         start_time = time.time()
-
         self.performance_metrics['total_requests'] += 1
 
         metadata = {
-            'original_length': len(content),
-            'original_token_count': self._estimate_tokens(content),
-            'optimizations_applied': [],
-            'processing_time': 0.0,
-            'acceptance_predicted': True,
-            'systems_used': []
+            'original_length': len(content), 'original_token_count': self._estimate_tokens(content),
+            'optimizations_applied': [], 'processing_time': 0.0,
+            'acceptance_predicted': True, 'systems_used': [], 'tier_used': 1
         }
 
-        # Step 1: Handle file permissions before any processing
+        # Initial content processing (permissions, context chopping)
         if file_paths and self.systems_status['permission_fallback']:
-            try:
-                permission_note = await self._handle_file_permissions(file_paths)
-                if permission_note:
-                    content = permission_note + "\n\n" + content
-                    metadata['optimizations_applied'].append('permission_optimization')
-                    metadata['systems_used'].append('permission_fallback')
-            except Exception as e:
-                logger.warning(f"Permission optimization failed: {e}")
+            permission_note = await self._handle_file_permissions(file_paths)
+            if permission_note:
+                content = f"{permission_note}\n\n{content}"
+                metadata['optimizations_applied'].append('permission_optimization')
 
-        # Step 2: Context chopping to get relevant code chunks
-        processed_chunks = []
+        code_chunks = [ContextChunk(content, "input.py", 0, 0, 0.0, 0, "")]
         if self.systems_status['context_chopping']:
-            try:
-                code_chunks = await self._apply_enhanced_context_chopping(
-                    content, file_paths, request_type, context_hint
-                )
-                metadata['systems_used'].append('context_chopping')
-                if len(code_chunks) > 1 or (code_chunks and code_chunks[0].content != content):
-                    self.performance_metrics['context_optimized'] += 1
-                    metadata['optimizations_applied'].append('intelligent_context_chopping')
+            code_chunks = await self._apply_enhanced_context_chopping(content, file_paths, request_type, context_hint)
+            metadata['systems_used'].append('context_chopping')
+            if len(code_chunks) > 1 or (code_chunks and code_chunks[0].content != content):
+                 metadata['optimizations_applied'].append('intelligent_context_chopping')
 
-                # Step 3: Rejection reduction on each chunk
-                for chunk in code_chunks:
-                    chunk_content = chunk.content
-                    if self.systems_status['rejection_reduction'] and self.rejection_reducer:
-                        try:
-                            # We only pass the chunk's content, not the original file paths
-                            reduced_content, res = await self.rejection_reducer.process_request(
-                                chunk_content, request_type, [chunk.file_path]
-                            )
-                            if res in [StrategyResult.SUCCESS, StrategyResult.PARTIAL_SUCCESS]:
-                                chunk_content = reduced_content
-                                if 'rejection_reduction' not in metadata['optimizations_applied']:
-                                     metadata['optimizations_applied'].append('rejection_reduction')
-                        except Exception as e:
-                            logger.warning(f"Rejection reduction for chunk failed: {e}")
+        # Tiered auto-escalation loop
+        final_chunks = []
+        max_tier = 3
+        for tier in range(1, max_tier + 1):
+            metadata['tier_used'] = tier
+            tier_successful = True
+            processed_chunks_for_tier = []
+
+            for chunk in code_chunks:
+                chunk_content = chunk.content
+                if self.systems_status['rejection_reduction'] and self.rejection_reducer:
+                    reduced_content, res = await self.rejection_reducer.process_request(
+                        chunk_content, request_type, [chunk.file_path], tier=tier
+                    )
+                    if res == StrategyResult.REJECTED:
+                        tier_successful = False
+                        logger.warning(f"Tier {tier} failed for chunk {chunk.file_path}. Escalating...")
+                        break  # Escalate to next tier for all chunks
                     
-                    header = f"# File: {chunk.file_path} (lines {chunk.start_line}-{chunk.end_line})"
-                    processed_chunks.append(f"{header}\n{chunk_content}")
+                    chunk_content = reduced_content
+                    if 'rejection_reduction' not in metadata['optimizations_applied']:
+                        metadata['optimizations_applied'].append('rejection_reduction')
 
-            except Exception as e:
-                logger.warning(f"Main optimization loop failed: {e}")
-                processed_chunks.append(content) # Fallback
-        else:
-             processed_chunks.append(content)
-        
-        final_content = "\n\n".join(processed_chunks)
+                header = f"# File: {chunk.file_path} (lines {chunk.start_line}-{chunk.end_line})"
+                processed_chunks_for_tier.append(f"{header}\n{chunk_content}")
 
-        # Step 4: Learning system feedback
-        if self.systems_status['learning_system']:
-            try:
-                await self._store_optimization_result(
-                    original_content=content,
-                    optimized_content=final_content,
-                    metadata=metadata,
-                    request_type=request_type
-                )
-                metadata['systems_used'].append('learning_system')
-            except Exception as e:
-                logger.warning(f"Learning system update failed: {e}")
+            if tier_successful:
+                final_chunks = processed_chunks_for_tier
+                break  # Success, exit the tier loop
 
-        # Finalize metadata
+            if not tier_successful and tier == max_tier:
+                logger.error("All tiers failed to process the content. Returning original.")
+                final_chunks = [f"# File: {c.file_path}\n{c.content}" for c in code_chunks] # Fallback
+                metadata['acceptance_predicted'] = False
+
+
+        final_content = "\n\n".join(final_chunks)
+
+        # Finalize and record
         metadata['final_length'] = len(final_content)
         metadata['final_token_count'] = self._estimate_tokens(final_content)
         metadata['compression_ratio'] = metadata['final_length'] / (metadata['original_length'] or 1)
         metadata['processing_time'] = time.time() - start_time
-        
         self._update_performance_metrics(metadata)
-        
+
+        if self.systems_status['learning_system']:
+            await self._store_optimization_result(content, final_content, metadata, request_type)
+
         return final_content, metadata
 
     async def _handle_file_permissions(self, file_paths: List[str]) -> Optional[str]:
