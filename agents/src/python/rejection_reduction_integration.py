@@ -270,17 +270,10 @@ class UnifiedClaudeOptimizer:
             )
             
             if context_window and context_window.chunks:
-                # Reconstruct content from chunks with rejection-aware filtering
+                # Reconstruct content from chunks. Sanitization is handled by the rejection reducer.
                 optimized_chunks = []
-                
                 for chunk in context_window.chunks:
-                    # Apply rejection-aware filtering to each chunk
-                    filtered_chunk = await self._apply_rejection_aware_filtering(
-                        chunk.content, chunk.security_level
-                    )
-                    
-                    if filtered_chunk:
-                        optimized_chunks.append(f"# File: {chunk.file_path} (lines {chunk.start_line}-{chunk.end_line})\n{filtered_chunk}")
+                    optimized_chunks.append(f"# File: {chunk.file_path} (lines {chunk.start_line}-{chunk.end_line})\n{chunk.content}")
                 
                 return "\n\n".join(optimized_chunks)
             
@@ -292,56 +285,6 @@ class UnifiedClaudeOptimizer:
 
         # Fallback to original content if context chopping fails
         return content
-    
-    async def _apply_rejection_aware_filtering(self, 
-                                             content: str, 
-                                             security_level: str) -> str:
-        """Apply rejection-aware filtering to content chunks"""
-        
-        if security_level in ['sensitive', 'classified']:
-            # Apply aggressive filtering for sensitive content
-            filtered = await self._sanitize_sensitive_content(content)
-        else:
-            # Apply standard filtering
-            filtered = await self._apply_standard_sanitization(content)
-        
-        return filtered
-    
-    async def _sanitize_sensitive_content(self, content: str) -> str:
-        """Sanitize sensitive content to prevent rejections"""
-        import re
-        
-        sanitized = content
-        
-        # Replace sensitive patterns
-        patterns = {
-            r'password\s*=\s*["\'][^"\']*["\']': 'password = "[REDACTED]"',
-            r'api_key\s*=\s*["\'][^"\']*["\']': 'api_key = "[REDACTED]"', 
-            r'secret\s*=\s*["\'][^"\']*["\']': 'secret = "[REDACTED]"',
-            r'token\s*=\s*["\'][^"\']*["\']': 'token = "[REDACTED]"'
-        }
-        
-        for pattern, replacement in patterns.items():
-            sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
-        
-        return sanitized
-    
-    async def _apply_standard_sanitization(self, content: str) -> str:
-        """Apply standard sanitization for general content"""
-        
-        # Replace problematic terms while preserving context
-        replacements = {
-            'exploit': 'security_test',
-            'payload': 'data_packet',
-            'backdoor': 'admin_access',
-            'hack': 'analyze'
-        }
-        
-        sanitized = content
-        for problematic, safe in replacements.items():
-            sanitized = sanitized.replace(problematic, safe)
-        
-        return sanitized
     
     async def _store_optimization_result(self, 
                                        original_content: str,
