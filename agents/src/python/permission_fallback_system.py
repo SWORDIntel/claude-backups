@@ -314,6 +314,59 @@ class PermissionFallbackSystem:
             "performance": "Functional but slower"
         }
 
+    def get_fallback_strategy(self, scenario: str) -> Optional[Dict]:
+        """
+        Retrieves the fallback strategy for a given scenario.
+
+        Args:
+            scenario: The key for the fallback scenario (e.g., "file_write_denied").
+
+        Returns:
+            A dictionary containing the strategy details, or None if not found.
+        """
+        return self.fallback_strategies.get(scenario)
+
+    def handle_permission_error(self, error_type: str, details: Dict) -> Dict:
+        """
+        Logs a permission error and returns information about a fallback strategy.
+        This can be used by a calling agent to decide how to proceed.
+
+        Args:
+            error_type: The type of error, corresponding to a scenario key.
+            details: A dictionary with context about the error (e.g., path, command).
+
+        Returns:
+            A dictionary with the suggested fallback action.
+        """
+        import time
+
+        error_log_entry = {
+            "timestamp": time.time(),
+            "error_type": error_type,
+            "details": details,
+            "capabilities": self.capabilities.__dict__
+        }
+        self.rejection_log.append(error_log_entry)
+
+        strategy = self.get_fallback_strategy(error_type)
+
+        if strategy:
+            return {
+                "status": "fallback_suggested",
+                "error_type": error_type,
+                "suggestion": strategy.get("message", "A fallback strategy is available."),
+                "primary_method": strategy.get("primary"),
+                "fallback_method": strategy.get("fallback"),
+                "details": details
+            }
+
+        return {
+            "status": "no_fallback_available",
+            "error_type": error_type,
+            "message": "No defined fallback strategy for this type of error.",
+            "details": details
+        }
+
     async def get_file_content_with_fallback(self, file_path: str) -> Tuple[Optional[str], str]:
         """
         Tries to read file content, providing a fallback for permission errors.
