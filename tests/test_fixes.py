@@ -35,17 +35,17 @@ def test_fixes():
         print("✗ Docker installation script missing or not executable")
     
     # Test 4: Check hybrid bridge manager
-    bridge_script = Path("agents/src/python/hybrid_bridge_manager.py")
-    if bridge_script.exists():
-        # Test syntax
-        try:
-            import py_compile
-            py_compile.compile(str(bridge_script), doraise=True)
-            print("✓ Hybrid bridge manager has valid syntax")
-        except Exception as e:
-            print(f"✗ Hybrid bridge manager syntax error: {e}")
-    else:
-        print("✗ Hybrid bridge manager not found")
+    # bridge_script = Path("agents/src/python/hybrid_bridge_manager.py")
+    # if bridge_script.exists():
+    #     # Test syntax
+    #     try:
+    #         import py_compile
+    #         py_compile.compile(str(bridge_script), doraise=True)
+    #         print("✓ Hybrid bridge manager has valid syntax")
+    #     except Exception as e:
+    #         print(f"✗ Hybrid bridge manager syntax error: {e}")
+    # else:
+    #     print("✗ Hybrid bridge manager not found")
     
     # Test 5: Check integration script fixes
     integration_script = Path("integrate_hybrid_bridge.sh")

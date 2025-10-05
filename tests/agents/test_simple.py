@@ -3,6 +3,7 @@
 Simple test of core functionality
 """
 import sys
+from pathlib import Path
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent

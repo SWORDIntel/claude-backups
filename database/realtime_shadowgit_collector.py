@@ -111,9 +111,9 @@ class ShadowgitCollector:
         
         # SIMD metrics tracking
         self.simd_metrics = {
-            'scalar': {'count': 0, 'total_time': 0, 'efficiency': []},
-            'avx2': {'count': 0, 'total_time': 0, 'efficiency': []},
-            'avx512': {'count': 0, 'total_time': 0, 'efficiency': []}
+            'scalar': {'count': 0, 'total_time': 0, 'efficiency': [], 'error_count': 0},
+            'avx2': {'count': 0, 'total_time': 0, 'efficiency': [], 'error_count': 0},
+            'avx512': {'count': 0, 'total_time': 0, 'efficiency': [], 'error_count': 0}
         }
         
         # Memory-mapped file for zero-copy data transfer
@@ -455,6 +455,8 @@ class ShadowgitCollector:
                 self.simd_metrics[simd_level]['count'] += 1
                 self.simd_metrics[simd_level]['total_time'] += event.processing_time_ns
                 self.simd_metrics[simd_level]['efficiency'].append(event.simd_efficiency)
+                if event.error_count > 0:
+                    self.simd_metrics[simd_level]['error_count'] += event.error_count
                 
                 # Keep efficiency history bounded
                 if len(self.simd_metrics[simd_level]['efficiency']) > 1000:
@@ -696,6 +698,12 @@ class ShadowgitCollector:
         if total_ops > 0:
             simd_efficiency_score /= total_ops
         
+        total_errors = sum(self.simd_metrics[level]['error_count'] for level in self.simd_metrics)
+        error_rate = total_errors / total_events if total_events > 0 else 0.0
+
+        # Calculate anomaly score from recent anomalies
+        anomaly_score = await self.anomaly_detector.get_current_anomaly_score(self.db_pool)
+
         return PerformanceMetrics(
             events_per_second=events_per_second,
             avg_processing_time_ns=avg_processing_time,
@@ -704,8 +712,8 @@ class ShadowgitCollector:
             cpu_utilization=cpu_percent / 100.0,
             disk_io_rate=disk_io.read_bytes + disk_io.write_bytes if disk_io else 0,
             network_io_rate=network_io.bytes_sent + network_io.bytes_recv if network_io else 0,
-            error_rate=0.0,  # TODO: Calculate from error events
-            anomaly_score=0.0  # TODO: Calculate from anomaly detector
+            error_rate=error_rate,
+            anomaly_score=anomaly_score
         )
     
     async def _store_system_metrics(self, metrics: PerformanceMetrics):
@@ -776,6 +784,24 @@ class AnomalyDetector:
     def __init__(self):
         self.baseline_metrics = {}
         
+    async def get_current_anomaly_score(self, db_pool: asyncpg.Pool) -> float:
+        """Get the current anomaly score from recent anomalies."""
+        if not db_pool:
+            return 0.0
+
+        try:
+            async with db_pool.acquire() as conn:
+                # Get average z-score of anomalies in the last 10 minutes
+                avg_z_score = await conn.fetchval(
+                    """SELECT AVG(z_score)
+                       FROM enhanced_learning.anomalies
+                       WHERE timestamp > NOW() - INTERVAL '10 minutes'"""
+                )
+                return float(avg_z_score) if avg_z_score else 0.0
+        except Exception as e:
+            logger.error(f"Failed to get anomaly score: {e}")
+            return 0.0
+
     async def detect_anomalies(self, db_pool: asyncpg.Pool):
         """Detect anomalies in shadowgit performance"""
         if not db_pool:

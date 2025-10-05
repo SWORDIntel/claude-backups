@@ -118,7 +118,7 @@ else
     log_warning "Docker not found - attempting to install..."
     if command -v apt-get >/dev/null 2>&1; then
         sudo apt-get update
-        sudo apt-get install -y docker.io docker-compose-v2
+        sudo apt-get install -y docker.io docker-compose-plugin
         sudo systemctl start docker
         sudo usermod -aG docker "$USER"
         log_success "Docker installed (you may need to log out and back in for group membership)"
@@ -223,15 +223,13 @@ if [[ -f "database/scripts/install.sh" ]]; then
         log_warning "Database install had issues (may already be installed)"
     fi
 else
-    if [[ -d "database" ]] && command -v docker >/dev/null 2>&1; then
+    if [[ -d "database" ]] && command -v docker &>/dev/null 2>&1; then
         log_info "Starting database via Docker Compose..."
-        cd database
-        if docker-compose up -d; then
+        if docker compose -f "$SCRIPT_DIR/docker-compose.yml" up -d postgres; then
             log_success "Database containers started"
         else
             log_warning "Database containers may already be running"
         fi
-        cd "$SCRIPT_DIR"
     else
         log_warning "Database directory not found or Docker unavailable"
     fi
@@ -259,13 +257,11 @@ if [[ -f "learning-system/scripts/setup.sh" ]]; then
 else
     if [[ -d "learning-system" ]] && command -v docker >/dev/null 2>&1; then
         log_info "Starting learning system via Docker Compose..."
-        cd learning-system
-        if docker-compose up -d; then
+        if docker compose -f "$SCRIPT_DIR/docker-compose.yml" up -d learning-system; then
             log_success "Learning system containers started"
         else
             log_warning "Learning containers may already be running"
         fi
-        cd "$SCRIPT_DIR"
     else
         log_warning "Learning system directory not found or Docker unavailable"
     fi
@@ -294,20 +290,11 @@ if [[ -d "hooks/shadowgit" ]]; then
             log_info "Trying direct installation..."
             # Compile C engine
             if [[ -f "hooks/shadowgit/Makefile" ]]; then
-                cd hooks/shadowgit
-                if make all 2>/dev/null; then
+                if make -f hooks/shadowgit/Makefile all PROJECT_ROOT="$SCRIPT_DIR" 2>/dev/null; then
                     log_success "Shadowgit C engine compiled"
                 else
                     log_warning "C engine compilation skipped (may need dependencies)"
                 fi
-                cd "$SCRIPT_DIR"
-            fi
-
-            # Add to PYTHONPATH
-            if [[ -d "hooks/shadowgit/python" ]]; then
-                SHADOWGIT_PYTHON="$SCRIPT_DIR/hooks/shadowgit/python"
-                echo "export PYTHONPATH=\"$SHADOWGIT_PYTHON:\$PYTHONPATH\"" >> ~/.bashrc
-                log_success "Shadowgit added to PYTHONPATH"
             fi
         fi
     else
@@ -368,11 +355,6 @@ echo ""
 
 if [[ -d "agents/src/rust/npu_coordination_bridge" ]] && command -v cargo >/dev/null 2>&1; then
     log_info "Building NPU coordination bridge with native optimizations..."
-    cd agents/src/rust/npu_coordination_bridge
-
-    # Use stable Rust optimization flags (portable across different CPUs)
-    export RUSTFLAGS="-C target-cpu=native -C opt-level=2 -C lto=thin"
-    log_info "Using RUSTFLAGS: $RUSTFLAGS"
 
     # Set OpenVINO/NPU environment variables for optimal performance
     export OMP_NUM_THREADS=20
@@ -387,23 +369,21 @@ if [[ -d "agents/src/rust/npu_coordination_bridge" ]] && command -v cargo >/dev/
     log_info "Rust optimizations: Meteor Lake (AVX2+FMA+AVX-VNNI), LTO=fat, opt-level=3"
     log_info "NPU environment: 20 threads, AVX512_CORE_VNNI, Turbo enabled"
 
-    if cargo build --release; then
+    if cargo build --manifest-path "$SCRIPT_DIR/agents/src/rust/npu_coordination_bridge/Cargo.toml" --release; then
         log_success "NPU bridge compiled (optimized for $(uname -m))"
 
         # Show binary size
-        if [[ -f "target/release/libnpu_coordination_bridge.so" ]]; then
-            ls -lh target/release/libnpu_coordination_bridge.so | awk '{print "  Binary size:", $5}'
+        if [[ -f "agents/src/rust/npu_coordination_bridge/target/release/libnpu_coordination_bridge.so" ]]; then
+            ls -lh agents/src/rust/npu_coordination_bridge/target/release/libnpu_coordination_bridge.so | awk '{print "  Binary size:", $5}'
         fi
 
         # Install Python bindings if available
-        if cargo build --release --features python-bindings 2>/dev/null; then
+        if cargo build --manifest-path "$SCRIPT_DIR/agents/src/rust/npu_coordination_bridge/Cargo.toml" --release --features python-bindings 2>/dev/null; then
             log_success "Python bindings compiled"
         fi
     else
         log_warning "NPU bridge compilation failed - check Cargo.toml and dependencies"
     fi
-
-    cd "$SCRIPT_DIR"
 else
     if [[ ! -d "agents/src/rust/npu_coordination_bridge" ]]; then
         log_warning "NPU bridge directory not found"
@@ -427,7 +407,6 @@ echo ""
 # Compile C agent coordination with maximum optimization
 if [[ -f "agents/src/c/Makefile" ]]; then
     log_info "Compiling C agent coordination engine with native optimizations..."
-    cd agents/src/c
 
     # Detect CPU features
     if grep -q avx512 /proc/cpuinfo; then
@@ -436,14 +415,12 @@ if [[ -f "agents/src/c/Makefile" ]]; then
         log_info "AVX2 detected - building with AVX2 optimizations"
     fi
 
-    if make clean && make production; then
+    if make -f agents/src/c/Makefile clean && make -f agents/src/c/Makefile production; then
         log_success "C agent engine compiled (optimized for $(uname -m))"
-        ls -lh ../../bin/ 2>/dev/null | grep -E "agent|bridge" | head -5 | sed 's/^/  /'
+        ls -lh agents/build/bin/ 2>/dev/null | grep -E "agent|bridge" | head -5 | sed 's/^/  /'
     else
         log_warning "C compilation failed - check build log"
     fi
-
-    cd "$SCRIPT_DIR"
 fi
 
 # Setup Python agent coordination

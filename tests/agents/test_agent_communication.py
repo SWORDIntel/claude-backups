@@ -6,6 +6,7 @@ Test script to verify agent communication system is working
 import sys
 import time
 import random
+from pathlib import Path
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent

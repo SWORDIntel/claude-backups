@@ -34,10 +34,12 @@ services:
       POSTGRES_USER: claude_user
       POSTGRES_PASSWORD: claude_secure_pass
       POSTGRES_DB: claude_auth
+      PYTHONPATH: /app
+    volumes:
+      - ./learning-system/python:/app/learning
     command: |
       bash -c "pip install fastapi uvicorn psycopg2-binary && 
-      python -c 'from fastapi import FastAPI; app = FastAPI(); app.get(\"/health\")(lambda: {\"status\": \"ok\"})' &&
-      uvicorn --factory main:app --host 0.0.0.0 --port 8080"
+      python /app/learning/integrated_learning_setup.py"
     ports:
       - "8080:8080"
     networks:

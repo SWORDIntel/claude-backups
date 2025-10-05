@@ -1634,7 +1634,7 @@ end
 
             # Install/upgrade dependencies
             venv_pip = self.venv_dir / "bin" / "pip"
-            requirements_file = self.project_root / "requirements.txt"
+            requirements_file = self.project_root / "config" / "requirements.txt"
             if requirements_file.is_file():
                 self._print_info(f"Installing/upgrading dependencies from {requirements_file}...")
                 try:
@@ -1942,9 +1942,9 @@ exec claude "$@"
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             pass
 
-        # Try 'docker-compose' (v1)
+        # Try 'docker-compose' (v1) - for legacy support
         if shutil.which("docker-compose"):
-            self._print_info("Found 'docker-compose' (v1).")
+            self._print_info("Found legacy 'docker-compose' (v1).")
             return ["docker-compose"]
 
         self._print_warning("Neither 'docker compose' nor 'docker-compose' found.")
@@ -1963,7 +1963,7 @@ exec claude "$@"
 
                 # Get environment-specific packages
                 env_packages = self._get_environment_specific_packages()
-                docker_packages = ["docker.io", "docker-compose"]
+                docker_packages = ["docker.io", "docker-compose-plugin"]
                 all_packages = list(set(env_packages + docker_packages))  # Remove duplicates
 
                 self._print_info(f"📦 Installing packages for {self.system_info.environment_type.value} environment: {', '.join(all_packages)}")

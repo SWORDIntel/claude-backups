@@ -2,8 +2,11 @@
 # ======================================
 # Team Delta - Hardware-accelerated integration build system
 
+# Define project root for absolute paths
+PROJECT_ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
+
 # Include compiler profile system
-include ../../Makefile.profiles
+include $(PROJECT_ROOT)/Makefile.profiles
 
 # Compiler and flags
 CC = gcc
@@ -31,9 +34,9 @@ $(info Building Shadowgit with Meteor Lake optimizations: AVX2+FMA+AVX-VNNI)
 LIBS = -lm -lrt -lpthread
 
 # Directories
-SHADOWGIT_DIR = /home/john/shadowgit/c_src_avx2
-BUILD_DIR = build
-AGENTS_PYTHON_DIR = /home/john/claude-backups/agents/src/python
+SHADOWGIT_DIR = src
+BUILD_DIR = ../../build/shadowgit
+AGENTS_PYTHON_DIR = ../../agents/src/python
 
 # Source files
 SHADOWGIT_SOURCES = $(SHADOWGIT_DIR)/shadowgit_avx2_diff.c

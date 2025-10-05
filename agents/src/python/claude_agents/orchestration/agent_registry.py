@@ -232,7 +232,26 @@ class PythonFallbackHandler:
         """Initialize Python agent implementations"""
         try:
             # Try to import existing bridge
-            sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
+            # Dynamically find project root and add to path
+            try:
+                from pathlib import Path
+
+                def find_project_root():
+                    """Dynamically find the project root."""
+                    current_path = Path(__file__).resolve()
+                    while current_path != current_path.parent:
+                        if (current_path / '.git').exists() or (current_path / 'README.md').exists():
+                            return current_path
+                        current_path = current_path.parent
+                    return Path.cwd() # Fallback
+
+                project_root = find_project_root()
+                agents_path = project_root / 'agents'
+                if str(agents_path) not in sys.path:
+                    sys.path.append(str(agents_path))
+            except Exception as e:
+                logger.warning(f"Could not dynamically add agents path: {e}")
+
             from claude_agents.bridges.claude_agent_bridge import ClaudeAgentBridge
             from DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster
             
@@ -838,8 +857,21 @@ class OrchestrationEngine:
 class EnhancedAgentRegistry:
     """Production-ready agent registry with full integration"""
     
-    def __init__(self, agents_dir: str = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents"):
-        self.agents_dir = Path(agents_dir)
+    def __init__(self, agents_dir: Optional[str] = None):
+        if agents_dir:
+            self.agents_dir = Path(agents_dir)
+        else:
+            def find_project_root():
+                """Dynamically find the project root."""
+                current_path = Path(__file__).resolve()
+                while current_path != current_path.parent:
+                    if (current_path / '.git').exists() or (current_path / 'README.md').exists():
+                        return current_path
+                    current_path = current_path.parent
+                return Path.cwd() # Fallback
+
+            project_root = find_project_root()
+            self.agents_dir = project_root / "agents"
         self.agents: Dict[str, AgentMetadata] = {}
         self.capabilities_index: Dict[str, List[str]] = {}
         self.category_index: Dict[str, List[str]] = {}
