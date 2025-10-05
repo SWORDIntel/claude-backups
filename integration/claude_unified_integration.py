@@ -105,10 +105,10 @@ class UnifiedAgentMetadata:
 class UnifiedAgentRegistry:
     """Unified registry combining all agent sources"""
     
-    def __init__(self):
+    def __init__(self, project_root: Optional[Path] = None, agents_dir: Optional[Path] = None):
         self.agents: Dict[str, UnifiedAgentMetadata] = {}
-        self.project_root = PROJECT_ROOT
-        self.agents_dir = AGENTS_DIR
+        self.project_root = project_root or PROJECT_ROOT
+        self.agents_dir = agents_dir or AGENTS_DIR
         self._load_all_agents()
     
     def _load_all_agents(self):
@@ -621,27 +621,85 @@ class UnifiedAgentInvoker:
         """Invoke via Python implementation"""
         if not agent.python_impl_path:
             raise ValueError("No Python implementation available")
-        
-        # TODO: Implement Python direct invocation
-        return {
-            'success': False,
-            'error': 'Python direct invocation not yet implemented',
-            'agent': agent.name,
-            'method': 'python_direct'
-        }
+
+        try:
+            command_data = json.loads(prompt)
+            command = command_data.get('command')
+            params = command_data.get('params', {})
+            if not command:
+                raise ValueError("JSON prompt must have a 'command' key")
+        except (json.JSONDecodeError, ValueError):
+            command = prompt
+            params = {}
+
+        try:
+            spec = importlib.util.spec_from_file_location(agent.name, agent.python_impl_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            class_name = f"{agent.name}PythonExecutor"
+            AgentClass = getattr(module, class_name, None)
+
+            if not AgentClass:
+                # Fallback for different capitalization, e.g. "Constructor" -> "CONSTRUCTOR"
+                class_name_upper = f"{agent.name.upper()}PythonExecutor"
+                if hasattr(module, class_name_upper):
+                    AgentClass = getattr(module, class_name_upper)
+                else:
+                    raise ImportError(f"Could not find {class_name} or {class_name_upper} in {agent.python_impl_path}")
+
+            instance = AgentClass()
+
+            if not hasattr(instance, 'execute_command'):
+                raise NotImplementedError(f"'execute_command' not found in {AgentClass.__name__}")
+
+            if asyncio.iscoroutinefunction(instance.execute_command):
+                result = asyncio.run(instance.execute_command(command, params))
+            else:
+                result = instance.execute_command(command, params)
+
+            return {
+                'success': True,
+                'output': result,
+                'agent': agent.name,
+                'method': 'python_direct'
+            }
+        except Exception as e:
+            logger.error(f"Python direct invocation failed for {agent.name}: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'agent': agent.name,
+                'method': 'python_direct'
+            }
     
     def _invoke_via_orchestrator(self, agent: UnifiedAgentMetadata, prompt: str) -> Dict[str, Any]:
         """Invoke via production orchestrator"""
         if not self.orchestrator:
             raise ValueError("Orchestrator not available")
-        
-        # TODO: Implement orchestrator invocation
-        return {
-            'success': False,
-            'error': 'Orchestrator invocation not yet implemented',
-            'agent': agent.name,
-            'method': 'orchestrator'
-        }
+
+        try:
+            # The orchestrator is expected to have a method to schedule tasks
+            # Assuming a 'schedule_task' method for this example
+            if hasattr(self.orchestrator, 'schedule_task'):
+                task_result = self.orchestrator.schedule_task(agent.name, prompt)
+                return {
+                    'success': True,
+                    'output': task_result,
+                    'agent': agent.name,
+                    'method': 'orchestrator'
+                }
+            else:
+                raise NotImplementedError("Orchestrator does not have a 'schedule_task' method")
+
+        except Exception as e:
+            logger.error(f"Orchestrator invocation failed for {agent.name}: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'agent': agent.name,
+                'method': 'orchestrator'
+            }
     
     def _invoke_via_fallback(self, agent: UnifiedAgentMetadata, prompt: str) -> Dict[str, Any]:
         """Fallback invocation method"""
@@ -659,16 +717,16 @@ class UnifiedAgentInvoker:
 
 class UnifiedClaudeCodeIntegration:
     """Main unified integration system"""
-    
-    def __init__(self):
+
+    def __init__(self, project_root: Optional[Path] = None, agents_dir: Optional[Path] = None):
         logger.info("Initializing Unified Claude Code Integration System")
-        
-        # Initialize components
-        self.registry = UnifiedAgentRegistry()
+
+        # Initialize components, passing down the paths to ensure testability
+        self.registry = UnifiedAgentRegistry(project_root=project_root, agents_dir=agents_dir)
         self.detector = ClaudeCodeEnvironmentDetector()
         self.hooks = UnifiedHookSystem(self.registry)
         self.invoker = UnifiedAgentInvoker(self.registry)
-        
+
         # Setup integration
         self._setup_integration()
     

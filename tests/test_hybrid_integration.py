@@ -13,7 +13,7 @@ from pathlib import Path
 print("=== Hybrid Bridge Integration Test ===")
 print()
 
-def test_component(name, test_func):
+def run_component_test(name, test_func):
     """Test a component and report results"""
     try:
         print(f"Testing {name}...")
@@ -107,7 +107,7 @@ def main():
     total = len(tests)
     
     for name, test_func in tests:
-        if test_component(name, test_func):
+        if run_component_test(name, test_func):
             passed += 1
         print()
     

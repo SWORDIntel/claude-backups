@@ -15,13 +15,18 @@ ifndef COMPILER_PROFILE
     COMPILER_PROFILE := $(shell scripts/detect-cpu-profile.sh --profile 2>/dev/null || echo "generic")
 endif
 
+# Use absolute path for profile file to support nested Makefiles
+# Fallback to current directory if PROJECT_ROOT is not set
+MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+PROJECT_ROOT_DIR := $(realpath $(MAKEFILE_DIR))
+
 # Validate profile exists, fallback to generic if not
-PROFILE_FILE := build-profiles/$(COMPILER_PROFILE).mk
+PROFILE_FILE := $(PROJECT_ROOT_DIR)/build-profiles/$(COMPILER_PROFILE).mk
 ifeq (,$(wildcard $(PROFILE_FILE)))
     $(warning Profile '$(COMPILER_PROFILE)' not found at $(PROFILE_FILE))
     $(warning Falling back to generic profile)
     COMPILER_PROFILE := generic
-    PROFILE_FILE := build-profiles/generic.mk
+    PROFILE_FILE := $(PROJECT_ROOT_DIR)/build-profiles/generic.mk
 endif
 
 # Include the selected profile

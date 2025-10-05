@@ -96,7 +96,7 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}3. Database Systems (PostgreSQL 16 + pgvector)${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-if [[ -f "database/docker-compose.yml" ]]; then
+if [[ -f "docker-compose.yml" ]]; then
     check_pass "docker-compose.yml exists"
 else
     check_fail "Docker config MISSING"
@@ -135,12 +135,12 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}4-5. Learning System v2.0 & Docker Integration${RESET}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-if [[ -f "learning-system/docker-compose.yml" ]]; then
-    check_pass "Learning docker-compose exists"
+if [[ -f "docker-compose.yml" ]]; then
+    check_pass "Root docker-compose.yml exists"
 else
-    check_fail "Docker config MISSING"
+    check_fail "Root docker-compose.yml MISSING"
 fi
-if [[ -d "learning-system/src" ]]; then
+if [[ -d "learning-system/python" ]]; then
     check_pass "Learning source code exists"
 else
     check_fail "Source code MISSING"

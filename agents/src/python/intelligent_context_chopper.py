@@ -256,11 +256,11 @@ class IntelligentContextChopper:
         
         # Check for security patterns with compiled regex for performance
         for pattern in self.security_patterns:
-            if re.search(pattern, chunk, re.IGNORECASE):
+            if re.search(pattern, chunk):
                 # Log security event
-                security_logger.info(f"Sensitive pattern detected and redacted: {pattern}")
+                security_logger.info(f"Sensitive pattern detected and redacted: {pattern.pattern}")
                 # Redact sensitive parts
-                chunk = re.sub(pattern, "[REDACTED]", chunk, flags=re.IGNORECASE)
+                chunk = re.sub(pattern, "[REDACTED]", chunk)
                 return True, "redacted"
         
         # Classify security level
@@ -479,6 +479,13 @@ class IntelligentContextChopper:
             "total_chunks_processed": len(self.context_store),
             "shadowgit_available": self.shadowgit_available
         }
+
+    async def get_optimized_context(self, query: str, files: List[str], max_tokens: Optional[int] = None, intent: str = "general", security_mode: bool = True) -> ContextWindow:
+        """
+        Selects and formats an optimized context window from a given list of files.
+        """
+        # The 'intent' parameter is the query for relevance scoring.
+        return await self.select_optimal_context(query, files, max_tokens)
 
 class ContextChopperHooks:
     """Hooks for integrating with Claude's execution flow"""

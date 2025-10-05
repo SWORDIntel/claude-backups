@@ -15,6 +15,7 @@ from typing import Dict, List, Set, Tuple, Optional, Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -369,8 +370,18 @@ def benchmark_comparison():
     ]
     
     # Initialize matcher
-    config_path = "${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}config/enhanced_trigger_keywords.yaml"
-    matcher = TrieKeywordMatcher(config_path)
+    def find_project_root():
+        """Dynamically find the project root."""
+        current_path = Path(__file__).resolve()
+        while current_path != current_path.parent:
+            if (current_path / '.git').exists() or (current_path / 'README.md').exists():
+                return current_path
+            current_path = current_path.parent
+        return Path.cwd() # Fallback
+
+    project_root = find_project_root()
+    config_path = project_root / "config" / "enhanced_trigger_keywords.yaml"
+    matcher = TrieKeywordMatcher(str(config_path))
     
     # Run benchmark
     print("Running trie-based matcher benchmark...")

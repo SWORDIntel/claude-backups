@@ -200,6 +200,8 @@ class ClaudeRejectionReducer:
         
         if rejection_risk < 0.3:  # Low risk, minimal processing
             optimized_content = await self._apply_minimal_optimization(content)
+            self.stats['successful_requests'] += 1
+            self._update_acceptance_rate()
             return optimized_content, StrategyResult.SUCCESS
         
         # Apply layered strategies based on risk level
@@ -229,15 +231,16 @@ class ClaudeRejectionReducer:
                 if trigger in content_lower:
                     category_score += 1
             
-            # Weight different categories
+            # Weight different categories - Increased weights for security
             weights = {
-                'security_tools': 0.8,
-                'sensitive_data': 0.6,
-                'harmful_commands': 0.9,
-                'system_modification': 0.7
+                'security_tools': 0.85,
+                'sensitive_data': 0.9,
+                'harmful_commands': 1.0,
+                'system_modification': 0.95
             }
             
-            risk_score += (category_score / len(triggers)) * weights.get(category, 0.5)
+            if category_score > 0:
+                risk_score += weights.get(category, 0.5)
         
         # Size-based risk
         if context.token_count > 12000:
@@ -303,10 +306,14 @@ class ClaudeRejectionReducer:
             original_length=len(context.content),
             optimized_length=len(current_content)
         )
-    
-    async def _apply_strategy(self, 
-                            strategy_name: str, 
-                            content: str, 
+
+    async def _apply_minimal_optimization(self, content: str) -> str:
+        """A minimal optimization for low-risk content."""
+        return content
+
+    async def _apply_strategy(self,
+                            strategy_name: str,
+                            content: str,
                             context: RejectionContext) -> 'SingleStrategyResult':
         """Apply a single rejection reduction strategy"""
         
@@ -363,26 +370,35 @@ class ClaudeRejectionReducer:
         import re
         
         # Replace actual secrets with placeholders
-        filtered_content = re.sub(
-            r'(api_key|password|token|secret)\s*[=:]\s*["\'][^"\']*["\']',
-            r'\1 = "[REDACTED_FOR_SECURITY]"',
+        new_content = re.sub(
+            r'["\']?(api_key|password|token|secret)["\']?\s*[:=]\s*["\'][^"\']*["\']',
+            r'"\1": "[REDACTED_FOR_SECURITY]"',
             filtered_content,
             flags=re.IGNORECASE
         )
-        
+        if new_content != filtered_content:
+            improvements += 1
+            filtered_content = new_content
+
         # Replace dangerous commands
-        filtered_content = re.sub(
+        new_content = re.sub(
             r'rm\s+-rf\s+/',
             'remove_directory_safely ',
             filtered_content
         )
-        
+        if new_content != filtered_content:
+            improvements += 1
+            filtered_content = new_content
+
         # Replace base64 suspicious content
-        filtered_content = re.sub(
+        new_content = re.sub(
             r'base64\.b64decode\(["\'][^"\']{50,}["\']\)',
             'base64.b64decode("[SAFE_ENCODED_CONTENT]")',
             filtered_content
         )
+        if new_content != filtered_content:
+            improvements += 1
+            filtered_content = new_content
         
         improvement_percentage = (improvements / max(1, len(content.split()))) * 100
         
@@ -398,7 +414,6 @@ class ClaudeRejectionReducer:
         # Check if this is high-risk content
         risk_indicators = [
             len(content) > 50000,  # Very large files
-            any(word in content.lower() for word in ['password', 'secret', 'private_key', 'api_key']),
             any(path for path in context.file_paths if '.env' in path or 'secret' in path.lower())
         ]
         
@@ -443,15 +458,43 @@ Safe preview: {metadata['safe_preview']}...
         preview = re.sub(r'password.*?[\s\n]', 'password=[REDACTED] ', preview, flags=re.IGNORECASE)
         
         return preview
-    
-    # Additional strategy implementations would continue here...
-    # For brevity, showing the core framework structure
+
+    async def _apply_unpunctuated_flow(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'unpunctuated_flow' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
+
+    async def _apply_token_dilution(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'token_dilution' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
+
+    async def _apply_context_flooding(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'context_flooding' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
+
+    async def _apply_permission_bypass(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'permission_bypass' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
+
+    async def _apply_progressive_retry(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'progressive_retry' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
+
+    async def _apply_request_framing(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'request_framing' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
+
+    async def _apply_adaptive_learning(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'adaptive_learning' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
+
+    async def _apply_realtime_monitor(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
+        logger.warning("Strategy 'realtime_monitor' is not fully implemented.")
+        return SingleStrategyResult(False, content, 0.0)
     
     def _estimate_tokens(self, content: str) -> int:
         """Estimate token count for content"""
-        # Rough estimation: 1 token ≈ 0.75 words
-        word_count = len(content.split())
-        return int(word_count * 0.75)
+        # Rough estimation: 1 token ≈ 4 chars
+        return int(len(content) / 4)
     
     def _get_strategy_effectiveness(self, strategy_name: str) -> float:
         """Get effectiveness rating for a strategy based on historical data"""

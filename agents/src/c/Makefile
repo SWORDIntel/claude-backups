@@ -3,8 +3,11 @@
 # Agents are modular and loaded separately
 # Single unified source directory: src/c/
 
+# Define project root for absolute paths
+PROJECT_ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
+
 # Include compiler profile system
-include ../../../Makefile.profiles
+include $(PROJECT_ROOT)/Makefile.profiles
 
 CC := gcc
 AR := ar

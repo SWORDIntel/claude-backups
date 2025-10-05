@@ -196,8 +196,8 @@ class UnifiedClaudeOptimizer:
         
         return current_content, metadata
     
-    async def _handle_file_permissions(self, 
-                                     content: str, 
+    async def _handle_file_permissions(self,
+                                     content: str,
                                      file_paths: List[str]) -> str:
         """Handle file permission issues using fallback strategies"""
         
@@ -214,30 +214,26 @@ class UnifiedClaudeOptimizer:
         
         if permission_issues:
             # Apply permission bypass strategies
-            fallback_result = await self.permission_system.get_file_content_with_fallback(
-                file_paths[0] if file_paths else ""
-            )
-            
-            if fallback_result:
-                # Replace inaccessible content with fallback
-                permission_note = f"""
-# Permission Optimization Applied
-# Issues resolved: {len(permission_issues)}
-# Fallback strategies used: {fallback_result.get('strategies_used', [])}
-
-{optimized_content}
-
-# Original permission issues:
-{chr(10).join(f"# - {issue}" for issue in permission_issues)}
+            for file_path in file_paths:
+                content_or_message, status = await self.permission_system.get_file_content_with_fallback(
+                    file_path
+                )
+                if status == "fallback":
+                    # Prepend a note about the fallback to the content
+                    permission_note = f"""
+# PERMISSION FALLBACK APPLIED for {file_path}
+# Reason: {content_or_message}
 """
-                optimized_content = permission_note
+                    optimized_content = permission_note + "\n\n" + optimized_content
+                    break  # Stop after first failure for now
         
         return optimized_content
     
-    async def _apply_enhanced_context_chopping(self, 
+    async def _apply_enhanced_context_chopping(self,
                                              content: str,
                                              file_paths: List[str] = None,
-                                             request_type: str = "general") -> str:
+                                             request_type: str = "general",
+                                             context_hint: str = None) -> str:
         """Apply context chopping with rejection-awareness"""
         
         # Enhance the context chopper with rejection reduction awareness
@@ -249,12 +245,27 @@ class UnifiedClaudeOptimizer:
         }
         
         # Use existing context chopper but with enhanced filtering
+        import tempfile
+        import os
+
+        effective_file_paths = file_paths or []
+        tmp_path = None
+
+        if not effective_file_paths and len(content) > 1000:
+            try:
+                with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".py") as tmp:
+                    tmp.write(content)
+                    tmp_path = tmp.name
+                effective_file_paths.append(tmp_path)
+            except Exception as e:
+                logger.warning(f"Could not create temp file for context chopping: {e}")
+
         try:
             # Get optimized context using the existing 85x system
             context_window = await self.context_chopper.get_optimized_context(
-                file_paths or [],
+                query=context_hint or request_type,
+                files=effective_file_paths,
                 max_tokens=chopping_config['max_tokens'],
-                intent=request_type,
                 security_mode=chopping_config['security_filtering']
             )
             
@@ -275,7 +286,10 @@ class UnifiedClaudeOptimizer:
             
         except Exception as e:
             logger.warning(f"Enhanced context chopping failed: {e}")
-        
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
         # Fallback to original content if context chopping fails
         return content
     

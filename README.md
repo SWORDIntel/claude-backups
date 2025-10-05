@@ -97,47 +97,44 @@ firefox index.html
 
 ## 🚀 Quick Start
 
-### For New Users - Complete System Installation
+### Complete System Installation & Verification
+
+The following commands will install the entire system, build all components, and run the complete test suite to verify the setup.
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/SWORDIntel/claude-backups.git
 cd claude-backups
 
-# 2. Complete installation (all 10 modules: Shadowgit, NPU, OpenVINO, Database, Learning, etc.)
-./install-complete.sh
-
-# 3. Validate all module integration
-./scripts/validate-all-modules.sh
-
-# 4. Check system health
-./scripts/health-check-all.sh
-
-# 5. Run tests to verify setup
-pytest tests/ --cov=hooks/shadowgit/python --cov=agents/src/python
-```
-
-### For Claude Code CLI Only
-
-```bash
-# Quick install Claude Code CLI (without full module system)
+# 2. Run the unified installer
+# This sets up the Python virtual environment and installs dependencies.
 ./install
+
+# 3. Activate the virtual environment
+source venv/bin/activate
+
+# 4. Build all C/C++ components (ShadowGit, Crypto-POW, etc.)
+# This uses the new profile-based build system.
+make all
+
+# 5. Run the full test suite to verify the installation
+# This includes unit, integration, and performance tests.
+python3 -m pytest -v
 ```
 
 ### For Developers
 
+For developers who need to work on specific components, the following commands are useful:
+
 ```bash
-# Install Claude enhanced installer
-cd installers/claude
-./claude-enhanced-installer.py
+# Build a specific component (e.g., ShadowGit)
+make shadowgit_build
 
-# Set up ShadowGit with NPU acceleration
-cd ../../hooks/shadowgit/python
-python3 shadowgit_avx2.py  # Auto-detects NPU/AVX2
+# Run the integration test suite for the agent system
+python3 -m pytest -v integration/test_unified_integration.py
 
-# Run quick CI checks before pushing
-cd ../../../
-./run-ci-checks.sh
+# Run the original import tests for backwards compatibility checks
+./tests/integration/run_import_tests.sh
 ```
 
 ### For Production Deployment
@@ -581,67 +578,52 @@ make crypto_pow_build
 
 ## 🔬 Testing & CI/CD
 
-### Test Suite (82% Coverage)
+### Running Tests
+
+The project uses `pytest` for testing. The test suite is organized into unit, integration, and performance tests.
 
 ```bash
-# Run all tests with coverage
-pytest tests/ --cov=hooks/shadowgit/python --cov=agents/src/python --cov-report=html
+# Activate the virtual environment first
+source venv/bin/activate
 
-# Run specific test categories
-pytest tests/ -m "not integration and not slow"  # Fast tests only
-pytest tests/ -m integration                      # Integration tests
-pytest tests/ -m benchmark                        # Performance benchmarks
+# Run the complete test suite (recommended)
+python3 -m pytest -v
 
-# Run integration tests
+# Run only the new unified integration tests
+python3 -m pytest -v integration/test_unified_integration.py
+
+# Run the legacy import tests for backwards compatibility
 ./tests/integration/run_import_tests.sh
-# Result: 18/18 tests passing ✅
+```
+
+### Test Organization
+
+The `tests/` directory is structured to separate different types of tests. The most critical integration tests are located in the `integration/` subdirectory.
+
+```
+tests/
+├── integration/               # Cross-module tests
+│   ├── test_unified_integration.py  # NEW: Validates the core agent integration system
+│   ├── test_shadowgit_imports.py    # Legacy import tests
+│   └── run_import_tests.sh          # Legacy test runner
+│
+├── performance/               # Performance benchmarks
+├── installer/                 # Installer validation
+├── learning/                  # Learning system tests
+└── README.md                  # Testing guide
 ```
 
 ### CI/CD Pipeline (GitHub Actions)
 
-**7 automated jobs** on every push/PR:
-
-1. **Lint** (2 min): Black, isort, Flake8, Pylint, MyPy, Bandit
-2. **Test** (5 min): Unit tests on Python 3.11 & 3.12 with coverage
-3. **Integration** (8 min): Integration tests with PostgreSQL
-4. **Security** (3 min): Trivy, Safety vulnerability scanning
-5. **Docs** (2 min): Documentation validation
-6. **Build** (2 min): Package build verification
-7. **Benchmark** (varies): Performance regression testing
+The project includes a comprehensive CI/CD pipeline using GitHub Actions that runs on every push and pull request. The pipeline includes jobs for linting, unit testing, integration testing, security scanning, and build verification.
 
 **Local Testing**:
+To run CI checks locally before committing, use the provided script:
 ```bash
-# Install Act (run GitHub Actions locally)
-brew install act  # macOS
-# or
-curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
-
-# Run specific job
-.github/workflows/test-local.sh lint
-.github/workflows/test-local.sh test
-.github/workflows/test-local.sh all  # All jobs
-
-# Or quick pre-commit check
 ./run-ci-checks.sh
 ```
 
 **Pipeline File**: [.github/workflows/test-shadowgit.yml](.github/workflows/test-shadowgit.yml)
-
-### Test Organization
-
-```
-tests/
-├── integration/               # Cross-module tests (18 tests, 100% passing)
-│   ├── test_shadowgit_imports.py
-│   ├── run_import_tests.sh
-│   └── TEST_REPORT.md
-├── performance/               # Performance benchmarks
-│   └── test_neural_accelerator_optimization.py
-├── installer/                 # Installer validation
-├── learning/                  # Learning system tests
-├── portability/               # Cross-platform tests
-└── README.md                  # Testing guide
-```
 
 **Testing Guide**: [TESTING.md](TESTING.md)
 
@@ -1018,36 +1000,47 @@ print(f"E-cores: {utilization['e_cores']['average']:.1f}% avg")
 
 ## 🔧 Build System
 
-### Makefile Targets
+The project now uses a unified, profile-based build system managed by Makefiles. The core logic is defined in `Makefile` at the root, which includes profiles from `Makefile.profiles` to configure builds for different environments (e.g., `development`, `production`, `testing`).
+
+This new system correctly handles absolute paths, ensuring that components can be built reliably from any directory.
+
+### Main Build Commands
+
+All commands should be run from the project's root directory.
 
 ```bash
-# ShadowGit
-make shadowgit_build    # Build ShadowGit binaries
-make shadowgit_test     # Run tests
-make shadowgit_clean    # Clean artifacts
+# Build all C/C++ components (ShadowGit, Crypto-POW, etc.)
+# This is the recommended command for a complete build.
+make all
 
-# Crypto-POW
-make crypto_pow_build   # Build crypto_pow binary
-make crypto_pow_test    # Run tests (2.89 MH/s benchmark)
-make crypto_pow_clean   # Clean artifacts
+# Clean all build artifacts from all components
+make clean
 
-# Combined
-make all                # Build everything
-make clean              # Clean all artifacts
-make test               # Run all tests
+# Run all available tests for the native components
+make test
+```
+
+### Component-Specific Builds
+
+You can also build and test individual components:
+
+```bash
+# Build only the ShadowGit component
+make shadowgit_build
+
+# Run only the ShadowGit tests
+make shadowgit_test
+
+# Build only the Crypto-POW component
+make crypto_pow_build
+
+# Run only the Crypto-POW tests and benchmarks
+make crypto_pow_test
 ```
 
 ### Build Validation
 
-```bash
-# Verify build system
-cd hooks/shadowgit
-./fix-makefile.sh      # Auto-fix if needed
-make all               # Build everything
-
-cd ../crypto-pow
-make crypto_pow_test   # Should show 2.89 MH/s
-```
+To validate that the build system is configured correctly, run the `make all` command. A successful run, which produces no errors and creates the binaries in the respective `bin/` directories, confirms that the build system is operational.
 
 ---
 
