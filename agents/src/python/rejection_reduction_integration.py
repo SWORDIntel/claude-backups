@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Any, Tuple
 # Import existing systems
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 from claude_rejection_reducer import ClaudeRejectionReducer, StrategyResult
-from intelligent_context_chopper import IntelligentContextChopper, ContextWindow
+from intelligent_context_chopper import IntelligentContextChopper, ContextWindow, ContextChunk
 from permission_fallback_system import PermissionFallbackSystem
 
 # Database integration for learning
@@ -85,30 +85,21 @@ class UnifiedClaudeOptimizer:
         logger.info("Unified Claude Optimizer initialized")
         logger.info(f"Systems enabled: {[k for k, v in self.systems_status.items() if v]}")
     
-    async def optimize_for_claude(self, 
+    async def optimize_for_claude(self,
                                 content: str,
                                 file_paths: List[str] = None,
                                 request_type: str = "general",
                                 context_hint: str = None) -> Tuple[str, Dict[str, Any]]:
         """
-        Main optimization pipeline combining all systems
-        
-        Args:
-            content: Raw content to optimize
-            file_paths: Associated file paths
-            request_type: Type of request (analysis, security, code_review, etc.)
-            context_hint: Additional context about the request
-            
-        Returns:
-            Tuple of (optimized_content, optimization_metadata)
+        Main optimization pipeline combining all systems.
+        The correct order is: Context Chopping -> Rejection Reduction.
+        This ensures that we only process the most relevant snippets.
         """
-        
         import time
         start_time = time.time()
-        
+
         self.performance_metrics['total_requests'] += 1
-        
-        # Initialize optimization metadata
+
         metadata = {
             'original_length': len(content),
             'original_token_count': self._estimate_tokens(content),
@@ -117,141 +108,111 @@ class UnifiedClaudeOptimizer:
             'acceptance_predicted': True,
             'systems_used': []
         }
-        
-        current_content = content
-        
-        # Step 1: Permission handling for file access
+
+        # Step 1: Handle file permissions before any processing
         if file_paths and self.systems_status['permission_fallback']:
             try:
-                accessible_content = await self._handle_file_permissions(
-                    current_content, file_paths
-                )
-                if accessible_content != current_content:
-                    current_content = accessible_content
+                permission_note = await self._handle_file_permissions(file_paths)
+                if permission_note:
+                    content = permission_note + "\n\n" + content
                     metadata['optimizations_applied'].append('permission_optimization')
                     metadata['systems_used'].append('permission_fallback')
-                    self.performance_metrics['permission_bypassed'] += 1
-                    
             except Exception as e:
                 logger.warning(f"Permission optimization failed: {e}")
-        
-        # Step 2: Context chopping (85x performance system)
+
+        # Step 2: Context chopping to get relevant code chunks
+        processed_chunks = []
         if self.systems_status['context_chopping']:
             try:
-                # Use existing context chopper with enhanced rejection-aware filtering
-                chopped_context = await self._apply_enhanced_context_chopping(
-                    current_content, file_paths, request_type
+                code_chunks = await self._apply_enhanced_context_chopping(
+                    content, file_paths, request_type, context_hint
                 )
-                
-                if chopped_context != current_content:
-                    current_content = chopped_context
-                    metadata['optimizations_applied'].append('intelligent_context_chopping')
-                    metadata['systems_used'].append('context_chopping')
+                metadata['systems_used'].append('context_chopping')
+                if len(code_chunks) > 1 or (code_chunks and code_chunks[0].content != content):
                     self.performance_metrics['context_optimized'] += 1
+                    metadata['optimizations_applied'].append('intelligent_context_chopping')
+
+                # Step 3: Rejection reduction on each chunk
+                for chunk in code_chunks:
+                    chunk_content = chunk.content
+                    if self.systems_status['rejection_reduction'] and self.rejection_reducer:
+                        try:
+                            # We only pass the chunk's content, not the original file paths
+                            reduced_content, res = await self.rejection_reducer.process_request(
+                                chunk_content, request_type, [chunk.file_path]
+                            )
+                            if res in [StrategyResult.SUCCESS, StrategyResult.PARTIAL_SUCCESS]:
+                                chunk_content = reduced_content
+                                if 'rejection_reduction' not in metadata['optimizations_applied']:
+                                     metadata['optimizations_applied'].append('rejection_reduction')
+                        except Exception as e:
+                            logger.warning(f"Rejection reduction for chunk failed: {e}")
                     
+                    header = f"# File: {chunk.file_path} (lines {chunk.start_line}-{chunk.end_line})"
+                    processed_chunks.append(f"{header}\n{chunk_content}")
+
             except Exception as e:
-                logger.warning(f"Context chopping failed: {e}")
+                logger.warning(f"Main optimization loop failed: {e}")
+                processed_chunks.append(content) # Fallback
+        else:
+             processed_chunks.append(content)
         
-        # Step 3: Rejection reduction strategies  
-        if self.systems_status['rejection_reduction'] and self.rejection_reducer:
-            try:
-                reduced_content, reduction_result = await self.rejection_reducer.process_request(
-                    current_content, request_type, file_paths
-                )
-                
-                if reduction_result in [StrategyResult.SUCCESS, StrategyResult.PARTIAL_SUCCESS]:
-                    current_content = reduced_content
-                    metadata['optimizations_applied'].append('rejection_reduction')
-                    metadata['systems_used'].append('rejection_reduction')
-                    metadata['acceptance_predicted'] = True
-                    self.performance_metrics['rejections_reduced'] += 1
-                else:
-                    metadata['acceptance_predicted'] = False
-                    
-            except Exception as e:
-                logger.warning(f"Rejection reduction failed: {e}")
-        
+        final_content = "\n\n".join(processed_chunks)
+
         # Step 4: Learning system feedback
         if self.systems_status['learning_system']:
             try:
                 await self._store_optimization_result(
                     original_content=content,
-                    optimized_content=current_content,
+                    optimized_content=final_content,
                     metadata=metadata,
                     request_type=request_type
                 )
                 metadata['systems_used'].append('learning_system')
-                
             except Exception as e:
                 logger.warning(f"Learning system update failed: {e}")
-        
+
         # Finalize metadata
-        metadata['final_length'] = len(current_content)
-        metadata['final_token_count'] = self._estimate_tokens(current_content)
-        metadata['compression_ratio'] = metadata['final_length'] / metadata['original_length']
+        metadata['final_length'] = len(final_content)
+        metadata['final_token_count'] = self._estimate_tokens(final_content)
+        metadata['compression_ratio'] = metadata['final_length'] / (metadata['original_length'] or 1)
         metadata['processing_time'] = time.time() - start_time
         
-        # Update performance metrics
         self._update_performance_metrics(metadata)
         
-        return current_content, metadata
-    
-    async def _handle_file_permissions(self,
-                                     content: str,
-                                     file_paths: List[str]) -> str:
-        """Handle file permission issues using fallback strategies"""
-        
-        optimized_content = content
-        
-        # Check for permission-sensitive content
-        permission_issues = []
-        
+        return final_content, metadata
+
+    async def _handle_file_permissions(self, file_paths: List[str]) -> Optional[str]:
+        """Handle file permission issues and return a note if any are found."""
         for file_path in file_paths:
             if not os.path.exists(file_path):
-                permission_issues.append(f"File not found: {file_path}")
-            elif not os.access(file_path, os.R_OK):
-                permission_issues.append(f"No read access: {file_path}")
-        
-        if permission_issues:
-            # Apply permission bypass strategies
-            for file_path in file_paths:
-                content_or_message, status = await self.permission_system.get_file_content_with_fallback(
-                    file_path
-                )
-                if status == "fallback":
-                    # Prepend a note about the fallback to the content
-                    permission_note = f"""
-# PERMISSION FALLBACK APPLIED for {file_path}
-# Reason: {content_or_message}
-"""
-                    optimized_content = permission_note + "\n\n" + optimized_content
-                    break  # Stop after first failure for now
-        
-        return optimized_content
+                return f"# PERMISSION ISSUE: File not found: {file_path}"
+            if not os.access(file_path, os.R_OK):
+                return f"# PERMISSION ISSUE: No read access: {file_path}"
+        return None
     
     async def _apply_enhanced_context_chopping(self,
                                              content: str,
                                              file_paths: List[str] = None,
                                              request_type: str = "general",
-                                             context_hint: str = None) -> str:
-        """Apply context chopping with rejection-awareness"""
-        
-        # Enhance the context chopper with rejection reduction awareness
+                                             context_hint: str = None) -> List[ContextChunk]:
+        """
+        Apply context chopping and return a list of content chunks.
+        """
         chopping_config = {
             'max_tokens': 8000,
             'preserve_structure': True,
             'security_filtering': True,
-            'rejection_aware': True  # New enhancement
         }
         
-        # Use existing context chopper but with enhanced filtering
         import tempfile
         import os
 
         effective_file_paths = file_paths or []
         tmp_path = None
 
-        if not effective_file_paths and len(content) > 1000:
+        # If we only have content, write it to a temp file for the chopper
+        if not effective_file_paths and len(content) > 0:
             try:
                 with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix=".py") as tmp:
                     tmp.write(content)
@@ -261,7 +222,6 @@ class UnifiedClaudeOptimizer:
                 logger.warning(f"Could not create temp file for context chopping: {e}")
 
         try:
-            # Get optimized context using the existing 85x system
             context_window = await self.context_chopper.get_optimized_context(
                 query=context_hint or request_type,
                 files=effective_file_paths,
@@ -270,12 +230,7 @@ class UnifiedClaudeOptimizer:
             )
             
             if context_window and context_window.chunks:
-                # Reconstruct content from chunks. Sanitization is handled by the rejection reducer.
-                optimized_chunks = []
-                for chunk in context_window.chunks:
-                    optimized_chunks.append(f"# File: {chunk.file_path} (lines {chunk.start_line}-{chunk.end_line})\n{chunk.content}")
-                
-                return "\n\n".join(optimized_chunks)
+                return context_window.chunks
             
         except Exception as e:
             logger.warning(f"Enhanced context chopping failed: {e}")
@@ -283,8 +238,17 @@ class UnifiedClaudeOptimizer:
             if tmp_path and os.path.exists(tmp_path):
                 os.remove(tmp_path)
 
-        # Fallback to original content if context chopping fails
-        return content
+        # Fallback to returning the original content as a single chunk
+        pseudo_path = (file_paths[0] if file_paths else "input.py")
+        return [ContextChunk(
+            content=content,
+            file_path=pseudo_path,
+            start_line=0,
+            end_line=content.count('\n'),
+            relevance_score=0.5,  # Default relevance
+            token_count=self._estimate_tokens(content),
+            security_level="cleared"
+        )]
     
     async def _store_optimization_result(self, 
                                        original_content: str,
