@@ -471,66 +471,6 @@ class IntelligentContextChopper:
         
         return result
     
-    async def get_context_for_files(self, query: str,
-                                     files: List[str],
-                                     max_tokens: Optional[int] = None) -> str:
-        """
-        Get optimized context for a query from a specific list of files.
-        """
-
-        # Generate cache key for this context request
-        files_hash = hashlib.md5(str(sorted(files)).encode()).hexdigest()
-        cache_key_data = f"context_files:{query}:{files_hash}:{max_tokens}"
-        cache_key = hashlib.md5(cache_key_data.encode()).hexdigest()
-
-        # Try multi-level cache first
-        if self.multilevel_cache:
-            try:
-                cached_context = await self.multilevel_cache.get(f"context_chopper:{cache_key}")
-                if cached_context:
-                    security_logger.info(f"Context (files) cache hit for query: {query[:50]}...")
-                    return cached_context
-            except Exception as e:
-                security_logger.warning(f"Context cache error: {e}")
-
-        # Get optimal context window from the provided files
-        window = await self.select_optimal_context(query, files, max_tokens)
-
-        # Format context for API
-        context_parts = []
-
-        # Add metadata header
-        context_parts.append(f"# Context Window: {window.total_tokens}/{window.max_tokens} tokens")
-        context_parts.append(f"# Files: {window.metadata['files_analyzed']}, Chunks: {window.metadata['chunks_selected']}")
-        context_parts.append("")
-
-        # Add chunks with file markers
-        current_file = None
-        for chunk in window.chunks:
-            if chunk.file_path != current_file:
-                context_parts.append(f"\n--- File: {chunk.file_path} ---")
-                current_file = chunk.file_path
-
-            context_parts.append(f"Lines {chunk.start_line}-{chunk.end_line}:")
-            context_parts.append(chunk.content)
-
-        result = "\n".join(context_parts)
-
-        # Cache the result in multi-level cache
-        if self.multilevel_cache and result:
-            try:
-                await self.multilevel_cache.put(
-                    f"context_chopper:{cache_key}",
-                    result,
-                    ttl_seconds=1800,  # 30 minutes for context
-                    cache_level="L2"   # Store in L2 for sharing
-                )
-                security_logger.info(f"Cached context (files) for query: {query[:50]}...")
-            except Exception as e:
-                security_logger.warning(f"Failed to cache context: {e}")
-
-        return result
-
     def export_learning_data(self) -> Dict:
         """Export learning data for PostgreSQL storage"""
         return {
