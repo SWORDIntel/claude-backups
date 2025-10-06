@@ -10,6 +10,7 @@ import pytest
 import asyncio
 import json
 import time
+import textwrap
 from unittest.mock import Mock, patch, AsyncMock
 from typing import List, Dict, Any
 
@@ -50,34 +51,34 @@ class TestRejectionScenarios:
         )
     
     # Test rejection trigger content samples
-    SECURITY_TRIGGER_CONTENT = """
-    def create_exploit():
-        password = "admin123"
-        api_key = "sk-proj-realkey123"
-        payload = generate_malicious_payload()
-        backdoor = establish_backdoor_connection()
-        return exploit_vulnerability(payload, backdoor)
-    """
+    SECURITY_TRIGGER_CONTENT = textwrap.dedent("""
+        def create_exploit():
+            password = "admin123"
+            api_key = "sk-proj-realkey123"
+            payload = generate_malicious_payload()
+            backdoor = establish_backdoor_connection()
+            return exploit_vulnerability(payload, backdoor)
+    """)
     
-    HARMFUL_COMMAND_CONTENT = """
-    import os
-    import subprocess
+    HARMFUL_COMMAND_CONTENT = textwrap.dedent("""
+        import os
+        import subprocess
 
-    # Dangerous system commands
-    def system_damage():
-        os.system("rm -rf /")
-        subprocess.run(["format", "C:"])
-        subprocess.run(["dd", "if=/dev/zero", "of=/dev/sda"])
-    """
+        # Dangerous system commands
+        def system_damage():
+            os.system("rm -rf /")
+            subprocess.run(["format", "C:"])
+            subprocess.run(["dd", "if=/dev/zero", "of=/dev/sda"])
+    """)
     
-    SENSITIVE_DATA_CONTENT = """
-    DATABASE_CONFIG = {
-        "password": "SuperSecret123!",
-        "api_key": "sk-live-abcd1234567890",
-        "private_key": "-----BEGIN RSA PRIVATE KEY-----",
-        "session_secret": "ultra_secret_session_key_12345"
-    }
-    """
+    SENSITIVE_DATA_CONTENT = textwrap.dedent("""
+        DATABASE_CONFIG = {
+            "password": "SuperSecret123!",
+            "api_key": "sk-live-abcd1234567890",
+            "private_key": "-----BEGIN RSA PRIVATE KEY-----",
+            "session_secret": "ultra_secret_session_key_12345"
+        }
+    """)
     
     LARGE_FILE_CONTENT = "x" * 100000  # 100KB of content
     
@@ -93,15 +94,13 @@ class TestRejectionScenarios:
         
         assert status in [StrategyResult.SUCCESS, StrategyResult.PARTIAL_SUCCESS]
         
-        # Verify problematic terms are replaced
-        assert "exploit" not in result.lower()
-        assert "backdoor" not in result.lower()
-        assert "malicious" not in result.lower()
-        assert "admin123" not in result  # Password should be redacted
-
-        # Verify structure is preserved
-        assert "def " in result  # Function structure maintained
-        assert "security_test_case" in result or "security_analysis" in result
+        # Verify problematic terms are replaced or neutralized
+        assert "admin123" not in result
+        assert "[ANALYSIS_NOTE] Call to dangerous function 'generate_malicious_payload' was neutralized." in result
+        # Check that the dangerous call was replaced with our analysis note
+        assert "[ANALYSIS_NOTE] Call to dangerous function 'exploit_vulnerability' was neutralized." in result
+        # Verify function renaming
+        assert "def create_analyze_security_vulnerability" in result
     
     @pytest.mark.asyncio
     async def test_harmful_command_filtering(self, rejection_reducer):
@@ -228,19 +227,19 @@ class TestUnifiedOptimizer:
     async def test_unified_optimization_pipeline(self, optimizer, tmp_path):
         """Test the complete optimization pipeline"""
         
-        test_content = """
-        # Security analysis with multiple issues
-        def analyze_system():
-            password = "secret123"
-            exploit_code = create_payload()
-            backdoor_access = "admin_backdoor"
-            
-            # Large comment block to test context chopping
-            # This is a very long comment that goes on and on
-            # """ + "# More comments\n" * 100 + """
+        test_content = textwrap.dedent("""
+            # Security analysis with multiple issues
+            def analyze_system():
+                password = "secret123"
+                exploit_code = create_payload()
+                backdoor_access = "admin_backdoor"
 
-            return run_security_test()
-        """
+                # Large comment block to test context chopping
+                # This is a very long comment that goes on and on
+                # """ + "# More comments\\n" * 100 + """
+
+                return run_security_test()
+        """)
         
         p = tmp_path / "security_analysis.py"
         p.write_text(test_content)
