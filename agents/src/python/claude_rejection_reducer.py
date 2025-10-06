@@ -710,6 +710,17 @@ function processData(items) {
         # for continuous improvement of strategy effectiveness
         pass
 
+    async def _get_context_for_request(self, query: str, files: List[str], project_root: str = ".", file_extensions: List[str] = None) -> str:
+        """Placeholder for get_context_for_request method."""
+        return "context"
+
+    async def get_optimized_context(self, query: str, files: List[str], max_tokens: Optional[int] = None, intent: str = "general", security_mode: bool = True) -> 'ContextWindow':
+        """Placeholder for get_optimized_context method."""
+        # This is a placeholder implementation.
+        # In a real implementation, this would return a ContextWindow object.
+        from intelligent_context_chopper import ContextWindow
+        return ContextWindow(chunks=[], total_tokens=0, max_tokens=max_tokens or 8000)
+
 # Supporting classes for type safety and structure
 @dataclass
 class SingleStrategyResult:

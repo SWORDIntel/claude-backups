@@ -480,6 +480,21 @@ class IntelligentContextChopper:
             "shadowgit_available": self.shadowgit_available
         }
 
+    def get_file_content_with_fallback(self, file_path: str) -> Tuple[Optional[str], str]:
+        """
+        Tries to read file content, providing a fallback for permission errors.
+        Returns (content, status)
+        """
+        try:
+            from pathlib import Path
+            return Path(file_path).read_text(), "success"
+        except FileNotFoundError:
+            return f"permission issues: file not found: {file_path}", "fallback"
+        except PermissionError:
+            return f"permission issues: permission denied: {file_path}", "fallback"
+        except Exception as e:
+            return f"permission issues: an error occurred: {e}", "fallback"
+
     async def get_optimized_context(self, query: str, files: List[str], max_tokens: Optional[int] = None, intent: str = "general", security_mode: bool = True) -> ContextWindow:
         """
         Selects and formats an optimized context window from a given list of files.
