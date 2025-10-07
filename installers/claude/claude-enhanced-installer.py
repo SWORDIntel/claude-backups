@@ -2124,10 +2124,10 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
             self._print_info("Waiting for database to be ready...")
             for i in range(30):  # 30 second timeout
                 try:
-                    result = self._run_command([
-                        "docker", "exec", "claude-postgres",
-                        "pg_isready", "-U", "claude_agent", "-d", "claude_agents_auth"
-                    ], check=False, timeout=5)
+                    docker_exec_cmd = ["docker", "exec", "claude-postgres", "pg_isready", "-U", "claude_agent", "-d", "claude_agents_auth"]
+                    if os.geteuid() != 0 and self.system_info.has_sudo:
+                        docker_exec_cmd.insert(0, "sudo")
+                    result = self._run_command(docker_exec_cmd, check=False, timeout=5)
                     if result.returncode == 0:
                         self._print_success("Database is ready")
                         break

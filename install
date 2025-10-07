@@ -172,6 +172,7 @@ if [[ ! -f "$PYTHON_INSTALLER" ]]; then
     echo -e "${YELLOW}Python installer not found. Trying alternative locations...${RESET}"
 
     for location in \
+        "$SCRIPT_DIR/installers/claude/claude-enhanced-installer.py" \
         "$SCRIPT_DIR/claude-enhanced-installer.py" \
         "$SCRIPT_DIR/claude-enhanced-installer-venv.py" \
         "$HOME/claude-backups/claude-python-installer.sh" \
