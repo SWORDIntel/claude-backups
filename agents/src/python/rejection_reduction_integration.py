@@ -215,7 +215,7 @@ class UnifiedClaudeOptimizer:
         if permission_issues:
             # Apply permission bypass strategies
             for file_path in file_paths:
-                content_or_message, status = await self.permission_system.get_file_content_with_fallback(
+                content_or_message, status = self.context_chopper.get_file_content_with_fallback(
                     file_path
                 )
                 if status == "fallback":

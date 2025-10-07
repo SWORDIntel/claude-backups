@@ -13,3 +13,5 @@ redis
 pytest-asyncio
 pytest-benchmark
 joblib
+docker
+nltk
