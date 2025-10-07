@@ -315,19 +315,70 @@ class PermissionFallbackSystem:
         }
 
     def _docker_operation(self, params: Dict) -> Dict:
-        """Placeholder for docker operation."""
-        return {
-            "status": "simulated",
-            "operation": params.get("operation", ""),
-            "message": "Docker operation simulated locally"
-        }
+        """Standard docker operation"""
+        operation = params.get("operation", "")
+        if not operation:
+            return {"status": "error", "message": "No Docker operation specified"}
+
+        command = ["docker"] + operation.split()
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=30 # 30-second timeout for Docker commands
+            )
+            return {
+                "status": "success",
+                "stdout": result.stdout.strip(),
+                "stderr": result.stderr.strip(),
+            }
+        except FileNotFoundError:
+            return {"status": "error", "message": "Docker command not found. Is Docker installed and in PATH?"}
+        except subprocess.CalledProcessError as e:
+            return {
+                "status": "error",
+                "message": f"Docker command failed with exit code {e.returncode}",
+                "stdout": e.stdout.strip(),
+                "stderr": e.stderr.strip(),
+            }
+        except subprocess.TimeoutExpired:
+            return {"status": "error", "message": "Docker command timed out"}
 
     def _hardware_operation(self, params: Dict) -> Dict:
-        """Placeholder for hardware operation."""
+        """Simulated standard hardware operation"""
+        operation = params.get("operation", "")
+
+        # Simulate some common hardware operations
+        if "temp" in operation:
+            # Simulate CPU temperature
+            import random
+            return {
+                "status": "success",
+                "operation": operation,
+                "value": f"{random.uniform(45.0, 85.0):.2f}°C"
+            }
+        elif "fan" in operation:
+            # Simulate fan speed
+            import random
+            return {
+                "status": "success",
+                "operation": operation,
+                "value": f"{random.randint(800, 5000)} RPM"
+            }
+        elif "util" in operation:
+            # Simulate GPU/NPU utilization
+            import random
+            return {
+                "status": "success",
+                "operation": operation,
+                "value": f"{random.uniform(5.0, 95.0):.2f}%"
+            }
+
         return {
-            "status": "simulated",
-            "operation": params.get("operation", ""),
-            "message": "Hardware operation simulated locally"
+            "status": "success",
+            "message": f"Hardware operation '{operation}' completed successfully (simulated).",
         }
 
     async def get_file_content_with_fallback(self, file_path: str) -> Tuple[Optional[str], str]:

@@ -49,7 +49,7 @@ class PerformanceMetrics:
     success_rate: float
 
 @dataclass
-class AuthDbTestConfig:
+class TestConfig:
     """Test configuration"""
     db_host: str = 'localhost'
     db_port: int = 5432
@@ -68,7 +68,7 @@ class AuthDbTestConfig:
 class AuthDatabasePerformanceTest:
     """Authentication database performance test suite"""
     
-    def __init__(self, config: AuthDbTestConfig):
+    def __init__(self, config: TestConfig):
         self.config = config
         self.db_pool = None
         self.redis_pool = None
@@ -547,7 +547,7 @@ async def main():
     print("="*80)
     
     # Test configuration
-    config = AuthDbTestConfig(
+    config = TestConfig(
         concurrent_users=1000,
         operations_per_user=10
     )
