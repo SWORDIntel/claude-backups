@@ -486,14 +486,20 @@ class IntelligentContextChopper:
         Returns (content, status)
         """
         try:
-            from pathlib import Path
-            return Path(file_path).read_text(), "success"
+            # Use pathlib for robust path handling
+            p = Path(file_path)
+            if not p.is_file():
+                return f"permission issues: path is not a file: {file_path}", "fallback"
+            return p.read_text(encoding='utf-8'), "success"
         except FileNotFoundError:
             return f"permission issues: file not found: {file_path}", "fallback"
         except PermissionError:
             return f"permission issues: permission denied: {file_path}", "fallback"
+        except UnicodeDecodeError:
+            return f"permission issues: could not decode file as utf-8: {file_path}", "fallback"
         except Exception as e:
-            return f"permission issues: an error occurred: {e}", "fallback"
+            # Catch any other potential file reading errors
+            return f"permission issues: an unexpected error occurred: {e}", "fallback"
 
     async def get_optimized_context(self, query: str, files: List[str], max_tokens: Optional[int] = None, intent: str = "general", security_mode: bool = True) -> ContextWindow:
         """
