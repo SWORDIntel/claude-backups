@@ -2,7 +2,6 @@ psycopg2-binary
 pandas
 numpy
 scikit-learn
-asyncio
 websockets
 requests
 beautifulsoup4
