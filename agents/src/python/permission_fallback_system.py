@@ -315,86 +315,71 @@ class PermissionFallbackSystem:
         }
 
     def _docker_operation(self, params: Dict) -> Dict:
-        """Standard docker operation"""
-        operation = params.get("operation", "")
-        if not operation:
-            return {"status": "error", "message": "No Docker operation specified"}
-
-        command = ["docker"] + operation.split()
+        """
+        Runs a Docker command, specifically 'docker info' to check daemon status.
+        """
+        # For security, this operation is hardcoded to 'docker info'
+        command = ["docker", "info"]
         try:
             result = subprocess.run(
                 command,
                 capture_output=True,
                 text=True,
                 check=True,
-                timeout=30 # 30-second timeout for Docker commands
+                timeout=15  # 15-second timeout is plenty for 'docker info'
             )
             return {
                 "status": "success",
-                "stdout": result.stdout.strip(),
-                "stderr": result.stderr.strip(),
+                "message": "Docker daemon is running.",
+                "details": result.stdout.strip(),
             }
         except FileNotFoundError:
             return {"status": "error", "message": "Docker command not found. Is Docker installed and in PATH?"}
         except subprocess.CalledProcessError as e:
             return {
                 "status": "error",
-                "message": f"Docker command failed with exit code {e.returncode}",
-                "stdout": e.stdout.strip(),
-                "stderr": e.stderr.strip(),
+                "message": "Docker daemon not running or command failed.",
+                "details": e.stderr.strip(),
             }
         except subprocess.TimeoutExpired:
-            return {"status": "error", "message": "Docker command timed out"}
+            return {"status": "error", "message": "Docker command timed out. Is the Docker daemon frozen?"}
 
     def _hardware_operation(self, params: Dict) -> Dict:
-        """Simulated standard hardware operation"""
-        operation = params.get("operation", "")
+        """
+        Reads a system metric as a proof-of-concept for hardware interaction.
+        Attempts to read CPU temperature on Linux, otherwise returns a simulated value.
+        """
+        temp_path = "/sys/class/thermal/thermal_zone0/temp"
+        operation = params.get("operation", "get_temp") # Default to getting temperature
 
-        # Simulate some common hardware operations
-        if "temp" in operation:
-            # Simulate CPU temperature
+        if operation == "get_temp" and os.path.exists(temp_path):
+            try:
+                with open(temp_path, 'r') as f:
+                    # The value is typically in millidegrees Celsius
+                    temp_millicelsius = int(f.read().strip())
+                    temp_celsius = temp_millicelsius / 1000.0
+                return {
+                    "status": "success",
+                    "source": "real",
+                    "metric": "cpu_temperature",
+                    "value": f"{temp_celsius:.2f}°C"
+                }
+            except (IOError, ValueError) as e:
+                return {
+                    "status": "fallback",
+                    "source": "simulated",
+                    "message": f"Could not read real hardware value ({e}), returning simulated data.",
+                    "value": "55.0°C"
+                }
+        else:
+            # Fallback for non-Linux systems or other operations
             import random
             return {
-                "status": "success",
-                "operation": operation,
+                "status": "fallback",
+                "source": "simulated",
+                "message": "Hardware path not found or operation not supported, returning simulated data.",
                 "value": f"{random.uniform(45.0, 85.0):.2f}°C"
             }
-        elif "fan" in operation:
-            # Simulate fan speed
-            import random
-            return {
-                "status": "success",
-                "operation": operation,
-                "value": f"{random.randint(800, 5000)} RPM"
-            }
-        elif "util" in operation:
-            # Simulate GPU/NPU utilization
-            import random
-            return {
-                "status": "success",
-                "operation": operation,
-                "value": f"{random.uniform(5.0, 95.0):.2f}%"
-            }
-
-        return {
-            "status": "success",
-            "message": f"Hardware operation '{operation}' completed successfully (simulated).",
-        }
-
-    async def get_file_content_with_fallback(self, file_path: str) -> Tuple[Optional[str], str]:
-        """
-        Tries to read file content, providing a fallback for permission errors.
-        Returns (content, status)
-        """
-        try:
-            from pathlib import Path
-            return Path(file_path).read_text(), "success"
-        except FileNotFoundError:
-            return f"permission issues: file not found: {file_path}", "fallback"
-        except PermissionError:
-            return f"permission issues: permission denied: {file_path}", "fallback"
-        except Exception as e:
-            return f"permission issues: an error occurred: {e}", "fallback"
 
     def get_capabilities_report(self) -> str:
         """Generate human-readable capabilities report"""
