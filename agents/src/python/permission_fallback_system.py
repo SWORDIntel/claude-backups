@@ -11,6 +11,8 @@ from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
 from dataclasses import dataclass
 import json
+import re
+import psutil
 
 class PermissionLevel(Enum):
     """Permission tiers for different environments"""
@@ -316,21 +318,44 @@ class PermissionFallbackSystem:
 
     def _docker_operation(self, params: Dict) -> Dict:
         """
-        Runs a Docker command, specifically 'docker info' to check daemon status.
+        Runs a safe subset of Docker commands based on parsed parameters.
         """
-        # For security, this operation is hardcoded to 'docker info'
-        command = ["docker", "info"]
+        operation = params.get("command", "info") # e.g., "ps", "pull"
+        args = params.get("args", [])
+
+        # Whitelist of safe commands
+        safe_commands = {
+            "info": ["info"],
+            "ps": ["ps", "-a"],
+            "images": ["images"],
+            "pull": ["pull"], # requires an argument
+        }
+
+        if operation not in safe_commands:
+            return {"status": "error", "message": f"Unsupported or unsafe Docker operation: {operation}"}
+
+        # Validate arguments for commands that require them
+        if operation == "pull":
+            if not args:
+                return {"status": "error", "message": "Docker pull command requires an image argument."}
+            # Basic validation for image name
+            image_name = args[0]
+            if not re.match(r'^[\w\-\./:]+$', image_name):
+                return {"status": "error", "message": f"Invalid Docker image name: {image_name}"}
+
+        command = ["docker"] + safe_commands[operation] + args
+
         try:
             result = subprocess.run(
                 command,
                 capture_output=True,
                 text=True,
                 check=True,
-                timeout=15  # 15-second timeout is plenty for 'docker info'
+                timeout=300  # 5 minutes for pull
             )
             return {
                 "status": "success",
-                "message": "Docker daemon is running.",
+                "message": f"Docker '{operation}' command executed successfully.",
                 "details": result.stdout.strip(),
             }
         except FileNotFoundError:
@@ -338,47 +363,47 @@ class PermissionFallbackSystem:
         except subprocess.CalledProcessError as e:
             return {
                 "status": "error",
-                "message": "Docker daemon not running or command failed.",
+                "message": f"Docker '{operation}' command failed.",
                 "details": e.stderr.strip(),
             }
         except subprocess.TimeoutExpired:
-            return {"status": "error", "message": "Docker command timed out. Is the Docker daemon frozen?"}
+            return {"status": "error", "message": f"Docker '{operation}' command timed out."}
 
     def _hardware_operation(self, params: Dict) -> Dict:
         """
-        Reads a system metric as a proof-of-concept for hardware interaction.
-        Attempts to read CPU temperature on Linux, otherwise returns a simulated value.
+        Reads system metrics using psutil for robust, cross-platform data retrieval.
         """
-        temp_path = "/sys/class/thermal/thermal_zone0/temp"
-        operation = params.get("operation", "get_temp") # Default to getting temperature
+        metric = params.get("metric", "cpu_temp")
 
-        if operation == "get_temp" and os.path.exists(temp_path):
-            try:
-                with open(temp_path, 'r') as f:
-                    # The value is typically in millidegrees Celsius
-                    temp_millicelsius = int(f.read().strip())
-                    temp_celsius = temp_millicelsius / 1000.0
-                return {
-                    "status": "success",
-                    "source": "real",
-                    "metric": "cpu_temperature",
-                    "value": f"{temp_celsius:.2f}°C"
-                }
-            except (IOError, ValueError) as e:
-                return {
-                    "status": "fallback",
-                    "source": "simulated",
-                    "message": f"Could not read real hardware value ({e}), returning simulated data.",
-                    "value": "55.0°C"
-                }
-        else:
-            # Fallback for non-Linux systems or other operations
-            import random
+        try:
+            if metric == "cpu_temp":
+                if hasattr(psutil, "sensors_temperatures"):
+                    temps = psutil.sensors_temperatures()
+                    if 'coretemp' in temps:
+                        # Return the first core temperature
+                        return {"status": "success", "metric": "cpu_temperature", "value": f"{temps['coretemp'][0].current}°C"}
+                # Fallback for systems without 'coretemp'
+                return {"status": "fallback", "source": "simulated", "metric": "cpu_temperature", "value": "55.0°C"}
+
+            elif metric == "cpu_usage":
+                usage = psutil.cpu_percent(interval=1)
+                return {"status": "success", "metric": "cpu_usage", "value": f"{usage}%"}
+
+            elif metric == "memory_usage":
+                mem = psutil.virtual_memory()
+                return {"status": "success", "metric": "memory_usage", "value": f"{mem.percent}%", "total_gb": f"{mem.total / (1024**3):.2f}"}
+
+            elif metric == "disk_usage":
+                disk = psutil.disk_usage('/')
+                return {"status": "success", "metric": "disk_usage", "value": f"{disk.percent}%", "total_gb": f"{disk.total / (1024**3):.2f}"}
+
+            else:
+                return {"status": "error", "message": f"Unsupported hardware metric: {metric}"}
+
+        except Exception as e:
             return {
-                "status": "fallback",
-                "source": "simulated",
-                "message": "Hardware path not found or operation not supported, returning simulated data.",
-                "value": f"{random.uniform(45.0, 85.0):.2f}°C"
+                "status": "error",
+                "message": f"Failed to retrieve hardware metric '{metric}': {e}"
             }
 
     def get_capabilities_report(self) -> str:
