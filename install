@@ -181,10 +181,10 @@ if [[ ! -f "$PYTHON_INSTALLER" ]]; then
         if [[ -f "$location" ]]; then
             if [[ "$location" == *.py ]]; then
                 echo -e "${GREEN}Found Python installer: $location${RESET}"
-                exec python3 "$location" "$@"
+                exec python3 "$location" --mode=full "$@"
             else
                 echo -e "${GREEN}Found installer: $location${RESET}"
-                exec "$location" "$@"
+                exec "$location" --mode=full "$@"
             fi
         fi
     done
