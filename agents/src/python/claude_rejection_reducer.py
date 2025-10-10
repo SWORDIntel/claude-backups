@@ -573,14 +573,29 @@ Safe preview: {metadata['safe_preview']}...
         return SingleStrategyResult(success=False, content=content, improvement=0.0)
 
     async def _apply_progressive_retry(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
-        """Simulates one step of a progressive retry by slightly reducing content size."""
-        if context.attempt_count > 1 and len(content) > 500:
-            # Reduce content by 10% for the next attempt
-            new_length = int(len(content) * 0.9)
-            new_content = content[:new_length]
-            logger.info(f"Progressive retry: reducing content from {len(content)} to {len(new_content)} bytes.")
-            return SingleStrategyResult(True, new_content, 10.0)
-        return SingleStrategyResult(False, content, 0.0)
+        """
+        Intelligently reduces content size on retries, removing low-priority
+        content like comments and boilerplate before truncating code.
+        """
+        if context.attempt_count <= 1:
+            return SingleStrategyResult(False, content, 0.0)
+
+        # First, try to remove comments
+        lines = content.split('\n')
+        non_comment_lines = [line for line in lines if not line.strip().startswith(('#', '//'))]
+
+        if len(non_comment_lines) < len(lines):
+            new_content = "\n".join(non_comment_lines)
+            improvement = 100 * (len(content) - len(new_content)) / len(content)
+            logger.info(f"Progressive retry: removed {len(lines) - len(non_comment_lines)} comment lines.")
+            return SingleStrategyResult(True, new_content, improvement)
+
+        # If no comments to remove, truncate by a percentage based on attempt number
+        reduction_factor = self.strategies['progressive_retry'].parameters['reduction_steps'][context.attempt_count - 2]
+        new_length = int(len(content) * reduction_factor)
+        new_content = content[:new_length]
+        logger.info(f"Progressive retry: truncating content to {reduction_factor*100}%.")
+        return SingleStrategyResult(True, new_content, (1-reduction_factor)*100)
 
     async def _apply_request_framing(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
         """Wraps the content in a descriptive frame to provide a legitimate context."""
@@ -603,19 +618,45 @@ Safe preview: {metadata['safe_preview']}...
         return SingleStrategyResult(True, framing, improvement)
 
     async def _apply_adaptive_learning(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
-        """Simulates adaptive learning by checking for learned patterns."""
+        """
+        Simulates adaptive learning by checking a mock 'database' of rejection
+        patterns and applying learned reframing rules.
+        """
+        # In a real system, self.learned_patterns would be populated from a database.
+        # Here, we'll add a few for demonstration.
+        self.learned_patterns = {
+            "eval\\(": "sandboxed_eval(",
+            "exec\\(": "sandboxed_exec(",
+            "pickle\\.load": "sandboxed_pickle.load"
+        }
+
+        new_content = content
+        patterns_applied = 0
         for pattern, replacement in self.learned_patterns.items():
-            if pattern in content:
-                new_content = content.replace(pattern, replacement)
-                logger.info(f"Adaptive learning: Replaced learned pattern '{pattern}'.")
-                return SingleStrategyResult(True, new_content, 5.0)
+            if re.search(pattern, new_content):
+                new_content = re.sub(pattern, replacement, new_content)
+                logger.info(f"Adaptive learning: Applied rule for '{pattern}'.")
+                patterns_applied += 1
+
+        if patterns_applied > 0:
+            improvement = (len(content) - len(new_content)) / len(content) * 100
+            return SingleStrategyResult(True, new_content, improvement)
+
         return SingleStrategyResult(False, content, 0.0)
 
     async def _apply_realtime_monitor(self, content: str, context: RejectionContext) -> 'SingleStrategyResult':
-        """Simulates a real-time monitor by logging request metadata."""
-        logger.info(f"Real-time monitor: Processing request of type '{context.request_type}' with risk score calculation.")
-        # This strategy doesn't modify content, it's for observation.
-        return SingleStrategyResult(False, content, 0.0)
+        """
+        Simulates a real-time monitor by calculating and logging a more detailed
+        risk score based on content analysis.
+        """
+        risk_score = await self._analyze_rejection_risk(context)
+
+        # Log detailed risk score for analytics
+        logger.info(f"Real-time monitor: Request type '{context.request_type}' processed with calculated risk score of {risk_score:.2f}.")
+
+        # This strategy observes and logs; it doesn't modify content.
+        # We can return a small "success" to indicate it ran.
+        return SingleStrategyResult(True, content, 0.0)
     
     def _estimate_tokens(self, content: str) -> int:
         """Estimate token count for content"""

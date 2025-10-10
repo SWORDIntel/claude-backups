@@ -13,6 +13,7 @@ from dataclasses import dataclass
 import json
 import re
 import psutil
+import sqlite3
 
 class PermissionLevel(Enum):
     """Permission tiers for different environments"""
@@ -284,36 +285,80 @@ class PermissionFallbackSystem:
         }
     
     def _local_simulation(self, params: Dict) -> Dict:
-        """Fallback: Simulate Docker operations locally"""
+        """
+        Fallback: Simulate Docker operations locally, with a functional in-memory
+        SQLite database for PostgreSQL simulation.
+        """
         operation = params.get("operation", "")
         
         if operation == "postgres":
-            return {
-                "status": "simulated",
-                "message": "Using in-memory SQLite instead of PostgreSQL Docker",
-                "alternative": "sqlite3.connect(':memory:')"
-            }
-        
+            try:
+                # Create an in-memory SQLite database
+                con = sqlite3.connect(":memory:")
+                cur = con.cursor()
+                # Create a sample table
+                cur.execute("CREATE TABLE users(id INT, name TEXT)")
+                cur.execute("INSERT INTO users VALUES (1, 'Claude')")
+                con.commit()
+                # Fetch the data to prove it works
+                res = cur.execute("SELECT * FROM users")
+                user = res.fetchone()
+                con.close()
+
+                return {
+                    "status": "simulated",
+                    "message": "Successfully created and queried an in-memory SQLite database.",
+                    "alternative": "sqlite3.connect(':memory:')",
+                    "proof": f"Fetched user: {user}"
+                }
+            except Exception as e:
+                 return {
+                    "status": "error",
+                    "message": f"In-memory SQLite simulation failed: {e}",
+                }
+
         return {
             "status": "simulated",
             "operation": operation,
-            "message": "Docker operation simulated locally"
+            "message": "Docker operation simulated locally (no-op)."
         }
     
     def _software_optimized(self, params: Dict) -> Dict:
-        """Partial fallback: Software-optimized operations"""
+        """
+        Partial fallback: Software-optimized operations with more realistic
+        simulated performance metrics.
+        """
         return {
             "status": "software_optimized",
-            "message": "Using AVX2-optimized software implementation",
-            "performance": "70% of hardware acceleration"
+            "message": "Using AVX2-optimized software implementation (simulated).",
+            "performance": {
+                "level": "70% of hardware acceleration",
+                "simulated_latency_ms": 50,
+                "simulated_throughput_gbps": 5.0
+            },
+            "output_structure": {
+                "data": "processed_data_avx2",
+                "metrics": ["latency", "throughput", "cpu_usage"]
+            }
         }
     
     def _pure_software(self, params: Dict) -> Dict:
-        """Full fallback: Pure software implementation"""
+        """
+        Full fallback: Pure software implementation with more realistic
+        simulated performance metrics.
+        """
         return {
             "status": "pure_software",
-            "message": "Using pure Python implementation",
-            "performance": "Functional but slower"
+            "message": "Using pure Python implementation (simulated).",
+            "performance": {
+                "level": "Functional but slower",
+                "simulated_latency_ms": 200,
+                "simulated_throughput_gbps": 1.0
+            },
+            "output_structure": {
+                "data": "processed_data_scalar",
+                "metrics": ["latency", "cpu_usage"]
+            }
         }
 
     def _docker_operation(self, params: Dict) -> Dict:
