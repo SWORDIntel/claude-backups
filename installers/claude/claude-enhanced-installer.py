@@ -2312,9 +2312,9 @@ export NPU_MILITARY_MODE={military_mode}
         self._print_section("Running NPU Acceleration Installer")
 
         try:
-            npu_installer = self.project_root / "agents" / "src" / "python" / "install_npu_acceleration.py"
+            npu_installer = self.project_root / "agents" / "src" / "python" / "deprecated" / "installers_old" / "install_npu_acceleration.py"
             if not npu_installer.exists():
-                self._print_info("NPU acceleration installer not found - skipping")
+                self._print_info("NPU acceleration installer archived - functionality integrated")
                 return True
 
             # Run NPU installer
@@ -2331,9 +2331,9 @@ export NPU_MILITARY_MODE={military_mode}
         self._print_section("Running Unified Optimization Setup")
 
         try:
-            optimizer_setup = self.project_root / "agents" / "src" / "python" / "setup_unified_optimization.py"
+            optimizer_setup = self.project_root / "agents" / "src" / "python" / "deprecated" / "installers_old" / "setup_unified_optimization.py"
             if not optimizer_setup.exists():
-                self._print_info("Unified optimization setup not found - skipping")
+                self._print_info("Optimization setup archived - functionality integrated")
                 return True
 
             # Run optimization setup
@@ -2967,29 +2967,29 @@ esac
                 self._print_warning("Think mode source directory not found, creating minimal setup")
                 return self._create_minimal_think_mode_setup(think_mode_dir)
 
-            # Components to copy
+            # Components to copy (with source locations)
             components = [
-                "auto_calibrating_think_mode.py",
-                "think_mode_calibration_schema.sql",
-                "claude_code_think_hooks.py",
-                "lightweight_think_mode_selector.py"
+                ("auto_calibrating_think_mode.py", "auto_calibrating_think_mode.py"),
+                ("think_mode_calibration_schema.sql", "think_mode_calibration_schema.sql"),
+                ("../claude_agents/integration/claude_code_think_hooks.py", "claude_code_think_hooks.py"),
+                ("lightweight_think_mode_selector.py", "lightweight_think_mode_selector.py")
             ]
 
             copied_components = []
-            for component in components:
-                source_file = think_mode_source / component
-                target_file = think_mode_dir / component
+            for source_name, target_name in components:
+                source_file = think_mode_source / source_name
+                target_file = think_mode_dir / target_name
 
                 if source_file.exists():
                     try:
                         import shutil
                         shutil.copy2(source_file, target_file)
-                        copied_components.append(component)
-                        self._print_info(f"Copied {component}")
+                        copied_components.append(target_name)
+                        self._print_info(f"Copied {target_name}")
                     except Exception as e:
-                        self._print_warning(f"Could not copy {component}: {e}")
+                        self._print_warning(f"Could not copy {target_name}: {e}")
                 else:
-                    self._print_warning(f"Component not found: {component}")
+                    self._print_warning(f"Component not found: {source_name}")
 
             if not copied_components:
                 self._print_warning("No think mode components found, creating minimal setup")
