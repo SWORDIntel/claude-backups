@@ -101,21 +101,12 @@ test-c: $(STANDALONE_EXE)
 	./$(STANDALONE_EXE) 25
 	@echo "✓ C integration test complete"
 
-.PHONY: test-python
-test-python: $(SHARED_LIB)
-	@echo "Running Python accelerator test..."
-	@echo "Setting up Python path..."
-	PYTHONPATH=$(AGENTS_PYTHON_DIR):$$PYTHONPATH $(PYTHON) $(PYTHON_SCRIPT)
-	@echo "✓ Python accelerator test complete"
-
 .PHONY: test-integration
 test-integration: $(SHARED_LIB) $(STANDALONE_EXE)
 	@echo "Running full integration test suite..."
 	@echo "1. C Library Test (25 tasks):"
 	./$(STANDALONE_EXE) 25
 	@echo ""
-	@echo "2. Python Orchestrator Test:"
-	PYTHONPATH=$(AGENTS_PYTHON_DIR):$$PYTHONPATH $(PYTHON) $(PYTHON_SCRIPT)
 	@echo "✓ Full integration test suite complete"
 
 # Performance benchmarking
