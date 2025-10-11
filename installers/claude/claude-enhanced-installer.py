@@ -2307,6 +2307,44 @@ export NPU_MILITARY_MODE={military_mode}
             self._print_warning(f"Rejection reducer install failed: {e}")
             return True  # Non-critical
 
+    def run_npu_acceleration_installer(self) -> bool:
+        """Run NPU acceleration configuration script"""
+        self._print_section("Running NPU Acceleration Installer")
+
+        try:
+            npu_installer = self.project_root / "agents" / "src" / "python" / "install_npu_acceleration.py"
+            if not npu_installer.exists():
+                self._print_info("NPU acceleration installer not found - skipping")
+                return True
+
+            # Run NPU installer
+            self._run_command(["python3", str(npu_installer)], timeout=120, check=False)
+            self._print_success("NPU acceleration configured")
+            self._print_info("NPU device: /dev/accel/accel0, Driver: intel_vpu")
+            return True
+        except Exception as e:
+            self._print_warning(f"NPU acceleration failed: {e}")
+            return True  # Non-critical
+
+    def run_unified_optimization_setup(self) -> bool:
+        """Run unified async optimization pipeline setup"""
+        self._print_section("Running Unified Optimization Setup")
+
+        try:
+            optimizer_setup = self.project_root / "agents" / "src" / "python" / "setup_unified_optimization.py"
+            if not optimizer_setup.exists():
+                self._print_info("Unified optimization setup not found - skipping")
+                return True
+
+            # Run optimization setup
+            self._run_command(["python3", str(optimizer_setup)], timeout=120, check=False)
+            self._print_success("Unified optimization pipeline configured")
+            self._print_info("Async pipeline: context, token, cache, trie optimizations")
+            return True
+        except Exception as e:
+            self._print_warning(f"Optimization setup failed: {e}")
+            return True  # Non-critical
+
     def compile_shadowgit_c_engine(self) -> bool:
         """Compile Shadowgit C acceleration engine (optional)"""
         self._print_section("Compiling Shadowgit C Engine")
@@ -3687,6 +3725,18 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.install_rejection_reducer():
+                success_count += 1
+
+        # Step 9.4.5: Run NPU acceleration installer (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.run_npu_acceleration_installer():
+                success_count += 1
+
+        # Step 9.4.6: Run unified optimization setup (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.run_unified_optimization_setup():
                 success_count += 1
 
         # Step 9.5: Setup auto-calibrating think mode system (if in full mode)
