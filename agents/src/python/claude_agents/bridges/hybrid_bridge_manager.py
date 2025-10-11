@@ -75,7 +75,7 @@ class HybridBridgeManager:
         if not self.native_only_mode:
             self.systems['docker'] = SystemConfig(
                 name='docker',
-                host=os.getenv('POSTGRES_HOST', 'localhost'),
+                host=os.getenv('POSTGRES_HOST', '127.0.0.1'),  # Use IPv4 to avoid IPv6 issues
                 port=int(os.getenv('POSTGRES_PORT', '5433')),  # Docker exposed port
                 user=os.getenv('POSTGRES_USER', 'claude_user'),
                 password=os.getenv('POSTGRES_PASSWORD', 'claude_secure_pass'),

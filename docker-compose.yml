@@ -34,11 +34,13 @@ services:
       POSTGRES_USER: claude_user
       POSTGRES_PASSWORD: claude_secure_pass
       POSTGRES_DB: claude_auth
-      PYTHONPATH: /app
+      PYTHONPATH: /app:/app/agents/src/python
     volumes:
       - ./learning-system/python:/app/learning
+      - ./agents:/app/agents:ro
+      - ./database:/app/database:ro
     command: |
-      bash -c "pip install fastapi uvicorn psycopg2-binary && 
+      bash -c "pip install fastapi uvicorn psycopg2-binary asyncpg &&
       python /app/learning/integrated_learning_setup.py"
     ports:
       - "8080:8080"
