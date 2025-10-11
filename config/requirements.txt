@@ -14,3 +14,4 @@ pytest-benchmark
 joblib
 docker
 nltk
+asyncpg
