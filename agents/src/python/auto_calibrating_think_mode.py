@@ -79,8 +79,8 @@ class CalibrationWeights:
 class PostgreSQLCalibrationDB:
     """PostgreSQL integration for calibration data and learning"""
 
-    def __init__(self, host='localhost', port=5433, database='claude_agents_auth',
-                 user='claude_agent', password=None):
+    def __init__(self, host='127.0.0.1', port=5433, database='claude_auth',
+                 user='claude_user', password='claude_secure_pass'):
         self.connection_params = {
             'host': host,
             'port': port,
