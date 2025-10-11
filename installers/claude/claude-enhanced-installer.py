@@ -1297,7 +1297,19 @@ detect_project_root() {{
 
 # Dynamic configuration
 PROJECT_ROOT=$(detect_project_root)
+
+# Find Claude binary (check multiple locations)
 CLAUDE_BINARY="{claude_binary}"
+if [[ ! -f "$CLAUDE_BINARY" ]]; then
+    # Fallback locations
+    for alt in "$HOME/.npm-global/bin/claude" "$HOME/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js" "$HOME/.npm/_npx/"*/node_modules/.bin/claude; do
+        if [[ -f "$alt" ]]; then
+            CLAUDE_BINARY="$alt"
+            break
+        fi
+    done
+fi
+
 ORCHESTRATOR_PATH="$PROJECT_ROOT/agents/src/python/production_orchestrator.py"
 CACHE_DIR="$HOME/.cache/claude"
 AGENTS_BRIDGE="$HOME/.local/bin/claude-agent"
