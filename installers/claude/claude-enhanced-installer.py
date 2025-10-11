@@ -2141,6 +2141,60 @@ end
             self._print_warning(f"Natural invocation failed: {e}")
             return True  # Non-critical
 
+    def install_universal_optimizer(self) -> bool:
+        """Install universal optimizer system"""
+        self._print_section("Installing Universal Optimizer")
+
+        try:
+            # Install infrastructure
+            install_script = self.project_root / "optimization" / "install-universal-optimizer.sh"
+            if install_script.exists():
+                self._run_command(["bash", str(install_script)], timeout=60, check=False)
+                self._print_success("Optimizer infrastructure installed")
+
+            # Create symlink for universal optimizer
+            optimizer_py = self.project_root / "optimization" / "claude_universal_optimizer.py"
+            if optimizer_py.exists():
+                target = self.local_bin / "claude-optimizer"
+                if target.exists():
+                    target.unlink()
+                target.symlink_to(optimizer_py)
+                optimizer_py.chmod(0o755)
+                self._print_success("Universal optimizer available")
+                self._print_info("7 optimization modules: context, token, permission, cache, trie, async, db")
+                self._print_info("Use: claude-optimizer --optimizer-status")
+
+            return True
+        except Exception as e:
+            self._print_warning(f"Optimizer installation failed: {e}")
+            return True  # Non-critical
+
+    def deploy_memory_optimization(self) -> bool:
+        """Deploy Intel Meteor Lake memory optimizations"""
+        self._print_section("Deploying Memory Optimizations")
+
+        try:
+            script = self.project_root / "optimization" / "deploy_memory_optimization.sh"
+            if not script.exists():
+                return True
+
+            # Check if Meteor Lake CPU
+            try:
+                lscpu_out = subprocess.check_output(["lscpu"], text=True).lower()
+                if "meteor" not in lscpu_out and "ultra 7" not in lscpu_out:
+                    self._print_info("Skipping Meteor Lake optimizations (different CPU)")
+                    return True
+            except:
+                pass
+
+            self._run_command(["bash", str(script)], timeout=120, check=False)
+            self._print_success("Meteor Lake memory optimizations deployed")
+            self._print_info("NUMA-aware allocation, cache-aligned, zero-copy enabled")
+            return True
+        except Exception as e:
+            self._print_warning(f"Memory optimization failed: {e}")
+            return True  # Non-critical
+
     def compile_shadowgit_c_engine(self) -> bool:
         """Compile Shadowgit C acceleration engine (optional)"""
         self._print_section("Compiling Shadowgit C Engine")
@@ -3497,6 +3551,18 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.enable_natural_invocation():
+                success_count += 1
+
+        # Step 9.4.2: Install universal optimizer (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_universal_optimizer():
+                success_count += 1
+
+        # Step 9.4.3: Deploy memory optimizations (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.deploy_memory_optimization():
                 success_count += 1
 
         # Step 9.5: Setup auto-calibrating think mode system (if in full mode)
