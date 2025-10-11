@@ -1,5 +1,5 @@
 # SECURITY HARDENING PATCH - Applied by DEBUGGER recommendations
-
+#!/usr/bin/env python3
 import re
 from functools import lru_cache
 
@@ -61,7 +61,7 @@ class RateLimiter:
 
 # Global limiter instance
 rate_limiter = RateLimiter()
-#!/usr/bin/env python3
+
 """
 Claude Unified Hook System v3.1-security-hardened - Complete Security & Performance Overhaul
 All critical security fixes and performance optimizations implemented:
