@@ -157,7 +157,8 @@ class HybridBridgeManager:
             config.available = False
             config.health_score = 0.0
             config.last_check = time.time()
-            logger.warning(f"✗ {system_name.upper()} system unavailable: {str(e)}")
+            # Use INFO instead of WARNING - unavailable systems are expected (e.g., no native DB)
+            logger.info(f"ℹ {system_name.upper()} system unavailable: {str(e)}")
             
     def _select_primary_system(self):
         """Select primary and fallback systems based on health scores"""

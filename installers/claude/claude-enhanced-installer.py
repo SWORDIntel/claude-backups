@@ -907,14 +907,16 @@ class ClaudeEnhancedInstaller:
                 os.environ["PATH"] = f"{npm_bin}:{current_path}"
 
             # Install package with multiple fallback strategies
+            # Use --prefix directly to ensure per-user installation
             install_strategies = [
-                ["npm", "install", "-g", "@anthropic-ai/claude-code"],
-                ["npm", "install", "-g", "@anthropic-ai/claude-code", "--force"],
-                ["npm", "install", "-g", "@anthropic-ai/claude-code", "--legacy-peer-deps"]
+                ["npm", "install", "-g", "--prefix", str(npm_prefix), "@anthropic-ai/claude-code"],
+                ["npm", "install", "-g", "--prefix", str(npm_prefix), "@anthropic-ai/claude-code", "--force"],
+                ["npm", "install", "-g", "--prefix", str(npm_prefix), "@anthropic-ai/claude-code", "--legacy-peer-deps"]
             ]
 
-            if self.system_info.has_sudo:
-                install_strategies.insert(1, ["sudo", "npm", "install", "-g", "@anthropic-ai/claude-code"])
+            # Don't use sudo for npm - we're installing per-user
+            # if self.system_info.has_sudo:
+            #     install_strategies.insert(1, ["sudo", "npm", "install", "-g", "@anthropic-ai/claude-code"])
 
             for strategy in install_strategies:
                 try:
