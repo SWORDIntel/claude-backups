@@ -82,7 +82,7 @@ class NPUModelType(Enum):
 NPU_TARGET_THROUGHPUT = 20000  # 20K ops/sec target
 NPU_SELECTION_LATENCY = 0.001  # <1ms agent selection
 NPU_ROUTING_LATENCY = 0.0005   # <0.5ms message routing
-NPU_UTILIZATION_TARGET = 0.75  # 75% of 11 TOPS capacity
+NPU_UTILIZATION_TARGET = 0.75  # 75% of max TOPS (11 standard, 26.4 military mode)
 
 # Intel VPU Constants (for direct hardware access)
 VPU_DEVICE_PATH = "/dev/accel/accel0"
