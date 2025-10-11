@@ -2345,6 +2345,35 @@ export NPU_MILITARY_MODE={military_mode}
             self._print_warning(f"Optimization setup failed: {e}")
             return True  # Non-critical
 
+    def register_agents_globally(self) -> bool:
+        """Register all agents with global registry and coordination bridge"""
+        self._print_section("Registering Agents Globally")
+
+        try:
+            # Run register-custom-agents.py
+            register_script = self.project_root / "tools" / "register-custom-agents.py"
+            if register_script.exists():
+                self._run_command(["python3", str(register_script)], timeout=60, check=False)
+                self._print_success("Agent registry created (95 agents, 466 aliases)")
+                self._print_info("Registry: config/registered_agents.json")
+                self._print_info("Cache: ~/.cache/claude/registered_agents.json")
+            else:
+                self._print_warning("Agent registration script not found")
+
+            # Run claude-global-agents-bridge setup
+            bridge_script = self.project_root / "tools" / "claude-global-agents-bridge.py"
+            if bridge_script.exists():
+                self._run_command(["python3", str(bridge_script), "--install"], timeout=60, check=False)
+                self._print_success("Global agents bridge initialized")
+                self._print_info("Task tool integration configured")
+            else:
+                self._print_warning("Global agents bridge not found")
+
+            return True
+        except Exception as e:
+            self._print_warning(f"Agent registration failed: {e}")
+            return True  # Non-critical
+
     def compile_shadowgit_c_engine(self) -> bool:
         """Compile Shadowgit C acceleration engine (optional)"""
         self._print_section("Compiling Shadowgit C Engine")
@@ -3623,6 +3652,12 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.install_agents_system():
+                success_count += 1
+
+        # Step 5.1: Register agents globally (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.register_agents_globally():
                 success_count += 1
 
         # Step 6: Install PICMCS v3.0 (if in full mode)

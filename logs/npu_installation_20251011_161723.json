@@ -1,0 +1,107 @@
+{
+  "installation_date": "2025-10-11T16:17:23.720918",
+  "installation_successful": false,
+  "hardware_status": {
+    "npu_hardware_available": true,
+    "npu_driver_loaded": true,
+    "npu_device_accessible": true
+  },
+  "installation_log": [
+    {
+      "timestamp": "2025-10-11T16:17:23.461453",
+      "message": "NPU hardware detected in lspci",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.461497",
+      "message": "NPU device accessible at /dev/accel/accel0",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.468709",
+      "message": "intel_vpu driver loaded",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.468834",
+      "message": "Created directory: /home/john/claude-backups/config",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.468866",
+      "message": "Created directory: /home/john/claude-backups/logs",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.468890",
+      "message": "Created directory: /home/john/claude-backups/cache/npu",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.468912",
+      "message": "Created directory: /home/john/claude-backups/data/npu_models",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.597965",
+      "message": "Added john to render group",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.598114",
+      "message": "Found orchestrator file: production_orchestrator.py",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.598159",
+      "message": "Found orchestrator file: npu_accelerated_orchestrator.py",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.598193",
+      "message": "Found orchestrator file: npu_orchestrator_bridge.py",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.598623",
+      "message": "Created service configuration",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.598887",
+      "message": "Created NPU configuration",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.599069",
+      "message": "Created integration configuration",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.599178",
+      "message": "Created environment configuration",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.620839",
+      "message": "NPU modules imported successfully",
+      "success": true
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.620926",
+      "message": "NPU device initialization failed",
+      "success": false
+    },
+    {
+      "timestamp": "2025-10-11T16:17:23.626250",
+      "message": "Bridge initialization failed",
+      "success": false
+    }
+  ],
+  "configuration_files": [
+    "/home/john/claude-backups/config/npu_config.json",
+    "/home/john/claude-backups/config/orchestrator_integration.json",
+    "/home/john/claude-backups/config/npu_environment.sh"
+  ],
+  "launcher_script": "/home/john/claude-backups/agents/src/python/npu_orchestrator_launcher.py"
+}
