@@ -2079,6 +2079,68 @@ end
             self._print_warning(f"Git hooks installation failed: {e}")
             return True  # Non-critical
 
+    def install_unified_integration(self) -> bool:
+        """Install unified integration system (94 agents, orchestrator)"""
+        self._print_section("Installing Unified Integration System")
+
+        try:
+            unified_py = self.project_root / "integration" / "claude_unified_integration.py"
+            if not unified_py.exists():
+                self._print_warning("Unified integration not found - skipping")
+                return True
+
+            # Make executable
+            unified_py.chmod(0o755)
+
+            # Create symlink in .local/bin
+            target = self.local_bin / "claude-unified-integration"
+            if target.exists():
+                target.unlink()
+            target.symlink_to(unified_py)
+            self._print_success("Created claude-unified-integration command")
+
+            # Run setup
+            try:
+                self._run_command(["python3", str(unified_py), "--setup"], timeout=60, check=False)
+                self._print_success("Unified integration system installed (94 agents)")
+                self._print_info("Use: claude-unified-integration --list")
+            except subprocess.CalledProcessError:
+                self._print_warning("Setup had issues but system is available")
+
+            return True
+
+        except Exception as e:
+            self._print_warning(f"Unified integration installation failed: {e}")
+            return True  # Non-critical
+
+    def enable_natural_invocation(self) -> bool:
+        """Enable natural language agent invocation"""
+        self._print_section("Enabling Natural Agent Invocation")
+
+        try:
+            script = self.project_root / "integration" / "enable-natural-invocation.sh"
+            if not script.exists():
+                self._print_warning("Natural invocation script not found - skipping")
+                return True
+
+            # Run with --force --no-tests for unattended install
+            try:
+                self._run_command(
+                    ["bash", str(script), "--force", "--no-tests"],
+                    timeout=120,
+                    check=False
+                )
+                self._print_success("Natural agent invocation enabled")
+                self._print_info("Use: test-invoke \"your request\" in ~/.config/claude/")
+            except subprocess.CalledProcessError:
+                self._print_warning("Natural invocation setup had issues")
+
+            return True
+
+        except Exception as e:
+            self._print_warning(f"Natural invocation failed: {e}")
+            return True  # Non-critical
+
     def compile_shadowgit_c_engine(self) -> bool:
         """Compile Shadowgit C acceleration engine (optional)"""
         self._print_section("Compiling Shadowgit C Engine")
@@ -3423,6 +3485,18 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.install_git_hooks():
+                success_count += 1
+
+        # Step 9.4: Install unified integration system (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_unified_integration():
+                success_count += 1
+
+        # Step 9.4.1: Enable natural invocation (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.enable_natural_invocation():
                 success_count += 1
 
         # Step 9.5: Setup auto-calibrating think mode system (if in full mode)
