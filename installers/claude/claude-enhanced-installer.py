@@ -2971,7 +2971,7 @@ esac
             components = [
                 ("auto_calibrating_think_mode.py", "auto_calibrating_think_mode.py"),
                 ("think_mode_calibration_schema.sql", "think_mode_calibration_schema.sql"),
-                ("../claude_agents/integration/claude_code_think_hooks.py", "claude_code_think_hooks.py"),
+                ("claude_agents/integration/claude_code_think_hooks.py", "claude_code_think_hooks.py"),
                 ("lightweight_think_mode_selector.py", "lightweight_think_mode_selector.py")
             ]
 
