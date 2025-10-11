@@ -1,1 +1,1 @@
-/home/ubuntu/claude-backups/agents/src/python/claude_agents/bridges/hybrid_bridge_manager.py
+claude_agents/bridges/hybrid_bridge_manager.py

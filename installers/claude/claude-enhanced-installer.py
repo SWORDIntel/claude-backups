@@ -1900,6 +1900,96 @@ end
             self._print_error(f"Crypto POW installation failed: {e}")
             return False
 
+    def compile_crypto_pow_c_engine(self) -> bool:
+        """Compile Crypto POW C acceleration engine (optional)"""
+        self._print_section("Compiling Crypto-POW C Engine")
+
+        try:
+            crypto_makefile = self.project_root / "Makefile"
+
+            if not crypto_makefile.exists():
+                self._print_warning("Crypto-POW Makefile not found - skipping C compilation")
+                return True  # Optional component
+
+            # Check if we have compiler
+            if not shutil.which("gcc") and not shutil.which("clang"):
+                self._print_warning("No C compiler found - skipping Crypto-POW C engine")
+                return True
+
+            self._print_info("Compiling Crypto-POW C acceleration with meteorlake optimizations...")
+
+            try:
+                # Clean first
+                self._run_command(
+                    ["make", "clean"],
+                    cwd=self.project_root,
+                    timeout=30,
+                    check=False
+                )
+
+                # Compile object files (production target requires main() which doesn't exist)
+                # Just build the objects which are the library components
+                self._run_command(
+                    ["make", "build/crypto_pow_core.o", "build/crypto_pow_patterns.o",
+                     "build/crypto_pow_behavioral.o", "build/crypto_pow_verification.o"],
+                    cwd=self.project_root,
+                    timeout=120
+                )
+
+                self._print_success("Crypto-POW C engine objects compiled successfully")
+                self._print_info("Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI)")
+                return True
+
+            except subprocess.CalledProcessError as e:
+                self._print_warning(f"Crypto-POW C compilation had issues: {e}")
+                self._print_info("Python crypto libraries will be used instead")
+                return True  # Non-critical, Python fallback available
+
+        except Exception as e:
+            self._print_warning(f"Crypto-POW C engine setup failed: {e}")
+            return True  # Non-critical
+
+    def setup_hybrid_bridge(self) -> bool:
+        """Setup hybrid bridge for native + Docker integration"""
+        self._print_section("Setting up Hybrid Bridge")
+
+        try:
+            bridge_script = self.project_root / "integration" / "integrate_hybrid_bridge.sh"
+            bridge_manager = self.project_root / "agents" / "src" / "python" / "claude_agents" / "bridges" / "hybrid_bridge_manager.py"
+
+            # Check if hybrid bridge components exist
+            if not bridge_manager.exists():
+                self._print_warning("Hybrid bridge manager not found - skipping")
+                return True  # Optional component
+
+            self._print_info("Hybrid bridge components found")
+
+            # Verify Python dependencies
+            try:
+                import asyncio
+                import asyncpg
+                self._print_success("Hybrid bridge dependencies available")
+            except ImportError as e:
+                self._print_warning(f"Hybrid bridge missing dependencies: {e}")
+                return True
+
+            # Create symlink in agents/src/python if it doesn't exist
+            hybrid_link = self.project_root / "agents" / "src" / "python" / "hybrid_bridge_manager.py"
+            if not hybrid_link.exists():
+                try:
+                    hybrid_link.symlink_to("claude_agents/bridges/hybrid_bridge_manager.py")
+                    self._print_success("Created hybrid bridge symlink")
+                except Exception as e:
+                    self._print_warning(f"Could not create symlink: {e}")
+
+            self._print_success("Hybrid bridge integrated")
+            self._print_info("Use: python3 agents/src/python/hybrid_bridge_manager.py")
+            return True
+
+        except Exception as e:
+            self._print_warning(f"Hybrid bridge setup failed: {e}")
+            return True  # Non-critical
+
     def compile_shadowgit_c_engine(self) -> bool:
         """Compile Shadowgit C acceleration engine (optional)"""
         self._print_section("Compiling Shadowgit C Engine")
@@ -3198,6 +3288,12 @@ fi
             if self.install_crypto_pow_module():
                 success_count += 1
 
+        # Step 6.6.1: Compile Crypto POW C engine (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.compile_crypto_pow_c_engine():
+                success_count += 1
+
         # Step 6.7: Compile Shadowgit C engine (if in full mode)
         if mode == InstallationMode.FULL:
             total_steps += 1
@@ -3220,6 +3316,12 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.setup_learning_system():
+                success_count += 1
+
+        # Step 9.1: Setup hybrid bridge (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.setup_hybrid_bridge():
                 success_count += 1
 
         # Step 9.5: Setup auto-calibrating think mode system (if in full mode)
