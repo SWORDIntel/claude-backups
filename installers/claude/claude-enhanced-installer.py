@@ -1518,8 +1518,8 @@ main "$@"
         self._print_section("Updating shell configuration")
 
         try:
-            # Ensure .local/bin is in PATH
-            path_export = f'export PATH="$HOME/.local/bin:$PATH"'
+            # Ensure .local/bin is FIRST in PATH (must come before npm/npx paths)
+            path_export = f'export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"'
 
             # Shell-specific configuration
             if self.system_info.shell == ShellType.ZSH:
