@@ -1992,6 +1992,93 @@ end
             self._print_warning(f"Hybrid bridge setup failed: {e}")
             return True  # Non-critical
 
+    def install_claude_code_hooks(self) -> bool:
+        """Install Claude Code runtime hooks to ~/.claude/hooks/"""
+        self._print_section("Installing Claude Code Hooks")
+
+        try:
+            claude_hooks_dir = self.system_info.home_dir / ".claude" / "hooks"
+            claude_hooks_dir.mkdir(parents=True, exist_ok=True)
+
+            hooks_installed = 0
+
+            # 1. Context chopping hooks (PICMCS)
+            context_hook = self.project_root / "hooks" / "context_chopping_hooks.py"
+            if context_hook.exists():
+                target = claude_hooks_dir / "context_chopping_hooks.py"
+                if target.exists():
+                    target.unlink()
+                target.symlink_to(context_hook)
+                self._print_success("Installed context_chopping_hooks.py")
+                hooks_installed += 1
+
+            # 2. Unified hook system (v2 - latest)
+            unified_hook = self.project_root / "hooks" / "claude_unified_hook_system_v2.py"
+            if unified_hook.exists():
+                target = claude_hooks_dir / "claude_unified_hook_system.py"
+                if target.exists():
+                    target.unlink()
+                target.symlink_to(unified_hook)
+                self._print_success("Installed unified hook system v2")
+                hooks_installed += 1
+
+            if hooks_installed > 0:
+                self._print_success(f"Installed {hooks_installed} Claude Code hooks to ~/.claude/hooks/")
+                return True
+            else:
+                self._print_warning("No hooks found to install")
+                return True
+
+        except Exception as e:
+            self._print_warning(f"Claude Code hooks installation failed: {e}")
+            return True  # Non-critical
+
+    def install_git_hooks(self) -> bool:
+        """Install git hooks for learning data and task recording"""
+        self._print_section("Installing Git Hooks")
+
+        try:
+            git_hooks_dir = self.project_root / ".git" / "hooks"
+            if not git_hooks_dir.exists():
+                self._print_info("Not a git repository - skipping git hooks")
+                return True
+
+            hooks_installed = 0
+
+            # 1. Pre-commit: Export learning data
+            pre_commit_src = self.project_root / "hooks" / "pre-commit" / "export_learning_data.sh"
+            if pre_commit_src.exists():
+                pre_commit_dst = git_hooks_dir / "pre-commit"
+                if pre_commit_dst.exists():
+                    pre_commit_dst.unlink()
+                pre_commit_dst.symlink_to(pre_commit_src)
+                pre_commit_dst.chmod(0o755)
+                self._print_success("Installed pre-commit hook (learning data export)")
+                hooks_installed += 1
+
+            # 2. Post-commit: Record task execution
+            post_task_src = self.project_root / "hooks" / "post-task" / "record_learning_data.sh"
+            if post_task_src.exists():
+                post_commit_dst = git_hooks_dir / "post-commit"
+                if post_commit_dst.exists():
+                    post_commit_dst.unlink()
+                post_commit_dst.symlink_to(post_task_src)
+                post_commit_dst.chmod(0o755)
+                self._print_success("Installed post-commit hook (task recording)")
+                hooks_installed += 1
+
+            if hooks_installed > 0:
+                self._print_success(f"Installed {hooks_installed} git hooks")
+                self._print_info("Hooks will activate on git commit operations")
+                return True
+            else:
+                self._print_warning("No git hooks found to install")
+                return True
+
+        except Exception as e:
+            self._print_warning(f"Git hooks installation failed: {e}")
+            return True  # Non-critical
+
     def compile_shadowgit_c_engine(self) -> bool:
         """Compile Shadowgit C acceleration engine (optional)"""
         self._print_section("Compiling Shadowgit C Engine")
@@ -3324,6 +3411,18 @@ fi
         if mode == InstallationMode.FULL:
             total_steps += 1
             if self.setup_hybrid_bridge():
+                success_count += 1
+
+        # Step 9.2: Install Claude Code hooks (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_claude_code_hooks():
+                success_count += 1
+
+        # Step 9.3: Install Git hooks (if in full mode)
+        if mode == InstallationMode.FULL:
+            total_steps += 1
+            if self.install_git_hooks():
                 success_count += 1
 
         # Step 9.5: Setup auto-calibrating think mode system (if in full mode)
