@@ -1,1 +1,0 @@
-/home/ubuntu/claude-backups/agents/src/python/scripts/fix_agent_class_naming.py

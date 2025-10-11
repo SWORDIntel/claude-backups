@@ -5,12 +5,12 @@
 echo "Rolling back Python source reorganization..."
 
 # Backup current state (post-reorganization)
-mv /home/ubuntu/claude-backups/agents/src/python /home/ubuntu/claude-backups/agents/src/python_failed_reorg_20250828_145639
+mv /home/john/claude-backups/agents/src/python /home/john/claude-backups/agents/src/python_failed_reorg_20250828_145639
 
 # Extract backup
-echo "Extracting backup from /home/ubuntu/claude-backups/agents/src/python_src_backup_20250828_145525.tar.gz..."
-cd /home/ubuntu/claude-backups/agents/src
+echo "Extracting backup from /home/john/claude-backups/agents/src/python_src_backup_20250828_145525.tar.gz..."
+cd /home/john/claude-backups/agents/src
 tar -xzf python_src_backup_20250828_145525.tar.gz
 
 echo "✅ Rollback complete"
-echo "Failed reorganization saved to: /home/ubuntu/claude-backups/agents/src/python_failed_reorg_*"
+echo "Failed reorganization saved to: /home/john/claude-backups/agents/src/python_failed_reorg_*"

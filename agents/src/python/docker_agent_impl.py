@@ -1,1 +1,0 @@
-/home/ubuntu/claude-backups/agents/src/python/claude_agents/implementations/infrastructure/docker_agent_impl.py

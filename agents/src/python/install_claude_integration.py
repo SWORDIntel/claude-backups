@@ -1,1 +1,0 @@
-/home/ubuntu/claude-backups/agents/src/python/scripts/install_claude_integration.py

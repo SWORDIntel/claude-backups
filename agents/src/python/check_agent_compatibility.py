@@ -1,1 +1,0 @@
-/home/ubuntu/claude-backups/agents/src/python/tests/check_agent_compatibility.py

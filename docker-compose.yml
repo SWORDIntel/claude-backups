@@ -36,12 +36,13 @@ services:
       POSTGRES_DB: claude_auth
       PYTHONPATH: /app:/app/agents/src/python
     volumes:
-      - ./learning-system/python:/app/learning
+      - ./learning-system:/app/learning
       - ./agents:/app/agents:ro
       - ./database:/app/database:ro
     command: |
-      bash -c "pip install fastapi uvicorn psycopg2-binary asyncpg &&
-      python /app/learning/integrated_learning_setup.py"
+      bash -c "apt-get update && apt-get install -y postgresql-client netcat-openbsd &&
+      pip install fastapi uvicorn psycopg2-binary asyncpg &&
+      python /app/learning/python/integrated_learning_setup.py"
     ports:
       - "8080:8080"
     networks:

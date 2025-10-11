@@ -1,1 +1,0 @@
-/home/ubuntu/claude-backups/agents/src/python/claude_agents/voice/quick_voice.py

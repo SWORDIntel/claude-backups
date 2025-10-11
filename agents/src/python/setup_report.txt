@@ -2,17 +2,17 @@
 === Unified Async Optimization Pipeline Setup Report ===
 
 Dependencies Status:
-  Available: 4/6 (66.7%)
+  Available: 5/6 (83.3%)
   asyncio              ✓ Available
-  redis                ✗ Missing
+  redis                ✓ Available
   asyncpg              ✓ Available
   prometheus_client    ✗ Missing
   psutil               ✓ Available
   numpy                ✓ Available
 
 Configuration Files:
-  Trigger keywords: $HOME/claude-backups/agents/config/enhanced_trigger_keywords.yaml
-  Pipeline config:  $HOME/claude-backups/agents/config/unified_pipeline_config.json
+  Trigger keywords: /home/john/claude-backups/agents/config/enhanced_trigger_keywords.yaml
+  Pipeline config:  /home/john/claude-backups/agents/config/unified_pipeline_config.json
 
 Performance Targets:
   ✓ End-to-end latency: <100ms
@@ -32,7 +32,7 @@ System Components:
   ✓ Circuit breaker (fault tolerance)
 
 Integration Status:
-  Redis (L2 cache): ⚠ Disabled
+  Redis (L2 cache): ✓ Ready
   PostgreSQL (L3): ✓ Ready
   Prometheus: ⚠ Disabled
   Shadowgit: ⚠ Checking...
