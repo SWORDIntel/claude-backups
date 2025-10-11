@@ -1,0 +1,159 @@
+═══════════════════════════════════════════════════════════════════════════════
+ PYTHON ROOT CLEANUP - QUICK REFERENCE GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 STATISTICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Files Analyzed:        107
+KEEP in Root:                  8
+MOVE to claude_agents/:       43
+ARCHIVE to deprecated/:       56
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 FILES TO KEEP IN ROOT (8)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Orchestrators:
+  • npu_accelerated_orchestrator.py        [44KB, modified Oct 11 08:41]
+  • npu_orchestrator_launcher.py
+  • production_orchestrator_optimized.py
+  • unified_orchestrator_system.py
+
+Critical Systems:
+  ⭐ auto_calibrating_think_mode.py       [23KB, ACTIVE - modified Oct 11 08:13]
+  • lightweight_think_mode_selector.py    [imported by auto_calibrating]
+  • think_mode_auto_calibration.py
+  • import_helper.py
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📦 MOVE TO claude_agents/ (43 files by category)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+implementations/specialized/  (1)  → agentsmith_impl.py
+implementations/language/     (1)  → julia_internal_agent_impl.py
+implementations/security/     (1)  → DISASSEMBLER_impl.py
+
+orchestration/                (5)  → dynamic_orchestrator_launcher.py, etc.
+learning/                     (5)  → advanced_learning_analytics.py, etc.
+think_mode/                   (2)  → dynamic_think_mode_selector.py, etc.
+performance/                  (4)  → token_optimizer.py, etc.
+integration/                  (6)  → claude_code_integration_hub.py, etc.
+npu/                         (10)  → npu_orchestrator_bridge.py, etc.
+hardware/                     (4)  → hardware_detection_unified.py, etc.
+git/                          (4)  → git_intelligence_engine.py, etc.
+bridges/                      (1)  → io_uring_bridge.py
+security/                     (3)  → cryptographic_proof_of_work_verifier.py, etc.
+utils/                        (7)  → agent_path_resolver.py, etc.
+analysis/                     (3)  → neural_code_reviewer.py, etc.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📁 ARCHIVE to deprecated/ (56 files)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+deprecated/demos/              (13)  → demo_*.py, *_demo.py, benchmarks
+deprecated/test_files/         (10)  → test_*.py, integration tests
+deprecated/installers_old/     (12)  → install_*.py, deploy_*.py, setup_*.py
+deprecated/reorganize_scripts/  (5)  → reorganize_*.py
+deprecated/unused_root/        (16)  → remaining files
+
+═══════════════════════════════════════════════════════════════════════════════
+
+⚙️ EXECUTION STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Review documentation:
+   $ cat CLEANUP_CATEGORIZATION.md  # Detailed analysis
+   $ cat CLEANUP_SUMMARY.md          # Executive summary
+
+2. Test with dry run:
+   $ bash execute_cleanup.sh --dry-run
+
+3. Execute cleanup:
+   $ bash execute_cleanup.sh
+
+4. Update imports (2 files affected):
+   - cryptd_testing_framework.py:22
+   - cryptd_automation_workflows.py:21
+   Change: from DISASSEMBLER_impl import ...
+   To:     from claude_agents.implementations.security.DISASSEMBLER_impl import ...
+
+5. Verify:
+   $ python3 auto_calibrating_think_mode.py
+   $ python3 npu_accelerated_orchestrator.py
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔍 SPECIAL CASES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⭐ auto_calibrating_think_mode.py
+   STATUS: KEEP IN ROOT - ACTIVE DEVELOPMENT
+   REASON: Modified Oct 11 08:13 (most recent)
+   SIZE:   23KB with PostgreSQL integration
+   NOTE:   This is the PRIMARY/SOURCE file
+
+DISASSEMBLER_impl.py
+   ACTION: Move to claude_agents/implementations/security/
+   IMPACT: 2 imports need updating (see step 4 above)
+
+npu_orchestrator_* variants
+   PRIMARY: npu_accelerated_orchestrator.py (KEEP in root)
+   VARIANTS: npu_orchestrator_{bridge,real,ultimate}.py (move to claude_agents/npu/)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 IMPORT UPDATES REQUIRED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+File: cryptd_testing_framework.py
+Line: 22
+Old:  from DISASSEMBLER_impl import (...)
+New:  from claude_agents.implementations.security.DISASSEMBLER_impl import (...)
+
+File: cryptd_automation_workflows.py
+Line: 21
+Old:  from DISASSEMBLER_impl import DISASSEMBLERBinaryAnalyzer
+New:  from claude_agents.implementations.security.DISASSEMBLER_impl import DISASSEMBLERBinaryAnalyzer
+
+File: enhanced_dynamic_think_mode_selector.py
+Line: 41
+Old:  from think_mode_auto_calibration import (...)
+New:  from claude_agents.think_mode.think_mode_auto_calibration import (...)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ VERIFICATION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ ] Read CLEANUP_CATEGORIZATION.md
+[ ] Read CLEANUP_SUMMARY.md
+[ ] Run execute_cleanup.sh --dry-run
+[ ] Review dry-run output
+[ ] Execute cleanup script
+[ ] Update 2 import statements for DISASSEMBLER_impl
+[ ] Update 1 import statement for think_mode_auto_calibration
+[ ] Test auto_calibrating_think_mode.py
+[ ] Test npu_accelerated_orchestrator.py
+[ ] Test agent imports from claude_agents
+[ ] Commit changes to git
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📚 GENERATED DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLEANUP_CATEGORIZATION.md     - Comprehensive file-by-file analysis
+CLEANUP_SUMMARY.md             - Executive summary with details
+CLEANUP_QUICK_REFERENCE.txt    - This quick reference guide
+execute_cleanup.sh             - Executable reorganization script
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 KEY TAKEAWAYS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 107 files analyzed, all categorized with reasoning
+• 8 essential entry points remain in root
+• 43 files belong in claude_agents package structure
+• 56 files archived (demos, tests, old installers)
+• Only 3 files need import updates
+• Safe dry-run mode available for testing
+• auto_calibrating_think_mode.py is ACTIVE (keep in root!)
+
+═══════════════════════════════════════════════════════════════════════════════
+Generated by: ARCHITECT Agent | Date: 2025-10-11 | Framework: v7.0
+═══════════════════════════════════════════════════════════════════════════════

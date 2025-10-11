@@ -22,19 +22,6 @@ import signal
 
 logger = logging.getLogger(__name__)
 
-def find_project_root():
-    """Find project root directory"""
-    from pathlib import Path
-    current = Path(__file__).resolve().parent
-    while current != current.parent:
-        if (current / "hooks").exists() or (current / ".git").exists():
-            return current
-        current = current.parent
-    return Path.home() / "claude-backups"
-
-_PROJECT_ROOT = find_project_root()
-_CLAUDE_DIR = Path.home() / ".claude"
-
 class SecurityPythonExecutor:
     """
     Enhanced Python executor for malware analysis with ULTRATHINK v4.0 integration
@@ -61,12 +48,12 @@ class SecurityPythonExecutor:
 
         # ULTRATHINK integration points
         self.ultrathink_integration = {
-            'ghidra_scripts_dir': str(_PROJECT_ROOT / 'hooks' / 'ghidra-workspace' / 'scripts'),
-            'analysis_workspace': str(_CLAUDE_DIR / 'ghidra-workspace'),
-            'hostile_samples_dir': str(_CLAUDE_DIR / 'hostile-samples'),
-            'quarantine_dir': str(_CLAUDE_DIR / 'quarantine'),
-            'reports_dir': str(_CLAUDE_DIR / 'analysis-reports'),
-            'yara_rules_dir': str(_CLAUDE_DIR / 'yara-rules')
+            'ghidra_scripts_dir': '/home/john/claude-backups/hooks/ghidra-workspace/scripts',
+            'analysis_workspace': '/home/john/.claude/ghidra-workspace',
+            'hostile_samples_dir': '/home/john/.claude/hostile-samples',
+            'quarantine_dir': '/home/john/.claude/quarantine',
+            'reports_dir': '/home/john/.claude/analysis-reports',
+            'yara_rules_dir': '/home/john/.claude/yara-rules'
         }
 
         # Security isolation settings

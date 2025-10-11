@@ -759,10 +759,10 @@ class UltimatePostgreSQLLearningSystem:
     def __init__(self, db_config: Dict[str, str] = None):
         self.db_config = db_config or {
             'host': 'localhost',
-            'port': 5432,
-            'database': 'claude_learning_db',
-            'user': 'claude_auth',
-            'password': 'claude_auth'
+            'port': 5433,
+            'database': 'claude_agents_auth',
+            'user': 'claude_agent',
+            'password': 'claude_secure_2024'
         }
         
         # Core components
@@ -1310,18 +1310,15 @@ class UltimatePostgreSQLLearningSystem:
         for agent in execution.agents_invoked:
             await conn.execute("""
                 INSERT INTO agent_performance_metrics (
-                    agent_name, total_invocations, successful_invocations, 
-                    avg_duration_seconds, min_duration_seconds, max_duration_seconds,
-                    last_invocation
-                ) VALUES ($1, 1, $2, $3, $3, $3, $4)
+                    agent_name, total_invocations, successful_invocations,
+                    avg_duration_seconds, last_invocation
+                ) VALUES ($1, 1, $2, $3, $4)
                 ON CONFLICT (agent_name) DO UPDATE SET
                     total_invocations = agent_performance_metrics.total_invocations + 1,
                     successful_invocations = agent_performance_metrics.successful_invocations + $2,
                     avg_duration_seconds = (
                         agent_performance_metrics.avg_duration_seconds * agent_performance_metrics.total_invocations + $3
                     ) / (agent_performance_metrics.total_invocations + 1),
-                    min_duration_seconds = LEAST(agent_performance_metrics.min_duration_seconds, $3),
-                    max_duration_seconds = GREATEST(agent_performance_metrics.max_duration_seconds, $3),
                     last_invocation = $4,
                     last_updated = NOW()
             """, agent, 1 if execution.success else 0, execution.duration_seconds, execution.end_time)
@@ -2422,9 +2419,9 @@ Commands:
         db_config = {
             'host': os.environ.get('POSTGRES_HOST', 'localhost'),
             'port': int(os.environ.get('POSTGRES_PORT', '5433')),
-            'database': os.environ.get('POSTGRES_DB', 'claude_auth'),
-            'user': os.environ.get('POSTGRES_USER', 'claude_auth'),
-            'password': os.environ.get('POSTGRES_PASSWORD', 'claude_auth_pass')
+            'database': os.environ.get('POSTGRES_DB', 'claude_agents_auth'),
+            'user': os.environ.get('POSTGRES_USER', 'claude_agent'),
+            'password': os.environ.get('POSTGRES_PASSWORD', 'claude_secure_2024')
         }
         logger.info("Using database config from environment variables")
     
@@ -2450,7 +2447,7 @@ Commands:
         # Create enhanced demo executions
         demo_executions = [
             EnhancedAgentTaskExecution(
-                execution_id="demo_ultimate_001",
+                execution_id="550e8400-e29b-41d4-a716-446655440001",
                 task_type="web_development",
                 task_description="Create authentication system with JWT",
                 agents_invoked=["WEB", "APIDESIGNER", "SECURITY", "TESTBED"],
@@ -2464,7 +2461,7 @@ Commands:
                 context_data={"priority": 2, "user_type": "enterprise"}
             ),
             EnhancedAgentTaskExecution(
-                execution_id="demo_ultimate_002",
+                execution_id="550e8400-e29b-41d4-a716-446655440002",
                 task_type="security_audit",
                 task_description="Comprehensive security review of API endpoints",
                 agents_invoked=["SECURITY", "SECURITYAUDITOR", "CRYPTOEXPERT"],
@@ -2478,7 +2475,7 @@ Commands:
                 context_data={"priority": 1, "compliance": "SOC2"}
             ),
             EnhancedAgentTaskExecution(
-                execution_id="demo_ultimate_003",
+                execution_id="550e8400-e29b-41d4-a716-446655440003",
                 task_type="performance_optimization",
                 task_description="Optimize database queries and caching",
                 agents_invoked=["OPTIMIZER", "DATABASE", "MONITOR"],
@@ -2494,7 +2491,7 @@ Commands:
         ]
         
         for demo_exec in demo_executions:
-            await learning_system.record_enhanced_execution(demo_exec, "demo_user", "demo_session")
+            await learning_system.record_enhanced_execution(demo_exec, "550e8400-e29b-41d4-a716-446655440010", "550e8400-e29b-41d4-a716-446655440020")
         
         print(f"✅ Recorded {len(demo_executions)} demo executions")
         
@@ -2666,8 +2663,8 @@ Commands:
         
         print("\n📊 System Statistics:")
         print(f"  Total Executions: {stats.get('total_executions', 0)}")
-        print(f"  Success Rate: {stats.get('overall_success_rate', 0):.1%}")
-        print(f"  Avg Duration: {stats.get('avg_duration', 0):.1f}s")
+        print(f"  Success Rate: {stats.get('overall_success_rate', 0) or 0:.1%}")
+        print(f"  Avg Duration: {stats.get('avg_duration', 0) or 0:.1f}s")
         print(f"  24h Executions: {stats.get('executions_24h', 0)}")
         print(f"  Total Anomalies: {stats.get('total_anomalies', 0)}")
         
