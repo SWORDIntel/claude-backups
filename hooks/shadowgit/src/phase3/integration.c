@@ -35,8 +35,8 @@
 #include <sys/syscall.h>
 #include <sys/eventfd.h>
 
-// Shadowgit AVX2 integration
-#include "/home/john/shadowgit/c_src_avx2/shadowgit_avx2_diff.h"
+#include <stdbool.h>
+#include "shadowgit_avx2_diff.h"
 
 // Performance constants
 #define PHASE3_TARGET_LINES_PER_SEC 3500000000ULL  // 3.5B lines/sec target
