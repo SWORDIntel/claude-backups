@@ -2312,7 +2312,7 @@ export NPU_MILITARY_MODE={military_mode}
         self._print_section("Running NPU Acceleration Installer")
 
         try:
-            npu_installer = self.project_root / "agents" / "src" / "python" / "deprecated" / "installers_old" / "install_npu_acceleration.py"
+            npu_installer = self.project_root / "installers" / "scripts" / "install_npu_acceleration.py"
             if not npu_installer.exists():
                 self._print_info("NPU acceleration installer archived - functionality integrated")
                 return True
@@ -2331,7 +2331,7 @@ export NPU_MILITARY_MODE={military_mode}
         self._print_section("Running Unified Optimization Setup")
 
         try:
-            optimizer_setup = self.project_root / "agents" / "src" / "python" / "deprecated" / "installers_old" / "setup_unified_optimization.py"
+            optimizer_setup = self.project_root / "installers" / "scripts" / "setup_unified_optimization.py"
             if not optimizer_setup.exists():
                 self._print_info("Optimization setup archived - functionality integrated")
                 return True
