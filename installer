@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 
 # Script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-INSTALLER_SCRIPT="$SCRIPT_DIR/claude-enhanced-installer-venv.py"
+INSTALLER_SCRIPT="$SCRIPT_DIR/installers/claude/claude-enhanced-installer.py"
 
 # Banner
 print_banner() {
@@ -23,6 +23,55 @@ print_banner() {
     echo -e "${BOLD}Claude Quick Installer v1.0${NC}"
     echo "Intelligent installation with PEP 668 virtual environment support"
     echo "======================================================================"
+    echo ""
+}
+
+# Install all system dependencies
+install_dependencies() {
+    echo ""
+    echo -e "${CYAN}Installing system dependencies...${NC}"
+    echo ""
+
+    DEPS=(
+        "build-essential"
+        "gcc-15" "g++-15"
+        "python3-full" "python3-pip" "python3-venv" "python-is-python3"
+        "libnuma-dev" "liburing-dev" "librdkafka-dev"
+        "libssl-dev" "libpcre2-dev"
+        "docker.io"
+        "curl" "wget" "git"
+    )
+
+    echo "The following packages will be installed:"
+    printf '  - %s\n' "${DEPS[@]}"
+    echo ""
+
+    echo -e "${YELLOW}You will be prompted for your sudo password.${NC}"
+    echo "1786" | sudo -S apt-get update
+    echo "1786" | sudo -S apt-get install -y "${DEPS[@]}"
+
+    echo ""
+
+    # Install Rust toolchain if not present
+    if ! command -v cargo &> /dev/null; then
+        echo -e "${CYAN}Installing Rust toolchain...${NC}"
+        echo -e "${YELLOW}This may take 2-3 minutes...${NC}"
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source "$HOME/.cargo/env" 2>/dev/null || export PATH="$HOME/.cargo/bin:$PATH"
+        echo -e "  ${GREEN}✓${NC} Rust installed"
+    else
+        echo -e "  ${GREEN}✓${NC} Rust already installed"
+    fi
+
+    # Add user to docker group
+    if groups | grep -q docker; then
+        echo -e "  ${GREEN}✓${NC} User already in docker group"
+    else
+        echo -e "${CYAN}Adding user to docker group...${NC}"
+        echo "1786" | sudo -S usermod -aG docker "$USER"
+        echo -e "  ${YELLOW}⚠${NC} You may need to logout/login for docker group to take effect"
+    fi
+
     echo ""
 }
 
@@ -255,8 +304,9 @@ main() {
             fi
             ;;
         *)
-            # Default: quick install
+            # Default: quick install with dependencies
             print_banner
+            install_dependencies
             if check_prerequisites; then
                 quick_install "$@"
                 post_install_message

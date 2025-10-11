@@ -12,7 +12,7 @@ categories = ["database", "algorithms", "hardware-support"]
 
 [lib]
 name = "vector_router"
-path = "../src/rust/vector_router.rs"
+path = "../rust/vector_router.rs"
 crate-type = ["cdylib", "rlib", "staticlib"]
 
 [features]

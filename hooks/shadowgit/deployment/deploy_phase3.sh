@@ -11,8 +11,8 @@ set -e  # Exit on any error
 # CONFIGURATION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SHADOWGIT_BASE="/home/john/shadowgit/c_src_avx2"
-PHASE3_BASE="/home/john/claude-backups"
+SHADOWGIT_BASE="${SHADOWGIT_BASE:-$HOME/shadowgit/c_src_avx2}"
+PHASE3_BASE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 INSTALL_PREFIX="/usr/local"
 POSTGRES_PORT=5433
 OPENVINO_PATH="/opt/openvino"
@@ -356,7 +356,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --benchmark)
-            exec python3 /home/john/claude-backups/agents/src/python/shadowgit_phase3_unified.py
+            exec python3 "$PHASE3_BASE/agents/src/python/shadowgit_phase3_unified.py"
             ;;
         *)
             break
@@ -364,13 +364,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ "$USE_PHASE3" -eq 1 ] && [ -f "/home/john/claude-backups/agents/src/python/shadowgit_accelerator.py" ]; then
+if [ "$USE_PHASE3" -eq 1 ] && [ -f "$PHASE3_BASE/agents/src/python/shadowgit_accelerator.py" ]; then
     # Use Phase-3 accelerated version
-    exec python3 /home/john/claude-backups/agents/src/python/shadowgit_accelerator.py "$@"
+    exec python3 "$PHASE3_BASE/agents/src/python/shadowgit_accelerator.py" "$@"
 else
     # Fall back to standard Shadowgit
-    if [ -f "/home/john/shadowgit/c_src_avx2/shadowgit" ]; then
-        exec /home/john/shadowgit/c_src_avx2/shadowgit "$@"
+    if [ -f "$SHADOWGIT_BASE/shadowgit" ]; then
+        exec "$SHADOWGIT_BASE/shadowgit" "$@"
     else
         echo "Error: Shadowgit not found"
         exit 1

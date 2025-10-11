@@ -23,10 +23,9 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>
 // Include io_uring - better to have it than not
-#ifdef __linux__
-#include <linux/io_uring.h>
+#ifdef HAVE_LIBURING
+#include <liburing.h>
 #endif
-// #include <liburing.h> // Not available on this system
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -1117,8 +1116,8 @@ static void run_enhanced_benchmark(int duration_seconds) {
     }
 #endif
     
-    // Cleanup - adapter handles all internal cleanup
-    ring_buffer_destroy_adapter(rb);
+    // Cleanup - use hybrid destroy function
+    destroy_hybrid_ring_buffer(rb);
     
     for (int i = 0; i < pool->num_workers; i++) {
         free(pool->workers[i].local_queue->tasks);

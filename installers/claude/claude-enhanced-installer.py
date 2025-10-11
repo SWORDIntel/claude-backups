@@ -7,6 +7,8 @@ Python-based installer system with robust error handling and cross-platform supp
 import argparse
 import getpass
 import json
+import logging
+from logging.handlers import RotatingFileHandler
 import os
 import pathlib
 import platform
@@ -121,6 +123,41 @@ class ClaudeEnhancedInstaller:
         # Create necessary directories
         for directory in [self.local_bin, self.config_dir, self.log_dir]:
             directory.mkdir(parents=True, exist_ok=True)
+
+        # Setup robust logging system
+        self.log_file = self.log_dir / "installer.log"
+        self.logger = logging.getLogger("ClaudeInstaller")
+        self.logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+
+        # File handler with rotation (10MB max, keep 5 backups)
+        file_handler = RotatingFileHandler(
+            str(self.log_file), maxBytes=10*1024*1024, backupCount=5
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter(
+            '%(asctime)s [%(levelname)8s] %(funcName)s:%(lineno)d - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(file_formatter)
+        self.logger.addHandler(file_handler)
+
+        # Console handler for verbose mode
+        if verbose:
+            console_handler = logging.StreamHandler(sys.stderr)
+            console_handler.setLevel(logging.DEBUG)
+            console_formatter = logging.Formatter('[%(levelname)s] %(message)s')
+            console_handler.setFormatter(console_formatter)
+            self.logger.addHandler(console_handler)
+
+        # Log installation start
+        self.logger.info("="*80)
+        self.logger.info("Claude Enhanced Installer Started")
+        self.logger.info(f"Mode: auto={auto_mode}, verbose={verbose}")
+        self.logger.info(f"System: {platform.system()} {platform.release()} ({platform.machine()})")
+        self.logger.info(f"Python: {sys.version}")
+        self.logger.info(f"Project root: {self.project_root}")
+        self.logger.info(f"Log file: {self.log_file}")
+        self.logger.info("="*80)
 
     def _detect_project_root(self) -> Path:
         """Detect the Claude project root directory using dynamic resolution"""
@@ -531,11 +568,20 @@ class ClaudeEnhancedInstaller:
 
     def _run_command(self, cmd: List[str], shell: bool = False, check: bool = True,
                     timeout: int = 60, cwd: Optional[Path] = None) -> subprocess.CompletedProcess:
-        """Run a command with comprehensive error handling"""
+        """Run a command with comprehensive error handling and logging"""
+        cmd_str = ' '.join(map(str, cmd)) if not shell else cmd[0]
+
+        # Log command execution
+        self.logger.debug(f"Executing command: {cmd_str}")
+        self.logger.debug(f"  CWD: {cwd or 'current'}")
+        self.logger.debug(f"  Shell: {shell}, Check: {check}, Timeout: {timeout}s")
+
         if self.verbose:
-            self._print_info(f"Running: {' '.join(cmd) if not shell else cmd[0]}")
+            self._print_info(f"Running: {cmd_str}")
 
         try:
+            start_time = time.time()
+
             if shell and isinstance(cmd, list):
                 cmd = ' '.join(shlex.quote(str(arg)) for arg in cmd)
 
@@ -549,22 +595,36 @@ class ClaudeEnhancedInstaller:
                 env={**os.environ, "PYTHONUNBUFFERED": "1"}
             )
 
+            elapsed = time.time() - start_time
+            self.logger.debug(f"Command completed in {elapsed:.2f}s: returncode={result.returncode}")
+
+            if result.stdout:
+                self.logger.debug(f"stdout ({len(result.stdout)} bytes): {result.stdout[:500]}")
+            if result.stderr:
+                self.logger.debug(f"stderr ({len(result.stderr)} bytes): {result.stderr[:500]}")
+
             if self.verbose and result.stdout:
                 self._print_dim(f"stdout: {result.stdout}")
             if self.verbose and result.stderr:
                 self._print_dim(f"stderr: {result.stderr}")
 
             if check and result.returncode != 0:
+                self.logger.error(f"Command failed: {cmd_str}")
+                self.logger.error(f"  Return code: {result.returncode}")
+                self.logger.error(f"  stderr: {result.stderr}")
                 raise subprocess.CalledProcessError(result.returncode, cmd, result.stdout, result.stderr)
 
             return result
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            self.logger.error(f"Command timed out after {timeout}s: {cmd_str}")
             self._print_error(f"Command timed out after {timeout}s: {cmd}")
             raise
         except subprocess.CalledProcessError as e:
+            self.logger.error(f"Command failed with code {e.returncode}: {cmd_str}")
             self._print_error(f"Command failed with code {e.returncode}: {cmd}")
             if e.stderr:
+                self.logger.error(f"Error output: {e.stderr}")
                 self._print_error(f"Error output: {e.stderr}")
             raise
 
@@ -1762,7 +1822,11 @@ end
             for package, description in requirements:
                 try:
                     self._print_info(f"Installing {package} ({description})...")
-                    self._run_command([pip_cmd, "install", "--user", package], timeout=120)
+                    # Use --user only if not in venv
+                    pip_args = [pip_cmd, "install", package]
+                    if not hasattr(sys, 'real_prefix') and not (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+                        pip_args.insert(2, "--user")
+                    self._run_command(pip_args, timeout=120)
                     self._print_success(f"✓ {package}")
                     installed_count += 1
                 except subprocess.CalledProcessError:
@@ -1819,7 +1883,11 @@ end
             for package, description in requirements:
                 try:
                     self._print_info(f"Installing {package} ({description})...")
-                    self._run_command([pip_cmd, "install", "--user", package], timeout=120)
+                    # Use --user only if not in venv
+                    pip_args = [pip_cmd, "install", package]
+                    if not hasattr(sys, 'real_prefix') and not (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+                        pip_args.insert(2, "--user")
+                    self._run_command(pip_args, timeout=120)
                     self._print_success(f"✓ {package}")
                     installed_count += 1
                 except subprocess.CalledProcessError:
@@ -3227,21 +3295,27 @@ fi
         print(f"{Colors.BOLD}{Colors.BLUE}{'─'*50}{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.BLUE}{title}{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.BLUE}{'─'*50}{Colors.RESET}")
+        self.logger.info(f"SECTION: {title}")
 
     def _print_success(self, message: str):
         print(f"{Colors.GREEN}✓ {message}{Colors.RESET}")
+        self.logger.info(f"SUCCESS: {message}")
 
     def _print_error(self, message: str):
         print(f"{Colors.RED}✗ {message}{Colors.RESET}")
+        self.logger.error(f"ERROR: {message}")
 
     def _print_warning(self, message: str):
         print(f"{Colors.YELLOW}⚠ {message}{Colors.RESET}")
+        self.logger.warning(f"WARNING: {message}")
 
     def _print_info(self, message: str):
         print(f"{Colors.CYAN}ℹ {message}{Colors.RESET}")
+        self.logger.info(f"INFO: {message}")
 
     def _print_dim(self, message: str):
         print(f"{Colors.DIM}{message}{Colors.RESET}")
+        self.logger.debug(f"DIM: {message}")
 
     def _format_environment_info(self) -> str:
         """Format environment information for display"""

@@ -39,6 +39,7 @@
 #include <openssl/kdf.h>
 #include <pthread.h>
 #include <sys/mman.h>
+#include <cpuid.h>
 #include <immintrin.h>
 
 #if HAVE_LIBURING

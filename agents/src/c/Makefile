@@ -6,6 +6,9 @@
 # Define project root for absolute paths
 PROJECT_ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
 
+# Force meteorlake profile for Intel Meteor Lake hardware
+export COMPILER_PROFILE := meteorlake
+
 # Include compiler profile system
 include $(PROJECT_ROOT)/Makefile.profiles
 
@@ -15,6 +18,7 @@ STRIP := strip
 
 # Compiler flags (profile provides -march/-mtune optimization)
 CFLAGS := -std=c11 -D_GNU_SOURCE -Wall -Wextra
+CFLAGS += -Wno-deprecated-declarations  # Suppress OpenSSL 3.0 deprecation warnings
 CFLAGS += -pthread
 CFLAGS += -I.
 # Add json-c includes if available
@@ -68,7 +72,7 @@ ifndef DEBUG
 endif
 
 # Directories
-BUILD_DIR := ../../build
+BUILD_DIR := $(PROJECT_ROOT)/agents/build
 BIN_DIR := $(BUILD_DIR)/bin
 OBJ_DIR := $(BUILD_DIR)/obj
 

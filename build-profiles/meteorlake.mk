@@ -19,13 +19,13 @@ PROD_FLAGS += -march=native -mtune=native
 # SIMD Extensions (explicitly enabled for Meteor Lake)
 PROD_FLAGS += -mavx2          # AVX2 256-bit SIMD
 PROD_FLAGS += -mfma           # Fused Multiply-Add (FMA3)
-PROD_FLAGS += -mavx-vnni      # AVX-VNNI for AI/ML workloads
+PROD_FLAGS += -mavxvnni       # AVX-VNNI for AI/ML workloads (GCC 15.2+ syntax)
 PROD_FLAGS += -maes           # AES-NI hardware acceleration
 PROD_FLAGS += -msse4.2        # SSE 4.2 (baseline)
 
 # Link-Time Optimization
-# -flto=thin: Fast incremental LTO (LLVM/Clang compatible)
-PROD_FLAGS += -flto=thin
+# -flto: Link-Time Optimization (GCC syntax; use -flto=thin for Clang)
+PROD_FLAGS += -flto
 
 # Loop and function optimizations
 PROD_FLAGS += -funroll-loops       # Unroll loops for better performance

@@ -161,7 +161,7 @@ typedef struct __attribute__((aligned(CACHE_LINE_SIZE))) {
 } agent_registry_entry_t;
 
 // Hash table for fast agent lookup
-typedef struct {
+typedef struct discovery_hash_node {
     agent_registry_entry_t* entry;
     struct discovery_hash_node* next;
 } discovery_hash_node_t;

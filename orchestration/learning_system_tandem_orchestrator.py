@@ -17,29 +17,33 @@ import logging
 import json
 from collections import defaultdict
 
-sys.path.append(str(Path(__file__).parent.parent / "agents" / "src" / "python"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "agents" / "src" / "python"))
 
 try:
-    from claude_agents.orchestration.production_orchestrator import (
+    # Try direct import first (production_orchestrator.py exists in agents/src/python)
+    from production_orchestrator import (
         ProductionOrchestrator,
         CommandSet,
         CommandStep,
-        ExecutionMode,
-        ExecutionResult
+        ExecutionMode
     )
     ORCHESTRATOR_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     ORCHESTRATOR_AVAILABLE = False
-    print("Warning: Production orchestrator not available, using sequential execution")
-    
-    # Create fallback classes
-    @dataclass
-    class ExecutionResult:
-        success: bool
-        agent: str
-        action: str
-        result: Dict[str, Any]
-        execution_time: float = 0.0
+    print(f"Warning: Production orchestrator import failed: {e}")
+    print("Using sequential execution mode")
+
+# Always define ExecutionResult (not exported by production_orchestrator)
+@dataclass
+class ExecutionResult:
+    success: bool
+    agent: str
+    action: str
+    result: Dict[str, Any]
+    execution_time: float = 0.0
+
+if not ORCHESTRATOR_AVAILABLE:
+    # Create fallback classes only if orchestrator unavailable
     
     @dataclass 
     class CommandStep:
