@@ -13,7 +13,8 @@ CC = gcc
 PYTHON = python3
 
 # Compiler flags (profile provides optimization and CPU targeting)
-CFLAGS = -std=c99 -Wall -Wextra $(PROD_FLAGS)
+# Forcing AVX2 flags as profile detection seems to be failing.
+CFLAGS = -std=c99 -Wall -Wextra -O3 -mavx2 -mfma
 CFLAGS += -fomit-frame-pointer -ffast-math
 CFLAGS += -flto -fuse-linker-plugin -funroll-loops -finline-functions
 CFLAGS += -ftree-vectorize -fprefetch-loop-arrays
