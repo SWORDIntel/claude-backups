@@ -1383,7 +1383,7 @@ from pathlib import Path
 
 class ClaudeMasterSystem:
     def __init__(self):
-        self.claude_binary = "{claude_binary}"
+        self.claude_binary = self.find_claude_binary()
         self.project_root = self.detect_project_root()
         self.colors = {{
             'green': '\\033[92m', 'yellow': '\\033[93m', 'red': '\\033[91m',
