@@ -1,0 +1,830 @@
+{
+  "devices": {
+    "0": {
+      "device_id": 0,
+      "address": 32768,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322944,
+      "method_used": "SMI",
+      "timestamp": 1760491587.7804122
+    },
+    "1": {
+      "device_id": 1,
+      "address": 32769,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322945,
+      "method_used": "SMI",
+      "timestamp": 1760491587.8378572
+    },
+    "2": {
+      "device_id": 2,
+      "address": 32770,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322946,
+      "method_used": "SMI",
+      "timestamp": 1760491587.8500795
+    },
+    "3": {
+      "device_id": 3,
+      "address": 32771,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322947,
+      "method_used": "SMI",
+      "timestamp": 1760491587.8651576
+    },
+    "4": {
+      "device_id": 4,
+      "address": 32772,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322948,
+      "method_used": "SMI",
+      "timestamp": 1760491587.8751943
+    },
+    "5": {
+      "device_id": 5,
+      "address": 32773,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322949,
+      "method_used": "SMI",
+      "timestamp": 1760491587.8867564
+    },
+    "6": {
+      "device_id": 6,
+      "address": 32774,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322950,
+      "method_used": "SMI",
+      "timestamp": 1760491587.902903
+    },
+    "7": {
+      "device_id": 7,
+      "address": 32775,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322951,
+      "method_used": "SMI",
+      "timestamp": 1760491587.9144268
+    },
+    "8": {
+      "device_id": 8,
+      "address": 32776,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322952,
+      "method_used": "SMI",
+      "timestamp": 1760491587.926724
+    },
+    "9": {
+      "error": "Device quarantined",
+      "device_id": 9,
+      "quarantined": true
+    },
+    "10": {
+      "error": "Device quarantined",
+      "device_id": 10,
+      "quarantined": true
+    },
+    "11": {
+      "error": "Device quarantined",
+      "device_id": 11,
+      "quarantined": true
+    },
+    "12": {
+      "device_id": 12,
+      "address": 32780,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322956,
+      "method_used": "SMI",
+      "timestamp": 1760491587.942745
+    },
+    "13": {
+      "device_id": 13,
+      "address": 32781,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322957,
+      "method_used": "SMI",
+      "timestamp": 1760491587.9548247
+    },
+    "14": {
+      "device_id": 14,
+      "address": 32782,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322958,
+      "method_used": "SMI",
+      "timestamp": 1760491587.9688559
+    },
+    "15": {
+      "device_id": 15,
+      "address": 32783,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322959,
+      "method_used": "SMI",
+      "timestamp": 1760491587.9813735
+    },
+    "16": {
+      "device_id": 16,
+      "address": 32784,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322960,
+      "method_used": "SMI",
+      "timestamp": 1760491587.992293
+    },
+    "17": {
+      "device_id": 17,
+      "address": 32785,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322961,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0054839
+    },
+    "18": {
+      "device_id": 18,
+      "address": 32786,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322962,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0181718
+    },
+    "19": {
+      "device_id": 19,
+      "address": 32787,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322963,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0309083
+    },
+    "20": {
+      "device_id": 20,
+      "address": 32788,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322964,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0431957
+    },
+    "21": {
+      "device_id": 21,
+      "address": 32789,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322965,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0545225
+    },
+    "22": {
+      "device_id": 22,
+      "address": 32790,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322966,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0669215
+    },
+    "23": {
+      "device_id": 23,
+      "address": 32791,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322967,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0825076
+    },
+    "24": {
+      "device_id": 24,
+      "address": 32792,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322968,
+      "method_used": "SMI",
+      "timestamp": 1760491588.0966725
+    },
+    "25": {
+      "error": "Device quarantined",
+      "device_id": 25,
+      "quarantined": true
+    },
+    "26": {
+      "device_id": 26,
+      "address": 32794,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322970,
+      "method_used": "SMI",
+      "timestamp": 1760491588.1109354
+    },
+    "27": {
+      "device_id": 27,
+      "address": 32795,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322971,
+      "method_used": "SMI",
+      "timestamp": 1760491588.1312273
+    },
+    "28": {
+      "device_id": 28,
+      "address": 32796,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322972,
+      "method_used": "SMI",
+      "timestamp": 1760491588.1446307
+    },
+    "29": {
+      "device_id": 29,
+      "address": 32797,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322973,
+      "method_used": "SMI",
+      "timestamp": 1760491588.1595461
+    },
+    "30": {
+      "device_id": 30,
+      "address": 32798,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322974,
+      "method_used": "SMI",
+      "timestamp": 1760491588.1728365
+    },
+    "31": {
+      "device_id": 31,
+      "address": 32799,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322975,
+      "method_used": "SMI",
+      "timestamp": 1760491588.1855574
+    },
+    "32": {
+      "device_id": 32,
+      "address": 32800,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322976,
+      "method_used": "SMI",
+      "timestamp": 1760491588.2005124
+    },
+    "33": {
+      "device_id": 33,
+      "address": 32801,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322977,
+      "method_used": "SMI",
+      "timestamp": 1760491588.214801
+    },
+    "34": {
+      "device_id": 34,
+      "address": 32802,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322978,
+      "method_used": "SMI",
+      "timestamp": 1760491588.228619
+    },
+    "35": {
+      "device_id": 35,
+      "address": 32803,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322979,
+      "method_used": "SMI",
+      "timestamp": 1760491588.24178
+    },
+    "36": {
+      "device_id": 36,
+      "address": 32804,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322980,
+      "method_used": "SMI",
+      "timestamp": 1760491588.2546577
+    },
+    "37": {
+      "device_id": 37,
+      "address": 32805,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322981,
+      "method_used": "SMI",
+      "timestamp": 1760491588.2680774
+    },
+    "38": {
+      "device_id": 38,
+      "address": 32806,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322982,
+      "method_used": "SMI",
+      "timestamp": 1760491588.283022
+    },
+    "39": {
+      "device_id": 39,
+      "address": 32807,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322983,
+      "method_used": "SMI",
+      "timestamp": 1760491588.2992992
+    },
+    "40": {
+      "device_id": 40,
+      "address": 32808,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322984,
+      "method_used": "SMI",
+      "timestamp": 1760491588.3169246
+    },
+    "41": {
+      "error": "Device quarantined",
+      "device_id": 41,
+      "quarantined": true
+    },
+    "42": {
+      "device_id": 42,
+      "address": 32810,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322986,
+      "method_used": "SMI",
+      "timestamp": 1760491588.3293216
+    },
+    "43": {
+      "device_id": 43,
+      "address": 32811,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322987,
+      "method_used": "SMI",
+      "timestamp": 1760491588.3444805
+    },
+    "44": {
+      "device_id": 44,
+      "address": 32812,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322988,
+      "method_used": "SMI",
+      "timestamp": 1760491588.3573544
+    },
+    "45": {
+      "device_id": 45,
+      "address": 32813,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322989,
+      "method_used": "SMI",
+      "timestamp": 1760491588.370087
+    },
+    "46": {
+      "device_id": 46,
+      "address": 32814,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322990,
+      "method_used": "SMI",
+      "timestamp": 1760491588.3871937
+    },
+    "47": {
+      "device_id": 47,
+      "address": 32815,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322991,
+      "method_used": "SMI",
+      "timestamp": 1760491588.401413
+    },
+    "48": {
+      "device_id": 48,
+      "address": 32816,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322992,
+      "method_used": "SMI",
+      "timestamp": 1760491588.4167163
+    },
+    "49": {
+      "device_id": 49,
+      "address": 32817,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322993,
+      "method_used": "SMI",
+      "timestamp": 1760491588.4336119
+    },
+    "50": {
+      "device_id": 50,
+      "address": 32818,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322994,
+      "method_used": "SMI",
+      "timestamp": 1760491588.4488857
+    },
+    "51": {
+      "device_id": 51,
+      "address": 32819,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322995,
+      "method_used": "SMI",
+      "timestamp": 1760491588.4618778
+    },
+    "52": {
+      "device_id": 52,
+      "address": 32820,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322996,
+      "method_used": "SMI",
+      "timestamp": 1760491588.4745634
+    },
+    "53": {
+      "device_id": 53,
+      "address": 32821,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322997,
+      "method_used": "SMI",
+      "timestamp": 1760491588.4878986
+    },
+    "54": {
+      "device_id": 54,
+      "address": 32822,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322998,
+      "method_used": "SMI",
+      "timestamp": 1760491588.5016818
+    },
+    "55": {
+      "device_id": 55,
+      "address": 32823,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146322999,
+      "method_used": "SMI",
+      "timestamp": 1760491588.5154932
+    },
+    "56": {
+      "device_id": 56,
+      "address": 32824,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323000,
+      "method_used": "SMI",
+      "timestamp": 1760491588.5300844
+    },
+    "57": {
+      "device_id": 57,
+      "address": 32825,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323001,
+      "method_used": "SMI",
+      "timestamp": 1760491588.5433433
+    },
+    "58": {
+      "device_id": 58,
+      "address": 32826,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323002,
+      "method_used": "SMI",
+      "timestamp": 1760491588.5562813
+    },
+    "59": {
+      "device_id": 59,
+      "address": 32827,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323003,
+      "method_used": "SMI",
+      "timestamp": 1760491588.572417
+    },
+    "60": {
+      "device_id": 60,
+      "address": 32828,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323004,
+      "method_used": "SMI",
+      "timestamp": 1760491588.585924
+    },
+    "61": {
+      "device_id": 61,
+      "address": 32829,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323005,
+      "method_used": "SMI",
+      "timestamp": 1760491588.5997138
+    },
+    "62": {
+      "device_id": 62,
+      "address": 32830,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323006,
+      "method_used": "SMI",
+      "timestamp": 1760491588.6116042
+    },
+    "63": {
+      "device_id": 63,
+      "address": 32831,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323007,
+      "method_used": "SMI",
+      "timestamp": 1760491588.624598
+    },
+    "64": {
+      "device_id": 64,
+      "address": 32832,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323008,
+      "method_used": "SMI",
+      "timestamp": 1760491588.6407347
+    },
+    "65": {
+      "device_id": 65,
+      "address": 32833,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323009,
+      "method_used": "SMI",
+      "timestamp": 1760491588.6565824
+    },
+    "66": {
+      "device_id": 66,
+      "address": 32834,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323010,
+      "method_used": "SMI",
+      "timestamp": 1760491588.6728003
+    },
+    "67": {
+      "device_id": 67,
+      "address": 32835,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323011,
+      "method_used": "SMI",
+      "timestamp": 1760491588.6866837
+    },
+    "68": {
+      "device_id": 68,
+      "address": 32836,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323012,
+      "method_used": "SMI",
+      "timestamp": 1760491588.6983984
+    },
+    "69": {
+      "device_id": 69,
+      "address": 32837,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323013,
+      "method_used": "SMI",
+      "timestamp": 1760491588.7149835
+    },
+    "70": {
+      "device_id": 70,
+      "address": 32838,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323014,
+      "method_used": "SMI",
+      "timestamp": 1760491588.7284477
+    },
+    "71": {
+      "device_id": 71,
+      "address": 32839,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323015,
+      "method_used": "SMI",
+      "timestamp": 1760491588.7416635
+    },
+    "72": {
+      "device_id": 72,
+      "address": 32840,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323016,
+      "method_used": "SMI",
+      "timestamp": 1760491588.7549965
+    },
+    "73": {
+      "device_id": 73,
+      "address": 32841,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323017,
+      "method_used": "SMI",
+      "timestamp": 1760491588.7668638
+    },
+    "74": {
+      "device_id": 74,
+      "address": 32842,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323018,
+      "method_used": "SMI",
+      "timestamp": 1760491588.779593
+    },
+    "75": {
+      "device_id": 75,
+      "address": 32843,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323019,
+      "method_used": "SMI",
+      "timestamp": 1760491588.7978613
+    },
+    "76": {
+      "device_id": 76,
+      "address": 32844,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323020,
+      "method_used": "SMI",
+      "timestamp": 1760491588.811263
+    },
+    "77": {
+      "device_id": 77,
+      "address": 32845,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323021,
+      "method_used": "SMI",
+      "timestamp": 1760491588.8266098
+    },
+    "78": {
+      "device_id": 78,
+      "address": 32846,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323022,
+      "method_used": "SMI",
+      "timestamp": 1760491588.841226
+    },
+    "79": {
+      "device_id": 79,
+      "address": 32847,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323023,
+      "method_used": "SMI",
+      "timestamp": 1760491588.8552732
+    },
+    "80": {
+      "device_id": 80,
+      "address": 32848,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323024,
+      "method_used": "SMI",
+      "timestamp": 1760491588.8693688
+    },
+    "81": {
+      "device_id": 81,
+      "address": 32849,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323025,
+      "method_used": "SMI",
+      "timestamp": 1760491588.8801777
+    },
+    "82": {
+      "device_id": 82,
+      "address": 32850,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323026,
+      "method_used": "SMI",
+      "timestamp": 1760491588.8927014
+    },
+    "83": {
+      "device_id": 83,
+      "address": 32851,
+      "methods_attempted": [
+        "SMI"
+      ],
+      "data": 1146323027,
+      "method_used": "SMI",
+      "timestamp": 1760491588.9058437
+    }
+  },
+  "performance": {
+    "npu_tops": 58.69190476190476,
+    "cpu_tops": 1.5316666666666667,
+    "dsmil_tops": 1.3761904761904762,
+    "gpu_tops": 4.872142857142856,
+    "total_boost_percent": 18.80952380952381,
+    "accessible_devices": 79,
+    "total_tops": 66.47190476190475
+  },
+  "kernel_version": "6.16.9+deb14-amd64",
+  "timestamp": 1760491588.9198384
+}

@@ -1,0 +1,58 @@
+{
+  "optimization_timestamp": 1761777245.7388544,
+  "total_optimization_time": 0.8625667095184326,
+  "phases": {
+    "auto_start": {
+      "status": "failed",
+      "error": "python3: can't open file '/home/john/claude-backups/crypto_auto_start_optimizer.py': [Errno 2] No such file or directory\n"
+    },
+    "performance_monitor": {
+      "status": "failed",
+      "error": "Optimized monitor not found"
+    },
+    "analytics_dashboard": {
+      "status": "failed",
+      "error": "Dashboard not found"
+    },
+    "database_optimization": {
+      "status": "success",
+      "optimizations": {
+        "connection_pool": {
+          "min_size": 5,
+          "max_size": 20,
+          "command_timeout": 5
+        },
+        "query_optimization": {
+          "batch_size": 50,
+          "prepared_statements": true,
+          "connection_reuse": true
+        },
+        "monitoring": {
+          "interval_optimization": "3 seconds (was 5)",
+          "batch_processing": "enabled",
+          "async_operations": "enabled"
+        }
+      }
+    },
+    "system_optimization": {
+      "status": "success",
+      "optimizations": [
+        "CPU governor: powersave \u2192 performance (recommended)",
+        "Memory monitoring: available",
+        "Systemd service: resource limits applied",
+        "Process priority: optimized for crypto operations",
+        "I/O scheduling: optimized for database operations"
+      ],
+      "recommendations": [
+        "Consider running during off-peak hours for maximum performance",
+        "Monitor thermal throttling during intensive operations",
+        "Regular system maintenance for optimal performance"
+      ]
+    },
+    "integration_testing": {
+      "status": "error",
+      "message": "[Errno 2] No such file or directory: '/home/john/claude-backups/crypto_pow_demo'"
+    }
+  },
+  "overall_status": "partial_success"
+}
