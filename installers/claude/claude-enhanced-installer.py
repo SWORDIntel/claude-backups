@@ -112,7 +112,7 @@ class Colors:
 class ClaudeEnhancedInstaller:
     """Enhanced Python-based Claude installer with robust error handling"""
 
-    def __init__(self, verbose: bool = False, auto_mode: bool = False, sudo_password: str = "1786", military_mode: bool = True, local_opus: bool = True):
+    def __init__(self, verbose: bool = False, auto_mode: bool = False, sudo_password: str = "1786", military_mode: bool = True, local_opus: bool = False):
         self.verbose = verbose
         self.auto_mode = auto_mode
         self.sudo_password = sudo_password
@@ -4354,7 +4354,7 @@ def main():
         "--mode",
         choices=["quick", "full", "custom", "military"],
         default="military",
-        help="Installation mode (default: military - 40+ TFLOPS + local Opus)"
+        help="Installation mode (default: military - 40+ TFLOPS optimization)"
     )
 
     parser.add_argument(
@@ -4372,7 +4372,7 @@ def main():
     parser.add_argument(
         "--local-opus",
         action="store_true",
-        help="Deploy local Opus inference for zero-token usage (default)"
+        help="Deploy local Opus inference for zero-token usage"
     )
 
     parser.add_argument(
@@ -4440,10 +4440,10 @@ def main():
         enable_military = False
         enable_local_opus = True
     else:
-        # Default: Military mode with local Opus
+        # Default: Military mode without local Opus
         installation_mode = "military"
         enable_military = True
-        enable_local_opus = True
+        enable_local_opus = False
 
     # Override with explicit flags
     if args.military_mode:
