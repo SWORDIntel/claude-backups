@@ -3408,6 +3408,42 @@ fi
 
         return packages
 
+    def _run_dsmil_orchestrator(self):
+        """Run DSMIL orchestrator for MIL-SPEC hardware detection and optimization"""
+        self._print_section("Running DSMIL Hardware Detection")
+
+        dsmil_script = self.project_root / "installers" / "claude" / "dsmil_orchestrator.py"
+
+        if not dsmil_script.exists():
+            self._print_warning("DSMIL orchestrator not found, skipping hardware detection")
+            return
+
+        try:
+            self._print_info("🔍 Detecting MIL-SPEC hardware with sudo privileges...")
+            self._print_info("Note: This requires sudo access for military-grade hardware detection")
+
+            # Run DSMIL orchestrator with sudo
+            result = self._run_sudo_command(
+                ["python3", str(dsmil_script)],
+                timeout=60,
+                purpose="MIL-SPEC hardware detection"
+            )
+
+            if result.returncode == 0:
+                self._print_success("✅ DSMIL hardware detection completed successfully")
+                if "hardware_detected\": true" in result.stdout:
+                    self._print_info("🎯 MIL-SPEC hardware detected - Military optimizations enabled")
+                else:
+                    self._print_info("ℹ️  No MIL-SPEC hardware detected - Standard mode active")
+            else:
+                self._print_warning("⚠️ DSMIL hardware detection completed with warnings")
+                if result.stderr:
+                    self._print_warning(f"Details: {result.stderr.strip()}")
+
+        except Exception as e:
+            self._print_warning(f"⚠️ DSMIL orchestration had issues: {e}")
+            self._print_info("Installation will continue in standard mode")
+
 
 def main():
     """Main entry point"""
@@ -3572,6 +3608,10 @@ def main():
         # Run installation
         mode = InstallationMode(args.mode)
         success = installer.run_installation(mode)
+
+        # Run DSMIL orchestrator after successful installation
+        if success:
+            installer._run_dsmil_orchestrator()
 
         sys.exit(0 if success else 1)
 
