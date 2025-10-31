@@ -8,6 +8,8 @@ Includes DSMIL hardware integration and full agent roster coordination
 import argparse
 import getpass
 import json
+import hashlib
+from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -39,6 +41,15 @@ try:
 except ImportError:
     MILITARY_DEPLOYMENT_AVAILABLE = False
 
+
+class Colors:
+    """ANSI color codes for terminal output"""
+    BOLD = '\033[1m'
+    CYAN = '\033[96m'
+    YELLOW = '\033[93m'
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    RESET = '\033[0m'
 
 
 class InstallationMode(Enum):
@@ -96,17 +107,7 @@ class SystemInfo:
     has_systemd: bool
 
 
-class Colors:
-    """ANSI color codes for terminal output"""
-    RED = '\033[0;31m'
-    GREEN = '\033[0;32m'
-    YELLOW = '\033[1;33m'
-    BLUE = '\033[0;34m'
-    CYAN = '\033[0;36m'
-    MAGENTA = '\033[0;35m'
-    BOLD = '\033[1m'
-    DIM = '\033[2m'
-    RESET = '\033[0m'
+
 
 
 class ClaudeEnhancedInstaller:
@@ -1415,439 +1416,13 @@ find_claude() {{
     return 1
 }}
 
-CLAUDE_BIN=$(find_claude) || {{ echo "❌ Claude not found"; exit 1; }}
+CLAUDE_BIN=$(find_claude)
+if [ $? -ne 0 ] || [ -z "$CLAUDE_BIN" ]; then
+    echo "❌ Claude not found"
+    exit 1
+fi
+
 exec "$CLAUDE_BIN" --dangerously-skip-permissions "$@"'''
-
-class ClaudeMasterSystem:
-    def __init__(self):
-        self.claude_binary = self.find_claude_binary()
-        self.project_root = self.detect_project_root()
-        self.colors = {{
-            'green': '\\033[92m', 'yellow': '\\033[93m', 'red': '\\033[91m',
-            'blue': '\\033[94m', 'cyan': '\\033[96m', 'bold': '\\033[1m',
-            'reset': '\\033[0m', 'dim': '\\033[2m'
-        }}
-
-        # Feature flags
-        self.permission_bypass = os.environ.get('CLAUDE_PERMISSION_BYPASS', 'true') == 'true'
-        self.show_status = os.environ.get('CLAUDE_SHOW_STATUS', 'true') == 'true'
-        self.status_detailed = False
-
-    def color(self, text_content, color):
-        return f"{{{{self.colors.get(color, '')}}}}{{text_content}}{{{{self.colors['reset']}}}}"
-
-    def detect_project_root(self):
-        \"\"\"Detect Claude project root dynamically\"\"\"
-        # Check environment variable first
-        if env_root := os.environ.get('CLAUDE_PROJECT_ROOT'):
-            if Path(env_root, 'agents').exists():
-                return env_root
-
-        # Check agents symlink
-        agents_link = Path.home() / ".local/share/claude/agents"
-        if agents_link.exists() and agents_link.is_symlink():
-            return str(agents_link.resolve().parent)
-
-        # Check common locations
-        locations = [
-            "{self.project_root}",
-            str(Path.home() / "claude-backups"),
-            str(Path.home() / "Documents/Claude"),
-            os.getcwd()
-        ]
-
-        for location in locations:
-            if Path(location, "CLAUDE.md").exists():
-                return location
-
-        return "{self.project_root}"
-
-    def show_integrated_status(self):
-        \"\"\"Show comprehensive system status inline with Claude\"\"\"
-        if not self.show_status:
-            return
-
-        timestamp = datetime.now().strftime("%H:%M:%S")
-
-        print(f"\\n{{{{self.color('━' * 80, 'cyan')}}}}")
-        print(f"{{{{self.color('🚀 Claude Agent Framework v7.0', 'bold')}}}} {{{{self.color(f'[{{{{timestamp}}}}]', 'dim')}}}}")
-
-        try:
-            # Get status data
-            agents = self.get_agent_count()
-            modules_online, modules_total = self.get_module_status()
-            hardware = self.get_hardware_status()
-            pow_hash = self.generate_proof_of_work()
-
-            # Display compact status
-            agent_color = 'green' if agents > 400 else 'yellow'
-            module_color = 'green' if modules_online >= 6 else 'yellow' if modules_online >= 4 else 'red'
-            cpu_color = 'green' if hardware['cpu'] < 50 else 'yellow' if hardware['cpu'] < 80 else 'red'
-            temp_color = 'green' if hardware['temp'] < 70 else 'yellow' if hardware['temp'] < 90 else 'red'
-
-            status_line = (
-                self.color('🤖', 'blue') + ' ' + self.color(f'{{{{agents}}}} agents', agent_color) + ' | ' +
-                self.color('🏗️', 'blue') + ' ' + self.color(f'{{{{modules_online}}}}/{{{{modules_total}}}} modules', module_color) + ' | ' +
-                self.color('💻', 'blue') + ' ' + self.color(f'{{{{hardware[\\\"cpu\\\"]:.0f}}}}% CPU', cpu_color) + ' | ' +
-                self.color('🌡️', 'blue') + ' ' + self.color(f'{{{{hardware[\\\"temp\\\"]:.0f}}}}°C', temp_color) + ' | ' +
-                self.color('⛏️', 'blue') + ' ' + self.color(pow_hash, 'green')
-            )
-            print(status_line)
-
-        except Exception as e:
-            print(f"{{{{self.color('⚠️  Status error:', 'yellow')}}}} {{e}}")
-
-        print(f"{{{{self.color('━' * 80, 'cyan')}}}}")
-
-    def get_agent_count(self):
-        try:
-            config_path = Path(self.project_root) / 'config/registered_agents.json'
-            if config_path.exists():
-                with open(config_path) as f:
-                    data = json.load(f)
-                    if isinstance(data, dict) and 'agents' in data:
-                        return len(data['agents'])
-            return 0
-        except:
-            return 0
-
-    def get_module_status(self):
-        modules = [
-            Path(self.project_root, 'agents').exists(),
-            Path(self.project_root, 'orchestration').exists(),
-            Path(self.project_root, 'integration').exists(),
-            Path(self.project_root, 'hooks/shadowgit').exists(),
-            Path('/dev/accel/accel0').exists(),  # NPU
-            self.check_postgresql(),
-            self.check_openvino(),
-            Path(self.project_root, 'crypto-pow').exists()
-        ]
-        return sum(modules), len(modules)
-
-    def check_postgresql(self):
-        try:
-            result = subprocess.run(['pg_isready', '-p', '5433'],
-                                  capture_output=True, timeout=1)
-            return result.returncode == 0
-        except:
-            return False
-
-    def check_openvino(self):
-        try:
-            result = subprocess.run(['python3', '-c', 'import openvino'],
-                                  capture_output=True, timeout=2)
-            return result.returncode == 0
-        except:
-            return False
-
-    def get_hardware_status(self):
-        try:
-            import psutil
-            cpu = psutil.cpu_percent(interval=0.1)
-
-            # Temperature
-            temp = 25.0
-            try:
-                with open('/sys/class/thermal/thermal_zone0/temp') as f:
-                    temp = int(f.read().strip()) / 1000
-            except:
-                pass
-
-            return {{'cpu': cpu, 'temp': temp}}
-        except:
-            return {{'cpu': 0, 'temp': 0}}
-
-    def generate_proof_of_work(self):
-        \"\"\"Generate quick proof-of-work\"\"\"
-        timestamp = int(time.time())
-        data = f"{{timestamp}}:{{{{os.getpid()}}}}"
-        hash_val = hashlib.sha256(data.encode()).hexdigest()
-        return f"POW:{{{{hash_val[:8]}}}}"
-
-    def find_claude_binary(self):
-        \"\"\"Find actual Claude binary\"\"\"
-        # Check primary binary first
-        if os.path.exists(self.claude_binary) and self.claude_binary != sys.argv[0]:
-            return self.claude_binary
-
-        # Fallback locations
-        fallback_paths = [
-            f"{{self.project_root}}/node_modules/.bin/claude",
-            f"{{{{Path.home()}}}}/.npm-global/bin/claude",
-            "/usr/local/bin/claude",
-            "/usr/bin/claude"
-        ]
-
-        for path in fallback_paths:
-            if os.path.exists(path) and os.access(path, os.X_OK) and path != sys.argv[0]:
-                return path
-        return None
-
-    def execute_claude(self, args):
-        \"\"\"Execute Claude with integrated status\"\"\"
-        # Show status before every execution
-        self.show_integrated_status()
-
-        # Find Claude binary
-        claude_binary = self.find_claude_binary()
-        if not claude_binary:
-            print(f"{{self.color('❌ Claude binary not found', 'red')}}")
-            return 1
-
-        try:
-            # Execute Claude
-            result = subprocess.run([claude_binary] + args)
-            return result.returncode
-        except KeyboardInterrupt:
-            print(f"\\n{{{{self.color('⏹️  Claude interrupted', 'yellow')}}}}")
-            return 130
-        except Exception as e:
-            print(f"{{{{self.color(f'❌ Error: {{e}}', 'red')}}}}")
-            return 1
-
-def main():
-    claude_system = ClaudeMasterSystem()
-
-    # Handle special flags
-    args = sys.argv[1:]
-
-    if '--status-only' in args:
-        claude_system.show_integrated_status()
-        return 0
-    elif '--no-status' in args:
-        claude_system.show_status = False
-        args.remove('--no-status')
-
-    # Execute Claude with integrated status
-    return claude_system.execute_claude(args)
-
-if __name__ == "__main__":
-    sys.exit(main())'''
-
-    def _generate_zsh_wrapper(self, claude_binary: Path) -> str:
-        """Generate zsh-compatible wrapper script"""
-        return f'''#!/bin/zsh
-# Claude Enhanced Wrapper - Auto-generated by Claude Enhanced Installer
-# ZSH-compatible version with recursion protection
-
-# Detect if we're being called recursively
-if [[ "${{CLAUDE_WRAPPER_ACTIVE}}" == "true" ]]; then
-    print "Error: Claude wrapper recursion detected" >&2
-    exit 1
-fi
-
-# Set recursion protection
-export CLAUDE_WRAPPER_ACTIVE=true
-
-# Cleanup function
-cleanup() {{
-    unset CLAUDE_WRAPPER_ACTIVE
-}}
-
-# Register cleanup
-trap cleanup EXIT
-
-# Real Claude binary path
-CLAUDE_BINARY="{claude_binary}"
-
-# Verify binary exists
-if [[ ! -f "$CLAUDE_BINARY" ]]; then
-    print "Error: Claude binary not found at $CLAUDE_BINARY" >&2
-    exit 1
-fi
-
-# Execute with proper permissions and error handling
-if [[ "$CLAUDE_BINARY" == *.js ]]; then
-    # Node.js script
-    exec node "$CLAUDE_BINARY" "$@"
-else
-    # Direct binary
-    exec "$CLAUDE_BINARY" "$@"
-fi'''
-
-    def _generate_enhanced_master_script(self) -> str:
-        """Generate the enhanced master script"""
-        return f'''#!/bin/bash
-ORCHESTRATOR_PATH=\"\$PROJECT_ROOT/agents/src/python/production_orchestrator.py\"
-CACHE_DIR=\"\$HOME/.cache/claude\"
-AGENTS_BRIDGE=\"\$HOME/.local/bin/claude-agent\"
-LEARNING_CLI=\"\$HOME/.local/bin/claude-learning\"
-
-# Feature flags - can be disabled via environment variables
-CLAUDE_PERMISSION_BYPASS="${{CLAUDE_PERMISSION_BYPASS:-true}}"
-PICMCS_ENABLED="${{PICMCS_ENABLED:-false}}"
-LEARNING_ML_ENABLED="${{LEARNING_ML_ENABLED:-false}}"
-LEARNING_DOCKER_AUTO_START="${{LEARNING_DOCKER_AUTO_START:-true}}"
-
-# Create cache directory
-mkdir -p "$CACHE_DIR"
-
-# Colors for output
-RED=\"\\033[0;31m\"
-GREEN=\"\\033[0;32m\"
-YELLOW=\"\\033[1;33m\"
-CYAN=\"\\033[0;36m\"
-BOLD=\"\\033[1m\"
-RESET=\"\\033[0m\"
-
-# Logging function
-log() {{
-    echo -e "${{CYAN}}[Claude Master]${{RESET}} $1"
-}}
-
-# Status display
-show_status() {{
-    echo -e "${{BOLD}}${{CYAN}}Claude Master System Status:${{RESET}}"
-    echo -e "  ${{GREEN}}✓${{RESET}} Claude Binary: $CLAUDE_BINARY"
-    echo -e "  ${{GREEN}}✓${{RESET}} Permission Bypass: $([[ "$CLAUDE_PERMISSION_BYPASS" == "true" ]] && echo "Enabled" || echo "Disabled")"
-
-    # Check orchestrator
-    if [[ -f "$ORCHESTRATOR_PATH" ]]; then
-        echo -e "  ${{GREEN}}✓${{RESET}} Orchestrator: Available"
-    else
-        echo -e "  ${{YELLOW}}⚠${{RESET}} Orchestrator: Not found"
-    fi
-
-    # Check agents bridge
-    if [[ -f "$AGENTS_BRIDGE" ]]; then
-        echo -e "  ${{GREEN}}✓${{RESET}} Agents Bridge: Available"
-    else
-        echo -e "  ${{YELLOW}}⚠${{RESET}} Agents Bridge: Not installed"
-    fi
-
-    # Check learning system
-    if [[ -f "$LEARNING_CLI" ]]; then
-        echo -e "  ${{GREEN}}✓${{RESET}} Learning System: Available"
-    else
-        echo -e "  ${{YELLOW}}⚠${{RESET}} Learning System: Not installed"
-    fi
-
-    # Check Docker
-    if command -v docker >/dev/null && docker ps | grep claude-postgres >/dev/null 2>&1; then
-        echo -e "  ${{GREEN}}✓${{RESET}} Database: Running (PostgreSQL)"
-    else
-        echo -e "  ${{YELLOW}}⚠${{RESET}} Database: Not running"
-    fi
-}}
-
-# Auto permission bypass check
-should_bypass_permissions() {{
-    # Always bypass if explicitly enabled
-    [[ "$CLAUDE_PERMISSION_BYPASS" == "true" ]] && return 0
-
-    # Check for headless/server environment
-    if [[ -n "${{SSH_CLIENT:-}}" ]] || [[ -n "${{SSH_TTY:-}}" ]] || [[ -f "/.dockerenv" ]]; then
-        return 0
-    fi
-
-    # Default to no bypass for desktop environments
-    return 1
-}}
-
-# Help display
-show_help() {{
-    cat << "EOF"
-Claude Master System with Auto Permission Bypass
-================================================
-Commands:
-  claude [args]           - Run Claude (with auto permission bypass)
-  claude --safe [args]    - Run Claude without permission bypass
-  claude --status         - Show status
-  claude --list-agents    - List agents
-  claude --orchestrator   - Launch Python orchestrator UI
-
-Environment:
-  CLAUDE_PERMISSION_BYPASS=false  - Disable auto permission bypass
-  PICMCS_ENABLED=false           - Disable PICMCS v3.0 context optimization
-  LEARNING_ML_ENABLED=false      - Disable machine learning features
-  LEARNING_DOCKER_AUTO_START=true - Enable automatic Docker container startup
-EOF
-}}
-
-# Main command handling
-main() {{
-    # Handle special commands
-    case "${{1:-}}" in
-        "--status")
-            show_status
-            return 0
-            ;;
-        "--list-agents")
-            if [[ -f "$AGENTS_BRIDGE" ]]; then
-                "$AGENTS_BRIDGE" list
-            else
-                echo -e "${{YELLOW}}⚠${{RESET}} Agents bridge not installed. Run: python3 claude-enhanced-installer.py --mode=full"
-            fi
-            return 0
-            ;;
-        "--orchestrator")
-            if [[ -f "$ORCHESTRATOR_PATH" ]]; then
-                log "Launching Python orchestrator UI..."
-                cd "$(dirname "$ORCHESTRATOR_PATH")"
-                python3 "$ORCHESTRATOR_PATH" "${{@:2}}"
-            else
-                echo -e "${{RED}}✗${{RESET}} Orchestrator not found. Install with: python3 claude-enhanced-installer.py --mode=full"
-                return 1
-            fi
-            return $?
-            ;;
-        "--help"|"-h")
-            show_help
-            return 0
-            ;;
-        "--safe")
-            # Run without permission bypass
-            shift
-            log "Running in safe mode (no permission bypass)"
-            exec "$CLAUDE_BINARY" "$@"
-            ;;
-    esac
-
-    # Verify Claude binary exists
-    if [[ ! -f "$CLAUDE_BINARY" ]]; then
-        echo -e "${{RED}}✗${{RESET}} Claude binary not found at $CLAUDE_BINARY"
-        echo "Install Claude with: npm install -g @anthropic-ai/claude-code"
-        return 1
-    fi
-
-    # Build command with auto permission bypass
-    local claude_args=()
-
-    # Detect Claude version for feature compatibility
-    local claude_version=""
-    if command -v "$CLAUDE_BINARY" >/dev/null 2>&1; then
-        claude_version=$("$CLAUDE_BINARY" --version 2>/dev/null | grep -oP "\\d+\\.\\d+\\.\\d+" || echo "1.0.0")
-    fi
-
-    # Add permission bypass if enabled (support both old and new flags)
-    if should_bypass_permissions; then
-        # Check if version 2.0+ for new permission mode flag
-        if [[ "$claude_version" == 2.* ]] || [[ "$claude_version" > "2." ]]; then
-            claude_args+=("--permission-mode" "bypassPermissions")
-            log "Permission bypass enabled (v2.0+ mode) - {self.system_info.environment_type.value} environment"
-        else
-            # Fallback to legacy flag for older versions
-            claude_args+=("--dangerously-skip-permissions")
-            log "Auto permission bypass enabled (legacy mode) - {self.system_info.environment_type.value} environment"
-        fi
-    fi
-
-    # Add checkpoint support for Claude 2.0+
-    if [[ "$claude_version" == 2.* ]] || [[ "$claude_version" > "2." ]]; then
-        # Enable checkpoints by default (can rewind with Esc Esc or /rewind)
-        export CLAUDE_CHECKPOINTS="${{CLAUDE_CHECKPOINTS:-true}}"
-    fi
-
-    # Add original arguments
-    claude_args+=("$@")
-
-    # Execute Claude with enhanced features
-    exec "$CLAUDE_BINARY" "${{claude_args[@]}}"
-}}
-
-# Run main function with all arguments
-main "$@"
-'''
 
     def _test_enhanced_wrapper(self, wrapper_path: Path) -> bool:
         """Test enhanced wrapper script functionality"""
@@ -2784,7 +2359,7 @@ export NPU_MILITARY_MODE={military_mode}
 # Provides enhanced functionality and error handling with dynamic path resolution
 
 # Dynamic project root detection
-detect_project_root() {{
+detect_project_root() {
     # Check agents symlink location first
     if [[ -L "$HOME/.local/share/claude/agents" ]]; then
         local agents_target
@@ -2797,9 +2372,9 @@ detect_project_root() {{
 
     # Check common locations
     local locations=(
-        "${project_root}"
+        "PROJECT_ROOT_PLACEHOLDER"
         "$HOME/Documents/Claude"
-        "${project_root}"
+        "PROJECT_ROOT_PLACEHOLDER"
         "$PWD"
     )
 
@@ -2821,6 +2396,7 @@ export CLAUDE_PROJECT_ROOT=$(detect_project_root)
 # Launch Claude with enhanced features
 exec claude "$@"
 '''
+            script_content = script_content.replace("PROJECT_ROOT_PLACEHOLDER", str(self.project_root))
 
             launch_script.write_text(script_content)
             launch_script.chmod(0o755)
@@ -2851,7 +2427,6 @@ exec claude "$@"
 
         self._print_warning("Neither 'docker compose' nor 'docker-compose' found.")
         return None
-
     def install_docker_database(self) -> bool:
         """Install Docker-based PostgreSQL database with pgvector"""
         self._print_section("Installing Docker database system")
@@ -2998,7 +2573,6 @@ CREATE INDEX IF NOT EXISTS idx_learning_analytics_category ON enhanced_learning.
 
 -- Grant permissions
 GRANT ALL PRIVILEGES ON SCHEMA enhanced_learning TO claude_agent;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA enhanced_learning TO claude_agent;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agent;
 """
 
@@ -3046,455 +2620,9 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
             self._print_error(f"Failed to install Docker database: {e}")
             return False
 
-    def install_global_agents_bridge(self) -> bool:
-        """Install global agents bridge for 60+ agent ecosystem"""
-        self._print_section("Installing global agents bridge")
 
-        try:
-            # Create bridge directory
-            bridge_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "bridge"
-            bridge_dir.mkdir(parents=True, exist_ok=True)
 
-            # Create agent registry
-            registry_content = {
-                "version": "10.0",
-                "agents": {},
-                "last_updated": time.time(),
-                "total_agents": 0
-            }
 
-            # Discover agents from source
-            agents_source = self.project_root / "agents"
-            if agents_source.exists():
-                for agent_file in agents_source.glob("*.md"):
-                    if agent_file.name != "Template.md":
-                        agent_name = agent_file.stem.lower().replace("-", "_")
-                        registry_content["agents"][agent_name] = {
-                            "file": str(agent_file),
-                            "name": agent_file.stem,
-                            "status": "active"
-                        }
-
-            registry_content["total_agents"] = len(registry_content["agents"])
-
-            # Write registry
-            registry_file = bridge_dir / "agents_registry.json"
-            registry_file.write_text(json.dumps(registry_content, indent=2))
-
-            # Create claude-agent command
-            agent_script = self.local_bin / "claude-agent"
-            agent_content = f'''#!/bin/bash
-# Claude Agents Bridge - Global agent access
-# Provides command-line access to 60+ specialized agents
-
-BRIDGE_DIR="{bridge_dir}"
-REGISTRY_FILE="$BRIDGE_DIR/agents_registry.json"
-
-# Show help
-show_help() {{
-    cat << "EOF"
-Claude Agents Bridge v10.0
-Command-line access to 60+ specialized agents
-
-Usage:
-  claude-agent list                    # List all agents
-  claude-agent status                  # Show system status
-  claude-agent <agent-name> <prompt>   # Invoke agent
-
-Examples:
-  claude-agent director "Create strategic plan"
-  claude-agent security "Audit system vulnerabilities"
-  claude-agent optimizer "Improve performance"
-
-Available Agents:
-  Command & Control: director, projectorchestrator
-  Security: security, bastion, cryptoexpert, quantumguard
-  Development: architect, constructor, debugger, testbed
-  Languages: c-internal, python-internal, rust-internal
-  And 50+ more specialized agents...
-EOF
-}}
-
-# List agents
-list_agents() {{
-    if [[ -f "$REGISTRY_FILE" ]]; then
-        python3 -c "
-import json
-with open('$REGISTRY_FILE') as f:
-    data = json.load(f)
-print(f'📊 Total Agents: {{{{data[\"total_agents\"]}}}}')
-print('\\n🤖 Available Agents:')
-for name, info in sorted(data['agents'].items()):
-    print(f'  {{{{name:20}}}} - {{{{info[\"name\"]}}}}')
-"
-    else
-        echo "❌ Agent registry not found"
-        exit 1
-    fi
-}}
-
-# Show status
-show_status() {{
-    echo "Claude Agents Bridge v10.0 Status:"
-    echo "  Registry: $REGISTRY_FILE"
-    if [[ -f "$REGISTRY_FILE" ]]; then
-        echo "  Status: ✅ Operational"
-        AGENT_COUNT=$(python3 -c "import json; print(json.load(open('$REGISTRY_FILE'))['total_agents'])")
-        echo "  Agents: $AGENT_COUNT available"
-    else
-        echo "  Status: ❌ Registry not found"
-    fi
-}}
-
-# Main command handling
-case "$1" in
-    "list"|"ls")
-        list_agents
-        ;;
-    "status"|"stat")
-        show_status
-        ;;
-    "help"|"--help"|"-h"|"")
-        show_help
-        ;;
-    *)
-        # Agent invocation
-        AGENT_NAME="$1"
-        shift
-        PROMPT="$*"
-
-        if [[ -z "$AGENT_NAME" ]] || [[ -z "$PROMPT" ]]; then
-            echo "❌ Usage: claude-agent <agent-name> <prompt>"
-            exit 1
-        fi
-
-        echo "🤖 Invoking agent: $AGENT_NAME"
-        echo "📝 Prompt: $PROMPT"
-        echo "⚠️  Note: Direct agent invocation requires Claude Code Task tool integration"
-        echo "💡 For now, this provides agent discovery and registry management"
-        ;;
-esac
-'''
-
-            agent_script.write_text(agent_content)
-            agent_script.chmod(0o755)
-
-            self._print_success("Global agents bridge installed")
-            return True
-
-        except Exception as e:
-            self._print_error(f"Failed to install global agents bridge: {e}")
-            return False
-
-    def setup_learning_system(self) -> bool:
-        """Setup ML-powered learning and analytics system"""
-        self._print_section("Setting up learning system")
-
-        try:
-            # Create learning directory
-            learning_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "learning"
-            learning_dir.mkdir(parents=True, exist_ok=True)
-
-            # Learning dependencies are now installed via requirements.txt in setup_python_venv
-            self._print_info("Learning system dependencies are handled by the main venv setup.")
-
-            # Create learning configuration
-            learning_config = {
-                "version": "3.1",
-                "database": {
-                    "host": "localhost",
-                    "port": 5433,
-                    "database": "claude_agents_auth",
-                    "user": "claude_agent",
-                    "password": "claude_secure_2024"
-                },
-                "ml_features": {
-                    "agent_selection": True,
-                    "performance_prediction": True,
-                    "adaptive_strategies": True,
-                    "vector_embeddings": True
-                },
-                "docker_integration": {
-                    "enabled": True,
-                    "auto_start": True,
-                    "container_name": "claude-postgres"
-                }
-            }
-
-            config_file = learning_dir / "config.json"
-            config_file.write_text(json.dumps(learning_config, indent=2))
-
-            # Create learning CLI script
-            learning_cli = self.local_bin / "claude-learning"
-            cli_content = f'''#!/bin/bash
-# Claude Learning System CLI
-# ML-powered performance analytics and optimization
-
-LEARNING_DIR="{learning_dir}"
-CONFIG_FILE="$LEARNING_DIR/config.json"
-
-show_help() {{
-    cat << "EOF"
-Claude Learning System v3.1
-ML-powered performance analytics and optimization
-
-Usage:
-  claude-learning status      # Show system status
-  claude-learning dashboard   # View performance dashboard
-  claude-learning export     # Export learning data
-  claude-learning analyze    # Run performance analysis
-
-Features:
-  • ML-powered agent selection
-  • Performance prediction and optimization
-  • Vector embeddings for task similarity
-  • Real-time analytics dashboard
-EOF
-}}
-
-check_database() {{
-    if docker ps | grep claude-postgres >/dev/null; then
-        echo "✅ Database: Running"
-        return 0
-    else
-        echo "❌ Database: Not running"
-        return 1
-    fi
-}}
-
-show_status() {{
-    echo "Claude Learning System Status:"
-    echo "  Config: $CONFIG_FILE"
-    if [[ -f "$CONFIG_FILE" ]]; then
-        echo "  Configuration: ✅ Found"
-    else
-        echo "  Configuration: ❌ Missing"
-    fi
-
-    check_database
-
-    if command -v docker >/dev/null; then
-        echo "  Docker: ✅ Available"
-    else
-        echo "  Docker: ❌ Not available"
-    fi
-}}
-
-case "$1" in
-    "status")
-        show_status
-        ;;
-    "dashboard")
-        echo "📊 Opening learning dashboard..."
-        echo "💡 Access via: http://localhost:5433 (when implemented)"
-        ;;
-    "export")
-        echo "📤 Exporting learning data..."
-        echo "💡 Data export functionality (when implemented)"
-        ;;
-    "analyze")
-        echo "🔍 Running performance analysis..."
-        echo "💡 Analysis functionality (when implemented)"
-        ;;
-    *)
-        show_help
-        ;;
-esac
-'''
-
-            learning_cli.write_text(cli_content)
-            learning_cli.chmod(0o755)
-
-            self._print_success("Learning system setup complete")
-            return True
-
-        except Exception as e:
-            self._print_error(f"Failed to setup learning system: {e}")
-            return False
-
-    def setup_auto_calibrating_think_mode(self) -> bool:
-        """Setup auto-calibrating think mode system with PostgreSQL integration"""
-        self._print_section("Setting up auto-calibrating think mode system")
-
-        try:
-            # Create think mode directory
-            think_mode_dir = self.system_info.home_dir / ".local" / "share" / "claude" / "think_mode"
-            think_mode_dir.mkdir(parents=True, exist_ok=True)
-
-            # Copy think mode components from agents/src/python/
-            think_mode_source = self.project_root / "agents" / "src" / "python"
-            if not think_mode_source.exists():
-                self._print_warning("Think mode source directory not found, creating minimal setup")
-                return self._create_minimal_think_mode_setup(think_mode_dir)
-
-            # Components to copy (with source locations)
-            components = [
-                ("auto_calibrating_think_mode.py", "auto_calibrating_think_mode.py"),
-                ("think_mode_calibration_schema.sql", "think_mode_calibration_schema.sql"),
-                ("claude_agents/integration/claude_code_think_hooks.py", "claude_code_think_hooks.py"),
-                ("lightweight_think_mode_selector.py", "lightweight_think_mode_selector.py")
-            ]
-
-            copied_components = []
-            for source_name, target_name in components:
-                source_file = think_mode_source / source_name
-                target_file = think_mode_dir / target_name
-
-                if source_file.exists():
-                    try:
-                        import shutil
-                        shutil.copy2(source_file, target_file)
-                        copied_components.append(target_name)
-                        self._print_info(f"Copied {target_name}")
-                    except Exception as e:
-                        self._print_warning(f"Could not copy {target_name}: {e}")
-                else:
-                    self._print_warning(f"Component not found: {source_name}")
-
-            if not copied_components:
-                self._print_warning("No think mode components found, creating minimal setup")
-                return self._create_minimal_think_mode_setup(think_mode_dir)
-
-            # Think mode dependencies are now installed via requirements.txt in setup_python_venv
-            self._print_info("Think mode dependencies are handled by the main venv setup.")
-
-            # Deploy PostgreSQL schema if database is available
-            if self._check_docker_postgres():
-                self._deploy_think_mode_schema(think_mode_dir)
-
-            # Create think mode configuration
-            think_mode_config = {
-                "version": "1.0",
-                "auto_calibration": {
-                    "enabled": True,
-                    "learning_rate": 0.1,
-                    "adaptation_threshold": 0.05,
-                    "rollback_on_performance_drop": True
-                },
-                "database": {
-                    "host": "localhost",
-                    "port": 5433,
-                    "database": "claude_agents_auth",
-                    "user": "claude_agent",
-                    "password": "claude_secure_2024",
-                    "table_prefix": "think_mode_"
-                },
-                "complexity_scoring": {
-                    "keywords_weight": 0.2,
-                    "dependencies_weight": 0.3,
-                    "context_weight": 0.25,
-                    "reasoning_weight": 0.25,
-                    "min_think_threshold": 0.3
-                },
-                "claude_integration": {
-                    "hook_enabled": True,
-                    "decision_latency_ms": 500,
-                    "fallback_mode": "lightweight"
-                }
-            }
-
-            config_file = think_mode_dir / "config.json"
-            config_file.write_text(json.dumps(think_mode_config, indent=2))
-
-            # Create think mode CLI script
-            think_mode_cli = self.local_bin / "claude-think-mode"
-            cli_content = f'''#!/bin/bash
-# Claude Auto-Calibrating Think Mode System CLI
-# Intelligent complexity-aware think mode selection
-
-THINK_MODE_DIR="{think_mode_dir}"
-CONFIG_FILE="$THINK_MODE_DIR/config.json"
-
-show_help() {{
-    cat << "EOF"
-Claude Auto-Calibrating Think Mode System v1.0
-Intelligent complexity-aware think mode selection
-
-Usage:
-  claude-think-mode status      # Show system status
-  claude-think-mode calibrate   # Run calibration cycle
-  claude-think-mode test        # Test think mode selection
-  claude-think-mode dashboard   # View analytics dashboard
-  claude-think-mode config      # Show configuration
-
-Features:
-  • Auto-calibrating complexity scoring (fixes 0.0-0.1 issue)
-  • PostgreSQL analytics integration (port 5433)
-  • Real-time decision feedback learning
-  • <500ms decision latency with NPU acceleration
-  • Automatic rollback for poor performance
-EOF
-}}
-
-check_database() {{
-    if docker ps | grep claude-postgres >/dev/null; then
-        echo "✅ Database: Running (PostgreSQL + pgvector)"
-        return 0
-    else
-        echo "❌ Database: Not running"
-        return 1
-    fi
-}}
-
-show_status() {{
-    echo "Claude Auto-Calibrating Think Mode Status:"
-    echo "  Config: $CONFIG_FILE"
-    if [[ -f "$CONFIG_FILE" ]]; then
-        echo "  Configuration: ✅ Found"
-        echo "  Components: {len(copied_components)} installed"
-    else
-        echo "  Configuration: ❌ Missing"
-    fi
-
-    check_database
-
-    if [[ -f "$THINK_MODE_DIR/auto_calibrating_think_mode.py" ]]; then
-        echo "  Think Mode Engine: ✅ Installed"
-    else
-        echo "  Think Mode Engine: ❌ Missing"
-    fi
-
-    if [[ -f "$THINK_MODE_DIR/claude_code_think_hooks.py" ]]; then
-        echo "  Claude Code Hooks: ✅ Installed"
-    else
-        echo "  Claude Code Hooks: ❌ Missing"
-    fi
-}}
-
-run_calibration() {{
-    echo "Running think mode calibration cycle..."
-    if [[ -f "$THINK_MODE_DIR/auto_calibrating_think_mode.py" ]]; then
-        cd "$THINK_MODE_DIR"
-        python3 auto_calibrating_think_mode.py --calibrate
-    else
-        echo "❌ Think mode engine not found"
-        exit 1
-    fi
-}}
-
-case "$1" in
-    status)     show_status ;;
-    calibrate)  run_calibration ;;
-    test)       echo "Running think mode selection test..."; cd "$THINK_MODE_DIR" && python3 lightweight_think_mode_selector.py --test ;;
-    dashboard)  echo "Opening analytics dashboard..."; cd "$THINK_MODE_DIR" && python3 auto_calibrating_think_mode.py --dashboard ;;
-    config)     cat "$CONFIG_FILE" ;;
-    help|--help|-h) show_help ;;
-    *)          show_help ;;
-esac
-'''
-
-            think_mode_cli.write_text(cli_content)
-            think_mode_cli.chmod(0o755)
-
-            self._print_success("Auto-calibrating think mode system setup complete")
-            self._print_info(f"Components installed: {', '.join(copied_components)}")
-            self._print_info("Use 'claude-think-mode status' to check system health")
-            self._print_info("Use 'claude-think-mode calibrate' to run initial calibration")
-            return True
-
-        except Exception as e:
-            self._print_error(f"Failed to setup auto-calibrating think mode system: {e}")
-            return False
 
     def _check_docker_postgres(self) -> bool:
         """Check if Docker PostgreSQL container is running"""
@@ -3828,11 +2956,11 @@ if __name__ == "__main__":
         try:
             # Create update checker script
             update_script = self.local_bin / "claude-update-checker"
-            script_content = f'''#!/bin/bash
+            script_content = '''#!/bin/bash
 # Claude Code Update Checker
 # Automatically checks for updates and notifies user
 
-CLAUDE_INSTALLER="{Path(__file__).resolve()}"
+CLAUDE_INSTALLER="INSTALLER_PATH_PLACEHOLDER"
 LOG_FILE="$HOME/.local/share/claude/logs/update-check.log"
 
 # Create log directory
@@ -3848,6 +2976,7 @@ else
     echo "$(date): Update check failed" >> "$LOG_FILE"
 fi
 '''
+            script_content = script_content.replace("INSTALLER_PATH_PLACEHOLDER", str(Path(__file__).resolve()))
 
             update_script.write_text(script_content)
             update_script.chmod(0o755)
@@ -4088,18 +3217,6 @@ fi
             if self.install_docker_database():
                 success_count += 1
 
-        # Step 8: Install global agents bridge (if in full mode)
-        if mode == InstallationMode.FULL:
-            total_steps += 1
-            if self.install_global_agents_bridge():
-                success_count += 1
-
-        # Step 9: Setup learning system (if in full mode)
-        if mode == InstallationMode.FULL:
-            total_steps += 1
-            if self.setup_learning_system():
-                success_count += 1
-
         # Step 9.1: Setup hybrid bridge (if in full mode)
         if mode == InstallationMode.FULL:
             total_steps += 1
@@ -4166,12 +3283,6 @@ fi
             if self.run_unified_optimization_setup():
                 success_count += 1
 
-        # Step 9.5: Setup auto-calibrating think mode system (if in full mode)
-        if mode == InstallationMode.FULL:
-            total_steps += 1
-            if self.setup_auto_calibrating_think_mode():
-                success_count += 1
-
         # Step 10: Setup update scheduler (if in full mode)
         if mode == InstallationMode.FULL:
             total_steps += 1
@@ -4187,49 +3298,10 @@ fi
         self._print_section("Installation Results")
         self._print_info(f"Completed {success_count}/{total_steps} steps successfully")
 
-        # Military deployment phase
-        if self.military_mode and hasattr(self, 'deploy_military_optimization'):
-            self._print_info("🚀 Starting military-grade 40+ TFLOPS optimization...")
-            if self.deploy_military_optimization():
-                self._print_success("✅ Military optimization deployed successfully")
-                success_count += 1
-            else:
-                self._print_warning("⚠️ Military optimization had issues")
-            total_steps += 1
-
-        # Local Opus deployment phase
-        if self.local_opus and hasattr(self, 'deploy_local_opus'):
-            self._print_info("🎯 Starting local Opus inference deployment...")
-            if self.deploy_local_opus():
-                self._print_success("✅ Local Opus deployment completed")
-                success_count += 1
-            else:
-                self._print_warning("⚠️ Local Opus deployment had issues")
-            total_steps += 1
-
         if success_count == total_steps:
             self._print_success("Installation completed successfully!")
-
-            # Enhanced completion message for military mode
-            if self.military_mode or self.local_opus:
-                self._print_info("")
-                self._print_info("🎯 Military-Grade Installation Complete!")
-                if self.military_mode:
-                    self._print_info("   ✅ 40+ TFLOPS optimization active")
-                    self._print_info("   ✅ NPU military mode enabled (26.4 TOPS)")
-                    self._print_info("   ✅ 98-agent coordination deployed")
-                if self.local_opus:
-                    self._print_info("   ✅ Local Opus inference ready")
-                    self._print_info("   ✅ Zero-token local routing enabled")
-                    self._print_info("   ✅ Start server: ./start_local_opus.sh")
-                self._print_info("")
-
             self._print_info("Please restart your shell or run 'source ~/.bashrc' (or ~/.zshrc)")
             self._print_info("Then test with: claude --help")
-
-            if self.local_opus:
-                self._print_info("Test local inference: python3 orchestration/test_local_routing.py")
-
             return True
         else:
             self._print_warning("Installation completed with some issues")
@@ -4241,28 +3313,24 @@ fi
             return True
 
         while True:
-            try:
-                answer = input(f"{question} [y/N]: ").strip().lower()
-                if answer in ['y', 'yes']:
-                    return True
-                elif answer in ['n', 'no', '']:
-                    return False
-                else:
-                    print("Please answer 'y' or 'n'")
-            except KeyboardInterrupt:
-                print("\nAborted by user")
-                sys.exit(1)
+            answer = input(f"{question} [y/N]: ").strip().lower()
+            if answer in ['y', 'yes']:
+                return True
+            elif answer in ['n', 'no', '']:
+                return False
+            else:
+                print("Please answer 'y' or 'n'")
 
     # Output formatting methods
     def _print_header(self):
-        print(f"{Colors.BOLD}{Colors.CYAN}{'='*70}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.CYAN}Claude Enhanced Installer v2.0{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.CYAN}Python-based installer with robust error handling{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.CYAN}{'='*70}{Colors.RESET}")
+        print("="*70)
+        print("Claude Enhanced Installer v2.0")
+        print("Python-based installer with robust error handling")
+        print("="*70)
         print()
 
         # System info
-        print(f"{Colors.BOLD}System Information:{Colors.RESET}")
+        print("System Information:")
         print(f"  Platform: {self.system_info.platform} ({self.system_info.architecture})")
         print(f"  Environment: {self._format_environment_info()}")
         print(f"  Shell: {self.system_info.shell.value}")
@@ -4275,76 +3343,37 @@ fi
         print()
 
     def _print_section(self, title: str):
-        print(f"{Colors.BOLD}{Colors.BLUE}{'─'*50}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.BLUE}{title}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.BLUE}{'─'*50}{Colors.RESET}")
+        print("─"*50)
+        print(title)
+        print("─"*50)
         self.logger.info(f"SECTION: {title}")
 
     def _print_success(self, message: str):
-        print(f"{Colors.GREEN}✓ {message}{Colors.RESET}")
+        print(f"✓ {message}")
         self.logger.info(f"SUCCESS: {message}")
 
     def _print_error(self, message: str):
-        print(f"{Colors.RED}✗ {message}{Colors.RESET}")
+        print(f"✗ {message}")
         self.logger.error(f"ERROR: {message}")
 
     def _print_warning(self, message: str):
-        print(f"{Colors.YELLOW}⚠ {message}{Colors.RESET}")
+        print(f"⚠ {message}")
         self.logger.warning(f"WARNING: {message}")
 
     def _print_info(self, message: str):
-        print(f"{Colors.CYAN}ℹ {message}{Colors.RESET}")
+        print(f"ℹ {message}")
         self.logger.info(f"INFO: {message}")
 
     def _print_dim(self, message: str):
-        print(f"{Colors.DIM}{message}{Colors.RESET}")
+        print(message)
         self.logger.debug(f"DIM: {message}")
 
     def _format_environment_info(self) -> str:
         """Format environment information for display"""
-        env_type = self.system_info.environment_type
-
-        # Environment type with appropriate emoji
-        env_icons = {
-            EnvironmentType.HEADLESS: "🖥️  Headless Server",
-            EnvironmentType.KDE: "🎨 KDE Plasma",
-            EnvironmentType.GNOME: "🐧 GNOME Desktop",
-            EnvironmentType.XFCE: "🖱️  XFCE Desktop",
-            EnvironmentType.WAYLAND: "🌊 Wayland",
-            EnvironmentType.X11: "🪟 X11",
-            EnvironmentType.UNKNOWN_GUI: "❓ Unknown GUI"
-        }
-
-        env_display = env_icons.get(env_type, env_type.value.title())
-
-        # Add display server info if available
-        if self.system_info.display_server:
-            env_display += f" ({self.system_info.display_server})"
-
-        # Add session info if available
-        if self.system_info.desktop_session and self.system_info.desktop_session != "unknown":
-            env_display += f" [{self.system_info.desktop_session}]"
-
-        return env_display
+        return self.system_info.environment_type.value
 
     def _adapt_installation_for_environment(self, mode: InstallationMode) -> InstallationMode:
         """Adapt installation mode based on detected environment"""
-        env_type = self.system_info.environment_type
-
-        # Environment-specific adaptations
-        if env_type == EnvironmentType.HEADLESS:
-            self._print_info("🖥️  Headless environment detected - optimizing for server deployment")
-            # Force full mode for headless to ensure all server components
-            if mode == InstallationMode.QUICK:
-                self._print_info("📦 Upgrading to full installation for headless server optimization")
-                return InstallationMode.FULL
-
-        elif env_type in [EnvironmentType.KDE, EnvironmentType.GNOME, EnvironmentType.XFCE]:
-            self._print_info(f"🎨 Desktop environment detected ({env_type.value.upper()}) - enabling GUI optimizations")
-
-        elif env_type in [EnvironmentType.WAYLAND, EnvironmentType.X11]:
-            self._print_info(f"🪟 Display server detected ({self.system_info.display_server}) - configuring graphics support")
-
         return mode
 
     def _get_environment_specific_packages(self) -> List[str]:
@@ -4355,7 +3384,6 @@ fi
         if env_type == EnvironmentType.HEADLESS:
             # Headless server packages
             packages.extend([
-                "docker.io", "docker-compose",
                 "python3-venv", "python3-full",
                 "curl", "wget", "git",
                 "postgresql-client",  # For database connectivity
@@ -4496,27 +3524,26 @@ def main():
         local_opus=enable_local_opus
     )
 
-    try:
-        if args.detect_only:
-            # Just detect and report
-            installer._print_header()
-            installations = installer.detect_claude_installations()
+    if args.detect_only:
+        # Just detect and report
+        installer._print_header()
+        installations = installer.detect_claude_installations()
 
-            if installations:
-                print(f"{Colors.BOLD}Found {len(installations)} Claude installation(s):{Colors.RESET}")
-                for i, install in enumerate(installations, 1):
-                    status = "✓ Working" if install.working else "✗ Not working"
-                    print(f"  {i}. {install.installation_type}: {install.binary_path}")
-                    print(f"     Version: {install.version or 'Unknown'}")
-                    print(f"     Status: {status}")
-                    if install.details:
-                        for key, value in install.details.items():
-                            print(f"     {key}: {value}")
-                    print()
-            else:
-                print(f"{Colors.YELLOW}No Claude installations found{Colors.RESET}")
+        if installations:
+            print(f"{Colors.BOLD}Found {len(installations)} Claude installation(s):{Colors.RESET}")
+            for i, install in enumerate(installations, 1):
+                status = "✓ Working" if install.working else "✗ Not working"
+                print(f"  {i}. {install.installation_type}: {install.binary_path}")
+                print(f"     Version: {install.version or 'Unknown'}")
+                print(f"     Status: {status}")
+                if install.details:
+                    for key, value in install.details.items():
+                        print(f"     {key}: {value}")
+                print()
+        else:
+            print(f"{Colors.YELLOW}No Claude installations found{Colors.RESET}")
 
-            return
+        return
 
         if args.check_updates:
             # Check for updates only
@@ -4547,16 +3574,6 @@ def main():
         success = installer.run_installation(mode)
 
         sys.exit(0 if success else 1)
-
-    except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}Installation aborted by user{Colors.RESET}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"{Colors.RED}Installation failed with error: {e}{Colors.RESET}")
-        if args.verbose:
-            import traceback
-            traceback.print_exc()
-        sys.exit(1)
 
 
 if __name__ == "__main__":
