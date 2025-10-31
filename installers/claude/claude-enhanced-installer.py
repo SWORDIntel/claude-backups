@@ -3419,27 +3419,14 @@ fi
             return
 
         try:
-            self._print_info("🔍 Detecting MIL-SPEC hardware...")
+            self._print_info("🔍 Detecting MIL-SPEC hardware with sudo for 40+ TFLOPS...")
 
-            # Try without sudo first for non-interactive environments
-            result = self._run_command(
+            # Run with sudo for military NPU access
+            result = self._run_sudo_command(
                 ["python3", str(dsmil_script)],
-                timeout=30,
-                check=False
+                timeout=60,
+                purpose="MIL-SPEC hardware detection"
             )
-
-            # If failed and we can use sudo, try with sudo
-            if result.returncode != 0:
-                self._print_info("Retrying with sudo for enhanced detection...")
-                try:
-                    result = self._run_sudo_command(
-                        ["python3", str(dsmil_script)],
-                        timeout=60,
-                        purpose="MIL-SPEC hardware detection"
-                    )
-                except Exception:
-                    # Fall back to non-sudo result
-                    pass
 
             if result.returncode == 0:
                 self._print_success("✅ DSMIL hardware detection completed successfully")

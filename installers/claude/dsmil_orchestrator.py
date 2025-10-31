@@ -394,6 +394,10 @@ class DSMILOrchestrator:
         try:
             build_dir = self.dsmil_modules_path / "build"
 
+            # Ensure src directory exists
+            src_dir = self.dsmil_modules_path / "src"
+            src_dir.mkdir(exist_ok=True)
+
             # Use primary Makefile with DKMS integration
             makefile = build_dir / "Makefile"
             if not makefile.exists():
