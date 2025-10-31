@@ -3408,40 +3408,24 @@ fi
 
         return packages
 
-    def _run_dsmil_orchestrator(self):
-        """Run DSMIL orchestrator for MIL-SPEC hardware detection and optimization"""
-        self._print_section("Running DSMIL Hardware Detection")
+    def _alert_dsmil_optimization(self):
+        """Alert user about DSMIL optimization for 40+ TFLOPS performance"""
+        self._print_section("🚀 40+ TFLOPS Optimization Available")
 
         dsmil_script = self.project_root / "installers" / "claude" / "dsmil_orchestrator.py"
 
         if not dsmil_script.exists():
-            self._print_warning("DSMIL orchestrator not found, skipping hardware detection")
             return
 
-        try:
-            self._print_info("🔍 Detecting MIL-SPEC hardware with sudo for 40+ TFLOPS...")
-
-            # Run with sudo for military NPU access
-            result = self._run_sudo_command(
-                ["python3", str(dsmil_script)],
-                timeout=60,
-                purpose="MIL-SPEC hardware detection"
-            )
-
-            if result.returncode == 0:
-                self._print_success("✅ DSMIL hardware detection completed successfully")
-                if "hardware_detected\": true" in result.stdout:
-                    self._print_info("🎯 MIL-SPEC hardware detected - Military optimizations enabled")
-                else:
-                    self._print_info("ℹ️  No MIL-SPEC hardware detected - Standard mode active")
-            else:
-                self._print_warning("⚠️ DSMIL hardware detection completed with warnings")
-                if result.stderr:
-                    self._print_warning(f"Details: {result.stderr.strip()}")
-
-        except Exception as e:
-            self._print_warning(f"⚠️ DSMIL orchestration had issues: {e}")
-            self._print_info("Installation will continue in standard mode")
+        self._print_info("🎯 For maximum performance on MIL-SPEC hardware:")
+        self._print_info("   • Enables 26.4 TOPS military NPU mode (vs 11 TOPS standard)")
+        self._print_info("   • Activates 98-agent coordination matrix")
+        self._print_info("   • Unlocks Dell Latitude JRTC1 capabilities")
+        print()
+        self._print_info(f"{Colors.BOLD}Run this command for 40+ TFLOPS optimization:{Colors.RESET}")
+        print(f"   {Colors.CYAN}sudo python3 {dsmil_script}{Colors.RESET}")
+        print()
+        self._print_info("Note: Requires sudo for military-grade hardware access")
 
 
 def main():
@@ -3608,9 +3592,9 @@ def main():
         mode = InstallationMode(args.mode)
         success = installer.run_installation(mode)
 
-        # Run DSMIL orchestrator after successful installation
+        # Alert user about DSMIL optimization after successful installation
         if success:
-            installer._run_dsmil_orchestrator()
+            installer._alert_dsmil_optimization()
 
         sys.exit(0 if success else 1)
 
