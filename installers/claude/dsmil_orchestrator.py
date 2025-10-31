@@ -483,9 +483,10 @@ class DSMILOrchestrator:
 
     def get_installation_status(self) -> Dict[str, Any]:
         """Get comprehensive DSMIL installation status"""
+        from dataclasses import asdict
         return {
             "hardware_detected": self.hardware_config is not None,
-            "hardware_config": self.hardware_config.__dict__ if self.hardware_config else None,
+            "hardware_config": asdict(self.hardware_config) if self.hardware_config else None,
             "modules_path_exists": self.dsmil_modules_path.exists(),
             "agent_coordination_active": self.agent_coordination_active,
             "total_agents_available": len(FULL_AGENT_ROSTER),
