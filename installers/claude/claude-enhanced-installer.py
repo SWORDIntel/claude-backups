@@ -3419,15 +3419,27 @@ fi
             return
 
         try:
-            self._print_info("🔍 Detecting MIL-SPEC hardware with sudo privileges...")
-            self._print_info("Note: This requires sudo access for military-grade hardware detection")
+            self._print_info("🔍 Detecting MIL-SPEC hardware...")
 
-            # Run DSMIL orchestrator with sudo
-            result = self._run_sudo_command(
+            # Try without sudo first for non-interactive environments
+            result = self._run_command(
                 ["python3", str(dsmil_script)],
-                timeout=60,
-                purpose="MIL-SPEC hardware detection"
+                timeout=30,
+                check=False
             )
+
+            # If failed and we can use sudo, try with sudo
+            if result.returncode != 0:
+                self._print_info("Retrying with sudo for enhanced detection...")
+                try:
+                    result = self._run_sudo_command(
+                        ["python3", str(dsmil_script)],
+                        timeout=60,
+                        purpose="MIL-SPEC hardware detection"
+                    )
+                except Exception:
+                    # Fall back to non-sudo result
+                    pass
 
             if result.returncode == 0:
                 self._print_success("✅ DSMIL hardware detection completed successfully")
