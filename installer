@@ -179,7 +179,7 @@ quick_install() {
     echo ""
 
     # Run enhanced installer with military mode
-    python3 "$INSTALLER_SCRIPT" --military-mode "$@"
+    python3 "$INSTALLER_SCRIPT" --mode full "$@"
 
     # Integrate military optimization by default
     echo ""
@@ -204,15 +204,14 @@ interactive_install() {
 
     case $choice in
         1)
-            echo -e "${CYAN}Military Installation (Default)${NC}"
-            quick_install --military-mode
+            quick_install --mode full
             ;;
         2)
             echo -e "${CYAN}Military + Local Opus Installation${NC}"
-            quick_install --military-mode --local-opus
+            quick_install --mode full --local-opus
             ;;
         3)
-            quick_install --force
+            quick_install --recreate-venv
             ;;
         4)
             quick_install --recreate-venv

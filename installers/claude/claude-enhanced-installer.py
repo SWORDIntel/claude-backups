@@ -56,6 +56,7 @@ class InstallationMode(Enum):
     QUICK = "quick"
     FULL = "full"
     CUSTOM = "custom"
+    MILITARY = "military"
 
 
 class ShellType(Enum):
@@ -1254,11 +1255,70 @@ exec "{venv_claude}" "$@"
             self._print_error(f"Failed to create venv wrapper: {e}")
             return False
 
+    def _find_wrapper_source(self) -> Optional[Path]:
+        """Locate the repository-provided wrapper script to expose as `claude`."""
+        candidates: List[Path] = [
+            self.project_root / "claude-wrapper-ultimate.sh",
+            self.project_root / "claude-wrapper-ultimate-pro.sh",
+        ]
+
+        wrappers_dir = self.project_root / "installers" / "wrappers"
+        if wrappers_dir.exists():
+            candidates.extend([
+                wrappers_dir / "claude-wrapper-ultimate.sh",
+                wrappers_dir / "claude-wrapper-ultimate-pro.sh",
+                wrappers_dir / "claude-wrapper-portable-fixed.sh",
+                wrappers_dir / "claude-wrapper-portable.sh",
+                wrappers_dir / "claude-wrapper-simple.sh",
+            ])
+            for candidate in sorted(wrappers_dir.glob("claude-wrapper-*.sh")):
+                if candidate not in candidates:
+                    candidates.append(candidate)
+
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate.resolve()
+
+        return None
+
+    def _install_wrapper_symlink(self, wrapper_source: Path) -> bool:
+        """Create ~/.local/bin/claude symlink pointing at the selected wrapper script."""
+        try:
+            if not wrapper_source.exists():
+                return False
+
+            target = self.local_bin / "claude"
+            if target.exists() or target.is_symlink():
+                target.unlink()
+
+            try:
+                current_mode = wrapper_source.stat().st_mode
+                wrapper_source.chmod(current_mode | 0o111)
+            except PermissionError:
+                # If chmod fails, continue; the wrapper is already executable in repo
+                pass
+
+            target.symlink_to(wrapper_source)
+            self._print_success(f"Linked {target} -> {wrapper_source}")
+            self._print_info("Claude command now routes through repository wrapper")
+            return True
+        except Exception as e:
+            self._print_warning(f"Failed to create wrapper symlink: {e}")
+            return False
+
     def create_wrapper_script(self, claude_binary: Path) -> bool:
         """Create enhanced wrapper script with auto permission bypass and orchestration"""
         self._print_section("Creating enhanced wrapper script")
 
         try:
+            wrapper_source = self._find_wrapper_source()
+            if wrapper_source:
+                self._print_info(f"Repository wrapper detected at {wrapper_source}")
+                if self._install_wrapper_symlink(wrapper_source):
+                    return True
+                else:
+                    self._print_warning("Wrapper symlink failed; falling back to generated wrapper")
+
             wrapper_path = self.local_bin / "claude"
 
             # Always create the enhanced wrapper with full functionality
@@ -1488,7 +1548,8 @@ exec "$CLAUDE_BIN" --dangerously-skip-permissions "$@"'''
 {path_export}
 
 # Claude completion (if available)
-if command -v claude >/dev/null 2>&1; then
+if command -v claude >/dev/null 2>&1;
+then
     # Try to enable completion
     true
 fi
@@ -1528,7 +1589,8 @@ fi
 {path_export}
 
 # Claude completion (if available)
-if command -v claude >/dev/null 2>&1; then
+if command -v claude >/dev/null 2>&1;
+then
     # Try to enable completion
     true
 fi
@@ -2331,21 +2393,33 @@ export NPU_MILITARY_MODE={military_mode}
 
             try:
                 self._run_command(
-                    ["make", "-f", str(shadowgit_makefile), "all"],
-                    cwd=str(shadowgit_makefile.parent),
-                    timeout=300
+                    ["make", "clean"],
+                    cwd=self.project_root,
+                    timeout=30,
+                    check=False
                 )
-                self._print_success("Shadowgit C engine compiled successfully")
-                self._print_info("AVX2/AVX-512 acceleration available")
+
+                # Compile object files (production target requires main() which doesn't exist)
+                # Just build the objects which are the library components
+                self._run_command(
+                    ["make", "build/crypto_pow_core.o", "build/crypto_pow_patterns.o",
+                     "build/crypto_pow_behavioral.o", "build/crypto_pow_verification.o"],
+                    cwd=self.project_root,
+                    timeout=120
+                )
+
+                self._print_success("Crypto-POW C engine objects compiled successfully")
+                self._print_info("Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI)")
                 return True
+
             except subprocess.CalledProcessError as e:
-                self._print_warning("Shadowgit C compilation failed (optional feature)")
-                self._print_info("Python-only mode will still work")
-                return True  # Don't fail installation for optional component
+                self._print_warning(f"Crypto-POW C compilation had issues: {e}")
+                self._print_info("Python crypto libraries will be used instead")
+                return True  # Non-critical, Python fallback available
 
         except Exception as e:
-            self._print_warning(f"Shadowgit compilation skipped: {e}")
-            return True  # Don't fail installation
+            self._print_warning(f"Crypto-POW C engine setup failed: {e}")
+            return True  # Non-critical
 
     def create_launch_script(self) -> bool:
         """Create convenient launch script with dynamic path resolution"""
@@ -2619,7 +2693,6 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
         except Exception as e:
             self._print_error(f"Failed to install Docker database: {e}")
             return False
-
 
 
 
@@ -3170,19 +3243,17 @@ fi
             success_count += 1
 
         # Step 5: Install agents (if in full mode)
-        if mode == InstallationMode.FULL:
+        if mode in [InstallationMode.FULL, InstallationMode.MILITARY]:
             total_steps += 1
             if self.install_agents_system():
                 success_count += 1
 
-        # Step 5.1: Register agents globally (if in full mode)
-        if mode == InstallationMode.FULL:
+        if mode in [InstallationMode.FULL, InstallationMode.MILITARY]:
             total_steps += 1
             if self.register_agents_globally():
                 success_count += 1
 
-        # Step 6: Install PICMCS v3.0 (if in full mode)
-        if mode == InstallationMode.FULL:
+        if mode in [InstallationMode.FULL, InstallationMode.MILITARY]:
             total_steps += 1
             if self.install_picmcs_system():
                 success_count += 1
@@ -3552,51 +3623,47 @@ def main():
             print(f"{Colors.BOLD}Found {len(installations)} Claude installation(s):{Colors.RESET}")
             for i, install in enumerate(installations, 1):
                 status = "✓ Working" if install.working else "✗ Not working"
-                print(f"  {i}. {install.installation_type}: {install.binary_path}")
-                print(f"     Version: {install.version or 'Unknown'}")
-                print(f"     Status: {status}")
+                print(f"  {i}. {install.installation_type}: {install.binary_path} ({status})")
                 if install.details:
                     for key, value in install.details.items():
                         print(f"     {key}: {value}")
                 print()
         else:
             print(f"{Colors.YELLOW}No Claude installations found{Colors.RESET}")
-
         return
 
-        if args.check_updates:
-            # Check for updates only
-            installer._print_header()
-            latest_version = installer.check_for_claude_updates()
-            current_version = installer._get_current_claude_version()
+    if args.check_updates:
+        # Check for updates only
+        installer._print_header()
+        latest_version = installer.check_for_claude_updates()
+        current_version = installer._get_current_claude_version()
 
-            print(f"{Colors.BOLD}Claude Code Update Check:{Colors.RESET}")
-            print(f"  Current Version: {current_version or 'Unknown'}")
+        print(f"{Colors.BOLD}Claude Code Update Check:{Colors.RESET}")
+        print(f"  Current Version: {current_version or 'Unknown'}")
 
-            if latest_version:
-                print(f"  Latest Version: {latest_version}")
-                print(f"  {Colors.GREEN}✓ Update available!{Colors.RESET}")
-                print(f"\nTo update run: python3 {sys.argv[0]} --auto-update")
-            else:
-                print(f"  {Colors.GREEN}✓ Up to date{Colors.RESET}")
+        if latest_version:
+            print(f"  Latest Version: {latest_version}")
+            print(f"  {Colors.GREEN}✓ Update available!{Colors.RESET}")
+            print(f"\nTo update run: python3 {sys.argv[0]} --auto-update")
+        else:
+            print(f"  {Colors.GREEN}✓ Up to date{Colors.RESET}")
+        return
 
-            return
-
-        if args.auto_update:
-            # Perform auto-update
-            installer._print_header()
-            success = installer.auto_update_claude()
-            sys.exit(0 if success else 1)
-
-        # Run installation
-        mode = InstallationMode(args.mode)
-        success = installer.run_installation(mode)
-
-        # Alert user about DSMIL optimization after successful installation
-        if success:
-            installer._alert_dsmil_optimization()
-
+    if args.auto_update:
+        # Perform auto-update
+        installer._print_header()
+        success = installer.auto_update_claude()
         sys.exit(0 if success else 1)
+
+    # Run installation
+    mode = InstallationMode(args.mode)
+    success = installer.run_installation(mode)
+
+    # Alert user about DSMIL optimization after successful installation
+    if success:
+        installer._alert_dsmil_optimization()
+
+    sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":
