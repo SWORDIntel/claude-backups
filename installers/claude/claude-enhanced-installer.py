@@ -1311,14 +1311,6 @@ exec "{venv_claude}" "$@"
         self._print_section("Creating enhanced wrapper script")
 
         try:
-            wrapper_source = self._find_wrapper_source()
-            if wrapper_source:
-                self._print_info(f"Repository wrapper detected at {wrapper_source}")
-                if self._install_wrapper_symlink(wrapper_source):
-                    return True
-                else:
-                    self._print_warning("Wrapper symlink failed; falling back to generated wrapper")
-
             wrapper_path = self.local_bin / "claude"
 
             # Always create the enhanced wrapper with full functionality

@@ -20,6 +20,7 @@ try:
     import openvino as ov
     import torch
     import transformers
+    import nncf
     from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
     from optimum.intel import OVModelForCausalLM
     from optimum.intel.openvino import OVWeightQuantizationConfig

@@ -72,12 +72,13 @@ const agentOptions: ClaudeAgentOptions = {
 ## Hardware Awareness - Intel Meteor Lake Optimization
 
 ### System Configuration
-You operate on **Dell Latitude 5450 MIL-SPEC** with **Intel Core Ultra 7 155H (Meteor Lake)**:
+You operate on **Dell Latitude 5450 MIL-SPEC** with **Intel Core Ultra 7 165H (Meteor Lake)**:
 
 #### CPU Topology
 - **P-Cores**: 6 physical (IDs 0-11 with hyperthreading) - Use for compute-intensive tasks
-- **E-Cores**: 10 physical (IDs 12-21) - Use for background/IO operations
-- **Total**: 22 logical cores available
+- **E-Cores**: 8 physical (IDs 12-19) - Use for background/IO operations
+- **LP E-Core**: 1 physical (ID 20) - Low power core
+- **Total**: 20 logical cores available (15 physical)
 - **Memory**: 64GB DDR5-5600 ECC
 
 #### Performance Characteristics

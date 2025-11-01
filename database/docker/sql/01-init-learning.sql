@@ -39,5 +39,4 @@ CREATE INDEX IF NOT EXISTS idx_learning_analytics_category ON enhanced_learning.
 
 -- Grant permissions
 GRANT ALL PRIVILEGES ON SCHEMA enhanced_learning TO claude_agent;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA enhanced_learning TO claude_agent;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agent;

@@ -10,6 +10,10 @@ import logging
 import os
 import subprocess
 import time
+import shutil
+import getpass
+import pwd
+import grp
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
@@ -83,6 +87,85 @@ class DSMILOrchestrator:
         self.dsmil_modules_path = Path("/home/john/claude-backups/hardware/dsmil-modules")
         self.hardware_config = None
         self.agent_coordination_active = False
+
+        sudo_user = os.environ.get("SUDO_USER")
+        user_candidate = sudo_user or os.environ.get("USER") or getpass.getuser()
+        try:
+            user_record = pwd.getpwnam(user_candidate)
+        except KeyError:
+            user_candidate = getpass.getuser()
+            user_record = pwd.getpwnam(user_candidate)
+
+        self._target_user = user_candidate
+        self._target_uid = user_record.pw_uid
+        self._target_gid = user_record.pw_gid
+        self._target_group = grp.getgrgid(self._target_gid).gr_name
+
+    def _ensure_dir_owned(self, path: Path) -> bool:
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except PermissionError as error:
+            parent = path.parent if path.parent != path else path
+            if not self._sudo_chown(parent, recursive=False):
+                self.logger.error(f"❌ Cannot create {path}: {error}")
+                return False
+            path.mkdir(parents=True, exist_ok=True)
+
+        try:
+            stat_result = path.stat()
+            if stat_result.st_uid != self._target_uid or stat_result.st_gid != self._target_gid:
+                try:
+                    shutil.chown(path, user=self._target_user, group=self._target_group)
+                except PermissionError:
+                    if not self._sudo_chown(path, recursive=True):
+                        self.logger.error(f"❌ Cannot adjust ownership for {path}")
+                        return False
+            return True
+        except Exception as error:
+            self.logger.error(f"❌ Failed to verify ownership for {path}: {error}")
+            return False
+
+    def _ensure_path_owned(self, path: Path) -> bool:
+        try:
+            if path.exists():
+                try:
+                    shutil.chown(path, user=self._target_user, group=self._target_group)
+                except PermissionError:
+                    if not self._sudo_chown(path, recursive=False):
+                        self.logger.error(f"❌ Cannot reset ownership for {path}")
+                        return False
+            return True
+        except Exception as error:
+            self.logger.error(f"❌ Cannot reset ownership for {path}: {error}")
+            return False
+
+    def _sudo_chown(self, path: Path, recursive: bool = False) -> bool:
+        try:
+            if not self.sudo_password:
+                return False
+            command = ["sudo", "-S", "chown"]
+            if recursive:
+                command.append("-R")
+            command.append(f"{self._target_user}:{self._target_group}")
+            command.append(str(path))
+            result = subprocess.run(
+                command,
+                input=f"{self.sudo_password}\n",
+                text=True,
+                capture_output=True,
+                timeout=30
+            )
+            if result.returncode != 0:
+                manual_flag = "-R " if recursive else ""
+                self.logger.error(
+                    f"❌ sudo chown failed for {path}: {result.stderr.strip()}\n"
+                    f"   ➜ Run 'sudo chown {manual_flag}{self._target_user}:{self._target_group} {path}' manually"
+                )
+                return False
+            return True
+        except Exception as error:
+            self.logger.error(f"❌ Unable to escalate ownership change for {path}: {error}")
+            return False
 
     def detect_milspec_hardware(self) -> Optional[MilSpecHardware]:
         """Detect Dell MIL-SPEC hardware using coordinated agent analysis"""
@@ -205,25 +288,29 @@ class DSMILOrchestrator:
                         )
                         devices.append(device)
 
-            # PCI device enumeration for security chips
+            # PCI security, monitoring, accelerator devices
             pci_result = subprocess.run(['lspci'], capture_output=True, text=True)
             for line in pci_result.stdout.split('\n'):
-                if any(keyword in line.lower() for keyword in ['security', 'crypto', 'tpm', 'dell']):
-                    pci_id = line.split()[0] if line.strip() else "unknown"
+                lowered = line.lower()
+                if any(keyword in lowered for keyword in ['security', 'crypto', 'tpm', 'dell', 'monitor', 'accelerator', 'neural']):
+                    tokens = line.split()
+                    pci_id = tokens[0] if tokens else "unknown"
                     device = DSMILDevice(
                         device_id=f"pci_{pci_id}",
                         device_type="PCI Security Device",
-                        capabilities=["Cryptography", "Authentication"],
+                        capabilities=["Cryptography", "Monitoring"],
                         status="Detected",
                         security_level="Enhanced"
                     )
                     devices.append(device)
 
-            # USB security devices
+            # USB security tokens and smart card readers
             usb_result = subprocess.run(['lsusb'], capture_output=True, text=True)
             for line in usb_result.stdout.split('\n'):
-                if any(keyword in line.lower() for keyword in ['security', 'smart', 'card', 'dell']):
-                    usb_id = line.split()[1] + ":" + line.split()[3] if len(line.split()) > 3 else "unknown"
+                lowered = line.lower()
+                tokens = line.split()
+                if any(keyword in lowered for keyword in ['security', 'smart', 'card', 'dell', 'token', 'reader']):
+                    usb_id = f"{tokens[1]}:{tokens[3]}" if len(tokens) > 3 else "unknown"
                     device = DSMILDevice(
                         device_id=f"usb_{usb_id}",
                         device_type="USB Security Device",
@@ -233,8 +320,62 @@ class DSMILOrchestrator:
                     )
                     devices.append(device)
 
+            # Character device interfaces (TPM, DSMIL, SMBIOS)
+            char_devices = [
+                (Path("/dev/tpm0"), "TPM 2.0 Device", ["Cryptography", "Attestation"], "Military"),
+                (Path("/dev/tpmrm0"), "TPM Resource Manager", ["Cryptography", "Isolation"], "Military"),
+                (Path("/dev/dsmil"), "DSMIL Control Device", ["Security", "Orchestration"], "Military"),
+                (Path("/dev/dell_smbios"), "Dell SMBIOS Interface", ["Management", "Security"], "Military"),
+                (Path("/dev/mei0"), "MEI Interface", ["Management", "Security"], "Enhanced"),
+                (Path("/dev/tpm2_accel_early"), "TPM Early Accel", ["Cryptography", "Boot"], "Military"),
+            ]
+
+            for path, dtype, capabilities, level in char_devices:
+                if path.exists():
+                    devices.append(
+                        DSMILDevice(
+                            device_id=path.name,
+                            device_type=dtype,
+                            capabilities=capabilities,
+                            status="Detected",
+                            security_level=level
+                        )
+                    )
+
+            # Loaded kernel modules indicative of MIL/Security features
+            lsmod_result = subprocess.run(['lsmod'], capture_output=True, text=True)
+            important_modules = {
+                "intel_vsec": ("Intel VSEC", ["Telemetry", "Security"]),
+                "mei_me": ("Intel ME Interface", ["Management", "Security"]),
+                "mei": ("Intel ME Core", ["Management"]),
+                "tpm_tis": ("TPM TIS Driver", ["Cryptography"]),
+                "tpm_crb": ("TPM CRB Driver", ["Cryptography"]),
+                "dell_smbios": ("Dell SMBIOS", ["Management", "Security"]),
+                "intel_rapl": ("Intel RAPL", ["Power", "Monitoring"]),
+                "intel_rapl_common": ("Intel RAPL Common", ["Power", "Monitoring"]),
+                "intel_pmc_core": ("Intel PMC Core", ["Power", "Telemetry"]),
+                "intel_pmc_ssram_telemetry": ("Intel PMC Telemetry", ["Telemetry", "Security"]),
+                "intel_vpu": ("Intel VPU", ["Acceleration", "AI"]),
+                "intel_ish_ipc": ("Intel ISH IPC", ["Sensors", "Security"]),
+            }
+
+            for line in lsmod_result.stdout.splitlines():
+                parts = line.split()
+                module_name = parts[0] if parts else ""
+                if module_name in important_modules:
+                    desc, caps = important_modules[module_name]
+                    devices.append(
+                        DSMILDevice(
+                            device_id=module_name,
+                            device_type=desc,
+                            capabilities=caps,
+                            status="Loaded",
+                            security_level="Enhanced"
+                        )
+                    )
+
             self.logger.info(f"🔍 Discovered {len(devices)} potential DSMIL devices")
-            return devices[:12]  # Limit to expected 12 devices
+            return devices
 
         except Exception as e:
             self.logger.error(f"DSMIL device discovery failed: {e}")
@@ -393,10 +534,46 @@ class DSMILOrchestrator:
         """Build DSMIL modules using coordinated build system"""
         try:
             build_dir = self.dsmil_modules_path / "build"
+            if not self._ensure_dir_owned(build_dir):
+                return False
 
-            # Ensure build src directory exists and has required files
             build_src_dir = build_dir / "src"
-            build_src_dir.mkdir(exist_ok=True)
+            if not self._ensure_dir_owned(build_src_dir):
+                return False
+
+            build_include_dir = build_dir / "include"
+            if not self._ensure_dir_owned(build_include_dir):
+                return False
+
+            source_src_dir = self.dsmil_modules_path / "src"
+            if source_src_dir.exists():
+                for source_file in source_src_dir.glob("*.c"):
+                    try:
+                        target_file = build_src_dir / source_file.name
+                        shutil.copy2(source_file, target_file)
+                        if not self._ensure_path_owned(target_file):
+                            return False
+                    except Exception as copy_error:
+                        self.logger.error(f"❌ Failed to stage source {source_file.name}: {copy_error}")
+                        return False
+            else:
+                self.logger.error("❌ DSMIL source directory missing")
+                return False
+
+            headers_dir = self.dsmil_modules_path / "headers"
+            if headers_dir.exists():
+                for header_path in headers_dir.glob("*.h"):
+                    try:
+                        target_header = build_include_dir / header_path.name
+                        shutil.copy2(header_path, target_header)
+                        if not self._ensure_path_owned(target_header):
+                            return False
+                    except Exception as copy_error:
+                        self.logger.error(f"❌ Failed to stage header {header_path.name}: {copy_error}")
+                        return False
+            else:
+                self.logger.error("❌ DSMIL headers directory missing")
+                return False
 
             # Create crypto_accelerated.c if missing
             crypto_file = build_src_dir / "crypto_accelerated.c"
@@ -427,6 +604,8 @@ tmp2_rc_t tmp2_create_primary_accelerated(ESYS_CONTEXT *esys_context,
     return TPM2_RC_SUCCESS;
 }'''
                 crypto_file.write_text(crypto_content)
+                if not self._ensure_path_owned(crypto_file):
+                    return False
 
             # Use primary Makefile with DKMS integration
             makefile = build_dir / "Makefile"
