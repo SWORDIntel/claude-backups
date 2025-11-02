@@ -105,7 +105,11 @@ detect_system_paths() {
     done
 
     # Set default user bin if none found
-    [[ -z "$CLAUDE_USER_BIN" ]] && export CLAUDE_USER_BIN="$HOME/.local/bin"
+    if [[ -z "$CLAUDE_USER_BIN" ]]; then
+        export CLAUDE_USER_BIN="$HOME/.local/bin"
+    fi
+
+    return 0
 }
 
 detect_config_paths() {
