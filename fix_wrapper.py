@@ -131,6 +131,29 @@ def create_wrapper():
     wrapper_path.chmod(0o755)
     print(f"Wrapper script created at {wrapper_path}")
 
+    capital_wrapper = local_bin / "Claude"
+    try:
+        wrapper_target = wrapper_path.resolve()
+        created_alias = False
+
+        if capital_wrapper.is_symlink():
+            if capital_wrapper.resolve() != wrapper_target:
+                capital_wrapper.unlink()
+                capital_wrapper.symlink_to(wrapper_path)
+                created_alias = True
+        elif capital_wrapper.exists():
+            capital_wrapper.unlink()
+            capital_wrapper.symlink_to(wrapper_path)
+            created_alias = True
+        else:
+            capital_wrapper.symlink_to(wrapper_path)
+            created_alias = True
+
+        if created_alias:
+            print(f"Alias created at {capital_wrapper}")
+    except OSError as exc:
+        print(f"Warning: failed to create 'Claude' alias: {exc}")
+
 
 if __name__ == "__main__":
     create_wrapper()
