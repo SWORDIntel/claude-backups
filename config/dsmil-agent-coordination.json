@@ -1,0 +1,40 @@
+{
+  "deployment_timestamp": 1762066352.5342238,
+  "total_agents": 98,
+  "security_agents": [
+    "SECURITY",
+    "SECURITYCHAOSAGENT",
+    "CRYPTOEXPERT",
+    "AUDITOR",
+    "THREATMODEL",
+    "FORENSICS",
+    "SECURITYTRAINING",
+    "REDTEAM",
+    "BLUETEAM",
+    "THREATHUNTER",
+    "DIGITALFORENSICS",
+    "APT41-REDTEAM-AGENT"
+  ],
+  "hardware_agents": [
+    "MONITOR",
+    "HARDWARE-INTEL",
+    "HARDWARE-DELL",
+    "HARDWARE-HP",
+    "HARDWARE",
+    "NPU",
+    "OPTIMIZER",
+    "HARDWARE-INTEL"
+  ],
+  "infrastructure_agents": [
+    "INFRASTRUCTURE",
+    "DEPLOYER",
+    "DOCKER-AGENT",
+    "KUBERNETES",
+    "COORDINATOR"
+  ],
+  "dsmil_integration": {
+    "hardware_detected": true,
+    "modules_available": true,
+    "coordination_mode": "full_parallel"
+  }
+}

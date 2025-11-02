@@ -1,5 +1,5 @@
 {
-  "numStartups": 70,
+  "numStartups": 71,
   "installMethod": "global",
   "autoUpdates": true,
   "hasSeenTasksHint": true,
@@ -2270,18 +2270,18 @@
       "projectOnboardingSeenCount": 0,
       "hasClaudeMdExternalIncludesApproved": false,
       "hasClaudeMdExternalIncludesWarningShown": false,
+      "lastTotalWebSearchRequests": 0,
       "lastCost": 0,
       "lastAPIDuration": 0,
       "lastToolDuration": 0,
-      "lastDuration": 29427,
+      "lastDuration": 4494,
       "lastLinesAdded": 0,
       "lastLinesRemoved": 0,
       "lastTotalInputTokens": 0,
       "lastTotalOutputTokens": 0,
       "lastTotalCacheCreationInputTokens": 0,
       "lastTotalCacheReadInputTokens": 0,
-      "lastTotalWebSearchRequests": 0,
-      "lastSessionId": "529c2264-5ab8-49ab-beeb-fc2cd79a77f4"
+      "lastSessionId": "46939ee6-c1f0-4e94-91a0-c329ad4e2b05"
     }
   },
   "claudeCodeFirstTokenDate": "2025-06-24T08:25:48.694410Z",
@@ -2299,8 +2299,9 @@
       "timestamp": 1757978508107
     },
     "b1b780e4-b510-41b7-81eb-5bd856c3048a": {
-      "hasAccess": false,
-      "timestamp": 1761917957397
+      "hasAccess": true,
+      "hasAccessNotAsDefault": false,
+      "timestamp": 1762066151000
     }
   },
   "isQualifiedForDataSharing": false,

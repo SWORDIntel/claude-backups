@@ -1,0 +1,281 @@
+[DEBUG] Watching for changes in setting files /home/john/claude-backups/.claude/settings.json, /home/john/claude-backups/.claude/settings.local.json...
+[DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+[DEBUG] Loading skills from directories: managed=/etc/claude-code/.claude/skills, user=/home/john/claude-backups/.claude/config/skills, project=/home/john/claude-backups/.claude/skills
+[DEBUG] >>>>> getPluginSkills CALLED <<<<<
+[DEBUG] Creating shell snapshot for bash (/bin/bash)
+[DEBUG] Looking for shell config file: /home/john/.bashrc
+[DEBUG] Snapshots directory: /home/john/claude-backups/.claude/config/shell-snapshots
+[DEBUG] Creating snapshot at: /home/john/claude-backups/.claude/config/shell-snapshots/snapshot-bash-1762066150724-so4mas.sh
+[DEBUG] Shell binary exists: true
+[DEBUG] Execution timeout: 10000ms
+[DEBUG] Writing to temp file: /home/john/claude-backups/.claude/config/todos/f9f8fa9c-4e2e-4b07-9416-df9d49c79f43-agent-f9f8fa9c-4e2e-4b07-9416-df9d49c79f43.json.tmp.44454.1762066150729
+[DEBUG] Temp file written successfully, size: 2 bytes
+[DEBUG] Renaming /home/john/claude-backups/.claude/config/todos/f9f8fa9c-4e2e-4b07-9416-df9d49c79f43-agent-f9f8fa9c-4e2e-4b07-9416-df9d49c79f43.json.tmp.44454.1762066150729 to /home/john/claude-backups/.claude/config/todos/f9f8fa9c-4e2e-4b07-9416-df9d49c79f43-agent-f9f8fa9c-4e2e-4b07-9416-df9d49c79f43.json
+[DEBUG] File /home/john/claude-backups/.claude/config/todos/f9f8fa9c-4e2e-4b07-9416-df9d49c79f43-agent-f9f8fa9c-4e2e-4b07-9416-df9d49c79f43.json written atomically
+[DEBUG] Writing to temp file: /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066150743
+[DEBUG] Preserving file permissions: 100775
+[DEBUG] Temp file written successfully, size: 312423 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066150743 to /home/john/claude-backups/.claude/config/.claude.json
+[DEBUG] File /home/john/claude-backups/.claude/config/.claude.json written atomically
+[DEBUG] getPluginSkills: Processing 0 enabled plugins
+[DEBUG] Total plugin skills loaded: 0
+[DEBUG] Total plugin commands loaded: 0
+[DEBUG] Registered 0 hooks from 0 plugins
+[DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, duplicates removed: 0)
+[DEBUG] getSkillsIfEnabled returning: 0 skill dir commands, 0 plugin skills
+[DEBUG] Shell snapshot created successfully (3246 bytes)
+[DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg)
+[DEBUG] rg error (signal=null, code=2, stderr: rg: /home/john/claude-backups/.claude/agents/agents: No such file or directory (os error 2)
+rg: /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/ENHANCEMENT_GUIDE.md: No such file or directory (os error 2)
+rg: /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/IMPLEMENTATION_PLAN.md: No such file or directory (os error 2)
+), 194 results
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/WHERE_I_AM.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/WHERE_I_AM.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/monitoring/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/monitoring/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/monitoring/README_COMPLETE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/monitoring/README_COMPLETE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/security_audit_scripts/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/security_audit_scripts/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/config/output-styles/precision-orchestration.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/config/output-styles/precision-orchestration.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/reports/SECURITY_AGENT_VERIFICATION_REPORT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/reports/SECURITY_AGENT_VERIFICATION_REPORT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/DART-INTERNAL-AGENT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/DART-INTERNAL-AGENT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/admin/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/admin/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/binary-communications-system/MILITARY_CRYPTO_UFP_INTEGRATION.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/binary-communications-system/MILITARY_CRYPTO_UFP_INTEGRATION.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/binary-communications-system/README_PRODUCTION.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/binary-communications-system/README_PRODUCTION.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/DDWRT-AGENT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/DDWRT-AGENT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/PHP-INTERNAL-AGENT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/PHP-INTERNAL-AGENT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/SESSION_SUMMARY.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/SESSION_SUMMARY.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/FINAL_CLEANUP_SUMMARY.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/FINAL_CLEANUP_SUMMARY.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/SYSTEM_STATUS_REPORT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/SYSTEM_STATUS_REPORT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/AGENT_SYSTEM_ARCHITECTURE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/AGENT_SYSTEM_ARCHITECTURE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/TANDEM_QUICK_START.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/TANDEM_QUICK_START.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/CLEANUP_REPORT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/CLEANUP_REPORT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/Claude Agent Communication System - Unified Global Documentation.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/Claude Agent Communication System - Unified Global Documentation.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/WHERE_I_AM.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/WHERE_I_AM.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/AGENT_QUICK_REFERENCE_V7.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/AGENT_QUICK_REFERENCE_V7.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/CHECKPOINT_2024_REORGANIZATION.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/CHECKPOINT_2024_REORGANIZATION.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/DIRECTORY_STRUCTURE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/DIRECTORY_STRUCTURE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/AGENT_INTEGRATION_PLAN.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/AGENT_INTEGRATION_PLAN.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/COMPLETE_SETUP_GUIDE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/COMPLETE_SETUP_GUIDE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/legacy/Director-Legacy.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/legacy/Director-Legacy.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/ISSUES_REPORT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/ISSUES_REPORT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/AI_ROUTER_INTEGRATION_GUIDE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/AI_ROUTER_INTEGRATION_GUIDE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/AGENT_SWITCHING_README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/AGENT_SWITCHING_README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/VOICE_TOGGLE_GUIDE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/VOICE_TOGGLE_GUIDE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/INTEGRATION_STRATEGY.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/INTEGRATION_STRATEGY.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/TANDEM_ORCHESTRATION_SYSTEM.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/TANDEM_ORCHESTRATION_SYSTEM.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/COORDINATION_UPDATE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/COORDINATION_UPDATE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/BRIDGE_USAGE_GUIDE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/BRIDGE_USAGE_GUIDE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/COMMUNICATION_SYSTEM_V3.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/COMMUNICATION_SYSTEM_V3.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/INTEGRATION_PLAN.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/INTEGRATION_PLAN.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/AGENT_FRAMEWORK_V7.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/AGENT_FRAMEWORK_V7.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/PRODUCTION_DEPLOYMENT_SUMMARY.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/PRODUCTION_DEPLOYMENT_SUMMARY.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/docs/archived/INTEGRATION_COMPLETE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/docs/archived/INTEGRATION_COMPLETE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/leadership_documentation/review_architecture_leadership_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/leadership_documentation/review_architecture_leadership_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/VECTORIZATION_ENHANCEMENT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/VECTORIZATION_ENHANCEMENT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/IMPLEMENTATION_SUCCESS.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/IMPLEMENTATION_SUCCESS.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/ENHANCED_ROUTER_SUMMARY.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/ENHANCED_ROUTER_SUMMARY.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/BUILD_STATUS.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/BUILD_STATUS.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/AGENT_COMPLETION_PLAN.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/AGENT_COMPLETION_PLAN.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/OLD-BACKUP/IMPLEMENTATION_CHECKPOINT.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/OLD-BACKUP/IMPLEMENTATION_CHECKPOINT.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/strategic_documentation/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/strategic_documentation/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/planning_documentation/create_project_plan_planning_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/planning_documentation/create_project_plan_planning_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/android_documentation/develop_app_android_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/android_documentation/develop_app_android_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/CONSTRUCTOR_IMPLEMENTATION_SUMMARY.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/CONSTRUCTOR_IMPLEMENTATION_SUMMARY.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/organization_documentation/structure_teams_organization_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/organization_documentation/structure_teams_organization_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/qa_documentation/plan_testing_qa_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/qa_documentation/plan_testing_qa_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/MIGRATION_TO_POSTGRESQL.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/MIGRATION_TO_POSTGRESQL.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/docs/technical/complete-performance-proof-2025-09-17.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/docs/technical/complete-performance-proof-2025-09-17.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/engineering_standards/guidelines/review_architecture_standards.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/engineering_standards/guidelines/review_architecture_standards.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/security_audit_scripts/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/security_audit_scripts/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/tui_documentation/create_tui_tui_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/tui_documentation/create_tui_tui_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/tui_documentation/create_tui_tui_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/tui_documentation/create_tui_tui_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/organization_documentation/structure_teams_organization_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/organization_documentation/structure_teams_organization_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/qa_documentation/plan_testing_qa_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/qa_documentation/plan_testing_qa_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/engineering_standards/guidelines/review_architecture_standards.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/engineering_standards/guidelines/review_architecture_standards.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/leadership_documentation/review_architecture_leadership_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/leadership_documentation/review_architecture_leadership_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/android_documentation/develop_app_android_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/android_documentation/develop_app_android_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/REORGANIZATION_PLAN.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/REORGANIZATION_PLAN.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/planning_documentation/create_project_plan_planning_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/planning_documentation/create_project_plan_planning_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/strategic_documentation/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/strategic_documentation/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PYTHON_UNIFICATION.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PYTHON_UNIFICATION.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/security_audit_scripts/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/security_audit_scripts/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/ULTRATHINK_AGENT_IMPLEMENTATION.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/ULTRATHINK_AGENT_IMPLEMENTATION.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/ORGANIZATION.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/ORGANIZATION.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/c/MICROCODE_ISSUE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/c/MICROCODE_ISSUE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/deprecated/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/deprecated/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/python_documentation/manage_environment_python_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/python_documentation/manage_environment_python_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/opentelemetry/sdk/metrics/_internal/exponential_histogram/mapping/ieee_754.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/opentelemetry/sdk/metrics/_internal/exponential_histogram/mapping/ieee_754.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python/npu_documentation/optimize_npu_inference_optimization_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python/npu_documentation/optimize_npu_inference_optimization_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/black-25.1.0.dist-info/licenses/AUTHORS.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/black-25.1.0.dist-info/licenses/AUTHORS.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/black-25.1.0.dist-info/licenses/AUTHORS.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/black-25.1.0.dist-info/licenses/AUTHORS.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/deprecated/README.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/deprecated/README.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/README_LEARNING_SYSTEM.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/README_LEARNING_SYSTEM.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/LEARNING_SYSTEM_FIXES.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/LEARNING_SYSTEM_FIXES.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/python_documentation/manage_environment_python_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/python_documentation/manage_environment_python_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PYTHON_ARCHITECTURE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PYTHON_ARCHITECTURE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/FUNCTIONALITY_RESTORED.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/FUNCTIONALITY_RESTORED.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/UNIVERSAL_HELPER_METHODS.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/UNIVERSAL_HELPER_METHODS.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PARALLEL_ORCHESTRATION_ENHANCEMENT_SUMMARY.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PARALLEL_ORCHESTRATION_ENHANCEMENT_SUMMARY.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PARALLEL_ORCHESTRATION_DEPLOYMENT_COMPLETE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/PARALLEL_ORCHESTRATION_DEPLOYMENT_COMPLETE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/npu_documentation/optimize_npu_inference_optimization_guide.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/npu_documentation/optimize_npu_inference_optimization_guide.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/opentelemetry/sdk/metrics/_internal/exponential_histogram/mapping/ieee_754.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/opentelemetry/sdk/metrics/_internal/exponential_histogram/mapping/ieee_754.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/pip-25.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/pip-25.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/numpy/random/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/numpy/random/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/pip-25.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/pip-25.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/idna-3.10.dist-info/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/idna-3.10.dist-info/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/numpy/random/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/numpy/random/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/scipy/fft/_pocketfft/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/scipy/fft/_pocketfft/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/idna-3.10.dist-info/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib/python3.12/site-packages/idna-3.10.dist-info/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Agent file /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/scipy/fft/_pocketfft/LICENSE.md is missing required 'name' in frontmatter
+[DEBUG] Failed to parse agent from /home/john/claude-backups/.claude/agents/src/python_failed_reorg_20250828_145457/venv_production/lib64/python3.12/site-packages/scipy/fft/_pocketfft/LICENSE.md: Missing required "name" field in frontmatter
+[DEBUG] Total plugin agents loaded: 0
+[DEBUG] Skills and commands included in Skill tool:
+[DEBUG] Slash commands included in SlashCommand tool:
+[DEBUG] Writing to temp file: /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066150903
+[DEBUG] Preserving file permissions: 100775
+[DEBUG] Temp file written successfully, size: 312423 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066150903 to /home/john/claude-backups/.claude/config/.claude.json
+[DEBUG] File /home/john/claude-backups/.claude/config/.claude.json written atomically
+[DEBUG] Writing to temp file: /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066150916
+[DEBUG] Preserving file permissions: 100775
+[DEBUG] Temp file written successfully, size: 312423 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066150916 to /home/john/claude-backups/.claude/config/.claude.json
+[DEBUG] File /home/john/claude-backups/.claude/config/.claude.json written atomically
+[DEBUG] Writing to temp file: /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066151005
+[DEBUG] Preserving file permissions: 100775
+[DEBUG] Temp file written successfully, size: 312460 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /home/john/claude-backups/.claude/config/.claude.json.tmp.44454.1762066151005 to /home/john/claude-backups/.claude/config/.claude.json
+[DEBUG] File /home/john/claude-backups/.claude/config/.claude.json written atomically
+[ERROR] AxiosError: AxiosError: Request failed with status code 401
+    at wR (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:24:1136)
+    at IncomingMessage.<anonymous> (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:29:9845)
+    at IncomingMessage.emit (node:events:531:35)
+    at IncomingMessage.emit (node:domain:489:12)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at m3A.request (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:31:2129)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async eh2 (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:3572:15125)
+[DEBUG] Failed to fetch Grove notice config: AxiosError: Request failed with status code 401
+[DEBUG] Getting matching hook commands for SessionStart with query: startup
+[DEBUG] Found 0 hook matchers in settings
+[DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+[ERROR] AxiosError: AxiosError: Request failed with status code 400
+    at wR (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:24:1136)
+    at IncomingMessage.<anonymous> (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:29:9845)
+    at IncomingMessage.emit (node:events:531:35)
+    at IncomingMessage.emit (node:domain:489:12)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at m3A.request (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:31:2129)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async qSQ (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:1951:1390)
+    at async ui (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:3549:10241)
+    at async Gz (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:652:23256)
+    at async Aq8 (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:652:29926)
+    at async jnB (file:///home/john/.npm-global/lib/node_modules/@anthropic-ai/claude-code/cli.js:652:30172)
+[DEBUG] Getting matching hook commands for SessionEnd with query: undefined
+[DEBUG] Found 0 hook matchers in settings
+[DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+[DEBUG] Cleaned up session snapshot: /home/john/claude-backups/.claude/config/shell-snapshots/snapshot-bash-1762066150724-so4mas.sh
