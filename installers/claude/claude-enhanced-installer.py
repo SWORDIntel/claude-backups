@@ -1908,48 +1908,46 @@ end
         self._print_section("Compiling Crypto-POW C Engine")
 
         try:
-            crypto_makefile = self.project_root / "Makefile"
+            crypto_pow_root_dir = self.project_root / "hooks" / "crypto-pow" / "crypto-pow-enhanced"
+            if not crypto_pow_root_dir.exists():
+                self._print_warning("Crypto-POW Rust module directory not found - skipping Rust compilation")
+                return True  # Optional component, Python fallback available
 
-            if not crypto_makefile.exists():
-                self._print_warning("Crypto-POW Makefile not found - skipping C compilation")
-                return True  # Optional component
-
-            # Check if we have compiler
-            if not shutil.which("gcc") and not shutil.which("clang"):
-                self._print_warning("No C compiler found - skipping Crypto-POW C engine")
+            # Check if we have cargo
+            if not shutil.which("cargo"):
+                self._print_warning("Cargo (Rust build tool) not found - skipping Crypto-POW Rust engine")
+                self._print_info("Python fallback will be used")
                 return True
 
-            self._print_info("Compiling Crypto-POW C acceleration with meteorlake optimizations...")
+            self._print_info("Compiling Crypto-POW Rust acceleration with meteorlake optimizations...")
 
             try:
                 # Clean first
                 self._run_command(
-                    ["make", "clean"],
-                    cwd=self.project_root,
-                    timeout=30,
+                    ["cargo", "clean"],
+                    cwd=crypto_pow_root_dir,
+                    timeout=60,
                     check=False
                 )
 
-                # Compile object files (production target requires main() which doesn't exist)
-                # Just build the objects which are the library components
+                # Build the Rust project
                 self._run_command(
-                    ["make", "build/crypto_pow_core.o", "build/crypto_pow_patterns.o",
-                     "build/crypto_pow_behavioral.o", "build/crypto_pow_verification.o"],
-                    cwd=self.project_root,
-                    timeout=120
+                    ["cargo", "build", "--release"],
+                    cwd=crypto_pow_root_dir,
+                    timeout=300
                 )
 
-                self._print_success("Crypto-POW C engine objects compiled successfully")
-                self._print_info("Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI)")
+                self._print_success("Crypto-POW Rust engine compiled successfully")
+                self._print_info("Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI) via Rust build")
                 return True
 
             except subprocess.CalledProcessError as e:
-                self._print_warning(f"Crypto-POW C compilation had issues: {e}")
+                self._print_warning(f"Crypto-POW Rust compilation had issues: {e}")
                 self._print_info("Python crypto libraries will be used instead")
                 return True  # Non-critical, Python fallback available
 
         except Exception as e:
-            self._print_warning(f"Crypto-POW C engine setup failed: {e}")
+            self._print_warning(f"Crypto-POW Rust engine setup failed: {e}")
             return True  # Non-critical
 
     def setup_hybrid_bridge(self) -> bool:
@@ -2384,29 +2382,28 @@ export NPU_MILITARY_MODE={military_mode}
             self._print_info("Compiling Shadowgit C acceleration engine...")
 
             try:
+                # Clean first
                 self._run_command(
                     ["make", "clean"],
-                    cwd=self.project_root,
+                    cwd=shadowgit_makefile.parent,
                     timeout=30,
                     check=False
                 )
 
-                # Compile object files (production target requires main() which doesn't exist)
-                # Just build the objects which are the library components
+                # Compile object files
                 self._run_command(
-                    ["make", "build/crypto_pow_core.o", "build/crypto_pow_patterns.o",
-                     "build/crypto_pow_behavioral.o", "build/crypto_pow_verification.o"],
-                    cwd=self.project_root,
+                    ["make"],
+                    cwd=shadowgit_makefile.parent,
                     timeout=120
                 )
 
-                self._print_success("Crypto-POW C engine objects compiled successfully")
+                self._print_success("Shadowgit C engine compiled successfully")
                 self._print_info("Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI)")
                 return True
 
             except subprocess.CalledProcessError as e:
-                self._print_warning(f"Crypto-POW C compilation had issues: {e}")
-                self._print_info("Python crypto libraries will be used instead")
+                self._print_warning(f"Shadowgit C compilation had issues: {e}")
+                self._print_info("Python fallback will be used instead")
                 return True  # Non-critical, Python fallback available
 
         except Exception as e:
@@ -2506,7 +2503,7 @@ exec claude "$@"
 
                 # Get environment-specific packages
                 env_packages = self._get_environment_specific_packages()
-                docker_packages = ["docker.io", "docker-compose-plugin"]
+                docker_packages = ["docker.io"]
                 all_packages = list(set(env_packages + docker_packages))  # Remove duplicates
 
                 self._print_info(f"📦 Installing packages for {self.system_info.environment_type.value} environment: {', '.join(all_packages)}")
