@@ -1878,18 +1878,23 @@ end
                 ("pycryptodome", "Additional crypto functions"),
             ]
 
-            self._print_info("Installing Crypto POW Python dependencies...")
+            self._print_info("Installing Crypto POW Python dependencies using pipx...")
 
-            pip_cmd = "pip3" if shutil.which("pip3") else "pip"
+            pipx_cmd = shutil.which("pipx")
+            if not pipx_cmd:
+                self._print_warning("pipx not found. Falling back to pip (may encounter externally-managed-environment errors).")
+                pipx_cmd = shutil.which("pip3") or shutil.which("pip")
+                if not pipx_cmd:
+                    self._print_error("Neither pipx nor pip found. Cannot install Python dependencies.")
+                    return False
+
             installed_count = 0
 
             for package, description in requirements:
                 try:
                     self._print_info(f"Installing {package} ({description})...")
-                    # Use --user only if not in venv
-                    pip_args = [pip_cmd, "install", package]
-                    if not hasattr(sys, 'real_prefix') and not (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
-                        pip_args.insert(2, "--user")
+                    # Use pipx install for isolated environments
+                    pip_args = [pipx_cmd, "install", package]
                     self._run_command(pip_args, timeout=120)
                     self._print_success(f"✓ {package}")
                     installed_count += 1
@@ -2503,7 +2508,7 @@ exec claude "$@"
 
                 # Get environment-specific packages
                 env_packages = self._get_environment_specific_packages()
-                docker_packages = ["docker.io"]
+                docker_packages = ["docker.io", "docker-compose-plugin"]
                 all_packages = list(set(env_packages + docker_packages))  # Remove duplicates
 
                 self._print_info(f"📦 Installing packages for {self.system_info.environment_type.value} environment: {', '.join(all_packages)}")
