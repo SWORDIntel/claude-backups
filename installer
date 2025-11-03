@@ -36,7 +36,7 @@ install_dependencies() {
     DEPS=(
         "build-essential"
         "gcc-15" "g++-15"
-        "python3-full" "python3-pip" "python3-venv" "python-is-python3"
+        "python3-full" "python3-pip" "python3-venv" "python-is-python3" "pipx"
         "libnuma-dev" "liburing-dev" "librdkafka-dev"
         "libssl-dev" "libpcre2-dev"
         "docker.io"
@@ -48,8 +48,8 @@ install_dependencies() {
     echo ""
 
     echo -e "${YELLOW}You will be prompted for your sudo password.${NC}"
-    echo "1786" | sudo -S apt-get update
-    echo "1786" | sudo -S apt-get install -y "${DEPS[@]}"
+    sudo -S apt-get update
+    sudo -S apt-get install -y "${DEPS[@]}"
 
     echo ""
 
@@ -69,7 +69,7 @@ install_dependencies() {
         echo -e "  ${GREEN}✓${NC} User already in docker group"
     else
         echo -e "${CYAN}Adding user to docker group...${NC}"
-        echo "1786" | sudo -S usermod -aG docker "$USER"
+        sudo -S usermod -aG docker "$USER"
         echo -e "  ${YELLOW}⚠${NC} You may need to logout/login for docker group to take effect"
     fi
 
@@ -155,7 +155,7 @@ run_military_optimization() {
     # Run military hardware detection
     if [[ -f "$SCRIPT_DIR/hardware/milspec_hardware_analyzer.py" ]]; then
         echo -e "${BLUE}Running military hardware analysis...${NC}"
-        echo "1786" | sudo -S python3 "$SCRIPT_DIR/hardware/milspec_hardware_analyzer.py"
+        sudo -S python3 "$SCRIPT_DIR/hardware/milspec_hardware_analyzer.py"
     fi
 
     # Execute 40+ TFLOPS optimization
@@ -167,7 +167,7 @@ run_military_optimization() {
     # Deploy agent coordination
     if [[ -f "$SCRIPT_DIR/installers/claude/dsmil_orchestrator.py" ]]; then
         echo -e "${BLUE}Deploying 98-agent coordination matrix...${NC}"
-        echo "1786" | sudo -S python3 "$SCRIPT_DIR/installers/claude/dsmil_orchestrator.py" || true
+        sudo -S python3 "$SCRIPT_DIR/installers/claude/dsmil_orchestrator.py" || true
     fi
 
     echo -e "${GREEN}Military optimization complete!${NC}"
@@ -287,11 +287,10 @@ post_install_message() {
     echo -e "${GREEN}Installation Complete!${NC}"
     echo "======================================================================"
     echo ""
-    echo -e "${BOLD}Next steps:${NC}"
-    echo "1. Reload your shell configuration:"
-    echo -e "   ${CYAN}source ~/.bashrc${NC}"
+    echo -e "${BOLD}IMPORTANT: Please reload your shell configuration to ensure Claude is in your PATH:${NC}"
+    echo -e "   ${CYAN}source ~/.bashrc${NC}  (or ~/.zshrc, ~/.profile, etc., depending on your shell)"
     echo ""
-    echo "2. Test Claude:"
+    echo -e "${BOLD}Then, you can test Claude:${NC}"
     echo -e "   ${CYAN}claude --version${NC}"
     echo ""
     echo "3. Activate virtual environment (if needed):"
