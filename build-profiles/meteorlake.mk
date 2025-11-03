@@ -3,45 +3,9 @@
 #
 # Architecture: Intel Meteor Lake (Raptor Cove P-cores + Crestmont E-cores)
 # SIMD Support: AVX2, AVX-VNNI, FMA3, AES-NI, SSE4.2
-# Notable: NO AVX-512 support (removed from Meteor Lake architecture)
-
-CPU_ARCH = meteorlake
-
-# Base optimization level (-O2 for production stability)
-# -O2 provides excellent performance without aggressive optimizations that can cause issues
-PROD_FLAGS = -O2
-
-# Architecture-specific tuning
-# -march=native: Use all instructions available on build machine
-# -mtune=native: Optimize instruction scheduling for build machine
-PROD_FLAGS += -march=native -mtune=native
-
-# SIMD Extensions (explicitly enabled for Meteor Lake)
-PROD_FLAGS += -mavx2          # AVX2 256-bit SIMD
-PROD_FLAGS += -mfma           # Fused Multiply-Add (FMA3)
-PROD_FLAGS += -mavxvnni       # AVX-VNNI for AI/ML workloads (GCC 15.2+ syntax)
-PROD_FLAGS += -maes           # AES-NI hardware acceleration
-PROD_FLAGS += -msse4.2        # SSE 4.2 (baseline)
-
-# Link-Time Optimization
-# -flto: Link-Time Optimization (GCC syntax; use -flto=thin for Clang)
-PROD_FLAGS += -flto
-
-# Loop and function optimizations
-PROD_FLAGS += -funroll-loops       # Unroll loops for better performance
-PROD_FLAGS += -finline-functions   # Aggressive function inlining
-
-# Code generation optimizations
-PROD_FLAGS += -fomit-frame-pointer # Remove frame pointer (more registers)
-
-# Intel-specific optimizations
-PROD_FLAGS += -fno-semantic-interposition  # Better optimization across DSOs
-
-# NOT INCLUDED (reasons documented):
-# -ffast-math          : Can break IEEE 754 compliance and cause precision issues
-# -mavx512f            : Not supported on Meteor Lake
-# -O3                  : Can cause code bloat and cache issues
-# -funroll-all-loops   : Can cause excessive code size
-
-# Export for visibility
-export METEORLAKE_FLAGS = $(PROD_FLAGS)
+# Notable: AVX-512 support is now available on P-cores for Meteor Lake
+PROD_FLAGS += -mavx512f         # AVX-512 Foundation
+PROD_FLAGS += -mavx512vl        # AVX-512 Vector Length Extensions
+PROD_FLAGS += -mavx512bw        # AVX-512 Byte and Word Instructions
+PROD_FLAGS += -mavx512dq        # AVX-512 Doubleword and Quadword Instructions
+PROD_FLAGS += -mavx512cd        # AVX-512 Conflict Detection Instructions
