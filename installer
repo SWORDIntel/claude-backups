@@ -293,7 +293,7 @@ post_install_message() {
     echo -e "${BOLD}Then, you can test Claude:${NC}"
     echo -e "   ${CYAN}claude --version${NC}"
     echo ""
-    echo -e "${BOLD}Remember to run the installer itself with 'sudo ./installer' next time.${NC}""
+    echo -e "${BOLD}Remember to run the installer itself with 'sudo ./installer' next time.${NC}"
     echo ""
     echo "3. Activate virtual environment (if needed):"
     echo -e "   ${CYAN}claude-activate${NC}"
