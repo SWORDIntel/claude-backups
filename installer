@@ -48,8 +48,8 @@ install_dependencies() {
     echo ""
 
     echo -e "${YELLOW}You will be prompted for your sudo password.${NC}"
-    sudo -S apt-get update
-    sudo -S apt-get install -y "${DEPS[@]}"
+    apt-get update
+    apt-get install -y "${DEPS[@]}"
 
     echo ""
 
@@ -69,7 +69,7 @@ install_dependencies() {
         echo -e "  ${GREEN}✓${NC} User already in docker group"
     else
         echo -e "${CYAN}Adding user to docker group...${NC}"
-        sudo -S usermod -aG docker "$USER"
+        usermod -aG docker "$USER"
         echo -e "  ${YELLOW}⚠${NC} You may need to logout/login for docker group to take effect"
     fi
 
@@ -155,7 +155,7 @@ run_military_optimization() {
     # Run military hardware detection
     if [[ -f "$SCRIPT_DIR/hardware/milspec_hardware_analyzer.py" ]]; then
         echo -e "${BLUE}Running military hardware analysis...${NC}"
-        sudo -S python3 "$SCRIPT_DIR/hardware/milspec_hardware_analyzer.py"
+        python3 "$SCRIPT_DIR/hardware/milspec_hardware_analyzer.py"
     fi
 
     # Execute 40+ TFLOPS optimization
@@ -167,7 +167,7 @@ run_military_optimization() {
     # Deploy agent coordination
     if [[ -f "$SCRIPT_DIR/installers/claude/dsmil_orchestrator.py" ]]; then
         echo -e "${BLUE}Deploying 98-agent coordination matrix...${NC}"
-        sudo -S python3 "$SCRIPT_DIR/installers/claude/dsmil_orchestrator.py" || true
+        python3 "$SCRIPT_DIR/installers/claude/dsmil_orchestrator.py" || true
     fi
 
     echo -e "${GREEN}Military optimization complete!${NC}"
@@ -287,11 +287,13 @@ post_install_message() {
     echo -e "${GREEN}Installation Complete!${NC}"
     echo "======================================================================"
     echo ""
-    echo -e "${BOLD}IMPORTANT: Please reload your shell configuration to ensure Claude is in your PATH:${NC}"
+    echo -e "${BOLD}To run Claude, you may need to reload your shell configuration:${NC}"
     echo -e "   ${CYAN}source ~/.bashrc${NC}  (or ~/.zshrc, ~/.profile, etc., depending on your shell)"
     echo ""
     echo -e "${BOLD}Then, you can test Claude:${NC}"
     echo -e "   ${CYAN}claude --version${NC}"
+    echo ""
+    echo -e "${BOLD}Remember to run the installer itself with 'sudo ./installer' next time.${NC}""
     echo ""
     echo "3. Activate virtual environment (if needed):"
     echo -e "   ${CYAN}claude-activate${NC}"
@@ -386,6 +388,10 @@ main() {
             install_dependencies
             if check_prerequisites; then
                 quick_install "$@"
+                # Set ownership of the claude wrapper to the current user
+                if [[ -f "$HOME/.local/bin/claude" ]]; then
+                    chown "$USER":"$USER" "$HOME/.local/bin/claude"
+                fi
                 post_install_message
             fi
             ;;
