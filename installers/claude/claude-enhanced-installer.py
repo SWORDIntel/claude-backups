@@ -1940,18 +1940,26 @@ end
 
     def compile_crypto_pow_c_engine(self) -> bool:
         """Compile Crypto POW C acceleration engine (optional)"""
-        self._print_section("Compiling Crypto-POW C Engine")
+        self._print_section("Compiling Crypto-POW Acceleration Engine")
 
         try:
             crypto_pow_root_dir = self.project_root / "hooks" / "crypto-pow" / "crypto-pow-enhanced"
             if not crypto_pow_root_dir.exists():
-                self._print_warning("Crypto-POW Rust module directory not found - skipping Rust compilation")
+                self._print_warning("Crypto-POW module directory not found - skipping compilation")
+                self._print_info("Python crypto libraries will be used")
                 return True  # Optional component, Python fallback available
+
+            # Check if Rust source code exists
+            crypto_pow_src = crypto_pow_root_dir / "src"
+            if not crypto_pow_src.exists():
+                self._print_info("Crypto-POW Rust source not found - skipping Rust compilation")
+                self._print_info("Python crypto libraries (cryptography, pycryptodome) will provide functionality")
+                return True  # Not an error - Python fallback is the primary implementation
 
             # Check if we have cargo
             if not shutil.which("cargo"):
                 self._print_warning("Cargo (Rust build tool) not found - skipping Crypto-POW Rust engine")
-                self._print_info("Python fallback will be used")
+                self._print_info("Python crypto libraries will be used")
                 return True
 
             self._print_info("Compiling Crypto-POW Rust acceleration with meteorlake optimizations...")
@@ -1982,7 +1990,8 @@ end
                 return True  # Non-critical, Python fallback available
 
         except Exception as e:
-            self._print_warning(f"Crypto-POW Rust engine setup failed: {e}")
+            self._print_warning(f"Crypto-POW acceleration engine setup failed: {e}")
+            self._print_info("Python crypto libraries will provide functionality")
             return True  # Non-critical
 
     def setup_hybrid_bridge(self) -> bool:
