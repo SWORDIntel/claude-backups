@@ -57,9 +57,25 @@ install_dependencies() {
     if ! command -v cargo &> /dev/null; then
         echo -e "${CYAN}Installing Rust toolchain...${NC}"
         echo -e "${YELLOW}This may take 2-3 minutes...${NC}"
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source "$HOME/.cargo/env" 2>/dev/null || export PATH="$HOME/.cargo/bin:$PATH"
-        echo -e "  ${GREEN}✓${NC} Rust installed"
+
+        # Determine actual user home directory (even when running with sudo)
+        if [[ -n "$SUDO_USER" ]]; then
+            USER_HOME=$(eval echo ~"$SUDO_USER")
+        else
+            USER_HOME="$HOME"
+        fi
+
+        # Install Rust as the actual user (not root)
+        if [[ $EUID -eq 0 ]] && [[ -n "$SUDO_USER" ]]; then
+            # Running with sudo - install as the actual user
+            sudo -u "$SUDO_USER" bash -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+            echo -e "  ${GREEN}✓${NC} Rust installed for user $SUDO_USER"
+        else
+            # Running as regular user
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            source "$HOME/.cargo/env" 2>/dev/null || export PATH="$HOME/.cargo/bin:$PATH"
+            echo -e "  ${GREEN}✓${NC} Rust installed"
+        fi
     else
         echo -e "  ${GREEN}✓${NC} Rust already installed"
     fi
@@ -104,6 +120,14 @@ check_prerequisites() {
     else
         npm_version=$(npm --version 2>&1)
         echo -e "  ${GREEN}✓${NC} npm $npm_version"
+    fi
+
+    # Check Rust
+    if ! command -v cargo &> /dev/null; then
+        echo -e "  ${BLUE}ℹ${NC} Rust not found (will be installed for Crypto-POW module)"
+    else
+        rust_version=$(rustc --version 2>&1 | awk '{print $2}')
+        echo -e "  ${GREEN}✓${NC} Rust $rust_version"
     fi
 
     # Check if PEP 668 environment
