@@ -48,8 +48,8 @@ install_dependencies() {
     echo ""
 
     echo -e "${YELLOW}You will be prompted for your sudo password.${NC}"
-    apt-get update
-    apt-get install -y "${DEPS[@]}"
+    sudo apt-get update
+    sudo apt-get install -y "${DEPS[@]}"
 
     echo ""
 
@@ -85,7 +85,7 @@ install_dependencies() {
         echo -e "  ${GREEN}✓${NC} User already in docker group"
     else
         echo -e "${CYAN}Adding user to docker group...${NC}"
-        usermod -aG docker "$USER"
+        sudo usermod -aG docker "$USER"
         echo -e "  ${YELLOW}⚠${NC} You may need to logout/login for docker group to take effect"
     fi
 
