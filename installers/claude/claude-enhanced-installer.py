@@ -1819,21 +1819,38 @@ end
 
             self._print_info("Installing Shadowgit Python dependencies...")
 
-            pip_cmd = "pip3" if shutil.which("pip3") else "pip"
+            pip_cmd = shutil.which("pip3") or shutil.which("pip")
+            if not pip_cmd:
+                self._print_error("pip not found. Cannot install Python dependencies.")
+                return False
+
             installed_count = 0
 
             for package, description in requirements:
                 try:
                     self._print_info(f"Installing {package} ({description})...")
-                    # Use --user only if not in venv
+                    # Use pip with --user flag if not in venv
                     pip_args = [pip_cmd, "install", package]
-                    if not hasattr(sys, 'real_prefix') and not (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
-                        pip_args.insert(2, "--user")
-                    self._run_command(pip_args, timeout=120)
+
+                    # Check if we're in a virtual environment
+                    in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+
+                    if not in_venv:
+                        # Try with --user first
+                        try:
+                            self._run_command(pip_args + ["--user"], timeout=120)
+                        except subprocess.CalledProcessError:
+                            # If --user fails, try with --break-system-packages (for PEP 668 environments)
+                            self._print_warning(f"--user flag failed, trying --break-system-packages for {package}")
+                            self._run_command(pip_args + ["--break-system-packages"], timeout=120)
+                    else:
+                        # In venv, install normally
+                        self._run_command(pip_args, timeout=120)
+
                     self._print_success(f"✓ {package}")
                     installed_count += 1
-                except subprocess.CalledProcessError:
-                    self._print_warning(f"Could not install {package} (may already be installed)")
+                except subprocess.CalledProcessError as e:
+                    self._print_warning(f"Could not install {package}: {e}")
 
             # Add shadowgit to shell PYTHONPATH
             shadowgit_python = shadowgit_dir / "python"
@@ -1878,28 +1895,41 @@ end
                 ("pycryptodome", "Additional crypto functions"),
             ]
 
-            self._print_info("Installing Crypto POW Python dependencies using pipx...")
+            self._print_info("Installing Crypto POW Python dependencies...")
 
-            pipx_cmd = shutil.which("pipx")
-            if not pipx_cmd:
-                self._print_warning("pipx not found. Falling back to pip (may encounter externally-managed-environment errors).")
-                pipx_cmd = shutil.which("pip3") or shutil.which("pip")
-                if not pipx_cmd:
-                    self._print_error("Neither pipx nor pip found. Cannot install Python dependencies.")
-                    return False
+            # Use pip3 for library installation (NOT pipx - pipx is for applications only)
+            pip_cmd = shutil.which("pip3") or shutil.which("pip")
+            if not pip_cmd:
+                self._print_error("pip not found. Cannot install Python dependencies.")
+                return False
 
             installed_count = 0
 
             for package, description in requirements:
                 try:
                     self._print_info(f"Installing {package} ({description})...")
-                    # Use pipx install for isolated environments
-                    pip_args = [pipx_cmd, "install", package]
-                    self._run_command(pip_args, timeout=120)
+                    # Use pip with --user flag if not in venv
+                    pip_args = [pip_cmd, "install", package]
+
+                    # Check if we're in a virtual environment
+                    in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+
+                    if not in_venv:
+                        # Try with --user first
+                        try:
+                            self._run_command(pip_args + ["--user"], timeout=120)
+                        except subprocess.CalledProcessError:
+                            # If --user fails, try with --break-system-packages (for PEP 668 environments)
+                            self._print_warning(f"--user flag failed, trying --break-system-packages for {package}")
+                            self._run_command(pip_args + ["--break-system-packages"], timeout=120)
+                    else:
+                        # In venv, install normally
+                        self._run_command(pip_args, timeout=120)
+
                     self._print_success(f"✓ {package}")
                     installed_count += 1
-                except subprocess.CalledProcessError:
-                    self._print_warning(f"Could not install {package}")
+                except subprocess.CalledProcessError as e:
+                    self._print_warning(f"Could not install {package}: {e}")
 
             self._print_success(f"Crypto POW module installed ({installed_count} dependencies)")
             return True
