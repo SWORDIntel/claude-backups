@@ -228,7 +228,7 @@ interactive_install() {
     echo ""
     echo "Choose installation options:"
     echo "  1) Military mode (Default - Recommended)"
-    echo "  2) Military + Local Opus"
+    echo "  2) Military + Local Opus (infrastructure-only, use qwen for inference)"
     echo "  3) Force reinstall (overwrites existing)"
     echo "  4) Recreate virtual environment"
     echo "  5) Legacy mode (no military optimization)"
@@ -242,7 +242,8 @@ interactive_install() {
             quick_install --mode full
             ;;
         2)
-            echo -e "${CYAN}Military + Local Opus Installation${NC}"
+            echo -e "${CYAN}Military + Local Opus Infrastructure Installation${NC}"
+            echo -e "${YELLOW}Note: Infrastructure-only, use qwen-openvino for actual inference${NC}"
             quick_install --mode full --local-opus
             ;;
         3)
