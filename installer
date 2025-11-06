@@ -35,7 +35,6 @@ install_dependencies() {
 
     DEPS=(
         "build-essential"
-        "gcc-15" "g++-15"
         "python3-full" "python3-pip" "python3-venv" "python-is-python3" "pipx"
         "libnuma-dev" "liburing-dev" "librdkafka-dev"
         "libssl-dev" "libpcre2-dev"
@@ -48,8 +47,17 @@ install_dependencies() {
     echo ""
 
     echo -e "${YELLOW}You will be prompted for your sudo password.${NC}"
-    apt-get update
-    apt-get install -y "${DEPS[@]}"
+    sudo apt-get update
+    sudo apt-get install -y "${DEPS[@]}"
+
+    # Try to install gcc-15/g++-15 if available (optional)
+    echo ""
+    echo -e "${CYAN}Checking for gcc-15/g++-15...${NC}"
+    if sudo apt-get install -y gcc-15 g++-15 2>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} gcc-15 and g++-15 installed"
+    else
+        echo -e "  ${BLUE}ℹ${NC} gcc-15/g++-15 not available, using default gcc from build-essential"
+    fi
 
     echo ""
 
@@ -85,7 +93,7 @@ install_dependencies() {
         echo -e "  ${GREEN}✓${NC} User already in docker group"
     else
         echo -e "${CYAN}Adding user to docker group...${NC}"
-        usermod -aG docker "$USER"
+        sudo usermod -aG docker "$USER"
         echo -e "  ${YELLOW}⚠${NC} You may need to logout/login for docker group to take effect"
     fi
 
@@ -186,6 +194,9 @@ run_military_optimization() {
     if [[ -f "$SCRIPT_DIR/execute_40tflops_optimization.sh" ]]; then
         echo -e "${BLUE}Executing 40+ TFLOPS optimization...${NC}"
         bash "$SCRIPT_DIR/execute_40tflops_optimization.sh"
+    elif [[ -f "$SCRIPT_DIR/archive/scripts/execute_40tflops_optimization.sh" ]]; then
+        echo -e "${BLUE}Executing 40+ TFLOPS optimization...${NC}"
+        bash "$SCRIPT_DIR/archive/scripts/execute_40tflops_optimization.sh"
     fi
 
     # Deploy agent coordination
