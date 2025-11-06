@@ -388,9 +388,9 @@ main() {
             install_dependencies
             if check_prerequisites; then
                 quick_install "$@"
-                # Set ownership of the claude wrapper to the current user
-                if [[ -f "$HOME/.local/bin/claude" ]]; then
-                    chown "$USER":"$USER" "$HOME/.local/bin/claude"
+                # Set ownership of the claude wrapper to the current user (if running with sudo)
+                if [[ -f "$HOME/.local/bin/claude" ]] && [[ $EUID -eq 0 ]]; then
+                    chown "$USER":"$USER" "$HOME/.local/bin/claude" 2>/dev/null || true
                 fi
                 post_install_message
             fi
