@@ -311,21 +311,35 @@ post_install_message() {
     echo -e "${GREEN}Installation Complete!${NC}"
     echo "======================================================================"
     echo ""
+
+    # Setup binaries automatically
+    if [[ -f "$SCRIPT_DIR/scripts/setup-binaries.sh" ]]; then
+        echo -e "${CYAN}Setting up binary shortcuts...${NC}"
+        bash "$SCRIPT_DIR/scripts/setup-binaries.sh" 2>/dev/null || true
+        echo ""
+    fi
+
     echo -e "${BOLD}To run Claude, you may need to reload your shell configuration:${NC}"
     echo -e "   ${CYAN}source ~/.bashrc${NC}  (or ~/.zshrc, ~/.profile, etc., depending on your shell)"
     echo ""
     echo -e "${BOLD}Then, you can test Claude:${NC}"
     echo -e "   ${CYAN}claude --version${NC}"
     echo ""
-    echo -e "${BOLD}Remember to run the installer itself with 'sudo ./installer' next time.${NC}"
+    echo -e "${BOLD}Quick commands:${NC}"
+    echo "  1. Validate system:"
+    echo -e "     ${CYAN}./scripts/quick-validate.sh${NC}"
     echo ""
-    echo "3. Activate virtual environment (if needed):"
-    echo -e "   ${CYAN}claude-activate${NC}"
+    echo "  2. Run benchmarks:"
+    echo -e "     ${CYAN}./scripts/quick-bench.sh${NC}"
     echo ""
-    echo "4. Check agent system:"
-    echo -e "   ${CYAN}ls -la ~/.claude/${NC}"
+    echo "  3. Load convenience aliases:"
+    echo -e "     ${CYAN}source scripts/shell-aliases.sh${NC}"
+    echo ""
+    echo "  4. Check agent system:"
+    echo -e "     ${CYAN}ls -la ~/.claude/${NC}"
     echo ""
     echo -e "${BLUE}For help: claude --help${NC}"
+    echo -e "${BLUE}Quick start guide: cat QUICKSTART.md${NC}"
     echo "======================================================================"
 }
 
