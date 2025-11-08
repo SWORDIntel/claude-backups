@@ -614,6 +614,28 @@ class ClaudeEnhancedInstaller:
         except:
             return False
 
+    def _get_pip_command(self) -> Optional[str]:
+        """Get the correct pip command (venv pip if available, otherwise create venv first)"""
+        # Check if venv exists and has pip
+        venv_pip = self.venv_dir / "bin" / "pip"
+        if venv_pip.exists():
+            self.logger.debug(f"Using venv pip: {venv_pip}")
+            return str(venv_pip)
+
+        # Venv doesn't exist, try to create it
+        self.logger.info("Venv not found, creating it first...")
+        if not self.setup_python_venv():
+            self.logger.error("Failed to create venv")
+            return None
+
+        # Check again after creation
+        if venv_pip.exists():
+            self.logger.debug(f"Using newly created venv pip: {venv_pip}")
+            return str(venv_pip)
+
+        self.logger.error("Venv pip not found even after creation")
+        return None
+
     def _run_command(self, cmd: List[str], shell: bool = False, check: bool = True,
                     timeout: int = 60, cwd: Optional[Path] = None) -> subprocess.CompletedProcess:
         """Run a command with comprehensive error handling and logging"""
@@ -1819,9 +1841,10 @@ end
 
             self._print_info("Installing Shadowgit Python dependencies...")
 
-            pip_cmd = shutil.which("pip3") or shutil.which("pip")
+            # Get the correct pip command (venv pip or create venv first)
+            pip_cmd = self._get_pip_command()
             if not pip_cmd:
-                self._print_error("pip not found. Cannot install Python dependencies.")
+                self._print_error("pip not found and could not create venv. Cannot install Python dependencies.")
                 return False
 
             installed_count = 0
@@ -1829,23 +1852,9 @@ end
             for package, description in requirements:
                 try:
                     self._print_info(f"Installing {package} ({description})...")
-                    # Use pip with --user flag if not in venv
+                    # Use the venv pip (no --user or --break-system-packages needed)
                     pip_args = [pip_cmd, "install", package]
-
-                    # Check if we're in a virtual environment
-                    in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
-
-                    if not in_venv:
-                        # Try with --user first
-                        try:
-                            self._run_command(pip_args + ["--user"], timeout=120)
-                        except subprocess.CalledProcessError:
-                            # If --user fails, try with --break-system-packages (for PEP 668 environments)
-                            self._print_warning(f"--user flag failed, trying --break-system-packages for {package}")
-                            self._run_command(pip_args + ["--break-system-packages"], timeout=120)
-                    else:
-                        # In venv, install normally
-                        self._run_command(pip_args, timeout=120)
+                    self._run_command(pip_args, timeout=120)
 
                     self._print_success(f"✓ {package}")
                     installed_count += 1
@@ -1897,10 +1906,10 @@ end
 
             self._print_info("Installing Crypto POW Python dependencies...")
 
-            # Use pip3 for library installation (NOT pipx - pipx is for applications only)
-            pip_cmd = shutil.which("pip3") or shutil.which("pip")
+            # Get the correct pip command (venv pip or create venv first)
+            pip_cmd = self._get_pip_command()
             if not pip_cmd:
-                self._print_error("pip not found. Cannot install Python dependencies.")
+                self._print_error("pip not found and could not create venv. Cannot install Python dependencies.")
                 return False
 
             installed_count = 0
@@ -1908,23 +1917,9 @@ end
             for package, description in requirements:
                 try:
                     self._print_info(f"Installing {package} ({description})...")
-                    # Use pip with --user flag if not in venv
+                    # Use the venv pip (no --user or --break-system-packages needed)
                     pip_args = [pip_cmd, "install", package]
-
-                    # Check if we're in a virtual environment
-                    in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
-
-                    if not in_venv:
-                        # Try with --user first
-                        try:
-                            self._run_command(pip_args + ["--user"], timeout=120)
-                        except subprocess.CalledProcessError:
-                            # If --user fails, try with --break-system-packages (for PEP 668 environments)
-                            self._print_warning(f"--user flag failed, trying --break-system-packages for {package}")
-                            self._run_command(pip_args + ["--break-system-packages"], timeout=120)
-                    else:
-                        # In venv, install normally
-                        self._run_command(pip_args, timeout=120)
+                    self._run_command(pip_args, timeout=120)
 
                     self._print_success(f"✓ {package}")
                     installed_count += 1
