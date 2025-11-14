@@ -240,24 +240,35 @@ hooks/shadowgit/
 
 ### 2. Agent Orchestration System
 
-**Location**: `agents/src/python/`
+**Location**: `agents/src/python/claude_agents/`
 
 Multi-agent coordination with intelligent task distribution:
 
-- **Agent Registry**: Dynamic agent discovery and registration
+- **Agent Registry**: Dynamic agent discovery and registration (EnhancedAgentRegistry)
 - **Path Resolver**: Portable path management across systems
 - **Conflict Predictor**: ML-powered conflict prediction
-- **Integrated Testing**: Comprehensive system tests
+- **Agent Implementations**: 68 specialized agents across multiple categories
 
 **Key Files**:
 ```bash
-agents/src/python/
-├── agent_registry.py              # Central agent management
-├── agent_path_resolver.py         # Path abstraction layer
-├── conflict_predictor.py          # ML conflict detection
-├── git_intelligence_demo.py       # Demo integration
-├── integrated_systems_test.py     # Full system testing
-└── initialize_git_intelligence.py # Setup & initialization
+agents/src/python/claude_agents/
+├── orchestration/
+│   ├── agent_registry.py          # EnhancedAgentRegistry (2009 lines)
+│   └── __init__.py                # get_agent_registry() singleton
+├── git/
+│   └── conflict_predictor.py      # ML conflict detection
+├── utils/
+│   └── agent_path_resolver.py     # Path abstraction layer
+├── implementations/               # 68 agent implementations
+│   ├── core/                      # Core agents
+│   ├── development/               # Development agents
+│   ├── infrastructure/            # Infrastructure agents
+│   ├── internal/                  # Internal system agents
+│   ├── language/                  # Language-specific agents
+│   ├── platform/                  # Platform agents
+│   ├── security/                  # Security agents
+│   └── specialized/               # Specialized task agents
+└── __init__.py                    # get_agent(), list_agents()
 ```
 
 **Features**:
@@ -268,37 +279,43 @@ agents/src/python/
 
 **Details**: [Agent Framework v7.0](config/CLAUDE.md)
 
-### 3. Crypto-POW System
+### 3. Crypto-POW Enhanced System
 
-**Location**: `hooks/crypto-pow/`
+**Location**: `hooks/crypto-pow/crypto-pow-enhanced/`
 
-High-performance cryptographic proof-of-work:
+Hardware-accelerated cryptographic proof-of-work optimized for Intel Meteor Lake:
 
-- **Hash Rate**: 2.89 MH/s (difficulty 12)
-- **OpenSSL Integration**: Hardware crypto acceleration
-- **Benchmarking**: Built-in performance testing
+- **Implementation**: Rust with AVX2/FMA/AVX-VNNI acceleration
+- **Hash Algorithms**: Blake3 (default), SHA-256, SHA3-256
+- **Parallel Processing**: Multi-threaded with Rayon
+- **Hardware Features**: TPM 2.0 support, cryptographic attestation
 
 **Key Files**:
 ```bash
-hooks/crypto-pow/
-├── bin/
-│   └── crypto_pow                 # Compiled binary (25KB)
+hooks/crypto-pow/crypto-pow-enhanced/
+├── Cargo.toml                     # Rust package manifest
 ├── src/
-│   └── crypto_pow.c               # C implementation
+│   ├── lib.rs                     # Core library
+│   ├── engine.rs                  # POW engine
+│   └── cli.rs                     # Command-line interface
+├── examples/                      # Usage examples
 └── README.md                      # Complete documentation
 ```
 
 **Usage**:
 ```bash
-# Build and test
-make crypto_pow_build
-make crypto_pow_test
+# Build (requires Rust)
+cd hooks/crypto-pow/crypto-pow-enhanced
+cargo build --release
 
-# Mine with specific difficulty
-./hooks/crypto-pow/bin/crypto_pow mine "commit message" 8
+# Run examples
+cargo run --example basic_usage
 
-# Benchmark performance
-./hooks/crypto-pow/bin/crypto_pow benchmark 12
+# Run CLI tool
+cargo run --bin crypto-pow -- --help
+
+# Run tests
+cargo test
 ```
 
 ### 4. Binary Communication System
@@ -539,36 +556,63 @@ print(f"Execution: {result['execution_path']}")  # 'npu' or 'cpu'
 
 **Quick Start**:
 ```python
-from agents.src.python.agent_registry import get_agent_registry
+# Add to Python path
+import sys
+sys.path.insert(0, 'agents/src/python')
+
+# Import and use the registry
+from claude_agents.orchestration import get_agent_registry
 
 registry = get_agent_registry()
-agents = registry.list_available_agents()
+agents = registry.list_all_agents()
 print(f"Available: {len(agents)} agents")
+
+# Or use the high-level API
+from claude_agents import get_agent, list_agents
+
+all_agents = list_agents()
+director = get_agent('director')
 ```
 
-### Crypto-POW - Proof of Work System
+### Crypto-POW Enhanced - Hardware-Accelerated Proof of Work
 
-**What it does**: Cryptographic PoW for git commits
+**What it does**: Hardware-accelerated cryptographic proof-of-work for secure commits
 
-**Performance**: 2.89 MH/s @ difficulty 12
+**Implementation**: Rust with SIMD acceleration (AVX2/FMA/AVX-VNNI)
 
 **Features**:
-- ✅ SHA-256 with OpenSSL acceleration
+- ✅ Blake3, SHA-256, SHA3-256 algorithms
+- ✅ Multi-threaded parallel processing
+- ✅ Hardware attestation support
+- ✅ TPM 2.0 integration (optional)
 - ✅ Configurable difficulty levels
-- ✅ Built-in benchmarking
-- ✅ Verification system
 
 **Quick Start**:
 ```bash
-# Build
-make crypto_pow_build
+# Build (requires Rust toolchain)
+cd hooks/crypto-pow/crypto-pow-enhanced
+cargo build --release
 
-# Mine a block
-./hooks/crypto-pow/bin/crypto_pow mine "commit message" 10
+# Run example
+cargo run --example basic_usage
 
-# Benchmark
-./hooks/crypto-pow/bin/crypto_pow benchmark 12
-# Output: 2,893,373.83 H/s
+# Use as library
+cargo run --bin crypto-pow -- mine --difficulty 20
+
+# Run tests
+cargo test
+```
+
+**Library Usage**:
+```rust
+use crypto_pow_enhanced::{CryptoPowEngine, EngineConfig, HashAlgorithm};
+
+let mut config = EngineConfig::default();
+config.difficulty = 20;
+config.hash_algorithm = HashAlgorithm::Blake3;
+
+let engine = CryptoPowEngine::new(config);
+let result = engine.solve(b"commit data");
 ```
 
 ### Binary Communication - Ultra-Fast IPC
