@@ -1,0 +1,171 @@
+name: "Claude Agent Framework"
+version: "7.0.0"
+description: "Multi-agent AI orchestration system with Intel NPU acceleration"
+
+architecture:
+  tiers:
+    - name: "Agent Layer (Tier 3)"
+      language: "Python 3.11+"
+      path: "agents/src/python/claude_agents/"
+      description: "68 specialized agents for task orchestration and coordination"
+      key_components:
+        - "orchestration/agent_registry.py - EnhancedAgentRegistry (2009 lines)"
+        - "implementations/ - 68 agent implementations across 9 categories"
+        - "git/conflict_predictor.py - ML-powered conflict prediction"
+        - "utils/agent_path_resolver.py - Portable path management"
+
+    - name: "Hook Layer (Tier 2)"
+      language: "Python + C bindings"
+      path: "hooks/"
+      description: "Business logic, abstractions, and hardware integration"
+      key_components:
+        - "shadowgit/python/ - Git intelligence with NPU/AVX2 acceleration"
+        - "shadowgit/python/shadowgit_avx2.py - 7-10x faster with NPU"
+        - "shadowgit/python/phase3_unified.py - Core git analysis"
+        - "shadowgit/python/integration_hub.py - Python-C bridge"
+
+    - name: "Binary Layer (Tier 1)"
+      language: "C + Rust"
+      path: "hooks/shadowgit/src/, hooks/crypto-pow/"
+      description: "High-performance primitives and hardware optimization"
+      key_components:
+        - "shadowgit/src/ - C implementation with SIMD (AVX2/AVX-512)"
+        - "crypto-pow/crypto-pow-enhanced/ - Rust POW with Blake3"
+        - "binary-communications-system/ - Ultra-fast IPC (50ns-10µs)"
+
+hardware:
+  platform: "Intel Meteor Lake (Core Ultra 7 165H)"
+  cpu:
+    p_cores: 12  # Performance cores (0-11), AVX-512 capable
+    e_cores: 10  # Efficiency cores (12-21), AVX2 only
+    total_cores: 22
+  npu:
+    name: "Intel AI Boost (NPU-3720)"
+    performance: "11 TOPS INT8"
+    memory: "128MB dedicated"
+  gpu:
+    name: "Intel Arc iGPU"
+    api: "OpenVINO 2025.3.0"
+  memory: "64GB DDR5-5600 ECC"
+
+performance:
+  optimizations:
+    - "NPU acceleration: 7-10x faster for batch operations"
+    - "AVX2/AVX-512 SIMD: Hardware-accelerated primitives"
+    - "P-core affinity: Compute-intensive tasks"
+    - "E-core affinity: I/O and background tasks"
+    - "Hybrid scheduling: 26% P-core advantage for single-thread"
+
+conventions:
+  python:
+    version: "3.11+"
+    formatter: "black (line-length: 100)"
+    import_sorter: "isort (black profile)"
+    linter: "pylint (score > 8.0)"
+    type_checker: "mypy (strict mode)"
+    test_framework: "pytest (80%+ coverage)"
+
+  imports:
+    correct:
+      - "from claude_agents.orchestration import get_agent_registry"
+      - "from claude_agents import get_agent, list_agents"
+      - "from hooks.shadowgit.python import Phase3Unified, ShadowGitAVX2"
+    incorrect:
+      - "from agents.src.python.agent_registry import ...  # ❌ Old path"
+      - "from shadowgit_python_bridge import ...  # ❌ Deprecated"
+
+  file_organization:
+    agents_base: "agents/src/python/claude_agents/"
+    categories:
+      - "implementations/core/ - Core agents (director, architect, constructor)"
+      - "implementations/development/ - Dev agents (debugger, linter, testbed)"
+      - "implementations/infrastructure/ - Infra agents (deployer, monitor, packager)"
+      - "implementations/internal/ - Internal agents (python-internal, c-internal)"
+      - "implementations/language/ - Language agents (java, typescript, etc.)"
+      - "implementations/platform/ - Platform agents (mobile, web, gui)"
+      - "implementations/security/ - Security agents (auditor, chaos, crypto)"
+      - "implementations/specialized/ - Specialized agents (planner, researcher)"
+
+  git_commits:
+    format: "<type>(<scope>): <subject>"
+    types:
+      - "feat - New feature"
+      - "fix - Bug fix"
+      - "docs - Documentation"
+      - "style - Formatting"
+      - "refactor - Code restructuring"
+      - "perf - Performance improvement"
+      - "test - Testing"
+      - "chore - Maintenance"
+
+dependencies:
+  core:
+    - "asyncio - Async I/O"
+    - "asyncpg - PostgreSQL async driver"
+    - "numpy - Numerical operations"
+    - "psycopg2 - PostgreSQL driver"
+
+  optional:
+    - "openvino - NPU/GPU acceleration"
+    - "psutil - System monitoring"
+    - "yaml - Configuration files"
+
+security:
+  practices:
+    - "Environment variables for credentials"
+    - "Pathlib for path operations"
+    - "Input validation for external data"
+    - "No shell=True in subprocess"
+    - "No eval/exec/pickle"
+    - "PostgreSQL parameter binding"
+
+testing:
+  structure:
+    - "tests/integration/ - Cross-module tests"
+    - "tests/performance/ - Benchmark tests"
+    - "tests/agents/ - Agent-specific tests"
+  requirements:
+    - "Minimum 80% coverage"
+    - "Type hints on all public functions"
+    - "Docstrings in Google style"
+    - "Integration tests for critical paths"
+
+documentation:
+  locations:
+    - "README.md - Main documentation"
+    - "INTEGRATION_VALIDATION_REPORT.md - Component integration status"
+    - "ENHANCEMENT_AND_CODEX_PLAN.md - Enhancement roadmap"
+    - "docs/ - Detailed documentation"
+    - ".github/copilot-instructions.md - AI assistant guidelines"
+
+performance_targets:
+  shadowgit_npu:
+    - "Hash 100 files: <20ms (7x faster than CPU)"
+    - "Similarity matrix: <15ms (8x faster)"
+    - "Git diff analysis: <50ms (10x faster)"
+
+  agent_registry:
+    - "Message routing: 50ns-10µs latency"
+    - "Agent invocation: <100ms"
+    - "Concurrent agents: 40+ simultaneous"
+
+  build_system:
+    - "Full build: <5 minutes"
+    - "Incremental build: <30 seconds"
+    - "Test suite: <2 minutes"
+
+ai_assistance:
+  github_copilot:
+    enabled: true
+    instructions: ".github/copilot-instructions.md"
+
+  context_files:
+    - ".aicontext/project.yaml - This file"
+    - ".vscode/settings.json - IDE configuration"
+    - ".devcontainer/devcontainer.json - Dev environment"
+
+  recommendations:
+    - "Use Copilot Chat for complex refactoring"
+    - "Reference copilot-instructions.md for patterns"
+    - "AI-generated code must pass all linting/type checks"
+    - "Review AI suggestions for security issues"

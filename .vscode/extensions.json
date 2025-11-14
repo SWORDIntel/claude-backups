@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    "ms-python.isort",
+    "ms-python.pylint",
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "rust-lang.rust-analyzer",
+    "ms-vscode.cpptools",
+    "ms-vscode.makefile-tools",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml",
+    "ms-azuretools.vscode-docker",
+    "streetsidesoftware.code-spell-checker",
+    "eamodio.gitlens",
+    "ms-vsliveshare.vsliveshare"
+  ],
+  "unwantedRecommendations": []
+}

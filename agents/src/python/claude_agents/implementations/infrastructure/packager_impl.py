@@ -1268,15 +1268,105 @@ class EcosystemManager:
         dependency_tree: Dict,
     ) -> Dict[str, Any]:
         """Install package in this ecosystem"""
-        raise NotImplementedError
+        try:
+            if isinstance(self, NPMManager):
+                cmd = ["npm", "install", f"{package_name}@{version}"]
+            elif isinstance(self, PipManager):
+                cmd = ["pip", "install", f"{package_name}=={version}"]
+            elif isinstance(self, CargoManager):
+                cmd = ["cargo", "install", package_name, "--version", version]
+            else:
+                return {"success": False, "error": f"Unknown package manager: {self.__class__.__name__}"}
+
+            result = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await result.communicate()
+
+            return {
+                "success": result.returncode == 0,
+                "package": package_name,
+                "version": version,
+                "output": stdout.decode() if stdout else "",
+                "errors": stderr.decode() if stderr else None,
+                "returncode": result.returncode
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e), "package": package_name}
 
     async def uninstall(self, package_name: str) -> Dict[str, Any]:
         """Uninstall package from this ecosystem"""
-        raise NotImplementedError
+        try:
+            if isinstance(self, NPMManager):
+                cmd = ["npm", "uninstall", package_name]
+            elif isinstance(self, PipManager):
+                cmd = ["pip", "uninstall", "-y", package_name]
+            elif isinstance(self, CargoManager):
+                cmd = ["cargo", "uninstall", package_name]
+            else:
+                return {"success": False, "error": f"Unknown package manager: {self.__class__.__name__}"}
+
+            result = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await result.communicate()
+
+            return {
+                "success": result.returncode == 0,
+                "package": package_name,
+                "output": stdout.decode() if stdout else "",
+                "returncode": result.returncode
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e), "package": package_name}
 
     async def list_packages(self) -> List[str]:
         """List installed packages"""
-        raise NotImplementedError
+        try:
+            if isinstance(self, NPMManager):
+                cmd = ["npm", "list", "--depth=0", "--json"]
+            elif isinstance(self, PipManager):
+                cmd = ["pip", "list", "--format=json"]
+            elif isinstance(self, CargoManager):
+                cmd = ["cargo", "install", "--list"]
+            else:
+                return []
+
+            result = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await result.communicate()
+
+            if result.returncode != 0:
+                return []
+
+            if isinstance(self, NPMManager):
+                import json
+                data = json.loads(stdout.decode())
+                return list(data.get("dependencies", {}).keys())
+            elif isinstance(self, PipManager):
+                import json
+                data = json.loads(stdout.decode())
+                return [pkg["name"] for pkg in data]
+            else:  # CargoManager
+                # Parse cargo install --list output
+                lines = stdout.decode().split('\n')
+                packages = []
+                for line in lines:
+                    if line and not line.startswith(' '):
+                        # Format: "package_name v1.2.3:"
+                        parts = line.split()
+                        if parts:
+                            packages.append(parts[0])
+                return packages
+        except Exception:
+            return []
 
 
 class NPMManager(EcosystemManager):

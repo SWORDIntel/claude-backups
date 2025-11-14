@@ -1,0 +1,101 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/agents/src/python",
+    "${workspaceFolder}/hooks/shadowgit/python",
+    "${workspaceFolder}"
+  ],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": [
+    "tests",
+    "-v",
+    "--cov=claude_agents",
+    "--cov=hooks.shadowgit.python",
+    "--cov-report=html"
+  ],
+  "python.formatting.provider": "none",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintArgs": [
+    "--max-line-length=100",
+    "--disable=C0111,C0103,R0913,R0914"
+  ],
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "editor.rulers": [100],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "on",
+      "strings": "on",
+      "other": "on"
+    }
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/venv": true,
+    "**/.venv": true,
+    "**/*.egg-info": true
+  },
+  "search.exclude": {
+    "**/venv": true,
+    "**/.venv": true,
+    "**/deprecated": true,
+    "**/archive": true,
+    "**/__pycache__": true,
+    "**/*.pyc": true
+  },
+  "files.watcherExclude": {
+    "**/venv/**": true,
+    "**/.venv/**": true,
+    "**/deprecated/**": true,
+    "**/archive/**": true
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/agents/src/python:${workspaceFolder}/hooks/shadowgit/python:${workspaceFolder}"
+  },
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}/agents/src/python:${workspaceFolder}/hooks/shadowgit/python:${workspaceFolder}"
+  },
+  "isort.args": ["--profile", "black"],
+  "black-formatter.args": ["--line-length=100"],
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.py$",
+        "cmd": "black ${file} && isort ${file}"
+      }
+    ]
+  },
+  "cSpell.words": [
+    "asyncpg",
+    "asyncio",
+    "claude",
+    "shadowgit",
+    "psycopg",
+    "openvino",
+    "numpy",
+    "aiohttp",
+    "pydantic",
+    "pylint",
+    "pytest",
+    "SIMD",
+    "AVX",
+    "NPU",
+    "vectorize"
+  ]
+}

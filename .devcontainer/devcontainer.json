@@ -1,0 +1,100 @@
+{
+  "name": "Claude Agent Framework v7.0",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bullseye",
+
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true,
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.pylint",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "rust-lang.rust-analyzer",
+        "ms-vscode.cpptools",
+        "ms-vscode.makefile-tools",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "streetsidesoftware.code-spell-checker",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "editor.formatOnSave": true,
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  },
+
+  "postCreateCommand": "bash -c 'pip install --upgrade pip && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && if [ -f agents/src/python/requirements_production.txt ]; then pip install -r agents/src/python/requirements_production.txt; fi && echo \"✅ Dev container ready!\"'",
+
+  "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,readonly,type=bind",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,readonly,type=bind"
+  ],
+
+  "remoteEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}/agents/src/python:${containerWorkspaceFolder}/hooks/shadowgit/python:${containerWorkspaceFolder}",
+    "PATH": "${containerEnv:PATH}:/home/vscode/.cargo/bin"
+  },
+
+  "forwardPorts": [5433, 8080, 9091],
+  "portsAttributes": {
+    "5433": {
+      "label": "PostgreSQL",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Learning System API",
+      "onAutoForward": "openBrowser"
+    },
+    "9091": {
+      "label": "Prometheus",
+      "onAutoForward": "ignore"
+    }
+  },
+
+  "containerEnv": {
+    "TZ": "UTC"
+  },
+
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined"
+  ],
+
+  "remoteUser": "vscode",
+
+  "updateContentCommand": "pip install -e .",
+
+  "waitFor": "postCreateCommand"
+}
