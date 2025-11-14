@@ -85,88 +85,81 @@ Claude Code is an interactive CLI tool that helps with software engineering task
 
 ### Using Agents in Claude Code
 
-The framework integrates seamlessly with Claude Code's `Task` tool for agent invocation:
+Simply tell Claude to use specific agents in natural language. Claude will automatically invoke the agents for you:
 
 #### Basic Agent Invocation
 
-```python
-# Within a Claude Code session, use the Task tool:
-Task(
-    subagent_type="python-internal",
-    prompt="Analyze this codebase for performance bottlenecks"
-)
+**Example requests:**
 
-# Invoke security auditor
-Task(
-    subagent_type="security",
-    prompt="Perform security audit on authentication module"
-)
+> "Use PYTHON-INTERNAL to analyze this codebase for performance bottlenecks"
 
-# Run tests with specialized agent
-Task(
-    subagent_type="testbed",
-    prompt="Run comprehensive test suite and analyze coverage"
-)
-```
+> "Use SECURITY to perform a security audit on the authentication module"
+
+> "Use TESTBED to run a comprehensive test suite and analyze the coverage"
 
 #### Multi-Agent Coordination
 
-```python
-# Parallel execution for independent tasks
-Task(subagent_type="architect", prompt="Design new microservice architecture")
-Task(subagent_type="security", prompt="Analyze security requirements")
-Task(subagent_type="database", prompt="Design database schema")
+**Parallel execution** (agents run simultaneously):
 
-# Sequential workflow (agents coordinate automatically)
-Task(
-    subagent_type="constructor",
-    prompt="Initialize new Python project with best practices"
-)
-# Constructor will automatically invoke other agents as needed
-```
+> "Use ARCHITECT and SECURITY and DATABASE in parallel to design a microservice architecture, analyze the security requirements, and design a database schema"
 
-#### Hardware-Aware Execution
+**Sequential workflow** (agents coordinate automatically):
 
-The framework automatically detects your hardware and optimizes performance:
+> "Use CONSTRUCTOR to initialize a new Python project with best practices"
 
-```python
-# Agent automatically uses available acceleration
-Task(
-    subagent_type="shadowgit",  # Uses AVX2/AVX-512 if available
-    prompt="Analyze git history and find performance regressions"
-)
+The CONSTRUCTOR agent will automatically invoke other agents (ARCHITECT, LINTER, TESTBED, etc.) as needed for comprehensive project setup.
 
-# NPU acceleration for ML workloads (if Intel NPU available)
-Task(
-    subagent_type="npu",
-    prompt="Optimize neural network inference with NPU acceleration"
-)
-```
+#### Hardware Acceleration (Always Automatic)
 
-### Configuration via CLAUDE.md
+**All agents automatically use the best available hardware acceleration** with no configuration needed:
 
-The framework is configured through `CLAUDE.md` in the project root:
+- **AVX-512** on supported Intel CPUs (1.86B lines/sec)
+- **AVX2** on modern x86-64 CPUs (930M lines/sec)
+- **SSE4.2** on legacy CPUs (400M lines/sec)
+- **Scalar** fallback on any CPU (50M lines/sec)
 
-```yaml
+**NPU acceleration** is automatically enabled if Intel NPU hardware is detected (7-10x speedup for git operations, ML inference).
+
+> "Use SHADOWGIT to analyze git history and find performance regressions"
+>
+> *(Automatically uses AVX-512/AVX2 + NPU if available)*
+
+> "Use NPU to optimize neural network inference with hardware acceleration"
+>
+> *(Automatically detects and configures Intel NPU)*
+
+### Configuration (Optional)
+
+The framework works out-of-the-box with no configuration. For custom behavior, create `CLAUDE.md` in your project root:
+
+```markdown
 ---
 name: claude
 version: 7.0.0
 status: PRODUCTION
-modules: 11
 agents: 98
-tools:
-  - Task
-  - Read
-  - Write
-  - Edit
-  - Bash
-sdk_version: "2.0+"
-checkpoint_support: true
 parallel_orchestration: true
 ---
 
-# Your project-specific instructions for Claude Code
+# Project-Specific Agent Instructions
+
+When using PYTHON-INTERNAL agent:
+- Always use type hints
+- Follow black formatting (100 char line)
+- Minimum 80% test coverage
+
+When using SECURITY agent:
+- Focus on OWASP Top 10
+- Check for SQL injection, XSS, CSRF
+- Verify JWT token handling
+
+When using DEPLOYER agent:
+- Deploy to staging first
+- Run smoke tests before production
+- Use blue-green deployment strategy
 ```
+
+**Most users don't need custom configuration** - the defaults work well for standard workflows.
 
 ### Available Agent Categories
 
@@ -208,74 +201,72 @@ parallel_orchestration: true
 
 ### Example Workflow
 
-Here's a complete development workflow using Claude Code with the agent framework:
+Here's a complete development workflow using natural language in Claude Code:
 
+**1. Start Claude Code in your project:**
 ```bash
-# 1. Start Claude Code in your project
 claude
-
-# 2. Within Claude Code session, invoke agents:
 ```
 
-```python
-# Design architecture
-Task(
-    subagent_type="architect",
-    prompt="Design a microservices architecture for user authentication"
-)
+**2. Request agents in natural language:**
 
-# Initialize project structure
-Task(
-    subagent_type="constructor",
-    prompt="Create Python microservice with FastAPI, PostgreSQL, and Redis"
-)
+> **User:** "Use ARCHITECT to design a microservices architecture for user authentication"
+>
+> *(Claude invokes ARCHITECT agent, provides detailed architecture)*
 
-# Implement features
-Task(
-    subagent_type="python-internal",
-    prompt="Implement JWT authentication with refresh tokens"
-)
+> **User:** "Use CONSTRUCTOR to create a Python microservice with FastAPI, PostgreSQL, and Redis"
+>
+> *(Claude invokes CONSTRUCTOR, which automatically uses PYTHON-INTERNAL, DATABASE, and other agents)*
 
-# Security review
-Task(
-    subagent_type="security",
-    prompt="Review authentication implementation for vulnerabilities"
-)
+> **User:** "Use PYTHON-INTERNAL to implement JWT authentication with refresh tokens"
+>
+> *(Claude implements the feature using the Python development agent)*
 
-# Run tests
-Task(
-    subagent_type="testbed",
-    prompt="Generate and run comprehensive test suite"
-)
+> **User:** "Use SECURITY to review the authentication implementation for vulnerabilities"
+>
+> *(Claude runs security audit, reports findings)*
 
-# Deploy
-Task(
-    subagent_type="deployer",
-    prompt="Deploy to production with Docker and Kubernetes"
-)
-```
+> **User:** "Use TESTBED to generate and run a comprehensive test suite"
+>
+> *(Claude generates tests, runs them, reports coverage)*
+
+> **User:** "Use DEPLOYER to deploy to production with Docker and Kubernetes"
+>
+> *(Claude handles containerization and deployment)*
+
+**You can also combine agents for parallel execution:**
+
+> **User:** "Use ARCHITECT and SECURITY and DATABASE in parallel to plan a microservices architecture, analyze security requirements, and design the database schema"
+>
+> *(Claude invokes all three agents simultaneously)*
 
 ### Best Practices
 
 **1. Use Specific Agents for Specific Tasks**
+- Name the agent in UPPERCASE in your request: "Use PYTHON-INTERNAL to..."
 - Choose the most appropriate agent for each task
-- Avoid using generic agents when specialized ones are available
+- Multiple specialized agents are better than one generic agent
 
 **2. Leverage Parallel Execution**
-- Invoke multiple independent agents simultaneously
-- Let Claude Code handle coordination and synchronization
+- Use "and" between agent names: "Use ARCHITECT and SECURITY and DATABASE in parallel to..."
+- Claude will invoke all agents simultaneously for faster results
+- Best for independent tasks that don't depend on each other
 
 **3. Trust Agent Recommendations**
-- Agents may suggest additional steps or invoke other agents
-- This is intentional for comprehensive task completion
+- Agents automatically invoke other agents when needed
+- Example: CONSTRUCTOR may invoke ARCHITECT, LINTER, and TESTBED
+- This ensures comprehensive, production-ready results
 
-**4. Monitor Performance**
-- Hardware acceleration is automatic
-- Check logs for acceleration mode used (AVX-512, AVX2, SSE4.2, or scalar)
+**4. Hardware Acceleration is Always Automatic**
+- No configuration needed - agents automatically use best available mode
+- AVX-512 → AVX2 → SSE4.2 → Scalar (automatic fallback)
+- NPU acceleration auto-enabled if Intel NPU detected
+- Check logs to see which acceleration mode was used
 
-**5. Configure Per-Project**
-- Use `CLAUDE.md` for project-specific agent configuration
-- Set hardware preferences, concurrency limits, and custom behaviors
+**5. Configure Per-Project (Optional)**
+- Use `CLAUDE.md` for project-specific behavior
+- Set agent preferences, concurrency limits, custom instructions
+- Most users don't need custom configuration
 
 ### Troubleshooting
 
