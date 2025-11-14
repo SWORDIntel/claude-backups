@@ -69,11 +69,12 @@
 2. [Quick Start](#-quick-start)
 3. [Architecture Overview](#-architecture-overview)
 4. [Core Components](#-core-components)
-5. [Hardware Acceleration](#-hardware-acceleration)
-6. [Development Guide](#-development-guide)
-7. [Testing & CI/CD](#-testing--cicd)
-8. [Documentation](#-documentation)
-9. [Performance Metrics](#-performance-metrics)
+5. [AI-Powered Development](#-ai-powered-development-codex-integration)
+6. [Hardware Acceleration](#-hardware-acceleration)
+7. [Development Guide](#-development-guide)
+8. [Testing & CI/CD](#-testing--cicd)
+9. [Documentation](#-documentation)
+10. [Performance Metrics](#-performance-metrics)
 
 ---
 
@@ -348,6 +349,70 @@ Maintains compatibility with old import paths:
 - Complete migration tools
 
 **Usage**: [Migration Guide](compat/MIGRATION_GUIDE.md)
+
+---
+
+## 🤖 AI-Powered Development (Codex Integration)
+
+**Status**: ✅ NEW - OpenAI GPT-4 Integration for Code Generation
+
+The Claude Agent Framework now includes seamless integration with OpenAI's GPT-4 API for intelligent code generation, review, and refactoring.
+
+**Features**:
+- 🎯 **Code Generation**: Generate code from natural language descriptions
+- 🔍 **Automated Review**: AI-powered code review with security and performance analysis
+- ♻️ **Intelligent Refactoring**: Context-aware code improvements
+- 📝 **Documentation**: Auto-generate docstrings and comments
+- 🏗️ **Framework-Aware**: Understands Claude Agent architecture and standards
+
+**Location**: `agents/src/python/claude_agents/implementations/development/codex_agent_impl.py`
+
+### Quick Start
+
+```python
+from claude_agents.implementations.development import CodexAgent
+import asyncio
+
+# Initialize agent
+agent = CodexAgent()
+agent.initialize()  # Uses OPENAI_API_KEY environment variable
+
+# Generate code
+result = await agent.generate_code(
+    prompt="Create a function to validate email addresses with regex",
+    language="python"
+)
+
+if result["success"]:
+    print(result["code"])
+```
+
+### Example: Code Review
+
+```python
+# Review code for security issues
+result = await agent.review_code(
+    code="def process(data): return eval(data)",
+    focus_areas=["security", "best_practices"]
+)
+```
+
+### Interactive Examples
+
+Run the comprehensive examples:
+
+```bash
+python3 examples/codex_usage_examples.py
+```
+
+**Prerequisites**:
+```bash
+pip install openai
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+**Configuration**: `config/codex.yaml`
+**Documentation**: [docs/CODEX_INTEGRATION.md](docs/CODEX_INTEGRATION.md)
 
 ---
 

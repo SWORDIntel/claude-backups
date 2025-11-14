@@ -1,0 +1,170 @@
+# OpenAI Codex Integration Configuration
+# For the Claude Agent Framework v7.0
+
+# API Configuration
+api:
+  # Set OPENAI_API_KEY environment variable or uncomment and set below
+  # api_key: "your-api-key-here"
+
+  # Model selection (GPT-4 recommended for code generation)
+  # Note: Original Codex models (code-davinci-002) are deprecated
+  model: "gpt-4"  # Options: gpt-4, gpt-4-turbo-preview, gpt-3.5-turbo
+
+  # API endpoint (default OpenAI, can override for Azure/custom endpoints)
+  # base_url: "https://api.openai.com/v1"
+
+  # Organization ID (optional)
+  # organization: "org-xxxxx"
+
+# Code Generation Settings
+generation:
+  max_tokens: 2000
+  temperature: 0.2  # Lower = more deterministic, higher = more creative
+  top_p: 1.0
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+
+  # Default language if not specified
+  default_language: "python"
+
+  # Include project context in prompts
+  include_context: true
+
+# Code Review Settings
+review:
+  max_tokens: 1500
+  temperature: 0.3
+
+  # Default focus areas for code review
+  focus_areas:
+    - security
+    - performance
+    - best_practices
+    - style
+    - documentation
+
+  # Minimum code quality score (1-10)
+  min_quality_score: 7
+
+# Refactoring Settings
+refactor:
+  max_tokens: 2000
+  temperature: 0.2
+
+  # Default refactoring goals
+  default_goals:
+    - improve_readability
+    - optimize_performance
+    - add_type_hints
+    - enhance_error_handling
+
+# Project Context for Codex
+# This context is included in all prompts to help Codex understand the project
+project_context:
+  name: "Claude Agent Framework"
+  version: "7.0.0"
+
+  architecture:
+    description: "3-tier multi-agent system with hardware acceleration"
+    layers:
+      - name: "Agent Layer"
+        language: "Python 3.11+"
+        path: "agents/src/python/claude_agents/"
+        description: "98 specialized agents for task orchestration"
+
+      - name: "Hook Layer"
+        language: "Python + C bindings"
+        path: "hooks/shadowgit/python/"
+        description: "Business logic with NPU/AVX2 acceleration"
+
+      - name: "Binary Layer"
+        language: "C + Rust"
+        path: "hooks/shadowgit/src/, hooks/crypto-pow/"
+        description: "High-performance primitives (SIMD optimized)"
+
+  standards:
+    python:
+      version: "3.11+"
+      formatter: "black"
+      line_length: 100
+      import_sorter: "isort"
+      linter: "pylint"
+      type_checker: "mypy"
+      test_framework: "pytest"
+      min_coverage: 80
+      docstring_style: "Google"
+
+    rust:
+      edition: "2021"
+      formatter: "cargo fmt"
+      linter: "clippy"
+
+    c:
+      standard: "C11"
+      compiler: "gcc-15"
+      optimization: "AVX2/AVX-512 SIMD"
+
+  imports:
+    correct:
+      - "from claude_agents.orchestration import get_agent_registry"
+      - "from claude_agents import get_agent, list_agents"
+      - "from hooks.shadowgit.python import Phase3Unified, ShadowGitAVX2"
+
+    incorrect:
+      - "from agents.src.python.agent_registry import ..."
+      - "from shadowgit_python_bridge import ..."
+
+  security:
+    rules:
+      - "Use environment variables for credentials (never hardcode)"
+      - "Validate all external inputs"
+      - "Use parameterized queries for SQL"
+      - "Never use eval()/exec()/pickle for untrusted data"
+      - "Use pathlib for path operations"
+
+  performance:
+    guidelines:
+      - "Use async/await for I/O operations"
+      - "Leverage NPU acceleration for critical paths (shadowgit_avx2)"
+      - "Profile before optimizing"
+      - "Use connection pooling for databases"
+      - "Cache expensive computations"
+
+# Feature Flags
+features:
+  # Enable/disable specific Codex capabilities
+  code_generation: true
+  code_review: true
+  refactoring: true
+  documentation_generation: true
+
+  # Experimental features
+  auto_testing: false  # Automatically generate tests
+  auto_documentation: false  # Auto-generate docstrings
+  auto_optimization: false  # Suggest performance optimizations
+
+# Usage Tracking
+tracking:
+  # Track API usage for cost monitoring
+  enabled: true
+  log_file: "logs/codex_usage.log"
+
+  # Alert thresholds
+  daily_token_limit: 100000
+  cost_alert_threshold: 50.0  # USD
+
+# Integration with Agent System
+agent_integration:
+  # Register Codex as an agent in the agent registry
+  register_as_agent: true
+  agent_name: "codex"
+  agent_category: "development"
+
+  # Priority for task assignment
+  priority: "medium"
+
+  # Auto-invoke for specific task types
+  auto_invoke_for:
+    - "code_generation"
+    - "code_review"
+    - "refactoring"
