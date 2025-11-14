@@ -375,7 +375,8 @@ check_database() {
         sleep 2
         
         # Create database and user if needed
-        psql -h "$DB_HOST" -p "$DB_PORT" -U ubuntu -d postgres <<EOF 2>/dev/null || true
+        PG_USER="${USER:-$(whoami)}"
+        psql -h "$DB_HOST" -p "$DB_PORT" -U "$PG_USER" -d postgres <<EOF 2>/dev/null || true
 CREATE USER claude_auth WITH PASSWORD 'claude_auth_pass';
 CREATE DATABASE claude_auth OWNER claude_auth;
 GRANT ALL PRIVILEGES ON DATABASE claude_auth TO claude_auth;

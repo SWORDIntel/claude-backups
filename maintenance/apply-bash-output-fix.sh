@@ -7,8 +7,10 @@ echo "     Claude Wrapper Bash Output Fix Installer"
 echo "═══════════════════════════════════════════════════════════════"
 echo
 
-# Check if the wrapper exists
-WRAPPER_PATH="/home/ubuntu/Downloads/claude-backups/claude-wrapper-ultimate.sh"
+# Auto-detect project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+WRAPPER_PATH="$PROJECT_ROOT/claude-wrapper-ultimate.sh"
 if [[ ! -f "$WRAPPER_PATH" ]]; then
     echo "Error: claude-wrapper-ultimate.sh not found at $WRAPPER_PATH"
     exit 1
@@ -38,9 +40,9 @@ else
 fi
 
 # Update symlink if it exists
-if [[ -L "/home/ubuntu/.local/bin/claude" ]]; then
+if [[ -L "$HOME/.local/bin/claude" ]]; then
     echo "Updating symlink..."
-    ln -sf "$WRAPPER_PATH" /home/ubuntu/.local/bin/claude
+    ln -sf "$WRAPPER_PATH" "$HOME/.local/bin/claude"
     echo "✓ Symlink updated"
 fi
 
