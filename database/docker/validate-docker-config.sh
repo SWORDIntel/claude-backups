@@ -10,7 +10,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-PROJECT_ROOT="/home/ubuntu/Downloads/claude-backups"
+# Auto-detect project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 VALIDATION_PASSED=0
 VALIDATION_FAILED=0
 

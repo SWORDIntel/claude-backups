@@ -52,7 +52,7 @@ if [ $? -eq 0 ]; then
     echo "📝 Log file: $LOG_FILE"
     echo ""
     echo "Connection string:"
-    echo "  psql -h localhost -p 5433 -U ubuntu -d postgres"
+    echo "  psql -h localhost -p 5433 -U ${USER:-$(whoami)} -d postgres"
 else
     echo "❌ Failed to start PostgreSQL"
     echo "Check log file: $LOG_FILE"

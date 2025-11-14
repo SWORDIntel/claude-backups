@@ -4,8 +4,8 @@
 
 The PostgreSQL data directory has incorrect ownership:
 - **Directory**: `database/data/postgresql/`
-- **Current Owner**: `dnsmasq` (incorrect)
-- **Expected Owner**: `john` (your user)
+- **Current Owner**: May be incorrect (e.g., system service user)
+- **Expected Owner**: Your current system user (`$USER`)
 - **Problem**: This prevents both Git tracking and normal database operations
 
 ## Why This Happened
@@ -22,7 +22,7 @@ This preserves any existing data and enables Git tracking.
 
 ```bash
 # Step 1: Take ownership (requires sudo)
-sudo chown -R john:john database/data/postgresql/
+sudo chown -R $USER:$USER database/data/postgresql/
 
 # Step 2: Check if there's any data
 ls -la database/data/postgresql/
@@ -131,10 +131,10 @@ The learning system uses these tables that should be preserved:
 
 ```bash
 # Export learning data
-pg_dump -h localhost -p 5433 -U john -d claude_learning > learning_backup.sql
+pg_dump -h localhost -p 5433 -U $USER -d claude_learning > learning_backup.sql
 
 # Import learning data (after fresh setup)
-psql -h localhost -p 5433 -U john -d claude_learning < learning_backup.sql
+psql -h localhost -p 5433 -U $USER -d claude_learning < learning_backup.sql
 ```
 
 ## Immediate Action Required
@@ -143,7 +143,7 @@ Run these commands to fix the current issue:
 
 ```bash
 # 1. Fix ownership
-sudo chown -R john:john database/data/postgresql/
+sudo chown -R $USER:$USER database/data/postgresql/
 
 # 2. Check contents
 ls -la database/data/postgresql/
@@ -155,7 +155,7 @@ ls -la database/data/postgresql/
 ./database/manage_database.sh start
 
 # 5. Verify it works
-psql -h localhost -p 5433 -U john -d postgres -c "SELECT version();"
+psql -h localhost -p 5433 -U $USER -d postgres -c "SELECT version();"
 ```
 
 ## Long-term Maintenance
@@ -170,8 +170,8 @@ BACKUP_DIR="database/backups/$(date +%Y%m%d)"
 mkdir -p "$BACKUP_DIR"
 
 # Export databases
-pg_dump -h localhost -p 5433 -U john -d claude_learning > "$BACKUP_DIR/learning.sql"
-pg_dump -h localhost -p 5433 -U john -d claude_auth > "$BACKUP_DIR/auth.sql"
+pg_dump -h localhost -p 5433 -U $USER -d claude_learning > "$BACKUP_DIR/learning.sql"
+pg_dump -h localhost -p 5433 -U $USER -d claude_auth > "$BACKUP_DIR/auth.sql"
 
 # Keep only last 7 days
 find database/backups -type d -mtime +7 -exec rm -rf {} \;
@@ -202,7 +202,7 @@ git commit -m "feat: Update learning data snapshot $(date +%Y%m%d)"
 
 ## Next Steps
 
-1. Fix ownership issue: `sudo chown -R john:john database/data/postgresql/`
+1. Fix ownership issue: `sudo chown -R $USER:$USER database/data/postgresql/`
 2. Run `./database/fix_permissions_preserve_data.sh` to implement the solution
 3. Set up regular exports with `export_learning_data.sh`
 4. Commit SQL exports instead of binary files

@@ -6,6 +6,7 @@ DATA_DIR="$SCRIPT_DIR/data/postgresql"
 LOG_FILE="$SCRIPT_DIR/data/postgresql.log"
 SOCKET_DIR="$SCRIPT_DIR/data/run"
 PG_PORT=5433  # Local PostgreSQL port
+PG_USER="${USER:-$(whoami)}"  # Use current system user
 
 # Auto-detect PostgreSQL version
 if [ -d "/usr/lib/postgresql/17/bin" ]; then
@@ -102,7 +103,7 @@ case "$1" in
         
         # Create database and user (using localhost connection with trust auth)
         echo "📦 Creating database and user..."
-        psql -h localhost -p $PG_PORT -U ubuntu -d postgres <<EOF
+        psql -h localhost -p $PG_PORT -U $PG_USER -d postgres <<EOF
 CREATE USER claude_auth WITH PASSWORD 'claude_auth_pass';
 CREATE DATABASE claude_auth OWNER claude_auth;
 GRANT ALL PRIVILEGES ON DATABASE claude_auth TO claude_auth;
@@ -111,7 +112,7 @@ EOF
         # Run SQL setup scripts in sequence
         if [ -f "$SCRIPT_DIR/sql/auth_db_setup.sql" ]; then
             echo "🔨 Running database schema setup..."
-            psql -h localhost -p $PG_PORT -U ubuntu -d claude_auth -f "$SCRIPT_DIR/sql/auth_db_setup.sql"
+            psql -h localhost -p $PG_PORT -U $PG_USER -d claude_auth -f "$SCRIPT_DIR/sql/auth_db_setup.sql"
             echo "✅ Base database schema complete"
         else
             echo "⚠️  SQL setup file not found: $SCRIPT_DIR/sql/auth_db_setup.sql"
@@ -162,11 +163,11 @@ EOF
             echo "  ✅ Data directory: $DATA_DIR"
             if check_postgresql_running; then
                 echo "  ✅ PostgreSQL: RUNNING on port $PG_PORT"
-                PG_VERSION=$(psql -h localhost -p $PG_PORT -U ubuntu -d postgres -t -c "SELECT version();" 2>/dev/null | grep PostgreSQL | head -1)
+                PG_VERSION=$(psql -h localhost -p $PG_PORT -U $PG_USER -d postgres -t -c "SELECT version();" 2>/dev/null | grep PostgreSQL | head -1)
                 if [ -n "$PG_VERSION" ]; then
                     echo "  📊 Version: $PG_VERSION"
                     # Check for PostgreSQL 17 features
-                    JSON_ARRAY_TEST=$(psql -h localhost -p $PG_PORT -U ubuntu -d postgres -t -c "SELECT JSON_ARRAY() IS NOT NULL;" 2>/dev/null || echo "FAILED")
+                    JSON_ARRAY_TEST=$(psql -h localhost -p $PG_PORT -U $PG_USER -d postgres -t -c "SELECT JSON_ARRAY() IS NOT NULL;" 2>/dev/null || echo "FAILED")
                     if [[ "$JSON_ARRAY_TEST" == *"t"* ]]; then
                         echo "  🚀 PostgreSQL 17 JSON functions: AVAILABLE"
                     else
@@ -197,7 +198,7 @@ EOF
             start_postgresql
         fi
         echo "Connecting to local PostgreSQL..."
-        psql -h localhost -p $PG_PORT -U ubuntu -d postgres
+        psql -h localhost -p $PG_PORT -U $PG_USER -d postgres
         ;;
     *)
         echo "Usage: $0 {start|stop|setup|test|redis|status|psql}"
