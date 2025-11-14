@@ -71,6 +71,242 @@ result = agent.execute(task="analyze code quality")
 
 ---
 
+## 🔌 Integration with Claude Code
+
+**This framework is specifically designed for [Claude Code](https://claude.ai/code)**, Anthropic's official CLI for Claude AI. The 98 specialized agents are built to enhance Claude Code sessions with advanced capabilities.
+
+### What is Claude Code?
+
+Claude Code is an interactive CLI tool that helps with software engineering tasks. The Claude Agent Framework v7.0 extends Claude Code with:
+- **98 specialized agents** for development, security, infrastructure, and operations
+- **Hardware acceleration** via Intel NPU and AVX2/AVX-512 SIMD
+- **Multi-agent orchestration** with parallel execution
+- **Production-ready tools** for real-world development workflows
+
+### Using Agents in Claude Code
+
+The framework integrates seamlessly with Claude Code's `Task` tool for agent invocation:
+
+#### Basic Agent Invocation
+
+```python
+# Within a Claude Code session, use the Task tool:
+Task(
+    subagent_type="python-internal",
+    prompt="Analyze this codebase for performance bottlenecks"
+)
+
+# Invoke security auditor
+Task(
+    subagent_type="security",
+    prompt="Perform security audit on authentication module"
+)
+
+# Run tests with specialized agent
+Task(
+    subagent_type="testbed",
+    prompt="Run comprehensive test suite and analyze coverage"
+)
+```
+
+#### Multi-Agent Coordination
+
+```python
+# Parallel execution for independent tasks
+Task(subagent_type="architect", prompt="Design new microservice architecture")
+Task(subagent_type="security", prompt="Analyze security requirements")
+Task(subagent_type="database", prompt="Design database schema")
+
+# Sequential workflow (agents coordinate automatically)
+Task(
+    subagent_type="constructor",
+    prompt="Initialize new Python project with best practices"
+)
+# Constructor will automatically invoke other agents as needed
+```
+
+#### Hardware-Aware Execution
+
+The framework automatically detects your hardware and optimizes performance:
+
+```python
+# Agent automatically uses available acceleration
+Task(
+    subagent_type="shadowgit",  # Uses AVX2/AVX-512 if available
+    prompt="Analyze git history and find performance regressions"
+)
+
+# NPU acceleration for ML workloads (if Intel NPU available)
+Task(
+    subagent_type="npu",
+    prompt="Optimize neural network inference with NPU acceleration"
+)
+```
+
+### Configuration via CLAUDE.md
+
+The framework is configured through `CLAUDE.md` in the project root:
+
+```yaml
+---
+name: claude
+version: 7.0.0
+status: PRODUCTION
+modules: 11
+agents: 98
+tools:
+  - Task
+  - Read
+  - Write
+  - Edit
+  - Bash
+sdk_version: "2.0+"
+checkpoint_support: true
+parallel_orchestration: true
+---
+
+# Your project-specific instructions for Claude Code
+```
+
+### Available Agent Categories
+
+**Development Agents:**
+- `architect` - System design and architecture
+- `constructor` - Project initialization and scaffolding
+- `debugger` - Bug detection and debugging assistance
+- `optimizer` - Performance optimization
+- `linter` - Code quality and style enforcement
+- `patcher` - Bug fixes and patches
+
+**Security Agents:**
+- `security` - Security auditing and vulnerability scanning
+- `cryptoexpert` - Cryptographic implementation
+- `auditor` - Compliance and security audits
+- `quantumguard` - Quantum-resistant security
+
+**Infrastructure Agents:**
+- `deployer` - Deployment automation
+- `infrastructure` - Infrastructure management
+- `database` - Database design and optimization
+- `docker` - Container orchestration
+- `monitor` - System monitoring
+
+**Language-Specific Agents:**
+- `python-internal` - Python development
+- `c-internal` - C development
+- `rust-internal` - Rust development
+- `java-internal` - Java development
+- `typescript-internal` - TypeScript development
+
+**Specialized Agents:**
+- `shadowgit` - Git operations with 7-10x NPU acceleration
+- `npu` - Intel NPU hardware optimization
+- `mlops` - ML operations and deployment
+- `datascience` - Data science workflows
+
+📖 **Complete Agent List**: [docs/AGENT_ECOSYSTEM.md](docs/AGENT_ECOSYSTEM.md)
+
+### Example Workflow
+
+Here's a complete development workflow using Claude Code with the agent framework:
+
+```bash
+# 1. Start Claude Code in your project
+claude
+
+# 2. Within Claude Code session, invoke agents:
+```
+
+```python
+# Design architecture
+Task(
+    subagent_type="architect",
+    prompt="Design a microservices architecture for user authentication"
+)
+
+# Initialize project structure
+Task(
+    subagent_type="constructor",
+    prompt="Create Python microservice with FastAPI, PostgreSQL, and Redis"
+)
+
+# Implement features
+Task(
+    subagent_type="python-internal",
+    prompt="Implement JWT authentication with refresh tokens"
+)
+
+# Security review
+Task(
+    subagent_type="security",
+    prompt="Review authentication implementation for vulnerabilities"
+)
+
+# Run tests
+Task(
+    subagent_type="testbed",
+    prompt="Generate and run comprehensive test suite"
+)
+
+# Deploy
+Task(
+    subagent_type="deployer",
+    prompt="Deploy to production with Docker and Kubernetes"
+)
+```
+
+### Best Practices
+
+**1. Use Specific Agents for Specific Tasks**
+- Choose the most appropriate agent for each task
+- Avoid using generic agents when specialized ones are available
+
+**2. Leverage Parallel Execution**
+- Invoke multiple independent agents simultaneously
+- Let Claude Code handle coordination and synchronization
+
+**3. Trust Agent Recommendations**
+- Agents may suggest additional steps or invoke other agents
+- This is intentional for comprehensive task completion
+
+**4. Monitor Performance**
+- Hardware acceleration is automatic
+- Check logs for acceleration mode used (AVX-512, AVX2, SSE4.2, or scalar)
+
+**5. Configure Per-Project**
+- Use `CLAUDE.md` for project-specific agent configuration
+- Set hardware preferences, concurrency limits, and custom behaviors
+
+### Troubleshooting
+
+**Agent Not Found:**
+```bash
+# List all available agents
+python3 -c "from claude_agents import list_agents; print('\n'.join(list_agents()))"
+```
+
+**Hardware Acceleration Not Working:**
+```bash
+# Check hardware capabilities
+python3 hardware/milspec_hardware_analyzer.py
+
+# View CPU features
+python3 -c "from hooks.shadowgit.python import ShadowgitAVX2; sg = ShadowgitAVX2(); print(sg.hw_caps)"
+```
+
+**Performance Issues:**
+```bash
+# Enable verbose logging
+export CLAUDE_AGENTS_LOG_LEVEL=DEBUG
+
+# Check NPU status
+bash hardware/enable-npu-turbo.sh
+```
+
+📖 **Detailed Troubleshooting**: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+
+---
+
 ## 🤖 AI-Powered Development with Codex
 
 **NEW in v7.0**: Seamless OpenAI GPT-4 integration for intelligent code generation and review.
