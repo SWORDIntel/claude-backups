@@ -193,16 +193,16 @@
                 <div class="stat-label">AI Agents</div>
             </div>
             <div class="stat">
-                <div class="stat-value">34+</div>
-                <div class="stat-label">Modules</div>
+                <div class="stat-value">14K+</div>
+                <div class="stat-label">Total Files</div>
             </div>
             <div class="stat">
-                <div class="stat-value">500+</div>
-                <div class="stat-label">Dependencies</div>
+                <div class="stat-value">7-10x</div>
+                <div class="stat-label">NPU Speedup</div>
             </div>
             <div class="stat">
-                <div class="stat-value">93%</div>
-                <div class="stat-label">Quality Score</div>
+                <div class="stat-value">82%</div>
+                <div class="stat-label">Test Coverage</div>
             </div>
         </div>
         
@@ -269,9 +269,50 @@
                     <div class="card-title">Docker Learning</div>
                     <div class="card-desc">Containerized learning system (435 lines)</div>
                 </div>
+
+                <div class="card" onclick="window.location='modules/project-structure.html'">
+                    <div class="card-icon">📁</div>
+                    <div class="card-title">Project Structure</div>
+                    <div class="card-desc">Complete directory layout (NEW in v7.0)</div>
+                </div>
+
+                <div class="card" onclick="window.location='modules/avx-acceleration.html'">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-title">AVX2/AVX-512 Acceleration</div>
+                    <div class="card-desc">Multi-level SIMD with fallback (NEW)</div>
+                </div>
             </div>
         </div>
-        
+
+        <div class="section">
+            <h2>🧠 NEW: OpenAI Codex Integration</h2>
+            <p style="color: #666; margin-bottom: 20px;">AI-powered code generation, review, and refactoring integrated into the framework:</p>
+            <div class="grid">
+                <div class="card" style="cursor: default;">
+                    <div class="card-icon">🤖</div>
+                    <div class="card-title">Code Generation</div>
+                    <div class="card-desc">Generate production code from natural language descriptions</div>
+                </div>
+
+                <div class="card" style="cursor: default;">
+                    <div class="card-icon">🔍</div>
+                    <div class="card-title">Code Review</div>
+                    <div class="card-desc">Automated security, performance, and style analysis</div>
+                </div>
+
+                <div class="card" style="cursor: default;">
+                    <div class="card-icon">♻️</div>
+                    <div class="card-title">Refactoring</div>
+                    <div class="card-desc">Intelligent code improvements with specific goals</div>
+                </div>
+            </div>
+            <ul class="link-list" style="margin-top: 20px;">
+                <li><a href="../docs/CODEX_INTEGRATION.md">📖 Codex Integration Guide (400+ lines)</a></li>
+                <li><a href="../examples/codex_usage_examples.py">💡 Interactive Examples & Demos</a></li>
+                <li><a href="../config/codex.yaml">⚙️ Configuration (codex.yaml)</a></li>
+            </ul>
+        </div>
+
         <div class="section">
             <h2>🔗 Quick Links</h2>
             <ul class="link-list">
