@@ -8,24 +8,26 @@ import json
 import time
 from datetime import datetime
 
+
 def optimize_npu():
     """Optimize NPU for optimize_npu_inference"""
     print(f"Starting NPU optimization for optimize_npu_inference...")
-    
+
     # Simulate NPU optimization
     start_time = time.time()
-    
+
     optimization_result = {
         "status": "completed",
         "action": "optimize_npu_inference",
         "timestamp": datetime.now().isoformat(),
         "execution_time": time.time() - start_time,
         "npu_optimized": True,
-        "performance_gain": "significant"
+        "performance_gain": "significant",
     }
-    
+
     print(f"NPU optimize_npu_inference optimization completed successfully")
     return optimization_result
+
 
 if __name__ == "__main__":
     result = optimize_npu()

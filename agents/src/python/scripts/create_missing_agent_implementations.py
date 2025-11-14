@@ -6,10 +6,11 @@ This script creates implementation files for the 11 agents that have .md files b
 androidmobile, gna, intergration, leadengineer, npu, organization, planner, python-internal, qadirector, researcher, tui
 """
 
-import os
-from pathlib import Path
 import hashlib
+import os
 from datetime import datetime
+from pathlib import Path
+
 
 def generate_agent_implementation(agent_name, class_name, description, commands):
     """Generate a complete agent implementation file"""
@@ -169,6 +170,7 @@ Timestamp: {{timestamp}}
 import json
 import sys
 from datetime import datetime
+
 
 def execute_{action}():
     """Execute {action} for {agent_name}"""

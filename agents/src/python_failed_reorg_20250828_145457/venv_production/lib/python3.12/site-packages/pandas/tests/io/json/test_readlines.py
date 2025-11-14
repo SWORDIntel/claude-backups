@@ -3,15 +3,13 @@ from io import StringIO
 from pathlib import Path
 
 import numpy as np
-import pytest
-
 import pandas as pd
+import pandas._testing as tm
+import pytest
 from pandas import (
     DataFrame,
     read_json,
 )
-import pandas._testing as tm
-
 from pandas.io.json._json import JsonReader
 
 pytestmark = pytest.mark.filterwarnings(

@@ -5,16 +5,18 @@ Uses Intel AI Boost NPU for actual hardware acceleration
 """
 
 import asyncio
-import time
 import json
-import numpy as np
-from typing import Dict, List, Any, Optional
-from pathlib import Path
 import logging
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 # Import OpenVINO
 try:
     import openvino as ov
+
     OPENVINO_AVAILABLE = True
 except ImportError:
     OPENVINO_AVAILABLE = False
@@ -22,6 +24,7 @@ except ImportError:
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class NPUAcceleratedOrchestrator:
     """Production NPU-accelerated orchestrator with Intel AI Boost"""
@@ -36,10 +39,10 @@ class NPUAcceleratedOrchestrator:
 
         # Performance metrics
         self.metrics = {
-            'npu_inferences': 0,
-            'cpu_fallbacks': 0,
-            'total_operations': 0,
-            'start_time': time.time()
+            "npu_inferences": 0,
+            "cpu_fallbacks": 0,
+            "total_operations": 0,
+            "start_time": time.time(),
         }
 
     async def initialize(self):
@@ -52,10 +55,10 @@ class NPUAcceleratedOrchestrator:
                 self.npu_core = ov.Core()
                 devices = self.npu_core.available_devices
 
-                if 'NPU' in devices:
+                if "NPU" in devices:
                     logger.info("✅ Intel AI Boost NPU detected")
                     self.use_npu = True
-                    npu_name = self.npu_core.get_property('NPU', 'FULL_DEVICE_NAME')
+                    npu_name = self.npu_core.get_property("NPU", "FULL_DEVICE_NAME")
                     logger.info(f"NPU Device: {npu_name}")
                 else:
                     logger.warning("⚠️ NPU not available, using CPU optimization")
@@ -76,22 +79,22 @@ class NPUAcceleratedOrchestrator:
 
     async def load_agents(self):
         """Load agent definitions"""
-        agent_files = list(self.agents_dir.glob('*.md'))
+        agent_files = list(self.agents_dir.glob("*.md"))
 
         for agent_file in agent_files:
-            if agent_file.name in ['README.md', 'TEMPLATE.md', 'WHERE_I_AM.md']:
+            if agent_file.name in ["README.md", "TEMPLATE.md", "WHERE_I_AM.md"]:
                 continue
 
             agent_name = agent_file.stem.lower()
 
             # Create simple agent metadata
             self.agents[agent_name] = {
-                'name': agent_name,
-                'file': str(agent_file),
-                'capabilities': self.extract_capabilities(agent_name),
-                'priority': self.calculate_priority(agent_name),
-                'last_used': 0,
-                'success_rate': 0.95  # Default
+                "name": agent_name,
+                "file": str(agent_file),
+                "capabilities": self.extract_capabilities(agent_name),
+                "priority": self.calculate_priority(agent_name),
+                "last_used": 0,
+                "success_rate": 0.95,  # Default
             }
 
         logger.info(f"Loaded {len(self.agents)} agents")
@@ -101,35 +104,37 @@ class NPUAcceleratedOrchestrator:
         capabilities = []
 
         # Security agents
-        if any(term in agent_name for term in ['security', 'crypto', 'audit', 'defense']):
-            capabilities.extend(['security', 'analysis', 'audit'])
+        if any(
+            term in agent_name for term in ["security", "crypto", "audit", "defense"]
+        ):
+            capabilities.extend(["security", "analysis", "audit"])
 
         # Development agents
-        if any(term in agent_name for term in ['debug', 'test', 'lint', 'architect']):
-            capabilities.extend(['development', 'analysis', 'quality'])
+        if any(term in agent_name for term in ["debug", "test", "lint", "architect"]):
+            capabilities.extend(["development", "analysis", "quality"])
 
         # Language-specific agents
-        if any(term in agent_name for term in ['python', 'c-internal', 'rust', 'java']):
-            capabilities.extend(['programming', 'compilation', 'optimization'])
+        if any(term in agent_name for term in ["python", "c-internal", "rust", "java"]):
+            capabilities.extend(["programming", "compilation", "optimization"])
 
         # Infrastructure agents
-        if any(term in agent_name for term in ['deploy', 'infrastructure', 'monitor']):
-            capabilities.extend(['deployment', 'monitoring', 'operations'])
+        if any(term in agent_name for term in ["deploy", "infrastructure", "monitor"]):
+            capabilities.extend(["deployment", "monitoring", "operations"])
 
-        return capabilities or ['general']
+        return capabilities or ["general"]
 
     def calculate_priority(self, agent_name: str) -> int:
         """Calculate agent priority (1=highest, 10=lowest)"""
         # Strategic agents
-        if agent_name in ['director', 'projectorchestrator']:
+        if agent_name in ["director", "projectorchestrator"]:
             return 1
 
         # Security agents
-        if any(term in agent_name for term in ['security', 'audit']):
+        if any(term in agent_name for term in ["security", "audit"]):
             return 2
 
         # Core development
-        if any(term in agent_name for term in ['architect', 'debugger', 'testbed']):
+        if any(term in agent_name for term in ["architect", "debugger", "testbed"]):
             return 3
 
         # Specialized agents
@@ -150,9 +155,11 @@ class NPUAcceleratedOrchestrator:
             logger.error(f"NPU model initialization failed: {e}")
             self.use_npu = False
 
-    async def select_best_agent(self, task_description: str, task_type: str = "general") -> str:
+    async def select_best_agent(
+        self, task_description: str, task_type: str = "general"
+    ) -> str:
         """Select best agent using NPU acceleration"""
-        self.metrics['total_operations'] += 1
+        self.metrics["total_operations"] += 1
 
         if self.use_npu and self.npu_model:
             return await self.npu_agent_selection(task_description, task_type)
@@ -178,25 +185,31 @@ class NPUAcceleratedOrchestrator:
                 await asyncio.sleep(0.0003)  # 0.3ms NPU inference time
 
                 # Calculate compatibility score
-                capability_score = len(set(agent_data['capabilities']) & set(task_type.split())) / max(len(agent_data['capabilities']), 1)
-                priority_score = (10 - agent_data['priority']) / 10
-                success_score = agent_data['success_rate']
+                capability_score = len(
+                    set(agent_data["capabilities"]) & set(task_type.split())
+                ) / max(len(agent_data["capabilities"]), 1)
+                priority_score = (10 - agent_data["priority"]) / 10
+                success_score = agent_data["success_rate"]
 
-                combined_score = (capability_score * 0.5 + priority_score * 0.3 + success_score * 0.2)
+                combined_score = (
+                    capability_score * 0.5 + priority_score * 0.3 + success_score * 0.2
+                )
                 agent_scores[agent_name] = combined_score
 
             # Select best agent
             best_agent = max(agent_scores.items(), key=lambda x: x[1])[0]
 
             inference_time = time.perf_counter() - start_time
-            self.metrics['npu_inferences'] += 1
+            self.metrics["npu_inferences"] += 1
 
-            logger.debug(f"NPU agent selection: {best_agent} in {inference_time*1000:.1f}ms")
+            logger.debug(
+                f"NPU agent selection: {best_agent} in {inference_time*1000:.1f}ms"
+            )
             return best_agent
 
         except Exception as e:
             logger.error(f"NPU inference failed: {e}")
-            self.metrics['cpu_fallbacks'] += 1
+            self.metrics["cpu_fallbacks"] += 1
             return await self.cpu_agent_selection(task_description, task_type)
 
     async def cpu_agent_selection(self, task_description: str, task_type: str) -> str:
@@ -214,23 +227,27 @@ class NPUAcceleratedOrchestrator:
 
             # Keyword matching
             for keyword in task_keywords:
-                if keyword in agent_name or any(keyword in cap for cap in agent_data['capabilities']):
+                if keyword in agent_name or any(
+                    keyword in cap for cap in agent_data["capabilities"]
+                ):
                     score += 1
 
             # Priority bonus
-            score += (10 - agent_data['priority']) / 10
+            score += (10 - agent_data["priority"]) / 10
 
             if score > best_score:
                 best_score = score
                 best_agent = agent_name
 
         cpu_time = time.perf_counter() - start_time
-        self.metrics['cpu_fallbacks'] += 1
+        self.metrics["cpu_fallbacks"] += 1
 
         logger.debug(f"CPU agent selection: {best_agent} in {cpu_time*1000:.1f}ms")
         return best_agent
 
-    async def execute_task(self, task_description: str, task_type: str = "general") -> Dict[str, Any]:
+    async def execute_task(
+        self, task_description: str, task_type: str = "general"
+    ) -> Dict[str, Any]:
         """Execute a task with NPU-accelerated agent selection"""
         start_time = time.perf_counter()
 
@@ -244,48 +261,56 @@ class NPUAcceleratedOrchestrator:
         total_time = time.perf_counter() - start_time
 
         result = {
-            'task': task_description,
-            'agent': selected_agent,
-            'execution_time_ms': total_time * 1000,
-            'npu_accelerated': self.use_npu,
-            'status': 'completed'
+            "task": task_description,
+            "agent": selected_agent,
+            "execution_time_ms": total_time * 1000,
+            "npu_accelerated": self.use_npu,
+            "status": "completed",
         }
 
         # Update agent metrics
         if selected_agent in self.agents:
-            self.agents[selected_agent]['last_used'] = time.time()
+            self.agents[selected_agent]["last_used"] = time.time()
 
         return result
 
-    async def batch_execute(self, tasks: List[Dict[str, str]], concurrency: int = 10) -> List[Dict[str, Any]]:
+    async def batch_execute(
+        self, tasks: List[Dict[str, str]], concurrency: int = 10
+    ) -> List[Dict[str, Any]]:
         """Execute multiple tasks concurrently with NPU acceleration"""
         semaphore = asyncio.Semaphore(concurrency)
 
         async def execute_with_semaphore(task):
             async with semaphore:
-                return await self.execute_task(task['description'], task.get('type', 'general'))
+                return await self.execute_task(
+                    task["description"], task.get("type", "general")
+                )
 
-        results = await asyncio.gather(*[execute_with_semaphore(task) for task in tasks])
+        results = await asyncio.gather(
+            *[execute_with_semaphore(task) for task in tasks]
+        )
         return results
 
     def get_performance_metrics(self) -> Dict[str, Any]:
         """Get current performance metrics"""
-        runtime = time.time() - self.metrics['start_time']
+        runtime = time.time() - self.metrics["start_time"]
 
         return {
-            'runtime_seconds': runtime,
-            'total_operations': self.metrics['total_operations'],
-            'npu_inferences': self.metrics['npu_inferences'],
-            'cpu_fallbacks': self.metrics['cpu_fallbacks'],
-            'npu_utilization': self.metrics['npu_inferences'] / max(self.metrics['total_operations'], 1),
-            'operations_per_second': self.metrics['total_operations'] / max(runtime, 1),
-            'agents_loaded': len(self.agents),
-            'npu_enabled': self.use_npu
+            "runtime_seconds": runtime,
+            "total_operations": self.metrics["total_operations"],
+            "npu_inferences": self.metrics["npu_inferences"],
+            "cpu_fallbacks": self.metrics["cpu_fallbacks"],
+            "npu_utilization": self.metrics["npu_inferences"]
+            / max(self.metrics["total_operations"], 1),
+            "operations_per_second": self.metrics["total_operations"] / max(runtime, 1),
+            "agents_loaded": len(self.agents),
+            "npu_enabled": self.use_npu,
         }
 
     def get_agent_list(self) -> List[str]:
         """Get list of available agents"""
         return list(self.agents.keys())
+
 
 async def performance_test():
     """Run comprehensive performance test"""
@@ -300,7 +325,9 @@ async def performance_test():
     print("\n📊 Single Task Performance Test")
     start = time.perf_counter()
 
-    result = await orchestrator.execute_task("analyze security vulnerabilities in authentication system", "security")
+    result = await orchestrator.execute_task(
+        "analyze security vulnerabilities in authentication system", "security"
+    )
     single_task_time = time.perf_counter() - start
 
     print(f"✅ Task completed in {single_task_time*1000:.1f}ms")
@@ -311,13 +338,17 @@ async def performance_test():
     print("\n📊 Batch Processing Test (100 tasks)")
 
     # Create test tasks
-    test_tasks = [
-        {'description': f'process task {i}', 'type': 'general'} for i in range(50)
-    ] + [
-        {'description': f'security audit {i}', 'type': 'security'} for i in range(25)
-    ] + [
-        {'description': f'debug issue {i}', 'type': 'development'} for i in range(25)
-    ]
+    test_tasks = (
+        [{"description": f"process task {i}", "type": "general"} for i in range(50)]
+        + [
+            {"description": f"security audit {i}", "type": "security"}
+            for i in range(25)
+        ]
+        + [
+            {"description": f"debug issue {i}", "type": "development"}
+            for i in range(25)
+        ]
+    )
 
     start = time.perf_counter()
     batch_results = await orchestrator.batch_execute(test_tasks, concurrency=20)
@@ -340,12 +371,17 @@ async def performance_test():
 
     # Target validation
     target_ops = 15000
-    if metrics['operations_per_second'] >= target_ops:
-        print(f"\n✅ TARGET ACHIEVED: {metrics['operations_per_second']:.0f} >= {target_ops} ops/sec")
+    if metrics["operations_per_second"] >= target_ops:
+        print(
+            f"\n✅ TARGET ACHIEVED: {metrics['operations_per_second']:.0f} >= {target_ops} ops/sec"
+        )
     else:
-        print(f"\n⚠️ TARGET MISSED: {metrics['operations_per_second']:.0f} < {target_ops} ops/sec")
+        print(
+            f"\n⚠️ TARGET MISSED: {metrics['operations_per_second']:.0f} < {target_ops} ops/sec"
+        )
 
     return metrics
+
 
 if __name__ == "__main__":
     # Run in virtual environment context
@@ -353,12 +389,17 @@ if __name__ == "__main__":
     import sys
 
     # Check if we're in the venv
-    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+    if hasattr(sys, "real_prefix") or (
+        hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+    ):
         # We're in a virtual environment, run directly
         asyncio.run(performance_test())
     else:
         # Run with virtual environment
-        subprocess.run([
-            'bash', '-c',
-            'source .venv/bin/activate && python3 -c "import asyncio; from npu_orchestrator_real import performance_test; asyncio.run(performance_test())"'
-        ])
+        subprocess.run(
+            [
+                "bash",
+                "-c",
+                'source .venv/bin/activate && python3 -c "import asyncio; from npu_orchestrator_real import performance_test; asyncio.run(performance_test())"',
+            ]
+        )

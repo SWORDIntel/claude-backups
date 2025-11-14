@@ -8,6 +8,7 @@ import re
 import sys
 from pathlib import Path
 
+
 def fix_claude_backups_references():
     """Fix remaining claude-backups hardcoded references"""
     project_root = Path(__file__).parent
@@ -18,17 +19,17 @@ def fix_claude_backups_references():
         "agents/src/python/claude_agents/implementations/specialized/production_orchestrator.py",
         "agents/src/python/production_orchestrator.py",
         "agents/src/python/dynamic_think_mode_selector.py",
-        "agents/src/python/claude_code_think_hooks.py"
+        "agents/src/python/claude_code_think_hooks.py",
     ]
 
     # Patterns to fix
     patterns = [
-        (r'Path\.home\(\) / "Documents" / "claude-backups"', 'get_project_root()'),
-        (r'Path\.home\(\) / "Downloads" / "claude-backups"', 'get_project_root()'),
-        (r'Path\.home\(\) / "claude-backups"', 'get_project_root()'),
+        (r'Path\.home\(\) / "Documents" / "claude-backups"', "get_project_root()"),
+        (r'Path\.home\(\) / "Downloads" / "claude-backups"', "get_project_root()"),
+        (r'Path\.home\(\) / "claude-backups"', "get_project_root()"),
         (r'"claude-backups"', '"' + project_root.name + '"'),
         (r"'claude-backups'", "'" + project_root.name + "'"),
-        (r'claude-backups', project_root.name)
+        (r"claude-backups", project_root.name),
     ]
 
     files_modified = []
@@ -40,7 +41,7 @@ def fix_claude_backups_references():
             continue
 
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -50,7 +51,7 @@ def fix_claude_backups_references():
                 content = re.sub(pattern, replacement, content)
 
             if content != original_content:
-                with open(full_path, 'w', encoding='utf-8') as f:
+                with open(full_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 files_modified.append(str(full_path))
                 print(f"Fixed: {full_path}")
@@ -60,6 +61,7 @@ def fix_claude_backups_references():
 
     print(f"\n✅ Fixed {len(files_modified)} files")
     return files_modified
+
 
 if __name__ == "__main__":
     fix_claude_backups_references()

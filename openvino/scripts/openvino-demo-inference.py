@@ -5,10 +5,13 @@ Demonstrates GPU and CPU inference on Meteor Lake
 Intel Core Ultra 7 165H with Arc Graphics
 """
 
-import numpy as np
 import time
-from openvino import Core, Model
+
+import numpy as np
 from openvino.runtime import opset10
+
+from openvino import Core, Model
+
 
 def create_test_model():
     """Create a simple test model"""
@@ -33,6 +36,7 @@ def create_test_model():
     output = opset10.relu(reduce)
 
     return Model([output], [param], "test_model")
+
 
 def benchmark_device(core, model, device_name, num_iterations=50):
     """Benchmark inference on a specific device"""
@@ -89,18 +93,19 @@ def benchmark_device(core, model, device_name, num_iterations=50):
         print(f"  Throughput: {fps:.1f} FPS")
 
         return {
-            'device': device_name,
-            'avg_ms': avg_time,
-            'std_ms': std_time,
-            'min_ms': min_time,
-            'max_ms': max_time,
-            'fps': fps,
-            'compile_time': compile_time
+            "device": device_name,
+            "avg_ms": avg_time,
+            "std_ms": std_time,
+            "min_ms": min_time,
+            "max_ms": max_time,
+            "fps": fps,
+            "compile_time": compile_time,
         }
 
     except Exception as e:
         print(f"❌ Error benchmarking {device_name}: {e}")
         return None
+
 
 def main():
     print("=" * 60)
@@ -114,6 +119,7 @@ def main():
 
     # Show version
     from openvino import __version__
+
     print(f"OpenVINO Version: {__version__}")
 
     # List devices
@@ -165,11 +171,15 @@ def main():
         print(f"{'-'*60}")
 
         for r in results:
-            print(f"{r['device']:<10} {r['avg_ms']:>8.2f}ms   {r['fps']:>7.1f}    {r['compile_time']:>8.3f}s")
+            print(
+                f"{r['device']:<10} {r['avg_ms']:>8.2f}ms   {r['fps']:>7.1f}    {r['compile_time']:>8.3f}s"
+            )
 
         # Find best device
-        best = min(results, key=lambda x: x['avg_ms'])
-        print(f"\n🏆 Best Performance: {best['device']} ({best['avg_ms']:.2f}ms / {best['fps']:.1f} FPS)")
+        best = min(results, key=lambda x: x["avg_ms"])
+        print(
+            f"\n🏆 Best Performance: {best['device']} ({best['avg_ms']:.2f}ms / {best['fps']:.1f} FPS)"
+        )
 
         # Recommendations
         print(f"\n💡 Recommendations (per CLAUDE.md):")
@@ -181,6 +191,7 @@ def main():
     print(f"✅ Demo Complete!")
     print(f"{'='*60}")
 
+
 if __name__ == "__main__":
     try:
         main()
@@ -189,4 +200,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()

@@ -16,39 +16,42 @@ Version: 1.0.0
 Dependencies: tkinter (built-in), requests, threading
 """
 
-import tkinter as tk
-from tkinter import ttk, messagebox, filedialog, scrolledtext
-import threading
-import queue
+import hashlib
 import json
 import os
+import queue
+import subprocess
 import sys
-import time
-import hashlib
-import zipfile
 import tempfile
+import threading
+import time
+import tkinter as tk
+import webbrowser
+import zipfile
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-import subprocess
-import webbrowser
+from tkinter import filedialog, messagebox, scrolledtext, ttk
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Optional dependencies with graceful fallbacks
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
 
 try:
     import markdown
+
     HAS_MARKDOWN = True
 except ImportError:
     HAS_MARKDOWN = False
 
 try:
     from PIL import Image, ImageTk
+
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
@@ -57,6 +60,7 @@ except ImportError:
 @dataclass
 class DownloadJob:
     """Download job configuration"""
+
     id: str
     url: str
     output_path: str
@@ -82,6 +86,7 @@ class DownloadJob:
 @dataclass
 class BatchOperation:
     """Batch operation configuration"""
+
     id: str
     name: str
     jobs: List[str]  # job IDs
@@ -120,7 +125,7 @@ class LogHandler:
         self.log_widget.see(tk.END)
 
         # Limit line count
-        lines = self.log_widget.get("1.0", tk.END).count('\n')
+        lines = self.log_widget.get("1.0", tk.END).count("\n")
         if lines > self.max_lines:
             # Remove oldest lines
             excess = lines - self.max_lines
@@ -160,7 +165,7 @@ class FileValidator:
     def calculate_hash(file_path: str, algorithm: str = "sha256") -> str:
         """Calculate file hash"""
         hash_func = hashlib.new(algorithm)
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_func.update(chunk)
         return hash_func.hexdigest()
@@ -177,7 +182,7 @@ class FileValidator:
             "modified": datetime.fromtimestamp(stat.st_mtime),
             "created": datetime.fromtimestamp(stat.st_ctime),
             "extension": Path(file_path).suffix.lower(),
-            "is_executable": os.access(file_path, os.X_OK)
+            "is_executable": os.access(file_path, os.X_OK),
         }
 
     @staticmethod
@@ -193,15 +198,24 @@ class FileValidator:
 
         # Check extension
         safe_extensions = {
-            '.txt', '.md', '.json', '.yml', '.yaml', '.xml',
-            '.py', '.js', '.html', '.css', '.log'
+            ".txt",
+            ".md",
+            ".json",
+            ".yml",
+            ".yaml",
+            ".xml",
+            ".py",
+            ".js",
+            ".html",
+            ".css",
+            ".log",
         }
 
         if info["extension"] in safe_extensions:
             return True, "Safe text file"
 
         # Binary files - limited preview
-        if info["extension"] in {'.zip', '.tar', '.gz'}:
+        if info["extension"] in {".zip", ".tar", ".gz"}:
             return True, "Archive file"
 
         return False, f"Unknown or potentially unsafe file type: {info['extension']}"
@@ -240,9 +254,7 @@ class DownloadManager:
 
         # Start download thread
         thread = threading.Thread(
-            target=self._download_worker,
-            args=(job, progress_callback),
-            daemon=True
+            target=self._download_worker, args=(job, progress_callback), daemon=True
         )
         thread.start()
         return True
@@ -264,9 +276,9 @@ class DownloadManager:
             response.raise_for_status()
 
             # Get file size
-            job.file_size = int(response.headers.get('content-length', 0))
+            job.file_size = int(response.headers.get("content-length", 0))
 
-            with open(job.output_path, 'wb') as f:
+            with open(job.output_path, "wb") as f:
                 downloaded = 0
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
@@ -279,13 +291,17 @@ class DownloadManager:
 
                         # Update progress callback
                         if progress_callback:
-                            progress_callback(job.progress, f"Downloaded {downloaded:,} bytes")
+                            progress_callback(
+                                job.progress, f"Downloaded {downloaded:,} bytes"
+                            )
 
             # Validate download
             if job.validation_hash:
                 calculated_hash = FileValidator.calculate_hash(job.output_path)
                 if calculated_hash != job.validation_hash:
-                    raise Exception(f"Hash validation failed: {calculated_hash} != {job.validation_hash}")
+                    raise Exception(
+                        f"Hash validation failed: {calculated_hash} != {job.validation_hash}"
+                    )
 
             job.status = "completed"
             job.completed_at = datetime.now(timezone.utc)
@@ -303,7 +319,11 @@ class DownloadManager:
 
             # Final progress update
             if progress_callback:
-                status = "Completed" if job.status == "completed" else f"Failed: {job.error_message}"
+                status = (
+                    "Completed"
+                    if job.status == "completed"
+                    else f"Failed: {job.error_message}"
+                )
                 progress_callback(job.progress, status)
 
 
@@ -313,7 +333,9 @@ class AgentIntegration:
     def __init__(self, logger: LogHandler):
         self.logger = logger
 
-    def invoke_python_internal(self, command: str, args: List[str] = None) -> Dict[str, Any]:
+    def invoke_python_internal(
+        self, command: str, args: List[str] = None
+    ) -> Dict[str, Any]:
         """Invoke PYTHON-INTERNAL agent"""
         try:
             self.logger.info(f"Invoking PYTHON-INTERNAL: {command}")
@@ -325,13 +347,13 @@ class AgentIntegration:
                     "python_version": sys.version,
                     "has_requests": HAS_REQUESTS,
                     "has_markdown": HAS_MARKDOWN,
-                    "has_pil": HAS_PIL
+                    "has_pil": HAS_PIL,
                 }
             elif command == "install_dependencies":
                 # Simulate dependency installation
                 return {
                     "status": "success",
-                    "message": "Dependencies would be installed via PYTHON-INTERNAL"
+                    "message": "Dependencies would be installed via PYTHON-INTERNAL",
                 }
             else:
                 return {"status": "error", "message": f"Unknown command: {command}"}
@@ -349,12 +371,12 @@ class AgentIntegration:
             if operation == "analyze_file":
                 return {
                     "status": "success",
-                    "analysis": f"File analysis would be performed by DEBUGGER agent on {target}"
+                    "analysis": f"File analysis would be performed by DEBUGGER agent on {target}",
                 }
             elif operation == "trace_error":
                 return {
                     "status": "success",
-                    "trace": "Error trace would be generated by DEBUGGER agent"
+                    "trace": "Error trace would be generated by DEBUGGER agent",
                 }
             else:
                 return {"status": "error", "message": f"Unknown operation: {operation}"}
@@ -375,7 +397,7 @@ class ClaudeArtifactDownloaderGUI:
 
         # Configure style
         self.style = ttk.Style()
-        self.style.theme_use('clam')
+        self.style.theme_use("clam")
 
         # Application state
         self.download_manager = None
@@ -426,9 +448,7 @@ class ClaudeArtifactDownloaderGUI:
 
         # Title
         title_label = ttk.Label(
-            header_frame,
-            text="Claude Artifact Downloader",
-            font=("Arial", 16, "bold")
+            header_frame, text="Claude Artifact Downloader", font=("Arial", 16, "bold")
         )
         title_label.grid(row=0, column=0, sticky="w")
 
@@ -437,18 +457,12 @@ class ClaudeArtifactDownloaderGUI:
         controls_frame.grid(row=0, column=2, sticky="e")
 
         ttk.Button(
-            controls_frame,
-            text="Settings",
-            command=self.show_settings,
-            width=10
+            controls_frame, text="Settings", command=self.show_settings, width=10
         ).grid(row=0, column=0, padx=(0, 5))
 
-        ttk.Button(
-            controls_frame,
-            text="Help",
-            command=self.show_help,
-            width=10
-        ).grid(row=0, column=1)
+        ttk.Button(controls_frame, text="Help", command=self.show_help, width=10).grid(
+            row=0, column=1
+        )
 
     def create_notebook(self, parent):
         """Create main tabbed interface"""
@@ -472,24 +486,27 @@ class ClaudeArtifactDownloaderGUI:
         download_frame.columnconfigure(1, weight=1)
 
         # URL input section
-        url_frame = ttk.LabelFrame(download_frame, text="Download Configuration", padding="10")
+        url_frame = ttk.LabelFrame(
+            download_frame, text="Download Configuration", padding="10"
+        )
         url_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
         url_frame.columnconfigure(1, weight=1)
 
         # URL input
-        ttk.Label(url_frame, text="Artifact URL:").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        ttk.Label(url_frame, text="Artifact URL:").grid(
+            row=0, column=0, sticky="w", padx=(0, 10)
+        )
         self.url_entry = ttk.Entry(url_frame, width=50)
         self.url_entry.grid(row=0, column=1, sticky="ew", padx=(0, 10))
 
-        ttk.Button(
-            url_frame,
-            text="Analyze",
-            command=self.analyze_url,
-            width=10
-        ).grid(row=0, column=2)
+        ttk.Button(url_frame, text="Analyze", command=self.analyze_url, width=10).grid(
+            row=0, column=2
+        )
 
         # Output path
-        ttk.Label(url_frame, text="Output Path:").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(10, 0))
+        ttk.Label(url_frame, text="Output Path:").grid(
+            row=1, column=0, sticky="w", padx=(0, 10), pady=(10, 0)
+        )
         path_frame = ttk.Frame(url_frame)
         path_frame.grid(row=1, column=1, columnspan=2, sticky="ew", pady=(10, 0))
         path_frame.columnconfigure(0, weight=1)
@@ -498,10 +515,7 @@ class ClaudeArtifactDownloaderGUI:
         self.output_entry.grid(row=0, column=0, sticky="ew", padx=(0, 10))
 
         ttk.Button(
-            path_frame,
-            text="Browse",
-            command=self.browse_output_path,
-            width=10
+            path_frame, text="Browse", command=self.browse_output_path, width=10
         ).grid(row=0, column=1)
 
         # Job details
@@ -510,22 +524,30 @@ class ClaudeArtifactDownloaderGUI:
         details_frame.columnconfigure(1, weight=1)
 
         # Job name
-        ttk.Label(details_frame, text="Job Name:").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        ttk.Label(details_frame, text="Job Name:").grid(
+            row=0, column=0, sticky="w", padx=(0, 10)
+        )
         self.job_name_entry = ttk.Entry(details_frame)
         self.job_name_entry.grid(row=0, column=1, sticky="ew", pady=(0, 5))
 
         # Description
-        ttk.Label(details_frame, text="Description:").grid(row=1, column=0, sticky="nw", padx=(0, 10))
+        ttk.Label(details_frame, text="Description:").grid(
+            row=1, column=0, sticky="nw", padx=(0, 10)
+        )
         self.description_text = tk.Text(details_frame, height=3, wrap=tk.WORD)
         self.description_text.grid(row=1, column=1, sticky="ew", pady=(0, 5))
 
         # Validation hash (optional)
-        ttk.Label(details_frame, text="Validation Hash:").grid(row=2, column=0, sticky="w", padx=(0, 10))
+        ttk.Label(details_frame, text="Validation Hash:").grid(
+            row=2, column=0, sticky="w", padx=(0, 10)
+        )
         self.hash_entry = ttk.Entry(details_frame)
         self.hash_entry.grid(row=2, column=1, sticky="ew")
 
         # Progress section
-        progress_frame = ttk.LabelFrame(download_frame, text="Download Progress", padding="10")
+        progress_frame = ttk.LabelFrame(
+            download_frame, text="Download Progress", padding="10"
+        )
         progress_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(0, 10))
         progress_frame.columnconfigure(0, weight=1)
 
@@ -534,15 +556,12 @@ class ClaudeArtifactDownloaderGUI:
             progress_frame,
             variable=self.current_progress,
             maximum=100,
-            mode='determinate'
+            mode="determinate",
         )
         self.progress_bar.grid(row=0, column=0, sticky="ew", pady=(0, 5))
 
         # Status label
-        self.status_label = ttk.Label(
-            progress_frame,
-            textvariable=self.current_status
-        )
+        self.status_label = ttk.Label(progress_frame, textvariable=self.current_status)
         self.status_label.grid(row=1, column=0, sticky="w")
 
         # Action buttons
@@ -553,19 +572,15 @@ class ClaudeArtifactDownloaderGUI:
             button_frame,
             text="Add to Queue",
             command=self.add_download,
-            style="Accent.TButton"
+            style="Accent.TButton",
         ).grid(row=0, column=0, padx=(0, 10))
 
         ttk.Button(
-            button_frame,
-            text="Start Download",
-            command=self.start_single_download
+            button_frame, text="Start Download", command=self.start_single_download
         ).grid(row=0, column=1, padx=(0, 10))
 
         ttk.Button(
-            button_frame,
-            text="Clear Form",
-            command=self.clear_download_form
+            button_frame, text="Clear Form", command=self.clear_download_form
         ).grid(row=0, column=2)
 
         # Options
@@ -573,15 +588,11 @@ class ClaudeArtifactDownloaderGUI:
         options_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 0))
 
         ttk.Checkbutton(
-            options_frame,
-            text="Auto-validate downloads",
-            variable=self.auto_validate
+            options_frame, text="Auto-validate downloads", variable=self.auto_validate
         ).grid(row=0, column=0, sticky="w")
 
         ttk.Checkbutton(
-            options_frame,
-            text="Auto-preview files",
-            variable=self.auto_preview
+            options_frame, text="Auto-preview files", variable=self.auto_preview
         ).grid(row=0, column=1, sticky="w", padx=(20, 0))
 
     def create_batch_tab(self):
@@ -594,23 +605,27 @@ class ClaudeArtifactDownloaderGUI:
         batch_frame.rowconfigure(1, weight=1)
 
         # Batch creation section
-        create_frame = ttk.LabelFrame(batch_frame, text="Create Batch Operation", padding="10")
+        create_frame = ttk.LabelFrame(
+            batch_frame, text="Create Batch Operation", padding="10"
+        )
         create_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
         create_frame.columnconfigure(1, weight=1)
 
         # Batch name
-        ttk.Label(create_frame, text="Batch Name:").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        ttk.Label(create_frame, text="Batch Name:").grid(
+            row=0, column=0, sticky="w", padx=(0, 10)
+        )
         self.batch_name_entry = ttk.Entry(create_frame)
         self.batch_name_entry.grid(row=0, column=1, sticky="ew", padx=(0, 10))
 
-        ttk.Button(
-            create_frame,
-            text="Create Batch",
-            command=self.create_batch
-        ).grid(row=0, column=2)
+        ttk.Button(create_frame, text="Create Batch", command=self.create_batch).grid(
+            row=0, column=2
+        )
 
         # Batch management section
-        management_frame = ttk.LabelFrame(batch_frame, text="Batch Management", padding="10")
+        management_frame = ttk.LabelFrame(
+            batch_frame, text="Batch Management", padding="10"
+        )
         management_frame.grid(row=1, column=0, sticky="nsew")
         management_frame.columnconfigure(0, weight=1)
         management_frame.rowconfigure(0, weight=1)
@@ -623,7 +638,9 @@ class ClaudeArtifactDownloaderGUI:
 
         # Treeview for batch operations
         columns = ("Name", "Jobs", "Status", "Created")
-        self.batch_tree = ttk.Treeview(list_frame, columns=columns, show="tree headings")
+        self.batch_tree = ttk.Treeview(
+            list_frame, columns=columns, show="tree headings"
+        )
 
         # Configure columns
         self.batch_tree.heading("#0", text="ID")
@@ -634,9 +651,15 @@ class ClaudeArtifactDownloaderGUI:
             self.batch_tree.column(col, width=100)
 
         # Scrollbars
-        v_scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.batch_tree.yview)
-        h_scrollbar = ttk.Scrollbar(list_frame, orient="horizontal", command=self.batch_tree.xview)
-        self.batch_tree.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        v_scrollbar = ttk.Scrollbar(
+            list_frame, orient="vertical", command=self.batch_tree.yview
+        )
+        h_scrollbar = ttk.Scrollbar(
+            list_frame, orient="horizontal", command=self.batch_tree.xview
+        )
+        self.batch_tree.configure(
+            yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set
+        )
 
         # Grid layout
         self.batch_tree.grid(row=0, column=0, sticky="nsew")
@@ -648,21 +671,15 @@ class ClaudeArtifactDownloaderGUI:
         batch_button_frame.grid(row=1, column=0, sticky="ew")
 
         ttk.Button(
-            batch_button_frame,
-            text="Start Batch",
-            command=self.start_batch
+            batch_button_frame, text="Start Batch", command=self.start_batch
         ).grid(row=0, column=0, padx=(0, 10))
 
         ttk.Button(
-            batch_button_frame,
-            text="Pause Batch",
-            command=self.pause_batch
+            batch_button_frame, text="Pause Batch", command=self.pause_batch
         ).grid(row=0, column=1, padx=(0, 10))
 
         ttk.Button(
-            batch_button_frame,
-            text="Delete Batch",
-            command=self.delete_batch
+            batch_button_frame, text="Delete Batch", command=self.delete_batch
         ).grid(row=0, column=2)
 
     def create_preview_tab(self):
@@ -675,12 +692,16 @@ class ClaudeArtifactDownloaderGUI:
         preview_frame.rowconfigure(1, weight=1)
 
         # File selection section
-        selection_frame = ttk.LabelFrame(preview_frame, text="File Selection", padding="10")
+        selection_frame = ttk.LabelFrame(
+            preview_frame, text="File Selection", padding="10"
+        )
         selection_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
         selection_frame.columnconfigure(1, weight=1)
 
         # File path input
-        ttk.Label(selection_frame, text="File Path:").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        ttk.Label(selection_frame, text="File Path:").grid(
+            row=0, column=0, sticky="w", padx=(0, 10)
+        )
 
         path_input_frame = ttk.Frame(selection_frame)
         path_input_frame.grid(row=0, column=1, sticky="ew")
@@ -690,19 +711,17 @@ class ClaudeArtifactDownloaderGUI:
         self.preview_path_entry.grid(row=0, column=0, sticky="ew", padx=(0, 10))
 
         ttk.Button(
-            path_input_frame,
-            text="Browse",
-            command=self.browse_preview_file
+            path_input_frame, text="Browse", command=self.browse_preview_file
         ).grid(row=0, column=1, padx=(0, 10))
 
-        ttk.Button(
-            path_input_frame,
-            text="Validate",
-            command=self.validate_file
-        ).grid(row=0, column=2)
+        ttk.Button(path_input_frame, text="Validate", command=self.validate_file).grid(
+            row=0, column=2
+        )
 
         # Preview/validation section
-        content_frame = ttk.LabelFrame(preview_frame, text="File Content & Validation", padding="10")
+        content_frame = ttk.LabelFrame(
+            preview_frame, text="File Content & Validation", padding="10"
+        )
         content_frame.grid(row=1, column=0, sticky="nsew")
         content_frame.columnconfigure(0, weight=1)
         content_frame.rowconfigure(0, weight=1)
@@ -715,7 +734,9 @@ class ClaudeArtifactDownloaderGUI:
         info_frame = ttk.Frame(self.preview_notebook, padding="10")
         self.preview_notebook.add(info_frame, text="File Info")
 
-        self.file_info_text = scrolledtext.ScrolledText(info_frame, wrap=tk.WORD, state=tk.DISABLED)
+        self.file_info_text = scrolledtext.ScrolledText(
+            info_frame, wrap=tk.WORD, state=tk.DISABLED
+        )
         self.file_info_text.pack(fill=tk.BOTH, expand=True)
 
         # Content preview tab
@@ -723,9 +744,7 @@ class ClaudeArtifactDownloaderGUI:
         self.preview_notebook.add(content_preview_frame, text="Content Preview")
 
         self.content_preview_text = scrolledtext.ScrolledText(
-            content_preview_frame,
-            wrap=tk.NONE,
-            state=tk.DISABLED
+            content_preview_frame, wrap=tk.NONE, state=tk.DISABLED
         )
         self.content_preview_text.pack(fill=tk.BOTH, expand=True)
 
@@ -734,9 +753,7 @@ class ClaudeArtifactDownloaderGUI:
         self.preview_notebook.add(validation_frame, text="Validation Results")
 
         self.validation_text = scrolledtext.ScrolledText(
-            validation_frame,
-            wrap=tk.WORD,
-            state=tk.DISABLED
+            validation_frame, wrap=tk.WORD, state=tk.DISABLED
         )
         self.validation_text.pack(fill=tk.BOTH, expand=True)
 
@@ -753,17 +770,13 @@ class ClaudeArtifactDownloaderGUI:
         control_frame = ttk.Frame(logs_frame)
         control_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
 
-        ttk.Button(
-            control_frame,
-            text="Clear Logs",
-            command=self.clear_logs
-        ).grid(row=0, column=0, padx=(0, 10))
+        ttk.Button(control_frame, text="Clear Logs", command=self.clear_logs).grid(
+            row=0, column=0, padx=(0, 10)
+        )
 
-        ttk.Button(
-            control_frame,
-            text="Export Logs",
-            command=self.export_logs
-        ).grid(row=0, column=1, padx=(0, 10))
+        ttk.Button(control_frame, text="Export Logs", command=self.export_logs).grid(
+            row=0, column=1, padx=(0, 10)
+        )
 
         ttk.Label(control_frame, text="Log Level:").grid(row=0, column=2, padx=(20, 5))
 
@@ -773,7 +786,7 @@ class ClaudeArtifactDownloaderGUI:
             textvariable=self.log_level_var,
             values=["DEBUG", "INFO", "WARNING", "ERROR"],
             state="readonly",
-            width=10
+            width=10,
         )
         log_level_combo.grid(row=0, column=3)
 
@@ -784,10 +797,7 @@ class ClaudeArtifactDownloaderGUI:
         log_frame.rowconfigure(0, weight=1)
 
         self.log_text = scrolledtext.ScrolledText(
-            log_frame,
-            wrap=tk.WORD,
-            state=tk.DISABLED,
-            font=("Consolas", 9)
+            log_frame, wrap=tk.WORD, state=tk.DISABLED, font=("Consolas", 9)
         )
         self.log_text.pack(fill=tk.BOTH, expand=True)
 
@@ -801,55 +811,53 @@ class ClaudeArtifactDownloaderGUI:
         integration_frame.rowconfigure(2, weight=1)
 
         # PYTHON-INTERNAL section
-        python_frame = ttk.LabelFrame(integration_frame, text="PYTHON-INTERNAL Agent", padding="10")
+        python_frame = ttk.LabelFrame(
+            integration_frame, text="PYTHON-INTERNAL Agent", padding="10"
+        )
         python_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
         python_frame.columnconfigure(2, weight=1)
 
         ttk.Button(
             python_frame,
             text="Validate Environment",
-            command=self.validate_python_environment
+            command=self.validate_python_environment,
         ).grid(row=0, column=0, padx=(0, 10))
 
         ttk.Button(
-            python_frame,
-            text="Install Dependencies",
-            command=self.install_dependencies
+            python_frame, text="Install Dependencies", command=self.install_dependencies
         ).grid(row=0, column=1, padx=(0, 10))
 
         self.python_status_label = ttk.Label(python_frame, text="Ready")
         self.python_status_label.grid(row=0, column=2, sticky="w", padx=(10, 0))
 
         # DEBUGGER section
-        debugger_frame = ttk.LabelFrame(integration_frame, text="DEBUGGER Agent", padding="10")
+        debugger_frame = ttk.LabelFrame(
+            integration_frame, text="DEBUGGER Agent", padding="10"
+        )
         debugger_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         debugger_frame.columnconfigure(2, weight=1)
 
         ttk.Button(
-            debugger_frame,
-            text="Analyze Last Error",
-            command=self.analyze_last_error
+            debugger_frame, text="Analyze Last Error", command=self.analyze_last_error
         ).grid(row=0, column=0, padx=(0, 10))
 
         ttk.Button(
-            debugger_frame,
-            text="Trace Download",
-            command=self.trace_download
+            debugger_frame, text="Trace Download", command=self.trace_download
         ).grid(row=0, column=1, padx=(0, 10))
 
         self.debugger_status_label = ttk.Label(debugger_frame, text="Ready")
         self.debugger_status_label.grid(row=0, column=2, sticky="w", padx=(10, 0))
 
         # Integration results
-        results_frame = ttk.LabelFrame(integration_frame, text="Integration Results", padding="10")
+        results_frame = ttk.LabelFrame(
+            integration_frame, text="Integration Results", padding="10"
+        )
         results_frame.grid(row=2, column=0, sticky="nsew")
         results_frame.columnconfigure(0, weight=1)
         results_frame.rowconfigure(0, weight=1)
 
         self.integration_text = scrolledtext.ScrolledText(
-            results_frame,
-            wrap=tk.WORD,
-            state=tk.DISABLED
+            results_frame, wrap=tk.WORD, state=tk.DISABLED
         )
         self.integration_text.pack(fill=tk.BOTH, expand=True)
 
@@ -864,18 +872,15 @@ class ClaudeArtifactDownloaderGUI:
             status_frame,
             textvariable=self.current_status,
             relief=tk.SUNKEN,
-            anchor=tk.W
+            anchor=tk.W,
         )
         self.operation_status_label.grid(row=0, column=0, sticky="ew", padx=(0, 10))
 
         # Application info
         app_info = f"Claude Artifact Downloader v1.0 | Python {sys.version.split()[0]}"
-        ttk.Label(
-            status_frame,
-            text=app_info,
-            relief=tk.SUNKEN,
-            anchor=tk.E
-        ).grid(row=0, column=1, sticky="ew")
+        ttk.Label(status_frame, text=app_info, relief=tk.SUNKEN, anchor=tk.E).grid(
+            row=0, column=1, sticky="ew"
+        )
 
     def setup_logging(self):
         """Setup logging system"""
@@ -889,8 +894,7 @@ class ClaudeArtifactDownloaderGUI:
 
         # Progress tracker
         self.progress_tracker = ProgressTracker(
-            self.current_progress,
-            self.current_status
+            self.current_progress, self.current_status
         )
 
     def load_configuration(self):
@@ -898,7 +902,7 @@ class ClaudeArtifactDownloaderGUI:
         config_path = Path.home() / ".claude_downloader_config.json"
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     config = json.load(f)
 
                 # Apply configuration
@@ -914,12 +918,12 @@ class ClaudeArtifactDownloaderGUI:
         config = {
             "auto_validate": self.auto_validate.get(),
             "auto_preview": self.auto_preview.get(),
-            "window_geometry": self.root.geometry()
+            "window_geometry": self.root.geometry(),
         }
 
         config_path = Path.home() / ".claude_downloader_config.json"
         try:
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
 
             self.logger.info("Configuration saved")
@@ -938,9 +942,9 @@ class ClaudeArtifactDownloaderGUI:
             self.logger.info(f"Analyzing URL: {url}")
 
             # Extract filename from URL
-            filename = url.split('/')[-1] or "artifact"
-            if '?' in filename:
-                filename = filename.split('?')[0]
+            filename = url.split("/")[-1] or "artifact"
+            if "?" in filename:
+                filename = filename.split("?")[0]
 
             # Generate job name
             job_name = f"Download_{filename}_{int(time.time())}"
@@ -979,8 +983,8 @@ class ClaudeArtifactDownloaderGUI:
                 ("All Files", "*.*"),
                 ("Archives", "*.zip;*.tar;*.gz"),
                 ("Text Files", "*.txt;*.md"),
-                ("Code Files", "*.py;*.js;*.html")
-            ]
+                ("Code Files", "*.py;*.js;*.html"),
+            ],
         )
 
         if file_path:
@@ -1014,12 +1018,14 @@ class ClaudeArtifactDownloaderGUI:
                 output_path=output_path,
                 name=job_name,
                 description=self.description_text.get(1.0, tk.END).strip(),
-                validation_hash=self.hash_entry.get().strip()
+                validation_hash=self.hash_entry.get().strip(),
             )
 
             # Add to manager
             if self.download_manager.add_job(job):
-                messagebox.showinfo("Success", f"Download job '{job_name}' added to queue")
+                messagebox.showinfo(
+                    "Success", f"Download job '{job_name}' added to queue"
+                )
                 self.clear_download_form()
             else:
                 messagebox.showerror("Error", "Failed to add download job")
@@ -1037,8 +1043,7 @@ class ClaudeArtifactDownloaderGUI:
         if self.download_manager.jobs:
             job_id = list(self.download_manager.jobs.keys())[-1]
             self.download_manager.start_download(
-                job_id,
-                progress_callback=self.progress_tracker.update_progress
+                job_id, progress_callback=self.progress_tracker.update_progress
             )
 
     def clear_download_form(self):
@@ -1060,11 +1065,7 @@ class ClaudeArtifactDownloaderGUI:
             return
 
         batch_id = f"batch_{int(time.time())}"
-        batch = BatchOperation(
-            id=batch_id,
-            name=batch_name,
-            jobs=[]
-        )
+        batch = BatchOperation(id=batch_id, name=batch_name, jobs=[])
 
         self.batch_operations[batch_id] = batch
         self.refresh_batch_list()
@@ -1085,7 +1086,12 @@ class ClaudeArtifactDownloaderGUI:
                 "end",
                 iid=batch_id,
                 text=batch_id,
-                values=(batch.name, len(batch.jobs), batch.status, batch.created_at.strftime("%Y-%m-%d %H:%M"))
+                values=(
+                    batch.name,
+                    len(batch.jobs),
+                    batch.status,
+                    batch.created_at.strftime("%Y-%m-%d %H:%M"),
+                ),
             )
 
     def start_batch(self):
@@ -1138,8 +1144,8 @@ class ClaudeArtifactDownloaderGUI:
                 ("All Files", "*.*"),
                 ("Text Files", "*.txt;*.md;*.log"),
                 ("Code Files", "*.py;*.js;*.html;*.css"),
-                ("Archives", "*.zip;*.tar;*.gz")
-            ]
+                ("Archives", "*.zip;*.tar;*.gz"),
+            ],
         )
 
         if file_path:
@@ -1201,16 +1207,31 @@ class ClaudeArtifactDownloaderGUI:
                 validation_results += "File is safe for preview and processing.\n"
 
                 # Preview content if text file
-                if file_info.get('extension') in {'.txt', '.md', '.py', '.js', '.html', '.css', '.log', '.json', '.yml', '.yaml'}:
+                if file_info.get("extension") in {
+                    ".txt",
+                    ".md",
+                    ".py",
+                    ".js",
+                    ".html",
+                    ".css",
+                    ".log",
+                    ".json",
+                    ".yml",
+                    ".yaml",
+                }:
                     try:
-                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        with open(
+                            file_path, "r", encoding="utf-8", errors="ignore"
+                        ) as f:
                             content = f.read(5000)  # First 5KB
 
                         self.content_preview_text.config(state=tk.NORMAL)
                         self.content_preview_text.delete(1.0, tk.END)
                         self.content_preview_text.insert(1.0, content)
                         if len(content) == 5000:
-                            self.content_preview_text.insert(tk.END, "\n\n... (truncated)")
+                            self.content_preview_text.insert(
+                                tk.END, "\n\n... (truncated)"
+                            )
                         self.content_preview_text.config(state=tk.DISABLED)
 
                         validation_results += "Content preview loaded successfully.\n"
@@ -1219,7 +1240,9 @@ class ClaudeArtifactDownloaderGUI:
                         validation_results += f"Content preview failed: {e}\n"
 
             else:
-                validation_results += "File preview not recommended due to safety concerns.\n"
+                validation_results += (
+                    "File preview not recommended due to safety concerns.\n"
+                )
 
             self.validation_text.insert(1.0, validation_results)
             self.validation_text.config(state=tk.DISABLED)
@@ -1242,13 +1265,17 @@ class ClaudeArtifactDownloaderGUI:
         file_path = filedialog.asksaveasfilename(
             title="Export Logs",
             defaultextension=".log",
-            filetypes=[("Log Files", "*.log"), ("Text Files", "*.txt"), ("All Files", "*.*")]
+            filetypes=[
+                ("Log Files", "*.log"),
+                ("Text Files", "*.txt"),
+                ("All Files", "*.*"),
+            ],
         )
 
         if file_path:
             try:
                 log_content = self.log_text.get(1.0, tk.END)
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.write(log_content)
 
                 self.logger.info(f"Logs exported to: {file_path}")
@@ -1261,13 +1288,18 @@ class ClaudeArtifactDownloaderGUI:
     def validate_python_environment(self):
         """Validate Python environment using PYTHON-INTERNAL agent"""
         try:
-            result = self.agent_integration.invoke_python_internal("validate_environment")
+            result = self.agent_integration.invoke_python_internal(
+                "validate_environment"
+            )
 
             # Display results
             self.integration_text.config(state=tk.NORMAL)
-            self.integration_text.insert(tk.END, f"\n[{datetime.now().strftime('%H:%M:%S')}] PYTHON-INTERNAL Environment Validation:\n")
+            self.integration_text.insert(
+                tk.END,
+                f"\n[{datetime.now().strftime('%H:%M:%S')}] PYTHON-INTERNAL Environment Validation:\n",
+            )
             self.integration_text.insert(tk.END, json.dumps(result, indent=2))
-            self.integration_text.insert(tk.END, "\n" + "="*50 + "\n")
+            self.integration_text.insert(tk.END, "\n" + "=" * 50 + "\n")
             self.integration_text.config(state=tk.DISABLED)
             self.integration_text.see(tk.END)
 
@@ -1282,13 +1314,18 @@ class ClaudeArtifactDownloaderGUI:
     def install_dependencies(self):
         """Install dependencies using PYTHON-INTERNAL agent"""
         try:
-            result = self.agent_integration.invoke_python_internal("install_dependencies", ["requests", "Pillow", "markdown"])
+            result = self.agent_integration.invoke_python_internal(
+                "install_dependencies", ["requests", "Pillow", "markdown"]
+            )
 
             # Display results
             self.integration_text.config(state=tk.NORMAL)
-            self.integration_text.insert(tk.END, f"\n[{datetime.now().strftime('%H:%M:%S')}] PYTHON-INTERNAL Dependency Installation:\n")
+            self.integration_text.insert(
+                tk.END,
+                f"\n[{datetime.now().strftime('%H:%M:%S')}] PYTHON-INTERNAL Dependency Installation:\n",
+            )
             self.integration_text.insert(tk.END, json.dumps(result, indent=2))
-            self.integration_text.insert(tk.END, "\n" + "="*50 + "\n")
+            self.integration_text.insert(tk.END, "\n" + "=" * 50 + "\n")
             self.integration_text.config(state=tk.DISABLED)
             self.integration_text.see(tk.END)
 
@@ -1302,9 +1339,12 @@ class ClaudeArtifactDownloaderGUI:
 
             # Display results
             self.integration_text.config(state=tk.NORMAL)
-            self.integration_text.insert(tk.END, f"\n[{datetime.now().strftime('%H:%M:%S')}] DEBUGGER Error Analysis:\n")
+            self.integration_text.insert(
+                tk.END,
+                f"\n[{datetime.now().strftime('%H:%M:%S')}] DEBUGGER Error Analysis:\n",
+            )
             self.integration_text.insert(tk.END, json.dumps(result, indent=2))
-            self.integration_text.insert(tk.END, "\n" + "="*50 + "\n")
+            self.integration_text.insert(tk.END, "\n" + "=" * 50 + "\n")
             self.integration_text.config(state=tk.DISABLED)
             self.integration_text.see(tk.END)
 
@@ -1314,13 +1354,18 @@ class ClaudeArtifactDownloaderGUI:
     def trace_download(self):
         """Trace download process using DEBUGGER agent"""
         try:
-            result = self.agent_integration.invoke_debugger("analyze_file", "download_process")
+            result = self.agent_integration.invoke_debugger(
+                "analyze_file", "download_process"
+            )
 
             # Display results
             self.integration_text.config(state=tk.NORMAL)
-            self.integration_text.insert(tk.END, f"\n[{datetime.now().strftime('%H:%M:%S')}] DEBUGGER Download Trace:\n")
+            self.integration_text.insert(
+                tk.END,
+                f"\n[{datetime.now().strftime('%H:%M:%S')}] DEBUGGER Download Trace:\n",
+            )
             self.integration_text.insert(tk.END, json.dumps(result, indent=2))
-            self.integration_text.insert(tk.END, "\n" + "="*50 + "\n")
+            self.integration_text.insert(tk.END, "\n" + "=" * 50 + "\n")
             self.integration_text.config(state=tk.DISABLED)
             self.integration_text.see(tk.END)
 
@@ -1336,22 +1381,22 @@ class ClaudeArtifactDownloaderGUI:
         settings_window.grab_set()
 
         # Settings content
-        ttk.Label(settings_window, text="Application Settings", font=("Arial", 14, "bold")).pack(pady=10)
+        ttk.Label(
+            settings_window, text="Application Settings", font=("Arial", 14, "bold")
+        ).pack(pady=10)
 
         # Download settings
-        download_frame = ttk.LabelFrame(settings_window, text="Download Settings", padding="10")
+        download_frame = ttk.LabelFrame(
+            settings_window, text="Download Settings", padding="10"
+        )
         download_frame.pack(fill=tk.X, padx=10, pady=5)
 
         ttk.Checkbutton(
-            download_frame,
-            text="Auto-validate downloads",
-            variable=self.auto_validate
+            download_frame, text="Auto-validate downloads", variable=self.auto_validate
         ).pack(anchor=tk.W)
 
         ttk.Checkbutton(
-            download_frame,
-            text="Auto-preview files",
-            variable=self.auto_preview
+            download_frame, text="Auto-preview files", variable=self.auto_preview
         ).pack(anchor=tk.W)
 
         # Buttons
@@ -1361,14 +1406,12 @@ class ClaudeArtifactDownloaderGUI:
         ttk.Button(
             button_frame,
             text="Save",
-            command=lambda: [self.save_configuration(), settings_window.destroy()]
+            command=lambda: [self.save_configuration(), settings_window.destroy()],
         ).pack(side=tk.RIGHT, padx=(10, 0))
 
-        ttk.Button(
-            button_frame,
-            text="Cancel",
-            command=settings_window.destroy
-        ).pack(side=tk.RIGHT)
+        ttk.Button(button_frame, text="Cancel", command=settings_window.destroy).pack(
+            side=tk.RIGHT
+        )
 
     def show_help(self):
         """Show help dialog"""
@@ -1378,7 +1421,9 @@ class ClaudeArtifactDownloaderGUI:
         help_window.transient(self.root)
 
         # Help content
-        help_text = scrolledtext.ScrolledText(help_window, wrap=tk.WORD, padx=10, pady=10)
+        help_text = scrolledtext.ScrolledText(
+            help_window, wrap=tk.WORD, padx=10, pady=10
+        )
         help_text.pack(fill=tk.BOTH, expand=True)
 
         help_content = """
@@ -1477,11 +1522,7 @@ For additional support, check the logs for error details and use the DEBUGGER ag
         help_text.config(state=tk.DISABLED)
 
         # Close button
-        ttk.Button(
-            help_window,
-            text="Close",
-            command=help_window.destroy
-        ).pack(pady=10)
+        ttk.Button(help_window, text="Close", command=help_window.destroy).pack(pady=10)
 
     def run(self):
         """Run the application"""
@@ -1505,7 +1546,9 @@ For additional support, check the logs for error details and use the DEBUGGER ag
 
             # Close any active downloads
             if self.download_manager and self.download_manager.active_downloads:
-                if messagebox.askyesno("Confirm Exit", "Active downloads in progress. Exit anyway?"):
+                if messagebox.askyesno(
+                    "Confirm Exit", "Active downloads in progress. Exit anyway?"
+                ):
                     self.root.destroy()
             else:
                 self.root.destroy()
@@ -1526,7 +1569,10 @@ def main():
 
         if missing_deps:
             print(f"Warning: Missing optional dependencies: {', '.join(missing_deps)}")
-            print("Some features may be limited. Install with: pip install " + " ".join(missing_deps))
+            print(
+                "Some features may be limited. Install with: pip install "
+                + " ".join(missing_deps)
+            )
 
         # Create and run application
         app = ClaudeArtifactDownloaderGUI()

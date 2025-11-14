@@ -19,15 +19,16 @@ Target: Real agent invocation for Phase 2 deployment
 import asyncio
 import json
 import logging
-from typing import Dict, List, Optional, Any
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class TaskToolAgent:
     """Agent wrapper that uses Claude Code Task tool for invocation"""
-    
+
     def __init__(self, agent_name: str, agent_config: Dict):
         self.name = agent_name
         self.config = agent_config
@@ -35,49 +36,49 @@ class TaskToolAgent:
         self.success_count = 0
         self.error_count = 0
         self.average_response_time = 0.0
-    
+
     async def invoke(self, prompt: str, context: Dict = None) -> Dict[str, Any]:
         """Invoke agent using Task tool"""
         start_time = datetime.now()
-        
+
         try:
             # Prepare enhanced prompt with context
             enhanced_prompt = self._enhance_prompt(prompt, context)
-            
+
             # This is where the actual Task tool invocation would occur
             # In real implementation, this would call Claude Code's Task tool:
             # result = await Task(subagent_type=self.name.lower(), prompt=enhanced_prompt)
-            
+
             # For now, simulate the invocation with realistic agent responses
             result = await self._simulate_task_invocation(enhanced_prompt)
-            
+
             # Update metrics
             end_time = datetime.now()
             response_time = (end_time - start_time).total_seconds()
             self._update_metrics(response_time, True)
-            
+
             return {
                 "status": "success",
                 "result": result,
                 "agent": self.name,
                 "response_time": response_time,
-                "timestamp": end_time.isoformat()
+                "timestamp": end_time.isoformat(),
             }
-            
+
         except Exception as e:
             end_time = datetime.now()
             response_time = (end_time - start_time).total_seconds()
             self._update_metrics(response_time, False)
-            
+
             logger.error(f"Agent {self.name} invocation failed: {e}")
             return {
                 "status": "error",
                 "error": str(e),
                 "agent": self.name,
                 "response_time": response_time,
-                "timestamp": end_time.isoformat()
+                "timestamp": end_time.isoformat(),
             }
-    
+
     def _enhance_prompt(self, prompt: str, context: Dict = None) -> str:
         """Enhance prompt with agent-specific context and instructions"""
         enhanced = f"""
@@ -104,10 +105,10 @@ EXPECTED OUTPUT:
 - Resource requirements or dependencies
 """
         return enhanced
-    
+
     async def _simulate_task_invocation(self, prompt: str) -> str:
         """Simulate Task tool invocation - replace with actual Task tool call"""
-        
+
         # Simulate processing time based on agent type
         if "SECURITY" in self.name:
             await asyncio.sleep(1.0)  # Security analysis takes time
@@ -117,7 +118,7 @@ EXPECTED OUTPUT:
             await asyncio.sleep(1.5)  # Optimization analysis takes time
         else:
             await asyncio.sleep(0.5)  # Default processing time
-        
+
         # Generate agent-specific responses
         agent_responses = {
             "DIRECTOR": self._generate_director_response,
@@ -127,14 +128,14 @@ EXPECTED OUTPUT:
             "CRYPTOEXPERT": self._generate_crypto_response,
             "MONITOR": self._generate_monitor_response,
             "OPTIMIZER": self._generate_optimizer_response,
-            "TESTBED": self._generate_testbed_response
+            "TESTBED": self._generate_testbed_response,
         }
-        
+
         if self.name in agent_responses:
             return agent_responses[self.name](prompt)
         else:
             return self._generate_generic_response(prompt)
-    
+
     def _generate_director_response(self, prompt: str) -> str:
         """Generate Director agent response"""
         return f"""STATUS: SUCCESS
@@ -430,31 +431,31 @@ NEXT STEPS:
             self.success_count += 1
         else:
             self.error_count += 1
-        
+
         # Update average response time
         total_invocations = self.success_count + self.error_count
         if total_invocations > 1:
             self.average_response_time = (
-                (self.average_response_time * (total_invocations - 1) + response_time) / 
-                total_invocations
-            )
+                self.average_response_time * (total_invocations - 1) + response_time
+            ) / total_invocations
         else:
             self.average_response_time = response_time
-        
+
         self.last_invocation = datetime.now()
+
 
 class AgentTaskBridge:
     """Bridge between deployment system and Task tool agents"""
-    
+
     def __init__(self, agent_registry):
         self.agent_registry = agent_registry
         self.task_agents: Dict[str, TaskToolAgent] = {}
         self.initialize_task_agents()
-    
+
     def initialize_task_agents(self):
         """Initialize Task tool wrapper agents"""
         logger.info("Initializing Task tool agent bridges")
-        
+
         for agent_name, agent_config in self.agent_registry.agents.items():
             # Convert agent config to dictionary format
             config_dict = {
@@ -462,84 +463,92 @@ class AgentTaskBridge:
                 "priority": agent_config.priority,
                 "status": agent_config.status,
                 "specializations": agent_config.specializations,
-                "keywords": agent_config.keywords
+                "keywords": agent_config.keywords,
             }
-            
+
             self.task_agents[agent_name] = TaskToolAgent(agent_name, config_dict)
-        
+
         logger.info(f"Initialized {len(self.task_agents)} Task tool agent bridges")
-    
-    async def invoke_agent(self, agent_name: str, prompt: str, context: Dict = None) -> Dict[str, Any]:
+
+    async def invoke_agent(
+        self, agent_name: str, prompt: str, context: Dict = None
+    ) -> Dict[str, Any]:
         """Invoke agent through Task tool bridge"""
         if agent_name not in self.task_agents:
             return {
                 "status": "error",
                 "error": f"Agent {agent_name} not found in registry",
-                "agent": agent_name
+                "agent": agent_name,
             }
-        
+
         task_agent = self.task_agents[agent_name]
         return await task_agent.invoke(prompt, context)
-    
-    async def invoke_multiple_agents(self, agent_names: List[str], prompt: str, 
-                                   context: Dict = None, parallel: bool = True) -> Dict[str, Any]:
+
+    async def invoke_multiple_agents(
+        self,
+        agent_names: List[str],
+        prompt: str,
+        context: Dict = None,
+        parallel: bool = True,
+    ) -> Dict[str, Any]:
         """Invoke multiple agents with coordination"""
         if parallel:
             # Execute agents in parallel
             tasks = [
-                self.invoke_agent(agent_name, prompt, context) 
+                self.invoke_agent(agent_name, prompt, context)
                 for agent_name in agent_names
             ]
             results = await asyncio.gather(*tasks)
-            
+
             return {
-                agent_name: result 
-                for agent_name, result in zip(agent_names, results)
+                agent_name: result for agent_name, result in zip(agent_names, results)
             }
         else:
             # Execute agents sequentially with context passing
             results = {}
             current_context = context or {}
-            
+
             for agent_name in agent_names:
                 result = await self.invoke_agent(agent_name, prompt, current_context)
                 results[agent_name] = result
-                
+
                 # Update context for next agent
                 if result["status"] == "success":
                     current_context[f"{agent_name}_result"] = result["result"]
-            
+
             return results
-    
+
     def get_agent_health(self) -> Dict[str, Dict[str, Any]]:
         """Get health metrics for all agents"""
         health_report = {}
-        
+
         for agent_name, task_agent in self.task_agents.items():
             total_invocations = task_agent.success_count + task_agent.error_count
             success_rate = (
-                task_agent.success_count / total_invocations 
-                if total_invocations > 0 else 0
+                task_agent.success_count / total_invocations
+                if total_invocations > 0
+                else 0
             )
-            
+
             health_report[agent_name] = {
                 "success_count": task_agent.success_count,
                 "error_count": task_agent.error_count,
                 "success_rate": success_rate,
                 "average_response_time": task_agent.average_response_time,
                 "last_invocation": (
-                    task_agent.last_invocation.isoformat() 
-                    if task_agent.last_invocation else None
+                    task_agent.last_invocation.isoformat()
+                    if task_agent.last_invocation
+                    else None
                 ),
-                "health_status": "healthy" if success_rate > 0.8 else "degraded"
+                "health_status": "healthy" if success_rate > 0.8 else "degraded",
             }
-        
+
         return health_report
-    
+
     def get_top_performing_agents(self, limit: int = 10) -> List[Tuple[str, float]]:
         """Get top performing agents by success rate and response time"""
         agent_scores = []
-        
+
         for agent_name, task_agent in self.task_agents.items():
             total_invocations = task_agent.success_count + task_agent.error_count
             if total_invocations > 0:
@@ -548,70 +557,76 @@ class AgentTaskBridge:
                 response_penalty = min(task_agent.average_response_time / 10.0, 0.5)
                 score = success_rate - response_penalty
                 agent_scores.append((agent_name, score))
-        
+
         agent_scores.sort(key=lambda x: x[1], reverse=True)
         return agent_scores[:limit]
+
 
 # Example usage and testing
 async def test_agent_bridge():
     """Test the agent bridge system"""
     from comprehensive_agent_deployment import AgentRegistry
-    
+
     print("Testing Agent Task Bridge...")
-    
+
     # Initialize registry and bridge
     registry = AgentRegistry()
     bridge = AgentTaskBridge(registry)
-    
+
     # Test individual agent invocation
     print("\n1. Testing individual agent invocation...")
     result = await bridge.invoke_agent(
-        "DIRECTOR", 
+        "DIRECTOR",
         "Analyze Phase 2 TPM integration requirements",
-        {"project": "DSMIL", "phase": 2}
+        {"project": "DSMIL", "phase": 2},
     )
     print(f"DIRECTOR result: {result['status']}")
-    
+
     # Test parallel agent coordination
     print("\n2. Testing parallel agent coordination...")
     security_agents = ["SECURITY", "CRYPTOEXPERT", "BASTION"]
     available_agents = [name for name in security_agents if name in bridge.task_agents]
-    
+
     if available_agents:
         parallel_results = await bridge.invoke_multiple_agents(
             available_agents,
             "Conduct security analysis for TPM device integration",
             {"target": "device_0x8005", "operation": "tpm_integration"},
-            parallel=True
+            parallel=True,
         )
         print(f"Parallel coordination: {len(parallel_results)} agents completed")
-    
+
     # Test sequential coordination
     print("\n3. Testing sequential coordination...")
     workflow_agents = ["DIRECTOR", "HARDWARE-DELL", "MONITOR"]
-    available_workflow = [name for name in workflow_agents if name in bridge.task_agents]
-    
+    available_workflow = [
+        name for name in workflow_agents if name in bridge.task_agents
+    ]
+
     if available_workflow:
         sequential_results = await bridge.invoke_multiple_agents(
             available_workflow,
             "Plan and execute hardware optimization for Dell Latitude 5450",
             {"hardware": "Dell_Latitude_5450", "cpu": "Intel_Core_Ultra_7_165H"},
-            parallel=False
+            parallel=False,
         )
         print(f"Sequential coordination: {len(sequential_results)} agents in workflow")
-    
+
     # Display health report
     print("\n4. Agent health report...")
     health = bridge.get_agent_health()
-    active_agents = [name for name, metrics in health.items() if metrics["success_count"] > 0]
+    active_agents = [
+        name for name, metrics in health.items() if metrics["success_count"] > 0
+    ]
     print(f"Active agents: {len(active_agents)}")
-    
+
     # Show top performers
     top_agents = bridge.get_top_performing_agents(5)
     if top_agents:
         print("\nTop performing agents:")
         for agent_name, score in top_agents:
             print(f"  {agent_name}: {score:.3f}")
+
 
 if __name__ == "__main__":
     asyncio.run(test_agent_bridge())

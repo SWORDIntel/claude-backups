@@ -23,29 +23,34 @@ Performance Targets:
 """
 
 import asyncio
-import logging
-import time
-import subprocess
-import shutil
+import hashlib
 import json
+import logging
 import os
+import shutil
 import signal
+import subprocess
 import sys
-from typing import Dict, List, Any, Optional, Tuple, Union
+import tempfile
+import time
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from datetime import datetime, timedelta
-import tempfile
-import hashlib
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Import Shadowgit components (updated for new location)
 try:
     # Use relative imports since we're now in hooks/shadowgit/deployment/
     sys.path.insert(0, str(Path(__file__).parent.parent / "python"))
-    from integration_hub import ShadowgitIntegrationHub, create_integration_hub, OperationMode
     from bridge import ShadowgitPythonBridge, create_bridge
+    from integration_hub import (
+        OperationMode,
+        ShadowgitIntegrationHub,
+        create_integration_hub,
+    )
     from npu_integration import ShadowgitNPUPython, create_npu_interface
+
     SHADOWGIT_COMPONENTS_AVAILABLE = True
 except ImportError as e:
     SHADOWGIT_COMPONENTS_AVAILABLE = False
@@ -84,8 +89,10 @@ WRAPPER_INTEGRATION_SCRIPT = "claude-wrapper-ultimate.sh"
 # ENUMS AND DATA STRUCTURES
 # ============================================================================
 
+
 class DeploymentStage(Enum):
     """Deployment stages"""
+
     PREPARATION = "preparation"
     COMPILATION = "compilation"
     VALIDATION = "validation"
@@ -96,24 +103,30 @@ class DeploymentStage(Enum):
     COMPLETION = "completion"
     ROLLBACK = "rollback"
 
+
 class DeploymentStatus(Enum):
     """Deployment status"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     SUCCESS = "success"
     FAILED = "failed"
     ROLLED_BACK = "rolled_back"
 
+
 class ValidationLevel(Enum):
     """Validation levels"""
+
     BASIC = "basic"
     STANDARD = "standard"
     COMPREHENSIVE = "comprehensive"
     STRESS_TEST = "stress_test"
 
+
 @dataclass
 class BuildConfiguration:
     """Build configuration options"""
+
     optimization_level: str = "O3"
     enable_avx512: bool = True
     enable_avx2: bool = True
@@ -124,9 +137,11 @@ class BuildConfiguration:
     compiler: str = "gcc"
     parallel_jobs: int = 0  # 0 = auto-detect
 
+
 @dataclass
 class DeploymentConfiguration:
     """Deployment configuration"""
+
     target_environment: str = "production"
     validation_level: ValidationLevel = ValidationLevel.STANDARD
     enable_backup: bool = True
@@ -136,9 +151,11 @@ class DeploymentConfiguration:
     post_deployment_monitoring: bool = True
     notification_webhook: Optional[str] = None
 
+
 @dataclass
 class DeploymentResult:
     """Deployment operation result"""
+
     deployment_id: str
     status: DeploymentStatus
     stage: DeploymentStage
@@ -151,18 +168,22 @@ class DeploymentResult:
     validation_results: Dict[str, Any] = field(default_factory=dict)
     rollback_info: Optional[Dict[str, Any]] = None
 
+
 @dataclass
 class ValidationResult:
     """Validation test result"""
+
     test_name: str
     success: bool
     duration_seconds: float
     metrics: Dict[str, Any] = field(default_factory=dict)
     error_message: Optional[str] = None
 
+
 # ============================================================================
 # SHADOWGIT DEPLOYMENT CLASS
 # ============================================================================
+
 
 class ShadowgitDeployment:
     """
@@ -172,9 +193,11 @@ class ShadowgitDeployment:
     monitoring with comprehensive validation and rollback capabilities.
     """
 
-    def __init__(self,
-                 build_config: Optional[BuildConfiguration] = None,
-                 deploy_config: Optional[DeploymentConfiguration] = None):
+    def __init__(
+        self,
+        build_config: Optional[BuildConfiguration] = None,
+        deploy_config: Optional[DeploymentConfiguration] = None,
+    ):
         self.build_config = build_config or BuildConfiguration()
         self.deploy_config = deploy_config or DeploymentConfiguration()
 
@@ -185,7 +208,7 @@ class ShadowgitDeployment:
             deployment_id=self.deployment_id,
             status=DeploymentStatus.PENDING,
             stage=self.current_stage,
-            start_time=datetime.now()
+            start_time=datetime.now(),
         )
 
         # Paths and directories
@@ -269,13 +292,15 @@ class ShadowgitDeployment:
             "shadowgit_maximum_performance.h",
             "shadowgit_npu_engine.c",
             "shadowgit_performance_coordinator.c",
-            "Makefile.shadowgit_max_perf"
+            "Makefile.shadowgit_max_perf",
         ]
 
         for file in required_files:
             source_file = SOURCE_DIR / file
             if not source_file.exists():
-                raise FileNotFoundError(f"Required source file not found: {source_file}")
+                raise FileNotFoundError(
+                    f"Required source file not found: {source_file}"
+                )
 
         # Check system dependencies
         await self._check_system_dependencies()
@@ -299,10 +324,12 @@ class ShadowgitDeployment:
             openvino_paths = [
                 "/opt/openvino",
                 "/usr/local/openvino",
-                Path.home() / "intel/openvino"
+                Path.home() / "intel/openvino",
             ]
 
-            openvino_found = any(path.exists() for path in openvino_paths if isinstance(path, Path))
+            openvino_found = any(
+                path.exists() for path in openvino_paths if isinstance(path, Path)
+            )
             if not openvino_found:
                 logger.warning("OpenVINO not found, NPU acceleration may not work")
 
@@ -314,26 +341,27 @@ class ShadowgitDeployment:
         try:
             # Get CPU info
             result = await asyncio.create_subprocess_exec(
-                "cat", "/proc/cpuinfo",
+                "cat",
+                "/proc/cpuinfo",
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
             stdout, _ = await result.communicate()
             cpu_info = stdout.decode()
 
             # Check for specific features
             features = {}
-            features['avx512f'] = 'avx512f' in cpu_info
-            features['avx2'] = 'avx2' in cpu_info
-            features['fma'] = 'fma' in cpu_info
-            features['bmi2'] = 'bmi2' in cpu_info
+            features["avx512f"] = "avx512f" in cpu_info
+            features["avx2"] = "avx2" in cpu_info
+            features["fma"] = "fma" in cpu_info
+            features["bmi2"] = "bmi2" in cpu_info
 
             # Update build configuration based on detected features
-            if not features['avx512f']:
+            if not features["avx512f"]:
                 logger.warning("AVX-512 not detected, disabling AVX-512 optimization")
                 self.build_config.enable_avx512 = False
 
-            if not features['avx2']:
+            if not features["avx2"]:
                 logger.warning("AVX2 not detected, disabling AVX2 optimization")
                 self.build_config.enable_avx2 = False
 
@@ -374,7 +402,7 @@ class ShadowgitDeployment:
         makefile_content = self._generate_makefile()
         makefile_path = self.build_dir / "Makefile"
 
-        with open(makefile_path, 'w') as f:
+        with open(makefile_path, "w") as f:
             f.write(makefile_content)
 
         # Copy source files to build directory
@@ -382,18 +410,14 @@ class ShadowgitDeployment:
             "shadowgit_maximum_performance.c",
             "shadowgit_maximum_performance.h",
             "shadowgit_npu_engine.c",
-            "shadowgit_performance_coordinator.c"
+            "shadowgit_performance_coordinator.c",
         ]
 
         for file in source_files:
             shutil.copy2(SOURCE_DIR / file, self.build_dir / file)
 
         # Execute build
-        build_command = [
-            "make",
-            f"-j{self.build_config.parallel_jobs}",
-            "all"
-        ]
+        build_command = ["make", f"-j{self.build_config.parallel_jobs}", "all"]
 
         logger.info(f"Building with command: {' '.join(build_command)}")
 
@@ -402,13 +426,12 @@ class ShadowgitDeployment:
             cwd=self.build_dir,
             env=env,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
 
         try:
             stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=BUILD_TIMEOUT_SECONDS
+                process.communicate(), timeout=BUILD_TIMEOUT_SECONDS
             )
 
             if process.returncode != 0:
@@ -419,11 +442,14 @@ class ShadowgitDeployment:
 
             # Collect build artifacts
             self.deployment_result.build_artifacts = [
-                str(f) for f in self.build_dir.glob("*")
+                str(f)
+                for f in self.build_dir.glob("*")
                 if f.is_file() and f.suffix in [".so", ".a", ".o", ""]
             ]
 
-            logger.info(f"✓ Compilation completed - {len(self.deployment_result.build_artifacts)} artifacts")
+            logger.info(
+                f"✓ Compilation completed - {len(self.deployment_result.build_artifacts)} artifacts"
+            )
 
         except asyncio.TimeoutError:
             process.kill()
@@ -476,7 +502,7 @@ class ShadowgitDeployment:
         candidates = [
             Path("/opt/openvino"),
             Path("/usr/local/openvino"),
-            Path.home() / "intel/openvino"
+            Path.home() / "intel/openvino",
         ]
 
         for candidate in candidates:
@@ -549,31 +575,36 @@ clean:
         validation_results = {}
 
         # Basic library loading test
-        validation_results['library_loading'] = await self._validate_library_loading()
+        validation_results["library_loading"] = await self._validate_library_loading()
 
         # Function symbol validation
-        validation_results['symbol_validation'] = await self._validate_symbols()
+        validation_results["symbol_validation"] = await self._validate_symbols()
 
         # Performance validation
-        if self.deploy_config.validation_level in [ValidationLevel.STANDARD, ValidationLevel.COMPREHENSIVE]:
-            validation_results['performance'] = await self._validate_performance()
+        if self.deploy_config.validation_level in [
+            ValidationLevel.STANDARD,
+            ValidationLevel.COMPREHENSIVE,
+        ]:
+            validation_results["performance"] = await self._validate_performance()
 
         # Stress testing
         if self.deploy_config.validation_level == ValidationLevel.COMPREHENSIVE:
-            validation_results['stress_test'] = await self._validate_stress_test()
+            validation_results["stress_test"] = await self._validate_stress_test()
 
         # Check validation results
-        failed_tests = [name for name, result in validation_results.items() if not result.success]
+        failed_tests = [
+            name for name, result in validation_results.items() if not result.success
+        ]
 
         if failed_tests:
             raise RuntimeError(f"Validation failed: {failed_tests}")
 
         self.deployment_result.validation_results = {
             name: {
-                'success': result.success,
-                'duration_seconds': result.duration_seconds,
-                'metrics': result.metrics,
-                'error_message': result.error_message
+                "success": result.success,
+                "duration_seconds": result.duration_seconds,
+                "metrics": result.metrics,
+                "error_message": result.error_message,
             }
             for name, result in validation_results.items()
         }
@@ -603,7 +634,7 @@ int main() {
 """
 
             test_file = self.build_dir / "test_loading.c"
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 f.write(test_code)
 
             # Compile test
@@ -611,10 +642,11 @@ int main() {
                 self.build_config.compiler,
                 str(test_file),
                 "-ldl",
-                "-o", str(self.build_dir / "test_loading"),
+                "-o",
+                str(self.build_dir / "test_loading"),
                 cwd=self.build_dir,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
 
             stdout, stderr = await process.communicate()
@@ -627,7 +659,7 @@ int main() {
                 str(self.build_dir / "test_loading"),
                 cwd=self.build_dir,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
 
             stdout, stderr = await process.communicate()
@@ -641,7 +673,7 @@ int main() {
                 test_name="library_loading",
                 success=True,
                 duration_seconds=duration,
-                metrics={'output': stdout.decode().strip()}
+                metrics={"output": stdout.decode().strip()},
             )
 
         except Exception as e:
@@ -649,7 +681,7 @@ int main() {
                 test_name="library_loading",
                 success=False,
                 duration_seconds=time.time() - start_time,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _validate_symbols(self) -> ValidationResult:
@@ -659,9 +691,11 @@ int main() {
         try:
             # Check symbols using nm
             process = await asyncio.create_subprocess_exec(
-                "nm", "-D", str(self.build_dir / "libshadowgit_max_perf.so"),
+                "nm",
+                "-D",
+                str(self.build_dir / "libshadowgit_max_perf.so"),
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
 
             stdout, stderr = await process.communicate()
@@ -677,7 +711,7 @@ int main() {
                 "shadowgit_max_perf_shutdown",
                 "get_performance_metrics",
                 "avx2_enhanced_hash",
-                "npu_submit_hash_operation"
+                "npu_submit_hash_operation",
             ]
 
             missing_symbols = []
@@ -694,7 +728,7 @@ int main() {
                 test_name="symbol_validation",
                 success=True,
                 duration_seconds=duration,
-                metrics={'symbols_checked': len(required_symbols)}
+                metrics={"symbols_checked": len(required_symbols)},
             )
 
         except Exception as e:
@@ -702,7 +736,7 @@ int main() {
                 test_name="symbol_validation",
                 success=False,
                 duration_seconds=time.time() - start_time,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _validate_performance(self) -> ValidationResult:
@@ -723,10 +757,14 @@ int main() {
             hash_duration = time.time_ns() - hash_start
 
             # Calculate simulated throughput
-            simulated_throughput = (len(test_data) / (hash_duration / 1e9)) if hash_duration > 0 else 0
+            simulated_throughput = (
+                (len(test_data) / (hash_duration / 1e9)) if hash_duration > 0 else 0
+            )
 
             if simulated_throughput < MIN_THROUGHPUT_LPS:
-                raise RuntimeError(f"Performance below minimum: {simulated_throughput:.0f} < {MIN_THROUGHPUT_LPS}")
+                raise RuntimeError(
+                    f"Performance below minimum: {simulated_throughput:.0f} < {MIN_THROUGHPUT_LPS}"
+                )
 
             duration = time.time() - start_time
 
@@ -735,10 +773,10 @@ int main() {
                 success=True,
                 duration_seconds=duration,
                 metrics={
-                    'throughput_lps': simulated_throughput,
-                    'test_data_size': len(test_data),
-                    'hash_duration_ns': hash_duration
-                }
+                    "throughput_lps": simulated_throughput,
+                    "test_data_size": len(test_data),
+                    "hash_duration_ns": hash_duration,
+                },
             )
 
         except Exception as e:
@@ -746,7 +784,7 @@ int main() {
                 test_name="performance",
                 success=False,
                 duration_seconds=time.time() - start_time,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _validate_stress_test(self) -> ValidationResult:
@@ -772,7 +810,9 @@ int main() {
             success_rate = (success_count / test_iterations) * 100
 
             if success_rate < MIN_SUCCESS_RATE:
-                raise RuntimeError(f"Stress test success rate too low: {success_rate:.1f}% < {MIN_SUCCESS_RATE}%")
+                raise RuntimeError(
+                    f"Stress test success rate too low: {success_rate:.1f}% < {MIN_SUCCESS_RATE}%"
+                )
 
             duration = time.time() - start_time
 
@@ -781,10 +821,10 @@ int main() {
                 success=True,
                 duration_seconds=duration,
                 metrics={
-                    'iterations': test_iterations,
-                    'success_count': success_count,
-                    'success_rate': success_rate
-                }
+                    "iterations": test_iterations,
+                    "success_count": success_count,
+                    "success_rate": success_rate,
+                },
             )
 
         except Exception as e:
@@ -792,7 +832,7 @@ int main() {
                 test_name="stress_test",
                 success=False,
                 duration_seconds=time.time() - start_time,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _stage_backup(self):
@@ -812,13 +852,15 @@ int main() {
 
         # Copy existing installation
         if INSTALL_DIR.exists():
-            shutil.copytree(INSTALL_DIR, backup_path / "installation", dirs_exist_ok=True)
+            shutil.copytree(
+                INSTALL_DIR, backup_path / "installation", dirs_exist_ok=True
+            )
 
         # Store backup info
         self.deployment_result.rollback_info = {
-            'backup_path': str(backup_path),
-            'backup_timestamp': backup_timestamp,
-            'original_installation': str(INSTALL_DIR)
+            "backup_path": str(backup_path),
+            "backup_timestamp": backup_timestamp,
+            "original_installation": str(INSTALL_DIR),
         }
 
         logger.info(f"✓ Backup created at {backup_path}")
@@ -847,13 +889,13 @@ int main() {
 
         # Create version file
         version_info = {
-            'deployment_id': self.deployment_id,
-            'timestamp': datetime.now().isoformat(),
-            'build_config': self.build_config.__dict__,
-            'version': '1.0.0'
+            "deployment_id": self.deployment_id,
+            "timestamp": datetime.now().isoformat(),
+            "build_config": self.build_config.__dict__,
+            "version": "1.0.0",
         }
 
-        with open(INSTALL_DIR / "version.json", 'w') as f:
+        with open(INSTALL_DIR / "version.json", "w") as f:
             json.dump(version_info, f, indent=2)
 
         # Update library cache
@@ -889,7 +931,7 @@ int main() {
             wrapper_paths = [
                 Path("/usr/local/bin") / WRAPPER_INTEGRATION_SCRIPT,
                 Path.home() / ".local/bin" / WRAPPER_INTEGRATION_SCRIPT,
-                SOURCE_DIR.parent.parent.parent / WRAPPER_INTEGRATION_SCRIPT
+                SOURCE_DIR.parent.parent.parent / WRAPPER_INTEGRATION_SCRIPT,
             ]
 
             wrapper_path = None
@@ -931,7 +973,7 @@ WantedBy=multi-user.target
         service_path = Path(f"/etc/systemd/system/{SYSTEMD_SERVICE_NAME}.service")
 
         try:
-            with open(service_path, 'w') as f:
+            with open(service_path, "w") as f:
                 f.write(service_content)
 
             # Reload systemd
@@ -954,7 +996,7 @@ export PKG_CONFIG_PATH=$SHADOWGIT_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
         env_path = Path("/etc/profile.d/shadowgit.sh")
 
         try:
-            with open(env_path, 'w') as f:
+            with open(env_path, "w") as f:
                 f.write(env_script)
 
             logger.info(f"✓ Environment script created: {env_path}")
@@ -983,13 +1025,17 @@ export PKG_CONFIG_PATH=$SHADOWGIT_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
     async def _test_integration_hub(self):
         """Test integration hub functionality"""
         try:
-            self.integration_hub = await create_integration_hub(OperationMode.DEVELOPMENT)
+            self.integration_hub = await create_integration_hub(
+                OperationMode.DEVELOPMENT
+            )
 
             # Submit test task
-            task_id = await self.integration_hub.submit_task('system_health', {})
-            result = await self.integration_hub.wait_for_task(task_id, timeout_seconds=30.0)
+            task_id = await self.integration_hub.submit_task("system_health", {})
+            result = await self.integration_hub.wait_for_task(
+                task_id, timeout_seconds=30.0
+            )
 
-            if not result.get('success'):
+            if not result.get("success"):
                 raise RuntimeError("Integration hub test failed")
 
             logger.info("✓ Integration hub test passed")
@@ -1022,7 +1068,7 @@ export PKG_CONFIG_PATH=$SHADOWGIT_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
             if version_file.exists():
                 with open(version_file) as f:
                     version_info = json.load(f)
-                    if version_info.get('deployment_id') != self.deployment_id:
+                    if version_info.get("deployment_id") != self.deployment_id:
                         raise RuntimeError("Version mismatch in installed files")
 
             logger.info("✓ System integration test passed")
@@ -1042,7 +1088,7 @@ export PKG_CONFIG_PATH=$SHADOWGIT_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
 
         # Save deployment report
         report_path = INSTALL_DIR / f"deployment_report_{self.deployment_id}.json"
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(report, f, indent=2)
 
         # Send notification if configured
@@ -1058,30 +1104,32 @@ export PKG_CONFIG_PATH=$SHADOWGIT_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
     def _generate_deployment_report(self) -> Dict[str, Any]:
         """Generate comprehensive deployment report"""
         return {
-            'deployment_info': {
-                'deployment_id': self.deployment_id,
-                'timestamp': datetime.now().isoformat(),
-                'duration_seconds': self.deployment_result.duration_seconds,
-                'status': self.deployment_result.status.value
+            "deployment_info": {
+                "deployment_id": self.deployment_id,
+                "timestamp": datetime.now().isoformat(),
+                "duration_seconds": self.deployment_result.duration_seconds,
+                "status": self.deployment_result.status.value,
             },
-            'build_configuration': self.build_config.__dict__,
-            'deployment_configuration': self.deploy_config.__dict__,
-            'validation_results': self.deployment_result.validation_results,
-            'build_artifacts': self.deployment_result.build_artifacts,
-            'installation_path': str(INSTALL_DIR),
-            'backup_info': self.deployment_result.rollback_info,
-            'system_info': {
-                'platform': sys.platform,
-                'python_version': sys.version,
-                'cpu_count': os.cpu_count()
-            }
+            "build_configuration": self.build_config.__dict__,
+            "deployment_configuration": self.deploy_config.__dict__,
+            "validation_results": self.deployment_result.validation_results,
+            "build_artifacts": self.deployment_result.build_artifacts,
+            "installation_path": str(INSTALL_DIR),
+            "backup_info": self.deployment_result.rollback_info,
+            "system_info": {
+                "platform": sys.platform,
+                "python_version": sys.version,
+                "cpu_count": os.cpu_count(),
+            },
         }
 
     async def _send_deployment_notification(self, report: Dict[str, Any]):
         """Send deployment notification"""
         try:
             # This would send HTTP notification to webhook
-            logger.info(f"Notification would be sent to: {self.deploy_config.notification_webhook}")
+            logger.info(
+                f"Notification would be sent to: {self.deploy_config.notification_webhook}"
+            )
         except Exception as e:
             logger.warning(f"Notification failed: {e}")
 
@@ -1102,7 +1150,7 @@ export PKG_CONFIG_PATH=$SHADOWGIT_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
         if not self.deployment_result.rollback_info:
             raise RuntimeError("No rollback information available")
 
-        backup_path = Path(self.deployment_result.rollback_info['backup_path'])
+        backup_path = Path(self.deployment_result.rollback_info["backup_path"])
 
         if not backup_path.exists():
             raise RuntimeError(f"Backup path not found: {backup_path}")
@@ -1150,40 +1198,42 @@ export PKG_CONFIG_PATH=$SHADOWGIT_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
         except Exception as e:
             logger.warning(f"Cleanup failed: {e}")
 
+
 # ============================================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================================
 
+
 async def deploy_shadowgit(
     build_config: Optional[BuildConfiguration] = None,
-    deploy_config: Optional[DeploymentConfiguration] = None
+    deploy_config: Optional[DeploymentConfiguration] = None,
 ) -> DeploymentResult:
     """Deploy Shadowgit with specified configuration"""
     deployment = ShadowgitDeployment(build_config, deploy_config)
     return await deployment.deploy()
 
+
 async def quick_deploy() -> DeploymentResult:
     """Quick deployment with standard configuration"""
     build_config = BuildConfiguration(
-        optimization_level="O3",
-        enable_avx512=True,
-        enable_avx2=True,
-        enable_npu=True
+        optimization_level="O3", enable_avx512=True, enable_avx2=True, enable_npu=True
     )
 
     deploy_config = DeploymentConfiguration(
         validation_level=ValidationLevel.STANDARD,
         enable_backup=True,
-        enable_rollback=True
+        enable_rollback=True,
     )
 
     return await deploy_shadowgit(build_config, deploy_config)
+
 
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
 
 if __name__ == "__main__":
+
     async def main():
         print("Shadowgit Deployment System - Production Deployment")
         print("=" * 60)
@@ -1196,7 +1246,7 @@ if __name__ == "__main__":
                 enable_avx2=True,
                 enable_npu=True,
                 enable_debug_symbols=False,
-                parallel_jobs=0  # Auto-detect
+                parallel_jobs=0,  # Auto-detect
             )
 
             deploy_config = DeploymentConfiguration(
@@ -1205,7 +1255,7 @@ if __name__ == "__main__":
                 enable_backup=True,
                 enable_rollback=True,
                 zero_downtime=False,  # Not needed for development
-                integration_test=True
+                integration_test=True,
             )
 
             print(f"Build Configuration: {build_config}")
@@ -1235,8 +1285,8 @@ if __name__ == "__main__":
             if result.validation_results:
                 print("Validation Results:")
                 for test_name, test_result in result.validation_results.items():
-                    status = "PASS" if test_result['success'] else "FAIL"
-                    duration = test_result['duration_seconds']
+                    status = "PASS" if test_result["success"] else "FAIL"
+                    duration = test_result["duration_seconds"]
                     print(f"  - {test_name}: {status} ({duration:.3f}s)")
 
             print()
@@ -1254,4 +1304,5 @@ if __name__ == "__main__":
             return 1
 
     import sys
+
     sys.exit(asyncio.run(main()))

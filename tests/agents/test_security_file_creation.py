@@ -4,11 +4,11 @@ Test if Security agent can create files/directories when explicitly requested
 """
 
 import asyncio
+import json
 import os
 import sys
 import tempfile
 import time
-import json
 from pathlib import Path
 
 # Add current directory to path to import modules
@@ -19,138 +19,153 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available
     def get_project_root():
         return Path(__file__).parent.parent.parent
+
     def get_agents_dir():
-        return get_project_root() / 'agents'
+        return get_project_root() / "agents"
+
     def get_database_dir():
-        return get_project_root() / 'database'
+        return get_project_root() / "database"
+
     def get_python_src_dir():
-        return get_agents_dir() / 'src' / 'python'
+        return get_agents_dir() / "src" / "python"
+
     def get_shadowgit_paths():
         home_dir = Path.home()
-        return {'root': home_dir / 'shadowgit'}
+        return {"root": home_dir / "shadowgit"}
+
     def get_database_config():
         return {
-            'host': 'localhost', 'port': 5433,
-            'database': 'claude_agents_auth',
-            'user': 'claude_agent', 'password': 'claude_auth_pass'
+            "host": "localhost",
+            "port": 5433,
+            "database": "claude_agents_auth",
+            "user": "claude_agent",
+            "password": "claude_auth_pass",
         }
-sys.path.insert(0, '$HOME/Documents/Claude/agents/src/python')
+
+
+sys.path.insert(0, "$HOME/Documents/Claude/agents/src/python")
 
 from security_impl import SecurityPythonExecutor
+
 
 async def test_explicit_file_creation():
     """Test Security agent's ability to create files when explicitly requested"""
     print("=" * 70)
     print("TESTING SECURITY AGENT FILE CREATION CAPABILITIES")
     print("=" * 70)
-    
+
     security = SecurityPythonExecutor()
-    
+
     # Create output directory
     output_dir = Path("$HOME/Documents/Claude/agents/security_audit_test")
     output_dir.mkdir(exist_ok=True)
-    
+
     print(f"Output directory: {output_dir}")
-    
+
     # Test creating a comprehensive security report
     print("\n1. Creating comprehensive security audit report...")
-    
+
     # Perform vulnerability scan
-    vuln_result = await security.execute_command("vulnerability_scan", {
-        "target": "$HOME/Documents/Claude/agents",
-        "type": "comprehensive"
-    })
-    
+    vuln_result = await security.execute_command(
+        "vulnerability_scan",
+        {"target": "$HOME/Documents/Claude/agents", "type": "comprehensive"},
+    )
+
     # Create security report file
     report_file = output_dir / "security_audit_report.json"
-    with open(report_file, 'w') as f:
+    with open(report_file, "w") as f:
         json.dump(vuln_result, f, indent=2, default=str)
-    
+
     print(f"✓ Created: {report_file}")
-    
+
     # Test creating compliance report
     print("\n2. Creating compliance audit report...")
-    
-    compliance_result = await security.execute_command("compliance_audit", {
-        "framework": "owasp",
-        "target": "$HOME/Documents/Claude/agents"
-    })
-    
+
+    compliance_result = await security.execute_command(
+        "compliance_audit",
+        {"framework": "owasp", "target": "$HOME/Documents/Claude/agents"},
+    )
+
     compliance_file = output_dir / "owasp_compliance_report.json"
-    with open(compliance_file, 'w') as f:
+    with open(compliance_file, "w") as f:
         json.dump(compliance_result, f, indent=2, default=str)
-    
+
     print(f"✓ Created: {compliance_file}")
-    
+
     # Test creating threat model
     print("\n3. Creating threat model...")
-    
-    threat_result = await security.execute_command("threat_model", {
-        "asset": "claude_agent_framework",
-        "methodology": "stride"
-    })
-    
+
+    threat_result = await security.execute_command(
+        "threat_model", {"asset": "claude_agent_framework", "methodology": "stride"}
+    )
+
     threat_file = output_dir / "threat_model_stride.json"
-    with open(threat_file, 'w') as f:
+    with open(threat_file, "w") as f:
         json.dump(threat_result, f, indent=2, default=str)
-    
+
     print(f"✓ Created: {threat_file}")
-    
+
     # Test creating security policies
     print("\n4. Creating security policy documents...")
-    
+
     policy_types = ["password", "access_control", "data_classification"]
     for policy_type in policy_types:
-        policy_result = await security.execute_command("create_policy", {
-            "type": policy_type
-        })
-        
+        policy_result = await security.execute_command(
+            "create_policy", {"type": policy_type}
+        )
+
         policy_file = output_dir / f"security_policy_{policy_type}.json"
-        with open(policy_file, 'w') as f:
+        with open(policy_file, "w") as f:
             json.dump(policy_result, f, indent=2, default=str)
-        
+
         print(f"✓ Created: {policy_file}")
-    
+
     # Create summary report
     print("\n5. Creating security audit summary...")
-    
+
     status = security.get_status()
     capabilities = security.get_capabilities()
-    
+
     summary = {
         "audit_timestamp": time.time(),
         "security_agent_status": status,
         "security_capabilities": capabilities,
         "reports_generated": [
             "security_audit_report.json",
-            "owasp_compliance_report.json", 
+            "owasp_compliance_report.json",
             "threat_model_stride.json",
             "security_policy_password.json",
             "security_policy_access_control.json",
-            "security_policy_data_classification.json"
+            "security_policy_data_classification.json",
         ],
         "audit_summary": {
-            "vulnerabilities_found": vuln_result['result'].get('vulnerabilities_found', 0),
-            "compliance_score": compliance_result['result'].get('overall_score', 0),
-            "threat_model_risk": threat_result['result'].get('overall_risk', 'unknown'),
-            "security_frameworks": len(status['security_frameworks']),
-            "total_audits": status['metrics']['security_audits']
-        }
+            "vulnerabilities_found": vuln_result["result"].get(
+                "vulnerabilities_found", 0
+            ),
+            "compliance_score": compliance_result["result"].get("overall_score", 0),
+            "threat_model_risk": threat_result["result"].get("overall_risk", "unknown"),
+            "security_frameworks": len(status["security_frameworks"]),
+            "total_audits": status["metrics"]["security_audits"],
+        },
     }
-    
+
     summary_file = output_dir / "security_audit_summary.json"
-    with open(summary_file, 'w') as f:
+    with open(summary_file, "w") as f:
         json.dump(summary, f, indent=2, default=str)
-    
+
     print(f"✓ Created: {summary_file}")
-    
+
     # Create README for the security audit
     readme_content = f"""# Security Audit Results
 
@@ -178,40 +193,41 @@ Timestamp: {time.ctime()}
 
 Generated by Claude Security Agent - Comprehensive Security Analysis Specialist
 """
-    
+
     readme_file = output_dir / "README.md"
-    with open(readme_file, 'w') as f:
+    with open(readme_file, "w") as f:
         f.write(readme_content)
-    
+
     print(f"✓ Created: {readme_file}")
-    
+
     # List all created files
     print(f"\n" + "=" * 50)
     print("SECURITY AUDIT FILES CREATED:")
     print("=" * 50)
-    
+
     created_files = list(output_dir.glob("*"))
     for file in sorted(created_files):
         size = file.stat().st_size
         print(f"  {file.name} ({size} bytes)")
-    
+
     print(f"\nTotal files created: {len(created_files)}")
     print(f"Output directory: {output_dir}")
-    
+
     return output_dir, created_files
+
 
 async def main():
     """Main test function"""
     print("SECURITY AGENT FILE CREATION TEST")
     print("Verifying Security agent can create audit files/directories")
     print("=" * 70)
-    
+
     output_dir, created_files = await test_explicit_file_creation()
-    
+
     print(f"\n" + "=" * 70)
     print("CONCLUSION:")
     print("=" * 70)
-    
+
     if created_files:
         print(f"✓ Security agent CAN create files and directories")
         print(f"✓ Successfully created {len(created_files)} files")
@@ -223,6 +239,7 @@ async def main():
     else:
         print(f"✗ No files were created")
         print(f"The Security agent may have limited file creation capabilities")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

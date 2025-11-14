@@ -24,19 +24,31 @@ Performance Targets:
 
 import asyncio
 import ctypes
+import json
 import logging
-import time
 import threading
+import time
 from ctypes import (
-    Structure, POINTER, c_int, c_uint32, c_uint64, c_double, c_bool, c_char_p,
-    c_void_p, c_size_t, byref, CFUNCTYPE, Array
+    CFUNCTYPE,
+    POINTER,
+    Array,
+    Structure,
+    byref,
+    c_bool,
+    c_char_p,
+    c_double,
+    c_int,
+    c_size_t,
+    c_uint32,
+    c_uint64,
+    c_void_p,
 )
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional, Tuple, Callable, Union
-from pathlib import Path
-import json
-import numpy as np
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -46,111 +58,108 @@ logger = logging.getLogger(__name__)
 # C STRUCTURE DEFINITIONS (MIRROR OF C HEADER)
 # ============================================================================
 
+
 class HardwareCapabilities(Structure):
     """Mirror of hardware_capabilities_t from C header"""
+
     _fields_ = [
         # CPU features
-        ('avx512f', c_bool),
-        ('avx512bw', c_bool),
-        ('avx512vl', c_bool),
-        ('avx2', c_bool),
-        ('fma', c_bool),
-        ('bmi2', c_bool),
-        ('popcnt', c_bool),
-
+        ("avx512f", c_bool),
+        ("avx512bw", c_bool),
+        ("avx512vl", c_bool),
+        ("avx2", c_bool),
+        ("fma", c_bool),
+        ("bmi2", c_bool),
+        ("popcnt", c_bool),
         # NPU capabilities
-        ('npu_available', c_bool),
-        ('npu_tops', c_uint32),
-
+        ("npu_available", c_bool),
+        ("npu_tops", c_uint32),
         # Memory hierarchy
-        ('l1d_cache_kb', c_uint32),
-        ('l2_cache_kb', c_uint32),
-        ('l3_cache_kb', c_uint32),
-        ('total_memory_gb', c_uint64),
-
+        ("l1d_cache_kb", c_uint32),
+        ("l2_cache_kb", c_uint32),
+        ("l3_cache_kb", c_uint32),
+        ("total_memory_gb", c_uint64),
         # Thermal management
-        ('max_temp_celsius', c_uint32),
-        ('current_temp', c_uint32),
-
+        ("max_temp_celsius", c_uint32),
+        ("current_temp", c_uint32),
         # Core configuration
-        ('p_core_ids', c_int * 6),    # INTEL_P_CORES
-        ('e_core_ids', c_int * 8),    # INTEL_E_CORES
-        ('lp_e_core_ids', c_int * 2), # INTEL_LP_E_CORES
+        ("p_core_ids", c_int * 6),  # INTEL_P_CORES
+        ("e_core_ids", c_int * 8),  # INTEL_E_CORES
+        ("lp_e_core_ids", c_int * 2),  # INTEL_LP_E_CORES
     ]
+
 
 class PerformanceMetrics(Structure):
     """Mirror of performance_metrics_t from C header"""
+
     _fields_ = [
         # Throughput metrics
-        ('total_lines_processed', c_uint64),
-        ('total_bytes_processed', c_uint64),
-        ('total_operations', c_uint64),
-
+        ("total_lines_processed", c_uint64),
+        ("total_bytes_processed", c_uint64),
+        ("total_operations", c_uint64),
         # Performance breakdown
-        ('npu_operations', c_uint64),
-        ('avx512_operations', c_uint64),
-        ('avx2_operations', c_uint64),
-        ('scalar_operations', c_uint64),
-
+        ("npu_operations", c_uint64),
+        ("avx512_operations", c_uint64),
+        ("avx2_operations", c_uint64),
+        ("scalar_operations", c_uint64),
         # Timing metrics
-        ('total_processing_time_ns', c_double),
-        ('avg_lines_per_second', c_double),
-        ('peak_lines_per_second', c_double),
-        ('current_lines_per_second', c_double),
-
+        ("total_processing_time_ns", c_double),
+        ("avg_lines_per_second", c_double),
+        ("peak_lines_per_second", c_double),
+        ("current_lines_per_second", c_double),
         # Hardware utilization
-        ('p_core_utilization', c_double * 6),
-        ('e_core_utilization', c_double * 8),
-        ('npu_utilization', c_double),
-        ('memory_bandwidth_gbps', c_double),
-
+        ("p_core_utilization", c_double * 6),
+        ("e_core_utilization", c_double * 8),
+        ("npu_utilization", c_double),
+        ("memory_bandwidth_gbps", c_double),
         # Thermal metrics
-        ('max_temp_reached', c_uint32),
-        ('current_temp', c_uint32),
-        ('thermal_throttling', c_bool),
-
+        ("max_temp_reached", c_uint32),
+        ("current_temp", c_uint32),
+        ("thermal_throttling", c_bool),
         # Efficiency metrics
-        ('performance_per_watt', c_double),
-        ('speedup_vs_baseline', c_double),
-        ('target_achievement_percent', c_double),
+        ("performance_per_watt", c_double),
+        ("speedup_vs_baseline", c_double),
+        ("target_achievement_percent", c_double),
     ]
+
 
 class PerformanceTask(Structure):
     """Mirror of performance_task_t from C header"""
+
     _fields_ = [
-        ('type', c_int),
-        ('task_id', c_char_p),
-
+        ("type", c_int),
+        ("task_id", c_char_p),
         # File processing data
-        ('file_path_a', c_char_p),
-        ('file_path_b', c_char_p),
-        ('data_a', c_void_p),
-        ('data_b', c_void_p),
-        ('size_a', c_size_t),
-        ('size_b', c_size_t),
-
+        ("file_path_a", c_char_p),
+        ("file_path_b", c_char_p),
+        ("data_a", c_void_p),
+        ("data_b", c_void_p),
+        ("size_a", c_size_t),
+        ("size_b", c_size_t),
         # Processing options
-        ('use_npu', c_bool),
-        ('use_avx512', c_bool),
-        ('use_avx2', c_bool),
-        ('priority', c_int),
-
+        ("use_npu", c_bool),
+        ("use_avx512", c_bool),
+        ("use_avx2", c_bool),
+        ("priority", c_int),
         # Results
-        ('lines_processed', c_uint64),
-        ('hash_result', c_uint64),
-        ('processing_time_ns', c_double),
-        ('assigned_core', c_int),
-        ('completed', c_bool),
-        ('error_msg', c_char_p),
+        ("lines_processed", c_uint64),
+        ("hash_result", c_uint64),
+        ("processing_time_ns", c_double),
+        ("assigned_core", c_int),
+        ("completed", c_bool),
+        ("error_msg", c_char_p),
     ]
+
 
 # ============================================================================
 # PERFORMANCE MONITORING DATA CLASSES
 # ============================================================================
 
+
 @dataclass
 class BridgeMetrics:
     """Python bridge specific metrics"""
+
     python_overhead_ns: float = 0.0
     ctypes_call_count: int = 0
     async_operations: int = 0
@@ -159,9 +168,11 @@ class BridgeMetrics:
     bridge_efficiency_percent: float = 0.0
     last_update: datetime = None
 
+
 @dataclass
 class SystemStatus:
     """Combined system status from C engine and Python bridge"""
+
     c_engine_initialized: bool = False
     npu_available: bool = False
     performance_target_achieved: bool = False
@@ -170,9 +181,11 @@ class SystemStatus:
     error_state: Optional[str] = None
     last_update: datetime = None
 
+
 # ============================================================================
 # SHADOWGIT PYTHON BRIDGE CLASS
 # ============================================================================
+
 
 class ShadowgitPythonBridge:
     """
@@ -196,7 +209,9 @@ class ShadowgitPythonBridge:
         self._start_time = time.time_ns()
         self._operation_count = 0
 
-        logger.info(f"ShadowgitPythonBridge initialized with library: {self.library_path}")
+        logger.info(
+            f"ShadowgitPythonBridge initialized with library: {self.library_path}"
+        )
 
     def _find_library(self) -> str:
         """Find the compiled Shadowgit C library"""
@@ -204,7 +219,7 @@ class ShadowgitPythonBridge:
             Path(__file__).parent / "libshadowgit_max_perf.so",
             Path(__file__).parent / "libshadowgit_max_perf.dylib",
             Path("/usr/local/lib/libshadowgit_max_perf.so"),
-            Path("/opt/shadowgit/lib/libshadowgit_max_perf.so")
+            Path("/opt/shadowgit/lib/libshadowgit_max_perf.so"),
         ]
 
         for path in search_paths:
@@ -257,13 +272,19 @@ class ShadowgitPythonBridge:
 
         # NPU functions
         self.lib.npu_submit_hash_operation.argtypes = [
-            c_void_p, c_void_p, c_size_t, POINTER(c_uint64)
+            c_void_p,
+            c_void_p,
+            c_size_t,
+            POINTER(c_uint64),
         ]
         self.lib.npu_submit_hash_operation.restype = c_int
 
         # Enhanced AVX2 functions
         self.lib.avx2_enhanced_diff.argtypes = [
-            c_void_p, c_void_p, c_size_t, POINTER(c_uint64)
+            c_void_p,
+            c_void_p,
+            c_size_t,
+            POINTER(c_uint64),
         ]
         self.lib.avx2_enhanced_diff.restype = c_size_t
 
@@ -271,15 +292,11 @@ class ShadowgitPythonBridge:
         self.lib.avx2_enhanced_hash.restype = c_uint64
 
         # Task submission
-        self.lib.submit_priority_task.argtypes = [
-            c_char_p, c_char_p, c_bool, c_int
-        ]
+        self.lib.submit_priority_task.argtypes = [c_char_p, c_char_p, c_bool, c_int]
         self.lib.submit_priority_task.restype = c_int
 
         # Performance testing
-        self.lib.test_npu_acceleration.argtypes = [
-            c_void_p, c_size_t, c_size_t
-        ]
+        self.lib.test_npu_acceleration.argtypes = [c_void_p, c_size_t, c_size_t]
         self.lib.test_npu_acceleration.restype = c_uint64
 
         # Thermal management
@@ -311,11 +328,7 @@ class ShadowgitPythonBridge:
     # ========================================================================
 
     async def process_files_async(
-        self,
-        file_a: str,
-        file_b: str,
-        use_npu: bool = True,
-        priority: int = 5
+        self, file_a: str, file_b: str, use_npu: bool = True, priority: int = 5
     ) -> Dict[str, Any]:
         """
         Asynchronously process two files with C engine
@@ -333,9 +346,7 @@ class ShadowgitPythonBridge:
             # Submit task to C engine in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
             task_id = await loop.run_in_executor(
-                None,
-                self._submit_task_sync,
-                file_a, file_b, use_npu, priority
+                None, self._submit_task_sync, file_a, file_b, use_npu, priority
             )
 
             if task_id < 0:
@@ -356,13 +367,12 @@ class ShadowgitPythonBridge:
             logger.error(f"Async file processing failed: {e}")
             raise
 
-    def _submit_task_sync(self, file_a: str, file_b: str, use_npu: bool, priority: int) -> int:
+    def _submit_task_sync(
+        self, file_a: str, file_b: str, use_npu: bool, priority: int
+    ) -> int:
         """Synchronous task submission to C engine"""
         return self.lib.submit_priority_task(
-            file_a.encode('utf-8'),
-            file_b.encode('utf-8'),
-            use_npu,
-            priority
+            file_a.encode("utf-8"), file_b.encode("utf-8"), use_npu, priority
         )
 
     async def _wait_for_completion_async(self, task_id: str) -> Dict[str, Any]:
@@ -379,12 +389,12 @@ class ShadowgitPythonBridge:
             # Simulate completion
             if time.time() - start_time > 0.1:  # 100ms processing time
                 return {
-                    'task_id': task_id,
-                    'completed': True,
-                    'lines_processed': 1000000,  # Simulated
-                    'processing_time_ns': 100000000,  # 100ms
-                    'throughput_lps': 10000000000,  # 10B lines/sec
-                    'success': True
+                    "task_id": task_id,
+                    "completed": True,
+                    "lines_processed": 1000000,  # Simulated
+                    "processing_time_ns": 100000000,  # 100ms
+                    "throughput_lps": 10000000000,  # 10B lines/sec
+                    "success": True,
                 }
 
         raise TimeoutError(f"Task {task_id} timed out")
@@ -402,16 +412,12 @@ class ShadowgitPythonBridge:
             if use_npu and self.status.npu_available:
                 # Use NPU acceleration
                 hash_result = await loop.run_in_executor(
-                    None,
-                    self._hash_with_npu,
-                    data
+                    None, self._hash_with_npu, data
                 )
             else:
                 # Use enhanced AVX2
                 hash_result = await loop.run_in_executor(
-                    None,
-                    self._hash_with_avx2,
-                    data
+                    None, self._hash_with_avx2, data
                 )
 
             # Update metrics
@@ -433,7 +439,7 @@ class ShadowgitPythonBridge:
             None,  # NPU engine (would be passed from context)
             data_ptr,
             len(data),
-            byref(hash_result)
+            byref(hash_result),
         )
 
         if result != 0:
@@ -454,7 +460,7 @@ class ShadowgitPythonBridge:
         self,
         file_pairs: List[Tuple[str, str]],
         use_npu: bool = True,
-        max_concurrent: int = 8
+        max_concurrent: int = 8,
     ) -> List[Dict[str, Any]]:
         """Process multiple file pairs concurrently"""
         semaphore = asyncio.Semaphore(max_concurrent)
@@ -470,11 +476,9 @@ class ShadowgitPythonBridge:
         processed_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                processed_results.append({
-                    'pair': file_pairs[i],
-                    'success': False,
-                    'error': str(result)
-                })
+                processed_results.append(
+                    {"pair": file_pairs[i], "success": False, "error": str(result)}
+                )
             else:
                 processed_results.append(result)
 
@@ -487,7 +491,7 @@ class ShadowgitPythonBridge:
     def get_performance_metrics(self) -> Dict[str, Any]:
         """Get comprehensive performance metrics"""
         if not self.initialized:
-            return {'error': 'Bridge not initialized'}
+            return {"error": "Bridge not initialized"}
 
         try:
             # Get C engine metrics
@@ -496,46 +500,55 @@ class ShadowgitPythonBridge:
             # Calculate bridge efficiency
             total_time = time.time_ns() - self._start_time
             if total_time > 0:
-                self.metrics.bridge_efficiency_percent = (
-                    100.0 - (self.metrics.python_overhead_ns / total_time * 100.0)
+                self.metrics.bridge_efficiency_percent = 100.0 - (
+                    self.metrics.python_overhead_ns / total_time * 100.0
                 )
 
             return {
-                'c_engine': {
-                    'total_lines_processed': c_metrics.total_lines_processed,
-                    'total_bytes_processed': c_metrics.total_bytes_processed,
-                    'avg_lines_per_second': c_metrics.avg_lines_per_second,
-                    'peak_lines_per_second': c_metrics.peak_lines_per_second,
-                    'current_lines_per_second': c_metrics.current_lines_per_second,
-                    'npu_utilization': c_metrics.npu_utilization,
-                    'thermal_throttling': c_metrics.thermal_throttling,
-                    'target_achievement_percent': c_metrics.target_achievement_percent
+                "c_engine": {
+                    "total_lines_processed": c_metrics.total_lines_processed,
+                    "total_bytes_processed": c_metrics.total_bytes_processed,
+                    "avg_lines_per_second": c_metrics.avg_lines_per_second,
+                    "peak_lines_per_second": c_metrics.peak_lines_per_second,
+                    "current_lines_per_second": c_metrics.current_lines_per_second,
+                    "npu_utilization": c_metrics.npu_utilization,
+                    "thermal_throttling": c_metrics.thermal_throttling,
+                    "target_achievement_percent": c_metrics.target_achievement_percent,
                 },
-                'python_bridge': {
-                    'overhead_ns': self.metrics.python_overhead_ns,
-                    'ctypes_calls': self.metrics.ctypes_call_count,
-                    'async_operations': self.metrics.async_operations,
-                    'zero_copy_operations': self.metrics.zero_copy_operations,
-                    'efficiency_percent': self.metrics.bridge_efficiency_percent,
-                    'operations_per_second': self._operation_count / ((time.time_ns() - self._start_time) / 1e9) if time.time_ns() - self._start_time > 0 else 0
+                "python_bridge": {
+                    "overhead_ns": self.metrics.python_overhead_ns,
+                    "ctypes_calls": self.metrics.ctypes_call_count,
+                    "async_operations": self.metrics.async_operations,
+                    "zero_copy_operations": self.metrics.zero_copy_operations,
+                    "efficiency_percent": self.metrics.bridge_efficiency_percent,
+                    "operations_per_second": (
+                        self._operation_count
+                        / ((time.time_ns() - self._start_time) / 1e9)
+                        if time.time_ns() - self._start_time > 0
+                        else 0
+                    ),
                 },
-                'system_status': {
-                    'c_engine_initialized': self.status.c_engine_initialized,
-                    'npu_available': self.status.npu_available,
-                    'current_temperature': self.lib.get_current_temperature() if self.lib else 0,
-                    'thermal_throttling': self.lib.is_thermal_throttling() if self.lib else False
-                }
+                "system_status": {
+                    "c_engine_initialized": self.status.c_engine_initialized,
+                    "npu_available": self.status.npu_available,
+                    "current_temperature": (
+                        self.lib.get_current_temperature() if self.lib else 0
+                    ),
+                    "thermal_throttling": (
+                        self.lib.is_thermal_throttling() if self.lib else False
+                    ),
+                },
             }
 
         except Exception as e:
             logger.error(f"Performance metrics collection failed: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def export_metrics_json(self) -> str:
         """Export metrics as JSON string"""
         metrics = self.get_performance_metrics()
-        metrics['timestamp'] = datetime.now().isoformat()
-        metrics['bridge_version'] = '1.0.0'
+        metrics["timestamp"] = datetime.now().isoformat()
+        metrics["bridge_version"] = "1.0.0"
         return json.dumps(metrics, indent=2)
 
     # ========================================================================
@@ -543,13 +556,11 @@ class ShadowgitPythonBridge:
     # ========================================================================
 
     async def test_npu_performance_async(
-        self,
-        test_data_size: int = 1024 * 1024,
-        iterations: int = 100
+        self, test_data_size: int = 1024 * 1024, iterations: int = 100
     ) -> Dict[str, Any]:
         """Test NPU performance asynchronously"""
         if not self.status.npu_available:
-            return {'error': 'NPU not available'}
+            return {"error": "NPU not available"}
 
         test_data = np.random.bytes(test_data_size)
 
@@ -560,26 +571,24 @@ class ShadowgitPythonBridge:
             throughput = await loop.run_in_executor(
                 None,
                 lambda: self.lib.test_npu_acceleration(
-                    ctypes.cast(test_data, c_void_p),
-                    test_data_size,
-                    iterations
-                )
+                    ctypes.cast(test_data, c_void_p), test_data_size, iterations
+                ),
             )
 
             total_time = time.time_ns() - start_time
 
             return {
-                'npu_throughput_lps': throughput,
-                'test_duration_ns': total_time,
-                'test_data_size': test_data_size,
-                'iterations': iterations,
-                'performance_ratio': throughput / 15_000_000_000,  # vs 15B target
-                'success': True
+                "npu_throughput_lps": throughput,
+                "test_duration_ns": total_time,
+                "test_data_size": test_data_size,
+                "iterations": iterations,
+                "performance_ratio": throughput / 15_000_000_000,  # vs 15B target
+                "success": True,
             }
 
         except Exception as e:
             logger.error(f"NPU performance test failed: {e}")
-            return {'error': str(e), 'success': False}
+            return {"error": str(e), "success": False}
 
     async def benchmark_full_system_async(self) -> Dict[str, Any]:
         """Run comprehensive system benchmark"""
@@ -588,46 +597,45 @@ class ShadowgitPythonBridge:
         try:
             # Test NPU performance
             if self.status.npu_available:
-                results['npu'] = await self.test_npu_performance_async()
+                results["npu"] = await self.test_npu_performance_async()
 
             # Test different data sizes
             sizes = [1024, 10240, 102400, 1024000]
-            results['size_scaling'] = {}
+            results["size_scaling"] = {}
 
             for size in sizes:
                 test_result = await self.hash_data_async(
-                    np.random.bytes(size),
-                    use_npu=True
+                    np.random.bytes(size), use_npu=True
                 )
-                results['size_scaling'][size] = test_result
+                results["size_scaling"][size] = test_result
 
             # Test concurrent operations
             concurrent_tasks = [
-                self.hash_data_async(np.random.bytes(10240))
-                for _ in range(8)
+                self.hash_data_async(np.random.bytes(10240)) for _ in range(8)
             ]
 
             concurrent_start = time.time_ns()
             concurrent_results = await asyncio.gather(*concurrent_tasks)
             concurrent_time = time.time_ns() - concurrent_start
 
-            results['concurrency'] = {
-                'tasks': len(concurrent_tasks),
-                'total_time_ns': concurrent_time,
-                'avg_time_per_task_ns': concurrent_time / len(concurrent_tasks),
-                'scaling_efficiency': 1.0 / (concurrent_time / (concurrent_time / len(concurrent_tasks)))
+            results["concurrency"] = {
+                "tasks": len(concurrent_tasks),
+                "total_time_ns": concurrent_time,
+                "avg_time_per_task_ns": concurrent_time / len(concurrent_tasks),
+                "scaling_efficiency": 1.0
+                / (concurrent_time / (concurrent_time / len(concurrent_tasks))),
             }
 
             # Overall system status
-            results['system_metrics'] = self.get_performance_metrics()
-            results['benchmark_timestamp'] = datetime.now().isoformat()
-            results['success'] = True
+            results["system_metrics"] = self.get_performance_metrics()
+            results["benchmark_timestamp"] = datetime.now().isoformat()
+            results["success"] = True
 
             return results
 
         except Exception as e:
             logger.error(f"System benchmark failed: {e}")
-            return {'error': str(e), 'success': False}
+            return {"error": str(e), "success": False}
 
     # ========================================================================
     # LIFECYCLE METHODS
@@ -656,9 +664,11 @@ class ShadowgitPythonBridge:
         """Context manager exit"""
         self.shutdown()
 
+
 # ============================================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================================
+
 
 def create_bridge(library_path: Optional[str] = None) -> ShadowgitPythonBridge:
     """Create and initialize a new bridge instance"""
@@ -667,6 +677,7 @@ def create_bridge(library_path: Optional[str] = None) -> ShadowgitPythonBridge:
         raise RuntimeError("Failed to initialize Shadowgit Python Bridge")
     return bridge
 
+
 async def quick_performance_test() -> Dict[str, Any]:
     """Quick performance test of the bridge"""
     try:
@@ -674,13 +685,15 @@ async def quick_performance_test() -> Dict[str, Any]:
             return await bridge.benchmark_full_system_async()
     except Exception as e:
         logger.error(f"Quick performance test failed: {e}")
-        return {'error': str(e), 'success': False}
+        return {"error": str(e), "success": False}
+
 
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
 
 if __name__ == "__main__":
+
     async def main():
         print("Shadowgit Python Bridge - Performance Test")
         print("=" * 50)
@@ -695,17 +708,19 @@ if __name__ == "__main__":
                 print(f"✓ C engine status: {metrics.get('system_status', {})}")
 
                 # Test NPU performance
-                if metrics.get('system_status', {}).get('npu_available'):
+                if metrics.get("system_status", {}).get("npu_available"):
                     print("\nTesting NPU performance...")
                     npu_result = await bridge.test_npu_performance_async()
-                    print(f"✓ NPU throughput: {npu_result.get('npu_throughput_lps', 0):,.0f} lines/sec")
+                    print(
+                        f"✓ NPU throughput: {npu_result.get('npu_throughput_lps', 0):,.0f} lines/sec"
+                    )
 
                 # Test async file processing
                 print("\nTesting async file processing...")
                 # Note: These would be actual test files in production
                 test_files = [
                     ("/tmp/test1.txt", "/tmp/test2.txt"),
-                    ("/tmp/test3.txt", "/tmp/test4.txt")
+                    ("/tmp/test3.txt", "/tmp/test4.txt"),
                 ]
 
                 # Create test files if they don't exist
@@ -720,9 +735,11 @@ if __name__ == "__main__":
                 print("\nRunning full system benchmark...")
                 benchmark = await bridge.benchmark_full_system_async()
 
-                if benchmark.get('success'):
+                if benchmark.get("success"):
                     print("✓ Benchmark completed successfully")
-                    print(f"  System metrics: {benchmark.get('system_metrics', {}).get('python_bridge', {})}")
+                    print(
+                        f"  System metrics: {benchmark.get('system_metrics', {}).get('python_bridge', {})}"
+                    )
                 else:
                     print(f"✗ Benchmark failed: {benchmark.get('error')}")
 
@@ -740,4 +757,5 @@ if __name__ == "__main__":
         return 0
 
     import sys
+
     sys.exit(asyncio.run(main()))

@@ -27,27 +27,27 @@ Status: PRODUCTION
 """
 
 import asyncio
-import json
-import os
-import sys
-import time
+import concurrent.futures
+import gc
 import hashlib
+import io
+import json
 import logging
+import mmap
+import os
+import re
 import subprocess
+import sys
 import tempfile
 import threading
-import gc
-import mmap
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Set, Union, Generator
+import time
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
-from collections import deque, defaultdict
-import concurrent.futures
-import io
-import re
 from functools import lru_cache, wraps
+from pathlib import Path
+from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,31 +56,36 @@ logger = logging.getLogger(__name__)
 # Core JSON libraries with performance optimization
 try:
     import orjson  # Ultra-fast JSON library
+
     HAS_ORJSON = True
 except ImportError:
     HAS_ORJSON = False
 
 try:
     import rapidjson  # Alternative high-speed parser
+
     HAS_RAPIDJSON = True
 except ImportError:
     HAS_RAPIDJSON = False
 
 try:
     import ijson  # Streaming JSON parser
+
     HAS_IJSON = True
 except ImportError:
     HAS_IJSON = False
 
 try:
     import jsonschema
-    from jsonschema import validate, ValidationError, Draft7Validator
+    from jsonschema import Draft7Validator, ValidationError, validate
+
     HAS_JSONSCHEMA = True
 except ImportError:
     HAS_JSONSCHEMA = False
 
 try:
     import pyjq  # jq-style transformations
+
     HAS_PYJQ = True
 except ImportError:
     HAS_PYJQ = False
@@ -88,12 +93,14 @@ except ImportError:
 # NPU acceleration support
 try:
     import openvino as ov
+
     HAS_OPENVINO = True
 except ImportError:
     HAS_OPENVINO = False
 
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
@@ -101,6 +108,7 @@ except ImportError:
 # Memory and performance monitoring
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -110,58 +118,70 @@ except ImportError:
 # EXECUTION MODES AND ENUMS
 # ================================================================================
 
+
 class ExecutionMode(Enum):
     """Execution modes for tandem operation"""
-    INTELLIGENT = "intelligent"      # NPU/CPU orchestration
-    PYTHON_ONLY = "python_only"      # Pure Python fallback
+
+    INTELLIGENT = "intelligent"  # NPU/CPU orchestration
+    PYTHON_ONLY = "python_only"  # Pure Python fallback
     NPU_ACCELERATED = "npu_accelerated"  # NPU acceleration mode
     CPU_OPTIMIZED = "cpu_optimized"  # Optimized CPU processing
-    STREAMING = "streaming"          # Memory-efficient streaming
-    BATCH = "batch"                  # Batch processing mode
+    STREAMING = "streaming"  # Memory-efficient streaming
+    BATCH = "batch"  # Batch processing mode
+
 
 class JSONParserType(Enum):
     """Available JSON parser types"""
-    ORJSON = "orjson"                # Ultra-fast parser
-    RAPIDJSON = "rapidjson"          # High-speed alternative
-    STANDARD = "standard"            # Python standard library
-    STREAMING = "streaming"          # ijson streaming parser
-    AUTO = "auto"                    # Automatic selection
+
+    ORJSON = "orjson"  # Ultra-fast parser
+    RAPIDJSON = "rapidjson"  # High-speed alternative
+    STANDARD = "standard"  # Python standard library
+    STREAMING = "streaming"  # ijson streaming parser
+    AUTO = "auto"  # Automatic selection
+
 
 class ValidationLevel(Enum):
     """JSON validation levels"""
-    NONE = "none"                    # No validation
-    SYNTAX = "syntax"                # Basic syntax validation
-    SCHEMA = "schema"                # Full schema validation
-    STRICT = "strict"                # Strict mode with enhanced checks
+
+    NONE = "none"  # No validation
+    SYNTAX = "syntax"  # Basic syntax validation
+    SCHEMA = "schema"  # Full schema validation
+    STRICT = "strict"  # Strict mode with enhanced checks
+
 
 class NPUOperationType(Enum):
     """NPU operation types"""
-    TOKENIZATION = "tokenization"    # String tokenization
+
+    TOKENIZATION = "tokenization"  # String tokenization
     PATTERN_MATCHING = "pattern_matching"  # Pattern recognition
-    VALIDATION = "validation"        # Schema validation
-    TRANSFORMATION = "transformation" # Data transformation
+    VALIDATION = "validation"  # Schema validation
+    TRANSFORMATION = "transformation"  # Data transformation
 
 
 # ================================================================================
 # DATA STRUCTURES
 # ================================================================================
 
+
 @dataclass
 class JSONProcessingConfig:
     """Configuration for JSON processing operations"""
+
     parser_type: JSONParserType = JSONParserType.AUTO
     validation_level: ValidationLevel = ValidationLevel.SCHEMA
     enable_npu: bool = True
     enable_caching: bool = True
     batch_size: int = 1000
     memory_threshold: int = 100 * 1024 * 1024  # 100MB
-    streaming_chunk_size: int = 64 * 1024      # 64KB
+    streaming_chunk_size: int = 64 * 1024  # 64KB
     max_retries: int = 3
     timeout_seconds: int = 30
+
 
 @dataclass
 class JSONOperationResult:
     """Result of JSON processing operation"""
+
     success: bool
     data: Any = None
     error_message: Optional[str] = None
@@ -171,9 +191,11 @@ class JSONOperationResult:
     memory_usage: int = 0
     cache_hit: bool = False
 
+
 @dataclass
 class NPUAccelerationStats:
     """NPU acceleration statistics"""
+
     total_operations: int = 0
     npu_operations: int = 0
     cpu_fallback_operations: int = 0
@@ -181,9 +203,11 @@ class NPUAccelerationStats:
     npu_utilization: float = 0.0
     last_npu_check: Optional[datetime] = None
 
+
 @dataclass
 class PerformanceMetrics:
     """Performance tracking metrics"""
+
     operations_per_second: float = 0.0
     average_latency: float = 0.0
     parse_operations: int = 0
@@ -197,6 +221,7 @@ class PerformanceMetrics:
 # ================================================================================
 # NPU ACCELERATION SYSTEM
 # ================================================================================
+
 
 class NPUAccelerator:
     """Intel NPU acceleration for JSON operations"""
@@ -219,7 +244,7 @@ class NPUAccelerator:
             self.core = ov.Core()
             available_devices = self.core.available_devices
 
-            if 'NPU' in available_devices:
+            if "NPU" in available_devices:
                 self.npu_available = True
                 logger.info("NPU acceleration initialized successfully")
 
@@ -236,7 +261,7 @@ class NPUAccelerator:
         """Test NPU functionality with simple operation"""
         try:
             # Simple test to verify NPU is working
-            if self.core and 'NPU' in self.core.available_devices:
+            if self.core and "NPU" in self.core.available_devices:
                 logger.info("NPU functionality test passed")
                 return True
         except Exception as e:
@@ -272,21 +297,23 @@ class NPUAccelerator:
         i = 0
         while i < len(json_text):
             char = json_text[i]
-            if char in '{}[],:':
+            if char in "{}[],:":
                 tokens.append(char)
             elif char == '"':
                 # String token
                 start = i
                 i += 1
                 while i < len(json_text) and json_text[i] != '"':
-                    if json_text[i] == '\\':
+                    if json_text[i] == "\\":
                         i += 1  # Skip escaped character
                     i += 1
-                tokens.append(json_text[start:i+1])
-            elif char.isdigit() or char in '.-':
+                tokens.append(json_text[start : i + 1])
+            elif char.isdigit() or char in ".-":
                 # Number token
                 start = i
-                while i < len(json_text) and (json_text[i].isdigit() or json_text[i] in '.-eE'):
+                while i < len(json_text) and (
+                    json_text[i].isdigit() or json_text[i] in ".-eE"
+                ):
                     i += 1
                 tokens.append(json_text[start:i])
                 i -= 1
@@ -342,6 +369,7 @@ class NPUAccelerator:
 # JSON PARSER SELECTION AND OPTIMIZATION
 # ================================================================================
 
+
 class JSONParserSelector:
     """Intelligent JSON parser selection based on data characteristics"""
 
@@ -352,44 +380,45 @@ class JSONParserSelector:
     def _detect_available_parsers(self) -> Dict[str, bool]:
         """Detect available JSON parsers"""
         return {
-            'orjson': HAS_ORJSON,
-            'rapidjson': HAS_RAPIDJSON,
-            'ijson': HAS_IJSON,
-            'standard': True  # Always available
+            "orjson": HAS_ORJSON,
+            "rapidjson": HAS_RAPIDJSON,
+            "ijson": HAS_IJSON,
+            "standard": True,  # Always available
         }
 
     def select_parser(self, data_characteristics: Dict[str, Any]) -> JSONParserType:
         """Select optimal parser based on data characteristics"""
-        data_size = data_characteristics.get('size', 0)
-        is_stream = data_characteristics.get('is_stream', False)
-        complexity = data_characteristics.get('complexity', 'medium')
+        data_size = data_characteristics.get("size", 0)
+        is_stream = data_characteristics.get("is_stream", False)
+        complexity = data_characteristics.get("complexity", "medium")
 
         # Streaming for very large data
         if is_stream or data_size > 100 * 1024 * 1024:  # >100MB
-            if self.available_parsers['ijson']:
+            if self.available_parsers["ijson"]:
                 return JSONParserType.STREAMING
 
         # orjson for large files and high performance
-        if data_size > 1024 * 1024 and self.available_parsers['orjson']:  # >1MB
+        if data_size > 1024 * 1024 and self.available_parsers["orjson"]:  # >1MB
             return JSONParserType.ORJSON
 
         # rapidjson for medium files
-        if data_size > 1024 and self.available_parsers['rapidjson']:  # >1KB
+        if data_size > 1024 and self.available_parsers["rapidjson"]:  # >1KB
             return JSONParserType.RAPIDJSON
 
         # orjson as default high-performance option
-        if self.available_parsers['orjson']:
+        if self.available_parsers["orjson"]:
             return JSONParserType.ORJSON
 
         # Fallback to standard library
         return JSONParserType.STANDARD
 
-    def parse_with_selected_parser(self, data: Union[str, bytes],
-                                   parser_type: JSONParserType) -> Any:
+    def parse_with_selected_parser(
+        self, data: Union[str, bytes], parser_type: JSONParserType
+    ) -> Any:
         """Parse JSON using selected parser"""
         if parser_type == JSONParserType.ORJSON and HAS_ORJSON:
             if isinstance(data, str):
-                data = data.encode('utf-8')
+                data = data.encode("utf-8")
             return orjson.loads(data)
 
         elif parser_type == JSONParserType.RAPIDJSON and HAS_RAPIDJSON:
@@ -400,17 +429,18 @@ class JSONParserSelector:
                 data = io.StringIO(data)
             elif isinstance(data, bytes):
                 data = io.BytesIO(data)
-            return list(ijson.items(data, ''))
+            return list(ijson.items(data, ""))
 
         else:  # Standard library fallback
             if isinstance(data, bytes):
-                data = data.decode('utf-8')
+                data = data.decode("utf-8")
             return json.loads(data)
 
 
 # ================================================================================
 # CACHING SYSTEM
 # ================================================================================
+
 
 class JSONCache:
     """High-performance caching system for JSON operations"""
@@ -421,7 +451,7 @@ class JSONCache:
         self.schema_cache = {}
         self.transform_cache = {}
         self.access_counts = defaultdict(int)
-        self.cache_stats = {'hits': 0, 'misses': 0}
+        self.cache_stats = {"hits": 0, "misses": 0}
 
     def _generate_key(self, data: Any) -> str:
         """Generate cache key for data"""
@@ -435,16 +465,16 @@ class JSONCache:
         key = self._generate_key(json_str)
         if key in self.parse_cache:
             self.access_counts[key] += 1
-            self.cache_stats['hits'] += 1
+            self.cache_stats["hits"] += 1
             return self.parse_cache[key]
 
-        self.cache_stats['misses'] += 1
+        self.cache_stats["misses"] += 1
         return None
 
     def cache_parsed(self, json_str: str, parsed_data: Any):
         """Cache parsed JSON data"""
         if len(self.parse_cache) >= self.max_size:
-            self._evict_least_used('parse')
+            self._evict_least_used("parse")
 
         key = self._generate_key(json_str)
         self.parse_cache[key] = parsed_data
@@ -455,16 +485,16 @@ class JSONCache:
         key = self._generate_key(schema)
         if key in self.schema_cache:
             self.access_counts[key] += 1
-            self.cache_stats['hits'] += 1
+            self.cache_stats["hits"] += 1
             return self.schema_cache[key]
 
-        self.cache_stats['misses'] += 1
+        self.cache_stats["misses"] += 1
         return None
 
     def cache_schema_validator(self, schema: Dict, validator: Any):
         """Cache schema validator"""
         if len(self.schema_cache) >= self.max_size:
-            self._evict_least_used('schema')
+            self._evict_least_used("schema")
 
         key = self._generate_key(schema)
         self.schema_cache[key] = validator
@@ -472,37 +502,38 @@ class JSONCache:
 
     def _evict_least_used(self, cache_type: str):
         """Evict least used items from cache"""
-        cache = getattr(self, f'{cache_type}_cache')
+        cache = getattr(self, f"{cache_type}_cache")
         if not cache:
             return
 
         # Find least used key
-        least_used_key = min(cache.keys(),
-                           key=lambda k: self.access_counts.get(k, 0))
+        least_used_key = min(cache.keys(), key=lambda k: self.access_counts.get(k, 0))
         del cache[least_used_key]
         del self.access_counts[least_used_key]
 
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
-        total_requests = self.cache_stats['hits'] + self.cache_stats['misses']
-        hit_rate = (self.cache_stats['hits'] / total_requests
-                   if total_requests > 0 else 0)
+        total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
+        hit_rate = (
+            self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
+        )
 
         return {
-            'hit_rate': hit_rate,
-            'total_hits': self.cache_stats['hits'],
-            'total_misses': self.cache_stats['misses'],
-            'cache_sizes': {
-                'parse': len(self.parse_cache),
-                'schema': len(self.schema_cache),
-                'transform': len(self.transform_cache)
-            }
+            "hit_rate": hit_rate,
+            "total_hits": self.cache_stats["hits"],
+            "total_misses": self.cache_stats["misses"],
+            "cache_sizes": {
+                "parse": len(self.parse_cache),
+                "schema": len(self.schema_cache),
+                "transform": len(self.transform_cache),
+            },
         }
 
 
 # ================================================================================
 # MAIN JSON-INTERNAL IMPLEMENTATION
 # ================================================================================
+
 
 class JSONInternalPythonExecutor:
     """
@@ -536,26 +567,33 @@ class JSONInternalPythonExecutor:
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=8)
 
         logger.info(f"JSON-INTERNAL v{self.version} initialized")
-        logger.info(f"NPU acceleration: {'enabled' if self.npu_accelerator.npu_available else 'disabled'}")
-        logger.info(f"Available parsers: {list(self.parser_selector.available_parsers.keys())}")
+        logger.info(
+            f"NPU acceleration: {'enabled' if self.npu_accelerator.npu_available else 'disabled'}"
+        )
+        logger.info(
+            f"Available parsers: {list(self.parser_selector.available_parsers.keys())}"
+        )
 
     def _initialize_error_patterns(self) -> Dict[str, callable]:
         """Initialize common JSON error patterns and fixes"""
         return {
-            'trailing_comma': self._fix_trailing_comma,
-            'unescaped_quotes': self._fix_unescaped_quotes,
-            'single_quotes': self._fix_single_quotes,
-            'missing_brackets': self._fix_missing_brackets,
-            'unicode_errors': self._fix_unicode_errors
+            "trailing_comma": self._fix_trailing_comma,
+            "unescaped_quotes": self._fix_unescaped_quotes,
+            "single_quotes": self._fix_single_quotes,
+            "missing_brackets": self._fix_missing_brackets,
+            "unicode_errors": self._fix_unicode_errors,
         }
 
     # ============================================================================
     # CORE JSON OPERATIONS
     # ============================================================================
 
-    async def parse_json(self, data: Union[str, bytes, io.IOBase],
-                        parser_type: JSONParserType = JSONParserType.AUTO,
-                        enable_recovery: bool = True) -> JSONOperationResult:
+    async def parse_json(
+        self,
+        data: Union[str, bytes, io.IOBase],
+        parser_type: JSONParserType = JSONParserType.AUTO,
+        enable_recovery: bool = True,
+    ) -> JSONOperationResult:
         """
         Parse JSON with automatic optimization and error recovery
 
@@ -578,7 +616,7 @@ class JSONInternalPythonExecutor:
                         success=True,
                         data=cached_result,
                         execution_time=time.time() - start_time,
-                        cache_hit=True
+                        cache_hit=True,
                     )
 
             # Determine data characteristics
@@ -589,7 +627,9 @@ class JSONInternalPythonExecutor:
                 parser_type = self.parser_selector.select_parser(data_characteristics)
 
             # Parse with selected parser
-            parsed_data = self.parser_selector.parse_with_selected_parser(data, parser_type)
+            parsed_data = self.parser_selector.parse_with_selected_parser(
+                data, parser_type
+            )
 
             # Cache result if applicable
             if self.cache and isinstance(data, str):
@@ -603,7 +643,7 @@ class JSONInternalPythonExecutor:
                 data=parsed_data,
                 execution_time=time.time() - start_time,
                 parser_used=parser_type.value,
-                npu_acceleration=self.npu_accelerator.npu_available
+                npu_acceleration=self.npu_accelerator.npu_available,
             )
 
         except Exception as e:
@@ -617,11 +657,12 @@ class JSONInternalPythonExecutor:
             return JSONOperationResult(
                 success=False,
                 error_message=str(e),
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
-    async def validate_json(self, data: Any, schema: Dict,
-                           level: ValidationLevel = ValidationLevel.SCHEMA) -> JSONOperationResult:
+    async def validate_json(
+        self, data: Any, schema: Dict, level: ValidationLevel = ValidationLevel.SCHEMA
+    ) -> JSONOperationResult:
         """
         Validate JSON data against schema with NPU acceleration
 
@@ -660,7 +701,7 @@ class JSONInternalPythonExecutor:
             return JSONOperationResult(
                 success=is_valid,
                 execution_time=time.time() - start_time,
-                npu_acceleration=self.npu_accelerator.npu_available
+                npu_acceleration=self.npu_accelerator.npu_available,
             )
 
         except Exception as e:
@@ -668,7 +709,7 @@ class JSONInternalPythonExecutor:
             return JSONOperationResult(
                 success=False,
                 error_message=str(e),
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
     def _cpu_validation(self, data: Any, schema: Dict, validator: Any = None) -> bool:
@@ -685,7 +726,9 @@ class JSONInternalPythonExecutor:
         except ValidationError:
             return False
 
-    async def transform_json(self, data: Any, transformations: Dict[str, str]) -> JSONOperationResult:
+    async def transform_json(
+        self, data: Any, transformations: Dict[str, str]
+    ) -> JSONOperationResult:
         """
         Transform JSON data using jq-style expressions
 
@@ -702,13 +745,14 @@ class JSONInternalPythonExecutor:
             if not HAS_PYJQ:
                 return JSONOperationResult(
                     success=False,
-                    error_message="pyjq not available for transformations"
+                    error_message="pyjq not available for transformations",
                 )
 
             results = {}
             for name, expr in transformations.items():
                 try:
                     import pyjq
+
                     result = pyjq.all(expr, data)
                     results[name] = result
                 except Exception as e:
@@ -717,9 +761,7 @@ class JSONInternalPythonExecutor:
             self.metrics.transformation_operations += 1
 
             return JSONOperationResult(
-                success=True,
-                data=results,
-                execution_time=time.time() - start_time
+                success=True, data=results, execution_time=time.time() - start_time
             )
 
         except Exception as e:
@@ -727,15 +769,16 @@ class JSONInternalPythonExecutor:
             return JSONOperationResult(
                 success=False,
                 error_message=str(e),
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
     # ============================================================================
     # STREAMING AND BATCH PROCESSING
     # ============================================================================
 
-    async def stream_process_large_json(self, file_path: str,
-                                       chunk_processor: callable) -> Generator[JSONOperationResult, None, None]:
+    async def stream_process_large_json(
+        self, file_path: str, chunk_processor: callable
+    ) -> Generator[JSONOperationResult, None, None]:
         """
         Stream process large JSON files with memory efficiency
 
@@ -748,24 +791,25 @@ class JSONInternalPythonExecutor:
         """
         if not HAS_IJSON:
             yield JSONOperationResult(
-                success=False,
-                error_message="ijson not available for streaming"
+                success=False, error_message="ijson not available for streaming"
             )
             return
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 parser = ijson.parse(f)
                 current_objects = []
 
                 for prefix, event, value in parser:
                     # Collect objects into chunks
-                    if event == 'start_map':
+                    if event == "start_map":
                         current_objects.append({})
-                    elif event == 'end_map':
+                    elif event == "end_map":
                         if len(current_objects) >= self.config.batch_size:
                             # Process chunk
-                            result = await self._process_chunk(current_objects, chunk_processor)
+                            result = await self._process_chunk(
+                                current_objects, chunk_processor
+                            )
                             yield result
                             current_objects = []
                     # Handle memory pressure
@@ -779,12 +823,12 @@ class JSONInternalPythonExecutor:
 
         except Exception as e:
             yield JSONOperationResult(
-                success=False,
-                error_message=f"Streaming error: {e}"
+                success=False, error_message=f"Streaming error: {e}"
             )
 
-    async def batch_process_json(self, json_objects: List[Any],
-                                processor: callable) -> List[JSONOperationResult]:
+    async def batch_process_json(
+        self, json_objects: List[Any], processor: callable
+    ) -> List[JSONOperationResult]:
         """
         Process multiple JSON objects in parallel batches
 
@@ -800,7 +844,7 @@ class JSONInternalPythonExecutor:
 
         # Process in batches to manage memory
         for i in range(0, len(json_objects), batch_size):
-            batch = json_objects[i:i + batch_size]
+            batch = json_objects[i : i + batch_size]
 
             # Parallel processing within batch
             tasks = [self._process_single_object(obj, processor) for obj in batch]
@@ -809,54 +853,55 @@ class JSONInternalPythonExecutor:
             # Convert exceptions to error results
             for result in batch_results:
                 if isinstance(result, Exception):
-                    results.append(JSONOperationResult(
-                        success=False,
-                        error_message=str(result)
-                    ))
+                    results.append(
+                        JSONOperationResult(success=False, error_message=str(result))
+                    )
                 else:
                     results.append(result)
 
         return results
 
-    async def _process_chunk(self, objects: List[Any], processor: callable) -> JSONOperationResult:
+    async def _process_chunk(
+        self, objects: List[Any], processor: callable
+    ) -> JSONOperationResult:
         """Process a chunk of objects"""
         start_time = time.time()
         try:
             result = await processor(objects)
             return JSONOperationResult(
-                success=True,
-                data=result,
-                execution_time=time.time() - start_time
+                success=True, data=result, execution_time=time.time() - start_time
             )
         except Exception as e:
             return JSONOperationResult(
                 success=False,
                 error_message=str(e),
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
-    async def _process_single_object(self, obj: Any, processor: callable) -> JSONOperationResult:
+    async def _process_single_object(
+        self, obj: Any, processor: callable
+    ) -> JSONOperationResult:
         """Process a single object"""
         start_time = time.time()
         try:
             result = await processor(obj)
             return JSONOperationResult(
-                success=True,
-                data=result,
-                execution_time=time.time() - start_time
+                success=True, data=result, execution_time=time.time() - start_time
             )
         except Exception as e:
             return JSONOperationResult(
                 success=False,
                 error_message=str(e),
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
     # ============================================================================
     # ERROR RECOVERY AND REPAIR
     # ============================================================================
 
-    async def _attempt_error_recovery(self, malformed_json: str, error_msg: str) -> JSONOperationResult:
+    async def _attempt_error_recovery(
+        self, malformed_json: str, error_msg: str
+    ) -> JSONOperationResult:
         """
         Attempt to recover from JSON parsing errors
 
@@ -881,7 +926,7 @@ class JSONInternalPythonExecutor:
                             success=True,
                             data=parsed_data,
                             execution_time=time.time() - start_time,
-                            error_message=f"Recovered using {fix_name}"
+                            error_message=f"Recovered using {fix_name}",
                         )
                     except:
                         continue
@@ -895,20 +940,20 @@ class JSONInternalPythonExecutor:
                 success=True,
                 data=partial_result,
                 execution_time=time.time() - start_time,
-                error_message="Partial recovery achieved"
+                error_message="Partial recovery achieved",
             )
         except Exception as e:
             return JSONOperationResult(
                 success=False,
                 error_message=f"Recovery failed: {e}",
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
     def _fix_trailing_comma(self, json_str: str) -> str:
         """Fix trailing commas in JSON"""
         # Remove trailing commas before } or ]
-        json_str = re.sub(r',\s*}', '}', json_str)
-        json_str = re.sub(r',\s*]', ']', json_str)
+        json_str = re.sub(r",\s*}", "}", json_str)
+        json_str = re.sub(r",\s*]", "]", json_str)
         return json_str
 
     def _fix_unescaped_quotes(self, json_str: str) -> str:
@@ -923,14 +968,14 @@ class JSONInternalPythonExecutor:
     def _fix_missing_brackets(self, json_str: str) -> str:
         """Attempt to fix missing brackets"""
         # Count opening and closing brackets
-        open_braces = json_str.count('{')
-        close_braces = json_str.count('}')
-        open_brackets = json_str.count('[')
-        close_brackets = json_str.count(']')
+        open_braces = json_str.count("{")
+        close_braces = json_str.count("}")
+        open_brackets = json_str.count("[")
+        close_brackets = json_str.count("]")
 
         # Add missing closing brackets/braces
-        json_str += '}' * (open_braces - close_braces)
-        json_str += ']' * (open_brackets - close_brackets)
+        json_str += "}" * (open_braces - close_braces)
+        json_str += "]" * (open_brackets - close_brackets)
 
         return json_str
 
@@ -938,7 +983,7 @@ class JSONInternalPythonExecutor:
         """Fix Unicode encoding errors"""
         # Attempt to fix common Unicode issues
         try:
-            return json_str.encode('utf-8', errors='ignore').decode('utf-8')
+            return json_str.encode("utf-8", errors="ignore").decode("utf-8")
         except:
             return json_str
 
@@ -958,36 +1003,38 @@ class JSONInternalPythonExecutor:
     # UTILITY METHODS
     # ============================================================================
 
-    def _analyze_data_characteristics(self, data: Union[str, bytes, io.IOBase]) -> Dict[str, Any]:
+    def _analyze_data_characteristics(
+        self, data: Union[str, bytes, io.IOBase]
+    ) -> Dict[str, Any]:
         """Analyze data to determine optimal processing strategy"""
         characteristics = {
-            'size': 0,
-            'is_stream': False,
-            'complexity': 'medium',
-            'estimated_depth': 0
+            "size": 0,
+            "is_stream": False,
+            "complexity": "medium",
+            "estimated_depth": 0,
         }
 
-        if hasattr(data, 'read'):
-            characteristics['is_stream'] = True
+        if hasattr(data, "read"):
+            characteristics["is_stream"] = True
         elif isinstance(data, (str, bytes)):
-            characteristics['size'] = len(data)
+            characteristics["size"] = len(data)
 
             # Estimate complexity based on nesting
             if isinstance(data, str):
                 depth = 0
                 max_depth = 0
                 for char in data[:1000]:  # Sample first 1000 chars
-                    if char in '{[':
+                    if char in "{[":
                         depth += 1
                         max_depth = max(max_depth, depth)
-                    elif char in '}]':
+                    elif char in "}]":
                         depth -= 1
-                characteristics['estimated_depth'] = max_depth
+                characteristics["estimated_depth"] = max_depth
 
                 if max_depth > 10:
-                    characteristics['complexity'] = 'high'
+                    characteristics["complexity"] = "high"
                 elif max_depth < 3:
-                    characteristics['complexity'] = 'low'
+                    characteristics["complexity"] = "low"
 
         return characteristics
 
@@ -1008,27 +1055,29 @@ class JSONInternalPythonExecutor:
         uptime = time.time() - self.start_time
 
         stats = {
-            'uptime_seconds': uptime,
-            'operations_per_second': (
-                self.metrics.parse_operations +
-                self.metrics.validation_operations +
-                self.metrics.transformation_operations
-            ) / max(uptime, 1),
-            'parse_operations': self.metrics.parse_operations,
-            'validation_operations': self.metrics.validation_operations,
-            'transformation_operations': self.metrics.transformation_operations,
-            'error_count': self.metrics.error_count,
-            'error_rate': self.metrics.error_count / max(self.metrics.parse_operations, 1),
-            'npu_stats': self.npu_accelerator.get_stats().__dict__,
-            'cache_stats': self.cache.get_stats() if self.cache else None,
-            'available_parsers': self.parser_selector.available_parsers
+            "uptime_seconds": uptime,
+            "operations_per_second": (
+                self.metrics.parse_operations
+                + self.metrics.validation_operations
+                + self.metrics.transformation_operations
+            )
+            / max(uptime, 1),
+            "parse_operations": self.metrics.parse_operations,
+            "validation_operations": self.metrics.validation_operations,
+            "transformation_operations": self.metrics.transformation_operations,
+            "error_count": self.metrics.error_count,
+            "error_rate": self.metrics.error_count
+            / max(self.metrics.parse_operations, 1),
+            "npu_stats": self.npu_accelerator.get_stats().__dict__,
+            "cache_stats": self.cache.get_stats() if self.cache else None,
+            "available_parsers": self.parser_selector.available_parsers,
         }
 
         return stats
 
     def cleanup(self):
         """Cleanup resources"""
-        if hasattr(self, 'thread_pool'):
+        if hasattr(self, "thread_pool"):
             self.thread_pool.shutdown(wait=True)
 
         if self.cache:
@@ -1041,6 +1090,7 @@ class JSONInternalPythonExecutor:
 # ================================================================================
 # MAIN EXECUTION FUNCTION
 # ================================================================================
+
 
 async def main():
     """Main execution function for testing"""
@@ -1055,6 +1105,7 @@ async def main():
     print(f"Performance stats: {executor.get_performance_stats()}")
 
     executor.cleanup()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

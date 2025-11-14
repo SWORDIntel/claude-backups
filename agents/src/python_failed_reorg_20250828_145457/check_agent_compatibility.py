@@ -3,10 +3,12 @@
 Check agent files for Tandem Orchestration compatibility
 """
 
-import os
-import yaml
-from pathlib import Path
 import json
+import os
+from pathlib import Path
+
+import yaml
+
 
 def check_agent_frontmatter(file_path):
     """Check if an agent file has valid YAML frontmatter"""

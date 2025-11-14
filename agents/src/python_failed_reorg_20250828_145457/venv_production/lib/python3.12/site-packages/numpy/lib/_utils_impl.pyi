@@ -1,5 +1,4 @@
 from _typeshed import SupportsWrite
-
 from numpy._typing import DTypeLike
 
 __all__ = ["get_include", "info", "show_runtime"]

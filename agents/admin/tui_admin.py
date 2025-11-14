@@ -32,36 +32,43 @@ import asyncio
 import curses
 import json
 import logging
+import math
 import os
+import queue
+import signal
+import subprocess
 import sys
 import threading
 import time
-import signal
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable, Tuple
-import queue
-import subprocess
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import psutil
-import math
 
 # Terminal and TUI imports
 import urwid
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
-from rich.layout import Layout
-from rich.live import Live
-from rich.progress import Progress, BarColumn, TextColumn, SpinnerColumn
 
 # Local imports
 from admin_core import (
-    AgentManager, SystemMonitor, ConfigManager, 
-    UserManager, DiagnosticTools, PerformanceOptimizer,
-    OperationResult, SystemStatus, SystemMetrics
+    AgentManager,
+    ConfigManager,
+    DiagnosticTools,
+    OperationResult,
+    PerformanceOptimizer,
+    SystemMetrics,
+    SystemMonitor,
+    SystemStatus,
+    UserManager,
 )
+from rich.console import Console
+from rich.layout import Layout
+from rich.live import Live
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.table import Table
+from rich.text import Text
 
 # ============================================================================
 # CONSTANTS AND CONFIGURATION

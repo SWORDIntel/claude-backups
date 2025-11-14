@@ -5,18 +5,18 @@ Single tool combining neural acceleration with legacy reliability
 Version: 3.0.0 UNIFIED
 """
 
-import os
-import sys
 import asyncio
-import json
 import ctypes
+import json
+import logging
+import os
 import subprocess
+import sys
 import time
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
-import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 
@@ -26,8 +26,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available
@@ -516,8 +520,8 @@ class ShadowgitUnified:
             asyncio.create_task(self.components["neural_engine"]._start_gna_surveillance())
             
         # Start file watching
-        from watchdog.observers import Observer
         from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
         
         class UnifiedHandler(FileSystemEventHandler):
             def __init__(self, unified_system):

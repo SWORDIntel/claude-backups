@@ -5,18 +5,18 @@ Specialized for Dell Latitude 5450 Military Edition with Intel Core Ultra 7 165H
 Target: Unlock 40+ TFLOPS through NPU military mode (26.4 TOPS)
 """
 
-import os
-import sys
-import subprocess
-import json
-import re
 import glob
-import time
 import hashlib
+import json
+import os
 import platform
+import re
+import subprocess
+import sys
 import tempfile
-from typing import Dict, List, Any, Optional, Tuple
+import time
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Define constants for Dell Latitude 5450 Military Edition
 NPU_DEVICE = "/dev/accel/accel0"
@@ -51,7 +51,7 @@ MILITARY_SIGNATURES = [
     "ControlVault",
     "DSMIL",
     "MIL-SPEC",
-    "Ultra 7 165H"
+    "Ultra 7 165H",
 ]
 
 # Performance targets for 40+ TFLOPS optimization
@@ -61,8 +61,9 @@ PERFORMANCE_TARGETS = {
     "gpu_tops": 18.0,
     "cpu_tflops": 5.6,
     "total_target_tflops": 50.0,
-    "minimum_target_tflops": 40.0
+    "minimum_target_tflops": 40.0,
 }
+
 
 class MilitaryHardwareAnalyzer:
     """Deep hardware analysis for military-grade Dell Latitude with 40+ TFLOPS target"""
@@ -80,7 +81,7 @@ class MilitaryHardwareAnalyzer:
             "military_features": {},
             "performance": {},
             "optimization_config": {},
-            "agent_coordination": {}
+            "agent_coordination": {},
         }
         self.is_military_edition = False
         self.extended_npu_detected = False
@@ -93,9 +94,7 @@ class MilitaryHardwareAnalyzer:
         if self.has_sudo:
             try:
                 subprocess.run(
-                    ["modprobe", "msr"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
+                    ["modprobe", "msr"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
                 return os.path.exists("/dev/cpu/0/msr")
             except Exception:
@@ -106,9 +105,13 @@ class MilitaryHardwareAnalyzer:
         """Run a command and return its output"""
         try:
             result = subprocess.run(
-                cmd, shell=True, check=False, timeout=timeout,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                universal_newlines=True
+                cmd,
+                shell=True,
+                check=False,
+                timeout=timeout,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
             )
             return result.stdout
         except subprocess.TimeoutExpired:
@@ -134,7 +137,7 @@ class MilitaryHardwareAnalyzer:
     def read_sysfs_file(self, path: str) -> str:
         """Read a sysfs file safely"""
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 return f.read().strip()
         except Exception:
             return ""
@@ -149,7 +152,9 @@ class MilitaryHardwareAnalyzer:
         print()
 
         if not self.has_sudo:
-            print("⚠️ WARNING: Running without sudo privileges (password: 1786 required)")
+            print(
+                "⚠️ WARNING: Running without sudo privileges (password: 1786 required)"
+            )
             print("Military-grade features will not be fully detected or activated.")
             print("Run with sudo for complete analysis and 40+ TFLOPS optimization.")
             print()
@@ -187,7 +192,9 @@ class MilitaryHardwareAnalyzer:
                 version = re.search(r"Version: (.+)", dmi_output)
 
                 if manufacturer and manufacturer.group(1).strip() == "Dell Inc.":
-                    self.results["platform"]["manufacturer"] = manufacturer.group(1).strip()
+                    self.results["platform"]["manufacturer"] = manufacturer.group(
+                        1
+                    ).strip()
                     print(f"  ✓ Dell Inc. hardware detected")
 
                 if product and "Latitude" in product.group(1):
@@ -197,7 +204,9 @@ class MilitaryHardwareAnalyzer:
                     # Check for Latitude 5450 MIL-SPEC
                     if "5450" in product.group(1):
                         self.results["platform"]["is_latitude_5450"] = True
-                        print(f"  🎯 Dell Latitude 5450 confirmed - Military edition candidate")
+                        print(
+                            f"  🎯 Dell Latitude 5450 confirmed - Military edition candidate"
+                        )
 
                 if version:
                     self.results["platform"]["version"] = version.group(1).strip()
@@ -207,7 +216,9 @@ class MilitaryHardwareAnalyzer:
             self.results["platform"]["is_military_edition"] = self.is_military_edition
 
             if self.is_military_edition:
-                print(f"  🔒 MILITARY EDITION CONFIRMED - Enhanced capabilities available")
+                print(
+                    f"  🔒 MILITARY EDITION CONFIRMED - Enhanced capabilities available"
+                )
             else:
                 print(f"  ℹ️ Standard edition detected - Limited military features")
 
@@ -247,8 +258,13 @@ class MilitaryHardwareAnalyzer:
         model_match = re.search(r"model name\s+:\s+(.+)", cpu_info)
         if model_match:
             self.results["cpu"]["model"] = model_match.group(1).strip()
-            if "Ultra 7" in self.results["cpu"]["model"] and "165H" in self.results["cpu"]["model"]:
-                print(f"  ✓ Intel Core Ultra 7 165H confirmed - Meteor Lake architecture")
+            if (
+                "Ultra 7" in self.results["cpu"]["model"]
+                and "165H" in self.results["cpu"]["model"]
+            ):
+                print(
+                    f"  ✓ Intel Core Ultra 7 165H confirmed - Meteor Lake architecture"
+                )
                 self.results["cpu"]["is_meteor_lake"] = True
             else:
                 print(f"  ⚠️ Unexpected CPU model: {self.results['cpu']['model']}")
@@ -269,8 +285,12 @@ class MilitaryHardwareAnalyzer:
                 self.results["cpu"]["cores"]["e_cores"] = 8
                 self.results["cpu"]["cores"]["lp_e_cores"] = 1
                 self.results["cpu"]["cores"]["total_physical"] = 15
-                print(f"  ✓ Core configuration: 6 P-cores + 8 E-cores + 1 LP E-core = 15 physical")
-                print(f"  ✓ Architecture: Meteor Lake hybrid design optimized for 40+ TFLOPS")
+                print(
+                    f"  ✓ Core configuration: 6 P-cores + 8 E-cores + 1 LP E-core = 15 physical"
+                )
+                print(
+                    f"  ✓ Architecture: Meteor Lake hybrid design optimized for 40+ TFLOPS"
+                )
             else:
                 print(f"  ⚠️ Unexpected core count - may affect 40+ TFLOPS performance")
 
@@ -300,7 +320,9 @@ class MilitaryHardwareAnalyzer:
             covert_features = self.read_msr(MSR_COVERT_FEATURES)
             if covert_features:
                 self.results["cpu"]["msr"]["covert_features"] = hex(covert_features)
-                print(f"  🔒 Military covert features MSR detected: {hex(covert_features)}")
+                print(
+                    f"  🔒 Military covert features MSR detected: {hex(covert_features)}"
+                )
 
                 # Military editions have special features enabled
                 if covert_features & 0x1:
@@ -330,13 +352,19 @@ class MilitaryHardwareAnalyzer:
         lspci_output = self.run_command("lspci")
         if "Meteor Lake" in lspci_output or "Neural Processing" in lspci_output:
             self.results["npu"]["model"] = "Intel NPU 3720"
-            self.results["npu"]["standard_tops"] = PERFORMANCE_TARGETS["npu_standard_tops"]
-            self.results["npu"]["military_tops_target"] = PERFORMANCE_TARGETS["npu_military_tops"]
+            self.results["npu"]["standard_tops"] = PERFORMANCE_TARGETS[
+                "npu_standard_tops"
+            ]
+            self.results["npu"]["military_tops_target"] = PERFORMANCE_TARGETS[
+                "npu_military_tops"
+            ]
             print(f"  ✓ Intel NPU 3720 confirmed - Meteor Lake integrated")
 
         # Check for OpenVINO support (critical for NPU optimization)
         try:
-            openvino_check = self.run_command("python3 -c 'import openvino; print(openvino.__version__)'")
+            openvino_check = self.run_command(
+                "python3 -c 'import openvino; print(openvino.__version__)'"
+            )
             if openvino_check and not openvino_check.startswith("Error"):
                 self.results["npu"]["openvino_support"] = True
                 self.results["npu"]["openvino_version"] = openvino_check.strip()
@@ -344,7 +372,7 @@ class MilitaryHardwareAnalyzer:
 
                 # Test NPU device availability through OpenVINO
                 if self.has_sudo:
-                    npu_test_script = '''
+                    npu_test_script = """
 import openvino as ov
 try:
     core = ov.Core()
@@ -363,8 +391,8 @@ try:
         print("No NPU devices found in OpenVINO")
 except Exception as e:
     print(f"OpenVINO NPU test failed: {e}")
-'''
-                    with tempfile.NamedTemporaryFile(suffix='.py', mode='w+') as f:
+"""
+                    with tempfile.NamedTemporaryFile(suffix=".py", mode="w+") as f:
                         f.write(npu_test_script)
                         f.flush()
                         npu_output = self.run_command(f"python3 {f.name}")
@@ -373,7 +401,9 @@ except Exception as e:
                             self.results["npu"]["openvino_devices"] = npu_output
                             print(f"  ✓ NPU available through OpenVINO")
                         else:
-                            print(f"  ⚠️ NPU not accessible through OpenVINO: {npu_output}")
+                            print(
+                                f"  ⚠️ NPU not accessible through OpenVINO: {npu_output}"
+                            )
         except Exception:
             print(f"  ⚠️ OpenVINO not available - NPU optimization limited")
 
@@ -405,13 +435,21 @@ except Exception as e:
                         self.results["npu"]["extended_cache"] = True
                         self.results["npu"]["military_cache"] = True
                         self.extended_npu_detected = True
-                        print(f"  🎯 EXTENDED CACHE DETECTED: {cache_size_mb}MB (vs 4MB standard)")
+                        print(
+                            f"  🎯 EXTENDED CACHE DETECTED: {cache_size_mb}MB (vs 4MB standard)"
+                        )
 
                         # Calculate performance boost with extended cache
                         cache_boost = min(cache_size_mb / 4, 32)  # Up to 32x boost
-                        boosted_tops = PERFORMANCE_TARGETS["npu_standard_tops"] * (1 + cache_boost * 0.1)
-                        self.results["npu"]["estimated_tops"] = min(boosted_tops, PERFORMANCE_TARGETS["npu_military_tops"])
-                        print(f"  🚀 Estimated performance: {self.results['npu']['estimated_tops']:.1f} TOPS")
+                        boosted_tops = PERFORMANCE_TARGETS["npu_standard_tops"] * (
+                            1 + cache_boost * 0.1
+                        )
+                        self.results["npu"]["estimated_tops"] = min(
+                            boosted_tops, PERFORMANCE_TARGETS["npu_military_tops"]
+                        )
+                        print(
+                            f"  🚀 Estimated performance: {self.results['npu']['estimated_tops']:.1f} TOPS"
+                        )
                 else:
                     self.results["npu"]["cache_size_mb"] = 4  # Default for Meteor Lake
                     print(f"  ✓ Standard NPU cache: 4MB")
@@ -437,33 +475,51 @@ except Exception as e:
                         self.results["npu"]["military_cache_mb"] = extended_cache_mb
                         self.results["npu"]["total_cache_mb"] = extended_cache_mb
                         self.results["npu"]["covert_edition"] = True
-                        print(f"    🎯 MILITARY CACHE: {extended_cache_mb}MB - COVERT EDITION")
+                        print(
+                            f"    🎯 MILITARY CACHE: {extended_cache_mb}MB - COVERT EDITION"
+                        )
 
                         # Military mode achieves 26.4 TOPS
-                        self.results["npu"]["military_tops"] = PERFORMANCE_TARGETS["npu_military_tops"]
-                        print(f"    🚀 Military mode performance: {PERFORMANCE_TARGETS['npu_military_tops']} TOPS")
+                        self.results["npu"]["military_tops"] = PERFORMANCE_TARGETS[
+                            "npu_military_tops"
+                        ]
+                        print(
+                            f"    🚀 Military mode performance: {PERFORMANCE_TARGETS['npu_military_tops']} TOPS"
+                        )
 
         # Set final NPU performance estimate
         if self.military_npu_mode:
-            self.results["npu"]["achievable_tops"] = PERFORMANCE_TARGETS["npu_military_tops"]
+            self.results["npu"]["achievable_tops"] = PERFORMANCE_TARGETS[
+                "npu_military_tops"
+            ]
             print(f"  🎯 TARGET ACHIEVED: Military NPU mode capable of 26.4 TOPS")
         elif self.extended_npu_detected:
-            estimated = self.results["npu"].get("estimated_tops", PERFORMANCE_TARGETS["npu_standard_tops"])
+            estimated = self.results["npu"].get(
+                "estimated_tops", PERFORMANCE_TARGETS["npu_standard_tops"]
+            )
             self.results["npu"]["achievable_tops"] = estimated
             print(f"  ⚡ Enhanced NPU mode: {estimated:.1f} TOPS")
         else:
-            self.results["npu"]["achievable_tops"] = PERFORMANCE_TARGETS["npu_standard_tops"]
-            print(f"  ℹ️ Standard NPU mode: {PERFORMANCE_TARGETS['npu_standard_tops']} TOPS")
+            self.results["npu"]["achievable_tops"] = PERFORMANCE_TARGETS[
+                "npu_standard_tops"
+            ]
+            print(
+                f"  ℹ️ Standard NPU mode: {PERFORMANCE_TARGETS['npu_standard_tops']} TOPS"
+            )
 
     def analyze_gpu(self):
         """Analyze Intel Arc Graphics for 18 TOPS target"""
         print("[Analyzing GPU - Intel Arc Graphics (Meteor Lake)]")
-        print(f"  Target: {PERFORMANCE_TARGETS['gpu_tops']} TOPS for integrated AI acceleration")
+        print(
+            f"  Target: {PERFORMANCE_TARGETS['gpu_tops']} TOPS for integrated AI acceleration"
+        )
 
         # Check GPU via lspci
         lspci_output = self.run_command("lspci | grep -i vga")
 
-        if "Intel" in lspci_output and ("Arc" in lspci_output or "Meteor Lake" in lspci_output):
+        if "Intel" in lspci_output and (
+            "Arc" in lspci_output or "Meteor Lake" in lspci_output
+        ):
             self.results["gpu"]["detected"] = True
             self.results["gpu"]["model"] = "Intel Arc Graphics (Meteor Lake)"
             self.results["gpu"]["architecture"] = "Xe-LPG"
@@ -474,7 +530,9 @@ except Exception as e:
             self.results["gpu"]["target_ai_tops"] = PERFORMANCE_TARGETS["gpu_tops"]
             self.results["gpu"]["achievable_tops"] = PERFORMANCE_TARGETS["gpu_tops"]
             print(f"  ✓ Arc Graphics configuration: 8 Execution Units")
-            print(f"  ✓ AI acceleration target: {PERFORMANCE_TARGETS['gpu_tops']} TOPS (INT8)")
+            print(
+                f"  ✓ AI acceleration target: {PERFORMANCE_TARGETS['gpu_tops']} TOPS (INT8)"
+            )
         else:
             print(f"  ⚠️ Intel Arc Graphics not detected - GPU acceleration unavailable")
             self.results["gpu"]["detected"] = False
@@ -505,7 +563,10 @@ except Exception as e:
         # Check for ECC memory (critical for military applications)
         if self.has_sudo:
             dmi_output = self.run_command("dmidecode -t memory")
-            if "Error Correction Type: Multi-bit ECC" in dmi_output or "ECC" in dmi_output:
+            if (
+                "Error Correction Type: Multi-bit ECC" in dmi_output
+                or "ECC" in dmi_output
+            ):
                 self.results["memory"]["ecc"] = True
                 print(f"  ✓ ECC memory detected - Military-grade reliability")
             else:
@@ -519,7 +580,9 @@ except Exception as e:
                 print(f"  ✓ Memory speed: {speed_mts} MT/s")
 
                 if speed_mts >= 5600:
-                    print(f"  ✓ High-speed memory: DDR5-{speed_mts} optimal for 40+ TFLOPS")
+                    print(
+                        f"  ✓ High-speed memory: DDR5-{speed_mts} optimal for 40+ TFLOPS"
+                    )
                     self.results["memory"]["optimal_for_40tflops"] = True
 
     def calculate_performance_potential(self):
@@ -529,7 +592,9 @@ except Exception as e:
         # Get achievable performance from each component
         npu_tops = self.results["npu"].get("achievable_tops", 0)
         gpu_tops = self.results["gpu"].get("achievable_tops", 0)
-        cpu_tflops = PERFORMANCE_TARGETS["cpu_tflops"]  # Conservative estimate for 15 cores
+        cpu_tflops = PERFORMANCE_TARGETS[
+            "cpu_tflops"
+        ]  # Conservative estimate for 15 cores
 
         # Calculate total performance
         total_tops = npu_tops + gpu_tops
@@ -541,8 +606,10 @@ except Exception as e:
             "cpu_tflops": cpu_tflops,
             "total_tops": total_tops,
             "total_tflops": total_tflops,
-            "target_achieved": total_tflops >= PERFORMANCE_TARGETS["minimum_target_tflops"],
-            "target_exceeded": total_tflops >= PERFORMANCE_TARGETS["total_target_tflops"]
+            "target_achieved": total_tflops
+            >= PERFORMANCE_TARGETS["minimum_target_tflops"],
+            "target_exceeded": total_tflops
+            >= PERFORMANCE_TARGETS["total_target_tflops"],
         }
 
         print(f"  📊 Performance Breakdown:")
@@ -553,13 +620,19 @@ except Exception as e:
         print(f"")
 
         if total_tflops >= PERFORMANCE_TARGETS["total_target_tflops"]:
-            print(f"  🎯 TARGET EXCEEDED: {total_tflops:.1f} TFLOPS ≥ {PERFORMANCE_TARGETS['total_target_tflops']} TFLOPS")
+            print(
+                f"  🎯 TARGET EXCEEDED: {total_tflops:.1f} TFLOPS ≥ {PERFORMANCE_TARGETS['total_target_tflops']} TFLOPS"
+            )
             print(f"  🚀 Performance level: EXCEPTIONAL (25% above minimum)")
         elif total_tflops >= PERFORMANCE_TARGETS["minimum_target_tflops"]:
-            print(f"  ✅ TARGET ACHIEVED: {total_tflops:.1f} TFLOPS ≥ {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS")
+            print(
+                f"  ✅ TARGET ACHIEVED: {total_tflops:.1f} TFLOPS ≥ {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS"
+            )
             print(f"  ⚡ Performance level: EXCELLENT")
         else:
-            print(f"  ⚠️ TARGET MISSED: {total_tflops:.1f} TFLOPS < {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS")
+            print(
+                f"  ⚠️ TARGET MISSED: {total_tflops:.1f} TFLOPS < {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS"
+            )
             print(f"  ℹ️ Military NPU mode required for 40+ TFLOPS")
 
     def generate_optimization_config(self):
@@ -570,46 +643,50 @@ except Exception as e:
             "hardware_profile": "intel_meteor_lake_military",
             "cpu_optimization": {
                 "p_cores": list(range(0, 12)),  # 6 physical, 12 logical
-                "e_cores": list(range(12, 20)), # 8 physical
-                "lp_e_core": [20],             # 1 physical
+                "e_cores": list(range(12, 20)),  # 8 physical
+                "lp_e_core": [20],  # 1 physical
                 "governor": "performance",
                 "turbo_boost": True,
-                "thermal_design_power": "military_spec"
+                "thermal_design_power": "military_spec",
             },
             "npu_optimization": {
                 "device": NPU_DEVICE,
                 "military_mode": self.military_npu_mode,
                 "target_tops": self.results["npu"].get("achievable_tops", 11),
                 "cache_size_mb": self.results["npu"].get("total_cache_mb", 4),
-                "secure_execution": self.results["military_features"].get("secure_npu_execution", False),
-                "openvino_priority": "NPU,GPU,CPU"
+                "secure_execution": self.results["military_features"].get(
+                    "secure_npu_execution", False
+                ),
+                "openvino_priority": "NPU,GPU,CPU",
             },
             "gpu_optimization": {
                 "target_tops": PERFORMANCE_TARGETS["gpu_tops"],
                 "arc_graphics": True,
                 "xe_lpg_architecture": True,
-                "cooperative_processing": True
+                "cooperative_processing": True,
             },
             "memory_optimization": {
                 "total_gb": self.results["memory"].get("total_gb", 0),
                 "ecc_enabled": self.results["memory"].get("ecc", False),
                 "allocation_strategy": "agent_aware",
-                "numa_optimization": True
+                "numa_optimization": True,
             },
             "thermal_management": {
                 "target_temp_max": 100,
                 "throttle_temp": 95,
                 "performance_temp": 85,
                 "adaptive_cooling": True,
-                "military_thermal_profile": True
+                "military_thermal_profile": True,
             },
-            "performance_targets": PERFORMANCE_TARGETS
+            "performance_targets": PERFORMANCE_TARGETS,
         }
 
         self.results["optimization_config"] = config
         print(f"  ✓ Hardware optimization profile: {config['hardware_profile']}")
         print(f"  ✓ NPU military mode: {config['npu_optimization']['military_mode']}")
-        print(f"  ✓ Target performance: {config['performance_targets']['total_target_tflops']} TFLOPS")
+        print(
+            f"  ✓ Target performance: {config['performance_targets']['total_target_tflops']} TFLOPS"
+        )
 
     def create_agent_coordination_matrix(self):
         """Create agent coordination matrix for 98 agents across 15 cores"""
@@ -622,14 +699,14 @@ except Exception as e:
                 "core_assignment": list(range(0, 4)),  # P-cores 0-3
                 "priority": "highest",
                 "memory_allocation_gb": 8,
-                "performance_target": "command_coordination"
+                "performance_target": "command_coordination",
             },
             "development_core": {
                 "agents": ["ARCHITECT", "CONSTRUCTOR", "DEBUGGER", "TESTBED"],
                 "core_assignment": list(range(4, 8)),  # P-cores 4-7
                 "priority": "high",
                 "memory_allocation_gb": 16,
-                "performance_target": "code_generation"
+                "performance_target": "code_generation",
             },
             "ai_ml_powerhouse": {
                 "agents": ["DATASCIENCE", "MLOPS", "NPU", "OPTIMIZER"],
@@ -638,42 +715,61 @@ except Exception as e:
                 "priority": "critical",
                 "memory_allocation_gb": 20,
                 "npu_cache_mb": self.results["npu"].get("total_cache_mb", 4),
-                "performance_target": "26_4_tops_processing"
+                "performance_target": "26_4_tops_processing",
             },
             "infrastructure": {
                 "agents": ["INFRASTRUCTURE", "MONITOR", "SECURITY", "DEPLOYER"],
                 "core_assignment": list(range(12, 16)),  # E-cores 12-15
                 "priority": "medium",
                 "memory_allocation_gb": 12,
-                "performance_target": "system_management"
+                "performance_target": "system_management",
             },
             "support_services": {
                 "agents": ["LINTER", "DOCGEN", "PACKAGER", "WEB"],
                 "core_assignment": list(range(16, 20)),  # E-cores 16-19
                 "priority": "low",
                 "memory_allocation_gb": 8,
-                "performance_target": "background_tasks"
+                "performance_target": "background_tasks",
             },
             "specialized_dynamic": {
                 "agents": ["HARDWARE", "DATABASE", "CRYPTO", "QUANTUM", "SECURITY"],
                 "core_assignment": [20, 21],  # E-core 20 + dynamic allocation
                 "priority": "variable",
                 "memory_allocation_gb": "variable",
-                "performance_target": "on_demand"
-            }
+                "performance_target": "on_demand",
+            },
         }
 
         # Add remaining agents (98 total) with dynamic allocation
         remaining_agents = [
-            "HARDWARE-INTEL", "HARDWARE-DELL", "HARDWARE-HP",
-            "PYTHON-INTERNAL", "JAVA-INTERNAL", "RUST-DEBUGGER", "CPP-INTERNAL-AGENT",
-            "TYPESCRIPT-INTERNAL-AGENT", "JSON-INTERNAL", "XML-INTERNAL",
-            "CRYPTOEXPERT", "SECURITYAUDITOR", "BASTION", "OVERSIGHT",
-            "DATABASE", "DOCKER-AGENT", "KUBERNETES", "CLOUD-NATIVE",
-            "RESEARCHER", "AUDITOR", "TESTBED", "DEBUGGER", "LINTER"
+            "HARDWARE-INTEL",
+            "HARDWARE-DELL",
+            "HARDWARE-HP",
+            "PYTHON-INTERNAL",
+            "JAVA-INTERNAL",
+            "RUST-DEBUGGER",
+            "CPP-INTERNAL-AGENT",
+            "TYPESCRIPT-INTERNAL-AGENT",
+            "JSON-INTERNAL",
+            "XML-INTERNAL",
+            "CRYPTOEXPERT",
+            "SECURITYAUDITOR",
+            "BASTION",
+            "OVERSIGHT",
+            "DATABASE",
+            "DOCKER-AGENT",
+            "KUBERNETES",
+            "CLOUD-NATIVE",
+            "RESEARCHER",
+            "AUDITOR",
+            "TESTBED",
+            "DEBUGGER",
+            "LINTER",
         ]
 
-        coordination_matrix["specialized_dynamic"]["agents"].extend(remaining_agents[:74])  # Fill to 98 total
+        coordination_matrix["specialized_dynamic"]["agents"].extend(
+            remaining_agents[:74]
+        )  # Fill to 98 total
 
         self.results["agent_coordination"] = {
             "total_agents": 98,
@@ -681,7 +777,7 @@ except Exception as e:
             "core_utilization": {
                 "p_cores_0_11": "strategic_development_ai",
                 "e_cores_12_19": "infrastructure_support",
-                "e_core_20_21": "specialized_dynamic"
+                "e_core_20_21": "specialized_dynamic",
             },
             "performance_distribution": {
                 "command_control": "4 agents on P-cores 0-3",
@@ -689,8 +785,8 @@ except Exception as e:
                 "ai_ml": "4 agents on P-cores 8-11 + NPU",
                 "infrastructure": "4 agents on E-cores 12-15",
                 "support": "4 agents on E-cores 16-19",
-                "specialized": "82 agents dynamic allocation"
-            }
+                "specialized": "82 agents dynamic allocation",
+            },
         }
 
         print(f"  ✓ 98 agents coordination matrix created")
@@ -776,7 +872,9 @@ except Exception as e:
             print(f"  Model: {self.results['cpu']['model']}")
         if self.results["cpu"]["cores"].get("total_physical"):
             cores = self.results["cpu"]["cores"]
-            print(f"  Physical Cores: {cores['total_physical']} (6 P-cores + 8 E-cores + 1 LP E-core)")
+            print(
+                f"  Physical Cores: {cores['total_physical']} (6 P-cores + 8 E-cores + 1 LP E-core)"
+            )
             print(f"  Logical Cores: {cores['total_logical']}")
 
         # NPU details
@@ -789,11 +887,19 @@ except Exception as e:
             print(f"  Achievable Performance: {achievable:.1f} TOPS")
 
             if self.military_npu_mode:
-                print(f"  🎯 MILITARY MODE: {PERFORMANCE_TARGETS['npu_military_tops']} TOPS")
-                print(f"  🔒 Extended Cache: {self.results['npu'].get('total_cache_mb', 4)}MB")
-                print(f"  ✅ Covert Edition: {self.results['npu'].get('covert_edition', False)}")
+                print(
+                    f"  🎯 MILITARY MODE: {PERFORMANCE_TARGETS['npu_military_tops']} TOPS"
+                )
+                print(
+                    f"  🔒 Extended Cache: {self.results['npu'].get('total_cache_mb', 4)}MB"
+                )
+                print(
+                    f"  ✅ Covert Edition: {self.results['npu'].get('covert_edition', False)}"
+                )
             else:
-                print(f"  ⚠️ Military mode not detected - Limited to standard performance")
+                print(
+                    f"  ⚠️ Military mode not detected - Limited to standard performance"
+                )
         else:
             print(f"  ❌ NPU not detected - Cannot achieve 40+ TFLOPS")
 
@@ -808,11 +914,17 @@ except Exception as e:
             print(f"")
 
             if perf["target_exceeded"]:
-                print(f"  🎯 EXCEPTIONAL: {perf['total_tflops']:.1f} TFLOPS > {PERFORMANCE_TARGETS['total_target_tflops']} TFLOPS (TARGET EXCEEDED)")
+                print(
+                    f"  🎯 EXCEPTIONAL: {perf['total_tflops']:.1f} TFLOPS > {PERFORMANCE_TARGETS['total_target_tflops']} TFLOPS (TARGET EXCEEDED)"
+                )
             elif perf["target_achieved"]:
-                print(f"  ✅ EXCELLENT: {perf['total_tflops']:.1f} TFLOPS ≥ {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS (TARGET ACHIEVED)")
+                print(
+                    f"  ✅ EXCELLENT: {perf['total_tflops']:.1f} TFLOPS ≥ {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS (TARGET ACHIEVED)"
+                )
             else:
-                print(f"  ⚠️ INSUFFICIENT: {perf['total_tflops']:.1f} TFLOPS < {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS (TARGET MISSED)")
+                print(
+                    f"  ⚠️ INSUFFICIENT: {perf['total_tflops']:.1f} TFLOPS < {PERFORMANCE_TARGETS['minimum_target_tflops']} TFLOPS (TARGET MISSED)"
+                )
 
         # Military features summary
         print("\n[MILITARY-GRADE FEATURES]")
@@ -847,6 +959,7 @@ except Exception as e:
             print(f"  🔧 Action needed: Enable military NPU features")
             print(f"  🔑 Requirement: sudo access for hardware activation")
 
+
 def main():
     """Execute the military hardware analysis for 40+ TFLOPS optimization"""
     print("Intel Core Ultra 7 165H Military Hardware Analyzer")
@@ -865,7 +978,7 @@ def main():
     if "--export" in sys.argv:
         try:
             os.makedirs(os.path.dirname(export_file), exist_ok=True)
-            with open(export_file, 'w') as f:
+            with open(export_file, "w") as f:
                 json.dump(results, f, indent=2)
             print(f"\n✅ Results exported to: {export_file}")
         except Exception as e:
@@ -873,14 +986,21 @@ def main():
 
     return results
 
+
 if __name__ == "__main__":
     if os.geteuid() != 0:
-        print("⚠️ WARNING: This script should be run with sudo for complete military hardware detection.")
-        print("Required for 40+ TFLOPS optimization: sudo python3 milspec_hardware_analyzer.py")
+        print(
+            "⚠️ WARNING: This script should be run with sudo for complete military hardware detection."
+        )
+        print(
+            "Required for 40+ TFLOPS optimization: sudo python3 milspec_hardware_analyzer.py"
+        )
         print("Sudo password required: 1786")
         decision = input("Continue without sudo? [y/N]: ")
         if decision.lower() != "y":
-            print("Run with: echo '1786' | sudo -S python3 milspec_hardware_analyzer.py")
+            print(
+                "Run with: echo '1786' | sudo -S python3 milspec_hardware_analyzer.py"
+            )
             sys.exit(1)
 
     main()

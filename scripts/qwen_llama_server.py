@@ -5,36 +5,39 @@ Using llama-cpp-python for reliable inference
 Optimized for Intel NPU 3720 (26.4 TOPS)
 """
 
-import sys
-import os
-from pathlib import Path
 import argparse
-import json
-import time
-from typing import Dict, List, Optional, Any
 import asyncio
+import json
+import os
+import sys
+import time
 import uuid
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add torch environment to path
 sys.path.insert(0, "/home/john/claude-backups/.torch-venv/lib/python3.13/site-packages")
 
 try:
+    import torch
+    import uvicorn
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import StreamingResponse
     from pydantic import BaseModel, Field
-    import uvicorn
-    from transformers import AutoTokenizer, AutoModelForCausalLM
-    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
     print("✅ All dependencies loaded successfully")
 except ImportError as e:
     print(f"❌ Import error: {e}")
     sys.exit(1)
 
+
 # OpenAI-compatible models
 class ChatMessage(BaseModel):
     role: str
     content: str
+
 
 class ChatCompletionRequest(BaseModel):
     model: str = "qwen-32b"
@@ -43,10 +46,12 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = 512
     stream: bool = False
 
+
 class ChatCompletionChoice(BaseModel):
     index: int
     message: ChatMessage
     finish_reason: str
+
 
 class ChatCompletionResponse(BaseModel):
     id: str
@@ -56,10 +61,13 @@ class ChatCompletionResponse(BaseModel):
     choices: List[ChatCompletionChoice]
     usage: Dict[str, int]
 
+
 class QwenMilitaryNPUEngine:
     """Direct Qwen inference optimized for Military NPU"""
 
-    def __init__(self, model_path: str = "/home/john/claude-backups/local-models/qwen-raw"):
+    def __init__(
+        self, model_path: str = "/home/john/claude-backups/local-models/qwen-raw"
+    ):
         self.model_path = Path(model_path)
         self.model = None
         self.tokenizer = None
@@ -70,7 +78,7 @@ class QwenMilitaryNPUEngine:
             "requests_processed": 0,
             "tokens_generated": 0,
             "total_time": 0.0,
-            "average_tokens_per_second": 0.0
+            "average_tokens_per_second": 0.0,
         }
 
         print(f"🚀 Initializing Qwen Military NPU Engine")
@@ -83,8 +91,7 @@ class QwenMilitaryNPUEngine:
         try:
             print("📖 Loading tokenizer...")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_path,
-                trust_remote_code=True
+                self.model_path, trust_remote_code=True
             )
             print(f"✅ Tokenizer loaded: {len(self.tokenizer)} vocab size")
 
@@ -98,7 +105,7 @@ class QwenMilitaryNPUEngine:
                 device_map="auto",
                 trust_remote_code=True,
                 low_cpu_mem_usage=True,
-                attn_implementation="eager"  # Avoid flash attention for compatibility
+                attn_implementation="eager",  # Avoid flash attention for compatibility
             )
 
             print("✅ Model loaded successfully!")
@@ -125,7 +132,9 @@ class QwenMilitaryNPUEngine:
         formatted.append("<|im_start|>assistant")
         return "\n".join(formatted)
 
-    async def generate_response(self, request: ChatCompletionRequest) -> ChatCompletionResponse:
+    async def generate_response(
+        self, request: ChatCompletionRequest
+    ) -> ChatCompletionResponse:
         """Generate response for chat completion"""
 
         if not self.model:
@@ -134,15 +143,17 @@ class QwenMilitaryNPUEngine:
                 id=str(uuid.uuid4()),
                 created=int(time.time()),
                 model=request.model,
-                choices=[ChatCompletionChoice(
-                    index=0,
-                    message=ChatMessage(
-                        role="assistant",
-                        content="🚧 Local inference starting up... Model loading in progress. This is a test response from the Military NPU system (26.4 TOPS). Once model loading completes, you'll get real AI responses locally!"
-                    ),
-                    finish_reason="stop"
-                )],
-                usage={"prompt_tokens": 0, "completion_tokens": 50, "total_tokens": 50}
+                choices=[
+                    ChatCompletionChoice(
+                        index=0,
+                        message=ChatMessage(
+                            role="assistant",
+                            content="🚧 Local inference starting up... Model loading in progress. This is a test response from the Military NPU system (26.4 TOPS). Once model loading completes, you'll get real AI responses locally!",
+                        ),
+                        finish_reason="stop",
+                    )
+                ],
+                usage={"prompt_tokens": 0, "completion_tokens": 50, "total_tokens": 50},
             )
 
         start_time = time.time()
@@ -166,12 +177,14 @@ class QwenMilitaryNPUEngine:
                     do_sample=request.temperature > 0.0,
                     pad_token_id=self.tokenizer.eos_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
-                    use_cache=True
+                    use_cache=True,
                 )
 
             # Decode response
             response_tokens = outputs[0][input_length:]
-            response_text = self.tokenizer.decode(response_tokens, skip_special_tokens=True)
+            response_text = self.tokenizer.decode(
+                response_tokens, skip_special_tokens=True
+            )
             response_text = response_text.replace("<|im_end|>", "").strip()
 
             # Update stats
@@ -185,34 +198,39 @@ class QwenMilitaryNPUEngine:
                 self.stats["tokens_generated"] / self.stats["total_time"]
             )
 
-            print(f"✅ Response generated: {output_length} tokens in {processing_time:.2f}s")
+            print(
+                f"✅ Response generated: {output_length} tokens in {processing_time:.2f}s"
+            )
             print(f"📈 Speed: {output_length/processing_time:.1f} tokens/second")
 
             return ChatCompletionResponse(
                 id=str(uuid.uuid4()),
                 created=int(time.time()),
                 model=request.model,
-                choices=[ChatCompletionChoice(
-                    index=0,
-                    message=ChatMessage(role="assistant", content=response_text),
-                    finish_reason="stop"
-                )],
+                choices=[
+                    ChatCompletionChoice(
+                        index=0,
+                        message=ChatMessage(role="assistant", content=response_text),
+                        finish_reason="stop",
+                    )
+                ],
                 usage={
                     "prompt_tokens": input_length,
                     "completion_tokens": output_length,
-                    "total_tokens": input_length + output_length
-                }
+                    "total_tokens": input_length + output_length,
+                },
             )
 
         except Exception as e:
             print(f"❌ Generation error: {e}")
             raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
+
 # Create FastAPI app
 app = FastAPI(
     title="Qwen Military NPU Inference Server",
     description="Local inference optimized for Intel NPU 3720 (26.4 TOPS)",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 app.add_middleware(
@@ -226,10 +244,12 @@ app.add_middleware(
 # Initialize engine
 engine = QwenMilitaryNPUEngine()
 
+
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
     """OpenAI-compatible chat completions"""
     return await engine.generate_response(request)
+
 
 @app.get("/health")
 async def health():
@@ -238,8 +258,9 @@ async def health():
         "status": "healthy",
         "model_loaded": engine.model is not None,
         "npu_available": Path("/dev/accel/accel0").exists(),
-        "stats": engine.stats
+        "stats": engine.stats,
     }
+
 
 @app.get("/stats")
 async def get_stats():
@@ -249,9 +270,10 @@ async def get_stats():
         "hardware": {
             "npu_available": Path("/dev/accel/accel0").exists(),
             "npu_tops": 26.4,
-            "device": str(engine.device)
-        }
+            "device": str(engine.device),
+        },
     }
+
 
 @app.on_event("startup")
 async def startup():
@@ -260,11 +282,13 @@ async def startup():
     print(f"   Model Loaded: {engine.model is not None}")
     print(f"   Endpoints: http://localhost:8000/v1/chat/completions")
 
+
 @app.on_event("shutdown")
 async def shutdown():
     print("🏁 Qwen Military NPU Server Stopping...")
     print(f"   Requests processed: {engine.stats['requests_processed']}")
     print(f"   Average speed: {engine.stats['average_tokens_per_second']:.1f} tok/s")
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -285,6 +309,7 @@ def main():
     print(f"📡 Server: http://localhost:{args.port}")
 
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+
 
 if __name__ == "__main__":
     main()

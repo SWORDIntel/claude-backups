@@ -7,13 +7,13 @@ Complete voice-to-agent integration system with real-time speech recognition
 import asyncio
 import json
 import os
-import sys
-import subprocess
-import threading
 import queue
-import time
-from typing import Dict, Any, Optional, List
+import subprocess
+import sys
 import tempfile
+import threading
+import time
+from typing import Any, Dict, List, Optional
 
 # Add agents to path
 sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')

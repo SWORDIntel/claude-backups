@@ -5,19 +5,19 @@ Provides seamless integration with claude-code and full agent orchestration
 Version: 4.0 - Production Ready
 """
 
-import sys
-import os
 import asyncio
+import hashlib
 import json
 import logging
+import os
+import signal
 import subprocess
+import sys
 import time
-from typing import Dict, List, Optional, Any, Union, Callable
-from enum import Enum
 from dataclasses import dataclass, field
 from datetime import datetime
-import hashlib
-import signal
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Union
 
 # Add paths for agent system
 sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python')
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 try:
-    from ENHANCED_AGENT_INTEGRATION import AgentSystem, AgentMessage, Priority
+    from ENHANCED_AGENT_INTEGRATION import AgentMessage, AgentSystem, Priority
 except ImportError as e:
     logger.warning(f"Binary protocol not available: {e}. Using fallback mode.")
     AgentSystem = None

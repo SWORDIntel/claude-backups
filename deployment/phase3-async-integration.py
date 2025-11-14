@@ -14,17 +14,17 @@ Target: 10x improvement = 12,260x speedup over original baseline
 """
 
 import asyncio
-import os
-import sys
-import time
 import json
 import logging
-from typing import Dict, List, Optional, Any, Tuple, Union
-from dataclasses import dataclass, asdict
-from pathlib import Path
-import subprocess
 import multiprocessing
+import os
+import subprocess
+import sys
+import time
 from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Add agents/src/python to path for imports
 
@@ -34,8 +34,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available
@@ -58,15 +62,20 @@ except ImportError:
         }
 sys.path.insert(0, str(get_project_root() / 'agents/src/python')
 
-# Import our async pipeline components
-from intel_npu_async_pipeline import AsyncPipelineOrchestrator, AsyncTask, ProcessingResult
-from io_uring_bridge import AsyncIOAccelerator, IORequest
 from avx512_vectorizer import VectorizedPipelineProcessor, VectorTask
+
+# Import our async pipeline components
+from intel_npu_async_pipeline import (
+    AsyncPipelineOrchestrator,
+    AsyncTask,
+    ProcessingResult,
+)
+from io_uring_bridge import AsyncIOAccelerator, IORequest
 
 # Import existing Phase 2 components
 try:
-    from trie_keyword_matcher import TrieKeywordMatcher
     from multilevel_cache_system import UniversalCacheSystem
+    from trie_keyword_matcher import TrieKeywordMatcher
     PHASE2_AVAILABLE = True
 except ImportError:
     PHASE2_AVAILABLE = False

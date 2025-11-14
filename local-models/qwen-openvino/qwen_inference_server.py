@@ -6,50 +6,60 @@ Optimized for Intel NPU 3720 military mode (26.4 TOPS)
 Zero-token local inference for 98-agent system
 """
 
+import argparse
 import asyncio
 import json
 import logging
+import os
+import sys
 import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union, AsyncGenerator
-import os
-import sys
-import argparse
+from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 try:
-    from fastapi import FastAPI, HTTPException, BackgroundTasks
+    import uvicorn
+    from fastapi import BackgroundTasks, FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import StreamingResponse
     from pydantic import BaseModel, Field
-    import uvicorn
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     print("Installing FastAPI dependencies...")
     import subprocess
-    subprocess.run([sys.executable, "-m", "pip", "install", "fastapi", "uvicorn", "pydantic"], check=True)
-    from fastapi import FastAPI, HTTPException, BackgroundTasks
+
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "fastapi", "uvicorn", "pydantic"],
+        check=True,
+    )
+    import uvicorn
+    from fastapi import BackgroundTasks, FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import StreamingResponse
     from pydantic import BaseModel, Field
-    import uvicorn
+
     FASTAPI_AVAILABLE = True
 
 try:
-    import openvino as ov
     from optimum.intel import OVModelForCausalLM
     from transformers import AutoTokenizer
+
+    import openvino as ov
+
     OV_AVAILABLE = True
 except ImportError:
     print("Warning: OpenVINO or Optimum not available, using fallback")
     OV_AVAILABLE = False
+
 
 # OpenAI-compatible request/response models
 class ChatMessage(BaseModel):
     role: str = Field(..., description="Message role (user, assistant, system)")
     content: str = Field(..., description="Message content")
     name: Optional[str] = Field(None, description="Message author name")
+
 
 class ChatCompletionRequest(BaseModel):
     model: str = Field("qwen2.5-32b", description="Model to use")
@@ -62,10 +72,12 @@ class ChatCompletionRequest(BaseModel):
     presence_penalty: float = Field(0.0, min=-2.0, max=2.0)
     stop: Optional[Union[str, List[str]]] = Field(None)
 
+
 class ChatCompletionChoice(BaseModel):
     index: int
     message: ChatMessage
     finish_reason: str
+
 
 class ChatCompletionResponse(BaseModel):
     id: str
@@ -75,10 +87,12 @@ class ChatCompletionResponse(BaseModel):
     choices: List[ChatCompletionChoice]
     usage: Dict[str, int]
 
+
 class ChatCompletionStreamChoice(BaseModel):
     index: int
     delta: Dict[str, Any]
     finish_reason: Optional[str] = None
+
 
 class ChatCompletionStreamResponse(BaseModel):
     id: str
@@ -87,10 +101,14 @@ class ChatCompletionStreamResponse(BaseModel):
     model: str
     choices: List[ChatCompletionStreamChoice]
 
+
 class QwenModelEngine:
     """Core model engine for Qwen 2.5 inference"""
 
-    def __init__(self, models_dir: str = "/home/john/claude-backups/local-models/qwen-openvino/models"):
+    def __init__(
+        self,
+        models_dir: str = "/home/john/claude-backups/local-models/qwen-openvino/models",
+    ):
         self.models_dir = Path(models_dir)
         self.current_model = None
         self.current_tokenizer = None
@@ -101,7 +119,7 @@ class QwenModelEngine:
             "total_requests": 0,
             "total_tokens_generated": 0,
             "average_latency": 0.0,
-            "total_processing_time": 0.0
+            "total_processing_time": 0.0,
         }
 
         # Setup logging
@@ -121,7 +139,7 @@ class QwenModelEngine:
                 return False
             core = ov.Core()
             devices = core.available_devices
-            return 'NPU' in devices and Path("/dev/accel/accel0").exists()
+            return "NPU" in devices and Path("/dev/accel/accel0").exists()
         except Exception:
             return False
 
@@ -132,7 +150,7 @@ class QwenModelEngine:
                 return False
             core = ov.Core()
             devices = core.available_devices
-            return 'GPU' in devices
+            return "GPU" in devices
         except Exception:
             return False
 
@@ -147,7 +165,7 @@ class QwenModelEngine:
 
         for config_file in configs_dir.glob("*.json"):
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     config = json.load(f)
                     configs[config_file.stem] = config
                     self.logger.info(f"Loaded config: {config_file.stem}")
@@ -162,12 +180,16 @@ class QwenModelEngine:
         priority_configs = []
 
         if self.npu_available:
-            priority_configs.extend([name for name in self.configs.keys() if "npu" in name])
+            priority_configs.extend(
+                [name for name in self.configs.keys() if "npu" in name]
+            )
 
         priority_configs.extend([name for name in self.configs.keys() if "cpu" in name])
 
         if self.gpu_available:
-            priority_configs.extend([name for name in self.configs.keys() if "gpu" in name])
+            priority_configs.extend(
+                [name for name in self.configs.keys() if "gpu" in name]
+            )
 
         for config_name in priority_configs:
             model_dir = self.models_dir / config_name
@@ -200,14 +222,11 @@ class QwenModelEngine:
             self.current_tokenizer = AutoTokenizer.from_pretrained(model_dir)
 
             # Load OpenVINO model
-            device = config.get('device', 'CPU')
-            compile_config = config.get('compilation_config', {})
+            device = config.get("device", "CPU")
+            compile_config = config.get("compilation_config", {})
 
             self.current_model = OVModelForCausalLM.from_pretrained(
-                model_dir,
-                device=device,
-                ov_config=compile_config,
-                compile=True
+                model_dir, device=device, ov_config=compile_config, compile=True
             )
 
             self.current_config = config
@@ -218,7 +237,9 @@ class QwenModelEngine:
             self.logger.error(f"Failed to load model {config_name}: {e}")
             return False
 
-    async def generate_response(self, request: ChatCompletionRequest) -> Union[ChatCompletionResponse, AsyncGenerator]:
+    async def generate_response(
+        self, request: ChatCompletionRequest
+    ) -> Union[ChatCompletionResponse, AsyncGenerator]:
         """Generate response for chat completion request"""
 
         if not self.current_model or not self.current_tokenizer:
@@ -245,19 +266,27 @@ class QwenModelEngine:
             }
 
             if request.stop:
-                stop_strings = request.stop if isinstance(request.stop, list) else [request.stop]
+                stop_strings = (
+                    request.stop if isinstance(request.stop, list) else [request.stop]
+                )
                 stop_token_ids = []
                 for stop_str in stop_strings:
-                    tokens = self.current_tokenizer.encode(stop_str, add_special_tokens=False)
+                    tokens = self.current_tokenizer.encode(
+                        stop_str, add_special_tokens=False
+                    )
                     stop_token_ids.extend(tokens)
                 if stop_token_ids:
                     generation_kwargs["eos_token_id"] = stop_token_ids
 
             # Generate response
             if request.stream:
-                return self._stream_generate(request_id, request, inputs, generation_kwargs, start_time)
+                return self._stream_generate(
+                    request_id, request, inputs, generation_kwargs, start_time
+                )
             else:
-                return await self._generate_complete(request_id, request, inputs, generation_kwargs, start_time)
+                return await self._generate_complete(
+                    request_id, request, inputs, generation_kwargs, start_time
+                )
 
         except Exception as e:
             self.logger.error(f"Generation failed: {e}")
@@ -269,17 +298,27 @@ class QwenModelEngine:
 
         for message in messages:
             if message.role == "system":
-                formatted_parts.append(f"<|im_start|>system\n{message.content}<|im_end|>")
+                formatted_parts.append(
+                    f"<|im_start|>system\n{message.content}<|im_end|>"
+                )
             elif message.role == "user":
                 formatted_parts.append(f"<|im_start|>user\n{message.content}<|im_end|>")
             elif message.role == "assistant":
-                formatted_parts.append(f"<|im_start|>assistant\n{message.content}<|im_end|>")
+                formatted_parts.append(
+                    f"<|im_start|>assistant\n{message.content}<|im_end|>"
+                )
 
         formatted_parts.append("<|im_start|>assistant")
         return "\n".join(formatted_parts)
 
-    async def _generate_complete(self, request_id: str, request: ChatCompletionRequest,
-                                inputs, generation_kwargs, start_time: float) -> ChatCompletionResponse:
+    async def _generate_complete(
+        self,
+        request_id: str,
+        request: ChatCompletionRequest,
+        inputs,
+        generation_kwargs,
+        start_time: float,
+    ) -> ChatCompletionResponse:
         """Generate complete response"""
 
         # Generate
@@ -287,8 +326,10 @@ class QwenModelEngine:
             outputs = self.current_model.generate(**inputs, **generation_kwargs)
 
         # Decode response
-        response_tokens = outputs[0][inputs.input_ids.shape[1]:]
-        response_text = self.current_tokenizer.decode(response_tokens, skip_special_tokens=True)
+        response_tokens = outputs[0][inputs.input_ids.shape[1] :]
+        response_text = self.current_tokenizer.decode(
+            response_tokens, skip_special_tokens=True
+        )
 
         # Clean up response
         response_text = response_text.replace("<|im_end|>", "").strip()
@@ -304,33 +345,43 @@ class QwenModelEngine:
         self.performance_metrics["total_tokens_generated"] += output_tokens
         self.performance_metrics["total_processing_time"] += processing_time
         self.performance_metrics["average_latency"] = (
-            self.performance_metrics["total_processing_time"] /
-            self.performance_metrics["total_requests"]
+            self.performance_metrics["total_processing_time"]
+            / self.performance_metrics["total_requests"]
         )
 
         return ChatCompletionResponse(
             id=request_id,
             created=int(time.time()),
             model=request.model,
-            choices=[ChatCompletionChoice(
-                index=0,
-                message=ChatMessage(role="assistant", content=response_text),
-                finish_reason="stop"
-            )],
+            choices=[
+                ChatCompletionChoice(
+                    index=0,
+                    message=ChatMessage(role="assistant", content=response_text),
+                    finish_reason="stop",
+                )
+            ],
             usage={
                 "prompt_tokens": input_tokens,
                 "completion_tokens": output_tokens,
-                "total_tokens": total_tokens
-            }
+                "total_tokens": total_tokens,
+            },
         )
 
-    async def _stream_generate(self, request_id: str, request: ChatCompletionRequest,
-                             inputs, generation_kwargs, start_time: float) -> AsyncGenerator:
+    async def _stream_generate(
+        self,
+        request_id: str,
+        request: ChatCompletionRequest,
+        inputs,
+        generation_kwargs,
+        start_time: float,
+    ) -> AsyncGenerator:
         """Generate streaming response"""
         # Note: This is a simplified streaming implementation
         # Real streaming would require more complex token-by-token generation
 
-        response = await self._generate_complete(request_id, request, inputs, generation_kwargs, start_time)
+        response = await self._generate_complete(
+            request_id, request, inputs, generation_kwargs, start_time
+        )
 
         # Simulate streaming by chunking the response
         content = response.choices[0].message.content
@@ -341,11 +392,13 @@ class QwenModelEngine:
                 id=request_id,
                 created=int(time.time()),
                 model=request.model,
-                choices=[ChatCompletionStreamChoice(
-                    index=0,
-                    delta={"content": word + " " if i < len(words) - 1 else word},
-                    finish_reason=None
-                )]
+                choices=[
+                    ChatCompletionStreamChoice(
+                        index=0,
+                        delta={"content": word + " " if i < len(words) - 1 else word},
+                        finish_reason=None,
+                    )
+                ],
             )
             yield f"data: {chunk.model_dump_json()}\n\n"
             await asyncio.sleep(0.05)  # Simulate natural typing speed
@@ -355,11 +408,9 @@ class QwenModelEngine:
             id=request_id,
             created=int(time.time()),
             model=request.model,
-            choices=[ChatCompletionStreamChoice(
-                index=0,
-                delta={},
-                finish_reason="stop"
-            )]
+            choices=[
+                ChatCompletionStreamChoice(index=0, delta={}, finish_reason="stop")
+            ],
         )
         yield f"data: {final_chunk.model_dump_json()}\n\n"
         yield "data: [DONE]\n\n"
@@ -375,12 +426,13 @@ class QwenModelEngine:
 
         return {
             "model_loaded": True,
-            "config_name": getattr(self, '_current_config_name', 'unknown'),
-            "device": self.current_config.get('device', 'unknown'),
-            "precision": self.current_config.get('precision', 'unknown'),
+            "config_name": getattr(self, "_current_config_name", "unknown"),
+            "device": self.current_config.get("device", "unknown"),
+            "precision": self.current_config.get("precision", "unknown"),
             "npu_available": self.npu_available,
-            "gpu_available": self.gpu_available
+            "gpu_available": self.gpu_available,
         }
+
 
 # Initialize model engine
 model_engine = QwenModelEngine()
@@ -389,7 +441,7 @@ model_engine = QwenModelEngine()
 app = FastAPI(
     title="Qwen 2.5 Local Inference Server",
     description="OpenAI-compatible local inference for Qwen 2.5-32B",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Add CORS middleware
@@ -400,6 +452,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
@@ -412,6 +465,7 @@ async def chat_completions(request: ChatCompletionRequest):
         response = await model_engine.generate_response(request)
         return response
 
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -419,8 +473,9 @@ async def health_check():
     return {
         "status": "healthy" if model_info.get("model_loaded", False) else "no_model",
         "timestamp": datetime.now().isoformat(),
-        "model_info": model_info
+        "model_info": model_info,
     }
+
 
 @app.get("/v1/models")
 async def list_models():
@@ -432,10 +487,11 @@ async def list_models():
                 "id": "qwen2.5-32b",
                 "object": "model",
                 "created": int(time.time()),
-                "owned_by": "local"
+                "owned_by": "local",
             }
-        ]
+        ],
     }
+
 
 @app.get("/stats")
 async def get_stats():
@@ -446,8 +502,9 @@ async def get_stats():
     return {
         "performance": metrics,
         "model": model_info,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -455,12 +512,17 @@ async def startup_event():
     model_info = model_engine.get_model_info()
     print("🚀 Qwen 2.5 Local Inference Server Starting...")
     print(f"   Host: localhost:8000")
-    print(f"   Model loaded: {'Yes' if model_info.get('model_loaded', False) else 'No'}")
+    print(
+        f"   Model loaded: {'Yes' if model_info.get('model_loaded', False) else 'No'}"
+    )
     print(f"   Device: {model_info.get('device', 'None')}")
-    print(f"   NPU Available: {'Yes' if model_info.get('npu_available', False) else 'No'}")
+    print(
+        f"   NPU Available: {'Yes' if model_info.get('npu_available', False) else 'No'}"
+    )
     print(f"   API: http://localhost:8000/v1/chat/completions")
     print(f"   Health: http://localhost:8000/health")
     print(f"   Stats: http://localhost:8000/stats")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -471,15 +533,20 @@ async def shutdown_event():
     print(f"   Total tokens generated: {metrics['total_tokens_generated']}")
     print(f"   Average latency: {metrics['average_latency']:.3f}s")
 
+
 def main():
     """Main server entry point"""
 
     parser = argparse.ArgumentParser(description="Qwen 2.5 Local Inference Server")
     parser.add_argument("--port", type=int, default=8000, help="Port to bind server")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind server")
+    parser.add_argument(
+        "--host", type=str, default="0.0.0.0", help="Host to bind server"
+    )
     parser.add_argument("--workers", type=int, default=1, help="Number of workers")
     parser.add_argument("--log-level", type=str, default="info", help="Log level")
-    parser.add_argument("--test", action="store_true", help="Test mode - exit after startup")
+    parser.add_argument(
+        "--test", action="store_true", help="Test mode - exit after startup"
+    )
     args = parser.parse_args()
 
     # Server configuration
@@ -489,7 +556,7 @@ def main():
         "log_level": args.log_level,
         "access_log": True,
         "reload": False,
-        "workers": args.workers
+        "workers": args.workers,
     }
 
     print("🚀 Starting Qwen 2.5 Local Inference Server")
@@ -499,7 +566,9 @@ def main():
     print(f"Zero-token local inference for 98-agent system")
 
     model_info = model_engine.get_model_info()
-    print(f"Model Status: {'Loaded' if model_info.get('model_loaded', False) else 'Not Loaded'}")
+    print(
+        f"Model Status: {'Loaded' if model_info.get('model_loaded', False) else 'Not Loaded'}"
+    )
     print(f"NPU Available: {'Yes' if model_info.get('npu_available', False) else 'No'}")
     print()
 
@@ -512,6 +581,7 @@ def main():
 
     # Start server
     uvicorn.run(app, **config)
+
 
 if __name__ == "__main__":
     main()

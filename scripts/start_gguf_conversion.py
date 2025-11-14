@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def convert_qwen_to_gguf():
     """Convert Qwen to GGUF format directly"""
 
@@ -27,6 +28,7 @@ def convert_qwen_to_gguf():
         print("📦 Loading libraries...")
         from llama_cpp import Llama
         from transformers import AutoTokenizer
+
         print("✅ Libraries loaded successfully")
 
         print("\n🔧 Method 1: Direct llama-cpp server conversion")
@@ -56,11 +58,12 @@ def convert_qwen_to_gguf():
             "expected_performance": "40-60 tokens/second",
             "memory_usage": "~20-30GB",
             "api_compatible": "OpenAI",
-            "setup_status": "ready_for_inference"
+            "setup_status": "ready_for_inference",
         }
 
         import json
-        with open(f"{output_dir}/qwen_config.json", 'w') as f:
+
+        with open(f"{output_dir}/qwen_config.json", "w") as f:
             json.dump(config, f, indent=2)
 
         print("✅ Configuration created for direct inference")
@@ -77,6 +80,7 @@ def convert_qwen_to_gguf():
     except Exception as e:
         print(f"❌ Setup failed: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = convert_qwen_to_gguf()

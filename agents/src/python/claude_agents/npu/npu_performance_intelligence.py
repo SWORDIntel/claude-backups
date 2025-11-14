@@ -11,26 +11,31 @@ Transforms pathetic monitoring into enterprise intelligence:
 - Enterprise-grade alerting and response automation
 """
 
-import time
+import concurrent.futures
 import json
-import uuid
-import threading
-import queue
-import psutil
 import os
+import queue
 import sys
-from typing import Dict, List, Optional, Any
+import threading
+import time
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import concurrent.futures
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 # Import enterprise learning system
 try:
-    from enterprise_learning_orchestrator import PerformanceMetric, initialize_enterprise_learning
+    from enterprise_learning_orchestrator import (
+        PerformanceMetric,
+        initialize_enterprise_learning,
+    )
     from production_agent_instrumentation import initialize_production_instrumentation
 except ImportError:
     print("❌ Enterprise systems not found")
     sys.exit(1)
+
 
 @dataclass
 class SystemMetrics:
@@ -42,6 +47,7 @@ class SystemMetrics:
     gpu_usage: Optional[float] = None
     npu_usage: Optional[float] = None
 
+
 @dataclass
 class PerformanceAlert:
     alert_id: str
@@ -51,6 +57,7 @@ class PerformanceAlert:
     threshold: float
     recommendation: str
     timestamp: datetime
+
 
 class NPUPerformanceIntelligence:
     """NPU-Accelerated Performance Intelligence Engine"""
@@ -66,12 +73,12 @@ class NPUPerformanceIntelligence:
 
         # Intelligence thresholds
         self.thresholds = {
-            'cpu_usage': 85.0,
-            'memory_usage': 90.0,
-            'disk_usage': 95.0,
-            'temperature': 90.0,
-            'response_time': 1000.0,  # ms
-            'error_rate': 5.0  # %
+            "cpu_usage": 85.0,
+            "memory_usage": 90.0,
+            "disk_usage": 95.0,
+            "temperature": 90.0,
+            "response_time": 1000.0,  # ms
+            "error_rate": 5.0,  # %
         }
 
         # Performance history for ML analysis
@@ -80,10 +87,10 @@ class NPUPerformanceIntelligence:
 
         # Statistics
         self.stats = {
-            'metrics_processed': 0,
-            'alerts_generated': 0,
-            'optimizations_suggested': 0,
-            'npu_acceleration_active': False
+            "metrics_processed": 0,
+            "alerts_generated": 0,
+            "optimizations_suggested": 0,
+            "npu_acceleration_active": False,
         }
 
         # Start background services
@@ -133,16 +140,16 @@ class NPUPerformanceIntelligence:
             memory_usage = memory.percent
 
             # Disk metrics
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_usage = disk.percent
 
             # Network I/O
             network = psutil.net_io_counters()
             network_io = {
-                'bytes_sent': network.bytes_sent,
-                'bytes_recv': network.bytes_recv,
-                'packets_sent': network.packets_sent,
-                'packets_recv': network.packets_recv
+                "bytes_sent": network.bytes_sent,
+                "bytes_recv": network.bytes_recv,
+                "packets_sent": network.packets_sent,
+                "packets_recv": network.packets_recv,
             }
 
             # Temperature (if available)
@@ -161,16 +168,13 @@ class NPUPerformanceIntelligence:
                 network_io=network_io,
                 temperature=temperature,
                 gpu_usage=gpu_usage,
-                npu_usage=npu_usage
+                npu_usage=npu_usage,
             )
 
         except Exception as e:
             print(f"⚠️  Metrics collection error: {e}")
             return SystemMetrics(
-                cpu_usage=0.0,
-                memory_usage=0.0,
-                disk_usage=0.0,
-                network_io={}
+                cpu_usage=0.0, memory_usage=0.0, disk_usage=0.0, network_io={}
             )
 
     def _record_system_metrics(self, metrics: SystemMetrics):
@@ -182,19 +186,19 @@ class NPUPerformanceIntelligence:
 
         # Record individual metrics
         metric_data = [
-            ('cpu_usage', metrics.cpu_usage, '%'),
-            ('memory_usage', metrics.memory_usage, '%'),
-            ('disk_usage', metrics.disk_usage, '%'),
-            ('network_bytes_sent', metrics.network_io.get('bytes_sent', 0), 'bytes'),
-            ('network_bytes_recv', metrics.network_io.get('bytes_recv', 0), 'bytes')
+            ("cpu_usage", metrics.cpu_usage, "%"),
+            ("memory_usage", metrics.memory_usage, "%"),
+            ("disk_usage", metrics.disk_usage, "%"),
+            ("network_bytes_sent", metrics.network_io.get("bytes_sent", 0), "bytes"),
+            ("network_bytes_recv", metrics.network_io.get("bytes_recv", 0), "bytes"),
         ]
 
         if metrics.temperature:
-            metric_data.append(('cpu_temperature', metrics.temperature, '°C'))
+            metric_data.append(("cpu_temperature", metrics.temperature, "°C"))
         if metrics.gpu_usage:
-            metric_data.append(('gpu_usage', metrics.gpu_usage, '%'))
+            metric_data.append(("gpu_usage", metrics.gpu_usage, "%"))
         if metrics.npu_usage:
-            metric_data.append(('npu_usage', metrics.npu_usage, '%'))
+            metric_data.append(("npu_usage", metrics.npu_usage, "%"))
 
         for name, value, unit in metric_data:
             performance_metric = PerformanceMetric(
@@ -205,7 +209,7 @@ class NPUPerformanceIntelligence:
                 agent_name="NPU_PERFORMANCE_INTELLIGENCE",
                 threshold_breached=self._check_threshold(name, value),
                 severity_level=self._calculate_severity(name, value),
-                correlation_id=str(uuid.uuid4())
+                correlation_id=str(uuid.uuid4()),
             )
 
             self.orchestrator.record_performance_metric(performance_metric)
@@ -236,14 +240,16 @@ class NPUPerformanceIntelligence:
                     if len(self.performance_history) > 10000:
                         self.performance_history = self.performance_history[-10000:]
 
-                    self.stats['metrics_processed'] += len(batch)
+                    self.stats["metrics_processed"] += len(batch)
                     batch.clear()
 
             except Exception as e:
                 print(f"❌ Performance analysis error: {e}")
                 time.sleep(1)
 
-    def _npu_analyze_performance(self, metrics_batch: List[SystemMetrics]) -> List[Dict]:
+    def _npu_analyze_performance(
+        self, metrics_batch: List[SystemMetrics]
+    ) -> List[Dict]:
         """NPU-accelerated performance analysis (simulated)"""
         # In production: Use Intel NPU with OpenVINO for ML inference
         # Current: CPU-based analysis with NPU simulation
@@ -253,9 +259,11 @@ class NPUPerformanceIntelligence:
         for metrics in metrics_batch:
             # Performance trend analysis
             trends = {
-                'cpu_trend': self._calculate_trend('cpu_usage', metrics.cpu_usage),
-                'memory_trend': self._calculate_trend('memory_usage', metrics.memory_usage),
-                'disk_trend': self._calculate_trend('disk_usage', metrics.disk_usage)
+                "cpu_trend": self._calculate_trend("cpu_usage", metrics.cpu_usage),
+                "memory_trend": self._calculate_trend(
+                    "memory_usage", metrics.memory_usage
+                ),
+                "disk_trend": self._calculate_trend("disk_usage", metrics.disk_usage),
             }
 
             # Anomaly detection
@@ -265,18 +273,18 @@ class NPUPerformanceIntelligence:
             performance_score = self._calculate_performance_score(metrics)
 
             analysis_result = {
-                'timestamp': datetime.now(),
-                'metrics': metrics,
-                'trends': trends,
-                'anomalies': anomalies,
-                'performance_score': performance_score,
-                'npu_processed': True  # Mark as NPU-processed
+                "timestamp": datetime.now(),
+                "metrics": metrics,
+                "trends": trends,
+                "anomalies": anomalies,
+                "performance_score": performance_score,
+                "npu_processed": True,  # Mark as NPU-processed
             }
 
             analysis_results.append(analysis_result)
 
         # Simulate NPU acceleration benefit
-        self.stats['npu_acceleration_active'] = True
+        self.stats["npu_acceleration_active"] = True
 
         return analysis_results
 
@@ -297,16 +305,16 @@ class NPUPerformanceIntelligence:
                 for anomaly in anomalies:
                     alert = PerformanceAlert(
                         alert_id=str(uuid.uuid4()),
-                        severity=anomaly['severity'],
-                        metric_name=anomaly['metric'],
-                        current_value=anomaly['value'],
-                        threshold=anomaly['threshold'],
-                        recommendation=anomaly['recommendation'],
-                        timestamp=datetime.now()
+                        severity=anomaly["severity"],
+                        metric_name=anomaly["metric"],
+                        current_value=anomaly["value"],
+                        threshold=anomaly["threshold"],
+                        recommendation=anomaly["recommendation"],
+                        timestamp=datetime.now(),
                     )
 
                     self.alert_queue.put(alert)
-                    self.stats['alerts_generated'] += 1
+                    self.stats["alerts_generated"] += 1
 
                 time.sleep(30)  # Anomaly detection every 30 seconds
 
@@ -321,8 +329,12 @@ class NPUPerformanceIntelligence:
         # Simple statistical anomaly detection
         # In production: Use proper ML models with NPU acceleration
 
-        for metric_name in ['cpu_usage', 'memory_usage', 'disk_usage']:
-            values = [d['metrics'].__dict__[metric_name] for d in data if hasattr(d['metrics'], metric_name)]
+        for metric_name in ["cpu_usage", "memory_usage", "disk_usage"]:
+            values = [
+                d["metrics"].__dict__[metric_name]
+                for d in data
+                if hasattr(d["metrics"], metric_name)
+            ]
 
             if len(values) < 10:
                 continue
@@ -333,13 +345,15 @@ class NPUPerformanceIntelligence:
 
             # Detect significant deviations
             if recent_avg > avg * 1.5:  # 50% above average
-                anomalies.append({
-                    'metric': metric_name,
-                    'value': recent_avg,
-                    'threshold': avg * 1.5,
-                    'severity': 'HIGH' if recent_avg > avg * 2 else 'MEDIUM',
-                    'recommendation': f"Investigate {metric_name} spike - {recent_avg:.1f}% (normal: {avg:.1f}%)"
-                })
+                anomalies.append(
+                    {
+                        "metric": metric_name,
+                        "value": recent_avg,
+                        "threshold": avg * 1.5,
+                        "severity": "HIGH" if recent_avg > avg * 2 else "MEDIUM",
+                        "recommendation": f"Investigate {metric_name} spike - {recent_avg:.1f}% (normal: {avg:.1f}%)",
+                    }
+                )
 
         return anomalies
 
@@ -358,7 +372,10 @@ class NPUPerformanceIntelligence:
                         agent_name="NPU_PERFORMANCE_INTELLIGENCE",
                         threshold_breached=True,
                         severity_level=self._severity_to_int(alert.severity),
-                        tags={'alert_id': alert.alert_id, 'recommendation': alert.recommendation}
+                        tags={
+                            "alert_id": alert.alert_id,
+                            "recommendation": alert.recommendation,
+                        },
                     )
 
                     self.orchestrator.record_performance_metric(alert_metric)
@@ -366,7 +383,9 @@ class NPUPerformanceIntelligence:
                 # Print alert for immediate visibility
                 print(f"🚨 PERFORMANCE ALERT [{alert.severity}]:")
                 print(f"   📊 Metric: {alert.metric_name}")
-                print(f"   📈 Value: {alert.current_value:.2f} (threshold: {alert.threshold:.2f})")
+                print(
+                    f"   📈 Value: {alert.current_value:.2f} (threshold: {alert.threshold:.2f})"
+                )
                 print(f"   💡 Recommendation: {alert.recommendation}")
 
             except queue.Empty:
@@ -393,16 +412,16 @@ class NPUPerformanceIntelligence:
                     print(f"   📈 Expected Improvement: {optimization['improvement']}")
                     print(f"   🔧 Action: {optimization['action']}")
 
-                    self.stats['optimizations_suggested'] += 1
+                    self.stats["optimizations_suggested"] += 1
 
                     # Record optimization metric
                     if self.orchestrator:
                         opt_metric = PerformanceMetric(
                             metric_category="performance_optimizations",
                             metric_name=f"optimization_{optimization['target']}",
-                            metric_value=optimization['impact_score'],
+                            metric_value=optimization["impact_score"],
                             agent_name="NPU_PERFORMANCE_INTELLIGENCE",
-                            tags={'recommendation': optimization['action']}
+                            tags={"recommendation": optimization["action"]},
                         )
 
                         self.orchestrator.record_performance_metric(opt_metric)
@@ -417,40 +436,48 @@ class NPUPerformanceIntelligence:
         recent_data = self.performance_history[-50:]
 
         # Analyze CPU usage patterns
-        cpu_values = [d['metrics'].cpu_usage for d in recent_data]
+        cpu_values = [d["metrics"].cpu_usage for d in recent_data]
         avg_cpu = sum(cpu_values) / len(cpu_values) if cpu_values else 0
 
         if avg_cpu > 80:
-            optimizations.append({
-                'target': 'cpu_usage',
-                'improvement': '15-25% CPU reduction',
-                'action': 'Enable CPU affinity optimization and process prioritization',
-                'impact_score': 85.0
-            })
+            optimizations.append(
+                {
+                    "target": "cpu_usage",
+                    "improvement": "15-25% CPU reduction",
+                    "action": "Enable CPU affinity optimization and process prioritization",
+                    "impact_score": 85.0,
+                }
+            )
 
         # Analyze memory usage patterns
-        memory_values = [d['metrics'].memory_usage for d in recent_data]
+        memory_values = [d["metrics"].memory_usage for d in recent_data]
         avg_memory = sum(memory_values) / len(memory_values) if memory_values else 0
 
         if avg_memory > 85:
-            optimizations.append({
-                'target': 'memory_usage',
-                'improvement': '10-20% memory reduction',
-                'action': 'Implement memory pooling and garbage collection optimization',
-                'impact_score': 75.0
-            })
+            optimizations.append(
+                {
+                    "target": "memory_usage",
+                    "improvement": "10-20% memory reduction",
+                    "action": "Implement memory pooling and garbage collection optimization",
+                    "impact_score": 75.0,
+                }
+            )
 
         # NPU utilization optimization
-        npu_values = [d['metrics'].npu_usage for d in recent_data if d['metrics'].npu_usage]
+        npu_values = [
+            d["metrics"].npu_usage for d in recent_data if d["metrics"].npu_usage
+        ]
         if npu_values:
             avg_npu = sum(npu_values) / len(npu_values)
             if avg_npu < 30:
-                optimizations.append({
-                    'target': 'npu_utilization',
-                    'improvement': '200-400% AI performance boost',
-                    'action': 'Migrate AI workloads to NPU acceleration',
-                    'impact_score': 95.0
-                })
+                optimizations.append(
+                    {
+                        "target": "npu_utilization",
+                        "improvement": "200-400% AI performance boost",
+                        "action": "Migrate AI workloads to NPU acceleration",
+                        "impact_score": 95.0,
+                    }
+                )
 
         return optimizations
 
@@ -467,8 +494,12 @@ class NPUPerformanceIntelligence:
                 print(f"   📊 Metrics Processed: {report['metrics_processed']:,}")
                 print(f"   🚨 Alerts Generated: {report['alerts_generated']}")
                 print(f"   💡 Optimizations: {report['optimizations_suggested']}")
-                print(f"   ⚡ NPU Acceleration: {'ACTIVE' if report['npu_active'] else 'INACTIVE'}")
-                print(f"   📈 System Performance: {report['performance_score']:.1f}/100")
+                print(
+                    f"   ⚡ NPU Acceleration: {'ACTIVE' if report['npu_active'] else 'INACTIVE'}"
+                )
+                print(
+                    f"   📈 System Performance: {report['performance_score']:.1f}/100"
+                )
                 print(f"   🎯 Daily Projection: {report['daily_projection']:,} metrics")
 
             except Exception as e:
@@ -478,29 +509,35 @@ class NPUPerformanceIntelligence:
     def _generate_intelligence_report(self) -> Dict[str, Any]:
         """Generate comprehensive intelligence report"""
         # Calculate metrics per hour for daily projection
-        hourly_rate = self.stats['metrics_processed'] / max(1, (time.time() % 3600) / 3600)
+        hourly_rate = self.stats["metrics_processed"] / max(
+            1, (time.time() % 3600) / 3600
+        )
         daily_projection = int(hourly_rate * 24)
 
         # Calculate current performance score
         performance_score = 100.0
         if self.performance_history:
             recent = self.performance_history[-10:]
-            avg_cpu = sum(d['metrics'].cpu_usage for d in recent) / len(recent)
-            avg_memory = sum(d['metrics'].memory_usage for d in recent) / len(recent)
+            avg_cpu = sum(d["metrics"].cpu_usage for d in recent) / len(recent)
+            avg_memory = sum(d["metrics"].memory_usage for d in recent) / len(recent)
 
             # Performance penalty for high resource usage
-            performance_score -= (avg_cpu / 100 * 30)  # CPU impact
-            performance_score -= (avg_memory / 100 * 20)  # Memory impact
+            performance_score -= avg_cpu / 100 * 30  # CPU impact
+            performance_score -= avg_memory / 100 * 20  # Memory impact
             performance_score = max(0, performance_score)
 
         return {
-            'metrics_processed': self.stats['metrics_processed'],
-            'alerts_generated': self.stats['alerts_generated'],
-            'optimizations_suggested': self.stats['optimizations_suggested'],
-            'npu_active': self.stats['npu_acceleration_active'],
-            'performance_score': performance_score,
-            'daily_projection': daily_projection,
-            'system_health': 'EXCELLENT' if performance_score > 90 else 'GOOD' if performance_score > 70 else 'NEEDS_ATTENTION'
+            "metrics_processed": self.stats["metrics_processed"],
+            "alerts_generated": self.stats["alerts_generated"],
+            "optimizations_suggested": self.stats["optimizations_suggested"],
+            "npu_active": self.stats["npu_acceleration_active"],
+            "performance_score": performance_score,
+            "daily_projection": daily_projection,
+            "system_health": (
+                "EXCELLENT"
+                if performance_score > 90
+                else "GOOD" if performance_score > 70 else "NEEDS_ATTENTION"
+            ),
         }
 
     # Utility methods
@@ -510,8 +547,8 @@ class NPUPerformanceIntelligence:
             # Try to get CPU temperature (Linux-specific)
             if hasattr(psutil, "sensors_temperatures"):
                 temps = psutil.sensors_temperatures()
-                if 'coretemp' in temps:
-                    return temps['coretemp'][0].current
+                if "coretemp" in temps:
+                    return temps["coretemp"][0].current
             return None
         except:
             return None
@@ -525,11 +562,12 @@ class NPUPerformanceIntelligence:
         """Get NPU usage (simulated)"""
         # Simulate NPU usage based on AI workload
         import random
-        return random.uniform(10, 60) if self.stats['npu_acceleration_active'] else 0
+
+        return random.uniform(10, 60) if self.stats["npu_acceleration_active"] else 0
 
     def _check_threshold(self, metric_name: str, value: float) -> bool:
         """Check if metric exceeds threshold"""
-        threshold = self.thresholds.get(metric_name, float('inf'))
+        threshold = self.thresholds.get(metric_name, float("inf"))
         return value > threshold
 
     def _calculate_severity(self, metric_name: str, value: float) -> int:
@@ -552,9 +590,9 @@ class NPUPerformanceIntelligence:
             return "STABLE"
 
         recent_values = [
-            d['metrics'].__dict__.get(metric_name, 0)
+            d["metrics"].__dict__.get(metric_name, 0)
             for d in self.performance_history[-10:]
-            if hasattr(d['metrics'], metric_name)
+            if hasattr(d["metrics"], metric_name)
         ]
 
         if len(recent_values) < 5:
@@ -609,12 +647,7 @@ class NPUPerformanceIntelligence:
 
     def _severity_to_int(self, severity: str) -> int:
         """Convert severity string to integer"""
-        severity_map = {
-            'LOW': 2,
-            'MEDIUM': 3,
-            'HIGH': 4,
-            'CRITICAL': 5
-        }
+        severity_map = {"LOW": 2, "MEDIUM": 3, "HIGH": 4, "CRITICAL": 5}
         return severity_map.get(severity, 1)
 
     def get_performance_dashboard(self) -> Dict[str, Any]:
@@ -632,18 +665,18 @@ class NPUPerformanceIntelligence:
                 enterprise_dashboard = self.orchestrator.get_enterprise_dashboard()
 
             dashboard = {
-                'current_metrics': current_metrics,
-                'intelligence_report': intelligence_report,
-                'enterprise_data': enterprise_dashboard,
-                'active_alerts': self.alert_queue.qsize(),
-                'performance_history_size': len(self.performance_history),
-                'npu_acceleration': self.stats['npu_acceleration_active']
+                "current_metrics": current_metrics,
+                "intelligence_report": intelligence_report,
+                "enterprise_data": enterprise_dashboard,
+                "active_alerts": self.alert_queue.qsize(),
+                "performance_history_size": len(self.performance_history),
+                "npu_acceleration": self.stats["npu_acceleration_active"],
             }
 
             return dashboard
 
         except Exception as e:
-            return {'error': f"Dashboard generation failed: {e}"}
+            return {"error": f"Dashboard generation failed: {e}"}
 
     def shutdown(self):
         """Graceful shutdown of NPU performance intelligence"""
@@ -659,8 +692,10 @@ class NPUPerformanceIntelligence:
         self.executor.shutdown(wait=True)
         print("✅ NPU Performance Intelligence shutdown complete")
 
+
 # Global NPU intelligence instance
 npu_intelligence = None
+
 
 def initialize_npu_intelligence():
     """Initialize NPU performance intelligence system"""
@@ -671,6 +706,7 @@ def initialize_npu_intelligence():
     except Exception as e:
         print(f"❌ Failed to initialize NPU intelligence: {e}")
         return None
+
 
 if __name__ == "__main__":
     # NPU Performance Intelligence demonstration
@@ -689,7 +725,9 @@ if __name__ == "__main__":
             # Show performance dashboard
             dashboard = intelligence.get_performance_dashboard()
             print(f"\n📈 PERFORMANCE DASHBOARD:")
-            print(f"   🎯 Intelligence Report: {dashboard.get('intelligence_report', {})}")
+            print(
+                f"   🎯 Intelligence Report: {dashboard.get('intelligence_report', {})}"
+            )
             print(f"   🚨 Active Alerts: {dashboard.get('active_alerts', 0)}")
             print(f"   📊 History Size: {dashboard.get('performance_history_size', 0)}")
             print(f"   ⚡ NPU Active: {dashboard.get('npu_acceleration', False)}")

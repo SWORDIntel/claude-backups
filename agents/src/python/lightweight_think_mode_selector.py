@@ -17,35 +17,41 @@ Copyright (C) 2025 Claude-Backups Framework
 License: MIT
 """
 
+import hashlib
+import json
+import logging
 import os
+import re
 import sys
 import time
-import json
-import re
-import hashlib
-import logging
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
 
 class ThinkModeDecision(Enum):
     """Think mode decision options"""
+
     NO_THINKING = "no_thinking"
     INTERLEAVED = "interleaved"
     AUTO = "auto"
 
+
 class TaskComplexity(Enum):
     """Task complexity levels"""
+
     TRIVIAL = 1
     SIMPLE = 2
     MODERATE = 3
     COMPLEX = 4
     ULTRACOMPLEX = 5
 
+
 @dataclass
 class ThinkModeAnalysis:
     """Think mode analysis result"""
+
     decision: ThinkModeDecision
     complexity_score: float
     confidence: float
@@ -53,31 +59,32 @@ class ThinkModeAnalysis:
     processing_time_ms: float
     agent_recommendations: List[str] = field(default_factory=list)
 
+
 class LightweightComplexityAnalyzer:
     """Lightweight complexity analysis without external dependencies"""
 
     def __init__(self):
         self.complexity_patterns = {
-            'technical_terms': [
-                r'\\b(algorithm|implementation|architecture|system|framework)\\b',
-                r'\\b(integration|coordination|optimization|performance)\\b',
-                r'\\b(security|compliance|validation|testing)\\b',
-                r'\\b(database|API|protocol|interface|driver)\\b'
+            "technical_terms": [
+                r"\\b(algorithm|implementation|architecture|system|framework)\\b",
+                r"\\b(integration|coordination|optimization|performance)\\b",
+                r"\\b(security|compliance|validation|testing)\\b",
+                r"\\b(database|API|protocol|interface|driver)\\b",
             ],
-            'multi_step': [
-                r'\\b(first|then|next|after|finally)\\b',
-                r'\\b(step \\d+|phase \\d+|part \\d+)\\b',
-                r'\\b(multiple|several|various|different)\\b'
+            "multi_step": [
+                r"\\b(first|then|next|after|finally)\\b",
+                r"\\b(step \\d+|phase \\d+|part \\d+)\\b",
+                r"\\b(multiple|several|various|different)\\b",
             ],
-            'agent_coordination': [
-                r'\\b(agent|coordinate|orchestrate|collaborate)\\b',
-                r'\\b(multi-agent|agent coordination|parallel|concurrent)\\b'
+            "agent_coordination": [
+                r"\\b(agent|coordinate|orchestrate|collaborate)\\b",
+                r"\\b(multi-agent|agent coordination|parallel|concurrent)\\b",
             ],
-            'complexity_indicators': [
-                r'\\b(complex|complicated|difficult|challenging)\\b',
-                r'\\b(design|plan|strategy|analysis|evaluation)\\b',
-                r'\\b(comprehensive|detailed|thorough|extensive)\\b'
-            ]
+            "complexity_indicators": [
+                r"\\b(complex|complicated|difficult|challenging)\\b",
+                r"\\b(design|plan|strategy|analysis|evaluation)\\b",
+                r"\\b(comprehensive|detailed|thorough|extensive)\\b",
+            ],
         }
 
     def analyze_task_complexity(self, task_text: str) -> float:
@@ -103,23 +110,24 @@ class LightweightComplexityAnalyzer:
                 matches += len(re.findall(pattern, text_lower))
 
             # Weight different categories
-            if category == 'technical_terms':
+            if category == "technical_terms":
                 complexity_score += min(matches * 0.05, 0.3)
-            elif category == 'multi_step':
+            elif category == "multi_step":
                 complexity_score += min(matches * 0.1, 0.25)
-            elif category == 'agent_coordination':
+            elif category == "agent_coordination":
                 complexity_score += min(matches * 0.15, 0.3)
-            elif category == 'complexity_indicators':
+            elif category == "complexity_indicators":
                 complexity_score += min(matches * 0.08, 0.2)
 
         # Question complexity
-        question_count = task_text.count('?')
+        question_count = task_text.count("?")
         if question_count > 3:
             complexity_score += 0.2
         elif question_count > 1:
             complexity_score += 0.1
 
         return min(complexity_score, 1.0)
+
 
 class LightweightThinkModeSelector:
     """Lightweight think mode selector with no external dependencies"""
@@ -128,10 +136,10 @@ class LightweightThinkModeSelector:
         self.logger = self._setup_logging()
         self.analyzer = LightweightComplexityAnalyzer()
         self.config = {
-            'complexity_threshold': 0.5,
-            'min_word_count_for_thinking': 10,  # Lowered from 30 to 10
-            'cache_enabled': True,
-            'cache_ttl_seconds': 300
+            "complexity_threshold": 0.5,
+            "min_word_count_for_thinking": 10,  # Lowered from 30 to 10
+            "cache_enabled": True,
+            "cache_ttl_seconds": 300,
         }
         self.decision_cache = {}
 
@@ -141,7 +149,7 @@ class LightweightThinkModeSelector:
         logger.setLevel(logging.INFO)
 
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(message)s')
+        formatter = logging.Formatter("%(asctime)s | %(levelname)-8s | %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
@@ -152,33 +160,39 @@ class LightweightThinkModeSelector:
         start_time = time.time()
 
         # Quick bypass for very short tasks
-        if len(task_text.split()) < self.config['min_word_count_for_thinking']:
+        if len(task_text.split()) < self.config["min_word_count_for_thinking"]:
             return ThinkModeAnalysis(
                 decision=ThinkModeDecision.NO_THINKING,
                 complexity_score=0.1,
                 confidence=0.9,
                 reasoning="Task too short for thinking mode",
-                processing_time_ms=(time.time() - start_time) * 1000
+                processing_time_ms=(time.time() - start_time) * 1000,
             )
 
         # Analyze complexity
         complexity_score = self.analyzer.analyze_task_complexity(task_text)
 
         # Determine decision
-        if complexity_score >= self.config['complexity_threshold']:
+        if complexity_score >= self.config["complexity_threshold"]:
             decision = ThinkModeDecision.INTERLEAVED
             confidence = min(complexity_score * 1.2, 1.0)
-            reasoning = f"High complexity ({complexity_score:.3f}) requires thinking mode"
+            reasoning = (
+                f"High complexity ({complexity_score:.3f}) requires thinking mode"
+            )
         else:
             decision = ThinkModeDecision.NO_THINKING
             confidence = 1.0 - complexity_score
-            reasoning = f"Low complexity ({complexity_score:.3f}) - direct response sufficient"
+            reasoning = (
+                f"Low complexity ({complexity_score:.3f}) - direct response sufficient"
+            )
 
         # Agent recommendations
         agent_recommendations = self._get_agent_recommendations(task_text)
         if agent_recommendations:
             decision = ThinkModeDecision.INTERLEAVED
-            reasoning += f" + Multi-agent coordination: {', '.join(agent_recommendations[:3])}"
+            reasoning += (
+                f" + Multi-agent coordination: {', '.join(agent_recommendations[:3])}"
+            )
 
         processing_time = (time.time() - start_time) * 1000
 
@@ -188,7 +202,7 @@ class LightweightThinkModeSelector:
             confidence=confidence,
             reasoning=reasoning,
             processing_time_ms=processing_time,
-            agent_recommendations=agent_recommendations
+            agent_recommendations=agent_recommendations,
         )
 
     def _get_agent_recommendations(self, task_text: str) -> List[str]:
@@ -197,12 +211,12 @@ class LightweightThinkModeSelector:
         recommendations = []
 
         agent_patterns = {
-            'security': ['security', 'vulnerability', 'audit', 'compliance'],
-            'architecture': ['design', 'architecture', 'system', 'framework'],
-            'performance': ['optimize', 'performance', 'speed', 'latency'],
-            'documentation': ['document', 'guide', 'manual', 'help'],
-            'testing': ['test', 'validate', 'verify', 'quality'],
-            'deployment': ['deploy', 'install', 'configure', 'setup']
+            "security": ["security", "vulnerability", "audit", "compliance"],
+            "architecture": ["design", "architecture", "system", "framework"],
+            "performance": ["optimize", "performance", "speed", "latency"],
+            "documentation": ["document", "guide", "manual", "help"],
+            "testing": ["test", "validate", "verify", "quality"],
+            "deployment": ["deploy", "install", "configure", "setup"],
         }
 
         for agent, keywords in agent_patterns.items():
@@ -216,23 +230,24 @@ class LightweightThinkModeSelector:
         analysis = self.analyze_and_decide(task_text)
 
         return {
-            'think_mode': analysis.decision.value,
-            'complexity_score': analysis.complexity_score,
-            'confidence': analysis.confidence,
-            'reasoning': analysis.reasoning,
-            'processing_time_ms': analysis.processing_time_ms,
-            'agent_recommendations': analysis.agent_recommendations,
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'system': 'lightweight_think_mode_selector',
-            'version': '1.0.0'
+            "think_mode": analysis.decision.value,
+            "complexity_score": analysis.complexity_score,
+            "confidence": analysis.confidence,
+            "reasoning": analysis.reasoning,
+            "processing_time_ms": analysis.processing_time_ms,
+            "agent_recommendations": analysis.agent_recommendations,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "system": "lightweight_think_mode_selector",
+            "version": "1.0.0",
         }
+
 
 def main():
     """Test execution with sample tasks"""
-    print("="*80)
+    print("=" * 80)
     print("Lightweight Dynamic Think Mode Selection System")
     print("Claude Code Integration - No External Dependencies")
-    print("="*80)
+    print("=" * 80)
 
     selector = LightweightThinkModeSelector()
 
@@ -242,7 +257,7 @@ def main():
         "Help me debug this Python function.",
         "Design a comprehensive microservices architecture with security, performance monitoring, and multi-agent coordination for a banking system.",
         "Create documentation for the API.",
-        "Coordinate multiple agents to implement a complex distributed system with real-time monitoring, security hardening, and cross-platform deployment."
+        "Coordinate multiple agents to implement a complex distributed system with real-time monitoring, security hardening, and cross-platform deployment.",
     ]
 
     print("\\n📊 Testing Think Mode Decisions:")
@@ -267,6 +282,7 @@ def main():
 
     print(f"\\n✅ Lightweight Think Mode Selection System: OPERATIONAL")
     print(f"🚀 Ready for Claude Code integration without external dependencies")
+
 
 if __name__ == "__main__":
     main()

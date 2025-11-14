@@ -4,20 +4,24 @@ Unified Agent Bridge System
 Consolidates all bridge functionality into one clean module
 """
 
-import os
-import sys
-import json
-import socket
 import asyncio
-import time
+import json
+import os
+import socket
 import subprocess
-from pathlib import Path
-from typing import Dict, Any, Optional, List
+import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Import from local enhanced modules (same directory now)
-from ENHANCED_AGENT_INTEGRATION import EnhancedAgentMessage, EnhancedAgentOrchestrator, Priority
+from ENHANCED_AGENT_INTEGRATION import (
+    EnhancedAgentMessage,
+    EnhancedAgentOrchestrator,
+    Priority,
+)
 
 # ============================================================================
 # CONFIGURATION

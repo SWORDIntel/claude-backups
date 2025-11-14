@@ -11,11 +11,12 @@ Usage:
     agents_to_invoke = result.get_priority_agents()
 """
 
-import os
 import logging
-from typing import Dict, List, Set, Optional, Any
+import os
 from dataclasses import dataclass
-from trie_keyword_matcher import TrieKeywordMatcher, MatchResult
+from typing import Any, Dict, List, Optional, Set
+
+from trie_keyword_matcher import MatchResult, TrieKeywordMatcher
 
 logger = logging.getLogger(__name__)
 

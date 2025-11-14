@@ -8,8 +8,9 @@ launcher-*.log
 # Node modules (if installed locally)
 node_modules/
 
-# Claude Code binaries
+# Claude Code binaries and runtime
 claude-code
+.claude/
 
 # Temporary files
 *.tmp
@@ -90,17 +91,6 @@ hook_profile.stats
 *.backup
 *.pre-security
 *~backup
-# Runtime artifacts
-venv/
-*.stats
-*.log
-agents/runtime/status.json
-config/shell-snapshots/
-config/todos/
-database/data/postgresql/
-*.backup
-*pre-security
-
 
 # PostgreSQL Docker data - track exports only
 database/data/postgresql/
@@ -115,11 +105,6 @@ config/projects/
 core.*
 *.iso
 *.img
-__pycache__/
-*.pyc
-*.pyo
-*.log
-*.tmp
 
 # Rust build artifacts
 target/

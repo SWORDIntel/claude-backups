@@ -10,8 +10,6 @@ from typing import (
     type_check_only,
 )
 
-from typing_extensions import deprecated
-
 import numpy as np
 from numpy import (
     _CastingKind,
@@ -37,6 +35,7 @@ from numpy._typing import (
     _ArrayLikeUInt_co,
     _ShapeLike,
 )
+from typing_extensions import deprecated
 
 __all__ = [
     "column_stack",

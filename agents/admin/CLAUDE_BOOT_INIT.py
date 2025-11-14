@@ -4,11 +4,12 @@ CLAUDE BOOT INITIALIZATION - Auto-load agents on every Claude Code boot
 Makes all agents available immediately when Claude Code starts
 """
 
-import os
-import sys
 import json
+import os
 import subprocess
+import sys
 from pathlib import Path
+
 
 class ClaudeBootInitializer:
     """Initializes agent system on every Claude Code boot"""

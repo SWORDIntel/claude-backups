@@ -10,12 +10,13 @@ actionable recommendations for achieving the 3.8x target improvement.
 
 import json
 import os
+import subprocess
 import sys
 import time
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-import subprocess
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import matplotlib
 
 # Add project root to Python path for imports
@@ -24,8 +25,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available
@@ -49,6 +54,7 @@ except ImportError:
 matplotlib.use('Agg')  # Use non-GUI backend
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 @dataclass
 class PerformanceAnalysis:

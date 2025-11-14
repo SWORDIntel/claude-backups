@@ -4,22 +4,25 @@ Learning System Diagnostic Tool
 Comprehensive health check for the Claude Agent Learning System
 """
 
-import subprocess
 import json
+import os
+import subprocess
 import sys
 from datetime import datetime, timedelta
-import os
+
 
 def run_command(cmd, description=""):
     """Run a command and return result"""
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, timeout=30
+        )
         return {
             "success": result.returncode == 0,
             "stdout": result.stdout.strip(),
             "stderr": result.stderr.strip(),
             "command": cmd,
-            "description": description
+            "description": description,
         }
     except subprocess.TimeoutExpired:
         return {
@@ -27,7 +30,7 @@ def run_command(cmd, description=""):
             "stdout": "",
             "stderr": "Command timed out",
             "command": cmd,
-            "description": description
+            "description": description,
         }
     except Exception as e:
         return {
@@ -35,8 +38,9 @@ def run_command(cmd, description=""):
             "stdout": "",
             "stderr": str(e),
             "command": cmd,
-            "description": description
+            "description": description,
         }
+
 
 def check_docker_status():
     """Check PostgreSQL Docker container status"""
@@ -53,7 +57,10 @@ def check_docker_status():
         return False
 
     # Check container health
-    result = run_command("docker inspect claude-postgres --format='{{.State.Health.Status}}'", "Check health")
+    result = run_command(
+        "docker inspect claude-postgres --format='{{.State.Health.Status}}'",
+        "Check health",
+    )
     if result["success"] and "healthy" in result["stdout"]:
         print("✅ Container health: HEALTHY")
     else:
@@ -68,6 +75,7 @@ def check_docker_status():
     print()
     return True
 
+
 def check_database_connection():
     """Check database connectivity and basic structure"""
     print("🗄️  DATABASE CONNECTION & STRUCTURE")
@@ -76,11 +84,15 @@ def check_database_connection():
     # Test basic connection
     result = run_command(
         "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c 'SELECT version();'",
-        "Test database connection"
+        "Test database connection",
     )
     if result["success"]:
         print("✅ Database connection successful")
-        version_line = result["stdout"].split('\n')[2] if len(result["stdout"].split('\n')) > 2 else result["stdout"]
+        version_line = (
+            result["stdout"].split("\n")[2]
+            if len(result["stdout"].split("\n")) > 2
+            else result["stdout"]
+        )
         print(f"   {version_line}")
     else:
         print("❌ Database connection failed")
@@ -90,7 +102,7 @@ def check_database_connection():
     # Check learning schema exists
     result = run_command(
         "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c \"SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'enhanced_learning';\"",
-        "Check learning schema"
+        "Check learning schema",
     )
     if result["success"] and "enhanced_learning" in result["stdout"]:
         print("✅ enhanced_learning schema exists")
@@ -100,15 +112,15 @@ def check_database_connection():
 
     # Check tables exist
     result = run_command(
-        "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c \"\\dt enhanced_learning.*\"",
-        "Check learning tables"
+        'docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c "\\dt enhanced_learning.*"',
+        "Check learning tables",
     )
     if result["success"]:
         print("✅ Learning tables found:")
-        lines = result["stdout"].split('\n')
+        lines = result["stdout"].split("\n")
         for line in lines:
-            if '|' in line and 'table' in line:
-                parts = [p.strip() for p in line.split('|')]
+            if "|" in line and "table" in line:
+                parts = [p.strip() for p in line.split("|")]
                 if len(parts) >= 2:
                     print(f"   - {parts[1]}")
     else:
@@ -117,6 +129,7 @@ def check_database_connection():
     print()
     return True
 
+
 def check_learning_data():
     """Check learning data and recent activity"""
     print("📊 LEARNING DATA STATUS")
@@ -124,8 +137,8 @@ def check_learning_data():
 
     # Check agent_metrics records
     result = run_command(
-        "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c \"SELECT COUNT(*) FROM enhanced_learning.agent_metrics;\"",
-        "Count agent metrics"
+        'docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SELECT COUNT(*) FROM enhanced_learning.agent_metrics;"',
+        "Count agent metrics",
     )
     if result["success"]:
         count = result["stdout"].strip()
@@ -137,8 +150,8 @@ def check_learning_data():
 
     # Check learning_analytics records
     result = run_command(
-        "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c \"SELECT COUNT(*) FROM enhanced_learning.learning_analytics;\"",
-        "Count learning analytics"
+        'docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SELECT COUNT(*) FROM enhanced_learning.learning_analytics;"',
+        "Count learning analytics",
     )
     if result["success"]:
         count = result["stdout"].strip()
@@ -147,7 +160,7 @@ def check_learning_data():
     # Check recent activity (last 24 hours)
     result = run_command(
         "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c \"SELECT COUNT(*) FROM enhanced_learning.agent_metrics WHERE timestamp > NOW() - INTERVAL '24 hours';\"",
-        "Recent activity check"
+        "Recent activity check",
     )
     if result["success"]:
         count = result["stdout"].strip()
@@ -159,8 +172,8 @@ def check_learning_data():
 
     # Check unique agents
     result = run_command(
-        "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c \"SELECT COUNT(DISTINCT agent_name) FROM enhanced_learning.agent_metrics;\"",
-        "Unique agents check"
+        'docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SELECT COUNT(DISTINCT agent_name) FROM enhanced_learning.agent_metrics;"',
+        "Unique agents check",
     )
     if result["success"]:
         count = result["stdout"].strip()
@@ -168,28 +181,29 @@ def check_learning_data():
 
     print()
 
+
 def check_extensions():
     """Check PostgreSQL extensions"""
     print("🔌 DATABASE EXTENSIONS")
     print("=" * 50)
 
     result = run_command(
-        "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c \"SELECT extname, extversion FROM pg_extension;\"",
-        "List extensions"
+        'docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c "SELECT extname, extversion FROM pg_extension;"',
+        "List extensions",
     )
     if result["success"]:
         print("✅ Installed extensions:")
-        lines = result["stdout"].split('\n')
+        lines = result["stdout"].split("\n")
         for line in lines:
-            if '|' in line and not line.startswith('-') and 'extname' not in line:
-                parts = [p.strip() for p in line.split('|')]
+            if "|" in line and not line.startswith("-") and "extname" not in line:
+                parts = [p.strip() for p in line.split("|")]
                 if len(parts) >= 2 and parts[0]:
                     print(f"   - {parts[0]} (v{parts[1]})")
 
     # Specifically check for pgvector
     result = run_command(
         "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c \"SELECT extname FROM pg_extension WHERE extname = 'vector';\"",
-        "Check pgvector"
+        "Check pgvector",
     )
     if result["success"] and "vector" in result["stdout"]:
         print("✅ pgvector extension available")
@@ -197,6 +211,7 @@ def check_extensions():
         print("❌ pgvector extension missing")
 
     print()
+
 
 def check_learning_scripts():
     """Check learning system scripts availability"""
@@ -208,7 +223,7 @@ def check_learning_scripts():
         "agents/src/python/advanced_learning_analytics.py",
         "agents/src/python/learning_orchestrator_bridge.py",
         "agents/src/python/claude_agents/cli/learning_cli.py",
-        "agents/src/python/enhanced_learning_collector.py"
+        "agents/src/python/enhanced_learning_collector.py",
     ]
 
     for script in scripts_to_check:
@@ -219,17 +234,13 @@ def check_learning_scripts():
 
     print()
 
+
 def check_environment():
     """Check environment variables and configuration"""
     print("🌐 ENVIRONMENT CONFIGURATION")
     print("=" * 50)
 
-    env_vars = [
-        "POSTGRES_PORT",
-        "POSTGRES_DB",
-        "POSTGRES_USER",
-        "POSTGRES_PASSWORD"
-    ]
+    env_vars = ["POSTGRES_PORT", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"]
 
     for var in env_vars:
         value = os.environ.get(var)
@@ -242,6 +253,7 @@ def check_environment():
 
     print()
 
+
 def generate_summary():
     """Generate overall system health summary"""
     print("📋 SYSTEM HEALTH SUMMARY")
@@ -249,12 +261,15 @@ def generate_summary():
 
     # Quick health indicators
     docker_ok = run_command("docker ps | grep claude-postgres", "")["success"]
-    db_ok = run_command("docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c 'SELECT 1;'", "")["success"]
+    db_ok = run_command(
+        "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -c 'SELECT 1;'",
+        "",
+    )["success"]
 
     # Data presence
     data_result = run_command(
-        "docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c \"SELECT COUNT(*) FROM enhanced_learning.agent_metrics;\"",
-        ""
+        'docker exec claude-postgres psql -U claude_agent -d claude_agents_auth -t -c "SELECT COUNT(*) FROM enhanced_learning.agent_metrics;"',
+        "",
     )
     has_data = data_result["success"] and int(data_result["stdout"].strip()) > 0
 
@@ -265,12 +280,15 @@ def generate_summary():
     if docker_ok and db_ok:
         print("\n🎉 Learning system is operational!")
         if not has_data:
-            print("💡 Tip: No learning data yet. Use agents to start collecting metrics.")
+            print(
+                "💡 Tip: No learning data yet. Use agents to start collecting metrics."
+            )
     else:
         print("\n⚠️  Learning system needs attention!")
         print("💡 Try: docker-compose up -d postgres")
 
     print()
+
 
 def main():
     """Main diagnostic routine"""
@@ -294,6 +312,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Diagnostic failed with error: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

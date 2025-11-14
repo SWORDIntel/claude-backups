@@ -6,63 +6,80 @@ Extends the base coordination matrix with 50K+ ops/sec capability
 """
 
 import asyncio
-import asyncpg
+import concurrent.futures
 import json
 import logging
-import numpy as np
-import time
-from typing import Dict, List, Set, Tuple, Optional, Any, Union
-from dataclasses import dataclass, field
-from enum import Enum
-from datetime import datetime, timedelta
-import uuid
-import concurrent.futures
-from pathlib import Path
 import sys
+import time
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+import asyncpg
+import numpy as np
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
     from agent_coordination_matrix import (
-        AgentCoordinationMatrix, ExecutionMode, AgentCapability,
-        AgentSpec, CoordinationPlan
+        AgentCapability,
+        AgentCoordinationMatrix,
+        AgentSpec,
+        CoordinationPlan,
+        ExecutionMode,
     )
+
     from agents.src.python.npu_coordination_bridge import (
-        NPUCoordinationBridge, NPUWorkflowTask, WorkflowPriority, NPUAgentScore
+        NPUAgentScore,
+        NPUCoordinationBridge,
+        NPUWorkflowTask,
+        WorkflowPriority,
     )
 except ImportError as e:
     logging.warning(f"Import error: {e}. Some features may be limited.")
 
 try:
     import openvino as ov
+
     OPENVINO_AVAILABLE = True
 except ImportError:
     OPENVINO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
+
 class WorkflowComplexity(Enum):
     """Workflow complexity levels for optimization"""
-    SIMPLE = "simple"           # Single agent, <1K ops
-    MODERATE = "moderate"       # 2-3 agents, <5K ops
-    COMPLEX = "complex"         # 4-6 agents, <15K ops
-    ENTERPRISE = "enterprise"   # 7+ agents, <50K ops
-    MASSIVE = "massive"         # 10+ agents, 50K+ ops
+
+    SIMPLE = "simple"  # Single agent, <1K ops
+    MODERATE = "moderate"  # 2-3 agents, <5K ops
+    COMPLEX = "complex"  # 4-6 agents, <15K ops
+    ENTERPRISE = "enterprise"  # 7+ agents, <50K ops
+    MASSIVE = "massive"  # 10+ agents, 50K+ ops
+
 
 class OptimizationStrategy(Enum):
     """NPU optimization strategies"""
-    LATENCY_OPTIMIZED = "latency"        # Minimize response time
+
+    LATENCY_OPTIMIZED = "latency"  # Minimize response time
     THROUGHPUT_OPTIMIZED = "throughput"  # Maximize ops/sec
-    RESOURCE_BALANCED = "balanced"       # Balance latency and throughput
-    QUALITY_FOCUSED = "quality"          # Prioritize result quality
-    COST_OPTIMIZED = "cost"             # Minimize resource usage
+    RESOURCE_BALANCED = "balanced"  # Balance latency and throughput
+    QUALITY_FOCUSED = "quality"  # Prioritize result quality
+    COST_OPTIMIZED = "cost"  # Minimize resource usage
+
 
 @dataclass
 class EnhancedCoordinationPlan(CoordinationPlan):
     """Enhanced coordination plan with NPU optimizations"""
+
     complexity: WorkflowComplexity = WorkflowComplexity.MODERATE
-    optimization_strategy: OptimizationStrategy = OptimizationStrategy.THROUGHPUT_OPTIMIZED
+    optimization_strategy: OptimizationStrategy = (
+        OptimizationStrategy.THROUGHPUT_OPTIMIZED
+    )
     npu_accelerated: bool = False
     parallel_efficiency: float = 0.85
     resource_requirements: Dict[str, float] = field(default_factory=dict)
@@ -70,9 +87,11 @@ class EnhancedCoordinationPlan(CoordinationPlan):
     pipeline_stages: List[List[str]] = field(default_factory=list)
     expected_throughput_ops_sec: float = 0.0
 
+
 @dataclass
 class ExecutionMetrics:
     """Comprehensive execution metrics"""
+
     start_time: datetime
     end_time: Optional[datetime] = None
     agents_executed: List[str] = field(default_factory=list)
@@ -83,6 +102,7 @@ class ExecutionMetrics:
     peak_throughput_ops_sec: float = 0.0
     avg_latency_ms: float = 0.0
     resource_utilization: Dict[str, float] = field(default_factory=dict)
+
 
 class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
     """Enhanced coordination matrix with NPU acceleration and advanced parallel execution"""
@@ -160,20 +180,20 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
                 max_concurrent_tasks=self._estimate_max_concurrent(agent_name),
                 npu_compatible=self._is_npu_compatible(agent_name),
                 resource_requirements=self._estimate_resources(agent_name),
-                throughput_capacity=self._estimate_throughput(agent_name)
+                throughput_capacity=self._estimate_throughput(agent_name),
             )
             self.enhanced_agent_registry[agent_name] = enhanced_spec
 
     def _estimate_max_concurrent(self, agent_name: str) -> int:
         """Estimate maximum concurrent tasks for agent"""
         # Strategic agents can handle more coordination
-        if any(word in agent_name.lower() for word in ['director', 'orchestrator']):
+        if any(word in agent_name.lower() for word in ["director", "orchestrator"]):
             return 10
         # Security agents need focused attention
-        elif 'security' in agent_name.lower():
+        elif "security" in agent_name.lower():
             return 3
         # Development agents vary by complexity
-        elif any(word in agent_name.lower() for word in ['debug', 'test', 'patch']):
+        elif any(word in agent_name.lower() for word in ["debug", "test", "patch"]):
             return 5
         else:
             return 2
@@ -182,8 +202,14 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
         """Determine if agent can benefit from NPU acceleration"""
         # Agents that do pattern recognition, analysis, or selection benefit from NPU
         npu_beneficial = [
-            'security', 'audit', 'analyze', 'optimizer', 'architect',
-            'selector', 'monitor', 'intelligence'
+            "security",
+            "audit",
+            "analyze",
+            "optimizer",
+            "architect",
+            "selector",
+            "monitor",
+            "intelligence",
         ]
         return any(word in agent_name.lower() for word in npu_beneficial)
 
@@ -193,32 +219,34 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
         base_memory = 100  # 100MB baseline
 
         # Adjust based on agent type
-        if 'architect' in agent_name.lower():
-            return {'cpu': base_cpu * 2, 'memory': base_memory * 3}
-        elif 'security' in agent_name.lower():
-            return {'cpu': base_cpu * 1.5, 'memory': base_memory * 2}
-        elif 'debug' in agent_name.lower():
-            return {'cpu': base_cpu * 1.2, 'memory': base_memory * 1.5}
+        if "architect" in agent_name.lower():
+            return {"cpu": base_cpu * 2, "memory": base_memory * 3}
+        elif "security" in agent_name.lower():
+            return {"cpu": base_cpu * 1.5, "memory": base_memory * 2}
+        elif "debug" in agent_name.lower():
+            return {"cpu": base_cpu * 1.2, "memory": base_memory * 1.5}
         else:
-            return {'cpu': base_cpu, 'memory': base_memory}
+            return {"cpu": base_cpu, "memory": base_memory}
 
     def _estimate_throughput(self, agent_name: str) -> float:
         """Estimate agent throughput capacity in ops/sec"""
         # Base throughput estimates
-        if any(word in agent_name.lower() for word in ['director', 'orchestrator']):
+        if any(word in agent_name.lower() for word in ["director", "orchestrator"]):
             return 1000.0  # High coordination throughput
-        elif 'security' in agent_name.lower():
-            return 500.0   # Moderate security analysis throughput
-        elif any(word in agent_name.lower() for word in ['debug', 'test']):
-            return 200.0   # Lower throughput for detailed analysis
+        elif "security" in agent_name.lower():
+            return 500.0  # Moderate security analysis throughput
+        elif any(word in agent_name.lower() for word in ["debug", "test"]):
+            return 200.0  # Lower throughput for detailed analysis
         else:
-            return 300.0   # Default throughput
+            return 300.0  # Default throughput
 
-    async def create_enhanced_coordination_plan(self,
-                                              task_description: str,
-                                              execution_mode: ExecutionMode = ExecutionMode.PARALLEL,
-                                              optimization_strategy: OptimizationStrategy = OptimizationStrategy.THROUGHPUT_OPTIMIZED,
-                                              max_agents: int = 8) -> EnhancedCoordinationPlan:
+    async def create_enhanced_coordination_plan(
+        self,
+        task_description: str,
+        execution_mode: ExecutionMode = ExecutionMode.PARALLEL,
+        optimization_strategy: OptimizationStrategy = OptimizationStrategy.THROUGHPUT_OPTIMIZED,
+        max_agents: int = 8,
+    ) -> EnhancedCoordinationPlan:
         """Create enhanced coordination plan with NPU optimization"""
 
         # Analyze task complexity
@@ -234,9 +262,7 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
                 required_capabilities = self.analyze_task_requirements(task_description)
 
                 npu_plan = await self.npu_bridge.create_npu_optimized_workflow(
-                    task_description,
-                    WorkflowPriority.NORMAL,
-                    execution_mode
+                    task_description, WorkflowPriority.NORMAL, execution_mode
                 )
 
                 # Use NPU-selected agents
@@ -281,7 +307,7 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
             resource_requirements=resource_requirements,
             dependency_graph=dependency_graph,
             pipeline_stages=pipeline_stages,
-            expected_throughput_ops_sec=expected_throughput
+            expected_throughput_ops_sec=expected_throughput,
         )
 
         # Store active workflow
@@ -296,8 +322,20 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
         # Count complexity indicators
         complexity_indicators = [
             len(task_description.split()),  # Word count
-            len([word for word in task_lower.split() if word in ['and', 'then', 'also', 'plus']]),  # Coordination words
-            len([word for word in task_lower.split() if word in ['secure', 'test', 'deploy', 'monitor']]),  # Multi-domain
+            len(
+                [
+                    word
+                    for word in task_lower.split()
+                    if word in ["and", "then", "also", "plus"]
+                ]
+            ),  # Coordination words
+            len(
+                [
+                    word
+                    for word in task_lower.split()
+                    if word in ["secure", "test", "deploy", "monitor"]
+                ]
+            ),  # Multi-domain
         ]
 
         total_complexity = sum(complexity_indicators)
@@ -321,24 +359,26 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
             deps = []
 
             # Strategic dependencies
-            if agent in ['DIRECTOR', 'PROJECTORCHESTRATOR']:
+            if agent in ["DIRECTOR", "PROJECTORCHESTRATOR"]:
                 deps = []  # Coordinators have no dependencies
-            elif 'ARCHITECT' in agent:
-                deps = ['DIRECTOR']  # Architect depends on direction
-            elif any(word in agent for word in ['CONSTRUCTOR', 'PATCHER']):
-                deps = ['ARCHITECT']  # Implementation depends on architecture
-            elif any(word in agent for word in ['TESTBED', 'DEBUGGER']):
-                deps = ['CONSTRUCTOR', 'PATCHER']  # Testing depends on implementation
-            elif 'DEPLOYER' in agent:
-                deps = ['TESTBED']  # Deployment depends on testing
-            elif 'MONITOR' in agent:
-                deps = ['DEPLOYER']  # Monitoring depends on deployment
+            elif "ARCHITECT" in agent:
+                deps = ["DIRECTOR"]  # Architect depends on direction
+            elif any(word in agent for word in ["CONSTRUCTOR", "PATCHER"]):
+                deps = ["ARCHITECT"]  # Implementation depends on architecture
+            elif any(word in agent for word in ["TESTBED", "DEBUGGER"]):
+                deps = ["CONSTRUCTOR", "PATCHER"]  # Testing depends on implementation
+            elif "DEPLOYER" in agent:
+                deps = ["TESTBED"]  # Deployment depends on testing
+            elif "MONITOR" in agent:
+                deps = ["DEPLOYER"]  # Monitoring depends on deployment
 
             dependencies[agent] = [dep for dep in deps if dep in agents]
 
         return dependencies
 
-    def _create_pipeline_stages(self, agents: List[str], dependencies: Dict[str, List[str]]) -> List[List[str]]:
+    def _create_pipeline_stages(
+        self, agents: List[str], dependencies: Dict[str, List[str]]
+    ) -> List[List[str]]:
         """Create pipeline stages for optimal parallel execution"""
         stages = []
         remaining_agents = set(agents)
@@ -363,30 +403,36 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
 
     def _calculate_resource_requirements(self, agents: List[str]) -> Dict[str, float]:
         """Calculate total resource requirements"""
-        total_resources = {'cpu': 0.0, 'memory': 0.0, 'npu': 0.0}
+        total_resources = {"cpu": 0.0, "memory": 0.0, "npu": 0.0}
 
         for agent in agents:
             if agent in self.enhanced_agent_registry:
-                agent_resources = self.enhanced_agent_registry[agent].resource_requirements
-                total_resources['cpu'] += agent_resources.get('cpu', 0.1)
-                total_resources['memory'] += agent_resources.get('memory', 100)
+                agent_resources = self.enhanced_agent_registry[
+                    agent
+                ].resource_requirements
+                total_resources["cpu"] += agent_resources.get("cpu", 0.1)
+                total_resources["memory"] += agent_resources.get("memory", 100)
 
                 # Add NPU usage if agent is NPU-compatible
                 if self.enhanced_agent_registry[agent].npu_compatible:
-                    total_resources['npu'] += 0.1
+                    total_resources["npu"] += 0.1
 
         return total_resources
 
-    def _calculate_expected_throughput(self,
-                                     agents: List[str],
-                                     execution_mode: ExecutionMode,
-                                     optimization_strategy: OptimizationStrategy) -> float:
+    def _calculate_expected_throughput(
+        self,
+        agents: List[str],
+        execution_mode: ExecutionMode,
+        optimization_strategy: OptimizationStrategy,
+    ) -> float:
         """Calculate expected workflow throughput"""
         agent_throughputs = []
 
         for agent in agents:
             if agent in self.enhanced_agent_registry:
-                base_throughput = self.enhanced_agent_registry[agent].throughput_capacity
+                base_throughput = self.enhanced_agent_registry[
+                    agent
+                ].throughput_capacity
                 agent_throughputs.append(base_throughput)
 
         if not agent_throughputs:
@@ -407,26 +453,26 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
 
         # Apply optimization strategy multipliers
         strategy_multipliers = {
-            OptimizationStrategy.LATENCY_OPTIMIZED: 0.8,    # Lower throughput, better latency
+            OptimizationStrategy.LATENCY_OPTIMIZED: 0.8,  # Lower throughput, better latency
             OptimizationStrategy.THROUGHPUT_OPTIMIZED: 1.2,  # Higher throughput focus
-            OptimizationStrategy.RESOURCE_BALANCED: 1.0,     # Balanced approach
-            OptimizationStrategy.QUALITY_FOCUSED: 0.7,       # Lower throughput, higher quality
-            OptimizationStrategy.COST_OPTIMIZED: 0.9         # Slightly lower throughput
+            OptimizationStrategy.RESOURCE_BALANCED: 1.0,  # Balanced approach
+            OptimizationStrategy.QUALITY_FOCUSED: 0.7,  # Lower throughput, higher quality
+            OptimizationStrategy.COST_OPTIMIZED: 0.9,  # Slightly lower throughput
         }
 
         multiplier = strategy_multipliers.get(optimization_strategy, 1.0)
         return expected_throughput * multiplier
 
-    async def execute_enhanced_coordination_plan(self,
-                                               plan: EnhancedCoordinationPlan,
-                                               task_description: str) -> Dict[str, Any]:
+    async def execute_enhanced_coordination_plan(
+        self, plan: EnhancedCoordinationPlan, task_description: str
+    ) -> Dict[str, Any]:
         """Execute enhanced coordination plan with advanced parallel processing"""
 
         # Initialize execution metrics
         metrics = ExecutionMetrics(
             start_time=datetime.utcnow(),
             agents_executed=plan.primary_agents,
-            parallel_stages=len(plan.pipeline_stages)
+            parallel_stages=len(plan.pipeline_stages),
         )
         self.execution_metrics[plan.session_id] = metrics
 
@@ -436,38 +482,57 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
         try:
             if plan.npu_accelerated and self.npu_bridge:
                 # NPU-accelerated execution
-                results = await self._execute_npu_accelerated_plan(plan, task_description)
+                results = await self._execute_npu_accelerated_plan(
+                    plan, task_description
+                )
             else:
                 # Standard enhanced execution
-                results = await self._execute_standard_enhanced_plan(plan, task_description)
+                results = await self._execute_standard_enhanced_plan(
+                    plan, task_description
+                )
 
             # Finalize metrics
             metrics.end_time = datetime.utcnow()
-            execution_time_ms = (metrics.end_time - metrics.start_time).total_seconds() * 1000
+            execution_time_ms = (
+                metrics.end_time - metrics.start_time
+            ).total_seconds() * 1000
 
             # Calculate final performance metrics
             if execution_time_ms > 0:
-                metrics.peak_throughput_ops_sec = (metrics.total_operations / execution_time_ms) * 1000
-                metrics.avg_latency_ms = execution_time_ms / max(metrics.total_operations, 1)
+                metrics.peak_throughput_ops_sec = (
+                    metrics.total_operations / execution_time_ms
+                ) * 1000
+                metrics.avg_latency_ms = execution_time_ms / max(
+                    metrics.total_operations, 1
+                )
 
             # Update success metrics
-            successful_agents = sum(1 for result in results.get('results', {}).values()
-                                  if result.get('success', False))
+            successful_agents = sum(
+                1
+                for result in results.get("results", {}).values()
+                if result.get("success", False)
+            )
             metrics.successful_operations = successful_agents
 
             # Add enhanced metrics to results
-            results.update({
-                'enhanced_metrics': {
-                    'complexity': plan.complexity.value,
-                    'optimization_strategy': plan.optimization_strategy.value,
-                    'npu_accelerated': plan.npu_accelerated,
-                    'pipeline_stages': metrics.parallel_stages,
-                    'peak_throughput_ops_sec': metrics.peak_throughput_ops_sec,
-                    'avg_latency_ms': metrics.avg_latency_ms,
-                    'parallel_efficiency': metrics.successful_operations / len(plan.primary_agents) if plan.primary_agents else 0,
-                    'resource_utilization': metrics.resource_utilization
+            results.update(
+                {
+                    "enhanced_metrics": {
+                        "complexity": plan.complexity.value,
+                        "optimization_strategy": plan.optimization_strategy.value,
+                        "npu_accelerated": plan.npu_accelerated,
+                        "pipeline_stages": metrics.parallel_stages,
+                        "peak_throughput_ops_sec": metrics.peak_throughput_ops_sec,
+                        "avg_latency_ms": metrics.avg_latency_ms,
+                        "parallel_efficiency": (
+                            metrics.successful_operations / len(plan.primary_agents)
+                            if plan.primary_agents
+                            else 0
+                        ),
+                        "resource_utilization": metrics.resource_utilization,
+                    }
                 }
-            })
+            )
 
             return results
 
@@ -475,14 +540,14 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
             logger.error(f"Enhanced coordination execution failed: {e}")
             metrics.end_time = datetime.utcnow()
             return {
-                'session_id': plan.session_id,
-                'success': False,
-                'error': str(e),
-                'enhanced_metrics': {
-                    'complexity': plan.complexity.value,
-                    'npu_accelerated': plan.npu_accelerated,
-                    'error_stage': 'execution'
-                }
+                "session_id": plan.session_id,
+                "success": False,
+                "error": str(e),
+                "enhanced_metrics": {
+                    "complexity": plan.complexity.value,
+                    "npu_accelerated": plan.npu_accelerated,
+                    "error_stage": "execution",
+                },
             }
 
         finally:
@@ -492,9 +557,9 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
 
             await self.performance_tracker.stop_tracking(plan.session_id)
 
-    async def _execute_npu_accelerated_plan(self,
-                                          plan: EnhancedCoordinationPlan,
-                                          task_description: str) -> Dict[str, Any]:
+    async def _execute_npu_accelerated_plan(
+        self, plan: EnhancedCoordinationPlan, task_description: str
+    ) -> Dict[str, Any]:
         """Execute plan with NPU acceleration"""
         if not self.npu_bridge:
             raise RuntimeError("NPU bridge not available")
@@ -507,17 +572,19 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
             execution_mode=plan.execution_mode,
             estimated_duration=plan.estimated_duration,
             success_probability=plan.success_probability,
-            parallel_groups=plan.parallel_groups
+            parallel_groups=plan.parallel_groups,
         )
 
         # Execute with NPU acceleration
-        results = await self.npu_bridge.execute_npu_workflow(base_plan, task_description)
+        results = await self.npu_bridge.execute_npu_workflow(
+            base_plan, task_description
+        )
 
         return results
 
-    async def _execute_standard_enhanced_plan(self,
-                                            plan: EnhancedCoordinationPlan,
-                                            task_description: str) -> Dict[str, Any]:
+    async def _execute_standard_enhanced_plan(
+        self, plan: EnhancedCoordinationPlan, task_description: str
+    ) -> Dict[str, Any]:
         """Execute plan with standard enhanced processing"""
 
         if plan.execution_mode == ExecutionMode.PARALLEL and plan.pipeline_stages:
@@ -532,13 +599,13 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
                 execution_mode=plan.execution_mode,
                 estimated_duration=plan.estimated_duration,
                 success_probability=plan.success_probability,
-                parallel_groups=plan.parallel_groups
+                parallel_groups=plan.parallel_groups,
             )
             return await self.execute_coordination_plan(base_plan, task_description)
 
-    async def _execute_pipeline_stages(self,
-                                     plan: EnhancedCoordinationPlan,
-                                     task_description: str) -> Dict[str, Any]:
+    async def _execute_pipeline_stages(
+        self, plan: EnhancedCoordinationPlan, task_description: str
+    ) -> Dict[str, Any]:
         """Execute pipeline stages with advanced parallel processing"""
         all_results = {}
         stage_times = []
@@ -546,13 +613,17 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
         for stage_idx, stage_agents in enumerate(plan.pipeline_stages):
             stage_start = time.perf_counter()
 
-            logger.info(f"Executing pipeline stage {stage_idx + 1}/{len(plan.pipeline_stages)}: {stage_agents}")
+            logger.info(
+                f"Executing pipeline stage {stage_idx + 1}/{len(plan.pipeline_stages)}: {stage_agents}"
+            )
 
             # Execute stage agents in parallel
             stage_tasks = []
             for agent in stage_agents:
                 task_coro = self._execute_single_agent(
-                    agent, task_description, f"{plan.session_id}-stage{stage_idx}-{agent}"
+                    agent,
+                    task_description,
+                    f"{plan.session_id}-stage{stage_idx}-{agent}",
                 )
                 stage_tasks.append(task_coro)
 
@@ -572,30 +643,39 @@ class EnhancedCoordinationMatrix(AgentCoordinationMatrix):
             logger.info(f"Stage {stage_idx + 1} completed in {stage_time*1000:.1f}ms")
 
         # Calculate overall results
-        successful_agents = sum(1 for result in all_results.values() if result.get('success', False))
+        successful_agents = sum(
+            1 for result in all_results.values() if result.get("success", False)
+        )
         total_time = sum(stage_times)
 
         return {
-            'session_id': plan.session_id,
-            'success': successful_agents > 0,
-            'results': all_results,
-            'execution_time_ms': total_time * 1000,
-            'pipeline_stages': len(plan.pipeline_stages),
-            'stage_times_ms': [t * 1000 for t in stage_times],
-            'agents_executed': list(all_results.keys()),
-            'parallel_efficiency': successful_agents / len(plan.primary_agents) if plan.primary_agents else 0
+            "session_id": plan.session_id,
+            "success": successful_agents > 0,
+            "results": all_results,
+            "execution_time_ms": total_time * 1000,
+            "pipeline_stages": len(plan.pipeline_stages),
+            "stage_times_ms": [t * 1000 for t in stage_times],
+            "agents_executed": list(all_results.keys()),
+            "parallel_efficiency": (
+                successful_agents / len(plan.primary_agents)
+                if plan.primary_agents
+                else 0
+            ),
         }
+
 
 # Enhanced agent specification
 @dataclass
 class EnhancedAgentSpec(AgentSpec):
     """Enhanced agent specification with additional performance attributes"""
+
     max_concurrent_tasks: int = 1
     npu_compatible: bool = False
     resource_requirements: Dict[str, float] = field(default_factory=dict)
     throughput_capacity: float = 100.0  # ops/sec
     scaling_factor: float = 1.0
     optimization_hints: Set[str] = field(default_factory=set)
+
 
 # Supporting classes for enhanced functionality
 class ThroughputOptimizer:
@@ -605,6 +685,7 @@ class ThroughputOptimizer:
         """Initialize throughput optimizer"""
         pass
 
+
 class PipelineManager:
     """Manages pipeline execution and staging"""
 
@@ -612,12 +693,14 @@ class PipelineManager:
         """Initialize pipeline manager"""
         pass
 
+
 class ResourceAllocator:
     """Manages resource allocation for agents"""
 
     async def initialize(self):
         """Initialize resource allocator"""
         pass
+
 
 class PerformanceTracker:
     """Tracks real-time performance metrics"""
@@ -632,14 +715,15 @@ class PerformanceTracker:
     async def start_tracking(self, session_id: str):
         """Start tracking performance for session"""
         self.active_sessions[session_id] = {
-            'start_time': time.perf_counter(),
-            'operations': 0
+            "start_time": time.perf_counter(),
+            "operations": 0,
         }
 
     async def stop_tracking(self, session_id: str):
         """Stop tracking performance for session"""
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
+
 
 class WorkflowTemplateManager:
     """Manages workflow templates for common patterns"""
@@ -650,26 +734,30 @@ class WorkflowTemplateManager:
     def load_templates(self):
         """Load common workflow templates"""
         # Security audit template
-        self.templates['security_audit'] = {
-            'agents': ['SECURITY', 'SECURITYAUDITOR', 'CRYPTOEXPERT'],
-            'execution_mode': ExecutionMode.PARALLEL,
-            'optimization_strategy': OptimizationStrategy.QUALITY_FOCUSED
+        self.templates["security_audit"] = {
+            "agents": ["SECURITY", "SECURITYAUDITOR", "CRYPTOEXPERT"],
+            "execution_mode": ExecutionMode.PARALLEL,
+            "optimization_strategy": OptimizationStrategy.QUALITY_FOCUSED,
         }
 
         # Development cycle template
-        self.templates['development_cycle'] = {
-            'agents': ['ARCHITECT', 'CONSTRUCTOR', 'TESTBED', 'DEPLOYER'],
-            'execution_mode': ExecutionMode.PARALLEL,
-            'optimization_strategy': OptimizationStrategy.THROUGHPUT_OPTIMIZED
+        self.templates["development_cycle"] = {
+            "agents": ["ARCHITECT", "CONSTRUCTOR", "TESTBED", "DEPLOYER"],
+            "execution_mode": ExecutionMode.PARALLEL,
+            "optimization_strategy": OptimizationStrategy.THROUGHPUT_OPTIMIZED,
         }
+
 
 # Global enhanced coordination matrix instance
 enhanced_coordination_matrix = EnhancedCoordinationMatrix()
 
-async def coordinate_agents_enhanced(task_description: str,
-                                   execution_mode: str = "parallel",
-                                   optimization_strategy: str = "throughput",
-                                   max_agents: int = 8) -> Dict[str, Any]:
+
+async def coordinate_agents_enhanced(
+    task_description: str,
+    execution_mode: str = "parallel",
+    optimization_strategy: str = "throughput",
+    max_agents: int = 8,
+) -> Dict[str, Any]:
     """Enhanced coordination interface with NPU acceleration"""
     await enhanced_coordination_matrix.initialize()
 
@@ -678,7 +766,7 @@ async def coordinate_agents_enhanced(task_description: str,
         "parallel": ExecutionMode.PARALLEL,
         "sequential": ExecutionMode.SEQUENTIAL,
         "redundant": ExecutionMode.REDUNDANT,
-        "consensus": ExecutionMode.CONSENSUS
+        "consensus": ExecutionMode.CONSENSUS,
     }
     exec_mode = mode_map.get(execution_mode.lower(), ExecutionMode.PARALLEL)
 
@@ -688,9 +776,11 @@ async def coordinate_agents_enhanced(task_description: str,
         "throughput": OptimizationStrategy.THROUGHPUT_OPTIMIZED,
         "balanced": OptimizationStrategy.RESOURCE_BALANCED,
         "quality": OptimizationStrategy.QUALITY_FOCUSED,
-        "cost": OptimizationStrategy.COST_OPTIMIZED
+        "cost": OptimizationStrategy.COST_OPTIMIZED,
     }
-    opt_strategy = strategy_map.get(optimization_strategy.lower(), OptimizationStrategy.THROUGHPUT_OPTIMIZED)
+    opt_strategy = strategy_map.get(
+        optimization_strategy.lower(), OptimizationStrategy.THROUGHPUT_OPTIMIZED
+    )
 
     # Create enhanced plan
     plan = await enhanced_coordination_matrix.create_enhanced_coordination_plan(
@@ -698,12 +788,16 @@ async def coordinate_agents_enhanced(task_description: str,
     )
 
     # Execute enhanced plan
-    results = await enhanced_coordination_matrix.execute_enhanced_coordination_plan(plan, task_description)
+    results = await enhanced_coordination_matrix.execute_enhanced_coordination_plan(
+        plan, task_description
+    )
 
     return results
 
+
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) > 1:
         task = " ".join(sys.argv[1:])
         results = asyncio.run(coordinate_agents_enhanced(task))

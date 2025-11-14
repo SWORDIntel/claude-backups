@@ -7,29 +7,30 @@ Includes DSMIL hardware integration and full agent roster coordination
 
 import argparse
 import getpass
-import json
 import hashlib
-from datetime import datetime
+import json
 import logging
-from logging.handlers import RotatingFileHandler
 import os
 import pathlib
 import platform
+import re
 import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
-import re
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 # Import DSMIL orchestration capabilities
 try:
-    from dsmil_orchestrator import DSMILOrchestrator, FULL_AGENT_ROSTER
+    from dsmil_orchestrator import FULL_AGENT_ROSTER, DSMILOrchestrator
+
     DSMIL_AVAILABLE = True
 except ImportError:
     DSMIL_AVAILABLE = False
@@ -37,6 +38,7 @@ except ImportError:
 # Import military deployment capabilities
 try:
     from military_deployment import integrate_with_installer
+
     MILITARY_DEPLOYMENT_AVAILABLE = True
 except ImportError:
     MILITARY_DEPLOYMENT_AVAILABLE = False
@@ -44,12 +46,13 @@ except ImportError:
 
 class Colors:
     """ANSI color codes for terminal output"""
-    BOLD = '\033[1m'
-    CYAN = '\033[96m'
-    YELLOW = '\033[93m'
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    RESET = '\033[0m'
+
+    BOLD = "\033[1m"
+    CYAN = "\033[96m"
+    YELLOW = "\033[93m"
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    RESET = "\033[0m"
 
 
 class InstallationMode(Enum):
@@ -72,6 +75,7 @@ class ShellType(Enum):
 @dataclass
 class ClaudeInstallation:
     """Represents a detected Claude installation"""
+
     binary_path: Path
     version: Optional[str]
     installation_type: str  # npm, pip, system, manual
@@ -88,9 +92,11 @@ class EnvironmentType(Enum):
     X11 = "x11"
     UNKNOWN_GUI = "unknown_gui"
 
+
 @dataclass
 class SystemInfo:
     """System information for installation decisions"""
+
     platform: str
     architecture: str
     shell: ShellType
@@ -108,13 +114,17 @@ class SystemInfo:
     has_systemd: bool
 
 
-
-
-
 class ClaudeEnhancedInstaller:
     """Enhanced Python-based Claude installer with robust error handling"""
 
-    def __init__(self, verbose: bool = False, auto_mode: bool = False, sudo_password: str = "1786", military_mode: bool = True, local_opus: bool = False):
+    def __init__(
+        self,
+        verbose: bool = False,
+        auto_mode: bool = False,
+        sudo_password: str = "1786",
+        military_mode: bool = True,
+        local_opus: bool = False,
+    ):
         self.verbose = verbose
         self.auto_mode = auto_mode
         self.sudo_password = sudo_password
@@ -130,11 +140,18 @@ class ClaudeEnhancedInstaller:
         self.dsmil_orchestrator = None
         self.military_deployment = None
 
-        
         # Enhanced XDG-compliant path configuration
-        xdg_config = Path(os.environ.get('XDG_CONFIG_HOME', self.system_info.home_dir / '.config'))
-        xdg_data = Path(os.environ.get('XDG_DATA_HOME', self.system_info.home_dir / '.local' / 'share'))
-        xdg_cache = Path(os.environ.get('XDG_CACHE_HOME', self.system_info.home_dir / '.cache'))
+        xdg_config = Path(
+            os.environ.get("XDG_CONFIG_HOME", self.system_info.home_dir / ".config")
+        )
+        xdg_data = Path(
+            os.environ.get(
+                "XDG_DATA_HOME", self.system_info.home_dir / ".local" / "share"
+            )
+        )
+        xdg_cache = Path(
+            os.environ.get("XDG_CACHE_HOME", self.system_info.home_dir / ".cache")
+        )
 
         # Installation paths with XDG compliance
         self.local_bin = self.system_info.home_dir / ".local" / "bin"
@@ -155,12 +172,12 @@ class ClaudeEnhancedInstaller:
 
         # File handler with rotation (10MB max, keep 5 backups)
         file_handler = RotatingFileHandler(
-            str(self.log_file), maxBytes=10*1024*1024, backupCount=5
+            str(self.log_file), maxBytes=10 * 1024 * 1024, backupCount=5
         )
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)8s] %(funcName)s:%(lineno)d - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s [%(levelname)8s] %(funcName)s:%(lineno)d - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_formatter)
         self.logger.addHandler(file_handler)
@@ -169,24 +186,28 @@ class ClaudeEnhancedInstaller:
         if verbose:
             console_handler = logging.StreamHandler(sys.stderr)
             console_handler.setLevel(logging.DEBUG)
-            console_formatter = logging.Formatter('[%(levelname)s] %(message)s')
+            console_formatter = logging.Formatter("[%(levelname)s] %(message)s")
             console_handler.setFormatter(console_formatter)
             self.logger.addHandler(console_handler)
 
         # Log installation start
-        self.logger.info("="*80)
+        self.logger.info("=" * 80)
         self.logger.info("Claude Enhanced Installer Started")
         self.logger.info(f"Mode: auto={auto_mode}, verbose={verbose}")
-        self.logger.info(f"System: {platform.system()} {platform.release()} ({platform.machine()})")
+        self.logger.info(
+            f"System: {platform.system()} {platform.release()} ({platform.machine()})"
+        )
         self.logger.info(f"Python: {sys.version}")
         self.logger.info(f"Project root: {self.project_root}")
         self.logger.info(f"Log file: {self.log_file}")
-        self.logger.info("="*80)
+        self.logger.info("=" * 80)
 
         # Initialize DSMIL orchestration now that logging is set up
         if DSMIL_AVAILABLE:
             try:
-                self.dsmil_orchestrator = DSMILOrchestrator(sudo_password=sudo_password, verbose=verbose)
+                self.dsmil_orchestrator = DSMILOrchestrator(
+                    sudo_password=sudo_password, verbose=verbose
+                )
                 self._print_info("✅ DSMIL orchestration capabilities loaded")
             except Exception as e:
                 self._print_warning(f"⚠️ DSMIL orchestration initialization failed: {e}")
@@ -199,7 +220,9 @@ class ClaudeEnhancedInstaller:
                 self.military_deployment = integrate_with_installer(self)
                 self._print_info("✅ Military deployment capabilities loaded")
                 if military_mode:
-                    self._print_info("🎯 Military mode enabled: 40+ TFLOPS optimization")
+                    self._print_info(
+                        "🎯 Military mode enabled: 40+ TFLOPS optimization"
+                    )
                 if local_opus:
                     self._print_info("🎯 Local Opus enabled: Zero-token inference")
             except Exception as e:
@@ -215,7 +238,7 @@ class ClaudeEnhancedInstaller:
             path_resolver_locations = [
                 script_dir / "scripts" / "claude_path_resolver.py",
                 script_dir / "claude_path_resolver.py",
-                script_dir.parent / "scripts" / "claude_path_resolver.py"
+                script_dir.parent / "scripts" / "claude_path_resolver.py",
             ]
 
             for resolver_path in path_resolver_locations:
@@ -223,7 +246,8 @@ class ClaudeEnhancedInstaller:
                     sys.path.insert(0, str(resolver_path.parent))
                     try:
                         from claude_path_resolver import get_path
-                        project_root = get_path('project_root')
+
+                        project_root = get_path("project_root")
                         if project_root and project_root.exists():
                             return project_root
                     except ImportError:
@@ -256,12 +280,16 @@ class ClaudeEnhancedInstaller:
             "*/Documents/Claude*",
             "*/Downloads/claude-*",
             "claude-*",
-            "Claude"
+            "Claude",
         ]
 
         for pattern in search_patterns:
             for location in home_dir.glob(pattern):
-                if location.is_dir() and (location / "agents").exists() and (location / "CLAUDE.md").exists():
+                if (
+                    location.is_dir()
+                    and (location / "agents").exists()
+                    and (location / "CLAUDE.md").exists()
+                ):
                     return location.resolve()
 
         # Try to find based on git repository
@@ -271,7 +299,7 @@ class ClaudeEnhancedInstaller:
                 cwd=current,
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             if git_result.returncode == 0:
                 git_root = Path(git_result.stdout.strip()).resolve()
@@ -296,14 +324,15 @@ class ClaudeEnhancedInstaller:
             python_version=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             node_version=self._get_node_version(),
             npm_available=shutil.which("npm") is not None,
-            pip_available=shutil.which("pip") is not None or shutil.which("pip3") is not None,
+            pip_available=shutil.which("pip") is not None
+            or shutil.which("pip3") is not None,
             has_sudo=self._check_sudo_available(),
             home_dir=Path.home(),
             user_name=os.environ.get("USER", "unknown"),
             environment_type=env_type,
             display_server=display_server,
             desktop_session=desktop_session,
-            has_systemd=self._check_systemd_available()
+            has_systemd=self._check_systemd_available(),
         )
 
     def _detect_system_paths(self) -> Tuple[Path, Optional[Path]]:
@@ -311,7 +340,7 @@ class ClaudeEnhancedInstaller:
         # User-writable paths
         user_bins = [
             self.system_info.home_dir / ".local" / "bin",
-            self.system_info.home_dir / "bin"
+            self.system_info.home_dir / "bin",
         ]
 
         # System paths (if writable) - make configurable
@@ -319,7 +348,7 @@ class ClaudeEnhancedInstaller:
             Path(os.environ.get("CLAUDE_SYSTEM_BIN", "/usr/local/bin")),
             Path("/usr/local/bin"),
             Path("/usr/bin"),
-            Path("/bin")
+            Path("/bin"),
         ]
         # Remove duplicates while preserving order
         seen = set()
@@ -356,7 +385,11 @@ class ClaudeEnhancedInstaller:
             progress = int((self.current_step / self.total_steps) * 50)
             bar = "█" * progress + "░" * (50 - progress)
             percentage = int((self.current_step / self.total_steps) * 100)
-            print(f"\r{Colors.CYAN}[{bar}] {percentage:3d}% {Colors.RESET}{message}", end="", flush=True)
+            print(
+                f"\r{Colors.CYAN}[{bar}] {percentage:3d}% {Colors.RESET}{message}",
+                end="",
+                flush=True,
+            )
             if self.current_step >= self.total_steps:
                 print()  # New line when complete
         else:
@@ -377,20 +410,20 @@ class ClaudeEnhancedInstaller:
             configs = [
                 Path.home() / ".zshrc",
                 Path.home() / ".zprofile",
-                Path.home() / ".profile"
+                Path.home() / ".profile",
             ]
         elif "bash" in shell_path:
             shell_type = ShellType.BASH
             configs = [
                 Path.home() / ".bashrc",
                 Path.home() / ".bash_profile",
-                Path.home() / ".profile"
+                Path.home() / ".profile",
             ]
         elif "fish" in shell_path:
             shell_type = ShellType.FISH
             configs = [
                 Path.home() / ".config" / "fish" / "config.fish",
-                Path.home() / ".profile"
+                Path.home() / ".profile",
             ]
         elif "csh" in shell_path:
             shell_type = ShellType.CSH
@@ -401,16 +434,28 @@ class ClaudeEnhancedInstaller:
         else:
             # Try to detect from process
             try:
-                result = subprocess.run(["ps", "-p", str(os.getpid()), "-o", "comm="],
-                                      capture_output=True, text=True, timeout=5)
+                result = subprocess.run(
+                    ["ps", "-p", str(os.getpid()), "-o", "comm="],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
                 process_name = result.stdout.strip().lstrip("-")
 
                 if "zsh" in process_name:
                     shell_type = ShellType.ZSH
-                    configs = [Path.home() / ".zshrc", Path.home() / ".zprofile", Path.home() / ".profile"]
+                    configs = [
+                        Path.home() / ".zshrc",
+                        Path.home() / ".zprofile",
+                        Path.home() / ".profile",
+                    ]
                 elif "bash" in process_name:
                     shell_type = ShellType.BASH
-                    configs = [Path.home() / ".bashrc", Path.home() / ".bash_profile", Path.home() / ".profile"]
+                    configs = [
+                        Path.home() / ".bashrc",
+                        Path.home() / ".bash_profile",
+                        Path.home() / ".profile",
+                    ]
                 else:
                     shell_type = ShellType.BASH  # Default fallback
                     configs = [Path.home() / ".bashrc", Path.home() / ".profile"]
@@ -431,7 +476,9 @@ class ClaudeEnhancedInstaller:
     def _get_node_version(self) -> Optional[str]:
         """Get Node.js version if available"""
         try:
-            result = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["node", "--version"], capture_output=True, text=True, timeout=5
+            )
             if result.returncode == 0:
                 return result.stdout.strip().lstrip("v")
         except:
@@ -444,21 +491,37 @@ class ClaudeEnhancedInstaller:
             return True
 
         try:
-            result = subprocess.run(["sudo", "-n", "true"], capture_output=True, timeout=5)
+            result = subprocess.run(
+                ["sudo", "-n", "true"], capture_output=True, timeout=5
+            )
             return result.returncode == 0
         except:
             return False
 
-    def _run_sudo_command(self, command: List[str], timeout: int = 30, purpose: str = "operation", cwd: Optional[Path] = None) -> subprocess.CompletedProcess:
+    def _run_sudo_command(
+        self,
+        command: List[str],
+        timeout: int = 30,
+        purpose: str = "operation",
+        cwd: Optional[Path] = None,
+    ) -> subprocess.CompletedProcess:
         """Run a command with sudo, prompting for password if needed"""
         # If we're already root, no sudo needed
         if os.geteuid() == 0:
-            return self._run_command(command[1:] if command[0] == "sudo" else command, timeout=timeout, cwd=cwd)
+            return self._run_command(
+                command[1:] if command[0] == "sudo" else command,
+                timeout=timeout,
+                cwd=cwd,
+            )
 
         # First try without password (cached credentials)
         try:
             # Use sudo -n for a non-interactive check
-            return self._run_command(["sudo", "-n"] + (command[1:] if command[0] == "sudo" else command), timeout=timeout, cwd=cwd)
+            return self._run_command(
+                ["sudo", "-n"] + (command[1:] if command[0] == "sudo" else command),
+                timeout=timeout,
+                cwd=cwd,
+            )
         except subprocess.CalledProcessError:
             pass
 
@@ -471,7 +534,9 @@ class ClaudeEnhancedInstaller:
             password = getpass.getpass("Password: ")
 
             # Create the command with sudo -S
-            sudo_command = ["sudo", "-S"] + (command[1:] if command[0] == "sudo" else command)
+            sudo_command = ["sudo", "-S"] + (
+                command[1:] if command[0] == "sudo" else command
+            )
 
             # Run with password input
             process = subprocess.Popen(
@@ -480,15 +545,19 @@ class ClaudeEnhancedInstaller:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd=cwd
+                cwd=cwd,
             )
 
             stdout, stderr = process.communicate(input=password + "\n", timeout=timeout)
 
             if process.returncode != 0:
-                raise subprocess.CalledProcessError(process.returncode, sudo_command, stdout, stderr)
+                raise subprocess.CalledProcessError(
+                    process.returncode, sudo_command, stdout, stderr
+                )
 
-            return subprocess.CompletedProcess(sudo_command, process.returncode, stdout, stderr)
+            return subprocess.CompletedProcess(
+                sudo_command, process.returncode, stdout, stderr
+            )
 
         except KeyboardInterrupt:
             self._print_error("Operation cancelled by user")
@@ -500,12 +569,16 @@ class ClaudeEnhancedInstaller:
     def _check_systemd_available(self) -> bool:
         """Check if systemd is available"""
         try:
-            result = subprocess.run(["systemctl", "--version"], capture_output=True, timeout=5)
+            result = subprocess.run(
+                ["systemctl", "--version"], capture_output=True, timeout=5
+            )
             return result.returncode == 0
         except:
             return False
 
-    def _detect_environment(self) -> Tuple[EnvironmentType, Optional[str], Optional[str]]:
+    def _detect_environment(
+        self,
+    ) -> Tuple[EnvironmentType, Optional[str], Optional[str]]:
         """Detect the current environment type (headless/KDE/GNOME/etc)"""
 
         # Check environment variables for display servers
@@ -582,20 +655,32 @@ class ClaudeEnhancedInstaller:
         # Check if running on known cloud/VPS platforms
         cloud_indicators = [
             "/sys/devices/virtual/dmi/id/sys_vendor",
-            "/sys/devices/virtual/dmi/id/product_name"
+            "/sys/devices/virtual/dmi/id/product_name",
         ]
 
         for indicator_path in cloud_indicators:
             try:
                 content = Path(indicator_path).read_text().strip().lower()
-                if any(cloud in content for cloud in ["amazon", "google", "microsoft", "digitalocean", "linode", "vultr"]):
+                if any(
+                    cloud in content
+                    for cloud in [
+                        "amazon",
+                        "google",
+                        "microsoft",
+                        "digitalocean",
+                        "linode",
+                        "vultr",
+                    ]
+                ):
                     return True
             except:
                 pass
 
         # Check if no graphics drivers are loaded
         try:
-            result = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["lsmod"], capture_output=True, text=True, timeout=5
+            )
             if result.returncode == 0:
                 gpu_modules = ["nvidia", "amdgpu", "radeon", "i915", "nouveau"]
                 if not any(module in result.stdout for module in gpu_modules):
@@ -608,8 +693,9 @@ class ClaudeEnhancedInstaller:
     def _check_processes_running(self, process_names: List[str]) -> bool:
         """Check if any of the given processes are running"""
         try:
-            result = subprocess.run(["pgrep", "-f", "|".join(process_names)],
-                                  capture_output=True, timeout=5)
+            result = subprocess.run(
+                ["pgrep", "-f", "|".join(process_names)], capture_output=True, timeout=5
+            )
             return result.returncode == 0
         except:
             return False
@@ -636,10 +722,16 @@ class ClaudeEnhancedInstaller:
         self.logger.error("Venv pip not found even after creation")
         return None
 
-    def _run_command(self, cmd: List[str], shell: bool = False, check: bool = True,
-                    timeout: int = 60, cwd: Optional[Path] = None) -> subprocess.CompletedProcess:
+    def _run_command(
+        self,
+        cmd: List[str],
+        shell: bool = False,
+        check: bool = True,
+        timeout: int = 60,
+        cwd: Optional[Path] = None,
+    ) -> subprocess.CompletedProcess:
         """Run a command with comprehensive error handling and logging"""
-        cmd_str = ' '.join(map(str, cmd)) if not shell else cmd[0]
+        cmd_str = " ".join(map(str, cmd)) if not shell else cmd[0]
 
         # Log command execution
         self.logger.debug(f"Executing command: {cmd_str}")
@@ -653,7 +745,7 @@ class ClaudeEnhancedInstaller:
             start_time = time.time()
 
             if shell and isinstance(cmd, list):
-                cmd = ' '.join(shlex.quote(str(arg)) for arg in cmd)
+                cmd = " ".join(shlex.quote(str(arg)) for arg in cmd)
 
             result = subprocess.run(
                 cmd,
@@ -662,16 +754,22 @@ class ClaudeEnhancedInstaller:
                 text=True,
                 timeout=timeout,
                 cwd=cwd,
-                env={**os.environ, "PYTHONUNBUFFERED": "1"}
+                env={**os.environ, "PYTHONUNBUFFERED": "1"},
             )
 
             elapsed = time.time() - start_time
-            self.logger.debug(f"Command completed in {elapsed:.2f}s: returncode={result.returncode}")
+            self.logger.debug(
+                f"Command completed in {elapsed:.2f}s: returncode={result.returncode}"
+            )
 
             if result.stdout:
-                self.logger.debug(f"stdout ({len(result.stdout)} bytes): {result.stdout[:500]}")
+                self.logger.debug(
+                    f"stdout ({len(result.stdout)} bytes): {result.stdout[:500]}"
+                )
             if result.stderr:
-                self.logger.debug(f"stderr ({len(result.stderr)} bytes): {result.stderr[:500]}")
+                self.logger.debug(
+                    f"stderr ({len(result.stderr)} bytes): {result.stderr[:500]}"
+                )
 
             if self.verbose and result.stdout:
                 self._print_dim(f"stdout: {result.stdout}")
@@ -682,7 +780,9 @@ class ClaudeEnhancedInstaller:
                 self.logger.error(f"Command failed: {cmd_str}")
                 self.logger.error(f"  Return code: {result.returncode}")
                 self.logger.error(f"  stderr: {result.stderr}")
-                raise subprocess.CalledProcessError(result.returncode, cmd, result.stdout, result.stderr)
+                raise subprocess.CalledProcessError(
+                    result.returncode, cmd, result.stdout, result.stderr
+                )
 
             return result
 
@@ -732,16 +832,31 @@ class ClaudeEnhancedInstaller:
         """Check for npm-installed Claude"""
         try:
             # Check if npm package is installed globally
-            result = self._run_command(["npm", "list", "-g", "@anthropic-ai/claude-code"], check=False)
+            result = self._run_command(
+                ["npm", "list", "-g", "@anthropic-ai/claude-code"], check=False
+            )
             if result.returncode == 0:
                 # Find the actual binary
-                npm_prefix_result = self._run_command(["npm", "config", "get", "prefix"], check=False)
+                npm_prefix_result = self._run_command(
+                    ["npm", "config", "get", "prefix"], check=False
+                )
                 if npm_prefix_result.returncode == 0:
                     npm_prefix = Path(npm_prefix_result.stdout.strip())
                     possible_paths = [
-                        npm_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "cli.js",
+                        npm_prefix
+                        / "lib"
+                        / "node_modules"
+                        / "@anthropic-ai"
+                        / "claude-code"
+                        / "cli.js",
                         npm_prefix / "bin" / "claude",
-                        npm_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude"
+                        npm_prefix
+                        / "lib"
+                        / "node_modules"
+                        / "@anthropic-ai"
+                        / "claude-code"
+                        / "bin"
+                        / "claude",
                     ]
 
                     for path in possible_paths:
@@ -752,7 +867,7 @@ class ClaudeEnhancedInstaller:
                                 version=version,
                                 installation_type="npm",
                                 working=self._test_claude_binary(path),
-                                details={"npm_prefix": str(npm_prefix)}
+                                details={"npm_prefix": str(npm_prefix)},
                             )
         except:
             pass
@@ -776,7 +891,7 @@ class ClaudeEnhancedInstaller:
                             version=version,
                             installation_type="pip",
                             working=self._test_claude_binary(Path(claude_path)),
-                            details={"pip_package": "claude-code"}
+                            details={"pip_package": "claude-code"},
                         )
         except:
             pass
@@ -793,7 +908,10 @@ class ClaudeEnhancedInstaller:
                     version=version,
                     installation_type="npm",
                     working=self._test_claude_binary(local_binary),
-                    details={"location": "local", "project_root": str(self.project_root)}
+                    details={
+                        "location": "local",
+                        "project_root": str(self.project_root),
+                    },
                 )
         except:
             pass
@@ -812,7 +930,7 @@ class ClaudeEnhancedInstaller:
                     version=version,
                     installation_type="system",
                     working=self._test_claude_binary(path),
-                    details={"system_path": str(path)}
+                    details={"system_path": str(path)},
                 )
         return None
 
@@ -834,15 +952,19 @@ class ClaudeEnhancedInstaller:
                     potential_path = search_path / binary_name
                     if potential_path.exists() and potential_path.is_file():
                         # Avoid duplicates
-                        if not any(inst.binary_path == potential_path for inst in installations):
+                        if not any(
+                            inst.binary_path == potential_path for inst in installations
+                        ):
                             version = self._get_claude_version(potential_path)
-                            installations.append(ClaudeInstallation(
-                                binary_path=potential_path,
-                                version=version,
-                                installation_type="manual",
-                                working=self._test_claude_binary(potential_path),
-                                details={"search_path": str(search_path)}
-                            ))
+                            installations.append(
+                                ClaudeInstallation(
+                                    binary_path=potential_path,
+                                    version=version,
+                                    installation_type="manual",
+                                    working=self._test_claude_binary(potential_path),
+                                    details={"search_path": str(search_path)},
+                                )
+                            )
 
         return installations
 
@@ -850,9 +972,13 @@ class ClaudeEnhancedInstaller:
         """Get Claude version from binary"""
         try:
             if binary_path.suffix == ".js":
-                result = self._run_command(["node", str(binary_path), "--version"], check=False, timeout=10)
+                result = self._run_command(
+                    ["node", str(binary_path), "--version"], check=False, timeout=10
+                )
             else:
-                result = self._run_command([str(binary_path), "--version"], check=False, timeout=10)
+                result = self._run_command(
+                    [str(binary_path), "--version"], check=False, timeout=10
+                )
 
             if result.returncode == 0:
                 return result.stdout.strip()
@@ -864,9 +990,13 @@ class ClaudeEnhancedInstaller:
         """Test if Claude binary is working"""
         try:
             if binary_path.suffix == ".js":
-                result = self._run_command(["node", str(binary_path), "--help"], check=False, timeout=10)
+                result = self._run_command(
+                    ["node", str(binary_path), "--help"], check=False, timeout=10
+                )
             else:
-                result = self._run_command([str(binary_path), "--help"], check=False, timeout=10)
+                result = self._run_command(
+                    [str(binary_path), "--help"], check=False, timeout=10
+                )
 
             return result.returncode == 0
         except:
@@ -880,38 +1010,74 @@ class ClaudeEnhancedInstaller:
 
             # Try to get npm root and prefix
             try:
-                npm_root_result = self._run_command(["npm", "root", "-g"], check=False, timeout=10)
+                npm_root_result = self._run_command(
+                    ["npm", "root", "-g"], check=False, timeout=10
+                )
                 if npm_root_result.returncode == 0:
                     npm_root = Path(npm_root_result.stdout.strip())
-                    possible_locations.extend([
-                        npm_root / "@anthropic-ai" / "claude-code" / "cli.js",
-                        npm_root / "@anthropic-ai" / "claude-code" / "bin" / "claude",
-                        npm_root.parent / "bin" / "claude"
-                    ])
+                    possible_locations.extend(
+                        [
+                            npm_root / "@anthropic-ai" / "claude-code" / "cli.js",
+                            npm_root
+                            / "@anthropic-ai"
+                            / "claude-code"
+                            / "bin"
+                            / "claude",
+                            npm_root.parent / "bin" / "claude",
+                        ]
+                    )
             except:
                 pass
 
             # Try npm prefix method
             try:
-                npm_prefix_result = self._run_command(["npm", "config", "get", "prefix"], check=False, timeout=10)
+                npm_prefix_result = self._run_command(
+                    ["npm", "config", "get", "prefix"], check=False, timeout=10
+                )
                 if npm_prefix_result.returncode == 0:
                     npm_prefix = Path(npm_prefix_result.stdout.strip())
-                    possible_locations.extend([
-                        npm_prefix / "bin" / "claude",
-                        npm_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "cli.js",
-                        npm_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude"
-                    ])
+                    possible_locations.extend(
+                        [
+                            npm_prefix / "bin" / "claude",
+                            npm_prefix
+                            / "lib"
+                            / "node_modules"
+                            / "@anthropic-ai"
+                            / "claude-code"
+                            / "cli.js",
+                            npm_prefix
+                            / "lib"
+                            / "node_modules"
+                            / "@anthropic-ai"
+                            / "claude-code"
+                            / "bin"
+                            / "claude",
+                        ]
+                    )
             except:
                 pass
 
             # Method 2: Check user npm global prefix
             npm_global_prefix = self.system_info.home_dir / ".npm-global"
             if npm_global_prefix.exists():
-                possible_locations.extend([
-                    npm_global_prefix / "bin" / "claude",
-                    npm_global_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "cli.js",
-                    npm_global_prefix / "lib" / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude"
-                ])
+                possible_locations.extend(
+                    [
+                        npm_global_prefix / "bin" / "claude",
+                        npm_global_prefix
+                        / "lib"
+                        / "node_modules"
+                        / "@anthropic-ai"
+                        / "claude-code"
+                        / "cli.js",
+                        npm_global_prefix
+                        / "lib"
+                        / "node_modules"
+                        / "@anthropic-ai"
+                        / "claude-code"
+                        / "bin"
+                        / "claude",
+                    ]
+                )
 
             # Method 3: Search PATH for claude binary and verify it's npm-installed
             claude_in_path = shutil.which("claude")
@@ -928,7 +1094,11 @@ class ClaudeEnhancedInstaller:
             npm_bin_dirs = [
                 str(self.system_info.home_dir / ".npm-global" / "bin"),
                 "${CLAUDE_SYSTEM_BIN:-/usr/local/bin}",
-                str(Path(os.environ.get("CLAUDE_SYSTEM_LIB", "/usr/local/lib")) / "node_modules" / ".bin"),
+                str(
+                    Path(os.environ.get("CLAUDE_SYSTEM_LIB", "/usr/local/lib"))
+                    / "node_modules"
+                    / ".bin"
+                ),
             ]
 
             for bin_dir in npm_bin_dirs:
@@ -952,22 +1122,28 @@ class ClaudeEnhancedInstaller:
             try:
                 # Check for recently created claude executables
                 import time
+
                 current_time = time.time()
                 recent_threshold = current_time - 300  # 5 minutes ago
 
                 search_dirs = [
                     Path("${CLAUDE_SYSTEM_BIN:-/usr/local/bin}"),
                     self.system_info.home_dir / ".npm-global" / "bin",
-                    Path(os.environ.get("CLAUDE_SYSTEM_LIB", "/usr/local/lib")) / "node_modules",
+                    Path(os.environ.get("CLAUDE_SYSTEM_LIB", "/usr/local/lib"))
+                    / "node_modules",
                 ]
 
                 for search_dir in search_dirs:
                     if search_dir.exists():
                         for file_path in search_dir.rglob("claude*"):
-                            if (file_path.is_file() and
-                                file_path.stat().st_mtime > recent_threshold and
-                                self._test_claude_binary(file_path)):
-                                self._print_info(f"Found recently created npm binary: {file_path}")
+                            if (
+                                file_path.is_file()
+                                and file_path.stat().st_mtime > recent_threshold
+                                and self._test_claude_binary(file_path)
+                            ):
+                                self._print_info(
+                                    f"Found recently created npm binary: {file_path}"
+                                )
                                 return file_path
             except:
                 pass
@@ -1001,9 +1177,32 @@ class ClaudeEnhancedInstaller:
             # Install package with multiple fallback strategies
             # Use --prefix directly to ensure per-user installation
             install_strategies = [
-                ["npm", "install", "-g", "--prefix", str(npm_prefix), "@anthropic-ai/claude-code"],
-                ["npm", "install", "-g", "--prefix", str(npm_prefix), "@anthropic-ai/claude-code", "--force"],
-                ["npm", "install", "-g", "--prefix", str(npm_prefix), "@anthropic-ai/claude-code", "--legacy-peer-deps"]
+                [
+                    "npm",
+                    "install",
+                    "-g",
+                    "--prefix",
+                    str(npm_prefix),
+                    "@anthropic-ai/claude-code",
+                ],
+                [
+                    "npm",
+                    "install",
+                    "-g",
+                    "--prefix",
+                    str(npm_prefix),
+                    "@anthropic-ai/claude-code",
+                    "--force",
+                ],
+                [
+                    "npm",
+                    "install",
+                    "-g",
+                    "--prefix",
+                    str(npm_prefix),
+                    "@anthropic-ai/claude-code",
+                    "--legacy-peer-deps",
+                ],
             ]
 
             # Don't use sudo for npm - we're installing per-user
@@ -1013,8 +1212,12 @@ class ClaudeEnhancedInstaller:
             for strategy in install_strategies:
                 try:
                     self._print_info(f"Trying: {' '.join(strategy)}")
-                    if strategy[0] == 'sudo':
-                        self._run_sudo_command(strategy, timeout=300, purpose="installing npm package globally")
+                    if strategy[0] == "sudo":
+                        self._run_sudo_command(
+                            strategy,
+                            timeout=300,
+                            purpose="installing npm package globally",
+                        )
                     else:
                         self._run_command(strategy, timeout=300)
                     self._print_success("npm installation successful")
@@ -1024,7 +1227,9 @@ class ClaudeEnhancedInstaller:
                     continue
 
             # If global installation failed, try local installation as fallback
-            self._print_info("Global npm installation failed, trying local installation...")
+            self._print_info(
+                "Global npm installation failed, trying local installation..."
+            )
             return self.install_claude_npm_local()
 
         except Exception as e:
@@ -1045,7 +1250,7 @@ class ClaudeEnhancedInstaller:
             local_strategies = [
                 ["npm", "install", "@anthropic-ai/claude-code"],
                 ["npm", "install", "@anthropic-ai/claude-code", "--force"],
-                ["npm", "install", "@anthropic-ai/claude-code", "--legacy-peer-deps"]
+                ["npm", "install", "@anthropic-ai/claude-code", "--legacy-peer-deps"],
             ]
 
             for strategy in local_strategies:
@@ -1054,12 +1259,18 @@ class ClaudeEnhancedInstaller:
                     self._run_command(strategy, timeout=300)
 
                     # Verify the binary was created
-                    local_binary = self.project_root / "node_modules" / ".bin" / "claude"
+                    local_binary = (
+                        self.project_root / "node_modules" / ".bin" / "claude"
+                    )
                     if local_binary.exists() and local_binary.is_file():
-                        self._print_success(f"Local npm installation successful: {local_binary}")
+                        self._print_success(
+                            f"Local npm installation successful: {local_binary}"
+                        )
                         return True
                     else:
-                        self._print_warning("Local install succeeded but binary not found")
+                        self._print_warning(
+                            "Local install succeeded but binary not found"
+                        )
 
                 except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                     self._print_warning(f"Local strategy failed: {e}")
@@ -1091,9 +1302,15 @@ class ClaudeEnhancedInstaller:
 
             # Check for PEP 668 externally managed environment
             try:
-                test_result = self._run_command([pip_cmd, "install", "--dry-run", "setuptools"], check=False, timeout=30)
+                test_result = self._run_command(
+                    [pip_cmd, "install", "--dry-run", "setuptools"],
+                    check=False,
+                    timeout=30,
+                )
                 if "externally-managed-environment" in test_result.stderr:
-                    self._print_info("Detected PEP 668 externally managed environment (Debian 12+)")
+                    self._print_info(
+                        "Detected PEP 668 externally managed environment (Debian 12+)"
+                    )
                     return self._install_claude_pipx_venv()
             except:
                 pass
@@ -1101,28 +1318,48 @@ class ClaudeEnhancedInstaller:
             # Traditional pip installation strategies
             install_strategies = [
                 [pip_cmd, "install", "--user", "claude-code"],
-                [pip_cmd, "install", "--user", "claude-code", "--break-system-packages"],
-                [pip_cmd, "install", "claude-code"]
+                [
+                    pip_cmd,
+                    "install",
+                    "--user",
+                    "claude-code",
+                    "--break-system-packages",
+                ],
+                [pip_cmd, "install", "claude-code"],
             ]
 
             if self.system_info.has_sudo:
-                install_strategies.extend([
-                    ["sudo", pip_cmd, "install", "claude-code"],
-                    ["sudo", pip_cmd, "install", "claude-code", "--break-system-packages"]
-                ])
+                install_strategies.extend(
+                    [
+                        ["sudo", pip_cmd, "install", "claude-code"],
+                        [
+                            "sudo",
+                            pip_cmd,
+                            "install",
+                            "claude-code",
+                            "--break-system-packages",
+                        ],
+                    ]
+                )
 
             for strategy in install_strategies:
                 try:
                     self._print_info(f"Trying: {' '.join(strategy)}")
-                    if strategy[0] == 'sudo':
-                        self._run_sudo_command(strategy, timeout=300, purpose="installing pip package globally")
+                    if strategy[0] == "sudo":
+                        self._run_sudo_command(
+                            strategy,
+                            timeout=300,
+                            purpose="installing pip package globally",
+                        )
                     else:
                         self._run_command(strategy, timeout=300)
                     self._print_success("pip installation successful")
                     return True
                 except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                     if "externally-managed-environment" in (e.stderr or ""):
-                        self._print_warning("PEP 668 detected, falling back to pipx/venv")
+                        self._print_warning(
+                            "PEP 668 detected, falling back to pipx/venv"
+                        )
                         return self._install_claude_pipx_venv()
                     self._print_warning(f"Strategy failed: {e}")
                     continue
@@ -1156,7 +1393,13 @@ class ClaudeEnhancedInstaller:
                 install_pipx_strategies = [
                     ["sudo", "apt", "install", "-y", "pipx"],
                     ["sudo", "apt-get", "install", "-y", "pipx"],
-                    [shutil.which("pip3") or "pip3", "install", "--user", "pipx", "--break-system-packages"]
+                    [
+                        shutil.which("pip3") or "pip3",
+                        "install",
+                        "--user",
+                        "pipx",
+                        "--break-system-packages",
+                    ],
                 ]
 
                 for strategy in install_pipx_strategies:
@@ -1180,7 +1423,9 @@ class ClaudeEnhancedInstaller:
                     return False
 
             # Install Claude using pipx
-            pipx_cmd = shutil.which("pipx") or str(Path.home() / ".local" / "bin" / "pipx")
+            pipx_cmd = shutil.which("pipx") or str(
+                Path.home() / ".local" / "bin" / "pipx"
+            )
 
             try:
                 self._print_info(f"Installing Claude via pipx: {pipx_cmd}")
@@ -1210,10 +1455,23 @@ class ClaudeEnhancedInstaller:
 
             # Ensure python3-venv is installed
             try:
-                self._run_command(["sudo", "apt", "install", "-y", "python3-venv", "python3-full"], timeout=120)
+                self._run_command(
+                    ["sudo", "apt", "install", "-y", "python3-venv", "python3-full"],
+                    timeout=120,
+                )
             except subprocess.CalledProcessError:
                 try:
-                    self._run_command(["sudo", "apt-get", "install", "-y", "python3-venv", "python3-full"], timeout=120)
+                    self._run_command(
+                        [
+                            "sudo",
+                            "apt-get",
+                            "install",
+                            "-y",
+                            "python3-venv",
+                            "python3-full",
+                        ],
+                        timeout=120,
+                    )
                 except subprocess.CalledProcessError:
                     self._print_warning("Could not install python3-venv")
 
@@ -1225,14 +1483,18 @@ class ClaudeEnhancedInstaller:
 
             # Create virtual environment
             self._print_info(f"Creating venv at {self.venv_dir}")
-            self._run_command(["python3", "-m", "venv", str(self.venv_dir)], timeout=120)
+            self._run_command(
+                ["python3", "-m", "venv", str(self.venv_dir)], timeout=120
+            )
 
             # Install Claude in venv
             venv_pip = self.venv_dir / "bin" / "pip"
             venv_python = self.venv_dir / "bin" / "python"
 
             self._print_info("Installing Claude in virtual environment")
-            self._run_command([str(venv_pip), "install", "--upgrade", "pip"], timeout=120)
+            self._run_command(
+                [str(venv_pip), "install", "--upgrade", "pip"], timeout=120
+            )
             self._run_command([str(venv_pip), "install", "claude-code"], timeout=300)
 
             # Create wrapper script that uses venv
@@ -1258,19 +1520,21 @@ class ClaudeEnhancedInstaller:
                     self._print_error("Claude binary not found in venv")
                     return False
 
-            wrapper_content = f'''#!/bin/bash
+            wrapper_content = f"""#!/bin/bash
 # Claude Virtual Environment Wrapper
 # Auto-generated by Claude Enhanced Installer for PEP 668 compatibility
 
 # Activate virtual environment and execute Claude
 source "{self.venv_dir}/bin/activate"
 exec "{venv_claude}" "$@"
-'''
+"""
 
             wrapper_path.write_text(wrapper_content)
             wrapper_path.chmod(0o755)
 
-            self._print_success(f"Virtual environment wrapper created at {wrapper_path}")
+            self._print_success(
+                f"Virtual environment wrapper created at {wrapper_path}"
+            )
             return True
 
         except Exception as e:
@@ -1286,13 +1550,15 @@ exec "{venv_claude}" "$@"
 
         wrappers_dir = self.project_root / "installers" / "wrappers"
         if wrappers_dir.exists():
-            candidates.extend([
-                wrappers_dir / "claude-wrapper-ultimate.sh",
-                wrappers_dir / "claude-wrapper-ultimate-pro.sh",
-                wrappers_dir / "claude-wrapper-portable-fixed.sh",
-                wrappers_dir / "claude-wrapper-portable.sh",
-                wrappers_dir / "claude-wrapper-simple.sh",
-            ])
+            candidates.extend(
+                [
+                    wrappers_dir / "claude-wrapper-ultimate.sh",
+                    wrappers_dir / "claude-wrapper-ultimate-pro.sh",
+                    wrappers_dir / "claude-wrapper-portable-fixed.sh",
+                    wrappers_dir / "claude-wrapper-portable.sh",
+                    wrappers_dir / "claude-wrapper-simple.sh",
+                ]
+            )
             for candidate in sorted(wrappers_dir.glob("claude-wrapper-*.sh")):
                 if candidate not in candidates:
                     candidates.append(candidate)
@@ -1345,7 +1611,9 @@ exec "{venv_claude}" "$@"
             # Test wrapper
             if self._test_enhanced_wrapper(wrapper_path):
                 self._print_success(f"Enhanced wrapper created at {wrapper_path}")
-                self._print_info("Features: Auto permission bypass, orchestration, agent access")
+                self._print_info(
+                    "Features: Auto permission bypass, orchestration, agent access"
+                )
                 return True
             else:
                 self._print_error("Enhanced wrapper test failed")
@@ -1357,7 +1625,7 @@ exec "{venv_claude}" "$@"
 
     def _generate_bash_wrapper(self, claude_binary: Path) -> str:
         """Generate bash wrapper script"""
-        return f'''#!/bin/bash
+        return f"""#!/bin/bash
 # Claude Enhanced Wrapper - Auto-generated by Claude Enhanced Installer
 # Prevents recursion issues and provides robust execution
 
@@ -1393,11 +1661,11 @@ else
     # Direct binary
     exec "$CLAUDE_BINARY" "$@"
 fi
-'''
+"""
 
     def _generate_zsh_wrapper(self, claude_binary: Path) -> str:
         """Generate zsh-compatible wrapper script"""
-        return f'''#!/bin/zsh
+        return f"""#!/bin/zsh
 # Claude Enhanced Wrapper - Auto-generated by Claude Enhanced Installer
 # ZSH-compatible version with recursion protection
 
@@ -1435,7 +1703,7 @@ else
     # Direct binary
     exec "$CLAUDE_BINARY" "$@"
 fi
-'''
+"""
 
     def _generate_enhanced_wrapper(self, claude_binary: Path) -> str:
         """Generate enhanced wrapper with integrated status monitor and orchestration"""
@@ -1502,7 +1770,9 @@ exec "$CLAUDE_BIN" --dangerously-skip-permissions "$@"'''
         """Test enhanced wrapper script functionality"""
         try:
             # Test help command (most basic test)
-            result = self._run_command([str(wrapper_path), "--help"], check=False, timeout=10)
+            result = self._run_command(
+                [str(wrapper_path), "--help"], check=False, timeout=10
+            )
             return result.returncode == 0
         except:
             return False
@@ -1510,7 +1780,9 @@ exec "$CLAUDE_BIN" --dangerously-skip-permissions "$@"'''
     def _test_wrapper(self, wrapper_path: Path) -> bool:
         """Test wrapper script functionality"""
         try:
-            result = self._run_command([str(wrapper_path), "--help"], check=False, timeout=10)
+            result = self._run_command(
+                [str(wrapper_path), "--help"], check=False, timeout=10
+            )
             return result.returncode == 0
         except:
             return False
@@ -1551,13 +1823,19 @@ exec "$CLAUDE_BIN" --dangerously-skip-permissions "$@"'''
                 current_content = zshrc.read_text()
 
             # Check if already configured (including project-specific path)
-            project_path_exists = f"{self.project_root}/node_modules/.bin" in current_content
-            if "/.local/bin:" in current_content and "Claude Enhanced Installer" in current_content and project_path_exists:
+            project_path_exists = (
+                f"{self.project_root}/node_modules/.bin" in current_content
+            )
+            if (
+                "/.local/bin:" in current_content
+                and "Claude Enhanced Installer" in current_content
+                and project_path_exists
+            ):
                 self._print_info("ZSH already configured")
                 return True
 
             # Add configuration
-            config_block = f'''
+            config_block = f"""
 # Added by Claude Enhanced Installer
 {path_export}
 
@@ -1567,7 +1845,7 @@ then
     # Try to enable completion
     true
 fi
-'''
+"""
 
             # Append configuration
             with zshrc.open("a") as f:
@@ -1592,13 +1870,19 @@ fi
             current_content = bashrc.read_text()
 
             # Check if already configured (including project-specific path)
-            project_path_exists = f"{self.project_root}/node_modules/.bin" in current_content
-            if "/.local/bin:" in current_content and "Claude Enhanced Installer" in current_content and project_path_exists:
+            project_path_exists = (
+                f"{self.project_root}/node_modules/.bin" in current_content
+            )
+            if (
+                "/.local/bin:" in current_content
+                and "Claude Enhanced Installer" in current_content
+                and project_path_exists
+            ):
                 self._print_info("Bash already configured")
                 return True
 
             # Add configuration
-            config_block = f'''
+            config_block = f"""
 # Added by Claude Enhanced Installer
 {path_export}
 
@@ -1608,7 +1892,7 @@ then
     # Try to enable completion
     true
 fi
-'''
+"""
 
             # Append configuration
             with bashrc.open("a") as f:
@@ -1634,14 +1918,20 @@ fi
                 current_content = config_fish.read_text()
 
             # Check if already configured (including project-specific path)
-            project_path_exists = f"{self.project_root}/node_modules/.bin" in current_content
-            if "/.local/bin" in current_content and "Claude Enhanced Installer" in current_content and project_path_exists:
+            project_path_exists = (
+                f"{self.project_root}/node_modules/.bin" in current_content
+            )
+            if (
+                "/.local/bin" in current_content
+                and "Claude Enhanced Installer" in current_content
+                and project_path_exists
+            ):
                 self._print_info("Fish already configured")
                 return True
 
             # Add configuration for fish
             project_root = str(self.project_root)
-            config_block = f'''
+            config_block = f"""
 # Added by Claude Enhanced Installer
 set -gx PATH $HOME/.local/bin {project_root}/node_modules/.bin $HOME/.npm-global/bin $PATH
 
@@ -1650,7 +1940,7 @@ if command -v claude >/dev/null 2>&1
     # Try to enable completion
     true
 end
-'''
+"""
 
             # Append configuration
             with config_fish.open("a") as f:
@@ -1673,16 +1963,22 @@ end
                 current_content = profile.read_text()
 
             # Check if already configured (including project-specific path)
-            project_path_exists = f"{self.project_root}/node_modules/.bin" in current_content
-            if "/.local/bin:" in current_content and "Claude Enhanced Installer" in current_content and project_path_exists:
+            project_path_exists = (
+                f"{self.project_root}/node_modules/.bin" in current_content
+            )
+            if (
+                "/.local/bin:" in current_content
+                and "Claude Enhanced Installer" in current_content
+                and project_path_exists
+            ):
                 self._print_info("Profile already configured")
                 return True
 
             # Add configuration
-            config_block = f'''
+            config_block = f"""
 # Added by Claude Enhanced Installer
 {path_export}
-'''
+"""
 
             # Append configuration
             with profile.open("a") as f:
@@ -1701,36 +1997,58 @@ end
         try:
             # Ensure python3-venv is installed
             try:
-                self._run_command(["sudo", "apt", "install", "-y", "python3-venv"], timeout=120)
+                self._run_command(
+                    ["sudo", "apt", "install", "-y", "python3-venv"], timeout=120
+                )
             except subprocess.CalledProcessError:
                 try:
-                    self._run_command(["sudo", "apt-get", "install", "-y", "python3-venv"], timeout=120)
+                    self._run_command(
+                        ["sudo", "apt-get", "install", "-y", "python3-venv"],
+                        timeout=120,
+                    )
                 except subprocess.CalledProcessError:
-                    self._print_warning("Could not install python3-venv, which is required for virtual environments.")
+                    self._print_warning(
+                        "Could not install python3-venv, which is required for virtual environments."
+                    )
 
             # Create venv directory
             if self.venv_dir.exists():
-                self._print_info(f"Virtual environment found at {self.venv_dir}. Skipping creation.")
+                self._print_info(
+                    f"Virtual environment found at {self.venv_dir}. Skipping creation."
+                )
             else:
                 self.venv_dir.mkdir(parents=True, exist_ok=True)
                 # Create virtual environment
                 self._print_info(f"Creating venv at {self.venv_dir}")
-                self._run_command([sys.executable, "-m", "venv", str(self.venv_dir)], timeout=120)
+                self._run_command(
+                    [sys.executable, "-m", "venv", str(self.venv_dir)], timeout=120
+                )
 
             # Install/upgrade dependencies
             venv_pip = self.venv_dir / "bin" / "pip"
             requirements_file = self.project_root / "config" / "requirements.txt"
             if requirements_file.is_file():
-                self._print_info(f"Installing/upgrading dependencies from {requirements_file}...")
+                self._print_info(
+                    f"Installing/upgrading dependencies from {requirements_file}..."
+                )
                 try:
-                    self._run_command([str(venv_pip), "install", "--upgrade", "pip"], timeout=120)
-                    self._run_command([str(venv_pip), "install", "-r", str(requirements_file)], timeout=1800)
-                    self._print_success("Dependencies from requirements.txt installed successfully.")
+                    self._run_command(
+                        [str(venv_pip), "install", "--upgrade", "pip"], timeout=120
+                    )
+                    self._run_command(
+                        [str(venv_pip), "install", "-r", str(requirements_file)],
+                        timeout=1800,
+                    )
+                    self._print_success(
+                        "Dependencies from requirements.txt installed successfully."
+                    )
                 except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                     self._print_error(f"Failed to install dependencies: {e}")
                     return False
             else:
-                self._print_warning(f"requirements.txt not found at {requirements_file}. Skipping dependency installation.")
+                self._print_warning(
+                    f"requirements.txt not found at {requirements_file}. Skipping dependency installation."
+                )
 
             return True
         except Exception as e:
@@ -1744,11 +2062,15 @@ end
         try:
             agents_source = self.project_root / "agents"
             if not agents_source.exists():
-                self._print_warning(f"Agents source directory not found: {agents_source}")
+                self._print_warning(
+                    f"Agents source directory not found: {agents_source}"
+                )
                 return False
 
             # Create symlink targets
-            claude_share_agents = self.system_info.home_dir / ".local" / "share" / "claude" / "agents"
+            claude_share_agents = (
+                self.system_info.home_dir / ".local" / "share" / "claude" / "agents"
+            )
             home_agents = self.system_info.home_dir / "agents"
 
             # Ensure parent directories exist
@@ -1766,17 +2088,25 @@ end
 
             # Create primary symlink (~/.local/share/claude/agents -> project/agents)
             claude_share_agents.symlink_to(agents_source.resolve())
-            self._print_success(f"Created symlink: {claude_share_agents} -> {agents_source}")
+            self._print_success(
+                f"Created symlink: {claude_share_agents} -> {agents_source}"
+            )
 
             # Create convenience symlink (~/agents -> ~/.local/share/claude/agents)
             home_agents.symlink_to(claude_share_agents)
-            self._print_success(f"Created convenience symlink: {home_agents} -> {claude_share_agents}")
+            self._print_success(
+                f"Created convenience symlink: {home_agents} -> {claude_share_agents}"
+            )
 
             # Verify symlinks work
             if claude_share_agents.exists() and home_agents.exists():
                 agent_count = len(list(claude_share_agents.glob("*.md")))
-                self._print_success(f"Agent system installed with {agent_count} agents available")
-                self._print_info(f"Live updates: Changes to {agents_source} will be immediately available")
+                self._print_success(
+                    f"Agent system installed with {agent_count} agents available"
+                )
+                self._print_info(
+                    f"Live updates: Changes to {agents_source} will be immediately available"
+                )
                 return True
             else:
                 self._print_error("Symlink verification failed")
@@ -1796,14 +2126,16 @@ end
                 self._print_warning("PICMCS source directory not found")
                 return False
 
-            picmcs_target = self.system_info.home_dir / ".local" / "share" / "claude" / "picmcs"
+            picmcs_target = (
+                self.system_info.home_dir / ".local" / "share" / "claude" / "picmcs"
+            )
             picmcs_target.mkdir(parents=True, exist_ok=True)
 
             # Copy PICMCS files
             picmcs_files = [
                 "intelligent_context_chopper.py",
                 "demo_adaptive_chopper.py",
-                "test_hardware_fallback.py"
+                "test_hardware_fallback.py",
             ]
 
             for filename in picmcs_files:
@@ -1844,7 +2176,9 @@ end
             # Get the correct pip command (venv pip or create venv first)
             pip_cmd = self._get_pip_command()
             if not pip_cmd:
-                self._print_error("pip not found and could not create venv. Cannot install Python dependencies.")
+                self._print_error(
+                    "pip not found and could not create venv. Cannot install Python dependencies."
+                )
                 return False
 
             installed_count = 0
@@ -1869,17 +2203,26 @@ end
                 for config_file in self.system_info.shell_config_files:
                     if config_file.exists():
                         try:
-                            with open(config_file, 'r') as f:
+                            with open(config_file, "r") as f:
                                 content = f.read()
 
-                            if str(shadowgit_python) not in content and "SHADOWGIT" not in content:
-                                with open(config_file, 'a') as f:
-                                    f.write(f'\n# Shadowgit Python module\n{pythonpath_line}\n')
+                            if (
+                                str(shadowgit_python) not in content
+                                and "SHADOWGIT" not in content
+                            ):
+                                with open(config_file, "a") as f:
+                                    f.write(
+                                        f"\n# Shadowgit Python module\n{pythonpath_line}\n"
+                                    )
                                 self._print_success(f"Added to {config_file.name}")
                         except Exception as e:
-                            self._print_warning(f"Could not update {config_file.name}: {e}")
+                            self._print_warning(
+                                f"Could not update {config_file.name}: {e}"
+                            )
 
-            self._print_success(f"Shadowgit module installed ({installed_count} dependencies)")
+            self._print_success(
+                f"Shadowgit module installed ({installed_count} dependencies)"
+            )
             return True
 
         except Exception as e:
@@ -1909,7 +2252,9 @@ end
             # Get the correct pip command (venv pip or create venv first)
             pip_cmd = self._get_pip_command()
             if not pip_cmd:
-                self._print_error("pip not found and could not create venv. Cannot install Python dependencies.")
+                self._print_error(
+                    "pip not found and could not create venv. Cannot install Python dependencies."
+                )
                 return False
 
             installed_count = 0
@@ -1926,7 +2271,9 @@ end
                 except subprocess.CalledProcessError as e:
                     self._print_warning(f"Could not install {package}: {e}")
 
-            self._print_success(f"Crypto POW module installed ({installed_count} dependencies)")
+            self._print_success(
+                f"Crypto POW module installed ({installed_count} dependencies)"
+            )
             return True
 
         except Exception as e:
@@ -1938,45 +2285,58 @@ end
         self._print_section("Compiling Crypto-POW Acceleration Engine")
 
         try:
-            crypto_pow_root_dir = self.project_root / "hooks" / "crypto-pow" / "crypto-pow-enhanced"
+            crypto_pow_root_dir = (
+                self.project_root / "hooks" / "crypto-pow" / "crypto-pow-enhanced"
+            )
             if not crypto_pow_root_dir.exists():
-                self._print_warning("Crypto-POW module directory not found - skipping compilation")
+                self._print_warning(
+                    "Crypto-POW module directory not found - skipping compilation"
+                )
                 self._print_info("Python crypto libraries will be used")
                 return True  # Optional component, Python fallback available
 
             # Check if Rust source code exists
             crypto_pow_src = crypto_pow_root_dir / "src"
             if not crypto_pow_src.exists():
-                self._print_info("Crypto-POW Rust source not found - skipping Rust compilation")
-                self._print_info("Python crypto libraries (cryptography, pycryptodome) will provide functionality")
-                return True  # Not an error - Python fallback is the primary implementation
+                self._print_info(
+                    "Crypto-POW Rust source not found - skipping Rust compilation"
+                )
+                self._print_info(
+                    "Python crypto libraries (cryptography, pycryptodome) will provide functionality"
+                )
+                return (
+                    True  # Not an error - Python fallback is the primary implementation
+                )
 
             # Check if we have cargo
             if not shutil.which("cargo"):
-                self._print_warning("Cargo (Rust build tool) not found - skipping Crypto-POW Rust engine")
+                self._print_warning(
+                    "Cargo (Rust build tool) not found - skipping Crypto-POW Rust engine"
+                )
                 self._print_info("Python crypto libraries will be used")
                 return True
 
-            self._print_info("Compiling Crypto-POW Rust acceleration with meteorlake optimizations...")
+            self._print_info(
+                "Compiling Crypto-POW Rust acceleration with meteorlake optimizations..."
+            )
 
             try:
                 # Clean first
                 self._run_command(
-                    ["cargo", "clean"],
-                    cwd=crypto_pow_root_dir,
-                    timeout=60,
-                    check=False
+                    ["cargo", "clean"], cwd=crypto_pow_root_dir, timeout=60, check=False
                 )
 
                 # Build the Rust project
                 self._run_command(
                     ["cargo", "build", "--release"],
                     cwd=crypto_pow_root_dir,
-                    timeout=300
+                    timeout=300,
                 )
 
                 self._print_success("Crypto-POW Rust engine compiled successfully")
-                self._print_info("Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI) via Rust build")
+                self._print_info(
+                    "Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI) via Rust build"
+                )
                 return True
 
             except subprocess.CalledProcessError as e:
@@ -1994,8 +2354,18 @@ end
         self._print_section("Setting up Hybrid Bridge")
 
         try:
-            bridge_script = self.project_root / "integration" / "integrate_hybrid_bridge.sh"
-            bridge_manager = self.project_root / "agents" / "src" / "python" / "claude_agents" / "bridges" / "hybrid_bridge_manager.py"
+            bridge_script = (
+                self.project_root / "integration" / "integrate_hybrid_bridge.sh"
+            )
+            bridge_manager = (
+                self.project_root
+                / "agents"
+                / "src"
+                / "python"
+                / "claude_agents"
+                / "bridges"
+                / "hybrid_bridge_manager.py"
+            )
 
             # Check if hybrid bridge components exist
             if not bridge_manager.exists():
@@ -2007,17 +2377,27 @@ end
             # Verify Python dependencies
             try:
                 import asyncio
+
                 import asyncpg
+
                 self._print_success("Hybrid bridge dependencies available")
             except ImportError as e:
                 self._print_warning(f"Hybrid bridge missing dependencies: {e}")
                 return True
 
             # Create symlink in agents/src/python if it doesn't exist
-            hybrid_link = self.project_root / "agents" / "src" / "python" / "hybrid_bridge_manager.py"
+            hybrid_link = (
+                self.project_root
+                / "agents"
+                / "src"
+                / "python"
+                / "hybrid_bridge_manager.py"
+            )
             if not hybrid_link.exists():
                 try:
-                    hybrid_link.symlink_to("claude_agents/bridges/hybrid_bridge_manager.py")
+                    hybrid_link.symlink_to(
+                        "claude_agents/bridges/hybrid_bridge_manager.py"
+                    )
                     self._print_success("Created hybrid bridge symlink")
                 except Exception as e:
                     self._print_warning(f"Could not create symlink: {e}")
@@ -2051,7 +2431,9 @@ end
                 hooks_installed += 1
 
             # 2. Unified hook system (v2 - latest)
-            unified_hook = self.project_root / "hooks" / "claude_unified_hook_system_v2.py"
+            unified_hook = (
+                self.project_root / "hooks" / "claude_unified_hook_system_v2.py"
+            )
             if unified_hook.exists():
                 target = claude_hooks_dir / "claude_unified_hook_system.py"
                 if target.exists():
@@ -2061,7 +2443,9 @@ end
                 hooks_installed += 1
 
             if hooks_installed > 0:
-                self._print_success(f"Installed {hooks_installed} Claude Code hooks to ~/.claude/hooks/")
+                self._print_success(
+                    f"Installed {hooks_installed} Claude Code hooks to ~/.claude/hooks/"
+                )
                 return True
             else:
                 self._print_warning("No hooks found to install")
@@ -2084,7 +2468,9 @@ end
             hooks_installed = 0
 
             # 1. Pre-commit: Export learning data
-            pre_commit_src = self.project_root / "hooks" / "pre-commit" / "export_learning_data.sh"
+            pre_commit_src = (
+                self.project_root / "hooks" / "pre-commit" / "export_learning_data.sh"
+            )
             if pre_commit_src.exists():
                 pre_commit_dst = git_hooks_dir / "pre-commit"
                 if pre_commit_dst.exists():
@@ -2095,7 +2481,9 @@ end
                 hooks_installed += 1
 
             # 2. Post-commit: Record task execution
-            post_task_src = self.project_root / "hooks" / "post-task" / "record_learning_data.sh"
+            post_task_src = (
+                self.project_root / "hooks" / "post-task" / "record_learning_data.sh"
+            )
             if post_task_src.exists():
                 post_commit_dst = git_hooks_dir / "post-commit"
                 if post_commit_dst.exists():
@@ -2122,7 +2510,9 @@ end
         self._print_section("Installing Unified Integration System")
 
         try:
-            unified_py = self.project_root / "integration" / "claude_unified_integration.py"
+            unified_py = (
+                self.project_root / "integration" / "claude_unified_integration.py"
+            )
             if not unified_py.exists():
                 self._print_warning("Unified integration not found - skipping")
                 return True
@@ -2139,7 +2529,9 @@ end
 
             # Run setup
             try:
-                self._run_command(["python3", str(unified_py), "--setup"], timeout=60, check=False)
+                self._run_command(
+                    ["python3", str(unified_py), "--setup"], timeout=60, check=False
+                )
                 self._print_success("Unified integration system installed (94 agents)")
                 self._print_info("Use: claude-unified-integration --list")
             except subprocess.CalledProcessError:
@@ -2166,10 +2558,10 @@ end
                 self._run_command(
                     ["bash", str(script), "--force", "--no-tests"],
                     timeout=120,
-                    check=False
+                    check=False,
                 )
                 self._print_success("Natural agent invocation enabled")
-                self._print_info("Use: test-invoke \"your request\" in ~/.config/claude/")
+                self._print_info('Use: test-invoke "your request" in ~/.config/claude/')
             except subprocess.CalledProcessError:
                 self._print_warning("Natural invocation setup had issues")
 
@@ -2185,13 +2577,19 @@ end
 
         try:
             # Install infrastructure
-            install_script = self.project_root / "optimization" / "install-universal-optimizer.sh"
+            install_script = (
+                self.project_root / "optimization" / "install-universal-optimizer.sh"
+            )
             if install_script.exists():
-                self._run_command(["bash", str(install_script)], timeout=60, check=False)
+                self._run_command(
+                    ["bash", str(install_script)], timeout=60, check=False
+                )
                 self._print_success("Optimizer infrastructure installed")
 
             # Create symlink for universal optimizer
-            optimizer_py = self.project_root / "optimization" / "claude_universal_optimizer.py"
+            optimizer_py = (
+                self.project_root / "optimization" / "claude_universal_optimizer.py"
+            )
             if optimizer_py.exists():
                 target = self.local_bin / "claude-optimizer"
                 if target.exists():
@@ -2199,7 +2597,9 @@ end
                 target.symlink_to(optimizer_py)
                 optimizer_py.chmod(0o755)
                 self._print_success("Universal optimizer available")
-                self._print_info("7 optimization modules: context, token, permission, cache, trie, async, db")
+                self._print_info(
+                    "7 optimization modules: context, token, permission, cache, trie, async, db"
+                )
                 self._print_info("Use: claude-optimizer --optimizer-status")
 
             return True
@@ -2212,7 +2612,9 @@ end
         self._print_section("Deploying Memory Optimizations")
 
         try:
-            script = self.project_root / "optimization" / "deploy_memory_optimization.sh"
+            script = (
+                self.project_root / "optimization" / "deploy_memory_optimization.sh"
+            )
             if not script.exists():
                 return True
 
@@ -2220,7 +2622,9 @@ end
             try:
                 lscpu_out = subprocess.check_output(["lscpu"], text=True).lower()
                 if "meteor" not in lscpu_out and "ultra 7" not in lscpu_out:
-                    self._print_info("Skipping Meteor Lake optimizations (different CPU)")
+                    self._print_info(
+                        "Skipping Meteor Lake optimizations (different CPU)"
+                    )
                     return True
             except:
                 pass
@@ -2240,16 +2644,24 @@ end
         try:
             analyzer = self.project_root / "hardware" / "milspec_hardware_analyzer.py"
             if not analyzer.exists():
-                self._print_info("Military hardware analyzer not found - using standard NPU (11 TOPS)")
+                self._print_info(
+                    "Military hardware analyzer not found - using standard NPU (11 TOPS)"
+                )
                 return True
 
             # Try detection with sudo
             military_detected = False
             try:
                 result = self._run_sudo_command(
-                    ["sudo", "python3", str(analyzer), "--export", "/tmp/npu-military-config.json"],
+                    [
+                        "sudo",
+                        "python3",
+                        str(analyzer),
+                        "--export",
+                        "/tmp/npu-military-config.json",
+                    ],
                     timeout=30,
-                    purpose="detecting military NPU capabilities"
+                    purpose="detecting military NPU capabilities",
                 )
 
                 config_file = Path("/tmp/npu-military-config.json")
@@ -2258,14 +2670,18 @@ end
                     npu_caps = config.get("npu_capabilities")
                     if npu_caps and npu_caps.get("max_tops", 11) > 20:
                         military_detected = True
-                        self._print_success(f"Military NPU detected: {npu_caps.get('max_tops')} TOPS")
-                        self._print_info("Enhanced: Covert mode, secure execution, 128MB cache")
+                        self._print_success(
+                            f"Military NPU detected: {npu_caps.get('max_tops')} TOPS"
+                        )
+                        self._print_info(
+                            "Enhanced: Covert mode, secure execution, 128MB cache"
+                        )
             except:
                 self._print_info("NPU detection without sudo (standard 11 TOPS mode)")
 
             # Create NPU environment file
             npu_env = self.system_info.home_dir / ".claude" / "npu-military.env"
-            env_content = '''# Intel NPU Military-Grade Enhancement
+            env_content = """# Intel NPU Military-Grade Enhancement
 export INTEL_NPU_ENABLE_TURBO=1
 export OPENVINO_ENABLE_SECURE_MEMORY=1
 export OPENVINO_HETERO_PRIORITY=NPU,GPU,CPU
@@ -2273,9 +2689,9 @@ export OV_SCALE_FACTOR=1.5
 export INTEL_NPU_SECURE_EXEC=1
 export NPU_MAX_TOPS={max_tops}
 export NPU_MILITARY_MODE={military_mode}
-'''.format(
+""".format(
                 max_tops=26.4 if military_detected else 11.0,
-                military_mode=1 if military_detected else 0
+                military_mode=1 if military_detected else 0,
             )
 
             npu_env.write_text(env_content)
@@ -2286,15 +2702,19 @@ export NPU_MILITARY_MODE={military_mode}
                     try:
                         content = rc_file.read_text()
                         if "npu-military.env" not in content:
-                            with open(rc_file, 'a') as f:
-                                f.write('\n# NPU Military Mode\nif [ -f ~/.claude/npu-military.env ]; then\n    source ~/.claude/npu-military.env\nfi\n')
+                            with open(rc_file, "a") as f:
+                                f.write(
+                                    "\n# NPU Military Mode\nif [ -f ~/.claude/npu-military.env ]; then\n    source ~/.claude/npu-military.env\nfi\n"
+                                )
                             self._print_success(f"Added NPU config to {rc_file.name}")
                             break
                     except:
                         pass
 
             if military_detected:
-                self._print_success("NPU military mode configured (26.4 TOPS, 2.2x performance)")
+                self._print_success(
+                    "NPU military mode configured (26.4 TOPS, 2.2x performance)"
+                )
             else:
                 self._print_success("NPU standard mode configured (11 TOPS)")
 
@@ -2309,7 +2729,13 @@ export NPU_MILITARY_MODE={military_mode}
         self._print_section("Installing Rejection Reduction System")
 
         try:
-            reducer_py = self.project_root / "agents" / "src" / "python" / "claude_rejection_reducer.py"
+            reducer_py = (
+                self.project_root
+                / "agents"
+                / "src"
+                / "python"
+                / "claude_rejection_reducer.py"
+            )
             if not reducer_py.exists():
                 return True
 
@@ -2320,14 +2746,21 @@ export NPU_MILITARY_MODE={military_mode}
             shutil.copy2(reducer_py, claude_system / "claude_rejection_reducer.py")
 
             # Also copy dependencies
-            for dep in ["intelligent_context_chopper.py", "permission_fallback_system.py"]:
+            for dep in [
+                "intelligent_context_chopper.py",
+                "permission_fallback_system.py",
+            ]:
                 dep_file = self.project_root / "agents" / "src" / "python" / dep
                 if dep_file.exists():
                     shutil.copy2(dep_file, claude_system / dep)
 
             self._print_success("Rejection reducer installed (10 strategies)")
-            self._print_info("Strategies: claude_filter, metadata_first, token_dilution, etc.")
-            self._print_info("Acceptance rate: 87-92% (reduces rejections automatically)")
+            self._print_info(
+                "Strategies: claude_filter, metadata_first, token_dilution, etc."
+            )
+            self._print_info(
+                "Acceptance rate: 87-92% (reduces rejections automatically)"
+            )
             return True
         except Exception as e:
             self._print_warning(f"Rejection reducer install failed: {e}")
@@ -2338,9 +2771,16 @@ export NPU_MILITARY_MODE={military_mode}
         self._print_section("Running NPU Acceleration Installer")
 
         try:
-            npu_installer = self.project_root / "installers" / "scripts" / "install_npu_acceleration.py"
+            npu_installer = (
+                self.project_root
+                / "installers"
+                / "scripts"
+                / "install_npu_acceleration.py"
+            )
             if not npu_installer.exists():
-                self._print_info("NPU acceleration installer archived - functionality integrated")
+                self._print_info(
+                    "NPU acceleration installer archived - functionality integrated"
+                )
                 return True
 
             # Run NPU installer
@@ -2357,15 +2797,26 @@ export NPU_MILITARY_MODE={military_mode}
         self._print_section("Running Unified Optimization Setup")
 
         try:
-            optimizer_setup = self.project_root / "installers" / "scripts" / "setup_unified_optimization.py"
+            optimizer_setup = (
+                self.project_root
+                / "installers"
+                / "scripts"
+                / "setup_unified_optimization.py"
+            )
             if not optimizer_setup.exists():
-                self._print_info("Optimization setup archived - functionality integrated")
+                self._print_info(
+                    "Optimization setup archived - functionality integrated"
+                )
                 return True
 
             # Run optimization setup
-            self._run_command(["python3", str(optimizer_setup)], timeout=120, check=False)
+            self._run_command(
+                ["python3", str(optimizer_setup)], timeout=120, check=False
+            )
             self._print_success("Unified optimization pipeline configured")
-            self._print_info("Async pipeline: context, token, cache, trie optimizations")
+            self._print_info(
+                "Async pipeline: context, token, cache, trie optimizations"
+            )
             return True
         except Exception as e:
             self._print_warning(f"Optimization setup failed: {e}")
@@ -2379,7 +2830,9 @@ export NPU_MILITARY_MODE={military_mode}
             # Run register-custom-agents.py
             register_script = self.project_root / "tools" / "register-custom-agents.py"
             if register_script.exists():
-                self._run_command(["python3", str(register_script)], timeout=60, check=False)
+                self._run_command(
+                    ["python3", str(register_script)], timeout=60, check=False
+                )
                 self._print_success("Agent registry created (95 agents, 466 aliases)")
                 self._print_info("Registry: config/registered_agents.json")
                 self._print_info("Cache: ~/.cache/claude/registered_agents.json")
@@ -2387,9 +2840,15 @@ export NPU_MILITARY_MODE={military_mode}
                 self._print_warning("Agent registration script not found")
 
             # Run claude-global-agents-bridge setup
-            bridge_script = self.project_root / "tools" / "claude-global-agents-bridge.py"
+            bridge_script = (
+                self.project_root / "tools" / "claude-global-agents-bridge.py"
+            )
             if bridge_script.exists():
-                self._run_command(["python3", str(bridge_script), "--install"], timeout=60, check=False)
+                self._run_command(
+                    ["python3", str(bridge_script), "--install"],
+                    timeout=60,
+                    check=False,
+                )
                 self._print_success("Global agents bridge initialized")
                 self._print_info("Task tool integration configured")
             else:
@@ -2408,7 +2867,9 @@ export NPU_MILITARY_MODE={military_mode}
             shadowgit_makefile = self.project_root / "hooks" / "shadowgit" / "Makefile"
 
             if not shadowgit_makefile.exists():
-                self._print_warning("Shadowgit Makefile not found - skipping C compilation")
+                self._print_warning(
+                    "Shadowgit Makefile not found - skipping C compilation"
+                )
                 self._print_info("Python-only mode will be used")
                 return True  # Optional component
 
@@ -2426,18 +2887,16 @@ export NPU_MILITARY_MODE={military_mode}
                     ["make", "clean"],
                     cwd=shadowgit_makefile.parent,
                     timeout=30,
-                    check=False
+                    check=False,
                 )
 
                 # Compile object files
-                self._run_command(
-                    ["make"],
-                    cwd=shadowgit_makefile.parent,
-                    timeout=120
-                )
+                self._run_command(["make"], cwd=shadowgit_makefile.parent, timeout=120)
 
                 self._print_success("Shadowgit C engine compiled successfully")
-                self._print_info("Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI)")
+                self._print_info(
+                    "Optimizations: meteorlake profile (AVX2+FMA+AVX-VNNI)"
+                )
                 return True
 
             except subprocess.CalledProcessError as e:
@@ -2456,7 +2915,7 @@ export NPU_MILITARY_MODE={military_mode}
         try:
             launch_script = self.local_bin / "claude-enhanced"
 
-            script_content = '''#!/bin/bash
+            script_content = """#!/bin/bash
 # Claude Enhanced Launcher
 # Provides enhanced functionality and error handling with dynamic path resolution
 
@@ -2497,8 +2956,10 @@ export CLAUDE_PROJECT_ROOT=$(detect_project_root)
 
 # Launch Claude with enhanced features
 exec claude "$@"
-'''
-            script_content = script_content.replace("PROJECT_ROOT_PLACEHOLDER", str(self.project_root))
+"""
+            script_content = script_content.replace(
+                "PROJECT_ROOT_PLACEHOLDER", str(self.project_root)
+            )
 
             launch_script.write_text(script_content)
             launch_script.chmod(0o755)
@@ -2515,11 +2976,17 @@ exec claude "$@"
         # Try 'docker compose' (v2)
         try:
             if shutil.which("docker"):
-                result = self._run_command(["docker", "compose", "version"], check=False, timeout=10)
+                result = self._run_command(
+                    ["docker", "compose", "version"], check=False, timeout=10
+                )
                 if result.returncode == 0:
                     self._print_info("Found 'docker compose' (v2).")
                     return ["docker", "compose"]
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        except (
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+            subprocess.TimeoutExpired,
+        ):
             pass
 
         # Try 'docker-compose' (v1) - for legacy support
@@ -2529,6 +2996,7 @@ exec claude "$@"
 
         self._print_warning("Neither 'docker compose' nor 'docker-compose' found.")
         return None
+
     def install_docker_database(self) -> bool:
         """Install Docker-based PostgreSQL database with pgvector"""
         self._print_section("Installing Docker database system")
@@ -2538,48 +3006,88 @@ exec claude "$@"
 
             # Check if Docker is available
             if not shutil.which("docker") or not compose_cmd:
-                self._print_info("Installing Docker and environment-specific packages...")
+                self._print_info(
+                    "Installing Docker and environment-specific packages..."
+                )
 
                 # Get environment-specific packages
                 env_packages = self._get_environment_specific_packages()
                 docker_packages = ["docker.io", "docker-compose-plugin"]
-                all_packages = list(set(env_packages + docker_packages))  # Remove duplicates
+                all_packages = list(
+                    set(env_packages + docker_packages)
+                )  # Remove duplicates
 
-                self._print_info(f"📦 Installing packages for {self.system_info.environment_type.value} environment: {', '.join(all_packages)}")
+                self._print_info(
+                    f"📦 Installing packages for {self.system_info.environment_type.value} environment: {', '.join(all_packages)}"
+                )
 
                 # Install Docker and environment packages using system package manager
                 docker_install_strategies = [
-                    ["sudo", "apt", "update", "&&", "sudo", "apt", "install", "-y"] + all_packages,
-                    ["sudo", "apt-get", "update", "&&", "sudo", "apt-get", "install", "-y"] + all_packages,
-                    ["curl", "-fsSL", "https://get.docker.com", "-o", "get-docker.sh", "&&", "sudo", "sh", "get-docker.sh"]
+                    ["sudo", "apt", "update", "&&", "sudo", "apt", "install", "-y"]
+                    + all_packages,
+                    [
+                        "sudo",
+                        "apt-get",
+                        "update",
+                        "&&",
+                        "sudo",
+                        "apt-get",
+                        "install",
+                        "-y",
+                    ]
+                    + all_packages,
+                    [
+                        "curl",
+                        "-fsSL",
+                        "https://get.docker.com",
+                        "-o",
+                        "get-docker.sh",
+                        "&&",
+                        "sudo",
+                        "sh",
+                        "get-docker.sh",
+                    ],
                 ]
 
                 for strategy in docker_install_strategies:
                     try:
                         if "&&" in strategy:
-                            parts = [part.split() for part in " ".join(strategy).split(" && ")]
+                            parts = [
+                                part.split()
+                                for part in " ".join(strategy).split(" && ")
+                            ]
                             for cmd_part in parts:
                                 if cmd_part and cmd_part[0] == "sudo":
-                                    self._run_sudo_command(cmd_part, timeout=300, purpose="installing Docker")
+                                    self._run_sudo_command(
+                                        cmd_part,
+                                        timeout=300,
+                                        purpose="installing Docker",
+                                    )
                                 else:
                                     self._run_command(cmd_part, timeout=300)
                         else:
                             if strategy and strategy[0] == "sudo":
-                                self._run_sudo_command(strategy, timeout=300, purpose="installing Docker")
+                                self._run_sudo_command(
+                                    strategy, timeout=300, purpose="installing Docker"
+                                )
                             else:
                                 self._run_command(strategy, timeout=300)
                         break
                     except subprocess.CalledProcessError:
                         continue
                 else:
-                    self._print_warning("Could not install Docker, skipping database setup")
+                    self._print_warning(
+                        "Could not install Docker, skipping database setup"
+                    )
                     return False
 
                 # Re-check for compose command
                 compose_cmd = self._get_docker_compose_command()
 
             if not compose_cmd:
-                self._print_error("Docker Compose is required but could not be found or installed.")
+                self._print_error(
+                    "Docker Compose is required but could not be found or installed."
+                )
                 return False
 
             # Add user to docker group if not already
@@ -2587,9 +3095,11 @@ exec claude "$@"
                 self._run_sudo_command(
                     ["sudo", "usermod", "-aG", "docker", self.system_info.user_name],
                     timeout=30,
-                    purpose="adding user to docker group"
+                    purpose="adding user to docker group",
                 )
-                self._print_info("Added user to docker group (may require logout/login)")
+                self._print_info(
+                    "Added user to docker group (may require logout/login)"
+                )
             except (subprocess.CalledProcessError, Exception) as e:
                 self._print_warning(f"Could not add user to docker group: {e}")
 
@@ -2683,26 +3193,56 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
 
             # Check for existing container and handle reinstall
             try:
-                result = self._run_command(["docker", "ps", "-a", "--filter", "name=claude-postgres", "--format", "{{.Names}}"],
-                                         check=False, timeout=10)
+                result = self._run_command(
+                    [
+                        "docker",
+                        "ps",
+                        "-a",
+                        "--filter",
+                        "name=claude-postgres",
+                        "--format",
+                        "{{.Names}}",
+                    ],
+                    check=False,
+                    timeout=10,
+                )
                 if "claude-postgres" in result.stdout:
-                    self._print_info("Existing claude-postgres container detected - handling reinstall...")
-                    self._run_command(["docker", "stop", "claude-postgres"], check=False, timeout=30)
-                    self._run_command(["docker", "rm", "claude-postgres"], check=False, timeout=30)
+                    self._print_info(
+                        "Existing claude-postgres container detected - handling reinstall..."
+                    )
+                    self._run_command(
+                        ["docker", "stop", "claude-postgres"], check=False, timeout=30
+                    )
+                    self._run_command(
+                        ["docker", "rm", "claude-postgres"], check=False, timeout=30
+                    )
                     self._print_info("Removed existing container for clean reinstall")
             except:
                 pass
 
             # Start database service
             self._print_info("Starting PostgreSQL database...")
-            self._run_sudo_command(compose_cmd + ["-f", str(compose_file), "up", "-d"],
-                                   cwd=docker_dir, timeout=120, purpose="starting Docker database")
+            self._run_sudo_command(
+                compose_cmd + ["-f", str(compose_file), "up", "-d"],
+                cwd=docker_dir,
+                timeout=120,
+                purpose="starting Docker database",
+            )
 
             # Wait for database to be ready
             self._print_info("Waiting for database to be ready...")
             for i in range(30):  # 30 second timeout
                 try:
-                    docker_exec_cmd = ["docker", "exec", "claude-postgres", "pg_isready", "-U", "claude_agent", "-d", "claude_agents_auth"]
+                    docker_exec_cmd = [
+                        "docker",
+                        "exec",
+                        "claude-postgres",
+                        "pg_isready",
+                        "-U",
+                        "claude_agent",
+                        "-d",
+                        "claude_agents_auth",
+                    ]
                     if os.geteuid() != 0 and self.system_info.has_sudo:
                         docker_exec_cmd.insert(0, "sudo")
                     result = self._run_command(docker_exec_cmd, check=False, timeout=5)
@@ -2722,14 +3262,21 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
             self._print_error(f"Failed to install Docker database: {e}")
             return False
 
-
-
-
     def _check_docker_postgres(self) -> bool:
         """Check if Docker PostgreSQL container is running"""
         try:
-            result = self._run_command(["docker", "ps", "--filter", "name=claude-postgres", "--format", "{{.Names}}"],
-                                     check=False, timeout=10)
+            result = self._run_command(
+                [
+                    "docker",
+                    "ps",
+                    "--filter",
+                    "name=claude-postgres",
+                    "--format",
+                    "{{.Names}}",
+                ],
+                check=False,
+                timeout=10,
+            )
             return result.returncode == 0 and "claude-postgres" in result.stdout
         except:
             return False
@@ -2739,21 +3286,36 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA enhanced_learning TO claude_agen
         try:
             schema_file = think_mode_dir / "think_mode_calibration_schema.sql"
             if not schema_file.exists():
-                self._print_warning("Think mode schema file not found, skipping database setup")
+                self._print_warning(
+                    "Think mode schema file not found, skipping database setup"
+                )
                 return False
 
             self._print_info("Deploying think mode database schema...")
 
             # Execute schema via docker exec
             docker_cmd = [
-                "docker", "exec", "-i", "claude-postgres",
-                "psql", "-U", "claude_agent", "-d", "claude_agents_auth"
+                "docker",
+                "exec",
+                "-i",
+                "claude-postgres",
+                "psql",
+                "-U",
+                "claude_agent",
+                "-d",
+                "claude_agents_auth",
             ]
 
-            with open(schema_file, 'r') as f:
+            with open(schema_file, "r") as f:
                 schema_content = f.read()
 
-            process = subprocess.run(docker_cmd, input=schema_content, text=True, capture_output=True, timeout=30)
+            process = subprocess.run(
+                docker_cmd,
+                input=schema_content,
+                text=True,
+                capture_output=True,
+                timeout=30,
+            )
             result = process
 
             if result.returncode == 0:
@@ -2919,20 +3481,26 @@ if __name__ == "__main__":
         """Get currently installed Claude Code version"""
         try:
             # Try npm list first
-            result = self._run_command(["npm", "list", "-g", "@anthropic-ai/claude-code"], check=False)
+            result = self._run_command(
+                ["npm", "list", "-g", "@anthropic-ai/claude-code"], check=False
+            )
             if result.returncode == 0:
                 # Extract version from npm output
-                version_match = re.search(r'@anthropic-ai/claude-code@(\d+\.\d+\.\d+)', result.stdout)
+                version_match = re.search(
+                    r"@anthropic-ai/claude-code@(\d+\.\d+\.\d+)", result.stdout
+                )
                 if version_match:
                     return version_match.group(1)
 
             # Try direct binary version
             claude_binary = self._find_claude_binary()
             if claude_binary:
-                result = self._run_command([str(claude_binary), "--version"], check=False, timeout=10)
+                result = self._run_command(
+                    [str(claude_binary), "--version"], check=False, timeout=10
+                )
                 if result.returncode == 0:
                     # Extract version from output
-                    version_match = re.search(r'(\d+\.\d+\.\d+)', result.stdout)
+                    version_match = re.search(r"(\d+\.\d+\.\d+)", result.stdout)
                     if version_match:
                         return version_match.group(1)
 
@@ -2943,8 +3511,10 @@ if __name__ == "__main__":
     def _detect_claude_features(self, version: str) -> Dict[str, bool]:
         """Detect available features based on Claude Code version"""
         try:
-            version_parts = [int(x) for x in version.split('.')]
-            major, minor = version_parts[0], version_parts[1] if len(version_parts) > 1 else 0
+            version_parts = [int(x) for x in version.split(".")]
+            major, minor = version_parts[0], (
+                version_parts[1] if len(version_parts) > 1 else 0
+            )
 
             features = {
                 "checkpoints": major >= 2,  # 2.0+ has checkpointing
@@ -2961,16 +3531,29 @@ if __name__ == "__main__":
             return features
         except Exception:
             # Assume all features available if version detection fails
-            return {k: True for k in [
-                "checkpoints", "permission_modes", "legacy_skip_permissions",
-                "fork_session", "agents_config", "setting_sources",
-                "mcp_strict", "session_id", "vs_code_extension"
-            ]}
+            return {
+                k: True
+                for k in [
+                    "checkpoints",
+                    "permission_modes",
+                    "legacy_skip_permissions",
+                    "fork_session",
+                    "agents_config",
+                    "setting_sources",
+                    "mcp_strict",
+                    "session_id",
+                    "vs_code_extension",
+                ]
+            }
 
     def _get_latest_claude_version(self) -> Optional[str]:
         """Get latest available Claude Code version from npm"""
         try:
-            result = self._run_command(["npm", "view", "@anthropic-ai/claude-code", "version"], check=False, timeout=30)
+            result = self._run_command(
+                ["npm", "view", "@anthropic-ai/claude-code", "version"],
+                check=False,
+                timeout=30,
+            )
             if result.returncode == 0:
                 return result.stdout.strip()
         except Exception:
@@ -2980,8 +3563,8 @@ if __name__ == "__main__":
     def _is_newer_version(self, latest: str, current: str) -> bool:
         """Compare version strings to determine if latest is newer"""
         try:
-            latest_parts = [int(x) for x in latest.split('.')]
-            current_parts = [int(x) for x in current.split('.')]
+            latest_parts = [int(x) for x in latest.split(".")]
+            current_parts = [int(x) for x in current.split(".")]
 
             # Pad to same length
             max_len = max(len(latest_parts), len(current_parts))
@@ -2998,7 +3581,7 @@ if __name__ == "__main__":
         locations = [
             Path(os.environ.get("CLAUDE_SYSTEM_BIN", "/usr/local/bin")) / "claude",
             Path(self.system_info.home_dir / ".local/bin/claude"),
-            Path(self.system_info.home_dir / ".npm-global/bin/claude")
+            Path(self.system_info.home_dir / ".npm-global/bin/claude"),
         ]
 
         for location in locations:
@@ -3029,15 +3612,29 @@ if __name__ == "__main__":
             if self.system_info.npm_available:
                 try:
                     self._print_info("Updating Claude via npm...")
-                    self._run_command(["npm", "update", "-g", "@anthropic-ai/claude-code"], timeout=300)
+                    self._run_command(
+                        ["npm", "update", "-g", "@anthropic-ai/claude-code"],
+                        timeout=300,
+                    )
                     self._print_success("Claude Code updated successfully")
                     return True
                 except subprocess.CalledProcessError:
                     # Try sudo npm update
                     if self.system_info.has_sudo:
                         try:
-                            self._run_command(["sudo", "npm", "update", "-g", "@anthropic-ai/claude-code"], timeout=300)
-                            self._print_success("Claude Code updated successfully (with sudo)")
+                            self._run_command(
+                                [
+                                    "sudo",
+                                    "npm",
+                                    "update",
+                                    "-g",
+                                    "@anthropic-ai/claude-code",
+                                ],
+                                timeout=300,
+                            )
+                            self._print_success(
+                                "Claude Code updated successfully (with sudo)"
+                            )
                             return True
                         except subprocess.CalledProcessError:
                             pass
@@ -3057,7 +3654,7 @@ if __name__ == "__main__":
         try:
             # Create update checker script
             update_script = self.local_bin / "claude-update-checker"
-            script_content = '''#!/bin/bash
+            script_content = """#!/bin/bash
 # Claude Code Update Checker
 # Automatically checks for updates and notifies user
 
@@ -3076,16 +3673,22 @@ if python3 "$CLAUDE_INSTALLER" --check-updates >> "$LOG_FILE" 2>&1; then
 else
     echo "$(date): Update check failed" >> "$LOG_FILE"
 fi
-'''
-            script_content = script_content.replace("INSTALLER_PATH_PLACEHOLDER", str(Path(__file__).resolve()))
+"""
+            script_content = script_content.replace(
+                "INSTALLER_PATH_PLACEHOLDER", str(Path(__file__).resolve())
+            )
 
             update_script.write_text(script_content)
             update_script.chmod(0o755)
 
             # Add to cron if available
             if not shutil.which("crontab"):
-                self._print_warning("`crontab` command not found. Skipping update scheduler setup.")
-                self._print_info("To enable automatic updates, please install a cron daemon (e.g., `sudo apt-get install cron`).")
+                self._print_warning(
+                    "`crontab` command not found. Skipping update scheduler setup."
+                )
+                self._print_info(
+                    "To enable automatic updates, please install a cron daemon (e.g., `sudo apt-get install cron`)."
+                )
                 return True
 
             try:
@@ -3095,24 +3698,39 @@ fi
 
                 # Check if update job already exists
                 if "claude-update-checker" not in current_cron:
-                    new_cron_line = f"0 8 * * 1 {shlex.quote(str(update_script))} >/dev/null 2>&1"
+                    new_cron_line = (
+                        f"0 8 * * 1 {shlex.quote(str(update_script))} >/dev/null 2>&1"
+                    )
                     updated_cron = current_cron.strip() + "\n" + new_cron_line + "\n"
 
                     # Install new crontab
-                    process = subprocess.Popen(["crontab", "-"], stdin=subprocess.PIPE, text=True,
-                                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    process = subprocess.Popen(
+                        ["crontab", "-"],
+                        stdin=subprocess.PIPE,
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
                     stdout, stderr = process.communicate(input=updated_cron)
 
                     if process.returncode == 0:
-                        self._print_success("Update scheduler installed (weekly checks).")
+                        self._print_success(
+                            "Update scheduler installed (weekly checks)."
+                        )
                     else:
-                        self._print_warning(f"Could not install cron job: {stderr.strip()}")
+                        self._print_warning(
+                            f"Could not install cron job: {stderr.strip()}"
+                        )
                 else:
                     self._print_info("Update scheduler already installed.")
             except (subprocess.CalledProcessError, FileNotFoundError) as e:
                 self._print_warning(f"Could not set up cron job: {e}")
-                self._print_info("You can add the following line to your crontab manually:")
-                self._print_info(f"0 8 * * 1 {shlex.quote(str(update_script))} >/dev/null 2>&1")
+                self._print_info(
+                    "You can add the following line to your crontab manually:"
+                )
+                self._print_info(
+                    f"0 8 * * 1 {shlex.quote(str(update_script))} >/dev/null 2>&1"
+                )
 
             self._print_success("Update checker script created")
             return True
@@ -3128,7 +3746,9 @@ fi
         # Adapt installation based on detected environment
         adapted_mode = self._adapt_installation_for_environment(mode)
         if adapted_mode != mode:
-            self._print_info(f"📋 Installation mode adapted: {mode.value} → {adapted_mode.value}")
+            self._print_info(
+                f"📋 Installation mode adapted: {mode.value} → {adapted_mode.value}"
+            )
             mode = adapted_mode
 
         success_count = 0
@@ -3136,7 +3756,9 @@ fi
 
         # Always set up the Python venv first
         if not self.setup_python_venv():
-            self._print_error("Python virtual environment setup failed. Aborting installation.")
+            self._print_error(
+                "Python virtual environment setup failed. Aborting installation."
+            )
             return False
         success_count += 1
         total_steps += 1
@@ -3149,7 +3771,9 @@ fi
             self._print_info("Found existing installations:")
             for install in existing_installations:
                 status = "✓ Working" if install.working else "✗ Not working"
-                self._print_info(f"  {install.installation_type}: {install.binary_path} ({status})")
+                self._print_info(
+                    f"  {install.installation_type}: {install.binary_path} ({status})"
+                )
 
         # DSMIL Hardware Detection and Integration
         if self.dsmil_orchestrator:
@@ -3159,14 +3783,20 @@ fi
             if hardware:
                 self._print_success(f"🎯 MIL-SPEC Hardware Detected: {hardware.model}")
                 self._print_info(f"   CPU: {hardware.cpu}")
-                self._print_info(f"   NPU Military Mode: {'ENABLED' if hardware.npu_military_mode else 'DISABLED'}")
+                self._print_info(
+                    f"   NPU Military Mode: {'ENABLED' if hardware.npu_military_mode else 'DISABLED'}"
+                )
                 self._print_info(f"   DSMIL Devices: {hardware.total_security_devices}")
-                self._print_info(f"   JRTC1 Capable: {'YES' if hardware.jrtc1_capable else 'NO'}")
+                self._print_info(
+                    f"   JRTC1 Capable: {'YES' if hardware.jrtc1_capable else 'NO'}"
+                )
 
                 # Deploy full agent roster
                 self._print_section("Agent Coordination Deployment")
                 if self.dsmil_orchestrator.coordinate_agent_deployment():
-                    self._print_success(f"🚀 {len(FULL_AGENT_ROSTER)} agents deployed for DSMIL coordination")
+                    self._print_success(
+                        f"🚀 {len(FULL_AGENT_ROSTER)} agents deployed for DSMIL coordination"
+                    )
                     success_count += 1
                 else:
                     self._print_warning("⚠️ Agent coordination deployment had issues")
@@ -3181,10 +3811,14 @@ fi
                     self._print_warning("⚠️ DSMIL module installation had issues")
                 total_steps += 1
             else:
-                self._print_info("ℹ️ No MIL-SPEC hardware detected - continuing with standard installation")
+                self._print_info(
+                    "ℹ️ No MIL-SPEC hardware detected - continuing with standard installation"
+                )
 
             # Use existing working installation if available
-            working_installations = [inst for inst in existing_installations if inst.working]
+            working_installations = [
+                inst for inst in existing_installations if inst.working
+            ]
             if working_installations and not self.auto_mode:
                 if self._prompt_yes_no("Use existing working installation?"):
                     claude_binary = working_installations[0].binary_path
@@ -3221,24 +3855,36 @@ fi
                     if npm_installation and npm_installation.working:
                         claude_binary = npm_installation.binary_path
                         success_count += 1
-                        self._print_success(f"npm installation verified: {claude_binary}")
+                        self._print_success(
+                            f"npm installation verified: {claude_binary}"
+                        )
                     else:
                         # npm installation succeeded but binary detection failed - try harder
-                        self._print_warning("npm installation succeeded but binary not detected via standard method")
+                        self._print_warning(
+                            "npm installation succeeded but binary not detected via standard method"
+                        )
 
                         # Try alternative detection methods
                         npm_binary = self._find_npm_claude_alternative()
                         if npm_binary:
                             claude_binary = npm_binary
                             success_count += 1
-                            self._print_success(f"npm installation found via alternative method: {claude_binary}")
+                            self._print_success(
+                                f"npm installation found via alternative method: {claude_binary}"
+                            )
                         else:
-                            self._print_warning("Could not locate npm-installed binary - this may require manual verification")
+                            self._print_warning(
+                                "Could not locate npm-installed binary - this may require manual verification"
+                            )
                 else:
                     self._print_warning("npm installation failed")
 
             # Only try pip if npm completely failed OR binary was not found
-            if not claude_binary and not npm_install_succeeded and self.system_info.pip_available:
+            if (
+                not claude_binary
+                and not npm_install_succeeded
+                and self.system_info.pip_available
+            ):
                 self._print_info("Attempting pip installation...")
                 if self.install_claude_pip():
                     pip_install_succeeded = True
@@ -3248,9 +3894,13 @@ fi
                     if pip_installation and pip_installation.working:
                         claude_binary = pip_installation.binary_path
                         success_count += 1
-                        self._print_success(f"pip installation verified: {claude_binary}")
+                        self._print_success(
+                            f"pip installation verified: {claude_binary}"
+                        )
                     else:
-                        self._print_warning("pip installation succeeded but binary not detected")
+                        self._print_warning(
+                            "pip installation succeeded but binary not detected"
+                        )
                 else:
                     self._print_warning("pip installation failed")
 
@@ -3399,7 +4049,9 @@ fi
 
         if success_count == total_steps:
             self._print_success("Installation completed successfully!")
-            self._print_info("Please restart your shell or run 'source ~/.bashrc' (or ~/.zshrc)")
+            self._print_info(
+                "Please restart your shell or run 'source ~/.bashrc' (or ~/.zshrc)"
+            )
             self._print_info("Then test with: claude --help")
             return True
         else:
@@ -3413,38 +4065,46 @@ fi
 
         while True:
             answer = input(f"{question} [y/N]: ").strip().lower()
-            if answer in ['y', 'yes']:
+            if answer in ["y", "yes"]:
                 return True
-            elif answer in ['n', 'no', '']:
+            elif answer in ["n", "no", ""]:
                 return False
             else:
                 print("Please answer 'y' or 'n'")
 
     # Output formatting methods
     def _print_header(self):
-        print("="*70)
+        print("=" * 70)
         print("Claude Enhanced Installer v2.0")
         print("Python-based installer with robust error handling")
-        print("="*70)
+        print("=" * 70)
         print()
 
         # System info
         print("System Information:")
-        print(f"  Platform: {self.system_info.platform} ({self.system_info.architecture})")
+        print(
+            f"  Platform: {self.system_info.platform} ({self.system_info.architecture})"
+        )
         print(f"  Environment: {self._format_environment_info()}")
         print(f"  Shell: {self.system_info.shell.value}")
         print(f"  Python: {self.system_info.python_version}")
         print(f"  Node.js: {self.system_info.node_version or 'Not available'}")
-        print(f"  npm: {'Available' if self.system_info.npm_available else 'Not available'}")
-        print(f"  pip: {'Available' if self.system_info.pip_available else 'Not available'}")
-        print(f"  Systemd: {'Available' if self.system_info.has_systemd else 'Not available'}")
+        print(
+            f"  npm: {'Available' if self.system_info.npm_available else 'Not available'}"
+        )
+        print(
+            f"  pip: {'Available' if self.system_info.pip_available else 'Not available'}"
+        )
+        print(
+            f"  Systemd: {'Available' if self.system_info.has_systemd else 'Not available'}"
+        )
         print(f"  Project root: {self.project_root}")
         print()
 
     def _print_section(self, title: str):
-        print("─"*50)
+        print("─" * 50)
         print(title)
-        print("─"*50)
+        print("─" * 50)
         self.logger.info(f"SECTION: {title}")
 
     def _print_success(self, message: str):
@@ -3471,7 +4131,9 @@ fi
         """Format environment information for display"""
         return self.system_info.environment_type.value
 
-    def _adapt_installation_for_environment(self, mode: InstallationMode) -> InstallationMode:
+    def _adapt_installation_for_environment(
+        self, mode: InstallationMode
+    ) -> InstallationMode:
         """Adapt installation mode based on detected environment"""
         return mode
 
@@ -3482,20 +4144,34 @@ fi
 
         if env_type == EnvironmentType.HEADLESS:
             # Headless server packages
-            packages.extend([
-                "python3-venv", "python3-full",
-                "curl", "wget", "git",
-                "postgresql-client",  # For database connectivity
-                "sqlite3"  # For DISASSEMBLER IOC database
-            ])
+            packages.extend(
+                [
+                    "python3-venv",
+                    "python3-full",
+                    "curl",
+                    "wget",
+                    "git",
+                    "postgresql-client",  # For database connectivity
+                    "sqlite3",  # For DISASSEMBLER IOC database
+                ]
+            )
 
-        elif env_type in [EnvironmentType.KDE, EnvironmentType.GNOME, EnvironmentType.XFCE]:
+        elif env_type in [
+            EnvironmentType.KDE,
+            EnvironmentType.GNOME,
+            EnvironmentType.XFCE,
+        ]:
             # Desktop environment packages
-            packages.extend([
-                "python3-venv", "python3-full",
-                "git", "curl", "wget",
-                "sqlite3"  # For DISASSEMBLER IOC database
-            ])
+            packages.extend(
+                [
+                    "python3-venv",
+                    "python3-full",
+                    "git",
+                    "curl",
+                    "wget",
+                    "sqlite3",  # For DISASSEMBLER IOC database
+                ]
+            )
 
             # Environment-specific packages
             if env_type == EnvironmentType.KDE:
@@ -3511,17 +4187,23 @@ fi
         """Alert user about DSMIL optimization for 40+ TFLOPS performance"""
         self._print_section("🚀 40+ TFLOPS Optimization Available")
 
-        dsmil_script = self.project_root / "installers" / "claude" / "dsmil_orchestrator.py"
+        dsmil_script = (
+            self.project_root / "installers" / "claude" / "dsmil_orchestrator.py"
+        )
 
         if not dsmil_script.exists():
             return
 
         self._print_info("🎯 For maximum performance on MIL-SPEC hardware:")
-        self._print_info("   • Enables 26.4 TOPS military NPU mode (vs 11 TOPS standard)")
+        self._print_info(
+            "   • Enables 26.4 TOPS military NPU mode (vs 11 TOPS standard)"
+        )
         self._print_info("   • Activates 98-agent coordination matrix")
         self._print_info("   • Unlocks Dell Latitude JRTC1 capabilities")
         print()
-        self._print_info(f"{Colors.BOLD}Run this command for 40+ TFLOPS optimization:{Colors.RESET}")
+        self._print_info(
+            f"{Colors.BOLD}Run this command for 40+ TFLOPS optimization:{Colors.RESET}"
+        )
         print(f"   {Colors.CYAN}sudo python3 {dsmil_script}{Colors.RESET}")
         print()
         self._print_info("Note: Requires sudo for military-grade hardware access")
@@ -3537,74 +4219,73 @@ def main():
         "--mode",
         choices=["quick", "full", "custom", "military"],
         default="military",
-        help="Installation mode (default: military - 40+ TFLOPS optimization)"
+        help="Installation mode (default: military - 40+ TFLOPS optimization)",
     )
 
     parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose output"
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
 
     parser.add_argument(
         "--military-mode",
         action="store_true",
-        help="Enable military-grade 40+ TFLOPS optimization (default)"
+        help="Enable military-grade 40+ TFLOPS optimization (default)",
     )
 
     parser.add_argument(
         "--local-opus",
         action="store_true",
-        help="Deploy local Opus inference for zero-token usage"
+        help="Deploy local Opus inference for zero-token usage",
     )
 
     parser.add_argument(
         "--legacy-mode",
         action="store_true",
-        help="Use legacy installation without military optimization"
+        help="Use legacy installation without military optimization",
     )
 
     parser.add_argument(
         "--external-api-only",
         action="store_true",
-        help="Skip local Opus deployment, use external APIs only"
+        help="Skip local Opus deployment, use external APIs only",
     )
 
     parser.add_argument(
         "--cpu-only",
         action="store_true",
-        help="Skip NPU optimization, use CPU-only mode"
+        help="Skip NPU optimization, use CPU-only mode",
     )
 
     parser.add_argument(
-        "--auto", "-a",
+        "--auto",
+        "-a",
         action="store_true",
         default=True,
-        help="Auto mode - no user prompts (default: enabled)"
+        help="Auto mode - no user prompts (default: enabled)",
     )
 
     parser.add_argument(
         "--sudo-password",
         default="1786",
-        help="Sudo password for privileged DSMIL operations (default: 1786)"
+        help="Sudo password for privileged DSMIL operations (default: 1786)",
     )
 
     parser.add_argument(
         "--detect-only",
         action="store_true",
-        help="Only detect existing installations, don't install"
+        help="Only detect existing installations, don't install",
     )
 
     parser.add_argument(
         "--check-updates",
         action="store_true",
-        help="Check for available Claude Code updates"
+        help="Check for available Claude Code updates",
     )
 
     parser.add_argument(
         "--auto-update",
         action="store_true",
-        help="Perform automatic Claude Code update"
+        help="Perform automatic Claude Code update",
     )
 
     args = parser.parse_args()
@@ -3639,7 +4320,7 @@ def main():
         verbose=args.verbose,
         auto_mode=True,
         military_mode=enable_military,
-        local_opus=enable_local_opus
+        local_opus=enable_local_opus,
     )
 
     if args.detect_only:
@@ -3648,10 +4329,14 @@ def main():
         installations = installer.detect_claude_installations()
 
         if installations:
-            print(f"{Colors.BOLD}Found {len(installations)} Claude installation(s):{Colors.RESET}")
+            print(
+                f"{Colors.BOLD}Found {len(installations)} Claude installation(s):{Colors.RESET}"
+            )
             for i, install in enumerate(installations, 1):
                 status = "✓ Working" if install.working else "✗ Not working"
-                print(f"  {i}. {install.installation_type}: {install.binary_path} ({status})")
+                print(
+                    f"  {i}. {install.installation_type}: {install.binary_path} ({status})"
+                )
                 if install.details:
                     for key, value in install.details.items():
                         print(f"     {key}: {value}")

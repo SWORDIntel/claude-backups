@@ -24,24 +24,26 @@ Performance Targets:
 """
 
 import asyncio
-import logging
-import time
-import threading
 import json
-import psycopg2
-from typing import Dict, List, Any, Optional, Tuple, Union, Callable
+import logging
+import signal
+import subprocess
+import sys
+import threading
+import time
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from datetime import datetime, timedelta
-import subprocess
-import signal
-import sys
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+import psycopg2
 
 # Import Shadowgit components (now using relative imports in same directory)
 try:
-    from bridge import ShadowgitPythonBridge, create_bridge, SystemStatus
-    from npu_integration import ShadowgitNPUPython, create_npu_interface, NPUDevice
+    from bridge import ShadowgitPythonBridge, SystemStatus, create_bridge
+    from npu_integration import NPUDevice, ShadowgitNPUPython, create_npu_interface
+
     SHADOWGIT_COMPONENTS_AVAILABLE = True
 except ImportError as e:
     SHADOWGIT_COMPONENTS_AVAILABLE = False
@@ -49,8 +51,13 @@ except ImportError as e:
 
 # Import orchestration components
 try:
-    from production_orchestrator import ProductionOrchestrator, CommandSet, ExecutionMode
     from npu_orchestrator_bridge import NPUOrchestratorBridge
+    from production_orchestrator import (
+        CommandSet,
+        ExecutionMode,
+        ProductionOrchestrator,
+    )
+
     ORCHESTRATION_AVAILABLE = True
 except ImportError as e:
     ORCHESTRATION_AVAILABLE = False
@@ -59,6 +66,7 @@ except ImportError as e:
 # Import learning system
 try:
     from postgresql_learning_system import PostgreSQLLearningSystem
+
     LEARNING_SYSTEM_AVAILABLE = True
 except ImportError as e:
     LEARNING_SYSTEM_AVAILABLE = False
@@ -92,8 +100,10 @@ DATABASE_SYNC_INTERVAL = 10.0  # seconds
 # ENUMS AND DATA STRUCTURES
 # ============================================================================
 
+
 class SystemComponent(Enum):
     """System component types"""
+
     C_ENGINE = "c_engine"
     NPU_INTERFACE = "npu_interface"
     PYTHON_BRIDGE = "python_bridge"
@@ -101,25 +111,31 @@ class SystemComponent(Enum):
     LEARNING_DATABASE = "learning_database"
     AGENT_ECOSYSTEM = "agent_ecosystem"
 
+
 class OperationMode(Enum):
     """System operation modes"""
+
     MAXIMUM_PERFORMANCE = "max_performance"
     BALANCED = "balanced"
     POWER_EFFICIENT = "power_efficient"
     DEVELOPMENT = "development"
     MAINTENANCE = "maintenance"
 
+
 class HealthStatus(Enum):
     """Component health status"""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     CRITICAL = "critical"
     OFFLINE = "offline"
     UNKNOWN = "unknown"
 
+
 @dataclass
 class ComponentHealth:
     """Health status of a system component"""
+
     component: SystemComponent
     status: HealthStatus
     last_check: datetime
@@ -128,22 +144,28 @@ class ComponentHealth:
     uptime_seconds: float = 0.0
     performance_ratio: float = 0.0  # vs target performance
 
+
 @dataclass
 class SystemMetrics:
     """Comprehensive system metrics"""
+
     timestamp: datetime
     total_throughput_lps: float = 0.0
     coordination_overhead_ns: float = 0.0
     system_availability: float = 0.0
-    component_health: Dict[SystemComponent, ComponentHealth] = field(default_factory=dict)
+    component_health: Dict[SystemComponent, ComponentHealth] = field(
+        default_factory=dict
+    )
     active_operations: int = 0
     queued_operations: int = 0
     error_count: int = 0
     uptime_seconds: float = 0.0
 
+
 @dataclass
 class IntegrationTask:
     """Task for system integration"""
+
     task_id: str
     task_type: str
     priority: int
@@ -154,9 +176,11 @@ class IntegrationTask:
     dependencies: List[str] = field(default_factory=list)
     status: str = "pending"
 
+
 # ============================================================================
 # SHADOWGIT INTEGRATION HUB CLASS
 # ============================================================================
+
 
 class ShadowgitIntegrationHub:
     """
@@ -195,7 +219,9 @@ class ShadowgitIntegrationHub:
         # Database connection
         self.db_connection = None
 
-        logger.info(f"ShadowgitIntegrationHub initialized in {operation_mode.value} mode")
+        logger.info(
+            f"ShadowgitIntegrationHub initialized in {operation_mode.value} mode"
+        )
 
     async def initialize(self) -> bool:
         """Initialize all system components"""
@@ -213,7 +239,11 @@ class ShadowgitIntegrationHub:
                 self.c_bridge = create_bridge()
                 await self._update_component_health(
                     SystemComponent.C_ENGINE,
-                    HealthStatus.HEALTHY if self.c_bridge.initialized else HealthStatus.CRITICAL
+                    (
+                        HealthStatus.HEALTHY
+                        if self.c_bridge.initialized
+                        else HealthStatus.CRITICAL
+                    ),
                 )
             else:
                 logger.warning("C bridge not available")
@@ -224,7 +254,11 @@ class ShadowgitIntegrationHub:
                 self.npu_interface = await create_npu_interface()
                 await self._update_component_health(
                     SystemComponent.NPU_INTERFACE,
-                    HealthStatus.HEALTHY if self.npu_interface.initialized else HealthStatus.DEGRADED
+                    (
+                        HealthStatus.HEALTHY
+                        if self.npu_interface.initialized
+                        else HealthStatus.DEGRADED
+                    ),
                 )
             else:
                 logger.warning("NPU interface not available")
@@ -235,8 +269,7 @@ class ShadowgitIntegrationHub:
                 self.orchestrator = ProductionOrchestrator()
                 await self.orchestrator.initialize()
                 await self._update_component_health(
-                    SystemComponent.ORCHESTRATOR,
-                    HealthStatus.HEALTHY
+                    SystemComponent.ORCHESTRATOR, HealthStatus.HEALTHY
                 )
             else:
                 logger.warning("Orchestrator not available")
@@ -247,15 +280,12 @@ class ShadowgitIntegrationHub:
                 try:
                     self.learning_system = PostgreSQLLearningSystem()
                     await self._update_component_health(
-                        SystemComponent.LEARNING_DATABASE,
-                        HealthStatus.HEALTHY
+                        SystemComponent.LEARNING_DATABASE, HealthStatus.HEALTHY
                     )
                 except Exception as e:
                     logger.warning(f"Learning system initialization failed: {e}")
                     await self._update_component_health(
-                        SystemComponent.LEARNING_DATABASE,
-                        HealthStatus.DEGRADED,
-                        str(e)
+                        SystemComponent.LEARNING_DATABASE, HealthStatus.DEGRADED, str(e)
                     )
 
             # Start monitoring tasks
@@ -285,7 +315,7 @@ class ShadowgitIntegrationHub:
                 port=DATABASE_PORT,
                 database=DATABASE_NAME,
                 user=DATABASE_USER,
-                password=""  # Uses socket authentication
+                password="",  # Uses socket authentication
             )
 
             # Create integration tables if they don't exist
@@ -388,42 +418,67 @@ class ShadowgitIntegrationHub:
         if self.c_bridge:
             try:
                 metrics = self.c_bridge.get_performance_metrics()
-                status = HealthStatus.HEALTHY if metrics.get('c_engine', {}).get('target_achievement_percent', 0) > 50 else HealthStatus.DEGRADED
-                await self._update_component_health(SystemComponent.C_ENGINE, status, metrics=metrics)
+                status = (
+                    HealthStatus.HEALTHY
+                    if metrics.get("c_engine", {}).get("target_achievement_percent", 0)
+                    > 50
+                    else HealthStatus.DEGRADED
+                )
+                await self._update_component_health(
+                    SystemComponent.C_ENGINE, status, metrics=metrics
+                )
             except Exception as e:
-                await self._update_component_health(SystemComponent.C_ENGINE, HealthStatus.CRITICAL, str(e))
+                await self._update_component_health(
+                    SystemComponent.C_ENGINE, HealthStatus.CRITICAL, str(e)
+                )
 
         # Check NPU interface
         if self.npu_interface:
             try:
                 npu_metrics = self.npu_interface.get_performance_metrics()
-                status = HealthStatus.HEALTHY if npu_metrics.get('npu_capabilities', {}).get('device_available') else HealthStatus.DEGRADED
-                await self._update_component_health(SystemComponent.NPU_INTERFACE, status, metrics=npu_metrics)
+                status = (
+                    HealthStatus.HEALTHY
+                    if npu_metrics.get("npu_capabilities", {}).get("device_available")
+                    else HealthStatus.DEGRADED
+                )
+                await self._update_component_health(
+                    SystemComponent.NPU_INTERFACE, status, metrics=npu_metrics
+                )
             except Exception as e:
-                await self._update_component_health(SystemComponent.NPU_INTERFACE, HealthStatus.CRITICAL, str(e))
+                await self._update_component_health(
+                    SystemComponent.NPU_INTERFACE, HealthStatus.CRITICAL, str(e)
+                )
 
         # Check orchestrator
         if self.orchestrator:
             try:
                 # Simple ping to orchestrator
-                await self._update_component_health(SystemComponent.ORCHESTRATOR, HealthStatus.HEALTHY)
+                await self._update_component_health(
+                    SystemComponent.ORCHESTRATOR, HealthStatus.HEALTHY
+                )
             except Exception as e:
-                await self._update_component_health(SystemComponent.ORCHESTRATOR, HealthStatus.CRITICAL, str(e))
+                await self._update_component_health(
+                    SystemComponent.ORCHESTRATOR, HealthStatus.CRITICAL, str(e)
+                )
 
         # Check database
         try:
             with self.db_connection.cursor() as cursor:
                 cursor.execute("SELECT 1")
-            await self._update_component_health(SystemComponent.LEARNING_DATABASE, HealthStatus.HEALTHY)
+            await self._update_component_health(
+                SystemComponent.LEARNING_DATABASE, HealthStatus.HEALTHY
+            )
         except Exception as e:
-            await self._update_component_health(SystemComponent.LEARNING_DATABASE, HealthStatus.CRITICAL, str(e))
+            await self._update_component_health(
+                SystemComponent.LEARNING_DATABASE, HealthStatus.CRITICAL, str(e)
+            )
 
     async def _update_component_health(
         self,
         component: SystemComponent,
         status: HealthStatus,
         error_message: Optional[str] = None,
-        metrics: Optional[Dict] = None
+        metrics: Optional[Dict] = None,
     ):
         """Update health status of a component"""
         self.health_status[component] = ComponentHealth(
@@ -432,7 +487,7 @@ class ShadowgitIntegrationHub:
             last_check=datetime.now(),
             metrics=metrics or {},
             error_message=error_message,
-            uptime_seconds=time.time() - self.start_time
+            uptime_seconds=time.time() - self.start_time,
         )
 
     async def _metrics_collector_loop(self):
@@ -455,15 +510,20 @@ class ShadowgitIntegrationHub:
         total_throughput = 0.0
         if self.c_bridge:
             c_metrics = self.c_bridge.get_performance_metrics()
-            total_throughput += c_metrics.get('c_engine', {}).get('current_lines_per_second', 0)
+            total_throughput += c_metrics.get("c_engine", {}).get(
+                "current_lines_per_second", 0
+            )
 
         if self.npu_interface:
             npu_metrics = self.npu_interface.get_performance_metrics()
-            total_throughput += npu_metrics.get('performance_metrics', {}).get('avg_throughput_ops_sec', 0)
+            total_throughput += npu_metrics.get("performance_metrics", {}).get(
+                "avg_throughput_ops_sec", 0
+            )
 
         # Calculate system availability
         healthy_components = sum(
-            1 for health in self.health_status.values()
+            1
+            for health in self.health_status.values()
             if health.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED]
         )
         total_components = len(self.health_status)
@@ -478,8 +538,12 @@ class ShadowgitIntegrationHub:
             component_health=self.health_status.copy(),
             active_operations=len(self.active_tasks),
             queued_operations=self.task_queue.qsize(),
-            error_count=sum(1 for h in self.health_status.values() if h.status == HealthStatus.CRITICAL),
-            uptime_seconds=time.time() - self.start_time
+            error_count=sum(
+                1
+                for h in self.health_status.values()
+                if h.status == HealthStatus.CRITICAL
+            ),
+            uptime_seconds=time.time() - self.start_time,
         )
 
         # Add to history
@@ -515,25 +579,33 @@ class ShadowgitIntegrationHub:
         try:
             with self.db_connection.cursor() as cursor:
                 # Insert current metrics
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO shadowgit_integration.system_metrics
                     (total_throughput_lps, coordination_overhead_ns, system_availability,
                      component_health, active_operations, error_count, uptime_seconds)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    int(self.metrics.total_throughput_lps),
-                    int(self.metrics.coordination_overhead_ns),
-                    self.metrics.system_availability,
-                    json.dumps({k.value: {
-                        'status': v.status.value,
-                        'last_check': v.last_check.isoformat(),
-                        'error_message': v.error_message,
-                        'uptime_seconds': v.uptime_seconds
-                    } for k, v in self.metrics.component_health.items()}),
-                    self.metrics.active_operations,
-                    self.metrics.error_count,
-                    int(self.metrics.uptime_seconds)
-                ))
+                """,
+                    (
+                        int(self.metrics.total_throughput_lps),
+                        int(self.metrics.coordination_overhead_ns),
+                        self.metrics.system_availability,
+                        json.dumps(
+                            {
+                                k.value: {
+                                    "status": v.status.value,
+                                    "last_check": v.last_check.isoformat(),
+                                    "error_message": v.error_message,
+                                    "uptime_seconds": v.uptime_seconds,
+                                }
+                                for k, v in self.metrics.component_health.items()
+                            }
+                        ),
+                        self.metrics.active_operations,
+                        self.metrics.error_count,
+                        int(self.metrics.uptime_seconds),
+                    ),
+                )
 
             self.db_connection.commit()
 
@@ -563,17 +635,31 @@ class ShadowgitIntegrationHub:
 
         # Check for performance degradation
         if len(throughput_trend) >= 2:
-            avg_recent = sum(throughput_trend[-5:]) / 5 if len(throughput_trend) >= 5 else throughput_trend[-1]
-            avg_earlier = sum(throughput_trend[:5]) / 5 if len(throughput_trend) >= 5 else throughput_trend[0]
+            avg_recent = (
+                sum(throughput_trend[-5:]) / 5
+                if len(throughput_trend) >= 5
+                else throughput_trend[-1]
+            )
+            avg_earlier = (
+                sum(throughput_trend[:5]) / 5
+                if len(throughput_trend) >= 5
+                else throughput_trend[0]
+            )
 
-            degradation_percent = ((avg_earlier - avg_recent) / max(avg_earlier, 1)) * 100
+            degradation_percent = (
+                (avg_earlier - avg_recent) / max(avg_earlier, 1)
+            ) * 100
 
             if degradation_percent > 10:  # 10% degradation
-                logger.warning(f"Performance degradation detected: {degradation_percent:.1f}%")
+                logger.warning(
+                    f"Performance degradation detected: {degradation_percent:.1f}%"
+                )
                 await self._trigger_performance_optimization()
 
         # Check target achievement
-        current_vs_target = (self.metrics.total_throughput_lps / TOTAL_THROUGHPUT_TARGET) * 100
+        current_vs_target = (
+            self.metrics.total_throughput_lps / TOTAL_THROUGHPUT_TARGET
+        ) * 100
         if current_vs_target < 80:  # Below 80% of target
             logger.info(f"Below target performance: {current_vs_target:.1f}%")
 
@@ -584,7 +670,10 @@ class ShadowgitIntegrationHub:
         # Optimize NPU interface
         if self.npu_interface:
             # Clear NPU cache if too full
-            if hasattr(self.npu_interface, '_result_cache') and len(self.npu_interface._result_cache) > 1000:
+            if (
+                hasattr(self.npu_interface, "_result_cache")
+                and len(self.npu_interface._result_cache) > 1000
+            ):
                 self.npu_interface._result_cache.clear()
                 logger.info("NPU cache cleared for optimization")
 
@@ -636,10 +725,10 @@ class ShadowgitIntegrationHub:
 
             # Store result
             self.completed_tasks[task.task_id] = {
-                'task': task,
-                'result': result,
-                'processing_time_ns': processing_time,
-                'completed_at': datetime.now()
+                "task": task,
+                "result": result,
+                "processing_time_ns": processing_time,
+                "completed_at": datetime.now(),
             }
 
             # Call callback if provided
@@ -649,17 +738,19 @@ class ShadowgitIntegrationHub:
                 except Exception as e:
                     logger.error(f"Task callback error: {e}")
 
-            logger.info(f"Task {task.task_id} completed in {processing_time / 1e6:.2f} ms")
+            logger.info(
+                f"Task {task.task_id} completed in {processing_time / 1e6:.2f} ms"
+            )
 
         except Exception as e:
             task.status = "failed"
-            error_result = {'error': str(e), 'success': False}
+            error_result = {"error": str(e), "success": False}
 
             self.completed_tasks[task.task_id] = {
-                'task': task,
-                'result': error_result,
-                'processing_time_ns': time.time_ns() - start_time,
-                'completed_at': datetime.now()
+                "task": task,
+                "result": error_result,
+                "processing_time_ns": time.time_ns() - start_time,
+                "completed_at": datetime.now(),
             }
 
             logger.error(f"Task {task.task_id} failed: {e}")
@@ -671,9 +762,9 @@ class ShadowgitIntegrationHub:
     async def _process_files_task(self, task: IntegrationTask) -> Dict[str, Any]:
         """Process files using optimal engine"""
         data = task.data
-        file_a = data.get('file_a')
-        file_b = data.get('file_b')
-        use_npu = data.get('use_npu', True)
+        file_a = data.get("file_a")
+        file_b = data.get("file_b")
+        use_npu = data.get("use_npu", True)
 
         if not file_a or not file_b:
             raise ValueError("file_a and file_b required for process_files task")
@@ -686,16 +777,16 @@ class ShadowgitIntegrationHub:
         else:
             # Fallback simulation
             return {
-                'task_id': task.task_id,
-                'files_processed': [file_a, file_b],
-                'simulated': True,
-                'success': True
+                "task_id": task.task_id,
+                "files_processed": [file_a, file_b],
+                "simulated": True,
+                "success": True,
             }
 
     async def _batch_hash_task(self, task: IntegrationTask) -> Dict[str, Any]:
         """Process batch hash computation"""
         data = task.data
-        data_list = data.get('data_list', [])
+        data_list = data.get("data_list", [])
 
         if not data_list:
             raise ValueError("data_list required for batch_hash task")
@@ -707,42 +798,42 @@ class ShadowgitIntegrationHub:
             result = await self.npu_interface.wait_for_completion(workload_id)
 
             return {
-                'task_id': task.task_id,
-                'workload_id': workload_id,
-                'batch_size': len(data_list),
-                'result': result.__dict__ if hasattr(result, '__dict__') else result,
-                'success': True
+                "task_id": task.task_id,
+                "workload_id": workload_id,
+                "batch_size": len(data_list),
+                "result": result.__dict__ if hasattr(result, "__dict__") else result,
+                "success": True,
             }
         else:
             # Fallback simulation
             return {
-                'task_id': task.task_id,
-                'batch_size': len(data_list),
-                'simulated_hashes': [hash(str(d)) for d in data_list],
-                'simulated': True,
-                'success': True
+                "task_id": task.task_id,
+                "batch_size": len(data_list),
+                "simulated_hashes": [hash(str(d)) for d in data_list],
+                "simulated": True,
+                "success": True,
             }
 
     async def _performance_test_task(self, task: IntegrationTask) -> Dict[str, Any]:
         """Run performance test"""
-        test_type = task.data.get('test_type', 'full_system')
+        test_type = task.data.get("test_type", "full_system")
 
-        if test_type == 'npu_only' and self.npu_interface:
+        if test_type == "npu_only" and self.npu_interface:
             return await self.npu_interface.benchmark_npu_performance()
-        elif test_type == 'c_engine_only' and self.c_bridge:
+        elif test_type == "c_engine_only" and self.c_bridge:
             return await self.c_bridge.benchmark_full_system_async()
         else:
             # Full system benchmark
             results = {}
 
             if self.c_bridge:
-                results['c_engine'] = await self.c_bridge.benchmark_full_system_async()
+                results["c_engine"] = await self.c_bridge.benchmark_full_system_async()
 
             if self.npu_interface:
-                results['npu'] = await self.npu_interface.benchmark_npu_performance()
+                results["npu"] = await self.npu_interface.benchmark_npu_performance()
 
-            results['system_metrics'] = self.get_system_metrics()
-            results['success'] = True
+            results["system_metrics"] = self.get_system_metrics()
+            results["success"] = True
 
             return results
 
@@ -751,20 +842,20 @@ class ShadowgitIntegrationHub:
         await self._check_all_component_health()
 
         return {
-            'task_id': task.task_id,
-            'timestamp': datetime.now().isoformat(),
-            'component_health': {
+            "task_id": task.task_id,
+            "timestamp": datetime.now().isoformat(),
+            "component_health": {
                 k.value: {
-                    'status': v.status.value,
-                    'last_check': v.last_check.isoformat(),
-                    'error_message': v.error_message,
-                    'uptime_seconds': v.uptime_seconds,
-                    'metrics': v.metrics
+                    "status": v.status.value,
+                    "last_check": v.last_check.isoformat(),
+                    "error_message": v.error_message,
+                    "uptime_seconds": v.uptime_seconds,
+                    "metrics": v.metrics,
                 }
                 for k, v in self.health_status.items()
             },
-            'system_metrics': self.get_system_metrics(),
-            'success': True
+            "system_metrics": self.get_system_metrics(),
+            "success": True,
         }
 
     # ========================================================================
@@ -777,7 +868,7 @@ class ShadowgitIntegrationHub:
         data: Dict[str, Any],
         priority: int = 5,
         timeout_seconds: float = 30.0,
-        callback: Optional[Callable] = None
+        callback: Optional[Callable] = None,
     ) -> str:
         """Submit integration task for processing"""
         if not self.initialized:
@@ -792,7 +883,7 @@ class ShadowgitIntegrationHub:
             data=data,
             created_at=datetime.now(),
             timeout_seconds=timeout_seconds,
-            callback=callback
+            callback=callback,
         )
 
         await self.task_queue.put(task)
@@ -800,13 +891,15 @@ class ShadowgitIntegrationHub:
 
         return task_id
 
-    async def wait_for_task(self, task_id: str, timeout_seconds: float = 30.0) -> Dict[str, Any]:
+    async def wait_for_task(
+        self, task_id: str, timeout_seconds: float = 30.0
+    ) -> Dict[str, Any]:
         """Wait for task completion"""
         start_time = time.time()
 
         while time.time() - start_time < timeout_seconds:
             if task_id in self.completed_tasks:
-                return self.completed_tasks[task_id]['result']
+                return self.completed_tasks[task_id]["result"]
 
             await asyncio.sleep(0.1)
 
@@ -815,65 +908,79 @@ class ShadowgitIntegrationHub:
     def get_system_metrics(self) -> Dict[str, Any]:
         """Get comprehensive system metrics"""
         return {
-            'timestamp': self.metrics.timestamp.isoformat(),
-            'performance': {
-                'total_throughput_lps': self.metrics.total_throughput_lps,
-                'target_throughput_lps': TOTAL_THROUGHPUT_TARGET,
-                'achievement_percent': (self.metrics.total_throughput_lps / TOTAL_THROUGHPUT_TARGET) * 100,
-                'coordination_overhead_ns': self.metrics.coordination_overhead_ns,
-                'coordination_overhead_ms': self.metrics.coordination_overhead_ns / 1e6
+            "timestamp": self.metrics.timestamp.isoformat(),
+            "performance": {
+                "total_throughput_lps": self.metrics.total_throughput_lps,
+                "target_throughput_lps": TOTAL_THROUGHPUT_TARGET,
+                "achievement_percent": (
+                    self.metrics.total_throughput_lps / TOTAL_THROUGHPUT_TARGET
+                )
+                * 100,
+                "coordination_overhead_ns": self.metrics.coordination_overhead_ns,
+                "coordination_overhead_ms": self.metrics.coordination_overhead_ns / 1e6,
             },
-            'availability': {
-                'system_availability': self.metrics.system_availability,
-                'target_availability': SYSTEM_AVAILABILITY_TARGET,
-                'uptime_seconds': self.metrics.uptime_seconds,
-                'uptime_hours': self.metrics.uptime_seconds / 3600
+            "availability": {
+                "system_availability": self.metrics.system_availability,
+                "target_availability": SYSTEM_AVAILABILITY_TARGET,
+                "uptime_seconds": self.metrics.uptime_seconds,
+                "uptime_hours": self.metrics.uptime_seconds / 3600,
             },
-            'operations': {
-                'active_operations': self.metrics.active_operations,
-                'queued_operations': self.metrics.queued_operations,
-                'completed_tasks': len(self.completed_tasks),
-                'error_count': self.metrics.error_count
+            "operations": {
+                "active_operations": self.metrics.active_operations,
+                "queued_operations": self.metrics.queued_operations,
+                "completed_tasks": len(self.completed_tasks),
+                "error_count": self.metrics.error_count,
             },
-            'components': {
+            "components": {
                 component.value: {
-                    'status': health.status.value,
-                    'last_check': health.last_check.isoformat(),
-                    'error_message': health.error_message,
-                    'performance_ratio': health.performance_ratio
+                    "status": health.status.value,
+                    "last_check": health.last_check.isoformat(),
+                    "error_message": health.error_message,
+                    "performance_ratio": health.performance_ratio,
                 }
                 for component, health in self.health_status.items()
-            }
+            },
         }
 
     def export_performance_report(self) -> str:
         """Export comprehensive performance report as JSON"""
         report = {
-            'report_timestamp': datetime.now().isoformat(),
-            'system_info': {
-                'operation_mode': self.operation_mode.value,
-                'initialized': self.initialized,
-                'uptime_seconds': time.time() - self.start_time
+            "report_timestamp": datetime.now().isoformat(),
+            "system_info": {
+                "operation_mode": self.operation_mode.value,
+                "initialized": self.initialized,
+                "uptime_seconds": time.time() - self.start_time,
             },
-            'current_metrics': self.get_system_metrics(),
-            'component_details': {}
+            "current_metrics": self.get_system_metrics(),
+            "component_details": {},
         }
 
         # Add component-specific details
         if self.c_bridge:
-            report['component_details']['c_engine'] = self.c_bridge.get_performance_metrics()
+            report["component_details"][
+                "c_engine"
+            ] = self.c_bridge.get_performance_metrics()
 
         if self.npu_interface:
-            report['component_details']['npu'] = self.npu_interface.get_performance_metrics()
+            report["component_details"][
+                "npu"
+            ] = self.npu_interface.get_performance_metrics()
 
         # Add performance history summary
         if self.performance_history:
             recent_history = self.performance_history[-100:]  # Last 100 entries
-            report['performance_trends'] = {
-                'avg_throughput_lps': sum(m.total_throughput_lps for m in recent_history) / len(recent_history),
-                'peak_throughput_lps': max(m.total_throughput_lps for m in recent_history),
-                'avg_availability': sum(m.system_availability for m in recent_history) / len(recent_history),
-                'trend_period_minutes': len(recent_history) * (METRICS_COLLECTION_INTERVAL / 60)
+            report["performance_trends"] = {
+                "avg_throughput_lps": sum(
+                    m.total_throughput_lps for m in recent_history
+                )
+                / len(recent_history),
+                "peak_throughput_lps": max(
+                    m.total_throughput_lps for m in recent_history
+                ),
+                "avg_availability": sum(m.system_availability for m in recent_history)
+                / len(recent_history),
+                "trend_period_minutes": len(recent_history)
+                * (METRICS_COLLECTION_INTERVAL / 60),
             }
 
         return json.dumps(report, indent=2)
@@ -892,9 +999,11 @@ class ShadowgitIntegrationHub:
                 logger.info(f"    Error: {health.error_message}")
 
         metrics = self.get_system_metrics()
-        perf = metrics['performance']
-        logger.info(f"Performance: {perf['total_throughput_lps']:,.0f} lines/sec "
-                   f"({perf['achievement_percent']:.1f}% of target)")
+        perf = metrics["performance"]
+        logger.info(
+            f"Performance: {perf['total_throughput_lps']:,.0f} lines/sec "
+            f"({perf['achievement_percent']:.1f}% of target)"
+        )
 
     async def shutdown(self):
         """Shutdown integration hub"""
@@ -923,12 +1032,14 @@ class ShadowgitIntegrationHub:
 
         logger.info("✓ Shadowgit Integration Hub shutdown completed")
 
+
 # ============================================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================================
 
+
 async def create_integration_hub(
-    operation_mode: OperationMode = OperationMode.BALANCED
+    operation_mode: OperationMode = OperationMode.BALANCED,
 ) -> ShadowgitIntegrationHub:
     """Create and initialize integration hub"""
     hub = ShadowgitIntegrationHub(operation_mode)
@@ -936,17 +1047,20 @@ async def create_integration_hub(
         raise RuntimeError("Failed to initialize Shadowgit Integration Hub")
     return hub
 
+
 async def quick_system_test() -> Dict[str, Any]:
     """Quick system integration test"""
     try:
         hub = await create_integration_hub()
 
         # Test system health
-        health_task_id = await hub.submit_task('system_health', {})
+        health_task_id = await hub.submit_task("system_health", {})
         health_result = await hub.wait_for_task(health_task_id)
 
         # Test performance
-        perf_task_id = await hub.submit_task('performance_test', {'test_type': 'full_system'})
+        perf_task_id = await hub.submit_task(
+            "performance_test", {"test_type": "full_system"}
+        )
         perf_result = await hub.wait_for_task(perf_task_id)
 
         # Get final metrics
@@ -955,21 +1069,23 @@ async def quick_system_test() -> Dict[str, Any]:
         await hub.shutdown()
 
         return {
-            'health_check': health_result,
-            'performance_test': perf_result,
-            'final_metrics': final_metrics,
-            'success': True
+            "health_check": health_result,
+            "performance_test": perf_result,
+            "final_metrics": final_metrics,
+            "success": True,
         }
 
     except Exception as e:
         logger.error(f"System test failed: {e}")
-        return {'error': str(e), 'success': False}
+        return {"error": str(e), "success": False}
+
 
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
 
 if __name__ == "__main__":
+
     async def main():
         print("Shadowgit Integration Hub - System Test")
         print("=" * 50)
@@ -983,19 +1099,19 @@ if __name__ == "__main__":
             print("\nSubmitting test tasks...")
 
             # Test system health
-            health_task = await hub.submit_task('system_health', {})
+            health_task = await hub.submit_task("system_health", {})
             print(f"✓ Health check task submitted: {health_task}")
 
             # Test batch processing
-            batch_task = await hub.submit_task('batch_hash', {
-                'data_list': [f"test_data_{i}" for i in range(10)]
-            })
+            batch_task = await hub.submit_task(
+                "batch_hash", {"data_list": [f"test_data_{i}" for i in range(10)]}
+            )
             print(f"✓ Batch hash task submitted: {batch_task}")
 
             # Test performance
-            perf_task = await hub.submit_task('performance_test', {
-                'test_type': 'full_system'
-            })
+            perf_task = await hub.submit_task(
+                "performance_test", {"test_type": "full_system"}
+            )
             print(f"✓ Performance test task submitted: {perf_task}")
 
             # Wait for results
@@ -1014,10 +1130,12 @@ if __name__ == "__main__":
             print("\nSystem Metrics:")
             print("-" * 20)
             metrics = hub.get_system_metrics()
-            perf_data = metrics['performance']
+            perf_data = metrics["performance"]
             print(f"Throughput: {perf_data['total_throughput_lps']:,.0f} lines/sec")
             print(f"Target Achievement: {perf_data['achievement_percent']:.1f}%")
-            print(f"System Availability: {metrics['availability']['system_availability']:.1f}%")
+            print(
+                f"System Availability: {metrics['availability']['system_availability']:.1f}%"
+            )
             print(f"Active Operations: {metrics['operations']['active_operations']}")
 
             # Export performance report
@@ -1026,7 +1144,7 @@ if __name__ == "__main__":
 
             # Save report to file
             report_file = Path(__file__).parent / "shadowgit_integration_report.json"
-            with open(report_file, 'w') as f:
+            with open(report_file, "w") as f:
                 f.write(report)
             print(f"✓ Performance report saved to: {report_file}")
 
@@ -1040,4 +1158,5 @@ if __name__ == "__main__":
         return 0
 
     import sys
+
     sys.exit(asyncio.run(main()))

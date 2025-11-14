@@ -6,18 +6,19 @@ Claude Agent Communication System - Administration Tools Setup
 Setup script for comprehensive administration tools installation.
 Provides automated setup for CLI, web console, TUI, and deployment management.
 
-Author: Claude Agent Administration System  
+Author: Claude Agent Administration System
 Version: 1.0.0 Production
 """
 
-import os
-import sys
-import subprocess
-import shutil
 import json
-import yaml
+import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
-from setuptools import setup, find_packages
+
+import yaml
+from setuptools import find_packages, setup
 
 # ============================================================================
 # SETUP CONFIGURATION
@@ -67,62 +68,64 @@ URL = "https://github.com/claude-agents/administration"
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: System Administrators",
-    "Intended Audience :: Developers", 
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9", 
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: System :: Systems Administration",
     "Topic :: System :: Monitoring",
     "Topic :: System :: Clustering",
     "Environment :: Console",
-    "Environment :: Web Environment"
+    "Environment :: Web Environment",
 ]
 
 # ============================================================================
 # INSTALLATION UTILITIES
 # ============================================================================
 
+
 def check_system_requirements():
     """Check system requirements"""
     print("🔍 Checking system requirements...")
-    
+
     # Check Python version
     if sys.version_info < (3, 8):
         print("❌ Python 3.8+ is required")
         sys.exit(1)
     print(f"✅ Python {sys.version.split()[0]} detected")
-    
+
     # Check Linux environment
-    if not sys.platform.startswith('linux'):
+    if not sys.platform.startswith("linux"):
         print("⚠️  Warning: This package is optimized for Linux environments")
-    
+
     # Check for required system tools
-    required_tools = ['docker', 'kubectl', 'curl', 'git']
+    required_tools = ["docker", "kubectl", "curl", "git"]
     for tool in required_tools:
         if shutil.which(tool):
             print(f"✅ {tool} found")
         else:
             print(f"⚠️  {tool} not found (optional but recommended)")
 
+
 def create_directory_structure():
     """Create necessary directory structure"""
     print("📁 Creating directory structure...")
-    
+
     directories = [
         "/etc/claude-agents",
         "/var/lib/claude-agents",
         "/var/lib/claude-agents/web/static/css",
-        "/var/lib/claude-agents/web/static/js", 
+        "/var/lib/claude-agents/web/static/js",
         "/var/lib/claude-agents/web/templates",
         "/var/lib/claude-agents/backup",
         "/var/log/claude-agents",
-        "/var/run/claude-agents"
+        "/var/run/claude-agents",
     ]
-    
+
     for directory in directories:
         try:
             os.makedirs(directory, mode=0o755, exist_ok=True)
@@ -132,23 +135,24 @@ def create_directory_structure():
         except Exception as e:
             print(f"❌ Error creating {directory}: {e}")
 
+
 def install_systemd_services():
     """Install systemd service files"""
     print("🔧 Installing systemd services...")
-    
+
     services = {
-        'claude-admin-web.service': {
-            'description': 'Claude Agent Administration Web Console',
-            'exec_start': f'{sys.executable} -m claude_admin.web_console',
-            'port': 8080
+        "claude-admin-web.service": {
+            "description": "Claude Agent Administration Web Console",
+            "exec_start": f"{sys.executable} -m claude_admin.web_console",
+            "port": 8080,
         },
-        'claude-admin-api.service': {
-            'description': 'Claude Agent Administration API',  
-            'exec_start': f'{sys.executable} -m claude_admin.api_server',
-            'port': 8081
-        }
+        "claude-admin-api.service": {
+            "description": "Claude Agent Administration API",
+            "exec_start": f"{sys.executable} -m claude_admin.api_server",
+            "port": 8081,
+        },
     }
-    
+
     service_template = """[Unit]
 Description={description}
 After=network.target
@@ -176,176 +180,176 @@ PrivateTmp=true
 [Install]
 WantedBy=multi-user.target
 """
-    
+
     for service_name, config in services.items():
         service_content = service_template.format(**config)
         service_path = f"/etc/systemd/system/{service_name}"
-        
+
         try:
-            with open(service_path, 'w') as f:
+            with open(service_path, "w") as f:
                 f.write(service_content)
             print(f"✅ Installed {service_name}")
         except PermissionError:
             print(f"⚠️  Could not install {service_name} (requires root privileges)")
 
+
 def create_user_and_group():
     """Create claude-admin user and group"""
     print("👤 Creating claude-admin user...")
-    
+
     try:
         # Create group
-        subprocess.run(['groupadd', '-r', 'claude-admin'], 
-                      check=False, capture_output=True)
-        
+        subprocess.run(
+            ["groupadd", "-r", "claude-admin"], check=False, capture_output=True
+        )
+
         # Create user
-        subprocess.run([
-            'useradd', '-r', '-g', 'claude-admin', 
-            '-d', '/var/lib/claude-agents',
-            '-s', '/bin/false',
-            '-c', 'Claude Agent Administration System',
-            'claude-admin'
-        ], check=False, capture_output=True)
-        
+        subprocess.run(
+            [
+                "useradd",
+                "-r",
+                "-g",
+                "claude-admin",
+                "-d",
+                "/var/lib/claude-agents",
+                "-s",
+                "/bin/false",
+                "-c",
+                "Claude Agent Administration System",
+                "claude-admin",
+            ],
+            check=False,
+            capture_output=True,
+        )
+
         print("✅ Created claude-admin user and group")
-        
+
         # Set ownership of directories
         directories = [
             "/var/lib/claude-agents",
-            "/var/log/claude-agents", 
-            "/var/run/claude-agents"
+            "/var/log/claude-agents",
+            "/var/run/claude-agents",
         ]
-        
+
         for directory in directories:
             if os.path.exists(directory):
-                subprocess.run(['chown', '-R', 'claude-admin:claude-admin', directory],
-                              check=False, capture_output=True)
-        
+                subprocess.run(
+                    ["chown", "-R", "claude-admin:claude-admin", directory],
+                    check=False,
+                    capture_output=True,
+                )
+
     except Exception as e:
         print(f"⚠️  Could not create user (may already exist): {e}")
+
 
 def generate_default_configs():
     """Generate default configuration files"""
     print("⚙️  Generating default configuration files...")
-    
+
     configs = {
-        '/etc/claude-agents/admin.yaml': {
-            'version': '1.0.0',
-            'debug': False,
-            'web_console': {
-                'host': '0.0.0.0',
-                'port': 8080,
-                'secret_key': 'CHANGE-ME-IN-PRODUCTION',
-                'session_timeout': 3600
+        "/etc/claude-agents/admin.yaml": {
+            "version": "1.0.0",
+            "debug": False,
+            "web_console": {
+                "host": "0.0.0.0",
+                "port": 8080,
+                "secret_key": "CHANGE-ME-IN-PRODUCTION",
+                "session_timeout": 3600,
             },
-            'database': {
-                'type': 'sqlite',
-                'path': '/var/lib/claude-agents/admin.db'
+            "database": {"type": "sqlite", "path": "/var/lib/claude-agents/admin.db"},
+            "redis": {"host": "localhost", "port": 6379, "db": 0},
+            "monitoring": {
+                "prometheus_url": "http://localhost:9090",
+                "grafana_url": "http://localhost:3000",
+                "update_interval": 30,
             },
-            'redis': {
-                'host': 'localhost',
-                'port': 6379,
-                'db': 0
+            "security": {
+                "jwt_algorithm": "HS256",
+                "password_min_length": 8,
+                "session_cookie_secure": True,
+                "cors_origins": ["http://localhost:8080"],
             },
-            'monitoring': {
-                'prometheus_url': 'http://localhost:9090',
-                'grafana_url': 'http://localhost:3000',
-                'update_interval': 30
+            "logging": {
+                "level": "INFO",
+                "format": "json",
+                "file": "${CLAUDE_LOG_DIR:-/var/log/claude-agents/}admin.log",
+                "max_size_mb": 100,
+                "backup_count": 10,
             },
-            'security': {
-                'jwt_algorithm': 'HS256',
-                'password_min_length': 8,
-                'session_cookie_secure': True,
-                'cors_origins': ['http://localhost:8080']
-            },
-            'logging': {
-                'level': 'INFO',
-                'format': 'json',
-                'file': '${CLAUDE_LOG_DIR:-/var/log/claude-agents/}admin.log',
-                'max_size_mb': 100,
-                'backup_count': 10
+        },
+        "/etc/claude-agents/deployment.yaml": {
+            "environments": {
+                "development": {
+                    "cluster_name": "claude-agents-dev",
+                    "namespace": "claude-agents-dev",
+                    "auto_scaling": False,
+                    "resources": {"default": {"cpu": "200m", "memory": "256Mi"}},
+                },
+                "production": {
+                    "cluster_name": "claude-agents-prod",
+                    "namespace": "claude-agents",
+                    "auto_scaling": True,
+                    "resources": {
+                        "default": {"cpu": "500m", "memory": "512Mi"},
+                        "high_performance": {"cpu": "1000m", "memory": "1Gi"},
+                    },
+                },
             }
         },
-        
-        '/etc/claude-agents/deployment.yaml': {
-            'environments': {
-                'development': {
-                    'cluster_name': 'claude-agents-dev',
-                    'namespace': 'claude-agents-dev',
-                    'auto_scaling': False,
-                    'resources': {
-                        'default': {
-                            'cpu': '200m',
-                            'memory': '256Mi'
-                        }
-                    }
+        "/etc/claude-agents/rbac.yaml": {
+            "roles": {
+                "admin": {"permissions": ["*"], "description": "Full system access"},
+                "operator": {
+                    "permissions": [
+                        "agents:read",
+                        "agents:restart",
+                        "agents:scale",
+                        "system:read",
+                        "config:read",
+                        "logs:read",
+                    ],
+                    "description": "Operations access",
                 },
-                'production': {
-                    'cluster_name': 'claude-agents-prod',
-                    'namespace': 'claude-agents',
-                    'auto_scaling': True,
-                    'resources': {
-                        'default': {
-                            'cpu': '500m', 
-                            'memory': '512Mi'
-                        },
-                        'high_performance': {
-                            'cpu': '1000m',
-                            'memory': '1Gi'
-                        }
-                    }
-                }
+                "viewer": {
+                    "permissions": ["system:read", "agents:read", "logs:read"],
+                    "description": "Read-only access",
+                },
+                "developer": {
+                    "permissions": [
+                        "agents:read",
+                        "agents:deploy",
+                        "config:read",
+                        "config:write",
+                        "logs:read",
+                        "system:read",
+                    ],
+                    "description": "Development access",
+                },
             }
         },
-        
-        '/etc/claude-agents/rbac.yaml': {
-            'roles': {
-                'admin': {
-                    'permissions': ['*'],
-                    'description': 'Full system access'
-                },
-                'operator': {
-                    'permissions': [
-                        'agents:read', 'agents:restart', 'agents:scale',
-                        'system:read', 'config:read', 'logs:read'
-                    ],
-                    'description': 'Operations access'
-                },
-                'viewer': {
-                    'permissions': [
-                        'system:read', 'agents:read', 'logs:read'
-                    ],
-                    'description': 'Read-only access'
-                },
-                'developer': {
-                    'permissions': [
-                        'agents:read', 'agents:deploy', 'config:read',
-                        'config:write', 'logs:read', 'system:read'
-                    ],
-                    'description': 'Development access'
-                }
-            }
-        }
     }
-    
+
     for config_path, config_data in configs.items():
         try:
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            
-            with open(config_path, 'w') as f:
+
+            with open(config_path, "w") as f:
                 yaml.dump(config_data, f, default_flow_style=False, indent=2)
-            
+
             print(f"✅ Generated {config_path}")
-            
+
             # Set appropriate permissions
             os.chmod(config_path, 0o640)
-            
+
         except Exception as e:
             print(f"❌ Error generating {config_path}: {e}")
+
 
 def install_bash_completions():
     """Install bash completions for CLI"""
     print("🔧 Installing bash completions...")
-    
+
     completion_script = """# Claude Agent Administration CLI bash completion
 _claude_admin_completion() {
     local cur prev opts
@@ -385,19 +389,20 @@ _claude_admin_completion() {
 
 complete -F _claude_admin_completion claude-admin
 """
-    
+
     completion_path = "/etc/bash_completion.d/claude-admin"
     try:
-        with open(completion_path, 'w') as f:
+        with open(completion_path, "w") as f:
             f.write(completion_script)
         print(f"✅ Installed bash completion: {completion_path}")
     except PermissionError:
         print("⚠️  Could not install bash completion (requires root privileges)")
 
+
 def setup_logrotate():
     """Setup log rotation"""
     print("📜 Setting up log rotation...")
-    
+
     logrotate_config = """${CLAUDE_LOG_DIR:-/var/log/claude-agents/}*.log {
     daily
     rotate 30
@@ -412,19 +417,20 @@ def setup_logrotate():
     endscript
     su claude-admin claude-admin
 }"""
-    
+
     logrotate_path = "/etc/logrotate.d/claude-agents"
     try:
-        with open(logrotate_path, 'w') as f:
+        with open(logrotate_path, "w") as f:
             f.write(logrotate_config)
         print(f"✅ Configured log rotation: {logrotate_path}")
     except PermissionError:
         print("⚠️  Could not configure log rotation (requires root privileges)")
 
+
 def post_install_setup():
     """Perform post-installation setup tasks"""
     print("\n🚀 Performing post-installation setup...")
-    
+
     check_system_requirements()
     create_directory_structure()
     create_user_and_group()
@@ -432,7 +438,7 @@ def post_install_setup():
     install_systemd_services()
     install_bash_completions()
     setup_logrotate()
-    
+
     print("\n✅ Post-installation setup completed!")
     print("\nNext steps:")
     print("1. Review configuration files in /etc/claude-agents/")
@@ -441,9 +447,11 @@ def post_install_setup():
     print("4. Run CLI: claude-admin --help")
     print("5. Launch TUI: claude-admin-tui")
 
+
 # ============================================================================
 # SETUP CONFIGURATION
 # ============================================================================
+
 
 # Read requirements from file
 def get_requirements():
@@ -454,34 +462,38 @@ def get_requirements():
             requirements = []
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith("#"):
                     # Remove comments from requirements
-                    req = line.split('#')[0].strip()
+                    req = line.split("#")[0].strip()
                     if req:
                         requirements.append(req)
             return requirements
     return []
 
+
 def get_entry_points():
     """Define console entry points"""
     return {
-        'console_scripts': [
-            'claude-admin=claude_admin.claude_admin_cli:main',
-            'claude-admin-web=claude_admin.web_console:main',
-            'claude-admin-tui=claude_admin.tui_admin:main',
-            'claude-deploy=claude_admin.deployment_manager:main',
+        "console_scripts": [
+            "claude-admin=claude_admin.claude_admin_cli:main",
+            "claude-admin-web=claude_admin.web_console:main",
+            "claude-admin-tui=claude_admin.tui_admin:main",
+            "claude-deploy=claude_admin.deployment_manager:main",
         ]
     }
+
 
 # Custom install command
 class PostInstallCommand:
     """Custom post-installation command"""
-    
+
     __slots__ = []
+
     def run(self):
         """Run post-installation setup"""
-        if '--skip-post-install' not in sys.argv:
+        if "--skip-post-install" not in sys.argv:
             post_install_setup()
+
 
 # ============================================================================
 # MAIN SETUP CONFIGURATION
@@ -498,14 +510,14 @@ if __name__ == "__main__":
         author_email=AUTHOR_EMAIL,
         url=URL,
         packages=find_packages(),
-        package_dir={'claude_admin': '.'},
+        package_dir={"claude_admin": "."},
         package_data={
-            'claude_admin': [
-                'templates/**/*',
-                'static/**/*',
-                'configs/**/*',
-                '*.yaml',
-                '*.json'
+            "claude_admin": [
+                "templates/**/*",
+                "static/**/*",
+                "configs/**/*",
+                "*.yaml",
+                "*.json",
             ]
         },
         include_package_data=True,
@@ -520,19 +532,17 @@ if __name__ == "__main__":
             "Documentation": f"{URL}/docs",
         },
         zip_safe=False,
-        platforms=['Linux'],
-        
+        platforms=["Linux"],
         # Custom commands
         cmdclass={
-            'install': PostInstallCommand,
+            "install": PostInstallCommand,
         },
-        
         # Additional metadata
         license="MIT",
         maintainer=AUTHOR,
         maintainer_email=AUTHOR_EMAIL,
     )
-    
+
     # Run post-install if installing
-    if 'install' in sys.argv and '--skip-post-install' not in sys.argv:
+    if "install" in sys.argv and "--skip-post-install" not in sys.argv:
         post_install_setup()

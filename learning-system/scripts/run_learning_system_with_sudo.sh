@@ -8,7 +8,9 @@ echo "LEARNING SYSTEM - DOCKER TESTING WITH SUDO"
 echo "Using sudo for Docker commands"
 echo "=================================================="
 
-PROJECT_ROOT="/home/ubuntu/Documents/claude-backups"
+# Auto-detect project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT" || exit 1
 
 # Colors for output

@@ -5,18 +5,19 @@ Integrates Shadowgit performance monitoring with NPU acceleration and learning d
 """
 
 import asyncio
-import time
 import json
-import subprocess
-import os
-import sys
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-from pathlib import Path
 import logging
+import os
+import subprocess
+import sys
+import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import numpy as np
 
 # Import existing components
 
@@ -28,33 +29,44 @@ sys.path.insert(0, str(project_root / "agents" / "src" / "python"))
 
 try:
     from agent_path_resolver import (
-        get_project_root, get_agents_root, get_shadowgit_root
+        get_agents_root,
+        get_project_root,
+        get_shadowgit_root,
     )
 except ImportError:
     # Fallback if agent_path_resolver not available
     def get_project_root():
         return Path(__file__).parent.parent.parent.parent
+
     def get_agents_root():
-        return get_project_root() / 'agents'
+        return get_project_root() / "agents"
+
     def get_shadowgit_root():
-        return get_project_root() / 'hooks' / 'shadowgit'
+        return get_project_root() / "hooks" / "shadowgit"
+
 
 def get_database_dir():
-    return get_project_root() / 'database'
+    return get_project_root() / "database"
+
 
 def get_python_src_dir():
-    return get_agents_root() / 'src' / 'python'
+    return get_agents_root() / "src" / "python"
+
 
 def get_database_config():
     return {
-        'host': 'localhost', 'port': 5433,
-        'database': 'claude_agents_auth',
-        'user': 'claude_agent', 'password': 'claude_auth_pass'
+        "host": "localhost",
+        "port": 5433,
+        "database": "claude_agents_auth",
+        "user": "claude_agent",
+        "password": "claude_auth_pass",
     }
+
 
 # Import analyzer from current directory
 try:
     from analyze_performance import PerformanceAnalysis
+
     PERFORMANCE_ANALYZER_AVAILABLE = True
 except ImportError:
     PERFORMANCE_ANALYZER_AVAILABLE = False
@@ -62,9 +74,11 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class GitOperation:
     """Git operation performance data"""
+
     operation_id: str
     operation_type: str  # diff, hash, index, merge, etc.
     file_count: int
@@ -75,9 +89,11 @@ class GitOperation:
     repository_path: str
     timestamp: float
 
+
 @dataclass
 class PerformanceMetrics:
     """Shadowgit performance metrics"""
+
     current_baseline: float
     target_performance: float
     achievement_percentage: float
@@ -87,6 +103,7 @@ class PerformanceMetrics:
     bottlenecks: List[str]
     optimization_recommendations: List[str]
 
+
 class ShadowgitPerformanceMonitor:
     """Real-time Shadowgit performance monitoring and optimization"""
 
@@ -95,7 +112,7 @@ class ShadowgitPerformanceMonitor:
         self.performance_history = []
         self.current_metrics = None
         self.baseline_performance = 3040000  # 3.04M lines/sec
-        self.target_performance = 11500000   # 11.5M lines/sec (3.8x improvement)
+        self.target_performance = 11500000  # 11.5M lines/sec (3.8x improvement)
 
         # NPU integration
         self.npu_available = False
@@ -132,7 +149,7 @@ class ShadowgitPerformanceMonitor:
                 database="claude_agents_auth",
                 user="claude_agent",
                 password="",
-                cursor_factory=RealDictCursor
+                cursor_factory=RealDictCursor,
             )
             logger.info("✅ Database connection established")
         except Exception as e:
@@ -143,14 +160,21 @@ class ShadowgitPerformanceMonitor:
         """Check if NPU acceleration is available"""
         try:
             # Check if we're in the NPU virtual environment
-            venv_python = Path('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/.venv/bin/python')
+            venv_python = Path(
+                '${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python/.venv/bin/python'
+            )
             if venv_python.exists():
-                result = subprocess.run([
-                    str(venv_python), '-c',
-                    'import openvino as ov; core = ov.Core(); print("NPU" in core.available_devices)'
-                ], capture_output=True, text=True)
+                result = subprocess.run(
+                    [
+                        str(venv_python),
+                        "-c",
+                        'import openvino as ov; core = ov.Core(); print("NPU" in core.available_devices)',
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
 
-                if result.returncode == 0 and 'True' in result.stdout:
+                if result.returncode == 0 and "True" in result.stdout:
                     self.npu_available = True
                     self.openvino_available = True
                     logger.info("✅ NPU acceleration available")
@@ -171,7 +195,8 @@ class ShadowgitPerformanceMonitor:
             cursor = self.db_connection.cursor()
 
             # Git operations table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS shadowgit_operations (
                     operation_id VARCHAR(64) PRIMARY KEY,
                     operation_type VARCHAR(32) NOT NULL,
@@ -184,10 +209,12 @@ class ShadowgitPerformanceMonitor:
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-            """)
+            """
+            )
 
             # Performance metrics table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS shadowgit_metrics (
                     id SERIAL PRIMARY KEY,
                     baseline_performance FLOAT NOT NULL,
@@ -201,10 +228,12 @@ class ShadowgitPerformanceMonitor:
                     recommendations TEXT[],
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-            """)
+            """
+            )
 
             # Performance optimization log
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS shadowgit_optimizations (
                     id SERIAL PRIMARY KEY,
                     optimization_type VARCHAR(64) NOT NULL,
@@ -215,7 +244,8 @@ class ShadowgitPerformanceMonitor:
                     hardware_config VARCHAR(32) NOT NULL,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-            """)
+            """
+            )
 
             self.db_connection.commit()
             logger.info("✅ Performance tables created/verified")
@@ -257,12 +287,20 @@ class ShadowgitPerformanceMonitor:
                 logger.error(f"Monitoring error: {e}")
                 await asyncio.sleep(5)
 
-    async def record_git_operation(self, operation_type: str, file_count: int,
-                                 lines_processed: int, execution_time_ms: float,
-                                 repository_path: str, hardware_used: str = "CPU"):
+    async def record_git_operation(
+        self,
+        operation_type: str,
+        file_count: int,
+        lines_processed: int,
+        execution_time_ms: float,
+        repository_path: str,
+        hardware_used: str = "CPU",
+    ):
         """Record a Git operation for performance analysis"""
 
-        throughput = lines_processed / (execution_time_ms / 1000) if execution_time_ms > 0 else 0
+        throughput = (
+            lines_processed / (execution_time_ms / 1000) if execution_time_ms > 0 else 0
+        )
 
         operation = GitOperation(
             operation_id=f"git_{operation_type}_{int(time.time() * 1000)}",
@@ -273,7 +311,7 @@ class ShadowgitPerformanceMonitor:
             throughput_lines_per_sec=throughput,
             hardware_used=hardware_used,
             repository_path=repository_path,
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         # Queue for background processing
@@ -289,17 +327,24 @@ class ShadowgitPerformanceMonitor:
         if self.db_connection:
             try:
                 cursor = self.db_connection.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO shadowgit_operations
                     (operation_id, operation_type, file_count, lines_processed,
                      execution_time_ms, throughput_lines_per_sec, hardware_used, repository_path)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    operation.operation_id, operation.operation_type, operation.file_count,
-                    operation.lines_processed, operation.execution_time_ms,
-                    operation.throughput_lines_per_sec, operation.hardware_used,
-                    operation.repository_path
-                ))
+                """,
+                    (
+                        operation.operation_id,
+                        operation.operation_type,
+                        operation.file_count,
+                        operation.lines_processed,
+                        operation.execution_time_ms,
+                        operation.throughput_lines_per_sec,
+                        operation.hardware_used,
+                        operation.repository_path,
+                    ),
+                )
                 self.db_connection.commit()
             except Exception as e:
                 logger.error(f"Failed to store operation data: {e}")
@@ -314,7 +359,9 @@ class ShadowgitPerformanceMonitor:
 
         # Calculate current performance
         recent_operations = self.performance_history[-10:]  # Last 10 operations
-        current_performance = np.mean([op.throughput_lines_per_sec for op in recent_operations])
+        current_performance = np.mean(
+            [op.throughput_lines_per_sec for op in recent_operations]
+        )
 
         # Calculate achievement percentage
         achievement_percentage = (current_performance / self.target_performance) * 100
@@ -345,7 +392,7 @@ class ShadowgitPerformanceMonitor:
             avx2_utilization=avx2_utilization,
             cpu_utilization=cpu_utilization,
             bottlenecks=bottlenecks,
-            optimization_recommendations=recommendations
+            optimization_recommendations=recommendations,
         )
 
         # Store metrics in database
@@ -377,15 +424,21 @@ class ShadowgitPerformanceMonitor:
         # Check for large file processing inefficiency
         large_file_ops = [op for op in operations if op.lines_processed > 100000]
         if large_file_ops:
-            avg_large_throughput = np.mean([op.throughput_lines_per_sec for op in large_file_ops])
+            avg_large_throughput = np.mean(
+                [op.throughput_lines_per_sec for op in large_file_ops]
+            )
             if avg_large_throughput < avg_throughput * 0.5:
                 bottlenecks.append("Large file processing inefficiency")
 
         return bottlenecks
 
-    def generate_optimization_recommendations(self, current_performance: float,
-                                            npu_utilization: float, avx2_utilization: float,
-                                            bottlenecks: List[str]) -> List[str]:
+    def generate_optimization_recommendations(
+        self,
+        current_performance: float,
+        npu_utilization: float,
+        avx2_utilization: float,
+        bottlenecks: List[str],
+    ) -> List[str]:
         """Generate optimization recommendations"""
         recommendations = []
 
@@ -408,7 +461,9 @@ class ShadowgitPerformanceMonitor:
             elif "CPU usage" in bottleneck:
                 recommendations.append("Migrate operations to NPU/AVX2 acceleration")
             elif "NPU utilization" in bottleneck:
-                recommendations.append("Enable NPU acceleration for appropriate operations")
+                recommendations.append(
+                    "Enable NPU acceleration for appropriate operations"
+                )
 
         # Target achievement recommendations
         achievement = (current_performance / self.target_performance) * 100
@@ -429,24 +484,31 @@ class ShadowgitPerformanceMonitor:
 
             # Calculate current performance
             recent_ops = self.performance_history[-10:]
-            current_performance = np.mean([op.throughput_lines_per_sec for op in recent_ops]) if recent_ops else 0
+            current_performance = (
+                np.mean([op.throughput_lines_per_sec for op in recent_ops])
+                if recent_ops
+                else 0
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO shadowgit_metrics
                 (baseline_performance, current_performance, target_performance, achievement_percentage,
                  npu_utilization, avx2_utilization, cpu_utilization, bottlenecks, recommendations)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                self.current_metrics.current_baseline,
-                current_performance,
-                self.current_metrics.target_performance,
-                self.current_metrics.achievement_percentage,
-                self.current_metrics.npu_utilization,
-                self.current_metrics.avx2_utilization,
-                self.current_metrics.cpu_utilization,
-                self.current_metrics.bottlenecks,
-                self.current_metrics.optimization_recommendations
-            ))
+            """,
+                (
+                    self.current_metrics.current_baseline,
+                    current_performance,
+                    self.current_metrics.target_performance,
+                    self.current_metrics.achievement_percentage,
+                    self.current_metrics.npu_utilization,
+                    self.current_metrics.avx2_utilization,
+                    self.current_metrics.cpu_utilization,
+                    self.current_metrics.bottlenecks,
+                    self.current_metrics.optimization_recommendations,
+                ),
+            )
 
             self.db_connection.commit()
 
@@ -461,14 +523,10 @@ class ShadowgitPerformanceMonitor:
         test_results = {}
 
         # Test 1: Small file diff operation
-        await self.record_git_operation(
-            "diff", 10, 1000, 50, "/test/repo", "CPU"
-        )
+        await self.record_git_operation("diff", 10, 1000, 50, "/test/repo", "CPU")
 
         # Test 2: Large file hash operation
-        await self.record_git_operation(
-            "hash", 100, 50000, 150, "/test/repo", "AVX2"
-        )
+        await self.record_git_operation("hash", 100, 50000, 150, "/test/repo", "AVX2")
 
         # Test 3: NPU-accelerated operation (if available)
         if self.npu_available:
@@ -489,19 +547,21 @@ class ShadowgitPerformanceMonitor:
             current_throughput = 0
             if self.performance_history:
                 recent_ops = self.performance_history[-5:]
-                current_throughput = np.mean([op.throughput_lines_per_sec for op in recent_ops])
+                current_throughput = np.mean(
+                    [op.throughput_lines_per_sec for op in recent_ops]
+                )
 
             test_results = {
-                'current_throughput_lines_per_sec': current_throughput,
-                'baseline_throughput': self.baseline_performance,
-                'target_throughput': self.target_performance,
-                'achievement_percentage': self.current_metrics.achievement_percentage,
-                'npu_utilization': self.current_metrics.npu_utilization,
-                'avx2_utilization': self.current_metrics.avx2_utilization,
-                'bottlenecks': self.current_metrics.bottlenecks,
-                'recommendations': self.current_metrics.optimization_recommendations,
-                'operations_tested': len(self.performance_history),
-                'npu_available': self.npu_available
+                "current_throughput_lines_per_sec": current_throughput,
+                "baseline_throughput": self.baseline_performance,
+                "target_throughput": self.target_performance,
+                "achievement_percentage": self.current_metrics.achievement_percentage,
+                "npu_utilization": self.current_metrics.npu_utilization,
+                "avx2_utilization": self.current_metrics.avx2_utilization,
+                "bottlenecks": self.current_metrics.bottlenecks,
+                "recommendations": self.current_metrics.optimization_recommendations,
+                "operations_tested": len(self.performance_history),
+                "npu_available": self.npu_available,
             }
 
         return test_results
@@ -509,33 +569,34 @@ class ShadowgitPerformanceMonitor:
     def get_performance_dashboard(self) -> Dict[str, Any]:
         """Get performance dashboard data"""
         if not self.current_metrics or not self.performance_history:
-            return {'status': 'No data available'}
+            return {"status": "No data available"}
 
         recent_ops = self.performance_history[-20:]
         current_throughput = np.mean([op.throughput_lines_per_sec for op in recent_ops])
 
         return {
-            'current_performance': {
-                'throughput_lines_per_sec': current_throughput,
-                'vs_baseline': (current_throughput / self.baseline_performance) * 100,
-                'vs_target': (current_throughput / self.target_performance) * 100
+            "current_performance": {
+                "throughput_lines_per_sec": current_throughput,
+                "vs_baseline": (current_throughput / self.baseline_performance) * 100,
+                "vs_target": (current_throughput / self.target_performance) * 100,
             },
-            'hardware_utilization': {
-                'npu_utilization': self.current_metrics.npu_utilization,
-                'avx2_utilization': self.current_metrics.avx2_utilization,
-                'cpu_utilization': self.current_metrics.cpu_utilization
+            "hardware_utilization": {
+                "npu_utilization": self.current_metrics.npu_utilization,
+                "avx2_utilization": self.current_metrics.avx2_utilization,
+                "cpu_utilization": self.current_metrics.cpu_utilization,
             },
-            'analysis': {
-                'bottlenecks': self.current_metrics.bottlenecks,
-                'recommendations': self.current_metrics.optimization_recommendations
+            "analysis": {
+                "bottlenecks": self.current_metrics.bottlenecks,
+                "recommendations": self.current_metrics.optimization_recommendations,
             },
-            'system_status': {
-                'npu_available': self.npu_available,
-                'monitoring_active': self.is_monitoring,
-                'operations_recorded': len(self.performance_history),
-                'database_connected': self.db_connection is not None
-            }
+            "system_status": {
+                "npu_available": self.npu_available,
+                "monitoring_active": self.is_monitoring,
+                "operations_recorded": len(self.performance_history),
+                "database_connected": self.db_connection is not None,
+            },
         }
+
 
 async def performance_test():
     """Test Shadowgit Performance Integration"""
@@ -550,7 +611,9 @@ async def performance_test():
     results = await monitor.run_performance_test()
 
     print(f"\n📊 Performance Test Results:")
-    print(f"   Current throughput: {results.get('current_throughput_lines_per_sec', 0):.0f} lines/sec")
+    print(
+        f"   Current throughput: {results.get('current_throughput_lines_per_sec', 0):.0f} lines/sec"
+    )
     print(f"   Baseline: {results.get('baseline_throughput', 0):.0f} lines/sec")
     print(f"   Target: {results.get('target_throughput', 0):.0f} lines/sec")
     print(f"   Achievement: {results.get('achievement_percentage', 0):.1f}%")
@@ -560,13 +623,13 @@ async def performance_test():
     print(f"   AVX2: {results.get('avx2_utilization', 0):.1f}%")
     print(f"   NPU Available: {results.get('npu_available', False)}")
 
-    bottlenecks = results.get('bottlenecks', [])
+    bottlenecks = results.get("bottlenecks", [])
     if bottlenecks:
         print(f"\n⚠️ Bottlenecks:")
         for bottleneck in bottlenecks:
             print(f"   • {bottleneck}")
 
-    recommendations = results.get('recommendations', [])
+    recommendations = results.get("recommendations", [])
     if recommendations:
         print(f"\n💡 Recommendations:")
         for rec in recommendations:
@@ -575,16 +638,21 @@ async def performance_test():
     # Dashboard
     dashboard = monitor.get_performance_dashboard()
     print(f"\n📈 System Status:")
-    status = dashboard.get('system_status', {})
+    status = dashboard.get("system_status", {})
     print(f"   Monitoring: {status.get('monitoring_active', False)}")
     print(f"   Database: {status.get('database_connected', False)}")
     print(f"   Operations: {status.get('operations_recorded', 0)}")
 
-    target_achievement = results.get('achievement_percentage', 0)
+    target_achievement = results.get("achievement_percentage", 0)
     if target_achievement >= 100:
-        print(f"\n🎯 TARGET ACHIEVED: {target_achievement:.1f}% of 11.5M lines/sec target")
+        print(
+            f"\n🎯 TARGET ACHIEVED: {target_achievement:.1f}% of 11.5M lines/sec target"
+        )
     else:
-        print(f"\n📈 TARGET PROGRESS: {target_achievement:.1f}% toward 11.5M lines/sec target")
+        print(
+            f"\n📈 TARGET PROGRESS: {target_achievement:.1f}% toward 11.5M lines/sec target"
+        )
+
 
 if __name__ == "__main__":
     asyncio.run(performance_test())

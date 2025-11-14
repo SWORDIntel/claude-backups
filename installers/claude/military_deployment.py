@@ -11,7 +11,8 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
+
 
 class MilitaryDeployment:
     """Handles military-grade deployment with 40+ TFLOPS optimization"""
@@ -23,7 +24,7 @@ class MilitaryDeployment:
         self.project_root = installer.project_root
 
         # Setup logging
-        self.logger = logging.getLogger('MilitaryDeployment')
+        self.logger = logging.getLogger("MilitaryDeployment")
 
         # Deployment paths
         self.hardware_dir = self.project_root / "hardware"
@@ -38,7 +39,9 @@ class MilitaryDeployment:
 
             # Step 1: Hardware detection and NPU activation
             if not self._deploy_hardware_optimization():
-                self.logger.warning("Hardware optimization failed, continuing with reduced capabilities")
+                self.logger.warning(
+                    "Hardware optimization failed, continuing with reduced capabilities"
+                )
 
             # Step 2: Agent coordination matrix deployment
             if not self._deploy_agent_coordination():
@@ -47,7 +50,9 @@ class MilitaryDeployment:
 
             # Step 3: Performance validation
             if not self._validate_military_performance():
-                self.logger.warning("Performance validation failed, but deployment continues")
+                self.logger.warning(
+                    "Performance validation failed, but deployment continues"
+                )
 
             self.logger.info("✅ Military optimization deployment completed")
             return True
@@ -61,31 +66,45 @@ class MilitaryDeployment:
 
         try:
             self.logger.info("🎯 Deploying local Opus inference infrastructure")
-            self.logger.info("📋 Note: Infrastructure-only mode - actual model weights not included")
-            self.logger.info("💡 Tip: Use qwen-openvino for functional local inference, or external APIs")
+            self.logger.info(
+                "📋 Note: Infrastructure-only mode - actual model weights not included"
+            )
+            self.logger.info(
+                "💡 Tip: Use qwen-openvino for functional local inference, or external APIs"
+            )
 
             # Step 1: Create directories
             self.local_models_dir.mkdir(parents=True, exist_ok=True)
 
             # Step 2: Deploy quantization system
             if not self._deploy_quantization_system():
-                self.logger.warning("Quantization system deployment had issues, continuing...")
+                self.logger.warning(
+                    "Quantization system deployment had issues, continuing..."
+                )
 
             # Step 3: Deploy FastAPI server
             if not self._deploy_inference_server():
-                self.logger.warning("Inference server deployment had issues, continuing...")
+                self.logger.warning(
+                    "Inference server deployment had issues, continuing..."
+                )
 
             # Step 4: Configure agent routing
             if not self._configure_local_routing():
-                self.logger.warning("Local routing configuration had issues, continuing...")
+                self.logger.warning(
+                    "Local routing configuration had issues, continuing..."
+                )
 
             self.logger.info("✅ Local Opus infrastructure deployment completed")
-            self.logger.info("   Use external APIs or qwen-openvino for actual inference")
+            self.logger.info(
+                "   Use external APIs or qwen-openvino for actual inference"
+            )
             return True
 
         except Exception as e:
             self.logger.warning(f"Local Opus deployment had issues: {e}")
-            self.logger.info("Continuing installation - infrastructure setup is optional")
+            self.logger.info(
+                "Continuing installation - infrastructure setup is optional"
+            )
             return True
 
     def _deploy_hardware_optimization(self) -> bool:
@@ -98,13 +117,17 @@ class MilitaryDeployment:
                 self.logger.info("Running military hardware analysis...")
 
                 cmd = [
-                    "python3", str(hardware_analyzer),
-                    "--export", str(self.project_root / ".claude" / "hardware_config.json")
+                    "python3",
+                    str(hardware_analyzer),
+                    "--export",
+                    str(self.project_root / ".claude" / "hardware_config.json"),
                 ]
 
                 result = self._run_with_sudo(cmd)
                 if result.returncode != 0:
-                    self.logger.warning(f"Hardware analyzer returned {result.returncode}")
+                    self.logger.warning(
+                        f"Hardware analyzer returned {result.returncode}"
+                    )
 
             # Run NPU optimization
             npu_optimizer = self.hardware_dir / "enable-npu-turbo.sh"
@@ -124,7 +147,9 @@ class MilitaryDeployment:
                 cmd = ["bash", str(optimization_script)]
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 if result.returncode != 0:
-                    self.logger.warning(f"40+ TFLOPS optimization warnings: {result.stderr[:200]}")
+                    self.logger.warning(
+                        f"40+ TFLOPS optimization warnings: {result.stderr[:200]}"
+                    )
 
             return True
 
@@ -137,7 +162,9 @@ class MilitaryDeployment:
 
         try:
             # Run DSMIL orchestrator
-            orchestrator_script = self.project_root / "installers" / "claude" / "dsmil_orchestrator.py"
+            orchestrator_script = (
+                self.project_root / "installers" / "claude" / "dsmil_orchestrator.py"
+            )
             if orchestrator_script.exists():
                 self.logger.info("Deploying 98-agent coordination matrix...")
 
@@ -172,7 +199,7 @@ class MilitaryDeployment:
                 cwd=str(self.local_models_dir),
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minutes timeout
+                timeout=300,  # 5 minutes timeout
             )
 
             if result.returncode == 0:
@@ -195,8 +222,12 @@ class MilitaryDeployment:
         try:
             server_file = self.local_models_dir / "local_opus_server.py"
             if not server_file.exists():
-                self.logger.warning("Local Opus server file not found - this is expected for infrastructure-only mode")
-                self.logger.info("Note: Use Qwen server (qwen-openvino/) or external APIs for actual inference")
+                self.logger.warning(
+                    "Local Opus server file not found - this is expected for infrastructure-only mode"
+                )
+                self.logger.info(
+                    "Note: Use Qwen server (qwen-openvino/) or external APIs for actual inference"
+                )
 
                 # Create startup script anyway (will show helpful error if run)
                 self._create_server_startup_script()
@@ -238,7 +269,7 @@ class MilitaryDeployment:
             required_files = [
                 "local_endpoint_router.py",
                 "endpoint_config.json",
-                "agent_coordination_matrix.json"
+                "agent_coordination_matrix.json",
             ]
 
             missing_files = []
@@ -276,13 +307,15 @@ class MilitaryDeployment:
                     self.logger.info("✅ Performance validation passed")
                     return True
                 else:
-                    self.logger.warning(f"Performance validation warnings: {result.stderr[:200]}")
+                    self.logger.warning(
+                        f"Performance validation warnings: {result.stderr[:200]}"
+                    )
 
             # Basic validation - check key files exist
             key_files = [
                 self.hardware_dir / "milspec_hardware_analyzer.py",
                 self.orchestration_dir / "agent_coordination_matrix.json",
-                self.local_models_dir / "local_opus_server.py"
+                self.local_models_dir / "local_opus_server.py",
             ]
 
             for file_path in key_files:
@@ -300,7 +333,7 @@ class MilitaryDeployment:
 
         startup_script = self.project_root / "start_local_opus.sh"
 
-        script_content = f'''#!/bin/bash
+        script_content = f"""#!/bin/bash
 # Local Opus Server Startup Script
 # Generated by Claude Military Installer
 
@@ -334,14 +367,16 @@ echo "🎯 Launching server on localhost:8000..."
 python3 local_opus_server.py
 
 echo "🏁 Local Opus server stopped"
-'''
+"""
 
         startup_script.write_text(script_content)
         startup_script.chmod(0o755)
 
         self.logger.info(f"✅ Created startup script: {startup_script}")
 
-    def _run_with_sudo(self, cmd: List[str], capture_errors: bool = True) -> subprocess.CompletedProcess:
+    def _run_with_sudo(
+        self, cmd: List[str], capture_errors: bool = True
+    ) -> subprocess.CompletedProcess:
         """Run command with sudo using configured password"""
 
         # Prepend sudo and password
@@ -353,7 +388,7 @@ echo "🏁 Local Opus server stopped"
                 input=f"{self.sudo_password}\n",
                 text=True,
                 capture_output=capture_errors,
-                timeout=120
+                timeout=120,
             )
             return result
 
@@ -367,20 +402,33 @@ echo "🏁 Local Opus server stopped"
 
         status = {
             "military_optimization": {
-                "hardware_analyzer": (self.hardware_dir / "milspec_hardware_analyzer.py").exists(),
+                "hardware_analyzer": (
+                    self.hardware_dir / "milspec_hardware_analyzer.py"
+                ).exists(),
                 "npu_optimizer": (self.hardware_dir / "enable-npu-turbo.sh").exists(),
-                "optimization_script": (self.project_root / "execute_40tflops_optimization.sh").exists()
+                "optimization_script": (
+                    self.project_root / "execute_40tflops_optimization.sh"
+                ).exists(),
             },
             "local_opus": {
                 "quantizer": (self.local_models_dir / "opus_quantizer.py").exists(),
                 "server": (self.local_models_dir / "local_opus_server.py").exists(),
-                "startup_script": (self.project_root / "start_local_opus.sh").exists()
+                "startup_script": (self.project_root / "start_local_opus.sh").exists(),
             },
             "agent_coordination": {
-                "orchestrator": (self.project_root / "installers" / "claude" / "dsmil_orchestrator.py").exists(),
-                "routing_config": (self.orchestration_dir / "agent_coordination_matrix.json").exists(),
-                "endpoint_router": (self.orchestration_dir / "local_endpoint_router.py").exists()
-            }
+                "orchestrator": (
+                    self.project_root
+                    / "installers"
+                    / "claude"
+                    / "dsmil_orchestrator.py"
+                ).exists(),
+                "routing_config": (
+                    self.orchestration_dir / "agent_coordination_matrix.json"
+                ).exists(),
+                "endpoint_router": (
+                    self.orchestration_dir / "local_endpoint_router.py"
+                ).exists(),
+            },
         }
 
         # Calculate overall readiness
@@ -396,19 +444,24 @@ echo "🏁 Local Opus server stopped"
             "ready_components": ready_components,
             "total_components": total_components,
             "readiness_percentage": round(readiness_percentage, 1),
-            "deployment_ready": readiness_percentage >= 80
+            "deployment_ready": readiness_percentage >= 80,
         }
 
         return status
+
 
 def integrate_with_installer(installer_instance):
     """Integration function for ClaudeEnhancedInstaller"""
 
     # Add military deployment methods to installer
-    military_deployment = MilitaryDeployment(installer_instance, installer_instance.verbose)
+    military_deployment = MilitaryDeployment(
+        installer_instance, installer_instance.verbose
+    )
 
     # Add methods to installer instance
-    installer_instance.deploy_military_optimization = military_deployment.deploy_military_optimization
+    installer_instance.deploy_military_optimization = (
+        military_deployment.deploy_military_optimization
+    )
     installer_instance.deploy_local_opus = military_deployment.deploy_local_opus
     installer_instance.get_deployment_status = military_deployment.get_deployment_status
 

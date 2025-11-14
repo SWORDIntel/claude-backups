@@ -5,31 +5,37 @@ Validates NPU pipeline optimization and delay removal
 """
 
 import asyncio
-import time
 import json
-import sys
-import os
-from pathlib import Path
 import logging
+import os
+import sys
+import time
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from intel_npu_async_pipeline import AsyncPipelineOrchestrator, AsyncTask, AsyncPipelineValidator
+    from intel_npu_async_pipeline import (
+        AsyncPipelineOrchestrator,
+        AsyncPipelineValidator,
+        AsyncTask,
+    )
     from npu_optimized_final import OptimizedNPUOrchestrator
+
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     IMPORTS_AVAILABLE = False
 
+
 def setup_logging():
     """Setup logging for validation"""
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
+
 
 async def test_delay_removal():
     """Test that artificial delays have been removed"""
@@ -77,7 +83,7 @@ async def test_delay_removal():
             task_id=f"perf_test_{i}",
             agent_type="optimizer" if i % 2 == 0 else "security",
             prompt=f"performance test task {i}",
-            priority=1 + (i % 5)
+            priority=1 + (i % 5),
         )
         tasks.append(task)
 
@@ -110,6 +116,7 @@ async def test_delay_removal():
 
     return delay_test_pass and pipeline_test_pass
 
+
 async def test_npu_hardware_detection():
     """Test NPU hardware detection improvements"""
     print("\n🧠 TESTING NPU HARDWARE DETECTION")
@@ -128,7 +135,7 @@ async def test_npu_hardware_detection():
     print(f"✅ NPU Device: {npu.device}")
 
     # Check for hardware paths
-    npu_paths = ['/dev/accel0', '/dev/accel/accel0']
+    npu_paths = ["/dev/accel0", "/dev/accel/accel0"]
     hardware_detected = False
 
     for path in npu_paths:
@@ -141,14 +148,15 @@ async def test_npu_hardware_detection():
         print("ℹ️  No NPU hardware paths detected (expected on some systems)")
 
     # Test cache directory
-    cache_path = Path.home() / '.cache' / 'ze_intel_npu_cache'
+    cache_path = Path.home() / ".cache" / "ze_intel_npu_cache"
     if cache_path.exists():
-        cache_files = list(cache_path.glob('*'))
+        cache_files = list(cache_path.glob("*"))
         print(f"✅ NPU Cache Found: {len(cache_files)} files")
         return True
     else:
         print("ℹ️  No NPU cache found")
         return npu.available
+
 
 async def performance_benchmark():
     """Run comprehensive performance benchmark"""
@@ -186,7 +194,7 @@ async def performance_benchmark():
         "total_time_seconds": total_time,
         "npu_enabled": metrics.get("npu_enabled", False),
         "agents_available": metrics.get("agents_available", 0),
-        "npu_inferences": metrics.get("npu_inferences", 0)
+        "npu_inferences": metrics.get("npu_inferences", 0),
     }
 
     # Performance targets
@@ -203,6 +211,7 @@ async def performance_benchmark():
         print("❌ NEEDS IMPROVEMENT: Below 5K ops/sec")
 
     return benchmark_results
+
 
 async def main():
     """Main validation test suite"""
@@ -236,7 +245,7 @@ async def main():
         print(f"Agents Available: {benchmark['agents_available']}")
 
     # Overall result
-    overall_pass = delay_test and (benchmark.get('raw_ops_per_sec', 0) > 5000)
+    overall_pass = delay_test and (benchmark.get("raw_ops_per_sec", 0) > 5000)
 
     if overall_pass:
         print("\n🎉 OPTIMIZATION SUCCESS: NPU pipeline optimized!")
@@ -253,16 +262,17 @@ async def main():
         "delay_removal_test": delay_test,
         "npu_detection_test": npu_test,
         "benchmark_results": benchmark,
-        "overall_success": overall_pass
+        "overall_success": overall_pass,
     }
 
     results_file = Path(__file__).parent / "npu_validation_results.json"
-    with open(results_file, 'w') as f:
+    with open(results_file, "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"\nResults saved to: {results_file}")
 
     return overall_pass
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

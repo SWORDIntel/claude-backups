@@ -23,21 +23,24 @@ Performance Targets:
 """
 
 import asyncio
+import json
 import logging
-import time
 import threading
-import numpy as np
-from typing import Dict, List, Any, Optional, Tuple, Union
+import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-import json
-from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 # OpenVINO imports with fallback
 try:
+    from openvino.runtime import CompiledModel, Core, InferRequest
+
     import openvino as ov
-    from openvino.runtime import Core, CompiledModel, InferRequest
+
     OPENVINO_AVAILABLE = True
 except ImportError:
     OPENVINO_AVAILABLE = False
@@ -51,27 +54,34 @@ logger = logging.getLogger(__name__)
 # ENUMS AND CONSTANTS
 # ============================================================================
 
+
 class NPUDevice(Enum):
     """NPU device types"""
+
     NPU = "NPU"
     GPU = "GPU"
     CPU = "CPU"
     AUTO = "AUTO"
 
+
 class WorkloadType(Enum):
     """Types of workloads for NPU processing"""
+
     HASH_COMPUTATION = "hash"
     DIFF_ANALYSIS = "diff"
     PATTERN_MATCHING = "pattern"
     BATCH_PROCESSING = "batch"
     REAL_TIME = "realtime"
 
+
 class OptimizationStrategy(Enum):
     """NPU optimization strategies"""
+
     LATENCY_OPTIMIZED = "latency"
     THROUGHPUT_OPTIMIZED = "throughput"
     POWER_OPTIMIZED = "power"
     BALANCED = "balanced"
+
 
 # Performance targets
 NPU_TARGET_THROUGHPUT = 8_000_000_000  # 8B lines/sec
@@ -83,9 +93,11 @@ THERMAL_LIMIT_CELSIUS = 95
 # DATA STRUCTURES
 # ============================================================================
 
+
 @dataclass
 class NPUCapabilities:
     """NPU hardware capabilities"""
+
     device_available: bool = False
     device_name: str = ""
     tops_capability: float = 0.0
@@ -95,9 +107,11 @@ class NPUCapabilities:
     thermal_design_power: float = 0.0
     current_utilization: float = 0.0
 
+
 @dataclass
 class NPUWorkload:
     """NPU workload description"""
+
     workload_id: str
     type: WorkloadType
     input_data: np.ndarray
@@ -107,9 +121,11 @@ class NPUWorkload:
     timeout_ms: int = 1000
     callback: Optional[callable] = None
 
+
 @dataclass
 class NPUResult:
     """NPU processing result"""
+
     workload_id: str
     success: bool
     result_data: Optional[np.ndarray] = None
@@ -119,9 +135,11 @@ class NPUResult:
     error_message: Optional[str] = None
     device_used: str = ""
 
+
 @dataclass
 class NPUPerformanceMetrics:
     """NPU-specific performance metrics"""
+
     total_operations: int = 0
     successful_operations: int = 0
     failed_operations: int = 0
@@ -133,9 +151,11 @@ class NPUPerformanceMetrics:
     cache_hit_rate: float = 0.0
     fallback_to_cpu_count: int = 0
 
+
 # ============================================================================
 # NPU PYTHON INTERFACE CLASS
 # ============================================================================
+
 
 class ShadowgitNPUPython:
     """
@@ -145,10 +165,12 @@ class ShadowgitNPUPython:
     distribution and real-time optimization.
     """
 
-    def __init__(self,
-                 device: NPUDevice = NPUDevice.AUTO,
-                 optimization: OptimizationStrategy = OptimizationStrategy.BALANCED,
-                 enable_cache: bool = True):
+    def __init__(
+        self,
+        device: NPUDevice = NPUDevice.AUTO,
+        optimization: OptimizationStrategy = OptimizationStrategy.BALANCED,
+        enable_cache: bool = True,
+    ):
         self.device = device
         self.optimization = optimization
         self.enable_cache = enable_cache
@@ -206,9 +228,7 @@ class ShadowgitNPUPython:
 
             # Compile for selected device
             self.compiled_model = self.core.compile_model(
-                model,
-                selected_device,
-                self._get_device_config()
+                model, selected_device, self._get_device_config()
             )
 
             # Create inference request
@@ -314,12 +334,12 @@ class ShadowgitNPUPython:
     </edges>
 </net>"""
 
-            with open(model_path, 'w') as f:
+            with open(model_path, "w") as f:
                 f.write(xml_content)
 
             # Create corresponding .bin file
-            bin_path = model_path.with_suffix('.bin')
-            with open(bin_path, 'wb') as f:
+            bin_path = model_path.with_suffix(".bin")
+            with open(bin_path, "wb") as f:
                 # Write minimal weights (1024 float32 values)
                 weights = np.random.randn(1024).astype(np.float32)
                 f.write(weights.tobytes())
@@ -335,24 +355,18 @@ class ShadowgitNPUPython:
         config = {}
 
         if self.optimization == OptimizationStrategy.LATENCY_OPTIMIZED:
-            config.update({
-                "PERFORMANCE_HINT": "LATENCY",
-                "NUM_STREAMS": "1"
-            })
+            config.update({"PERFORMANCE_HINT": "LATENCY", "NUM_STREAMS": "1"})
         elif self.optimization == OptimizationStrategy.THROUGHPUT_OPTIMIZED:
-            config.update({
-                "PERFORMANCE_HINT": "THROUGHPUT",
-                "NUM_STREAMS": "AUTO"
-            })
+            config.update({"PERFORMANCE_HINT": "THROUGHPUT", "NUM_STREAMS": "AUTO"})
         elif self.optimization == OptimizationStrategy.POWER_OPTIMIZED:
-            config.update({
-                "PERFORMANCE_HINT": "CUMULATIVE_THROUGHPUT",
-                "INFERENCE_PRECISION_HINT": "f16"
-            })
+            config.update(
+                {
+                    "PERFORMANCE_HINT": "CUMULATIVE_THROUGHPUT",
+                    "INFERENCE_PRECISION_HINT": "f16",
+                }
+            )
         else:  # BALANCED
-            config.update({
-                "PERFORMANCE_HINT": "CUMULATIVE_THROUGHPUT"
-            })
+            config.update({"PERFORMANCE_HINT": "CUMULATIVE_THROUGHPUT"})
 
         return config
 
@@ -413,8 +427,7 @@ class ShadowgitNPUPython:
             try:
                 # Get workload from queue with timeout
                 workload = await asyncio.wait_for(
-                    self._workload_queue.get(),
-                    timeout=1.0
+                    self._workload_queue.get(), timeout=1.0
                 )
 
                 # Process workload
@@ -451,10 +464,9 @@ class ShadowgitNPUPython:
                 if cache_key in self._result_cache:
                     cached_result = self._result_cache[cache_key]
                     cached_result.workload_id = workload.workload_id
-                    self.metrics.cache_hit_rate = (
-                        len([r for r in self._result_cache.values() if r.success]) /
-                        max(1, len(self._result_cache))
-                    )
+                    self.metrics.cache_hit_rate = len(
+                        [r for r in self._result_cache.values() if r.success]
+                    ) / max(1, len(self._result_cache))
                     return cached_result
 
             # Perform NPU inference
@@ -472,7 +484,8 @@ class ShadowgitNPUPython:
             # Calculate throughput
             ops_per_second = (
                 workload.input_data.size / (processing_time / 1e9)
-                if processing_time > 0 else 0
+                if processing_time > 0
+                else 0
             )
 
             result = NPUResult(
@@ -482,7 +495,7 @@ class ShadowgitNPUPython:
                 processing_time_ns=processing_time,
                 throughput_ops_sec=ops_per_second,
                 npu_utilization=self._calculate_utilization(),
-                device_used=device_used
+                device_used=device_used,
             )
 
             # Cache result if enabled
@@ -498,7 +511,7 @@ class ShadowgitNPUPython:
                 workload_id=workload.workload_id,
                 success=False,
                 error_message=str(e),
-                processing_time_ns=time.time_ns() - start_time
+                processing_time_ns=time.time_ns() - start_time,
             )
 
     async def _run_npu_inference(self, workload: NPUWorkload) -> np.ndarray:
@@ -516,8 +529,7 @@ class ShadowgitNPUPython:
 
             # Run inference
             await asyncio.get_event_loop().run_in_executor(
-                None,
-                self.infer_request.infer
+                None, self.infer_request.infer
             )
 
             # Get output
@@ -536,7 +548,7 @@ class ShadowgitNPUPython:
         chunks = []
 
         for i in range(0, tensor.size, chunk_size):
-            chunk = tensor.flat[i:i+chunk_size]
+            chunk = tensor.flat[i : i + chunk_size]
             chunk_result = await self._run_small_inference(chunk)
             chunks.append(chunk_result)
 
@@ -558,16 +570,13 @@ class ShadowgitNPUPython:
         input_name = list(self.infer_request.model_inputs)[0].any_name
         self.infer_request.set_tensor(input_name, reshaped.astype(np.uint8))
 
-        await asyncio.get_event_loop().run_in_executor(
-            None,
-            self.infer_request.infer
-        )
+        await asyncio.get_event_loop().run_in_executor(None, self.infer_request.infer)
 
         # Get result
         output_name = list(self.infer_request.model_outputs)[0].any_name
         result = self.infer_request.get_tensor(output_name).data
 
-        return np.array(result).flatten()[:chunk.size]
+        return np.array(result).flatten()[: chunk.size]
 
     async def _simulate_cpu_fallback(self, workload: NPUWorkload) -> np.ndarray:
         """Simulate CPU fallback processing"""
@@ -613,9 +622,10 @@ class ShadowgitNPUPython:
             # Running average
             if self.metrics.successful_operations > 0:
                 self.metrics.avg_throughput_ops_sec = (
-                    (self.metrics.avg_throughput_ops_sec * (self.metrics.successful_operations - 1) +
-                     result.throughput_ops_sec) / self.metrics.successful_operations
-                )
+                    self.metrics.avg_throughput_ops_sec
+                    * (self.metrics.successful_operations - 1)
+                    + result.throughput_ops_sec
+                ) / self.metrics.successful_operations
         else:
             self.metrics.failed_operations += 1
 
@@ -655,6 +665,7 @@ class ShadowgitNPUPython:
         # This would query actual thermal sensors
         # For simulation, return a random value around 65°C
         import random
+
         base_temp = 65.0
         variation = random.uniform(-5.0, 15.0)
         utilization_factor = self.capabilities.current_utilization / 100.0
@@ -669,7 +680,7 @@ class ShadowgitNPUPython:
         data: Union[bytes, np.ndarray],
         workload_id: Optional[str] = None,
         priority: int = 5,
-        callback: Optional[callable] = None
+        callback: Optional[callable] = None,
     ) -> str:
         """Submit hash computation workload to NPU"""
         if not self.initialized:
@@ -689,7 +700,7 @@ class ShadowgitNPUPython:
             input_data=input_data,
             batch_size=1,
             priority=priority,
-            callback=callback
+            callback=callback,
         )
 
         await self._workload_queue.put(workload)
@@ -700,7 +711,7 @@ class ShadowgitNPUPython:
         data_batch: List[Union[bytes, np.ndarray]],
         workload_type: WorkloadType = WorkloadType.BATCH_PROCESSING,
         workload_id: Optional[str] = None,
-        callback: Optional[callable] = None
+        callback: Optional[callable] = None,
     ) -> str:
         """Submit batch processing workload"""
         if not self.initialized:
@@ -724,16 +735,14 @@ class ShadowgitNPUPython:
             type=workload_type,
             input_data=batch_data,
             batch_size=len(data_batch),
-            callback=callback
+            callback=callback,
         )
 
         await self._workload_queue.put(workload)
         return workload_id
 
     async def wait_for_completion(
-        self,
-        workload_id: str,
-        timeout_seconds: float = 30.0
+        self, workload_id: str, timeout_seconds: float = 30.0
     ) -> NPUResult:
         """Wait for specific workload completion"""
         start_time = time.time()
@@ -753,49 +762,51 @@ class ShadowgitNPUPython:
         runtime_seconds = (time.time_ns() - self._start_time) / 1e9
 
         return {
-            'npu_capabilities': {
-                'device_available': self.capabilities.device_available,
-                'device_name': self.capabilities.device_name,
-                'tops_capability': self.capabilities.tops_capability,
-                'current_utilization': self.capabilities.current_utilization,
-                'thermal_design_power': self.capabilities.thermal_design_power
+            "npu_capabilities": {
+                "device_available": self.capabilities.device_available,
+                "device_name": self.capabilities.device_name,
+                "tops_capability": self.capabilities.tops_capability,
+                "current_utilization": self.capabilities.current_utilization,
+                "thermal_design_power": self.capabilities.thermal_design_power,
             },
-            'performance_metrics': {
-                'total_operations': self.metrics.total_operations,
-                'successful_operations': self.metrics.successful_operations,
-                'failed_operations': self.metrics.failed_operations,
-                'success_rate': (
-                    self.metrics.successful_operations / max(1, self.metrics.total_operations) * 100.0
+            "performance_metrics": {
+                "total_operations": self.metrics.total_operations,
+                "successful_operations": self.metrics.successful_operations,
+                "failed_operations": self.metrics.failed_operations,
+                "success_rate": (
+                    self.metrics.successful_operations
+                    / max(1, self.metrics.total_operations)
+                    * 100.0
                 ),
-                'avg_throughput_ops_sec': self.metrics.avg_throughput_ops_sec,
-                'peak_throughput_ops_sec': self.metrics.peak_throughput_ops_sec,
-                'cache_hit_rate': self.metrics.cache_hit_rate * 100.0,
-                'fallback_to_cpu_count': self.metrics.fallback_to_cpu_count,
-                'thermal_throttling_events': self.metrics.thermal_throttling_events
+                "avg_throughput_ops_sec": self.metrics.avg_throughput_ops_sec,
+                "peak_throughput_ops_sec": self.metrics.peak_throughput_ops_sec,
+                "cache_hit_rate": self.metrics.cache_hit_rate * 100.0,
+                "fallback_to_cpu_count": self.metrics.fallback_to_cpu_count,
+                "thermal_throttling_events": self.metrics.thermal_throttling_events,
             },
-            'system_status': {
-                'initialized': self.initialized,
-                'runtime_seconds': runtime_seconds,
-                'workload_queue_size': self._workload_queue.qsize(),
-                'worker_tasks_active': len([t for t in self._worker_tasks if not t.done()]),
-                'cache_entries': len(self._result_cache),
-                'current_temperature': self._get_current_temperature()
+            "system_status": {
+                "initialized": self.initialized,
+                "runtime_seconds": runtime_seconds,
+                "workload_queue_size": self._workload_queue.qsize(),
+                "worker_tasks_active": len(
+                    [t for t in self._worker_tasks if not t.done()]
+                ),
+                "cache_entries": len(self._result_cache),
+                "current_temperature": self._get_current_temperature(),
             },
-            'target_achievement': {
-                'target_throughput': NPU_TARGET_THROUGHPUT,
-                'current_vs_target_percent': (
+            "target_achievement": {
+                "target_throughput": NPU_TARGET_THROUGHPUT,
+                "current_vs_target_percent": (
                     self.metrics.avg_throughput_ops_sec / NPU_TARGET_THROUGHPUT * 100.0
                 ),
-                'peak_vs_target_percent': (
+                "peak_vs_target_percent": (
                     self.metrics.peak_throughput_ops_sec / NPU_TARGET_THROUGHPUT * 100.0
-                )
-            }
+                ),
+            },
         }
 
     async def benchmark_npu_performance(
-        self,
-        test_sizes: List[int] = None,
-        iterations: int = 100
+        self, test_sizes: List[int] = None, iterations: int = 100
     ) -> Dict[str, Any]:
         """Comprehensive NPU performance benchmark"""
         if test_sizes is None:
@@ -815,8 +826,7 @@ class ShadowgitNPUPython:
 
             for i in range(iterations):
                 wid = await self.submit_hash_workload(
-                    test_data,
-                    workload_id=f"bench_{size}_{i}"
+                    test_data, workload_id=f"bench_{size}_{i}"
                 )
                 workload_ids.append(wid)
 
@@ -834,37 +844,39 @@ class ShadowgitNPUPython:
             # Calculate metrics
             successful_count = len([r for r in completed_results if r.success])
             if successful_count > 0:
-                avg_processing_time = sum(
-                    r.processing_time_ns for r in completed_results if r.success
-                ) / successful_count
+                avg_processing_time = (
+                    sum(r.processing_time_ns for r in completed_results if r.success)
+                    / successful_count
+                )
 
-                avg_throughput = sum(
-                    r.throughput_ops_sec for r in completed_results if r.success
-                ) / successful_count
+                avg_throughput = (
+                    sum(r.throughput_ops_sec for r in completed_results if r.success)
+                    / successful_count
+                )
             else:
                 avg_processing_time = 0
                 avg_throughput = 0
 
             results[size] = {
-                'iterations': iterations,
-                'successful': successful_count,
-                'failed': iterations - successful_count,
-                'success_rate': successful_count / iterations * 100.0,
-                'total_time_ns': total_time,
-                'avg_processing_time_ns': avg_processing_time,
-                'avg_throughput_ops_sec': avg_throughput,
-                'ops_per_second': (size * successful_count) / (total_time / 1e9)
+                "iterations": iterations,
+                "successful": successful_count,
+                "failed": iterations - successful_count,
+                "success_rate": successful_count / iterations * 100.0,
+                "total_time_ns": total_time,
+                "avg_processing_time_ns": avg_processing_time,
+                "avg_throughput_ops_sec": avg_throughput,
+                "ops_per_second": (size * successful_count) / (total_time / 1e9),
             }
 
         # Overall benchmark summary
         overall_metrics = self.get_performance_metrics()
 
         return {
-            'benchmark_results': results,
-            'overall_metrics': overall_metrics,
-            'benchmark_timestamp': datetime.now().isoformat(),
-            'npu_device': self.capabilities.device_name,
-            'openvino_available': OPENVINO_AVAILABLE
+            "benchmark_results": results,
+            "overall_metrics": overall_metrics,
+            "benchmark_timestamp": datetime.now().isoformat(),
+            "npu_device": self.capabilities.device_name,
+            "openvino_available": OPENVINO_AVAILABLE,
         }
 
     async def shutdown(self):
@@ -895,13 +907,15 @@ class ShadowgitNPUPython:
 
         logger.info("NPU interface shutdown completed")
 
+
 # ============================================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================================
 
+
 async def create_npu_interface(
     device: NPUDevice = NPUDevice.AUTO,
-    optimization: OptimizationStrategy = OptimizationStrategy.BALANCED
+    optimization: OptimizationStrategy = OptimizationStrategy.BALANCED,
 ) -> ShadowgitNPUPython:
     """Create and initialize NPU interface"""
     interface = ShadowgitNPUPython(device, optimization)
@@ -909,23 +923,25 @@ async def create_npu_interface(
         raise RuntimeError("Failed to initialize NPU interface")
     return interface
 
+
 async def quick_npu_test() -> Dict[str, Any]:
     """Quick NPU performance test"""
     try:
         async with create_npu_interface() as npu:
             return await npu.benchmark_npu_performance(
-                test_sizes=[1024, 4096],
-                iterations=10
+                test_sizes=[1024, 4096], iterations=10
             )
     except Exception as e:
         logger.error(f"Quick NPU test failed: {e}")
-        return {'error': str(e), 'success': False}
+        return {"error": str(e), "success": False}
+
 
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
 
 if __name__ == "__main__":
+
     async def main():
         print("Shadowgit NPU Python Interface - Performance Test")
         print("=" * 55)
@@ -969,26 +985,27 @@ if __name__ == "__main__":
             # Run performance benchmark
             print("\nRunning performance benchmark...")
             benchmark = await npu.benchmark_npu_performance(
-                test_sizes=[1024, 4096],
-                iterations=20
+                test_sizes=[1024, 4096], iterations=20
             )
 
             print("✓ Benchmark completed")
-            for size, metrics in benchmark['benchmark_results'].items():
-                print(f"  {size} bytes: {metrics['avg_throughput_ops_sec']:.0f} ops/sec "
-                      f"({metrics['success_rate']:.1f}% success)")
+            for size, metrics in benchmark["benchmark_results"].items():
+                print(
+                    f"  {size} bytes: {metrics['avg_throughput_ops_sec']:.0f} ops/sec "
+                    f"({metrics['success_rate']:.1f}% success)"
+                )
 
             # Print final metrics
             print("\nFinal Performance Metrics:")
             print("-" * 30)
             final_metrics = npu.get_performance_metrics()
-            perf = final_metrics['performance_metrics']
+            perf = final_metrics["performance_metrics"]
             print(f"Total operations: {perf['total_operations']}")
             print(f"Success rate: {perf['success_rate']:.1f}%")
             print(f"Avg throughput: {perf['avg_throughput_ops_sec']:.0f} ops/sec")
             print(f"Peak throughput: {perf['peak_throughput_ops_sec']:.0f} ops/sec")
 
-            target = final_metrics['target_achievement']
+            target = final_metrics["target_achievement"]
             print(f"Target achievement: {target['current_vs_target_percent']:.1f}%")
 
             await npu.shutdown()
@@ -1001,4 +1018,5 @@ if __name__ == "__main__":
         return 0
 
     import sys
+
     sys.exit(asyncio.run(main()))

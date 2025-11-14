@@ -30,6 +30,7 @@ if CRYPTO_POW_DIR.exists():
     if str(CRYPTO_POW_DIR) not in sys.path:
         sys.path.insert(0, str(CRYPTO_POW_DIR))
 
+
 # Deprecation warning helper
 def _warn_deprecated_import(old_module: str, new_module: str):
     """Warn about deprecated import paths."""
@@ -37,8 +38,9 @@ def _warn_deprecated_import(old_module: str, new_module: str):
         f"Importing '{old_module}' from old location is deprecated. "
         f"Please update to: from {new_module}",
         DeprecationWarning,
-        stacklevel=4
+        stacklevel=4,
     )
+
 
 # Re-export relocated modules for compatibility (lazy loading)
 __all__ = [
@@ -46,9 +48,15 @@ __all__ = [
     "get_crypto_pow_root",
 ]
 
+
 def get_shadowgit_root() -> Path:
     """Get shadowgit module root directory."""
-    return SHADOWGIT_PYTHON.parent if SHADOWGIT_PYTHON.exists() else PROJECT_ROOT / "shadowgit"
+    return (
+        SHADOWGIT_PYTHON.parent
+        if SHADOWGIT_PYTHON.exists()
+        else PROJECT_ROOT / "shadowgit"
+    )
+
 
 def get_crypto_pow_root() -> Path:
     """Get crypto POW module root directory."""

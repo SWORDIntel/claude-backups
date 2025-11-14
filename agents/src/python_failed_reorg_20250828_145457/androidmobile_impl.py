@@ -6,17 +6,17 @@ Enhanced with GNA integration, Material Design 3, and Jetpack Compose
 """
 
 import asyncio
+import hashlib
+import json
 import logging
 import os
-import json
-import hashlib
-import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-from enum import Enum
-from collections import defaultdict
 import subprocess
+import time
+from collections import defaultdict
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -683,10 +683,10 @@ class ANDROIDMOBILEPythonExecutor:
     async def _create_enhanced_android_files(self, action: str, result: Dict[str, Any], context: Dict[str, Any]):
         """Create enhanced Android project files"""
         try:
+            import json
             import os
             from pathlib import Path
-            import json
-            
+
             # Create directories
             apps_dir = Path("android_apps")
             builds_dir = Path("android_builds")

@@ -3,9 +3,8 @@
 from collections.abc import Callable
 from typing import Any, assert_type
 
-from _typeshed import SupportsWrite
-
 import numpy as np
+from _typeshed import SupportsWrite
 
 def func(a: str, b: int) -> None: ...
 

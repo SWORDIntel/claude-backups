@@ -5,69 +5,143 @@ Coordinates Dell MIL-SPEC hardware detection and module integration
 Uses full agent roster for maximum parallel orchestration
 """
 
+import getpass
+import grp
 import json
 import logging
 import os
+import pwd
+import shutil
 import subprocess
 import time
-import shutil
-import getpass
-import pwd
-import grp
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 # Full Agent Roster for Coordination
 FULL_AGENT_ROSTER = [
     # Core Coordination (2)
-    "DIRECTOR", "PROJECTORCHESTRATOR",
-
+    "DIRECTOR",
+    "PROJECTORCHESTRATOR",
     # Security Specialists (15)
-    "SECURITY", "BASTION", "SECURITYCHAOSAGENT", "OVERSIGHT", "CRYPTOEXPERT",
-    "AUDITOR", "COMPLIANCE", "RISKASSESSMENT", "THREATMODEL", "PENTESTER",
-    "FORENSICS", "INCIDENTRESPONSE", "SECURITYTRAINING", "ETHICALHACKER",
+    "SECURITY",
+    "BASTION",
+    "SECURITYCHAOSAGENT",
+    "OVERSIGHT",
+    "CRYPTOEXPERT",
+    "AUDITOR",
+    "COMPLIANCE",
+    "RISKASSESSMENT",
+    "THREATMODEL",
+    "PENTESTER",
+    "FORENSICS",
+    "INCIDENTRESPONSE",
+    "SECURITYTRAINING",
+    "ETHICALHACKER",
     "REDTEAM",
-
     # Hardware & Infrastructure (20)
-    "INFRASTRUCTURE", "DEPLOYER", "MONITOR", "PACKAGER", "HARDWARE-INTEL",
-    "HARDWARE-DELL", "HARDWARE-HP", "HARDWARE", "NPU", "OPTIMIZER",
-    "C-INTERNAL", "HARDWARE-INTEL", "DATASCIENCE", "MLOPS", "QUANTUM",
-    "DOCKER-AGENT", "KUBERNETES", "CLOUDNATIVE", "SERVERLESS", "MICROSERVICES",
-
+    "INFRASTRUCTURE",
+    "DEPLOYER",
+    "MONITOR",
+    "PACKAGER",
+    "HARDWARE-INTEL",
+    "HARDWARE-DELL",
+    "HARDWARE-HP",
+    "HARDWARE",
+    "NPU",
+    "OPTIMIZER",
+    "C-INTERNAL",
+    "HARDWARE-INTEL",
+    "DATASCIENCE",
+    "MLOPS",
+    "QUANTUM",
+    "DOCKER-AGENT",
+    "KUBERNETES",
+    "CLOUDNATIVE",
+    "SERVERLESS",
+    "MICROSERVICES",
     # Development & Testing (25)
-    "ARCHITECT", "CONSTRUCTOR", "PATCHER", "DEBUGGER", "TESTBED", "LINTER",
-    "PYTHON-INTERNAL", "RUST-DEBUGGER", "JULIA-INTERNAL", "TYPESCRIPT-INTERNAL",
-    "JAVA-INTERNAL", "C-MAKE-INTERNAL", "ASSEMBLY-INTERNAL-AGENT", "ZIG-INTERNAL-AGENT",
-    "CARBON-INTERNAL-AGENT", "CPP-INTERNAL-AGENT", "CPP-GUI-INTERNAL", "DISASSEMBLER",
-    "WRAPPER-LIBERATION", "WRAPPER-LIBERATION-PRO", "JSON-INTERNAL", "XML-INTERNAL",
-    "ZFS-INTERNAL", "RESEARCHER", "DOCGEN",
-
+    "ARCHITECT",
+    "CONSTRUCTOR",
+    "PATCHER",
+    "DEBUGGER",
+    "TESTBED",
+    "LINTER",
+    "PYTHON-INTERNAL",
+    "RUST-DEBUGGER",
+    "JULIA-INTERNAL",
+    "TYPESCRIPT-INTERNAL",
+    "JAVA-INTERNAL",
+    "C-MAKE-INTERNAL",
+    "ASSEMBLY-INTERNAL-AGENT",
+    "ZIG-INTERNAL-AGENT",
+    "CARBON-INTERNAL-AGENT",
+    "CPP-INTERNAL-AGENT",
+    "CPP-GUI-INTERNAL",
+    "DISASSEMBLER",
+    "WRAPPER-LIBERATION",
+    "WRAPPER-LIBERATION-PRO",
+    "JSON-INTERNAL",
+    "XML-INTERNAL",
+    "ZFS-INTERNAL",
+    "RESEARCHER",
+    "DOCGEN",
     # Specialized Operations (20)
-    "APIDESIGNER", "DATABASE", "WEB", "MOBILE", "PYGUI", "TUI", "ANDROIDMOBILE",
-    "COORDINATOR", "EMERGENCYRESPONSE", "CRISISMANAGEMENT", "BUSINESSCONTINUITY",
-    "DISASTERRECOVERY", "VULNERABILITYASSESSMENT", "AWARENESSBUILDER", "BLUETEAM",
-    "PURPLETEAM", "SOCANALYST", "THREATHUNTER", "MALWAREANALYST", "DIGITALFORENSICS",
-
+    "APIDESIGNER",
+    "DATABASE",
+    "WEB",
+    "MOBILE",
+    "PYGUI",
+    "TUI",
+    "ANDROIDMOBILE",
+    "COORDINATOR",
+    "EMERGENCYRESPONSE",
+    "CRISISMANAGEMENT",
+    "BUSINESSCONTINUITY",
+    "DISASTERRECOVERY",
+    "VULNERABILITYASSESSMENT",
+    "AWARENESSBUILDER",
+    "BLUETEAM",
+    "PURPLETEAM",
+    "SOCANALYST",
+    "THREATHUNTER",
+    "MALWAREANALYST",
+    "DIGITALFORENSICS",
     # Advanced Capabilities (16)
-    "QUANTUMGUARD", "AGENTSMITH", "CHAOS-AGENT", "GHOST-PROTOCOL-AGENT",
-    "APT41-REDTEAM-AGENT", "APT41-DEFENSE-AGENT", "BGP-RED-TEAM", "BGP-BLUE-TEAM",
-    "BGP-PURPLE-TEAM-AGENT", "NSA", "PSYOPS", "PSYOPS-AGENT", "COGNITIVE_DEFENSE_AGENT",
-    "PROMPT-DEFENDER", "PROMPT-INJECTOR", "CLAUDECODE-PROMPTINJECTOR"
+    "QUANTUMGUARD",
+    "AGENTSMITH",
+    "CHAOS-AGENT",
+    "GHOST-PROTOCOL-AGENT",
+    "APT41-REDTEAM-AGENT",
+    "APT41-DEFENSE-AGENT",
+    "BGP-RED-TEAM",
+    "BGP-BLUE-TEAM",
+    "BGP-PURPLE-TEAM-AGENT",
+    "NSA",
+    "PSYOPS",
+    "PSYOPS-AGENT",
+    "COGNITIVE_DEFENSE_AGENT",
+    "PROMPT-DEFENDER",
+    "PROMPT-INJECTOR",
+    "CLAUDECODE-PROMPTINJECTOR",
 ]
+
 
 @dataclass
 class DSMILDevice:
     """Represents a DSMIL security device"""
+
     device_id: str
     device_type: str
     capabilities: List[str]
     status: str
     security_level: str
 
+
 @dataclass
 class MilSpecHardware:
     """Dell MIL-SPEC hardware configuration"""
+
     model: str
     variant: str
     cpu: str
@@ -77,6 +151,7 @@ class MilSpecHardware:
     total_security_devices: int
     jrtc1_capable: bool
 
+
 class DSMILOrchestrator:
     """Orchestrates DSMIL hardware detection and module management with full agent coordination"""
 
@@ -84,7 +159,9 @@ class DSMILOrchestrator:
         self.sudo_password = sudo_password
         self.verbose = verbose
         self.logger = logging.getLogger(__name__)
-        self.dsmil_modules_path = Path("/home/john/claude-backups/hardware/dsmil-modules")
+        self.dsmil_modules_path = Path(
+            "/home/john/claude-backups/hardware/dsmil-modules"
+        )
         self.hardware_config = None
         self.agent_coordination_active = False
 
@@ -113,7 +190,10 @@ class DSMILOrchestrator:
 
         try:
             stat_result = path.stat()
-            if stat_result.st_uid != self._target_uid or stat_result.st_gid != self._target_gid:
+            if (
+                stat_result.st_uid != self._target_uid
+                or stat_result.st_gid != self._target_gid
+            ):
                 try:
                     shutil.chown(path, user=self._target_user, group=self._target_group)
                 except PermissionError:
@@ -153,7 +233,7 @@ class DSMILOrchestrator:
                 input=f"{self.sudo_password}\n",
                 text=True,
                 capture_output=True,
-                timeout=30
+                timeout=30,
             )
             if result.returncode != 0:
                 manual_flag = "-R " if recursive else ""
@@ -164,17 +244,26 @@ class DSMILOrchestrator:
                 return False
             return True
         except Exception as error:
-            self.logger.error(f"❌ Unable to escalate ownership change for {path}: {error}")
+            self.logger.error(
+                f"❌ Unable to escalate ownership change for {path}: {error}"
+            )
             return False
 
     def detect_milspec_hardware(self) -> Optional[MilSpecHardware]:
         """Detect Dell MIL-SPEC hardware using coordinated agent analysis"""
-        self.logger.info("🔍 Initiating MIL-SPEC hardware detection with full agent coordination")
+        self.logger.info(
+            "🔍 Initiating MIL-SPEC hardware detection with full agent coordination"
+        )
 
         # Coordinate with hardware detection agents
         detection_agents = [
-            "HARDWARE-DELL", "HARDWARE-INTEL", "HARDWARE", "NPU",
-            "C-INTERNAL", "DEBUGGER", "AUDITOR"
+            "HARDWARE-DELL",
+            "HARDWARE-INTEL",
+            "HARDWARE",
+            "NPU",
+            "C-INTERNAL",
+            "DEBUGGER",
+            "AUDITOR",
         ]
 
         try:
@@ -202,13 +291,19 @@ class DSMILOrchestrator:
                 npu_military_mode=npu_military,
                 dsmil_devices=dsmil_devices,
                 total_security_devices=len(dsmil_devices),
-                jrtc1_capable=self._check_jrtc1_capability(dmi_info)
+                jrtc1_capable=self._check_jrtc1_capability(dmi_info),
             )
 
             self.hardware_config = hardware_config
-            self.logger.info(f"✅ MIL-SPEC hardware detected: {hardware_config.model} {hardware_config.variant}")
-            self.logger.info(f"📊 Security devices: {hardware_config.total_security_devices}")
-            self.logger.info(f"🧠 NPU military mode: {'ENABLED' if hardware_config.npu_military_mode else 'DISABLED'}")
+            self.logger.info(
+                f"✅ MIL-SPEC hardware detected: {hardware_config.model} {hardware_config.variant}"
+            )
+            self.logger.info(
+                f"📊 Security devices: {hardware_config.total_security_devices}"
+            )
+            self.logger.info(
+                f"🧠 NPU military mode: {'ENABLED' if hardware_config.npu_military_mode else 'DISABLED'}"
+            )
 
             return hardware_config
 
@@ -220,25 +315,33 @@ class DSMILOrchestrator:
         """Check DMI for Dell MIL-SPEC identification"""
         try:
             # Check system manufacturer
-            result = subprocess.run(['dmidecode', '-s', 'system-manufacturer'],
-                                  capture_output=True, text=True)
-            if 'Dell' not in result.stdout:
+            result = subprocess.run(
+                ["dmidecode", "-s", "system-manufacturer"],
+                capture_output=True,
+                text=True,
+            )
+            if "Dell" not in result.stdout:
                 return None
 
             # Check system product name
-            result = subprocess.run(['dmidecode', '-s', 'system-product-name'],
-                                  capture_output=True, text=True)
+            result = subprocess.run(
+                ["dmidecode", "-s", "system-product-name"],
+                capture_output=True,
+                text=True,
+            )
             product_name = result.stdout.strip()
 
             # Look for MIL-SPEC indicators
-            milspec_indicators = ['Latitude 5450', 'MIL-SPEC', 'JRTC1', 'Military']
+            milspec_indicators = ["Latitude 5450", "MIL-SPEC", "JRTC1", "Military"]
 
             for indicator in milspec_indicators:
                 if indicator in product_name:
                     return {
                         "manufacturer": "Dell Inc.",
                         "model": product_name,
-                        "variant": "MIL-SPEC" if "MIL-SPEC" in product_name else "JRTC1"
+                        "variant": (
+                            "MIL-SPEC" if "MIL-SPEC" in product_name else "JRTC1"
+                        ),
                     }
 
             return None
@@ -278,21 +381,35 @@ class DSMILOrchestrator:
             platform_path = Path("/sys/bus/platform/devices")
             if platform_path.exists():
                 for device_dir in platform_path.iterdir():
-                    if "dell" in device_dir.name.lower() or "dsmil" in device_dir.name.lower():
+                    if (
+                        "dell" in device_dir.name.lower()
+                        or "dsmil" in device_dir.name.lower()
+                    ):
                         device = DSMILDevice(
                             device_id=device_dir.name,
                             device_type="Platform Device",
                             capabilities=["Security", "Monitoring"],
                             status="Detected",
-                            security_level="Military"
+                            security_level="Military",
                         )
                         devices.append(device)
 
             # PCI security, monitoring, accelerator devices
-            pci_result = subprocess.run(['lspci'], capture_output=True, text=True)
-            for line in pci_result.stdout.split('\n'):
+            pci_result = subprocess.run(["lspci"], capture_output=True, text=True)
+            for line in pci_result.stdout.split("\n"):
                 lowered = line.lower()
-                if any(keyword in lowered for keyword in ['security', 'crypto', 'tpm', 'dell', 'monitor', 'accelerator', 'neural']):
+                if any(
+                    keyword in lowered
+                    for keyword in [
+                        "security",
+                        "crypto",
+                        "tpm",
+                        "dell",
+                        "monitor",
+                        "accelerator",
+                        "neural",
+                    ]
+                ):
                     tokens = line.split()
                     pci_id = tokens[0] if tokens else "unknown"
                     device = DSMILDevice(
@@ -300,34 +417,76 @@ class DSMILOrchestrator:
                         device_type="PCI Security Device",
                         capabilities=["Cryptography", "Monitoring"],
                         status="Detected",
-                        security_level="Enhanced"
+                        security_level="Enhanced",
                     )
                     devices.append(device)
 
             # USB security tokens and smart card readers
-            usb_result = subprocess.run(['lsusb'], capture_output=True, text=True)
-            for line in usb_result.stdout.split('\n'):
+            usb_result = subprocess.run(["lsusb"], capture_output=True, text=True)
+            for line in usb_result.stdout.split("\n"):
                 lowered = line.lower()
                 tokens = line.split()
-                if any(keyword in lowered for keyword in ['security', 'smart', 'card', 'dell', 'token', 'reader']):
-                    usb_id = f"{tokens[1]}:{tokens[3]}" if len(tokens) > 3 else "unknown"
+                if any(
+                    keyword in lowered
+                    for keyword in [
+                        "security",
+                        "smart",
+                        "card",
+                        "dell",
+                        "token",
+                        "reader",
+                    ]
+                ):
+                    usb_id = (
+                        f"{tokens[1]}:{tokens[3]}" if len(tokens) > 3 else "unknown"
+                    )
                     device = DSMILDevice(
                         device_id=f"usb_{usb_id}",
                         device_type="USB Security Device",
                         capabilities=["Authentication", "Storage"],
                         status="Detected",
-                        security_level="Standard"
+                        security_level="Standard",
                     )
                     devices.append(device)
 
             # Character device interfaces (TPM, DSMIL, SMBIOS)
             char_devices = [
-                (Path("/dev/tpm0"), "TPM 2.0 Device", ["Cryptography", "Attestation"], "Military"),
-                (Path("/dev/tpmrm0"), "TPM Resource Manager", ["Cryptography", "Isolation"], "Military"),
-                (Path("/dev/dsmil"), "DSMIL Control Device", ["Security", "Orchestration"], "Military"),
-                (Path("/dev/dell_smbios"), "Dell SMBIOS Interface", ["Management", "Security"], "Military"),
-                (Path("/dev/mei0"), "MEI Interface", ["Management", "Security"], "Enhanced"),
-                (Path("/dev/tpm2_accel_early"), "TPM Early Accel", ["Cryptography", "Boot"], "Military"),
+                (
+                    Path("/dev/tpm0"),
+                    "TPM 2.0 Device",
+                    ["Cryptography", "Attestation"],
+                    "Military",
+                ),
+                (
+                    Path("/dev/tpmrm0"),
+                    "TPM Resource Manager",
+                    ["Cryptography", "Isolation"],
+                    "Military",
+                ),
+                (
+                    Path("/dev/dsmil"),
+                    "DSMIL Control Device",
+                    ["Security", "Orchestration"],
+                    "Military",
+                ),
+                (
+                    Path("/dev/dell_smbios"),
+                    "Dell SMBIOS Interface",
+                    ["Management", "Security"],
+                    "Military",
+                ),
+                (
+                    Path("/dev/mei0"),
+                    "MEI Interface",
+                    ["Management", "Security"],
+                    "Enhanced",
+                ),
+                (
+                    Path("/dev/tpm2_accel_early"),
+                    "TPM Early Accel",
+                    ["Cryptography", "Boot"],
+                    "Military",
+                ),
             ]
 
             for path, dtype, capabilities, level in char_devices:
@@ -338,12 +497,12 @@ class DSMILOrchestrator:
                             device_type=dtype,
                             capabilities=capabilities,
                             status="Detected",
-                            security_level=level
+                            security_level=level,
                         )
                     )
 
             # Loaded kernel modules indicative of MIL/Security features
-            lsmod_result = subprocess.run(['lsmod'], capture_output=True, text=True)
+            lsmod_result = subprocess.run(["lsmod"], capture_output=True, text=True)
             important_modules = {
                 "intel_vsec": ("Intel VSEC", ["Telemetry", "Security"]),
                 "mei_me": ("Intel ME Interface", ["Management", "Security"]),
@@ -354,7 +513,10 @@ class DSMILOrchestrator:
                 "intel_rapl": ("Intel RAPL", ["Power", "Monitoring"]),
                 "intel_rapl_common": ("Intel RAPL Common", ["Power", "Monitoring"]),
                 "intel_pmc_core": ("Intel PMC Core", ["Power", "Telemetry"]),
-                "intel_pmc_ssram_telemetry": ("Intel PMC Telemetry", ["Telemetry", "Security"]),
+                "intel_pmc_ssram_telemetry": (
+                    "Intel PMC Telemetry",
+                    ["Telemetry", "Security"],
+                ),
                 "intel_vpu": ("Intel VPU", ["Acceleration", "AI"]),
                 "intel_ish_ipc": ("Intel ISH IPC", ["Sensors", "Security"]),
             }
@@ -370,7 +532,7 @@ class DSMILOrchestrator:
                             device_type=desc,
                             capabilities=caps,
                             status="Loaded",
-                            security_level="Enhanced"
+                            security_level="Enhanced",
                         )
                     )
 
@@ -393,7 +555,7 @@ class DSMILOrchestrator:
             milspec_indicators = [
                 "/sys/kernel/debug/intel_npu/military_mode",
                 "/sys/class/accel/accel0/military_features",
-                "/proc/accel/military_status"
+                "/proc/accel/military_status",
             ]
 
             for indicator in milspec_indicators:
@@ -402,8 +564,12 @@ class DSMILOrchestrator:
 
             # Attempt to detect through capabilities
             try:
-                result = subprocess.run(['sudo', '-n', 'cat', '/sys/class/accel/accel0/power/control'],
-                                      capture_output=True, text=True, timeout=5)
+                result = subprocess.run(
+                    ["sudo", "-n", "cat", "/sys/class/accel/accel0/power/control"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
                 if result.returncode == 0:
                     return True  # Sudo access suggests military capabilities
             except:
@@ -418,10 +584,10 @@ class DSMILOrchestrator:
     def _detect_cpu(self) -> str:
         """Detect CPU model"""
         try:
-            with open('/proc/cpuinfo', 'r') as f:
+            with open("/proc/cpuinfo", "r") as f:
                 for line in f:
-                    if 'model name' in line:
-                        return line.split(':')[1].strip()
+                    if "model name" in line:
+                        return line.split(":")[1].strip()
             return "Unknown CPU"
         except:
             return "Unknown CPU"
@@ -440,24 +606,67 @@ class DSMILOrchestrator:
         model = dmi_info.get("model", "").upper()
         variant = dmi_info.get("variant", "").upper()
 
-        return any(indicator.upper() in f"{model} {variant}" for indicator in jrtc1_indicators)
+        return any(
+            indicator.upper() in f"{model} {variant}" for indicator in jrtc1_indicators
+        )
 
     def coordinate_agent_deployment(self) -> bool:
         """Deploy full agent roster for DSMIL integration"""
-        self.logger.info(f"🚀 Deploying {len(FULL_AGENT_ROSTER)} agents for DSMIL coordination")
+        self.logger.info(
+            f"🚀 Deploying {len(FULL_AGENT_ROSTER)} agents for DSMIL coordination"
+        )
 
         try:
             # Security-focused agent deployment
-            security_agents = [agent for agent in FULL_AGENT_ROSTER if any(keyword in agent for keyword in
-                             ['SECURITY', 'CRYPTO', 'AUDIT', 'THREAT', 'FORENSICS', 'REDTEAM', 'BLUETEAM'])]
+            security_agents = [
+                agent
+                for agent in FULL_AGENT_ROSTER
+                if any(
+                    keyword in agent
+                    for keyword in [
+                        "SECURITY",
+                        "CRYPTO",
+                        "AUDIT",
+                        "THREAT",
+                        "FORENSICS",
+                        "REDTEAM",
+                        "BLUETEAM",
+                    ]
+                )
+            ]
 
             # Hardware-focused agent deployment
-            hardware_agents = [agent for agent in FULL_AGENT_ROSTER if any(keyword in agent for keyword in
-                             ['HARDWARE', 'NPU', 'INTEL', 'DELL', 'OPTIMIZER', 'MONITOR'])]
+            hardware_agents = [
+                agent
+                for agent in FULL_AGENT_ROSTER
+                if any(
+                    keyword in agent
+                    for keyword in [
+                        "HARDWARE",
+                        "NPU",
+                        "INTEL",
+                        "DELL",
+                        "OPTIMIZER",
+                        "MONITOR",
+                    ]
+                )
+            ]
 
             # Infrastructure agents
-            infra_agents = [agent for agent in FULL_AGENT_ROSTER if any(keyword in agent for keyword in
-                          ['INFRASTRUCTURE', 'DEPLOYER', 'DOCKER', 'KUBERNETES', 'COORDINATOR'])]
+            infra_agents = [
+                agent
+                for agent in FULL_AGENT_ROSTER
+                if any(
+                    keyword in agent
+                    for keyword in [
+                        "INFRASTRUCTURE",
+                        "DEPLOYER",
+                        "DOCKER",
+                        "KUBERNETES",
+                        "COORDINATOR",
+                    ]
+                )
+            ]
 
             self.logger.info(f"📊 Agent distribution:")
             self.logger.info(f"   Security agents: {len(security_agents)}")
@@ -474,14 +683,16 @@ class DSMILOrchestrator:
                 "dsmil_integration": {
                     "hardware_detected": self.hardware_config is not None,
                     "modules_available": self.dsmil_modules_path.exists(),
-                    "coordination_mode": "full_parallel"
-                }
+                    "coordination_mode": "full_parallel",
+                },
             }
 
             # Save coordination config
-            config_path = Path("/home/john/claude-backups/config/dsmil-agent-coordination.json")
+            config_path = Path(
+                "/home/john/claude-backups/config/dsmil-agent-coordination.json"
+            )
             config_path.parent.mkdir(exist_ok=True)
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 json.dump(agent_config, f, indent=2)
 
             self.agent_coordination_active = True
@@ -495,18 +706,28 @@ class DSMILOrchestrator:
     def install_dsmil_modules(self) -> bool:
         """Install DSMIL kernel modules with agent coordination"""
         if not self.hardware_config:
-            self.logger.error("❌ No MIL-SPEC hardware detected - cannot install DSMIL modules")
+            self.logger.error(
+                "❌ No MIL-SPEC hardware detected - cannot install DSMIL modules"
+            )
             return False
 
         if not self.dsmil_modules_path.exists():
-            self.logger.error(f"❌ DSMIL modules not found at {self.dsmil_modules_path}")
+            self.logger.error(
+                f"❌ DSMIL modules not found at {self.dsmil_modules_path}"
+            )
             return False
 
         self.logger.info("🔧 Installing DSMIL kernel modules with coordinated agents")
 
         try:
             # Deploy specialized agents for installation
-            install_agents = ["CONSTRUCTOR", "C-INTERNAL", "SECURITY", "HARDWARE-DELL", "DEBUGGER"]
+            install_agents = [
+                "CONSTRUCTOR",
+                "C-INTERNAL",
+                "SECURITY",
+                "HARDWARE-DELL",
+                "DEBUGGER",
+            ]
 
             # Build modules using coordinated approach
             success = self._build_dsmil_modules()
@@ -554,7 +775,9 @@ class DSMILOrchestrator:
                         if not self._ensure_path_owned(target_file):
                             return False
                     except Exception as copy_error:
-                        self.logger.error(f"❌ Failed to stage source {source_file.name}: {copy_error}")
+                        self.logger.error(
+                            f"❌ Failed to stage source {source_file.name}: {copy_error}"
+                        )
                         return False
             else:
                 self.logger.error("❌ DSMIL source directory missing")
@@ -569,7 +792,9 @@ class DSMILOrchestrator:
                         if not self._ensure_path_owned(target_header):
                             return False
                     except Exception as copy_error:
-                        self.logger.error(f"❌ Failed to stage header {header_path.name}: {copy_error}")
+                        self.logger.error(
+                            f"❌ Failed to stage header {header_path.name}: {copy_error}"
+                        )
                         return False
             else:
                 self.logger.error("❌ DSMIL headers directory missing")
@@ -578,7 +803,7 @@ class DSMILOrchestrator:
             # Create crypto_accelerated.c if missing
             crypto_file = build_src_dir / "crypto_accelerated.c"
             if not crypto_file.exists():
-                crypto_content = '''#include "../include/tpm2_compat_accelerated.h"
+                crypto_content = """#include "../include/tpm2_compat_accelerated.h"
 #include <string.h>
 
 tpm2_rc_t tmp2_crypto_init(tmp2_acceleration_flags_t accel_flags, tmp2_security_level_t min_security_level) {
@@ -602,7 +827,7 @@ tmp2_rc_t tmp2_create_primary_accelerated(ESYS_CONTEXT *esys_context,
                                         TPMT_TK_CREATION **creation_ticket,
                                         tmp2_acceleration_flags_t accel_flags) {
     return TPM2_RC_SUCCESS;
-}'''
+}"""
                 crypto_file.write_text(crypto_content)
                 if not self._ensure_path_owned(crypto_file):
                     return False
@@ -615,11 +840,14 @@ tmp2_rc_t tmp2_create_primary_accelerated(ESYS_CONTEXT *esys_context,
 
             # Execute build with proper environment
             env = os.environ.copy()
-            env['KVER'] = subprocess.run(['uname', '-r'], capture_output=True, text=True).stdout.strip()
+            env["KVER"] = subprocess.run(
+                ["uname", "-r"], capture_output=True, text=True
+            ).stdout.strip()
 
-            build_cmd = ['make', '-C', str(build_dir), 'all']
-            result = subprocess.run(build_cmd, cwd=build_dir, env=env,
-                                  capture_output=True, text=True)
+            build_cmd = ["make", "-C", str(build_dir), "all"]
+            result = subprocess.run(
+                build_cmd, cwd=build_dir, env=env, capture_output=True, text=True
+            )
 
             if result.returncode != 0:
                 self.logger.error(f"❌ Build failed: {result.stderr}")
@@ -639,19 +867,25 @@ tmp2_rc_t tmp2_create_primary_accelerated(ESYS_CONTEXT *esys_context,
             modules_to_load = [
                 "dell-millspec-enhanced.ko",
                 "dsmil-72dev.ko",
-                "tpm2_accel_early.ko"
+                "tpm2_accel_early.ko",
             ]
 
             for module in modules_to_load:
                 module_path = self.dsmil_modules_path / "build" / module
                 if module_path.exists():
-                    load_cmd = f"echo {self.sudo_password} | sudo -S insmod {module_path}"
-                    result = subprocess.run(load_cmd, shell=True, capture_output=True, text=True)
+                    load_cmd = (
+                        f"echo {self.sudo_password} | sudo -S insmod {module_path}"
+                    )
+                    result = subprocess.run(
+                        load_cmd, shell=True, capture_output=True, text=True
+                    )
 
                     if result.returncode == 0:
                         self.logger.info(f"✅ Loaded module: {module}")
                     else:
-                        self.logger.warning(f"⚠️ Failed to load module {module}: {result.stderr}")
+                        self.logger.warning(
+                            f"⚠️ Failed to load module {module}: {result.stderr}"
+                        )
 
             return True
 
@@ -663,11 +897,14 @@ tmp2_rc_t tmp2_create_primary_accelerated(ESYS_CONTEXT *esys_context,
         """Validate DSMIL installation and device enumeration"""
         try:
             # Check loaded modules
-            lsmod_result = subprocess.run(['lsmod'], capture_output=True, text=True)
+            lsmod_result = subprocess.run(["lsmod"], capture_output=True, text=True)
             dsmil_modules_loaded = []
 
-            for line in lsmod_result.stdout.split('\n'):
-                if any(keyword in line for keyword in ['dsmil', 'dell_millspec', 'tpm2_accel']):
+            for line in lsmod_result.stdout.split("\n"):
+                if any(
+                    keyword in line
+                    for keyword in ["dsmil", "dell_millspec", "tpm2_accel"]
+                ):
                     dsmil_modules_loaded.append(line.split()[0])
 
             self.logger.info(f"📊 DSMIL modules loaded: {len(dsmil_modules_loaded)}")
@@ -677,7 +914,9 @@ tmp2_rc_t tmp2_create_primary_accelerated(ESYS_CONTEXT *esys_context,
             self.logger.info(f"🔍 Post-install device count: {len(new_devices)}")
 
             # Check for enhanced device capabilities
-            enhanced_devices = [d for d in new_devices if d.security_level == "Military"]
+            enhanced_devices = [
+                d for d in new_devices if d.security_level == "Military"
+            ]
             self.logger.info(f"🔒 Military-grade devices: {len(enhanced_devices)}")
 
             # Validate against expected 12 devices
@@ -697,18 +936,24 @@ tmp2_rc_t tmp2_create_primary_accelerated(ESYS_CONTEXT *esys_context,
     def get_installation_status(self) -> Dict[str, Any]:
         """Get comprehensive DSMIL installation status"""
         from dataclasses import asdict
+
         return {
             "hardware_detected": self.hardware_config is not None,
-            "hardware_config": asdict(self.hardware_config) if self.hardware_config else None,
+            "hardware_config": (
+                asdict(self.hardware_config) if self.hardware_config else None
+            ),
             "modules_path_exists": self.dsmil_modules_path.exists(),
             "agent_coordination_active": self.agent_coordination_active,
             "total_agents_available": len(FULL_AGENT_ROSTER),
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
+
 
 def main():
     """Test DSMIL orchestration functionality"""
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     orchestrator = DSMILOrchestrator(verbose=True)
 
@@ -736,6 +981,7 @@ def main():
     # Print status
     status = orchestrator.get_installation_status()
     print(f"\n📊 Final Status: {json.dumps(status, indent=2)}")
+
 
 if __name__ == "__main__":
     main()

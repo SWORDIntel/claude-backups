@@ -13,6 +13,7 @@ import os
 import re
 from pathlib import Path
 
+
 def analyze_agent_class_names():
     """Analyze all agent implementation files to find actual class names"""
     agent_classes = {}

@@ -1,13 +1,12 @@
 import numpy as np
-import pytest
-
 import pandas as pd
+import pandas._testing as tm
+import pytest
 from pandas import (
     Categorical,
     DataFrame,
     Series,
 )
-import pandas._testing as tm
 
 
 def _assert_series_equal_both(a, b, **kwargs):

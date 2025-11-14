@@ -4,11 +4,12 @@ NPU Installer Integration
 Adds Intel AI Boost NPU support to the Claude installer system
 """
 
+import os
 import subprocess
 import sys
-import os
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+
 
 class NPUIntegration:
     """Handles Intel AI Boost NPU installation and integration"""
@@ -29,39 +30,43 @@ class NPUIntegration:
         self.log("Detecting Intel NPU hardware...")
 
         hardware_info = {
-            'npu_detected': False,
-            'cpu_model': 'Unknown',
-            'supports_ai_boost': False,
-            'pci_devices': []
+            "npu_detected": False,
+            "cpu_model": "Unknown",
+            "supports_ai_boost": False,
+            "pci_devices": [],
         }
 
         try:
             # Check CPU model for Intel Core Ultra (Meteor Lake)
-            with open('/proc/cpuinfo', 'r') as f:
+            with open("/proc/cpuinfo", "r") as f:
                 cpuinfo = f.read()
-                if 'Intel(R) Core(TM) Ultra' in cpuinfo:
-                    hardware_info['supports_ai_boost'] = True
+                if "Intel(R) Core(TM) Ultra" in cpuinfo:
+                    hardware_info["supports_ai_boost"] = True
                     # Extract CPU model
-                    for line in cpuinfo.split('\n'):
-                        if 'model name' in line:
-                            hardware_info['cpu_model'] = line.split(':')[1].strip()
+                    for line in cpuinfo.split("\n"):
+                        if "model name" in line:
+                            hardware_info["cpu_model"] = line.split(":")[1].strip()
                             break
 
             # Check for NPU via PCI devices
             try:
-                lspci_output = subprocess.check_output(['lspci'], universal_newlines=True)
-                for line in lspci_output.split('\n'):
-                    if 'Intel' in line and any(keyword in line.lower() for keyword in ['npu', 'ai', 'neural']):
-                        hardware_info['pci_devices'].append(line.strip())
-                        hardware_info['npu_detected'] = True
+                lspci_output = subprocess.check_output(
+                    ["lspci"], universal_newlines=True
+                )
+                for line in lspci_output.split("\n"):
+                    if "Intel" in line and any(
+                        keyword in line.lower() for keyword in ["npu", "ai", "neural"]
+                    ):
+                        hardware_info["pci_devices"].append(line.strip())
+                        hardware_info["npu_detected"] = True
             except subprocess.CalledProcessError:
                 self.log("Could not run lspci to detect NPU", "WARNING")
 
             # Check for Intel NPU device files
-            npu_devices = list(Path('/dev').glob('accel*'))
+            npu_devices = list(Path("/dev").glob("accel*"))
             if npu_devices:
-                hardware_info['npu_detected'] = True
-                hardware_info['device_files'] = [str(d) for d in npu_devices]
+                hardware_info["npu_detected"] = True
+                hardware_info["device_files"] = [str(d) for d in npu_devices]
 
         except Exception as e:
             self.log(f"Hardware detection error: {e}", "WARNING")
@@ -76,12 +81,14 @@ class NPUIntegration:
 
         try:
             # Create virtual environment
-            subprocess.run([
-                sys.executable, "-m", "venv", str(venv_path)
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [sys.executable, "-m", "venv", str(venv_path)],
+                check=True,
+                capture_output=True,
+            )
 
             # Get python executable in venv
-            if os.name == 'nt':  # Windows
+            if os.name == "nt":  # Windows
                 python_venv = venv_path / "Scripts" / "python.exe"
                 pip_venv = venv_path / "Scripts" / "pip.exe"
             else:  # Unix-like
@@ -89,9 +96,11 @@ class NPUIntegration:
                 pip_venv = venv_path / "bin" / "pip"
 
             # Upgrade pip
-            subprocess.run([
-                str(pip_venv), "install", "--upgrade", "pip", "setuptools", "wheel"
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [str(pip_venv), "install", "--upgrade", "pip", "setuptools", "wheel"],
+                check=True,
+                capture_output=True,
+            )
 
             self.venv_path = venv_path
             self.log(f"Virtual environment created at: {venv_path}")
@@ -105,7 +114,7 @@ class NPUIntegration:
         """Install OpenVINO in virtual environment"""
         self.log("Installing OpenVINO for NPU acceleration...")
 
-        if os.name == 'nt':  # Windows
+        if os.name == "nt":  # Windows
             pip_venv = venv_path / "Scripts" / "pip.exe"
             python_venv = venv_path / "Scripts" / "python.exe"
         else:  # Unix-like
@@ -115,9 +124,11 @@ class NPUIntegration:
         try:
             # Install OpenVINO
             self.log("Installing OpenVINO runtime...")
-            subprocess.run([
-                str(pip_venv), "install", "openvino", "numpy"
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [str(pip_venv), "install", "openvino", "numpy"],
+                check=True,
+                capture_output=True,
+            )
 
             # Test OpenVINO installation
             test_script = """
@@ -131,9 +142,11 @@ if 'NPU' in devices:
 print("OpenVINO installation successful")
 """
 
-            result = subprocess.run([
-                str(python_venv), "-c", test_script
-            ], capture_output=True, universal_newlines=True)
+            result = subprocess.run(
+                [str(python_venv), "-c", test_script],
+                capture_output=True,
+                universal_newlines=True,
+            )
 
             if result.returncode == 0:
                 self.log("OpenVINO installation verified successfully")
@@ -141,9 +154,15 @@ print("OpenVINO installation successful")
 
                 # Extract version
                 try:
-                    version_result = subprocess.run([
-                        str(python_venv), "-c", "import openvino as ov; print(ov.__version__)"
-                    ], capture_output=True, universal_newlines=True)
+                    version_result = subprocess.run(
+                        [
+                            str(python_venv),
+                            "-c",
+                            "import openvino as ov; print(ov.__version__)",
+                        ],
+                        capture_output=True,
+                        universal_newlines=True,
+                    )
                     if version_result.returncode == 0:
                         self.openvino_version = version_result.stdout.strip()
                         self.log(f"OpenVINO version: {self.openvino_version}")
@@ -345,20 +364,27 @@ echo "Use 'claude-npu' command to launch NPU-accelerated orchestrator"
                 "openvino_version": self.openvino_version,
                 "launchers": {
                     "npu_orchestrator": str(install_dir / "claude-npu"),
-                    "npu_test": str(install_dir / "claude-npu-test")
-                }
+                    "npu_test": str(install_dir / "claude-npu-test"),
+                },
             }
         else:
             return {"success": False, "error": "Launcher creation failed"}
+
 
 def main():
     """Main function for standalone execution"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Intel AI Boost NPU Integration for Claude")
+    parser = argparse.ArgumentParser(
+        description="Intel AI Boost NPU Integration for Claude"
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
-    parser.add_argument("--install-dir", type=str, help="Installation directory for launchers")
-    parser.add_argument("--test-only", action="store_true", help="Only run hardware tests")
+    parser.add_argument(
+        "--install-dir", type=str, help="Installation directory for launchers"
+    )
+    parser.add_argument(
+        "--test-only", action="store_true", help="Only run hardware tests"
+    )
 
     args = parser.parse_args()
 
@@ -371,7 +397,7 @@ def main():
         print(f"  NPU Detected: {hardware_info['npu_detected']}")
         print(f"  CPU Model: {hardware_info['cpu_model']}")
         print(f"  AI Boost Support: {hardware_info['supports_ai_boost']}")
-        if hardware_info['pci_devices']:
+        if hardware_info["pci_devices"]:
             print(f"  PCI Devices: {hardware_info['pci_devices']}")
         return
 
@@ -384,12 +410,13 @@ def main():
         print(f"OpenVINO Version: {result['openvino_version']}")
         print(f"Virtual Environment: {result['venv_path']}")
         print("\nLaunchers created:")
-        for name, path in result['launchers'].items():
+        for name, path in result["launchers"].items():
             print(f"  {name}: {path}")
         print("\nTest your installation with: claude-npu-test")
     else:
         print(f"❌ NPU Integration Failed: {result['error']}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

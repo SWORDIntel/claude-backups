@@ -5,14 +5,13 @@ Updates imports in all files to use new structure
 Handles orchestration, learning system, and all dependencies
 """
 
+import ast
+import json
 import os
 import re
-from pathlib import Path
-import json
-from datetime import datetime
-import ast
 import sys
-
+from datetime import datetime
+from pathlib import Path
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -20,8 +19,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available

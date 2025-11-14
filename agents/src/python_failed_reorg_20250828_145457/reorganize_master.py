@@ -5,15 +5,15 @@ Coordinates all three steps with minimal disruption
 Includes automatic testing and rollback on failure
 """
 
-import os
-import sys
-import subprocess
-import time
-from pathlib import Path
 import json
+import os
+import subprocess
+import sys
+import time
 from datetime import datetime
-import psutil
+from pathlib import Path
 
+import psutil
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -21,8 +21,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available

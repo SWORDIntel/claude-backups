@@ -4,11 +4,12 @@ VOICE SYSTEM TOGGLE - Easy on/off control for voice input
 Simple commands to enable/disable voice system
 """
 
-import os
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+
 
 class VoiceToggle:
     """Simple voice system toggle controller"""
