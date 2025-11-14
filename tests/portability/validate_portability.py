@@ -4,16 +4,17 @@ TESTBED Agent - Comprehensive Portability Validation Suite
 Tests that ALL claude-backups systems are path-agnostic and portable
 """
 
-import os
-import sys
-import subprocess
-import tempfile
-import shutil
 import json
+import os
 import re
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+import shutil
+import subprocess
+import sys
+import tempfile
 import time
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
 
 class PortabilityValidator:
     def __init__(self):
@@ -25,11 +26,9 @@ class PortabilityValidator:
         """Log validation messages"""
         timestamp = time.strftime("%H:%M:%S")
         print(f"[{timestamp}] [{level}] {message}")
-        self.results.append({
-            "timestamp": timestamp,
-            "level": level,
-            "message": message
-        })
+        self.results.append(
+            {"timestamp": timestamp, "level": level, "message": message}
+        )
 
     def create_test_environments(self) -> List[Dict]:
         """Create multiple test environments with different users and paths"""
@@ -38,26 +37,26 @@ class PortabilityValidator:
                 "name": "alice_home",
                 "base_path": "/tmp/test_alice_home",
                 "user": "alice",
-                "project_path": "/tmp/test_alice_home/claude-backups"
+                "project_path": "/tmp/test_alice_home/claude-backups",
             },
             {
                 "name": "bob_opt",
                 "base_path": "/tmp/test_bob_opt",
                 "user": "bob",
-                "project_path": "/tmp/test_bob_opt/opt/claude"
+                "project_path": "/tmp/test_bob_opt/opt/claude",
             },
             {
                 "name": "system_usr",
                 "base_path": "/tmp/test_system",
                 "user": "system",
-                "project_path": "/tmp/test_system/usr/local/claude-backups"
+                "project_path": "/tmp/test_system/usr/local/claude-backups",
             },
             {
                 "name": "deep_nested",
                 "base_path": "/tmp/test_deep",
                 "user": "testuser",
-                "project_path": "/tmp/test_deep/very/deep/nested/path/claude-backups"
-            }
+                "project_path": "/tmp/test_deep/very/deep/nested/path/claude-backups",
+            },
         ]
 
         for env in environments:
@@ -71,7 +70,9 @@ class PortabilityValidator:
                     shutil.rmtree(env["project_path"])
                 shutil.copytree(str(self.current_dir), env["project_path"])
 
-                self.log(f"Created test environment: {env['name']} at {env['project_path']}")
+                self.log(
+                    f"Created test environment: {env['name']} at {env['project_path']}"
+                )
 
             except Exception as e:
                 self.log(f"Failed to create environment {env['name']}: {e}", "ERROR")
@@ -90,9 +91,13 @@ class PortabilityValidator:
 
         try:
             # Test wrapper help command
-            result = subprocess.run([
-                "bash", wrapper_path, "--help"
-            ], cwd=env["project_path"], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["bash", wrapper_path, "--help"],
+                cwd=env["project_path"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode == 0:
                 self.log(f"✅ Wrapper help works in {env['name']}")
@@ -104,7 +109,9 @@ class PortabilityValidator:
 
                 return True
             else:
-                self.log(f"❌ Wrapper failed in {env['name']}: {result.stderr}", "ERROR")
+                self.log(
+                    f"❌ Wrapper failed in {env['name']}: {result.stderr}", "ERROR"
+                )
                 return False
 
         except Exception as e:
@@ -115,10 +122,7 @@ class PortabilityValidator:
         """Test installation scripts portability"""
         self.log(f"Testing installer portability in {env['name']}")
 
-        installers = [
-            "claude-installer.sh",
-            "claude-enhanced-installer.py"
-        ]
+        installers = ["claude-installer.sh", "claude-enhanced-installer.py"]
 
         results = []
         for installer in installers:
@@ -129,14 +133,17 @@ class PortabilityValidator:
 
             try:
                 # Test dry-run mode
-                if installer.endswith('.py'):
+                if installer.endswith(".py"):
                     cmd = ["python3", installer_path, "--detect-only"]
                 else:
                     cmd = ["bash", installer_path, "--dry-run"]
 
                 result = subprocess.run(
-                    cmd, cwd=env["project_path"],
-                    capture_output=True, text=True, timeout=60
+                    cmd,
+                    cwd=env["project_path"],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
                 )
 
                 if result.returncode == 0:
@@ -145,15 +152,18 @@ class PortabilityValidator:
                     # Check for hardcoded paths
                     output = result.stdout + result.stderr
                     hardcoded_patterns = [
-                        r'/home/john',
-                        r'/home/ubuntu',
-                        r'/home/\w+/claude-backups',
-                        r'HOME=/home/\w+'
+                        r"/home/john",
+                        r"/home/ubuntu",
+                        r"/home/\w+/claude-backups",
+                        r"HOME=/home/\w+",
                     ]
 
                     for pattern in hardcoded_patterns:
                         if re.search(pattern, output):
-                            self.log(f"⚠️  Found hardcoded path pattern '{pattern}' in {installer}", "WARNING")
+                            self.log(
+                                f"⚠️  Found hardcoded path pattern '{pattern}' in {installer}",
+                                "WARNING",
+                            )
                             results.append(False)
                             break
                     else:
@@ -191,7 +201,7 @@ class PortabilityValidator:
             for agent_name in key_agents:
                 agent_path = os.path.join(agents_dir, agent_name)
                 if os.path.exists(agent_path):
-                    with open(agent_path, 'r') as f:
+                    with open(agent_path, "r") as f:
                         content = f.read()
 
                     # Check for hardcoded paths
@@ -213,7 +223,7 @@ class PortabilityValidator:
         python_scripts = [
             "agents/src/python/production_orchestrator.py",
             "agents/src/python/agent_registry.py",
-            "integrated_learning_setup.py"
+            "integrated_learning_setup.py",
         ]
 
         results = []
@@ -225,15 +235,15 @@ class PortabilityValidator:
 
             try:
                 # Read script content
-                with open(script_path, 'r') as f:
+                with open(script_path, "r") as f:
                     content = f.read()
 
                 # Check for hardcoded paths
                 hardcoded_patterns = [
-                    r'/home/john',
-                    r'/home/ubuntu',
+                    r"/home/john",
+                    r"/home/ubuntu",
                     r'HOME\s*=\s*["\'][^"\']*john',
-                    r'HOME\s*=\s*["\'][^"\']*ubuntu'
+                    r'HOME\s*=\s*["\'][^"\']*ubuntu',
                 ]
 
                 path_issues = []
@@ -243,7 +253,9 @@ class PortabilityValidator:
                         path_issues.extend(matches)
 
                 if path_issues:
-                    self.log(f"⚠️  Hardcoded paths in {script_rel}: {path_issues}", "WARNING")
+                    self.log(
+                        f"⚠️  Hardcoded paths in {script_rel}: {path_issues}", "WARNING"
+                    )
                     results.append(False)
                 else:
                     self.log(f"✅ {script_rel} is path-agnostic")
@@ -259,11 +271,7 @@ class PortabilityValidator:
         """Test documentation examples are portable"""
         self.log(f"Testing documentation portability in {env['name']}")
 
-        doc_files = [
-            "README.md",
-            "CLAUDE.md",
-            "INSTALL.md"
-        ]
+        doc_files = ["README.md", "CLAUDE.md", "INSTALL.md"]
 
         results = []
         for doc_file in doc_files:
@@ -272,13 +280,18 @@ class PortabilityValidator:
                 continue
 
             try:
-                with open(doc_path, 'r') as f:
+                with open(doc_path, "r") as f:
                     content = f.read()
 
                 # Check for hardcoded user paths in examples
-                hardcoded_examples = re.findall(r'/home/(?:john|ubuntu)/[^\s\)]*', content)
+                hardcoded_examples = re.findall(
+                    r"/home/(?:john|ubuntu)/[^\s\)]*", content
+                )
                 if hardcoded_examples:
-                    self.log(f"⚠️  Hardcoded examples in {doc_file}: {len(hardcoded_examples)} found", "WARNING")
+                    self.log(
+                        f"⚠️  Hardcoded examples in {doc_file}: {len(hardcoded_examples)} found",
+                        "WARNING",
+                    )
                     results.append(False)
                 else:
                     self.log(f"✅ {doc_file} examples are portable")
@@ -296,20 +309,30 @@ class PortabilityValidator:
 
         try:
             # Test basic wrapper functionality
-            wrapper_path = os.path.join(env["project_path"], "claude-wrapper-ultimate.sh")
+            wrapper_path = os.path.join(
+                env["project_path"], "claude-wrapper-ultimate.sh"
+            )
 
             # Test status command
-            result = subprocess.run([
-                "bash", wrapper_path, "--status"
-            ], cwd=env["project_path"], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["bash", wrapper_path, "--status"],
+                cwd=env["project_path"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode == 0:
                 self.log(f"✅ End-to-end status check works in {env['name']}")
 
                 # Test agent listing
-                result2 = subprocess.run([
-                    "bash", wrapper_path, "--agents"
-                ], cwd=env["project_path"], capture_output=True, text=True, timeout=30)
+                result2 = subprocess.run(
+                    ["bash", wrapper_path, "--agents"],
+                    cwd=env["project_path"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
 
                 if result2.returncode == 0 and "DIRECTOR" in result2.stdout:
                     self.log(f"✅ Agent listing works in {env['name']}")
@@ -318,7 +341,9 @@ class PortabilityValidator:
                     self.log(f"❌ Agent listing failed in {env['name']}", "ERROR")
                     return False
             else:
-                self.log(f"❌ Status check failed in {env['name']}: {result.stderr}", "ERROR")
+                self.log(
+                    f"❌ Status check failed in {env['name']}: {result.stderr}", "ERROR"
+                )
                 return False
 
         except Exception as e:
@@ -359,17 +384,19 @@ class PortabilityValidator:
                 "agent_loading": self.test_agent_loading(env),
                 "python_scripts": self.test_python_scripts(env),
                 "documentation": self.test_documentation_portability(env),
-                "end_to_end": self.test_end_to_end_functionality(env)
+                "end_to_end": self.test_end_to_end_functionality(env),
             }
 
-            validation_results[env['name']] = env_results
+            validation_results[env["name"]] = env_results
 
             # Calculate environment score
             passed = sum(1 for result in env_results.values() if result)
             total = len(env_results)
             score = (passed / total) * 100
 
-            self.log(f"📊 {env['name']} Score: {score:.1f}% ({passed}/{total} tests passed)")
+            self.log(
+                f"📊 {env['name']} Score: {score:.1f}% ({passed}/{total} tests passed)"
+            )
 
         # Clean up
         self.cleanup_test_environments(environments)
@@ -396,13 +423,17 @@ class PortabilityValidator:
             total_tests += total
             total_passed += passed
 
-            status = "✅ PASS" if score >= 80 else "⚠️  PARTIAL" if score >= 60 else "❌ FAIL"
+            status = (
+                "✅ PASS" if score >= 80 else "⚠️  PARTIAL" if score >= 60 else "❌ FAIL"
+            )
             self.log(f"{env_name:15} | {score:5.1f}% | {status}")
 
         overall_score = (total_passed / total_tests) * 100 if total_tests > 0 else 0
 
         self.log("-" * 60)
-        self.log(f"OVERALL SCORE: {overall_score:.1f}% ({total_passed}/{total_tests} tests passed)")
+        self.log(
+            f"OVERALL SCORE: {overall_score:.1f}% ({total_passed}/{total_tests} tests passed)"
+        )
 
         # Determine system status
         if overall_score >= 90:
@@ -437,7 +468,7 @@ class PortabilityValidator:
             "detailed_results": validation_results,
             "recommendations": recommendations,
             "total_tests": total_tests,
-            "total_passed": total_passed
+            "total_passed": total_passed,
         }
 
     def generate_recommendations(self, validation_results: Dict) -> List[str]:
@@ -445,26 +476,51 @@ class PortabilityValidator:
         recommendations = []
 
         # Analyze common failure patterns
-        wrapper_failures = sum(1 for results in validation_results.values() if not results.get("wrapper_portability", True))
-        installer_failures = sum(1 for results in validation_results.values() if not results.get("installer_portability", True))
-        python_failures = sum(1 for results in validation_results.values() if not results.get("python_scripts", True))
-        doc_failures = sum(1 for results in validation_results.values() if not results.get("documentation", True))
+        wrapper_failures = sum(
+            1
+            for results in validation_results.values()
+            if not results.get("wrapper_portability", True)
+        )
+        installer_failures = sum(
+            1
+            for results in validation_results.values()
+            if not results.get("installer_portability", True)
+        )
+        python_failures = sum(
+            1
+            for results in validation_results.values()
+            if not results.get("python_scripts", True)
+        )
+        doc_failures = sum(
+            1
+            for results in validation_results.values()
+            if not results.get("documentation", True)
+        )
 
         total_envs = len(validation_results)
 
         if wrapper_failures > 0:
-            recommendations.append(f"Wrapper portability failed in {wrapper_failures}/{total_envs} environments - review claude-wrapper-ultimate.sh for hardcoded paths")
+            recommendations.append(
+                f"Wrapper portability failed in {wrapper_failures}/{total_envs} environments - review claude-wrapper-ultimate.sh for hardcoded paths"
+            )
 
         if installer_failures > 0:
-            recommendations.append(f"Installer portability failed in {installer_failures}/{total_envs} environments - review installation scripts for path assumptions")
+            recommendations.append(
+                f"Installer portability failed in {installer_failures}/{total_envs} environments - review installation scripts for path assumptions"
+            )
 
         if python_failures > 0:
-            recommendations.append(f"Python script portability failed in {python_failures}/{total_envs} environments - use __file__ and pathlib for dynamic path resolution")
+            recommendations.append(
+                f"Python script portability failed in {python_failures}/{total_envs} environments - use __file__ and pathlib for dynamic path resolution"
+            )
 
         if doc_failures > 0:
-            recommendations.append(f"Documentation portability failed in {doc_failures}/{total_envs} environments - update examples to use placeholder paths like $HOME or /path/to/project")
+            recommendations.append(
+                f"Documentation portability failed in {doc_failures}/{total_envs} environments - update examples to use placeholder paths like $HOME or /path/to/project"
+            )
 
         return recommendations
+
 
 def main():
     """Main validation entry point"""
@@ -478,7 +534,7 @@ def main():
 
         # Save detailed results
         results_file = "/tmp/portability_validation_results.json"
-        with open(results_file, 'w') as f:
+        with open(results_file, "w") as f:
             json.dump(results, f, indent=2)
 
         print(f"\n📄 Detailed results saved to: {results_file}")
@@ -497,6 +553,7 @@ def main():
     except Exception as e:
         print(f"\n💥 Validation failed with exception: {e}")
         sys.exit(3)
+
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,11 @@
 import numpy as np
+import pandas._testing as tm
 import pytest
-
 from pandas import (
     Categorical,
     DataFrame,
     Series,
 )
-import pandas._testing as tm
 
 
 class TestSeriesSortValues:

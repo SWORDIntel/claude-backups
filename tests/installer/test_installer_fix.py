@@ -4,10 +4,11 @@ Test script to validate the installer logic fix
 Tests the specific scenario where npm installation succeeds but binary detection might fail
 """
 
-import tempfile
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+
 
 def test_installer_logic():
     """Test the fixed installer logic"""
@@ -68,6 +69,7 @@ def test_installer_logic():
     print("🔧 The bug has been successfully fixed!")
     return True
 
+
 def test_installer_run():
     """Test running the actual installer in detect-only mode"""
     print("\n🔍 Testing actual installer execution...")
@@ -76,14 +78,21 @@ def test_installer_run():
         installer_path = Path(__file__).parent / "claude-enhanced-installer.py"
 
         # Run installer in detect-only mode to verify it doesn't crash
-        result = subprocess.run([
-            sys.executable, str(installer_path), "--detect-only", "--verbose"
-        ], capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            [sys.executable, str(installer_path), "--detect-only", "--verbose"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
 
         if result.returncode == 0:
             print("✅ PASSED: Installer runs without errors")
             print("📄 Output preview:")
-            print(result.stdout[:200] + "..." if len(result.stdout) > 200 else result.stdout)
+            print(
+                result.stdout[:200] + "..."
+                if len(result.stdout) > 200
+                else result.stdout
+            )
             return True
         else:
             print("❌ FAILED: Installer exited with error")
@@ -93,6 +102,7 @@ def test_installer_run():
     except Exception as e:
         print(f"❌ FAILED: Exception during installer test: {e}")
         return False
+
 
 def main():
     """Main test function"""
@@ -120,6 +130,7 @@ def main():
     print("=" * 60)
 
     return 0 if success else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

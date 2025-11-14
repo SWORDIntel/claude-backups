@@ -8,32 +8,34 @@ frontend frameworks React/Vue/Angular integration capabilities.
 """
 
 import asyncio
+import hashlib
 import json
 import os
+import secrets
 import sys
+import tempfile
 import traceback
+import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-import hashlib
-import secrets
-import uuid
-import tempfile
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Web frameworks
 try:
-    from fastapi import FastAPI, HTTPException, Request, Response, Depends
+    from fastapi import Depends, FastAPI, HTTPException, Request, Response
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+    from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
     from pydantic import BaseModel
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
 
 try:
-    from flask import Flask, request, jsonify, render_template_string
+    from flask import Flask, jsonify, render_template_string, request
     from flask_cors import CORS
+
     HAS_FLASK = True
 except ImportError:
     HAS_FLASK = False
@@ -41,25 +43,30 @@ except ImportError:
 try:
     import django
     from django.conf import settings
+
     HAS_DJANGO = True
 except ImportError:
     HAS_DJANGO = False
 
 try:
     import jinja2
+
     HAS_JINJA = True
 except ImportError:
     HAS_JINJA = False
 
 try:
     import jwt
+
     HAS_JWT = True
 except ImportError:
     HAS_JWT = False
 
+
 @dataclass
 class WebApplication:
     """Web application configuration"""
+
     name: str
     framework: str
     port: int
@@ -73,9 +80,11 @@ class WebApplication:
     api_prefix: str
     middlewares: List[str]
 
+
 @dataclass
 class APIEndpoint:
     """API endpoint definition"""
+
     path: str
     method: str
     handler: str
@@ -85,9 +94,11 @@ class APIEndpoint:
     auth_required: bool
     rate_limit: Optional[int]
 
+
 @dataclass
 class WebComponent:
     """Frontend component definition"""
+
     name: str
     type: str  # react, vue, angular, vanilla
     template: str
@@ -96,31 +107,31 @@ class WebComponent:
     props: Dict[str, Any]
     events: List[str]
 
+
 @dataclass
 class DatabaseSchema:
     """Database schema definition"""
+
     name: str
     tables: List[Dict[str, Any]]
     relationships: List[Dict[str, str]]
     indexes: List[str]
 
+
 class FastAPIBuilder:
     """FastAPI application builder"""
-    
+
     def __init__(self):
         self.app = None
         self.endpoints = []
         self.models = {}
-        
+
     def create_app(self, config: WebApplication) -> FastAPI:
         """Create FastAPI application"""
         self.app = FastAPI(
-            title=config.name,
-            version="1.0.0",
-            docs_url="/docs",
-            redoc_url="/redoc"
+            title=config.name, version="1.0.0", docs_url="/docs", redoc_url="/redoc"
         )
-        
+
         # Add CORS middleware
         if config.cors_enabled:
             self.app.add_middleware(
@@ -130,20 +141,20 @@ class FastAPIBuilder:
                 allow_methods=["*"],
                 allow_headers=["*"],
             )
-            
+
         # Setup authentication
         if config.auth_enabled:
             self._setup_auth()
-            
+
         return self.app
-        
+
     def add_endpoint(self, endpoint: APIEndpoint):
         """Add API endpoint"""
-        
+
         # Create dynamic handler
         async def handler(**kwargs):
             return {"message": f"Handler for {endpoint.path}", "params": kwargs}
-            
+
         # Register endpoint based on method
         if endpoint.method == "GET":
             self.app.get(endpoint.path)(handler)
@@ -153,14 +164,16 @@ class FastAPIBuilder:
             self.app.put(endpoint.path)(handler)
         elif endpoint.method == "DELETE":
             self.app.delete(endpoint.path)(handler)
-            
+
         self.endpoints.append(endpoint)
-        
+
     def _setup_auth(self):
         """Setup JWT authentication"""
         security = HTTPBearer()
-        
-        async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+
+        async def verify_token(
+            credentials: HTTPAuthorizationCredentials = Depends(security),
+        ):
             token = credentials.credentials
             # Verify JWT token
             try:
@@ -169,69 +182,68 @@ class FastAPIBuilder:
                     return payload
             except:
                 raise HTTPException(status_code=401, detail="Invalid token")
-                
+
         self.app.dependency_overrides[security] = verify_token
+
 
 class FlaskBuilder:
     """Flask application builder"""
-    
+
     def __init__(self):
         self.app = None
         self.endpoints = []
-        
+
     def create_app(self, config: WebApplication) -> Flask:
         """Create Flask application"""
         self.app = Flask(
             config.name,
             static_folder=config.static_folder,
-            template_folder=config.template_folder
+            template_folder=config.template_folder,
         )
-        
+
         # Enable CORS
         if config.cors_enabled and HAS_FLASK:
             CORS(self.app)
-            
+
         # Setup authentication
         if config.auth_enabled:
             self._setup_auth()
-            
+
         return self.app
-        
+
     def add_endpoint(self, endpoint: APIEndpoint):
         """Add Flask endpoint"""
-        
+
         def handler():
             return jsonify({"message": f"Handler for {endpoint.path}"})
-            
+
         self.app.add_url_rule(
-            endpoint.path,
-            endpoint.handler,
-            handler,
-            methods=[endpoint.method]
+            endpoint.path, endpoint.handler, handler, methods=[endpoint.method]
         )
-        
+
         self.endpoints.append(endpoint)
-        
+
     def _setup_auth(self):
         """Setup authentication"""
-        
+
         @self.app.before_request
         def verify_token():
-            if request.endpoint and request.endpoint != 'login':
-                token = request.headers.get('Authorization')
+            if request.endpoint and request.endpoint != "login":
+                token = request.headers.get("Authorization")
                 if not token:
                     return jsonify({"error": "No token provided"}), 401
 
+
 class TemplateEngine:
     """Template engine for HTML generation"""
-    
+
     def __init__(self):
         self.templates = self._load_templates()
-        
+
     def _load_templates(self) -> Dict[str, str]:
         """Load HTML templates"""
         return {
-            'base': """<!DOCTYPE html>
+            "base": """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -253,8 +265,7 @@ class TemplateEngine:
     {% block scripts %}{% endblock %}
 </body>
 </html>""",
-            
-            'landing': """{% extends "base" %}
+            "landing": """{% extends "base" %}
 {% block content %}
 <div class="jumbotron">
     <h1 class="display-4">{{ heading }}</h1>
@@ -262,8 +273,7 @@ class TemplateEngine:
     <a class="btn btn-primary btn-lg" href="{{ cta_link }}" role="button">{{ cta_text }}</a>
 </div>
 {% endblock %}""",
-            
-            'dashboard': """{% extends "base" %}
+            "dashboard": """{% extends "base" %}
 {% block content %}
 <div class="row">
     <div class="col-md-3">
@@ -281,8 +291,7 @@ class TemplateEngine:
     </div>
 </div>
 {% endblock %}""",
-            
-            'form': """{% extends "base" %}
+            "form": """{% extends "base" %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
@@ -298,36 +307,37 @@ class TemplateEngine:
         </form>
     </div>
 </div>
-{% endblock %}"""
+{% endblock %}""",
         }
-        
+
     def render(self, template_name: str, context: Dict[str, Any]) -> str:
         """Render template with context"""
         if not HAS_JINJA:
             return "<!-- Jinja2 not available -->"
-            
-        template_str = self.templates.get(template_name, '')
+
+        template_str = self.templates.get(template_name, "")
         template = jinja2.Template(template_str)
         return template.render(**context)
 
+
 class FrontendGenerator:
     """Frontend code generator"""
-    
+
     def __init__(self):
-        self.frameworks = ['react', 'vue', 'angular', 'vanilla']
-        
+        self.frameworks = ["react", "vue", "angular", "vanilla"]
+
     def generate_component(self, component: WebComponent) -> Dict[str, str]:
         """Generate frontend component code"""
-        
-        if component.type == 'react':
+
+        if component.type == "react":
             return self._generate_react(component)
-        elif component.type == 'vue':
+        elif component.type == "vue":
             return self._generate_vue(component)
-        elif component.type == 'angular':
+        elif component.type == "angular":
             return self._generate_angular(component)
         else:
             return self._generate_vanilla(component)
-            
+
     def _generate_react(self, component: WebComponent) -> Dict[str, str]:
         """Generate React component"""
         code = f"""import React, {{ useState, useEffect }} from 'react';
@@ -348,13 +358,13 @@ const {component.name} = ({{ {', '.join(component.props.keys())} }}) => {{
 }};
 
 export default {component.name};"""
-        
+
         return {
-            'jsx': code,
-            'css': component.styles,
-            'test': self._generate_react_test(component)
+            "jsx": code,
+            "css": component.styles,
+            "test": self._generate_react_test(component),
         }
-        
+
     def _generate_vue(self, component: WebComponent) -> Dict[str, str]:
         """Generate Vue component"""
         code = f"""<template>
@@ -382,9 +392,9 @@ export default {{
 <style scoped>
 {component.styles}
 </style>"""
-        
-        return {'vue': code}
-        
+
+        return {"vue": code}
+
     def _generate_angular(self, component: WebComponent) -> Dict[str, str]:
         """Generate Angular component"""
         ts_code = f"""import {{ Component, OnInit, Input }} from '@angular/core';
@@ -403,13 +413,9 @@ export class {component.name}Component implements OnInit {{
         // Component initialized
     }}
 }}"""
-        
-        return {
-            'ts': ts_code,
-            'html': component.template,
-            'css': component.styles
-        }
-        
+
+        return {"ts": ts_code, "html": component.template, "css": component.styles}
+
     def _generate_vanilla(self, component: WebComponent) -> Dict[str, str]:
         """Generate vanilla JavaScript component"""
         code = f"""// {component.name} Component
@@ -441,9 +447,9 @@ styleSheet.textContent = styles;
 document.head.appendChild(styleSheet);
 
 export default {component.name};"""
-        
-        return {'js': code}
-        
+
+        return {"js": code}
+
     def _generate_react_test(self, component: WebComponent) -> str:
         """Generate React component test"""
         return f"""import React from 'react';
@@ -456,16 +462,17 @@ describe('{component.name}', () => {{
     }});
 }});"""
 
+
 class APIGenerator:
     """REST API code generator"""
-    
+
     def __init__(self):
         self.auth_templates = self._load_auth_templates()
-        
+
     def _load_auth_templates(self) -> Dict[str, str]:
         """Load authentication templates"""
         return {
-            'jwt': """import jwt
+            "jwt": """import jwt
 from datetime import datetime, timedelta
 
 SECRET_KEY = "your-secret-key"
@@ -486,8 +493,7 @@ def verify_token(token: str) -> dict:
         raise Exception("Token expired")
     except jwt.InvalidTokenError:
         raise Exception("Invalid token")""",
-        
-            'oauth': """from authlib.integrations.flask_client import OAuth
+            "oauth": """from authlib.integrations.flask_client import OAuth
 
 oauth = OAuth()
 
@@ -501,9 +507,9 @@ def init_oauth(app):
         access_token_url='https://provider.com/oauth/token',
         client_kwargs={'scope': 'email profile'}
     )
-    return oauth"""
+    return oauth""",
         }
-        
+
     def generate_crud_endpoints(self, model_name: str, fields: Dict[str, str]) -> str:
         """Generate CRUD endpoints"""
         code = f"""# CRUD endpoints for {model_name}
@@ -552,20 +558,21 @@ async def delete({model_name.lower()}_id: str):
 """
         return code
 
+
 class WEBPythonExecutor:
     """
     WEB Agent Python Implementation v9.0
-    
+
     Comprehensive web development with FastAPI, Flask, Django support
     and modern frontend framework integration.
     """
-    
+
     def __init__(self):
         # v9.0 compliance attributes
         self.agent_name = "WEB"
         self.version = "9.0"
         self.start_time = datetime.now().isoformat()
-        
+
         self.fastapi_builder = FastAPIBuilder() if HAS_FASTAPI else None
         self.flask_builder = FlaskBuilder() if HAS_FLASK else None
         self.template_engine = TemplateEngine()
@@ -573,27 +580,27 @@ class WEBPythonExecutor:
         self.api_generator = APIGenerator()
         self.applications = {}
         self.metrics = {
-            'apps_created': 0,
-            'endpoints_created': 0,
-            'components_generated': 0,
-            'templates_rendered': 0,
-            'errors': 0
+            "apps_created": 0,
+            "endpoints_created": 0,
+            "components_generated": 0,
+            "templates_rendered": 0,
+            "errors": 0,
         }
-        
+
     async def execute_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
         """Execute WEB commands"""
         try:
             result = await self.process_command(command)
             return result
         except Exception as e:
-            self.metrics['errors'] += 1
+            self.metrics["errors"] += 1
             return {"error": str(e), "traceback": traceback.format_exc()}
-            
+
     async def process_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
         """Process web development operations"""
-        action = command.get('action', '')
-        payload = command.get('payload', {})
-        
+        action = command.get("action", "")
+        payload = command.get("payload", {})
+
         commands = {
             "create_app": self.create_app,
             "add_endpoint": self.add_endpoint,
@@ -606,181 +613,174 @@ class WEBPythonExecutor:
             "deploy_config": self.deploy_config,
             "test_endpoint": self.test_endpoint,
             "optimize_performance": self.optimize_performance,
-            "setup_database": self.setup_database
+            "setup_database": self.setup_database,
         }
-        
+
         handler = commands.get(action)
         if handler:
             return await handler(payload)
         else:
             return {"error": f"Unknown web operation: {action}"}
-            
+
     async def create_app(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Create web application"""
         try:
             config = WebApplication(
-                name=payload.get('name', 'webapp'),
-                framework=payload.get('framework', 'fastapi'),
-                port=payload.get('port', 8000),
-                host=payload.get('host', '0.0.0.0'),
-                debug=payload.get('debug', True),
-                cors_enabled=payload.get('cors', True),
-                auth_enabled=payload.get('auth', False),
-                database=payload.get('database'),
-                static_folder=payload.get('static_folder'),
-                template_folder=payload.get('template_folder'),
-                api_prefix=payload.get('api_prefix', '/api'),
-                middlewares=payload.get('middlewares', [])
+                name=payload.get("name", "webapp"),
+                framework=payload.get("framework", "fastapi"),
+                port=payload.get("port", 8000),
+                host=payload.get("host", "0.0.0.0"),
+                debug=payload.get("debug", True),
+                cors_enabled=payload.get("cors", True),
+                auth_enabled=payload.get("auth", False),
+                database=payload.get("database"),
+                static_folder=payload.get("static_folder"),
+                template_folder=payload.get("template_folder"),
+                api_prefix=payload.get("api_prefix", "/api"),
+                middlewares=payload.get("middlewares", []),
             )
-            
-            if config.framework == 'fastapi' and self.fastapi_builder:
+
+            if config.framework == "fastapi" and self.fastapi_builder:
                 app = self.fastapi_builder.create_app(config)
-                self.applications[config.name] = {'framework': 'fastapi', 'app': app, 'config': config}
-            elif config.framework == 'flask' and self.flask_builder:
+                self.applications[config.name] = {
+                    "framework": "fastapi",
+                    "app": app,
+                    "config": config,
+                }
+            elif config.framework == "flask" and self.flask_builder:
                 app = self.flask_builder.create_app(config)
-                self.applications[config.name] = {'framework': 'flask', 'app': app, 'config': config}
+                self.applications[config.name] = {
+                    "framework": "flask",
+                    "app": app,
+                    "config": config,
+                }
             else:
                 return {"error": f"Framework {config.framework} not available"}
-                
-            self.metrics['apps_created'] += 1
-            
+
+            self.metrics["apps_created"] += 1
+
             # Generate startup code
             startup_code = self._generate_startup_code(config)
-            
+
             return {
                 "status": "success",
                 "app_name": config.name,
                 "framework": config.framework,
                 "port": config.port,
-                "startup_code": startup_code
+                "startup_code": startup_code,
             }
-            
+
         except Exception as e:
             return {"error": f"Failed to create app: {str(e)}"}
-            
+
     async def add_endpoint(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Add API endpoint"""
         try:
-            app_name = payload.get('app_name', 'webapp')
-            
+            app_name = payload.get("app_name", "webapp")
+
             if app_name not in self.applications:
                 return {"error": f"Application {app_name} not found"}
-                
+
             endpoint = APIEndpoint(
-                path=payload.get('path', '/'),
-                method=payload.get('method', 'GET'),
-                handler=payload.get('handler', 'default_handler'),
-                description=payload.get('description', ''),
-                parameters=payload.get('parameters', []),
-                response_model=payload.get('response_model'),
-                auth_required=payload.get('auth_required', False),
-                rate_limit=payload.get('rate_limit')
+                path=payload.get("path", "/"),
+                method=payload.get("method", "GET"),
+                handler=payload.get("handler", "default_handler"),
+                description=payload.get("description", ""),
+                parameters=payload.get("parameters", []),
+                response_model=payload.get("response_model"),
+                auth_required=payload.get("auth_required", False),
+                rate_limit=payload.get("rate_limit"),
             )
-            
+
             app_info = self.applications[app_name]
-            
-            if app_info['framework'] == 'fastapi':
+
+            if app_info["framework"] == "fastapi":
                 self.fastapi_builder.add_endpoint(endpoint)
-            elif app_info['framework'] == 'flask':
+            elif app_info["framework"] == "flask":
                 self.flask_builder.add_endpoint(endpoint)
-                
-            self.metrics['endpoints_created'] += 1
-            
-            return {
-                "status": "success",
-                "endpoint": asdict(endpoint)
-            }
-            
+
+            self.metrics["endpoints_created"] += 1
+
+            return {"status": "success", "endpoint": asdict(endpoint)}
+
         except Exception as e:
             return {"error": f"Failed to add endpoint: {str(e)}"}
-            
+
     async def generate_component(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Generate frontend component"""
         try:
             component = WebComponent(
-                name=payload.get('name', 'Component'),
-                type=payload.get('type', 'react'),
-                template=payload.get('template', '<div>Component</div>'),
-                styles=payload.get('styles', ''),
-                scripts=payload.get('scripts', ''),
-                props=payload.get('props', {}),
-                events=payload.get('events', [])
+                name=payload.get("name", "Component"),
+                type=payload.get("type", "react"),
+                template=payload.get("template", "<div>Component</div>"),
+                styles=payload.get("styles", ""),
+                scripts=payload.get("scripts", ""),
+                props=payload.get("props", {}),
+                events=payload.get("events", []),
             )
-            
+
             code = self.frontend_generator.generate_component(component)
-            
-            self.metrics['components_generated'] += 1
-            
+
+            self.metrics["components_generated"] += 1
+
             return {
                 "status": "success",
                 "component_name": component.name,
                 "type": component.type,
-                "code": code
+                "code": code,
             }
-            
+
         except Exception as e:
             return {"error": f"Failed to generate component: {str(e)}"}
-            
+
     async def render_template(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Render HTML template"""
         try:
-            template_name = payload.get('template', 'base')
-            context = payload.get('context', {})
-            
+            template_name = payload.get("template", "base")
+            context = payload.get("context", {})
+
             html = self.template_engine.render(template_name, context)
-            
-            self.metrics['templates_rendered'] += 1
-            
-            return {
-                "status": "success",
-                "html": html,
-                "template": template_name
-            }
-            
+
+            self.metrics["templates_rendered"] += 1
+
+            return {"status": "success", "html": html, "template": template_name}
+
         except Exception as e:
             return {"error": f"Failed to render template: {str(e)}"}
-            
+
     async def generate_crud(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Generate CRUD endpoints"""
         try:
-            model_name = payload.get('model', 'Item')
-            fields = payload.get('fields', {'name': 'str', 'description': 'str'})
-            
+            model_name = payload.get("model", "Item")
+            fields = payload.get("fields", {"name": "str", "description": "str"})
+
             code = self.api_generator.generate_crud_endpoints(model_name, fields)
-            
-            return {
-                "status": "success",
-                "model": model_name,
-                "code": code
-            }
-            
+
+            return {"status": "success", "model": model_name, "code": code}
+
         except Exception as e:
             return {"error": f"Failed to generate CRUD: {str(e)}"}
-            
+
     async def setup_auth(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Setup authentication"""
         try:
-            auth_type = payload.get('type', 'jwt')
-            
+            auth_type = payload.get("type", "jwt")
+
             if auth_type in self.api_generator.auth_templates:
                 code = self.api_generator.auth_templates[auth_type]
             else:
                 code = "# Authentication setup"
-                
-            return {
-                "status": "success",
-                "auth_type": auth_type,
-                "code": code
-            }
-            
+
+            return {"status": "success", "auth_type": auth_type, "code": code}
+
         except Exception as e:
             return {"error": f"Failed to setup auth: {str(e)}"}
-            
+
     async def create_middleware(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Create middleware"""
         try:
-            middleware_type = payload.get('type', 'logging')
-            
+            middleware_type = payload.get("type", "logging")
+
             code = f"""# {middleware_type.title()} Middleware
 
 from fastapi import Request
@@ -806,62 +806,56 @@ async def {middleware_type}_middleware(request: Request, call_next):
 # Add to app:
 # app.middleware("http")({middleware_type}_middleware)
 """
-            
+
             return {
                 "status": "success",
                 "middleware_type": middleware_type,
-                "code": code
+                "code": code,
             }
-            
+
         except Exception as e:
             return {"error": f"Failed to create middleware: {str(e)}"}
-            
+
     async def generate_api_docs(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Generate API documentation"""
         try:
-            app_name = payload.get('app_name', 'webapp')
-            format = payload.get('format', 'openapi')
-            
+            app_name = payload.get("app_name", "webapp")
+            format = payload.get("format", "openapi")
+
             if app_name not in self.applications:
                 return {"error": f"Application {app_name} not found"}
-                
+
             docs = {
                 "openapi": "3.0.0",
-                "info": {
-                    "title": app_name,
-                    "version": "1.0.0"
-                },
-                "paths": {}
+                "info": {"title": app_name, "version": "1.0.0"},
+                "paths": {},
             }
-            
+
             # Add endpoints to documentation
             app_info = self.applications[app_name]
-            if app_info['framework'] == 'fastapi':
+            if app_info["framework"] == "fastapi":
                 for endpoint in self.fastapi_builder.endpoints:
                     docs["paths"][endpoint.path] = {
                         endpoint.method.lower(): {
                             "description": endpoint.description,
                             "parameters": endpoint.parameters,
-                            "responses": {"200": {"description": "Success"}}
+                            "responses": {"200": {"description": "Success"}},
                         }
                     }
-                    
-            return {
-                "status": "success",
-                "documentation": docs
-            }
-            
+
+            return {"status": "success", "documentation": docs}
+
         except Exception as e:
             return {"error": f"Failed to generate docs: {str(e)}"}
-            
+
     async def deploy_config(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Generate deployment configuration"""
         try:
-            platform = payload.get('platform', 'docker')
-            app_name = payload.get('app_name', 'webapp')
-            
+            platform = payload.get("platform", "docker")
+            app_name = payload.get("app_name", "webapp")
+
             configs = {
-                'docker': f"""# Dockerfile
+                "docker": f"""# Dockerfile
 FROM python:3.9-slim
 
 WORKDIR /app
@@ -875,7 +869,7 @@ EXPOSE 8000
 
 CMD ["uvicorn", "{app_name}:app", "--host", "0.0.0.0", "--port", "8000"]
 """,
-                'kubernetes': f"""apiVersion: apps/v1
+                "kubernetes": f"""apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {app_name}
@@ -907,7 +901,7 @@ spec:
       targetPort: 8000
   type: LoadBalancer
 """,
-                'nginx': f"""server {{
+                "nginx": f"""server {{
     listen 80;
     server_name example.com;
     
@@ -920,26 +914,22 @@ spec:
         proxy_cache_bypass $http_upgrade;
     }}
 }}
-"""
+""",
             }
-            
+
             config = configs.get(platform, "# Configuration not available")
-            
-            return {
-                "status": "success",
-                "platform": platform,
-                "configuration": config
-            }
-            
+
+            return {"status": "success", "platform": platform, "configuration": config}
+
         except Exception as e:
             return {"error": f"Failed to generate deploy config: {str(e)}"}
-            
+
     async def test_endpoint(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Generate endpoint test"""
         try:
-            endpoint_path = payload.get('path', '/')
-            method = payload.get('method', 'GET')
-            
+            endpoint_path = payload.get("path", "/")
+            method = payload.get("method", "GET")
+
             test_code = f"""import pytest
 from httpx import AsyncClient
 
@@ -950,20 +940,17 @@ async def test_{method.lower()}_{endpoint_path.replace('/', '_')}():
         assert response.status_code == 200
         # Add more assertions based on expected response
 """
-            
-            return {
-                "status": "success",
-                "test_code": test_code
-            }
-            
+
+            return {"status": "success", "test_code": test_code}
+
         except Exception as e:
             return {"error": f"Failed to generate test: {str(e)}"}
-            
+
     async def optimize_performance(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Generate performance optimization recommendations"""
         try:
-            app_name = payload.get('app_name', 'webapp')
-            
+            app_name = payload.get("app_name", "webapp")
+
             recommendations = [
                 "Enable response caching for static content",
                 "Implement database connection pooling",
@@ -974,9 +961,9 @@ async def test_{method.lower()}_{endpoint_path.replace('/', '_')}():
                 "Optimize database queries with indexes",
                 "Implement pagination for large datasets",
                 "Use Redis for session storage",
-                "Enable HTTP/2"
+                "Enable HTTP/2",
             ]
-            
+
             optimization_code = """# Performance optimizations
 
 # 1. Response caching
@@ -1000,23 +987,23 @@ from slowapi import Limiter
 limiter = Limiter(key_func=lambda: "global")
 app.state.limiter = limiter
 """
-            
+
             return {
                 "status": "success",
                 "recommendations": recommendations,
-                "code": optimization_code
+                "code": optimization_code,
             }
-            
+
         except Exception as e:
             return {"error": f"Failed to optimize: {str(e)}"}
-            
+
     async def setup_database(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Setup database configuration"""
         try:
-            db_type = payload.get('type', 'postgresql')
-            
+            db_type = payload.get("type", "postgresql")
+
             configs = {
-                'postgresql': """from sqlalchemy import create_engine
+                "postgresql": """from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -1033,7 +1020,7 @@ def get_db():
     finally:
         db.close()
 """,
-                'mongodb': """from motor.motor_asyncio import AsyncIOMotorClient
+                "mongodb": """from motor.motor_asyncio import AsyncIOMotorClient
 
 MONGODB_URL = "mongodb://localhost:27017"
 client = AsyncIOMotorClient(MONGODB_URL)
@@ -1042,56 +1029,58 @@ database = client.mydb
 async def get_database():
     return database
 """,
-                'redis': """import redis.asyncio as redis
+                "redis": """import redis.asyncio as redis
 
 REDIS_URL = "redis://localhost:6379"
 
 async def get_redis():
     return await redis.from_url(REDIS_URL)
-"""
+""",
             }
-            
+
             config = configs.get(db_type, "# Database configuration")
-            
+
             return {
                 "status": "success",
                 "database_type": db_type,
-                "configuration": config
+                "configuration": config,
             }
-            
+
         except Exception as e:
             return {"error": f"Failed to setup database: {str(e)}"}
-            
+
     def _generate_startup_code(self, config: WebApplication) -> str:
         """Generate application startup code"""
-        if config.framework == 'fastapi':
+        if config.framework == "fastapi":
             return f"""# Run with: uvicorn {config.name}:app --reload --host {config.host} --port {config.port}"""
 
-    async def _create_web_files(self, result_data: Dict[str, Any], context: Dict[str, Any]):
+    async def _create_web_files(
+        self, result_data: Dict[str, Any], context: Dict[str, Any]
+    ):
         """Create web files and artifacts using declared tools"""
         try:
-            import os
-            from pathlib import Path
             import json
+            import os
             import time
-            
+            from pathlib import Path
+
             # Create directories
             main_dir = Path("web_applications")
             docs_dir = Path("web_components")
-            
+
             os.makedirs(main_dir, exist_ok=True)
             os.makedirs(docs_dir / "components", exist_ok=True)
             os.makedirs(docs_dir / "pages", exist_ok=True)
             os.makedirs(docs_dir / "styles", exist_ok=True)
             os.makedirs(docs_dir / "assets", exist_ok=True)
-            
+
             timestamp = int(time.time())
-            
+
             # 1. Create main result file
             result_file = main_dir / f"web_result_{timestamp}.json"
-            with open(result_file, 'w') as f:
+            with open(result_file, "w") as f:
                 json.dump(result_data, f, indent=2, default=str)
-            
+
             # 2. Create implementation script
             script_file = docs_dir / "components" / f"web_implementation.py"
             script_content = f'''#!/usr/bin/env python3
@@ -1143,14 +1132,14 @@ if __name__ == "__main__":
     result = asyncio.run(impl.execute())
     print(f"Result: {result}")
 '''
-            
-            with open(script_file, 'w') as f:
+
+            with open(script_file, "w") as f:
                 f.write(script_content)
-            
+
             os.chmod(script_file, 0o755)
-            
+
             # 3. Create README
-            readme_content = f'''# WEB Output
+            readme_content = f"""# WEB Output
 
 Generated by WEB Agent at {datetime.now().isoformat()}
 
@@ -1178,15 +1167,16 @@ cat {result_file}
 
 ---
 Last updated: {datetime.now().isoformat()}
-'''
-            
-            with open(docs_dir / "README.md", 'w') as f:
+"""
+
+            with open(docs_dir / "README.md", "w") as f:
                 f.write(readme_content)
-            
+
             print(f"WEB files created successfully in {main_dir} and {docs_dir}")
-            
+
         except Exception as e:
             print(f"Failed to create web files: {e}")
 
+
 # Export main class
-__all__ = ['WEBPythonExecutor']
+__all__ = ["WEBPythonExecutor"]

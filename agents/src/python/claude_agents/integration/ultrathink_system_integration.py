@@ -22,20 +22,21 @@ Purpose: Universal think mode enhancement for Claude Code
 License: MIT
 """
 
+import asyncio
+import json
+import logging
 import os
 import sys
-import json
 import time
-import asyncio
-import logging
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Integration with existing systems
 try:
-    from dynamic_think_mode_selector import DynamicThinkModeSelector, ThinkModeDecision
     from claude_code_think_hooks import ClaudeCodeThinkHooks
+    from dynamic_think_mode_selector import DynamicThinkModeSelector, ThinkModeDecision
+
     THINK_SYSTEM_AVAILABLE = True
 except ImportError:
     THINK_SYSTEM_AVAILABLE = False
@@ -43,7 +44,10 @@ except ImportError:
 # NPU orchestrator integration
 try:
     import importlib.util
-    npu_spec = importlib.util.spec_from_file_location("npu_orchestrator", "npu_orchestrator_real.py")
+
+    npu_spec = importlib.util.spec_from_file_location(
+        "npu_orchestrator", "npu_orchestrator_real.py"
+    )
     if npu_spec and npu_spec.loader:
         npu_module = importlib.util.module_from_spec(npu_spec)
         npu_spec.loader.exec_module(npu_module)
@@ -53,15 +57,18 @@ try:
 except Exception:
     NPU_ORCHESTRATOR_AVAILABLE = False
 
+
 @dataclass
 class SystemIntegrationConfig:
     """Configuration for ultrathink system integration"""
+
     npu_orchestrator_enabled: bool = True
     agent_coordination_enabled: bool = True
     context_chopping_integration: bool = True
     learning_system_integration: bool = True
     performance_monitoring: bool = True
     adaptive_optimization: bool = True
+
 
 class UltrathinkSystemIntegrator:
     """Main system integrator for dynamic think mode with existing systems"""
@@ -71,16 +78,18 @@ class UltrathinkSystemIntegrator:
         self.logger = self._setup_logging()
 
         # Initialize subsystems
-        self.think_selector = DynamicThinkModeSelector() if THINK_SYSTEM_AVAILABLE else None
+        self.think_selector = (
+            DynamicThinkModeSelector() if THINK_SYSTEM_AVAILABLE else None
+        )
         self.claude_hooks = ClaudeCodeThinkHooks() if THINK_SYSTEM_AVAILABLE else None
 
         # Integration state
         self.integration_status = {
-            'npu_orchestrator': False,
-            'agent_framework': False,
-            'context_chopping': False,
-            'learning_system': False,
-            'performance_monitoring': False
+            "npu_orchestrator": False,
+            "agent_framework": False,
+            "context_chopping": False,
+            "learning_system": False,
+            "performance_monitoring": False,
         }
 
     def _setup_logging(self) -> logging.Logger:
@@ -90,7 +99,7 @@ class UltrathinkSystemIntegrator:
 
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)-8s | ULTRATHINK | %(message)s'
+            "%(asctime)s | %(levelname)-8s | ULTRATHINK | %(message)s"
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -107,15 +116,17 @@ class UltrathinkSystemIntegrator:
                 integration_code = self._create_npu_integration()
 
                 # Write integration module
-                integration_path = Path('npu_think_mode_bridge.py')
-                with open(integration_path, 'w') as f:
+                integration_path = Path("npu_think_mode_bridge.py")
+                with open(integration_path, "w") as f:
                     f.write(integration_code)
 
-                self.integration_status['npu_orchestrator'] = True
+                self.integration_status["npu_orchestrator"] = True
                 self.logger.info("✅ NPU orchestrator integration: COMPLETE")
                 return True
             else:
-                self.logger.warning("⚠️ NPU orchestrator not available, using CPU coordination")
+                self.logger.warning(
+                    "⚠️ NPU orchestrator not available, using CPU coordination"
+                )
                 return False
 
         except Exception as e:
@@ -179,15 +190,15 @@ class NpuThinkModeCoordinator:
 
         try:
             # Check for agent framework
-            agents_dir = Path('agents')
+            agents_dir = Path("agents")
             if agents_dir.exists():
-                agent_count = len(list(agents_dir.glob('*.md')))
+                agent_count = len(list(agents_dir.glob("*.md")))
                 self.logger.info(f"Found {agent_count} agents in framework")
 
                 # Create agent coordination integration
                 self._create_agent_integration()
 
-                self.integration_status['agent_framework'] = True
+                self.integration_status["agent_framework"] = True
                 self.logger.info("✅ Agent framework integration: COMPLETE")
                 return True
             else:
@@ -234,7 +245,7 @@ class AgentThinkModeCoordinator:
             }
 '''
 
-        with open(Path('agents/src/python/agent_think_coordination.py'), 'w') as f:
+        with open(Path("agents/src/python/agent_think_coordination.py"), "w") as f:
             f.write(integration_code)
 
     def integrate_with_context_chopping(self) -> bool:
@@ -243,14 +254,14 @@ class AgentThinkModeCoordinator:
 
         try:
             # Check for context chopping system
-            chopper_path = Path('agents/src/python/intelligent_context_chopper.py')
+            chopper_path = Path("agents/src/python/intelligent_context_chopper.py")
             if chopper_path.exists():
                 self.logger.info("Found PICMCS context chopping system")
 
                 # Create integration
                 self._create_context_integration()
 
-                self.integration_status['context_chopping'] = True
+                self.integration_status["context_chopping"] = True
                 self.logger.info("✅ Context chopping integration: COMPLETE")
                 return True
             else:
@@ -299,7 +310,7 @@ class ContextThinkModeIntegration:
         return {"chopped_content": content[:size], "mode": "standard"}
 '''
 
-        with open(Path('agents/src/python/context_think_integration.py'), 'w') as f:
+        with open(Path("agents/src/python/context_think_integration.py"), "w") as f:
             f.write(integration_code)
 
     def integrate_with_learning_system(self) -> bool:
@@ -308,11 +319,11 @@ class ContextThinkModeIntegration:
 
         try:
             # Check for learning system
-            learning_path = Path('agents/src/python/postgresql_learning_system.py')
+            learning_path = Path("agents/src/python/postgresql_learning_system.py")
             if learning_path.exists():
                 self.logger.info("Found PostgreSQL learning system")
 
-                self.integration_status['learning_system'] = True
+                self.integration_status["learning_system"] = True
                 self.logger.info("✅ Learning system integration: COMPLETE")
                 return True
             else:
@@ -331,7 +342,7 @@ class ContextThinkModeIntegration:
             ("NPU Orchestrator", self.integrate_with_npu_orchestrator),
             ("Agent Framework", self.integrate_with_agent_framework),
             ("Context Chopping", self.integrate_with_context_chopping),
-            ("Learning System", self.integrate_with_learning_system)
+            ("Learning System", self.integrate_with_learning_system),
         ]
 
         successful_integrations = 0
@@ -347,31 +358,40 @@ class ContextThinkModeIntegration:
                 self.logger.error(f"❌ {step_name}: FAILED - {e}")
 
         success_rate = successful_integrations / len(deployment_steps)
-        self.logger.info(f"System deployment: {successful_integrations}/{len(deployment_steps)} ({success_rate:.1%}) successful")
+        self.logger.info(
+            f"System deployment: {successful_integrations}/{len(deployment_steps)} ({success_rate:.1%}) successful"
+        )
 
         return success_rate >= 0.75  # 75% success rate for production readiness
 
     def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status"""
         return {
-            'ultrathink_system': 'operational' if THINK_SYSTEM_AVAILABLE else 'unavailable',
-            'integration_status': self.integration_status.copy(),
-            'config': self.config.__dict__,
-            'subsystems': {
-                'npu_orchestrator': NPU_ORCHESTRATOR_AVAILABLE,
-                'think_selector': THINK_SYSTEM_AVAILABLE,
-                'claude_hooks': self.claude_hooks is not None
+            "ultrathink_system": (
+                "operational" if THINK_SYSTEM_AVAILABLE else "unavailable"
+            ),
+            "integration_status": self.integration_status.copy(),
+            "config": self.config.__dict__,
+            "subsystems": {
+                "npu_orchestrator": NPU_ORCHESTRATOR_AVAILABLE,
+                "think_selector": THINK_SYSTEM_AVAILABLE,
+                "claude_hooks": self.claude_hooks is not None,
             },
-            'performance': self.think_selector.get_performance_report() if self.think_selector else None,
-            'timestamp': time.time()
+            "performance": (
+                self.think_selector.get_performance_report()
+                if self.think_selector
+                else None
+            ),
+            "timestamp": time.time(),
         }
+
 
 def main():
     """Main execution for ultrathink system integration"""
-    print("="*80)
+    print("=" * 80)
     print("Ultrathink System Integration")
     print("Dynamic Think Mode Selection - Claude-Backups Framework")
-    print("="*80)
+    print("=" * 80)
 
     # Initialize integrator
     integrator = UltrathinkSystemIntegrator()
@@ -397,18 +417,22 @@ def main():
 
     print(f"   Ultrathink System: {status['ultrathink_system']}")
     print(f"   Integration Status:")
-    for component, status_val in status['integration_status'].items():
+    for component, status_val in status["integration_status"].items():
         emoji = "✅" if status_val else "❌"
-        print(f"     {emoji} {component}: {'INTEGRATED' if status_val else 'NOT INTEGRATED'}")
+        print(
+            f"     {emoji} {component}: {'INTEGRATED' if status_val else 'NOT INTEGRATED'}"
+        )
 
     print(f"   Subsystems:")
-    for subsystem, available in status['subsystems'].items():
+    for subsystem, available in status["subsystems"].items():
         emoji = "✅" if available else "❌"
-        print(f"     {emoji} {subsystem}: {'AVAILABLE' if available else 'NOT AVAILABLE'}")
+        print(
+            f"     {emoji} {subsystem}: {'AVAILABLE' if available else 'NOT AVAILABLE'}"
+        )
 
     # Performance metrics
-    if status['performance']:
-        metrics = status['performance']['metrics']
+    if status["performance"]:
+        metrics = status["performance"]["metrics"]
         print(f"   Performance Metrics:")
         print(f"     Total Analyses: {metrics['total_analyses']}")
         print(f"     NPU Accelerated: {metrics['npu_analyses']}")
@@ -416,8 +440,8 @@ def main():
 
     print(f"\\n🎯 ULTRATHINK INTEGRATION STATUS:")
 
-    success_count = sum(status['integration_status'].values())
-    total_count = len(status['integration_status'])
+    success_count = sum(status["integration_status"].values())
+    total_count = len(status["integration_status"])
 
     if success_count == total_count:
         print(f"✅ COMPLETE: All {total_count} systems integrated")
@@ -429,6 +453,7 @@ def main():
     print(f"\\n🚀 Dynamic Think Mode Selection: READY FOR CLAUDE CODE INTEGRATION")
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

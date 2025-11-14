@@ -4,9 +4,10 @@ Updates all existing agent definition files to include communication system inte
 This ensures all agents are properly connected to the ultra-fast binary protocol
 """
 
+import glob
 import os
 import re
-import glob
+
 import yaml
 
 # Communication system integration block to add to each agent

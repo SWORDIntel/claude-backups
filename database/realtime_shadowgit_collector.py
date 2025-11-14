@@ -13,23 +13,24 @@ Features:
 """
 
 import asyncio
-import asyncpg
-import json
-import time
-import mmap
-import struct
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from threading import Thread, Event
-import psutil
-import logging
-from concurrent.futures import ThreadPoolExecutor
-import signal
-import sys
-from datetime import datetime, timedelta
 import hashlib
+import json
+import logging
+import mmap
+import signal
+import struct
+import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from threading import Event, Thread
+from typing import Dict, List, Optional, Tuple
+
+import asyncpg
+import numpy as np
+import psutil
 
 # Configure logging
 
@@ -39,8 +40,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available

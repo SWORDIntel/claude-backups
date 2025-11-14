@@ -1,3 +1,0 @@
-#!/bin/bash
-# Convenience shortcut for BRING_ONLINE.sh
-exec ./agents/system/BRING_ONLINE.sh "$@"

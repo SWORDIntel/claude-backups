@@ -32,39 +32,52 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
-from pathlib import Path
 import uuid
-
-# FastAPI and web framework imports
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends, status
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
-import uvicorn
-from starlette.requests import Request
-
-# WebSocket and real-time imports
-import socketio
-from socketio import AsyncServer
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 
 # Authentication and security
 import jwt
-from passlib.context import CryptContext
-
-# Prometheus and metrics
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 import prometheus_client
+
+# WebSocket and real-time imports
+import socketio
+import uvicorn
 
 # Local imports
 from admin_core import (
-    AgentManager, SystemMonitor, ConfigManager, 
-    UserManager, DeploymentManager, BackupManager,
-    DiagnosticTools, PerformanceOptimizer, OperationResult
+    AgentManager,
+    BackupManager,
+    ConfigManager,
+    DeploymentManager,
+    DiagnosticTools,
+    OperationResult,
+    PerformanceOptimizer,
+    SystemMonitor,
+    UserManager,
 )
+
+# FastAPI and web framework imports
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from passlib.context import CryptContext
+
+# Prometheus and metrics
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from socketio import AsyncServer
+from starlette.requests import Request
 
 # ============================================================================
 # CONFIGURATION AND CONSTANTS
@@ -72,56 +85,58 @@ from admin_core import (
 
 # Web server configuration
 WEB_CONFIG = {
-    'host': '0.0.0.0',
-    'port': 8080,
-    'static_dir': '/var/lib/claude-agents/web/static',
-    'template_dir': '/var/lib/claude-agents/web/templates',
-    'upload_dir': '/var/lib/claude-agents/web/uploads'
+    "host": "0.0.0.0",
+    "port": 8080,
+    "static_dir": "/var/lib/claude-agents/web/static",
+    "template_dir": "/var/lib/claude-agents/web/templates",
+    "upload_dir": "/var/lib/claude-agents/web/uploads",
 }
 
 # WebSocket event types
 WEBSOCKET_EVENTS = {
-    'SYSTEM_STATUS': 'system_status',
-    'AGENT_STATUS': 'agent_status',
-    'PERFORMANCE_METRICS': 'performance_metrics',
-    'ALERT': 'alert',
-    'LOG_MESSAGE': 'log_message',
-    'CONFIG_CHANGE': 'config_change',
-    'DEPLOYMENT_UPDATE': 'deployment_update'
+    "SYSTEM_STATUS": "system_status",
+    "AGENT_STATUS": "agent_status",
+    "PERFORMANCE_METRICS": "performance_metrics",
+    "ALERT": "alert",
+    "LOG_MESSAGE": "log_message",
+    "CONFIG_CHANGE": "config_change",
+    "DEPLOYMENT_UPDATE": "deployment_update",
 }
 
 # API rate limiting
 API_RATE_LIMITS = {
-    'default': 100,  # requests per minute
-    'metrics': 300,
-    'status': 200,
-    'config_change': 30
+    "default": 100,  # requests per minute
+    "metrics": 300,
+    "status": 200,
+    "config_change": 30,
 }
 
 # ============================================================================
 # MAIN WEB APPLICATION CLASS
 # ============================================================================
 
+
 class ClaudeWebConsole:
     """Main web administration console"""
-    
+
     __slots__ = []
+
     def __init__(self):
         # Initialize FastAPI app
         self.app = FastAPI(
             title="Claude Agent Administration Console",
             description="Web-based administration interface for Claude Agent Communication System",
-            version="1.0.0"
+            version="1.0.0",
         )
-        
+
         # Initialize Socket.IO server
         self.sio = AsyncServer(
-            async_mode='asgi',
+            async_mode="asgi",
             cors_allowed_origins="*",
             logger=True,
-            engineio_logger=True
+            engineio_logger=True,
         )
-        
+
         # Initialize core managers
         self.agent_manager = AgentManager()
         self.system_monitor = SystemMonitor()
@@ -131,15 +146,15 @@ class ClaudeWebConsole:
         self.backup_manager = BackupManager()
         self.diagnostic_tools = DiagnosticTools()
         self.performance_optimizer = PerformanceOptimizer()
-        
+
         # WebSocket connection management
         self.connected_clients: Set[str] = set()
         self.client_subscriptions: Dict[str, Set[str]] = {}
-        
+
         # Authentication
         self.security = HTTPBearer()
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        
+
         # Initialize web application
         self._setup_middleware()
         self._setup_routes()
@@ -157,52 +172,56 @@ class ClaudeWebConsole:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-        
+
         # Custom middleware for request logging
         @self.app.middleware("http")
         async def log_requests(request: Request, call_next):
             start_time = time.time()
             response = await call_next(request)
             process_time = time.time() - start_time
-            
-            logging.info(f"{request.method} {request.url.path} - {response.status_code} - {process_time:.3f}s")
+
+            logging.info(
+                f"{request.method} {request.url.path} - {response.status_code} - {process_time:.3f}s"
+            )
             response.headers["X-Process-Time"] = str(process_time)
             return response
 
     def _setup_routes(self):
         """Setup API routes"""
-        
+
         # ============== AUTHENTICATION ROUTES ==============
-        
+
         @self.app.post("/api/auth/login")
         async def login(credentials: dict):
             """Authenticate user and return JWT token"""
-            username = credentials.get('username')
-            password = credentials.get('password')
-            
+            username = credentials.get("username")
+            password = credentials.get("password")
+
             if not username or not password:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Username and password required"
+                    detail="Username and password required",
                 )
-            
+
             token = self.user_manager.authenticate_user(username, password)
             if not token:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid credentials"
+                    detail="Invalid credentials",
                 )
-            
+
             return {"token": token, "type": "bearer"}
 
         @self.app.post("/api/auth/logout")
-        async def logout(credentials: HTTPAuthorizationCredentials = Depends(self.security)):
+        async def logout(
+            credentials: HTTPAuthorizationCredentials = Depends(self.security),
+        ):
             """Logout user and invalidate token"""
             # Token invalidation would be implemented here
             return {"message": "Logged out successfully"}
 
         # ============== SYSTEM STATUS ROUTES ==============
-        
+
         @self.app.get("/api/system/status")
         async def get_system_status(user=Depends(self._get_current_user)):
             """Get overall system status"""
@@ -222,8 +241,8 @@ class ClaudeWebConsole:
                         "memory_utilization": status.memory_utilization,
                         "disk_utilization": status.disk_utilization,
                         "network_utilization": status.network_utilization,
-                        "uptime": str(status.uptime)
-                    }
+                        "uptime": str(status.uptime),
+                    },
                 }
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
@@ -247,14 +266,14 @@ class ClaudeWebConsole:
                         "active_connections": metrics.active_connections,
                         "queue_depth": metrics.queue_depth,
                         "error_rate": metrics.error_rate,
-                        "processing_rate": metrics.processing_rate
-                    }
+                        "processing_rate": metrics.processing_rate,
+                    },
                 }
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # ============== AGENT MANAGEMENT ROUTES ==============
-        
+
         @self.app.get("/api/agents")
         async def get_agents(user=Depends(self._get_current_user)):
             """Get all agent statuses"""
@@ -270,41 +289,39 @@ class ClaudeWebConsole:
                             "pid": agent.pid,
                             "port": agent.port,
                             "node_id": agent.node_id,
-                            "cpu_percent": agent.resource_usage.get('cpu', 0.0),
-                            "memory_mb": agent.resource_usage.get('memory', 0.0),
+                            "cpu_percent": agent.resource_usage.get("cpu", 0.0),
+                            "memory_mb": agent.resource_usage.get("memory", 0.0),
                             "uptime": str(datetime.now() - agent.startup_time),
                             "health_score": agent.health_score,
-                            "version": agent.version
+                            "version": agent.version,
                         }
                         for agent in agents
-                    ]
+                    ],
                 }
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.post("/api/agents/{agent_type}/start")
         async def start_agent(
-            agent_type: str,
-            config: dict = None,
-            user=Depends(self._get_admin_user)
+            agent_type: str, config: dict = None, user=Depends(self._get_admin_user)
         ):
             """Start agent instances"""
             try:
-                scale = config.get('scale', 1) if config else 1
+                scale = config.get("scale", 1) if config else 1
                 result = self.agent_manager.start_agent(agent_type, scale=scale)
-                
+
                 if result.success:
                     # Broadcast update to connected clients
-                    await self._broadcast_agent_update(agent_type, 'started')
-                    
+                    await self._broadcast_agent_update(agent_type, "started")
+
                     return {
                         "status": "success",
                         "message": f"Started {agent_type} agent",
-                        "data": result.data
+                        "data": result.data,
                     }
                 else:
                     raise HTTPException(status_code=500, detail=result.error)
-                    
+
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
@@ -313,16 +330,16 @@ class ClaudeWebConsole:
             """Stop agent instance"""
             try:
                 result = self.agent_manager.stop_agent(agent_name)
-                
+
                 if result.success:
-                    await self._broadcast_agent_update(agent_name, 'stopped')
+                    await self._broadcast_agent_update(agent_name, "stopped")
                     return {
                         "status": "success",
-                        "message": f"Stopped {agent_name} agent"
+                        "message": f"Stopped {agent_name} agent",
                     }
                 else:
                     raise HTTPException(status_code=500, detail=result.error)
-                    
+
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
@@ -330,69 +347,68 @@ class ClaudeWebConsole:
         async def restart_agent(agent_name: str, user=Depends(self._get_admin_user)):
             """Restart agent instance"""
             try:
-                result = self.agent_manager.restart_agent(agent_name, zero_downtime=True)
-                
+                result = self.agent_manager.restart_agent(
+                    agent_name, zero_downtime=True
+                )
+
                 if result.success:
-                    await self._broadcast_agent_update(agent_name, 'restarted')
+                    await self._broadcast_agent_update(agent_name, "restarted")
                     return {
                         "status": "success",
                         "message": f"Restarted {agent_name} agent",
-                        "data": {"downtime_ms": result.metadata.get('downtime_ms', 0)}
+                        "data": {"downtime_ms": result.metadata.get("downtime_ms", 0)},
                     }
                 else:
                     raise HTTPException(status_code=500, detail=result.error)
-                    
+
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # ============== CONFIGURATION ROUTES ==============
-        
+
         @self.app.get("/api/config/{component}")
         async def get_config(component: str, user=Depends(self._get_current_user)):
             """Get configuration for component"""
             try:
                 config = self.config_manager.get_config(component)
-                return {
-                    "status": "success",
-                    "data": config
-                }
+                return {"status": "success", "data": config}
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.post("/api/config/{component}")
         async def update_config(
-            component: str,
-            config_update: dict,
-            user=Depends(self._get_admin_user)
+            component: str, config_update: dict, user=Depends(self._get_admin_user)
         ):
             """Update configuration with hot reload"""
             try:
-                key = config_update.get('key')
-                value = config_update.get('value')
-                hot_reload = config_update.get('hot_reload', True)
-                
+                key = config_update.get("key")
+                value = config_update.get("value")
+                hot_reload = config_update.get("hot_reload", True)
+
                 if not key:
-                    raise HTTPException(status_code=400, detail="Configuration key required")
-                
+                    raise HTTPException(
+                        status_code=400, detail="Configuration key required"
+                    )
+
                 result = self.config_manager.set_config_value(
                     component, key, value, hot_reload
                 )
-                
+
                 if result.success:
                     await self._broadcast_config_change(component, key, value)
                     return {
                         "status": "success",
                         "message": "Configuration updated",
-                        "data": result.data
+                        "data": result.data,
                     }
                 else:
                     raise HTTPException(status_code=500, detail=result.error)
-                    
+
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # ============== USER MANAGEMENT ROUTES ==============
-        
+
         @self.app.get("/api/users")
         async def get_users(user=Depends(self._get_admin_user)):
             """Get all users"""
@@ -406,12 +422,16 @@ class ClaudeWebConsole:
                             "role": u.role,
                             "email": u.email,
                             "is_active": u.is_active,
-                            "created_at": u.created_at.isoformat() if u.created_at else None,
-                            "last_login": u.last_login.isoformat() if u.last_login else None,
-                            "permissions": u.permissions
+                            "created_at": (
+                                u.created_at.isoformat() if u.created_at else None
+                            ),
+                            "last_login": (
+                                u.last_login.isoformat() if u.last_login else None
+                            ),
+                            "permissions": u.permissions,
                         }
                         for u in users
-                    ]
+                    ],
                 }
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
@@ -421,58 +441,62 @@ class ClaudeWebConsole:
             """Create new user"""
             try:
                 result = self.user_manager.create_user(
-                    username=user_data.get('username'),
-                    role=user_data.get('role'),
-                    permissions=user_data.get('permissions', []),
-                    email=user_data.get('email')
+                    username=user_data.get("username"),
+                    role=user_data.get("role"),
+                    permissions=user_data.get("permissions", []),
+                    email=user_data.get("email"),
                 )
-                
+
                 if result.success:
                     return {
                         "status": "success",
                         "message": "User created successfully",
-                        "data": result.data
+                        "data": result.data,
                     }
                 else:
                     raise HTTPException(status_code=400, detail=result.error)
-                    
+
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
         # ============== PROMETHEUS METRICS ROUTE ==============
-        
+
         @self.app.get("/metrics")
         async def prometheus_metrics():
             """Prometheus metrics endpoint"""
             return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
         # ============== MAIN DASHBOARD ROUTE ==============
-        
+
         @self.app.get("/", response_class=HTMLResponse)
         async def dashboard(request: Request):
             """Main dashboard page"""
-            return self.templates.TemplateResponse("dashboard.html", {"request": request})
+            return self.templates.TemplateResponse(
+                "dashboard.html", {"request": request}
+            )
 
     def _setup_websocket_handlers(self):
         """Setup WebSocket event handlers"""
-        
+
         @self.sio.event
         async def connect(sid, environ, auth):
             """Handle client connection"""
             try:
                 # Authenticate WebSocket connection
-                token = auth.get('token') if auth else None
+                token = auth.get("token") if auth else None
                 if token:
                     user = self._verify_jwt_token(token)
                     if user:
                         self.connected_clients.add(sid)
                         self.client_subscriptions[sid] = set()
-                        logging.info(f"WebSocket client {sid} connected (user: {user['username']})")
+                        logging.info(
+                            f"WebSocket client {sid} connected (user: {user['username']})"
+                        )
                         return True
-                
+
                 logging.warning(f"WebSocket connection rejected for {sid}")
                 return False
-                
+
             except Exception as e:
                 logging.error(f"WebSocket connection error: {e}")
                 return False
@@ -488,44 +512,48 @@ class ClaudeWebConsole:
         async def subscribe(sid, data):
             """Handle subscription to specific data streams"""
             try:
-                subscription_type = data.get('type')
+                subscription_type = data.get("type")
                 if subscription_type and sid in self.connected_clients:
                     self.client_subscriptions[sid].add(subscription_type)
-                    await self.sio.emit('subscribed', {
-                        'type': subscription_type,
-                        'status': 'success'
-                    }, room=sid)
-                    
+                    await self.sio.emit(
+                        "subscribed",
+                        {"type": subscription_type, "status": "success"},
+                        room=sid,
+                    )
+
             except Exception as e:
-                await self.sio.emit('error', {'message': str(e)}, room=sid)
+                await self.sio.emit("error", {"message": str(e)}, room=sid)
 
         @self.sio.event
         async def unsubscribe(sid, data):
             """Handle unsubscription from data streams"""
             try:
-                subscription_type = data.get('type')
+                subscription_type = data.get("type")
                 if subscription_type and sid in self.client_subscriptions:
                     self.client_subscriptions[sid].discard(subscription_type)
-                    await self.sio.emit('unsubscribed', {
-                        'type': subscription_type,
-                        'status': 'success'
-                    }, room=sid)
-                    
+                    await self.sio.emit(
+                        "unsubscribed",
+                        {"type": subscription_type, "status": "success"},
+                        room=sid,
+                    )
+
             except Exception as e:
-                await self.sio.emit('error', {'message': str(e)}, room=sid)
+                await self.sio.emit("error", {"message": str(e)}, room=sid)
 
     def _setup_static_files(self):
         """Setup static file serving"""
         # Create directories if they don't exist
-        os.makedirs(WEB_CONFIG['static_dir'], exist_ok=True)
-        os.makedirs(WEB_CONFIG['template_dir'], exist_ok=True)
-        
+        os.makedirs(WEB_CONFIG["static_dir"], exist_ok=True)
+        os.makedirs(WEB_CONFIG["template_dir"], exist_ok=True)
+
         # Mount static files
-        self.app.mount("/static", StaticFiles(directory=WEB_CONFIG['static_dir']), name="static")
-        
+        self.app.mount(
+            "/static", StaticFiles(directory=WEB_CONFIG["static_dir"]), name="static"
+        )
+
         # Setup templates
-        self.templates = Jinja2Templates(directory=WEB_CONFIG['template_dir'])
-        
+        self.templates = Jinja2Templates(directory=WEB_CONFIG["template_dir"])
+
         # Generate default templates if they don't exist
         self._create_default_templates()
 
@@ -542,22 +570,25 @@ class ClaudeWebConsole:
             try:
                 if self.connected_clients:
                     status = self.system_monitor.get_system_status()
-                    
-                    await self._broadcast_to_subscribers('system_status', {
-                        'timestamp': datetime.now().isoformat(),
-                        'cluster_state': status.cluster_state,
-                        'active_nodes': status.active_nodes,
-                        'total_agents': status.total_agents,
-                        'active_agents': status.active_agents,
-                        'failed_agents': status.failed_agents,
-                        'cpu_utilization': status.cpu_utilization,
-                        'memory_utilization': status.memory_utilization,
-                        'disk_utilization': status.disk_utilization,
-                        'network_utilization': status.network_utilization
-                    })
-                
+
+                    await self._broadcast_to_subscribers(
+                        "system_status",
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "cluster_state": status.cluster_state,
+                            "active_nodes": status.active_nodes,
+                            "total_agents": status.total_agents,
+                            "active_agents": status.active_agents,
+                            "failed_agents": status.failed_agents,
+                            "cpu_utilization": status.cpu_utilization,
+                            "memory_utilization": status.memory_utilization,
+                            "disk_utilization": status.disk_utilization,
+                            "network_utilization": status.network_utilization,
+                        },
+                    )
+
                 await asyncio.sleep(5)  # Update every 5 seconds
-                
+
             except Exception as e:
                 logging.error(f"System metrics broadcast error: {e}")
                 await asyncio.sleep(10)
@@ -568,18 +599,21 @@ class ClaudeWebConsole:
             try:
                 if self.connected_clients:
                     metrics = self.system_monitor.get_performance_metrics()
-                    
-                    await self._broadcast_to_subscribers('performance_metrics', {
-                        'timestamp': metrics.timestamp.isoformat(),
-                        'throughput': metrics.throughput,
-                        'latency_p99_ns': metrics.latency_p99_ns,
-                        'error_rate': metrics.error_rate,
-                        'queue_depth': metrics.queue_depth,
-                        'processing_rate': metrics.processing_rate
-                    })
-                
+
+                    await self._broadcast_to_subscribers(
+                        "performance_metrics",
+                        {
+                            "timestamp": metrics.timestamp.isoformat(),
+                            "throughput": metrics.throughput,
+                            "latency_p99_ns": metrics.latency_p99_ns,
+                            "error_rate": metrics.error_rate,
+                            "queue_depth": metrics.queue_depth,
+                            "processing_rate": metrics.processing_rate,
+                        },
+                    )
+
                 await asyncio.sleep(2)  # Update every 2 seconds
-                
+
             except Exception as e:
                 logging.error(f"Performance broadcast error: {e}")
                 await asyncio.sleep(5)
@@ -592,22 +626,30 @@ class ClaudeWebConsole:
 
     async def _broadcast_agent_update(self, agent_name: str, action: str):
         """Broadcast agent status update"""
-        await self._broadcast_to_subscribers('agent_update', {
-            'agent_name': agent_name,
-            'action': action,
-            'timestamp': datetime.now().isoformat()
-        })
+        await self._broadcast_to_subscribers(
+            "agent_update",
+            {
+                "agent_name": agent_name,
+                "action": action,
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
 
     async def _broadcast_config_change(self, component: str, key: str, value: Any):
         """Broadcast configuration change"""
-        await self._broadcast_to_subscribers('config_change', {
-            'component': component,
-            'key': key,
-            'value': value,
-            'timestamp': datetime.now().isoformat()
-        })
+        await self._broadcast_to_subscribers(
+            "config_change",
+            {
+                "component": component,
+                "key": key,
+                "value": value,
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
 
-    def _get_current_user(self, credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    def _get_current_user(
+        self, credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())
+    ):
         """Get current authenticated user"""
         try:
             token = credentials.credentials
@@ -617,20 +659,19 @@ class ClaudeWebConsole:
             else:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid authentication token"
+                    detail="Invalid authentication token",
                 )
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required"
+                detail="Authentication required",
             )
 
     def _get_admin_user(self, user=Depends(_get_current_user)):
         """Get current user and ensure admin role"""
-        if user.get('role') not in ['admin']:
+        if user.get("role") not in ["admin"]:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admin access required"
+                status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
             )
         return user
 
@@ -638,9 +679,7 @@ class ClaudeWebConsole:
         """Verify JWT token and return user payload"""
         try:
             payload = jwt.decode(
-                token,
-                self.user_manager.secret_key,
-                algorithms=["HS256"]
+                token, self.user_manager.secret_key, algorithms=["HS256"]
             )
             return payload
         except jwt.ExpiredSignatureError:
@@ -735,34 +774,38 @@ class ClaudeWebConsole:
 </body>
 </html>
         """
-        
-        template_path = Path(WEB_CONFIG['template_dir']) / 'dashboard.html'
+
+        template_path = Path(WEB_CONFIG["template_dir"]) / "dashboard.html"
         if not template_path.exists():
-            with open(template_path, 'w') as f:
+            with open(template_path, "w") as f:
                 f.write(dashboard_template)
 
     def run(self):
         """Run the web console"""
         # Combine FastAPI and Socket.IO
         combined_app = socketio.ASGIApp(self.sio, self.app)
-        
+
         logging.info("Starting Claude Agent Web Administration Console")
-        logging.info(f"Dashboard available at http://{WEB_CONFIG['host']}:{WEB_CONFIG['port']}")
-        
+        logging.info(
+            f"Dashboard available at http://{WEB_CONFIG['host']}:{WEB_CONFIG['port']}"
+        )
+
         uvicorn.run(
             combined_app,
-            host=WEB_CONFIG['host'],
-            port=WEB_CONFIG['port'],
-            log_level="info"
+            host=WEB_CONFIG["host"],
+            port=WEB_CONFIG["port"],
+            log_level="info",
         )
+
 
 # ============================================================================
 # STATIC ASSETS GENERATOR
 # ============================================================================
 
+
 def generate_static_assets():
     """Generate CSS and JavaScript assets"""
-    
+
     # Dashboard CSS
     dashboard_css = """
 /* Claude Agent Administration Console Styles */
@@ -1321,32 +1364,35 @@ createApp({
 """
 
     # Create static asset directories and files
-    css_dir = Path(WEB_CONFIG['static_dir']) / 'css'
-    js_dir = Path(WEB_CONFIG['static_dir']) / 'js'
-    
+    css_dir = Path(WEB_CONFIG["static_dir"]) / "css"
+    js_dir = Path(WEB_CONFIG["static_dir"]) / "js"
+
     css_dir.mkdir(parents=True, exist_ok=True)
     js_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Write CSS file
-    with open(css_dir / 'dashboard.css', 'w') as f:
+    with open(css_dir / "dashboard.css", "w") as f:
         f.write(dashboard_css)
-    
+
     # Write JavaScript file
-    with open(js_dir / 'dashboard.js', 'w') as f:
+    with open(js_dir / "dashboard.js", "w") as f:
         f.write(dashboard_js)
+
 
 # ============================================================================
 # MAIN ENTRY POINT
 # ============================================================================
 
+
 def main():
     """Main entry point for web console"""
     # Generate static assets
     generate_static_assets()
-    
+
     # Create and run web console
     console = ClaudeWebConsole()
     console.run()
+
 
 if __name__ == "__main__":
     main()

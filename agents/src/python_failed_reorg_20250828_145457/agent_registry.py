@@ -5,24 +5,25 @@ Production-ready registry with binary protocol integration, Task tool compatibil
 and advanced orchestration capabilities for Claude Code.
 """
 
-import os
-import sys
-import yaml
-import json
 import asyncio
-import time
 import hashlib
+import json
+import logging
+import os
+import re
 import socket
 import struct
-from typing import Dict, List, Any, Optional, Set, Tuple, Callable
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
+import sys
+import threading
+import time
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-import logging
-import threading
-from collections import defaultdict, deque
-import re
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+
+import yaml
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -10,6 +10,7 @@ import os
 import sys
 from pathlib import Path
 
+
 class AgentPathResolver:
     """Provides dynamic path resolution for agent system"""
 
@@ -21,10 +22,11 @@ class AgentPathResolver:
     def _detect_paths(self):
         """Detect project and agent root paths dynamically"""
         # Check environment variables first
-        if os.environ.get('CLAUDE_PROJECT_ROOT'):
-            self._project_root = Path(os.environ['CLAUDE_PROJECT_ROOT'])
-            self._agents_root = Path(os.environ.get('CLAUDE_AGENTS_ROOT',
-                                                  self._project_root / 'agents'))
+        if os.environ.get("CLAUDE_PROJECT_ROOT"):
+            self._project_root = Path(os.environ["CLAUDE_PROJECT_ROOT"])
+            self._agents_root = Path(
+                os.environ.get("CLAUDE_AGENTS_ROOT", self._project_root / "agents")
+            )
             return
 
         # Try to detect based on current file location
@@ -34,14 +36,14 @@ class AgentPathResolver:
         # Look for characteristic files to identify structure
         for parent in [current_dir] + list(current_dir.parents):
             # Check if this is agents directory
-            if (parent / 'TEMPLATE.md').exists() and (parent / 'src').exists():
+            if (parent / "TEMPLATE.md").exists() and (parent / "src").exists():
                 self._agents_root = parent
                 self._project_root = parent.parent
                 break
             # Check if this is project root
-            elif (parent / 'CLAUDE.md').exists() and (parent / 'agents').exists():
+            elif (parent / "CLAUDE.md").exists() and (parent / "agents").exists():
                 self._project_root = parent
-                self._agents_root = parent / 'agents'
+                self._agents_root = parent / "agents"
                 break
 
         # Fallback
@@ -50,8 +52,8 @@ class AgentPathResolver:
             self._agents_root = current_dir
 
         # Set environment variables for other processes
-        os.environ['CLAUDE_PROJECT_ROOT'] = str(self._project_root)
-        os.environ['CLAUDE_AGENTS_ROOT'] = str(self._agents_root)
+        os.environ["CLAUDE_PROJECT_ROOT"] = str(self._project_root)
+        os.environ["CLAUDE_AGENTS_ROOT"] = str(self._agents_root)
 
     @property
     def project_root(self):
@@ -79,34 +81,41 @@ class AgentPathResolver:
 
     def get_config_path(self, config_name):
         """Get path to configuration file"""
-        return self.resolve_agent_path(f'config/{config_name}')
+        return self.resolve_agent_path(f"config/{config_name}")
 
     def get_binary_path(self, binary_name):
         """Get path to binary file"""
-        return self.resolve_agent_path(f'binary-communications-system/{binary_name}')
+        return self.resolve_agent_path(f"binary-communications-system/{binary_name}")
 
     def get_src_path(self, lang, filename):
         """Get path to source file"""
-        return self.resolve_agent_path(f'src/{lang}/{filename}')
+        return self.resolve_agent_path(f"src/{lang}/{filename}")
+
 
 # Global instance for easy importing
 path_resolver = AgentPathResolver()
+
 
 # Convenience functions
 def get_project_root():
     return path_resolver.project_root
 
+
 def get_agents_root():
     return path_resolver.agents_root
+
 
 def resolve_agent_path(relative_path):
     return path_resolver.resolve_agent_path(relative_path)
 
+
 def resolve_project_path(relative_path):
     return path_resolver.resolve_project_path(relative_path)
 
+
 def add_to_python_path():
     path_resolver.add_to_python_path()
+
 
 # New helpers for reorganized modules
 def get_shadowgit_root() -> Path:
@@ -129,6 +138,7 @@ def get_shadowgit_root() -> Path:
 
     return shadowgit_root
 
+
 def get_crypto_pow_root() -> Path:
     """
     Get crypto POW module root directory.
@@ -148,6 +158,7 @@ def get_crypto_pow_root() -> Path:
 
     return crypto_pow_root
 
+
 def get_shadowgit_paths() -> dict:
     """
     DEPRECATED: Legacy function for compatibility.
@@ -156,10 +167,11 @@ def get_shadowgit_paths() -> dict:
     Returns dict with shadowgit path components.
     """
     import warnings
+
     warnings.warn(
         "get_shadowgit_paths() is deprecated. Use get_shadowgit_root() instead.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     shadowgit_root = get_shadowgit_root()
@@ -171,6 +183,7 @@ def get_shadowgit_paths() -> dict:
         "analysis": shadowgit_root / "analysis",
         "deployment": shadowgit_root / "deployment",
     }
+
 
 # Auto-add to Python path when imported
 add_to_python_path()

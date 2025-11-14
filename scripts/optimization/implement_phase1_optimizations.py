@@ -5,16 +5,17 @@ Leverages AVX2 SIMD operations for maximum performance
 Integrates Trie matcher for O(1) lookups
 """
 
-import os
-import sys
-import json
-import time
 import hashlib
-import numpy as np
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-import subprocess
+import json
 import logging
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 # Add project paths
 sys.path.append(str(Path(__file__).parent / "agents" / "src" / "python"))
@@ -22,54 +23,51 @@ sys.path.append(str(Path(__file__).parent / "agents" / "src" / "python"))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class Phase1ContextOptimizer:
     """
     Implements Phase 1 optimizations:
     1. Vector index optimization (simulated HNSW with AVX2)
     2. Trie matcher integration for O(1) lookups
     """
-    
+
     def __init__(self):
         self.avx2_available = self._check_avx2()
         self.trie_matcher = None
         self.context_chopper = None
         self._initialize_components()
-        
+
     def _check_avx2(self) -> bool:
         """Check if AVX2 is available"""
         try:
             result = subprocess.run(
-                ["grep", "avx2", "/proc/cpuinfo"],
-                capture_output=True,
-                text=True
+                ["grep", "avx2", "/proc/cpuinfo"], capture_output=True, text=True
             )
             return result.returncode == 0
         except:
             return False
-            
+
     def _initialize_components(self):
         """Initialize trie matcher and context chopper"""
         try:
-            from trie_keyword_matcher import TrieKeywordMatcher
             from intelligent_context_chopper import IntelligentContextChopper
-            
+            from trie_keyword_matcher import TrieKeywordMatcher
+
             self.trie_matcher = TrieKeywordMatcher()
             self.context_chopper = IntelligentContextChopper(
-                max_context_tokens=8000,
-                security_mode=True,
-                use_shadowgit=True
+                max_context_tokens=8000, security_mode=True, use_shadowgit=True
             )
             logger.info("✓ Components initialized successfully")
         except ImportError as e:
             logger.warning(f"Component import failed: {e}")
-            
+
     def implement_vector_optimization(self):
         """
         Implement vector index optimization using AVX2
         Since pgvector doesn't support HNSW directly, we'll optimize queries
         """
         logger.info("Implementing vector optimization with AVX2...")
-        
+
         # Create optimized vector operations using NumPy (which uses SIMD)
         optimization_sql = """
         -- Create helper function for fast cosine similarity using cube extension
@@ -108,17 +106,26 @@ class Phase1ContextOptimizer:
         ON git_intelligence.context_cache 
         USING ivfflat (embedding vector_cosine_ops);
         """
-        
+
         # Execute optimization
         try:
             result = subprocess.run(
-                ["docker", "exec", "-i", "claude-postgres", "psql", 
-                 "-U", "claude_agent", "-d", "claude_agents_auth"],
+                [
+                    "docker",
+                    "exec",
+                    "-i",
+                    "claude-postgres",
+                    "psql",
+                    "-U",
+                    "claude_agent",
+                    "-d",
+                    "claude_agents_auth",
+                ],
                 input=optimization_sql,
                 text=True,
-                capture_output=True
+                capture_output=True,
             )
-            
+
             if result.returncode == 0:
                 logger.info("✓ Vector optimization implemented successfully")
                 return True
@@ -128,13 +135,13 @@ class Phase1ContextOptimizer:
         except Exception as e:
             logger.error(f"Error implementing vector optimization: {e}")
             return False
-            
+
     def integrate_trie_matcher(self):
         """
         Integrate Trie matcher with context chopper for O(1) lookups
         """
         logger.info("Integrating Trie matcher for O(1) pattern matching...")
-        
+
         # Create integrated optimizer
         integrated_code = '''
 import sys
@@ -245,21 +252,27 @@ if __name__ == "__main__":
     print(f"  - AVX2 available: {True}")  # Assuming it's available based on user input
     print(f"  - Shadowgit integration: {optimizer.chopper.shadowgit_available}")
 '''
-        
+
         # Write integrated optimizer
-        output_path = Path(__file__).parent / "agents" / "src" / "python" / "integrated_context_optimizer.py"
+        output_path = (
+            Path(__file__).parent
+            / "agents"
+            / "src"
+            / "python"
+            / "integrated_context_optimizer.py"
+        )
         output_path.write_text(integrated_code)
         logger.info(f"✓ Integrated optimizer written to {output_path}")
-        
+
         return True
-        
+
     def create_avx2_helper(self):
         """
         Create AVX2 optimized helper for vector operations
         Uses NumPy which automatically leverages AVX2 when available
         """
         logger.info("Creating AVX2 optimized vector operations...")
-        
+
         avx2_code = '''
 import numpy as np
 import time
@@ -337,128 +350,147 @@ if __name__ == "__main__":
     ops = AVX2VectorOperations()
     ops.benchmark_avx2()
 '''
-        
+
         # Write AVX2 helper
-        output_path = Path(__file__).parent / "agents" / "src" / "python" / "avx2_vector_operations.py"
+        output_path = (
+            Path(__file__).parent
+            / "agents"
+            / "src"
+            / "python"
+            / "avx2_vector_operations.py"
+        )
         output_path.write_text(avx2_code)
         logger.info(f"✓ AVX2 helper written to {output_path}")
-        
+
         return True
-        
+
     def run_performance_test(self):
         """Run performance test to validate optimizations"""
         logger.info("Running performance validation...")
-        
+
         test_results = {
             "timestamp": time.time(),
             "avx2_available": self.avx2_available,
-            "optimizations_applied": []
+            "optimizations_applied": [],
         }
-        
+
         # Test 1: Vector operations
         if self.avx2_available:
             try:
                 result = subprocess.run(
-                    ["python3", "-c", 
-                     "import numpy as np; import time; "
-                     "a = np.random.randn(10000, 512); b = np.random.randn(512); "
-                     "start = time.time(); c = np.dot(a, b); "
-                     "print(f'{(time.time()-start)*1000:.2f}ms for 10K vectors')"],
+                    [
+                        "python3",
+                        "-c",
+                        "import numpy as np; import time; "
+                        "a = np.random.randn(10000, 512); b = np.random.randn(512); "
+                        "start = time.time(); c = np.dot(a, b); "
+                        "print(f'{(time.time()-start)*1000:.2f}ms for 10K vectors')",
+                    ],
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
                 logger.info(f"Vector test: {result.stdout.strip()}")
                 test_results["vector_performance"] = result.stdout.strip()
             except Exception as e:
                 logger.error(f"Vector test failed: {e}")
-                
+
         # Test 2: Trie performance
         try:
             from trie_keyword_matcher import TrieKeywordMatcher
+
             trie = TrieKeywordMatcher()
-            
+
             # Insert patterns
             patterns = ["class", "def", "function", "import", "error"]
             for p in patterns:
                 trie.insert(p)
-                
+
             # Test lookups
             start = time.time()
             for _ in range(10000):
                 trie.search("class")
                 trie.search("notfound")
             elapsed = time.time() - start
-            
+
             logger.info(f"Trie test: 20K lookups in {elapsed*1000:.2f}ms")
             test_results["trie_performance"] = f"{20000/elapsed:.0f} lookups/sec"
         except Exception as e:
             logger.error(f"Trie test failed: {e}")
-            
+
         return test_results
-        
+
     def apply_all_optimizations(self):
         """Apply all Phase 1 optimizations"""
         logger.info("=" * 60)
         logger.info("PHASE 1 CONTEXT CHOPPING OPTIMIZATIONS")
         logger.info("=" * 60)
-        
+
         results = {
             "vector_optimization": False,
             "trie_integration": False,
             "avx2_helper": False,
-            "performance_test": {}
+            "performance_test": {},
         }
-        
+
         # 1. Vector optimization
         logger.info("\n1. Implementing Vector Index Optimization...")
         results["vector_optimization"] = self.implement_vector_optimization()
-        
+
         # 2. Trie integration
         logger.info("\n2. Integrating Trie Matcher...")
         results["trie_integration"] = self.integrate_trie_matcher()
-        
+
         # 3. AVX2 helper
         logger.info("\n3. Creating AVX2 Helper...")
         results["avx2_helper"] = self.create_avx2_helper()
-        
+
         # 4. Performance test
         logger.info("\n4. Running Performance Tests...")
         results["performance_test"] = self.run_performance_test()
-        
+
         # Summary
         logger.info("\n" + "=" * 60)
         logger.info("OPTIMIZATION SUMMARY")
         logger.info("=" * 60)
-        
-        success_count = sum([
-            results["vector_optimization"],
-            results["trie_integration"],
-            results["avx2_helper"]
-        ])
-        
+
+        success_count = sum(
+            [
+                results["vector_optimization"],
+                results["trie_integration"],
+                results["avx2_helper"],
+            ]
+        )
+
         logger.info(f"✓ Successful optimizations: {success_count}/3")
         logger.info(f"✓ AVX2 available: {self.avx2_available}")
-        
+
         if results["vector_optimization"]:
             logger.info("✓ Vector indexes optimized with IVFFlat")
         if results["trie_integration"]:
             logger.info("✓ Trie matcher integrated for O(1) lookups")
         if results["avx2_helper"]:
             logger.info("✓ AVX2 vector operations ready")
-            
+
         # Save results
         results_path = Path(__file__).parent / "phase1_optimization_results.json"
         with open(results_path, "w") as f:
             json.dump(results, f, indent=2, default=str)
         logger.info(f"\nResults saved to {results_path}")
-        
+
         return results
+
 
 if __name__ == "__main__":
     optimizer = Phase1ContextOptimizer()
     results = optimizer.apply_all_optimizations()
-    
-    if all([results["vector_optimization"], results["trie_integration"], results["avx2_helper"]]):
+
+    if all(
+        [
+            results["vector_optimization"],
+            results["trie_integration"],
+            results["avx2_helper"],
+        ]
+    ):
         logger.info("\n🎉 PHASE 1 OPTIMIZATIONS COMPLETE!")
         logger.info("The Intelligent Context Chopping system is now optimized with:")
         logger.info("  - Vector operations using IVFFlat approximation")

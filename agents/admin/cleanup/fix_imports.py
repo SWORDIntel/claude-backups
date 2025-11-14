@@ -4,9 +4,10 @@ Import Fixer for Claude Agent Framework
 Fixes import statements after directory reorganization
 """
 
+import glob
 import os
 import re
-import glob
+
 
 def fix_imports_in_file(file_path, moved_files_map):
     """Fix imports in a single Python file"""

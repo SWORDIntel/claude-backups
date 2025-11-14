@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 @dataclass
 class InstallationConfig:
     """Configuration for Claude installation"""
+
     # Installation preferences
     preferred_method: str = "npm"  # npm, pip, system, manual
     use_system_packages: bool = False
@@ -50,24 +51,24 @@ class InstallationConfig:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'InstallationConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "InstallationConfig":
         """Create from dictionary"""
         return cls(**data)
 
     def save_to_file(self, path: Path) -> None:
         """Save configuration to file"""
         path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open('w') as f:
+        with path.open("w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load_from_file(cls, path: Path) -> 'InstallationConfig':
+    def load_from_file(cls, path: Path) -> "InstallationConfig":
         """Load configuration from file"""
         if not path.exists():
             return cls()  # Return default config
 
         try:
-            with path.open('r') as f:
+            with path.open("r") as f:
                 data = json.load(f)
             return cls.from_dict(data)
         except (json.JSONDecodeError, TypeError):
@@ -89,7 +90,9 @@ class ClaudeEnvironmentValidator:
         # Check Python version
         python_version = sys.version_info
         if python_version < (3, 8):
-            issues.append(f"Python 3.8+ required, found {python_version.major}.{python_version.minor}")
+            issues.append(
+                f"Python 3.8+ required, found {python_version.major}.{python_version.minor}"
+            )
             system_ok = False
 
         # Check available disk space
@@ -97,7 +100,9 @@ class ClaudeEnvironmentValidator:
             disk_usage = os.statvfs(Path.home())
             free_space_gb = (disk_usage.f_frsize * disk_usage.f_bavail) / (1024**3)
             if free_space_gb < 1.0:  # Require at least 1GB free
-                issues.append(f"Insufficient disk space: {free_space_gb:.1f}GB available, 1GB required")
+                issues.append(
+                    f"Insufficient disk space: {free_space_gb:.1f}GB available, 1GB required"
+                )
                 system_ok = False
         except:
             issues.append("Could not check disk space")
@@ -113,9 +118,9 @@ class ClaudeEnvironmentValidator:
         if platform_issues:
             system_ok = False
 
-        self.validation_results['system_requirements'] = {
-            'passed': system_ok,
-            'issues': issues
+        self.validation_results["system_requirements"] = {
+            "passed": system_ok,
+            "issues": issues,
         }
 
         return system_ok, issues
@@ -130,9 +135,7 @@ class ClaudeEnvironmentValidator:
         for host in test_hosts:
             try:
                 subprocess.run(
-                    ["ping", "-c", "1", "-W", "3", host],
-                    capture_output=True,
-                    timeout=5
+                    ["ping", "-c", "1", "-W", "3", host], capture_output=True, timeout=5
                 )
                 return True
             except:
@@ -160,8 +163,9 @@ class ClaudeEnvironmentValidator:
 
         # Check for Xcode command line tools
         try:
-            subprocess.run(["xcode-select", "--print-path"],
-                         capture_output=True, check=True)
+            subprocess.run(
+                ["xcode-select", "--print-path"], capture_output=True, check=True
+            )
         except:
             issues.append("Xcode command line tools not installed")
 
@@ -178,7 +182,9 @@ class ClaudeEnvironmentValidator:
 
         # Check for essential build tools
         essential_tools = ["gcc", "g++", "make"]
-        missing_tools = [tool for tool in essential_tools if not self._command_exists(tool)]
+        missing_tools = [
+            tool for tool in essential_tools if not self._command_exists(tool)
+        ]
 
         if missing_tools:
             issues.append(f"Missing build tools: {', '.join(missing_tools)}")
@@ -222,7 +228,7 @@ class ClaudeEnvironmentValidator:
         target_dirs = [
             Path.home() / ".local" / "bin",
             Path.home() / ".config" / "claude",
-            Path.home() / ".local" / "share" / "claude"
+            Path.home() / ".local" / "share" / "claude",
         ]
 
         if self.config.custom_install_path:
@@ -242,9 +248,9 @@ class ClaudeEnvironmentValidator:
                 issues.append(f"Cannot access {directory}: {e}")
                 paths_ok = False
 
-        self.validation_results['installation_paths'] = {
-            'passed': paths_ok,
-            'issues': issues
+        self.validation_results["installation_paths"] = {
+            "passed": paths_ok,
+            "issues": issues,
         }
 
         return paths_ok, issues
@@ -262,8 +268,9 @@ class ClaudeEnvironmentValidator:
             else:
                 # Check Node.js version
                 try:
-                    result = subprocess.run(["node", "--version"],
-                                          capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["node", "--version"], capture_output=True, text=True
+                    )
                     version_str = result.stdout.strip().lstrip("v")
                     major_version = int(version_str.split(".")[0])
                     if major_version < 16:
@@ -294,10 +301,7 @@ class ClaudeEnvironmentValidator:
                 issues.append("docker not found (required for database installation)")
                 deps_ok = False
 
-        self.validation_results['dependencies'] = {
-            'passed': deps_ok,
-            'issues': issues
-        }
+        self.validation_results["dependencies"] = {"passed": deps_ok, "issues": issues}
 
         return deps_ok, issues
 
@@ -333,9 +337,9 @@ class ClaudeEnvironmentValidator:
                 "architecture": platform.machine(),
                 "python_version": sys.version,
                 "home_directory": str(Path.home()),
-                "current_directory": str(Path.cwd())
+                "current_directory": str(Path.cwd()),
             },
-            "configuration": self.config.to_dict()
+            "configuration": self.config.to_dict(),
         }
 
 
@@ -355,7 +359,7 @@ class ClaudeInstallationManager:
         state["timestamp"] = time.time()
         state["version"] = "2.0"
 
-        with self.state_file.open('w') as f:
+        with self.state_file.open("w") as f:
             json.dump(state, f, indent=2)
 
     def load_installation_state(self) -> Optional[Dict[str, Any]]:
@@ -364,7 +368,7 @@ class ClaudeInstallationManager:
             return None
 
         try:
-            with self.state_file.open('r') as f:
+            with self.state_file.open("r") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError):
             return None
@@ -383,7 +387,7 @@ class ClaudeInstallationManager:
             Path.home() / ".zshrc",
             Path.home() / ".profile",
             self.config_dir / "installer_config.json",
-            self.state_file
+            self.state_file,
         ]
 
         for file_path in files_to_backup:
@@ -391,6 +395,7 @@ class ClaudeInstallationManager:
                 backup_file = backup_path / file_path.name
                 try:
                     import shutil
+
                     shutil.copy2(file_path, backup_file)
                 except:
                     pass  # Continue with other files
@@ -412,6 +417,7 @@ class ClaudeInstallationManager:
                         target = self.config_dir / backup_file.name
 
                     import shutil
+
                     shutil.copy2(backup_file, target)
 
             return True
@@ -424,7 +430,7 @@ class ClaudeInstallationManager:
         # Remove potentially broken wrapper scripts
         wrapper_paths = [
             Path.home() / ".local" / "bin" / "claude",
-            Path.home() / ".local" / "bin" / "claude-enhanced"
+            Path.home() / ".local" / "bin" / "claude-enhanced",
         ]
 
         for wrapper_path in wrapper_paths:
@@ -482,4 +488,5 @@ if __name__ == "__main__":
 
     print("\nValidation Report:")
     import pprint
+
     pprint.pprint(validator.get_validation_report())

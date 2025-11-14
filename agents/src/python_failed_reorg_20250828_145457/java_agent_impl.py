@@ -18,21 +18,22 @@ This agent provides comprehensive Java development capabilities including:
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
+import re
 import subprocess
 import tempfile
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Any, Tuple
-import hashlib
-import re
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class JavaProjectType(Enum):
     SPRING_BOOT_WEB = "spring-boot-web"
@@ -43,9 +44,11 @@ class JavaProjectType(Enum):
     REACTIVE_SERVICE = "reactive-service"
     STANDALONE_APP = "standalone-app"
 
+
 class BuildTool(Enum):
     MAVEN = "maven"
     GRADLE = "gradle"
+
 
 class DatabaseType(Enum):
     H2 = "h2"
@@ -54,17 +57,20 @@ class DatabaseType(Enum):
     ORACLE = "oracle"
     MONGODB = "mongodb"
 
+
 class JavaVersion(Enum):
     JAVA_8 = "8"
     JAVA_11 = "11"
     JAVA_17 = "17"
     JAVA_21 = "21"
 
+
 class SecurityType(Enum):
     BASIC = "basic"
     JWT = "jwt"
     OAUTH2 = "oauth2"
     LDAP = "ldap"
+
 
 @dataclass
 class JavaProject:
@@ -82,6 +88,7 @@ class JavaProject:
     security: Optional[SecurityType] = None
     packaging: str = "jar"
 
+
 @dataclass
 class ServiceConfig:
     port: int = 8080
@@ -91,6 +98,7 @@ class ServiceConfig:
     enable_metrics: bool = True
     cors_enabled: bool = True
     profile: str = "dev"
+
 
 @dataclass
 class PerformanceMetrics:
@@ -102,6 +110,7 @@ class PerformanceMetrics:
     heap_usage_mb: float
     thread_count: int
 
+
 @dataclass
 class TestCoverageResult:
     total_lines: int
@@ -111,9 +120,10 @@ class TestCoverageResult:
     passed_tests: int
     failed_tests: int
 
+
 class JavaAgent:
     """Elite Java enterprise application development specialist"""
-    
+
     def __init__(self):
         self.agent_id = "java-internal-agent-v7"
         self.capabilities = {
@@ -126,51 +136,62 @@ class JavaAgent:
             "containerization": True,
             "performance_optimization": True,
             "testing_frameworks": True,
-            "build_automation": True
+            "build_automation": True,
         }
         self.active_projects = {}
         self.maven_cache = {}
         self.performance_profiles = {}
-        
-    async def create_project(self, config: JavaProject, service_config: Optional[ServiceConfig] = None) -> Dict[str, Any]:
+
+    async def create_project(
+        self, config: JavaProject, service_config: Optional[ServiceConfig] = None
+    ) -> Dict[str, Any]:
         """Create new Java project with enterprise configuration"""
         try:
             logger.info(f"Creating Java project: {config.name}")
-            
+
             # Set defaults
             if not config.artifact_id:
                 config.artifact_id = config.name.replace("-", "").lower()
-            
+
             # Create project directory
             config.path.mkdir(parents=True, exist_ok=True)
-            
+
             # Initialize build configuration
             if config.build_tool == BuildTool.MAVEN:
                 await self._create_maven_project(config)
             else:
                 await self._create_gradle_project(config)
-            
+
             # Create project structure based on type
             await self._create_project_structure(config)
-            
+
             # Generate application code
-            if config.project_type in [JavaProjectType.SPRING_BOOT_WEB, JavaProjectType.SPRING_BOOT_API]:
-                await self._create_spring_boot_application(config, service_config or ServiceConfig())
+            if config.project_type in [
+                JavaProjectType.SPRING_BOOT_WEB,
+                JavaProjectType.SPRING_BOOT_API,
+            ]:
+                await self._create_spring_boot_application(
+                    config, service_config or ServiceConfig()
+                )
             elif config.project_type == JavaProjectType.MICROSERVICE:
-                await self._create_microservice(config, service_config or ServiceConfig())
+                await self._create_microservice(
+                    config, service_config or ServiceConfig()
+                )
             elif config.project_type == JavaProjectType.REACTIVE_SERVICE:
-                await self._create_reactive_service(config, service_config or ServiceConfig())
+                await self._create_reactive_service(
+                    config, service_config or ServiceConfig()
+                )
             else:
                 await self._create_basic_application(config)
-            
+
             # Setup additional configurations
             await self._setup_database_configuration(config)
             await self._setup_security_configuration(config)
             await self._create_docker_configuration(config)
             await self._create_test_configuration(config)
-            
+
             self.active_projects[config.name] = config
-            
+
             return {
                 "status": "success",
                 "project": config.name,
@@ -178,13 +199,13 @@ class JavaAgent:
                 "type": config.project_type.value,
                 "java_version": config.java_version.value,
                 "build_tool": config.build_tool.value,
-                "spring_boot_version": config.spring_boot_version
+                "spring_boot_version": config.spring_boot_version,
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to create project {config.name}: {e}")
             return {"status": "error", "error": str(e)}
-    
+
     async def _create_maven_project(self, config: JavaProject) -> None:
         """Create Maven pom.xml configuration"""
         pom_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -320,9 +341,9 @@ class JavaAgent:
     
 </project>
 """
-        
+
         (config.path / "pom.xml").write_text(pom_xml)
-    
+
     async def _create_gradle_project(self, config: JavaProject) -> None:
         """Create Gradle build.gradle configuration"""
         build_gradle = f"""plugins {{
@@ -357,24 +378,41 @@ tasks.named('test') {{
     useJUnitPlatform()
 }}
 """
-        
+
         (config.path / "build.gradle").write_text(build_gradle)
-    
+
     async def _create_project_structure(self, config: JavaProject) -> None:
         """Create standard Java project structure"""
         # Maven/Gradle structure
-        src_main_java = config.path / "src/main/java" / config.group_id.replace(".", "/") / config.artifact_id
+        src_main_java = (
+            config.path
+            / "src/main/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
         src_main_resources = config.path / "src/main/resources"
-        src_test_java = config.path / "src/test/java" / config.group_id.replace(".", "/") / config.artifact_id
-        
+        src_test_java = (
+            config.path
+            / "src/test/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
+
         for directory in [src_main_java, src_main_resources, src_test_java]:
             directory.mkdir(parents=True, exist_ok=True)
-    
-    async def _create_spring_boot_application(self, config: JavaProject, service_config: ServiceConfig) -> None:
+
+    async def _create_spring_boot_application(
+        self, config: JavaProject, service_config: ServiceConfig
+    ) -> None:
         """Create Spring Boot application with controllers and services"""
         package_name = f"{config.group_id}.{config.artifact_id}"
-        src_dir = config.path / "src/main/java" / config.group_id.replace(".", "/") / config.artifact_id
-        
+        src_dir = (
+            config.path
+            / "src/main/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
+
         # Main Application class
         main_class = f"""package {package_name};
 
@@ -389,13 +427,15 @@ public class {config.name.title().replace("-", "")}Application {{
     }}
 }}
 """
-        
-        (src_dir / f"{config.name.title().replace('-', '')}Application.java").write_text(main_class)
-        
+
+        (
+            src_dir / f"{config.name.title().replace('-', '')}Application.java"
+        ).write_text(main_class)
+
         # REST Controller
         controller_dir = src_dir / "controller"
         controller_dir.mkdir(exist_ok=True)
-        
+
         controller_class = f"""package {package_name}.controller;
 
 import org.springframework.web.bind.annotation.*;
@@ -424,13 +464,15 @@ public class {config.name.title().replace("-", "")}Controller {{
     }}
 }}
 """
-        
-        (controller_dir / f"{config.name.title().replace('-', '')}Controller.java").write_text(controller_class)
-        
+
+        (
+            controller_dir / f"{config.name.title().replace('-', '')}Controller.java"
+        ).write_text(controller_class)
+
         # Service layer
         service_dir = src_dir / "service"
         service_dir.mkdir(exist_ok=True)
-        
+
         service_class = f"""package {package_name}.service;
 
 import org.springframework.stereotype.Service;
@@ -449,13 +491,15 @@ public class {config.name.title().replace("-", "")}Service {{
     }}
 }}
 """
-        
-        (service_dir / f"{config.name.title().replace('-', '')}Service.java").write_text(service_class)
-        
+
+        (
+            service_dir / f"{config.name.title().replace('-', '')}Service.java"
+        ).write_text(service_class)
+
         # Model classes
         model_dir = src_dir / "model"
         model_dir.mkdir(exist_ok=True)
-        
+
         model_class = f"""package {package_name}.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -489,9 +533,9 @@ public class StatusResponse {{
     public void setVersion(String version) {{ this.version = version; }}
 }}
 """
-        
+
         (model_dir / "StatusResponse.java").write_text(model_class)
-        
+
         # Application properties
         app_properties = f"""server.port={service_config.port}
 server.servlet.context-path={service_config.context_path}
@@ -513,17 +557,21 @@ info.app.name={config.name}
 info.app.version={config.version}
 info.app.description=Java application built with Spring Boot
 """
-        
-        (config.path / "src/main/resources/application.properties").write_text(app_properties)
-    
-    async def _create_microservice(self, config: JavaProject, service_config: ServiceConfig) -> None:
+
+        (config.path / "src/main/resources/application.properties").write_text(
+            app_properties
+        )
+
+    async def _create_microservice(
+        self, config: JavaProject, service_config: ServiceConfig
+    ) -> None:
         """Create microservice with Spring Cloud integration"""
         await self._create_spring_boot_application(config, service_config)
-        
+
         # Add Spring Cloud dependencies to pom.xml
         pom_path = config.path / "pom.xml"
         pom_content = pom_path.read_text()
-        
+
         # Add Spring Cloud BOM
         spring_cloud_deps = """        
         <dependency>
@@ -546,24 +594,33 @@ info.app.description=Java application built with Spring Boot
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
         </dependency>
     </dependencies>"""
-        
+
         # Insert before closing dependencies tag
         pom_content = pom_content.replace("    </dependencies>", spring_cloud_deps)
         pom_path.write_text(pom_content)
-        
+
         # Bootstrap properties for service discovery
         bootstrap_props = f"""spring.application.name={config.name}
 spring.cloud.config.uri=http://config-server:8888
 eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka
 """
-        
-        (config.path / "src/main/resources/bootstrap.properties").write_text(bootstrap_props)
-    
-    async def _create_reactive_service(self, config: JavaProject, service_config: ServiceConfig) -> None:
+
+        (config.path / "src/main/resources/bootstrap.properties").write_text(
+            bootstrap_props
+        )
+
+    async def _create_reactive_service(
+        self, config: JavaProject, service_config: ServiceConfig
+    ) -> None:
         """Create reactive service with WebFlux"""
         package_name = f"{config.group_id}.{config.artifact_id}"
-        src_dir = config.path / "src/main/java" / config.group_id.replace(".", "/") / config.artifact_id
-        
+        src_dir = (
+            config.path
+            / "src/main/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
+
         # Add WebFlux dependency to pom.xml
         pom_path = config.path / "pom.xml"
         if pom_path.exists():
@@ -574,14 +631,14 @@ eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
     </dependencies>"""
-            
+
             pom_content = pom_content.replace("    </dependencies>", webflux_dep)
             pom_path.write_text(pom_content)
-        
+
         # Reactive controller
         controller_dir = src_dir / "controller"
         controller_dir.mkdir(exist_ok=True)
-        
+
         reactive_controller = f"""package {package_name}.controller;
 
 import org.springframework.web.bind.annotation.*;
@@ -609,14 +666,19 @@ public class ReactiveController {{
     }}
 }}
 """
-        
+
         (controller_dir / "ReactiveController.java").write_text(reactive_controller)
-    
+
     async def _create_basic_application(self, config: JavaProject) -> None:
         """Create basic Java application"""
         package_name = f"{config.group_id}.{config.artifact_id}"
-        src_dir = config.path / "src/main/java" / config.group_id.replace(".", "/") / config.artifact_id
-        
+        src_dir = (
+            config.path
+            / "src/main/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
+
         main_class = f"""package {package_name};
 
 public class {config.name.title().replace("-", "")}Application {{
@@ -628,25 +690,32 @@ public class {config.name.title().replace("-", "")}Application {{
     }}
 }}
 """
-        
-        (src_dir / f"{config.name.title().replace('-', '')}Application.java").write_text(main_class)
-    
+
+        (
+            src_dir / f"{config.name.title().replace('-', '')}Application.java"
+        ).write_text(main_class)
+
     async def _setup_database_configuration(self, config: JavaProject) -> None:
         """Setup database configuration and entities"""
         if not config.database:
             return
-            
+
         package_name = f"{config.group_id}.{config.artifact_id}"
-        src_dir = config.path / "src/main/java" / config.group_id.replace(".", "/") / config.artifact_id
-        
+        src_dir = (
+            config.path
+            / "src/main/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
+
         # Repository layer
         repository_dir = src_dir / "repository"
         repository_dir.mkdir(exist_ok=True)
-        
+
         # Entity layer
         entity_dir = src_dir / "entity"
         entity_dir.mkdir(exist_ok=True)
-        
+
         # Sample entity
         entity_class = f"""package {package_name}.entity;
 
@@ -693,9 +762,9 @@ public class User {{
     public void setCreatedAt(LocalDateTime createdAt) {{ this.createdAt = createdAt; }}
 }}
 """
-        
+
         (entity_dir / "User.java").write_text(entity_class)
-        
+
         # Repository interface
         repository_class = f"""package {package_name}.repository;
 
@@ -714,9 +783,9 @@ public interface UserRepository extends JpaRepository<User, Long> {{
     boolean existsByUsername(String username);
 }}
 """
-        
+
         (repository_dir / "UserRepository.java").write_text(repository_class)
-        
+
         # Database configuration
         if config.database == DatabaseType.POSTGRESQL:
             db_properties = """
@@ -749,25 +818,30 @@ spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 """
-        
+
         # Append to application.properties
         app_props_path = config.path / "src/main/resources/application.properties"
         if app_props_path.exists():
-            with open(app_props_path, 'a') as f:
+            with open(app_props_path, "a") as f:
                 f.write(db_properties)
-    
+
     async def _setup_security_configuration(self, config: JavaProject) -> None:
         """Setup Spring Security configuration"""
         if not config.security:
             return
-            
+
         package_name = f"{config.group_id}.{config.artifact_id}"
-        src_dir = config.path / "src/main/java" / config.group_id.replace(".", "/") / config.artifact_id
-        
+        src_dir = (
+            config.path
+            / "src/main/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
+
         # Security configuration
         security_dir = src_dir / "config"
         security_dir.mkdir(exist_ok=True)
-        
+
         if config.security == SecurityType.JWT:
             security_config = f"""package {package_name}.config;
 
@@ -839,9 +913,9 @@ public class SecurityConfig {{
     }}
 }}
 """
-        
+
         (security_dir / "SecurityConfig.java").write_text(security_config)
-    
+
     async def _create_docker_configuration(self, config: JavaProject) -> None:
         """Create Docker configuration"""
         dockerfile_content = f"""# Multi-stage build for Java application
@@ -884,9 +958,9 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 # Run application
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 """
-        
+
         (config.path / "Dockerfile").write_text(dockerfile_content)
-        
+
         # Docker Compose for development
         compose_content = f"""version: '3.8'
 
@@ -922,14 +996,19 @@ networks:
   app-network:
     driver: bridge
 """
-        
+
         (config.path / "docker-compose.yml").write_text(compose_content)
-    
+
     async def _create_test_configuration(self, config: JavaProject) -> None:
         """Create test configuration with JUnit and TestContainers"""
         package_name = f"{config.group_id}.{config.artifact_id}"
-        test_dir = config.path / "src/test/java" / config.group_id.replace(".", "/") / config.artifact_id
-        
+        test_dir = (
+            config.path
+            / "src/test/java"
+            / config.group_id.replace(".", "/")
+            / config.artifact_id
+        )
+
         # Integration test
         integration_test = f"""package {package_name};
 
@@ -947,13 +1026,15 @@ class {config.name.title().replace("-", "")}ApplicationTests {{
     }}
 }}
 """
-        
-        (test_dir / f"{config.name.title().replace('-', '')}ApplicationTests.java").write_text(integration_test)
-        
+
+        (
+            test_dir / f"{config.name.title().replace('-', '')}ApplicationTests.java"
+        ).write_text(integration_test)
+
         # Controller test
         controller_test_dir = test_dir / "controller"
         controller_test_dir.mkdir(exist_ok=True)
-        
+
         controller_test = f"""package {package_name}.controller;
 
 import org.junit.jupiter.api.Test;
@@ -983,105 +1064,108 @@ class {config.name.title().replace("-", "")}ControllerTest {{
     }}
 }}
 """
-        
-        (controller_test_dir / f"{config.name.title().replace('-', '')}ControllerTest.java").write_text(controller_test)
-        
+
+        (
+            controller_test_dir
+            / f"{config.name.title().replace('-', '')}ControllerTest.java"
+        ).write_text(controller_test)
+
         # Test application properties
         test_props = """spring.datasource.url=jdbc:h2:mem:testdb
 spring.datasource.driver-class-name=org.h2.Driver
 spring.jpa.hibernate.ddl-auto=create-drop
 logging.level.org.springframework.web=DEBUG
 """
-        
+
         test_resources = config.path / "src/test/resources"
         test_resources.mkdir(exist_ok=True)
         (test_resources / "application-test.properties").write_text(test_props)
-    
+
     async def build_project(self, project_name: str) -> Dict[str, Any]:
         """Build Java project using Maven or Gradle"""
         try:
             logger.info(f"Building Java project: {project_name}")
-            
+
             project = self.active_projects.get(project_name)
             if not project:
                 raise ValueError(f"Project {project_name} not found")
-            
+
             # Simulate build process
             build_start = time.time()
-            
+
             if project.build_tool == BuildTool.MAVEN:
                 await self._maven_build(project)
             else:
                 await self._gradle_build(project)
-            
+
             build_time = int((time.time() - build_start) * 1000)
-            
+
             return {
                 "status": "success",
                 "build_tool": project.build_tool.value,
                 "build_time_ms": build_time,
-                "artifact_path": f"target/{project.artifact_id}-{project.version}.jar"
+                "artifact_path": f"target/{project.artifact_id}-{project.version}.jar",
             }
-            
+
         except Exception as e:
             logger.error(f"Build failed: {e}")
             return {"status": "error", "error": str(e)}
-    
+
     async def _maven_build(self, project: JavaProject) -> None:
         """Execute Maven build"""
         await asyncio.sleep(3.0)  # Simulate build time
         logger.info("Maven build completed successfully")
-    
+
     async def _gradle_build(self, project: JavaProject) -> None:
         """Execute Gradle build"""
         await asyncio.sleep(2.5)  # Simulate build time
         logger.info("Gradle build completed successfully")
-    
+
     async def run_tests(self, project_name: str) -> TestCoverageResult:
         """Run tests and generate coverage report"""
         try:
             logger.info(f"Running tests for {project_name}")
-            
+
             project = self.active_projects.get(project_name)
             if not project:
                 raise ValueError(f"Project {project_name} not found")
-            
+
             # Simulate test execution
             await asyncio.sleep(5.0)
-            
+
             # Generate realistic test results
             total_lines = 1500
             covered_lines = int(total_lines * 0.85)  # 85% coverage
             test_count = 25
-            
+
             return TestCoverageResult(
                 total_lines=total_lines,
                 covered_lines=covered_lines,
                 coverage_percentage=round((covered_lines / total_lines) * 100, 2),
                 test_count=test_count,
                 passed_tests=test_count - 1,
-                failed_tests=1
+                failed_tests=1,
             )
-            
+
         except Exception as e:
             logger.error(f"Test execution failed: {e}")
             return TestCoverageResult(0, 0, 0.0, 0, 0, 0)
-    
+
     async def optimize_performance(self, project_name: str) -> PerformanceMetrics:
         """Optimize JVM performance and measure metrics"""
         try:
             logger.info(f"Optimizing performance for {project_name}")
-            
+
             project = self.active_projects.get(project_name)
             if not project:
                 raise ValueError(f"Project {project_name} not found")
-            
+
             # Apply JVM optimizations
             await self._apply_jvm_optimizations(project)
-            
+
             # Simulate performance measurement
             await asyncio.sleep(3.0)
-            
+
             return PerformanceMetrics(
                 startup_time_ms=2500,
                 memory_usage_mb=256.8,
@@ -1089,13 +1173,13 @@ logging.level.org.springframework.web=DEBUG
                 throughput_requests_per_second=12000,
                 response_time_p95_ms=15.7,
                 heap_usage_mb=180.4,
-                thread_count=50
+                thread_count=50,
             )
-            
+
         except Exception as e:
             logger.error(f"Performance optimization failed: {e}")
             return PerformanceMetrics(0, 0.0, 0.0, 0, 0.0, 0.0, 0)
-    
+
     async def _apply_jvm_optimizations(self, project: JavaProject) -> None:
         """Apply JVM performance optimizations"""
         # Create JVM options file
@@ -1108,16 +1192,17 @@ logging.level.org.springframework.web=DEBUG
 -XX:+UseStringDeduplication
 -server
 """
-        
+
         (project.path / ".jvmopts").write_text(jvm_opts)
+
 
 async def main():
     """Test the Java agent implementation"""
     agent = JavaAgent()
-    
+
     print("☕ JAVA-INTERNAL-AGENT v7.0.0 Test Suite")
     print("=" * 50)
-    
+
     # Test 1: Create Spring Boot web service
     print("\n🚀 Creating Spring Boot web service...")
     web_config = JavaProject(
@@ -1128,32 +1213,29 @@ async def main():
         build_tool=BuildTool.MAVEN,
         group_id="com.example",
         database=DatabaseType.POSTGRESQL,
-        security=SecurityType.JWT
+        security=SecurityType.JWT,
     )
-    
+
     service_config = ServiceConfig(
-        port=8080,
-        enable_swagger=True,
-        enable_actuator=True,
-        cors_enabled=True
+        port=8080, enable_swagger=True, enable_actuator=True, cors_enabled=True
     )
-    
+
     result = await agent.create_project(web_config, service_config)
     print(f"Spring Boot service creation: {result['status']}")
-    if result['status'] == 'success':
+    if result["status"] == "success":
         print(f"  Path: {result['path']}")
         print(f"  Java version: {result['java_version']}")
         print(f"  Build tool: {result['build_tool']}")
         print(f"  Spring Boot version: {result['spring_boot_version']}")
-    
+
     # Test 2: Build project
     print("\n🔨 Building project with Maven...")
     build_result = await agent.build_project("user-service")
-    if build_result['status'] == 'success':
+    if build_result["status"] == "success":
         print(f"Build successful: ✓")
         print(f"  Build time: {build_result['build_time_ms']}ms")
         print(f"  Artifact: {build_result['artifact_path']}")
-    
+
     # Test 3: Run tests with coverage
     print("\n🧪 Running tests and coverage analysis...")
     test_result = await agent.run_tests("user-service")
@@ -1163,7 +1245,7 @@ async def main():
     print(f"  Failed: {test_result.failed_tests}")
     print(f"  Coverage: {test_result.coverage_percentage}%")
     print(f"  Lines covered: {test_result.covered_lines}/{test_result.total_lines}")
-    
+
     # Test 4: Performance optimization
     print("\n⚡ Optimizing JVM performance...")
     perf_metrics = await agent.optimize_performance("user-service")
@@ -1174,7 +1256,7 @@ async def main():
     print(f"  Throughput: {perf_metrics.throughput_requests_per_second:,} req/sec")
     print(f"  P95 response time: {perf_metrics.response_time_p95_ms}ms")
     print(f"  Thread count: {perf_metrics.thread_count}")
-    
+
     # Test 5: Create microservice
     print("\n🌐 Creating microservice with Spring Cloud...")
     micro_config = JavaProject(
@@ -1183,31 +1265,31 @@ async def main():
         project_type=JavaProjectType.MICROSERVICE,
         java_version=JavaVersion.JAVA_17,
         database=DatabaseType.POSTGRESQL,
-        security=SecurityType.JWT
+        security=SecurityType.JWT,
     )
-    
+
     micro_result = await agent.create_project(micro_config)
-    if micro_result['status'] == 'success':
+    if micro_result["status"] == "success":
         print(f"Microservice created: ✓")
         print(f"  Spring Cloud integration: ✓")
         print(f"  Service discovery: ✓")
         print(f"  Configuration management: ✓")
-    
+
     # Test 6: Create reactive service
     print("\n🔄 Creating reactive service with WebFlux...")
     reactive_config = JavaProject(
         name="reactive-api",
         path=Path("/tmp/java-projects/reactive-api"),
         project_type=JavaProjectType.REACTIVE_SERVICE,
-        java_version=JavaVersion.JAVA_17
+        java_version=JavaVersion.JAVA_17,
     )
-    
+
     reactive_result = await agent.create_project(reactive_config)
-    if reactive_result['status'] == 'success':
+    if reactive_result["status"] == "success":
         print(f"Reactive service created: ✓")
         print(f"  WebFlux integration: ✓")
         print(f"  Reactive streams: ✓")
-    
+
     # Test 7: Create Gradle project
     print("\n📦 Creating Gradle-based project...")
     gradle_config = JavaProject(
@@ -1215,15 +1297,15 @@ async def main():
         path=Path("/tmp/java-projects/gradle-app"),
         project_type=JavaProjectType.SPRING_BOOT_API,
         build_tool=BuildTool.GRADLE,
-        java_version=JavaVersion.JAVA_21
+        java_version=JavaVersion.JAVA_21,
     )
-    
+
     gradle_result = await agent.create_project(gradle_config)
-    if gradle_result['status'] == 'success':
+    if gradle_result["status"] == "success":
         print(f"Gradle project created: ✓")
         print(f"  Build tool: {gradle_result['build_tool']}")
         print(f"  Java version: {gradle_result['java_version']}")
-    
+
     # Test 8: Enterprise application
     print("\n🏢 Creating enterprise application...")
     enterprise_config = JavaProject(
@@ -1232,20 +1314,21 @@ async def main():
         project_type=JavaProjectType.ENTERPRISE_APP,
         java_version=JavaVersion.JAVA_17,
         database=DatabaseType.POSTGRESQL,
-        security=SecurityType.OAUTH2
+        security=SecurityType.OAUTH2,
     )
-    
+
     enterprise_result = await agent.create_project(enterprise_config)
-    if enterprise_result['status'] == 'success':
+    if enterprise_result["status"] == "success":
         print(f"Enterprise application created: ✓")
         print(f"  Database integration: ✓")
         print(f"  OAuth2 security: ✓")
         print(f"  Docker configuration: ✓")
         print(f"  Comprehensive testing: ✓")
-    
+
     print("\n✅ JAVA-INTERNAL-AGENT test suite completed!")
     print(f"Agent capabilities: {len(agent.capabilities)} features")
     print(f"Active projects: {len(agent.active_projects)}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

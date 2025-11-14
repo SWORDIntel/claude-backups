@@ -4,10 +4,11 @@ Fix Learning System for Current Session
 Initializes the PostgreSQL learning system without requiring docker group membership
 """
 
-import psycopg2
-import sys
 import json
+import sys
 from datetime import datetime
+
+import psycopg2
 
 # Try different possible credentials
 
@@ -17,8 +18,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available

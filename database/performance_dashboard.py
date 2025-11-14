@@ -13,23 +13,24 @@ Features:
 """
 
 import asyncio
-import asyncpg
-import numpy as np
-import tkinter as tk
-from tkinter import ttk
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.animation import FuncAnimation
-import matplotlib.dates as mdates
-from datetime import datetime, timedelta
-import threading
 import json
 import logging
-import psutil
+import threading
 import time
-from typing import Dict, List, Optional, Tuple
+import tkinter as tk
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
+from tkinter import ttk
+from typing import Dict, List, Optional, Tuple
+
+import asyncpg
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import psutil
+from matplotlib.animation import FuncAnimation
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Configure logging
 
@@ -39,8 +40,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available

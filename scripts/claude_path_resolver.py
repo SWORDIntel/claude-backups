@@ -7,11 +7,11 @@ Eliminates ALL hardcoded paths for true cross-platform portability
 """
 
 import os
-import sys
-import pwd
 import pathlib
+import pwd
+import sys
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
 
 class ClaudePathResolver:
@@ -24,8 +24,8 @@ class ClaudePathResolver:
     def _initialize_paths(self):
         """Initialize all Claude paths dynamically"""
         # Core paths
-        self.paths['user_home'] = self._detect_user_home()
-        self.paths['project_root'] = self._detect_project_root()
+        self.paths["user_home"] = self._detect_user_home()
+        self.paths["project_root"] = self._detect_project_root()
 
         # System paths
         self._detect_system_paths()
@@ -41,10 +41,10 @@ class ClaudePathResolver:
     def _detect_user_home(self) -> Path:
         """Detect user home directory using multiple methods"""
         methods = [
-            lambda: Path(os.environ.get('HOME', '')),
+            lambda: Path(os.environ.get("HOME", "")),
             lambda: Path(pwd.getpwuid(os.getuid()).pw_dir),
             lambda: Path.home(),
-            lambda: Path(f'/home/{os.getenv("USER", os.getenv("USERNAME", ""))}')
+            lambda: Path(f'/home/{os.getenv("USER", os.getenv("USERNAME", ""))}'),
         ]
 
         for method in methods:
@@ -56,7 +56,7 @@ class ClaudePathResolver:
                 continue
 
         # Emergency fallback
-        return Path('/tmp')
+        return Path("/tmp")
 
     def _detect_project_root(self) -> Path:
         """Detect project root using multiple strategies"""
@@ -68,23 +68,19 @@ class ClaudePathResolver:
             # Script-relative detection (highest priority)
             script_dir.parent,
             script_dir.parent.parent,
-
             # Environment variable override
-            Path(os.environ.get('CLAUDE_PROJECT_ROOT', '')),
-
+            Path(os.environ.get("CLAUDE_PROJECT_ROOT", "")),
             # Current working directory
             Path.cwd(),
-
             # Common installation locations
-            self.paths['user_home'] / 'claude-backups',
-            self.paths['user_home'] / 'Downloads' / 'claude-backups',
-            self.paths['user_home'] / 'Documents' / 'claude-backups',
-            self.paths['user_home'] / 'projects' / 'claude-backups',
-            self.paths['user_home'] / 'src' / 'claude-backups',
-
+            self.paths["user_home"] / "claude-backups",
+            self.paths["user_home"] / "Downloads" / "claude-backups",
+            self.paths["user_home"] / "Documents" / "claude-backups",
+            self.paths["user_home"] / "projects" / "claude-backups",
+            self.paths["user_home"] / "src" / "claude-backups",
             # System-wide locations
-            Path('/opt/claude-backups'),
-            Path('/usr/local/claude-backups'),
+            Path("/opt/claude-backups"),
+            Path("/usr/local/claude-backups"),
         ]
 
         for root in potential_roots:
@@ -94,49 +90,49 @@ class ClaudePathResolver:
             try:
                 root = root.resolve()
                 # Validate by checking for key indicator files
-                indicators = ['CLAUDE.md', 'claude-enhanced-installer.py', 'agents']
+                indicators = ["CLAUDE.md", "claude-enhanced-installer.py", "agents"]
                 if any((root / indicator).exists() for indicator in indicators):
                     return root
             except (OSError, AttributeError):
                 continue
 
         # Ultimate fallback
-        return self.paths['user_home']
+        return self.paths["user_home"]
 
     def _detect_system_paths(self):
         """Detect appropriate system paths based on OS and permissions"""
         user_writable_bins = [
-            self.paths['user_home'] / '.local' / 'bin',
-            self.paths['user_home'] / 'bin',
+            self.paths["user_home"] / ".local" / "bin",
+            self.paths["user_home"] / "bin",
         ]
 
         system_bins = [
-            Path('/usr/local/bin'),
-            Path('/usr/bin'),
-            Path('/bin'),
+            Path("/usr/local/bin"),
+            Path("/usr/bin"),
+            Path("/bin"),
         ]
 
         # Find first writable user bin
-        self.paths['user_bin'] = None
+        self.paths["user_bin"] = None
         for bin_path in user_writable_bins:
             try:
                 bin_path.mkdir(parents=True, exist_ok=True)
                 if os.access(bin_path, os.W_OK):
-                    self.paths['user_bin'] = bin_path
+                    self.paths["user_bin"] = bin_path
                     break
             except (OSError, PermissionError):
                 continue
 
         # Set default user bin if none found
-        if not self.paths['user_bin']:
-            self.paths['user_bin'] = self.paths['user_home'] / '.local' / 'bin'
+        if not self.paths["user_bin"]:
+            self.paths["user_bin"] = self.paths["user_home"] / ".local" / "bin"
 
         # Find first writable system bin (if we have permissions)
-        self.paths['system_bin'] = None
+        self.paths["system_bin"] = None
         for bin_path in system_bins:
             try:
                 if os.access(bin_path, os.W_OK):
-                    self.paths['system_bin'] = bin_path
+                    self.paths["system_bin"] = bin_path
                     break
             except (OSError, PermissionError):
                 continue
@@ -144,57 +140,74 @@ class ClaudePathResolver:
     def _detect_config_paths(self):
         """Setup XDG Base Directory Specification compliant paths"""
         # XDG paths
-        xdg_config = Path(os.environ.get('XDG_CONFIG_HOME', self.paths['user_home'] / '.config'))
-        xdg_data = Path(os.environ.get('XDG_DATA_HOME', self.paths['user_home'] / '.local' / 'share'))
-        xdg_cache = Path(os.environ.get('XDG_CACHE_HOME', self.paths['user_home'] / '.cache'))
-        xdg_state = Path(os.environ.get('XDG_STATE_HOME', self.paths['user_home'] / '.local' / 'state'))
+        xdg_config = Path(
+            os.environ.get("XDG_CONFIG_HOME", self.paths["user_home"] / ".config")
+        )
+        xdg_data = Path(
+            os.environ.get(
+                "XDG_DATA_HOME", self.paths["user_home"] / ".local" / "share"
+            )
+        )
+        xdg_cache = Path(
+            os.environ.get("XDG_CACHE_HOME", self.paths["user_home"] / ".cache")
+        )
+        xdg_state = Path(
+            os.environ.get(
+                "XDG_STATE_HOME", self.paths["user_home"] / ".local" / "state"
+            )
+        )
 
         # Claude-specific paths
-        self.paths['config_dir'] = xdg_config / 'claude'
-        self.paths['data_dir'] = xdg_data / 'claude'
-        self.paths['cache_dir'] = xdg_cache / 'claude'
-        self.paths['state_dir'] = xdg_state / 'claude'
-        self.paths['log_dir'] = self.paths['state_dir'] / 'logs'
+        self.paths["config_dir"] = xdg_config / "claude"
+        self.paths["data_dir"] = xdg_data / "claude"
+        self.paths["cache_dir"] = xdg_cache / "claude"
+        self.paths["state_dir"] = xdg_state / "claude"
+        self.paths["log_dir"] = self.paths["state_dir"] / "logs"
 
     def _detect_optional_system_paths(self):
         """Detect optional system paths that may or may not exist"""
         # OpenVINO detection
         openvino_locations = [
-            Path('/opt/openvino'),
-            Path('/usr/local/openvino'),
-            self.paths['user_home'] / 'openvino',
-            self.paths['user_home'] / '.local' / 'openvino',
+            Path("/opt/openvino"),
+            Path("/usr/local/openvino"),
+            self.paths["user_home"] / "openvino",
+            self.paths["user_home"] / ".local" / "openvino",
         ]
 
-        self.paths['openvino_root'] = None
+        self.paths["openvino_root"] = None
         for location in openvino_locations:
             if location.exists() and location.is_dir():
-                self.paths['openvino_root'] = location
+                self.paths["openvino_root"] = location
                 break
 
     def _setup_project_paths(self):
         """Setup project structure paths"""
-        project_root = self.paths['project_root']
+        project_root = self.paths["project_root"]
 
-        self.paths['agents_dir'] = project_root / 'agents'
-        self.paths['scripts_dir'] = project_root / 'scripts'
-        self.paths['tools_dir'] = project_root / 'tools'
-        self.paths['database_dir'] = project_root / 'database'
-        self.paths['docs_dir'] = project_root / 'docs'
-        self.paths['hooks_dir'] = project_root / 'hooks'
+        self.paths["agents_dir"] = project_root / "agents"
+        self.paths["scripts_dir"] = project_root / "scripts"
+        self.paths["tools_dir"] = project_root / "tools"
+        self.paths["database_dir"] = project_root / "database"
+        self.paths["docs_dir"] = project_root / "docs"
+        self.paths["hooks_dir"] = project_root / "hooks"
 
         # Python-specific paths
-        self.paths['python_dir'] = self.paths['agents_dir'] / 'src' / 'python'
-        self.paths['python_config'] = self.paths['python_dir'] / 'config'
+        self.paths["python_dir"] = self.paths["agents_dir"] / "src" / "python"
+        self.paths["python_config"] = self.paths["python_dir"] / "config"
 
         # Docker and database paths
-        self.paths['docker_dir'] = self.paths['database_dir'] / 'docker'
-        self.paths['learning_dir'] = project_root / 'learning'
+        self.paths["docker_dir"] = self.paths["database_dir"] / "docker"
+        self.paths["learning_dir"] = project_root / "learning"
 
     def _ensure_directories(self):
         """Ensure critical directories exist"""
         critical_dirs = [
-            'config_dir', 'data_dir', 'cache_dir', 'state_dir', 'log_dir', 'user_bin'
+            "config_dir",
+            "data_dir",
+            "cache_dir",
+            "state_dir",
+            "log_dir",
+            "user_bin",
         ]
 
         for dir_key in critical_dirs:
@@ -205,10 +218,10 @@ class ClaudePathResolver:
                     pass  # Continue if we can't create the directory
 
         # Create convenience symlink
-        claude_link = self.paths['user_home'] / '.claude'
+        claude_link = self.paths["user_home"] / ".claude"
         if not claude_link.exists():
             try:
-                claude_link.symlink_to(self.paths['config_dir'])
+                claude_link.symlink_to(self.paths["config_dir"])
             except (OSError, PermissionError):
                 pass
 
@@ -224,26 +237,26 @@ class ClaudePathResolver:
         """Export paths as environment variables"""
         env_vars = {}
         path_mapping = {
-            'CLAUDE_USER_HOME': 'user_home',
-            'CLAUDE_PROJECT_ROOT': 'project_root',
-            'CLAUDE_USER_BIN': 'user_bin',
-            'CLAUDE_SYSTEM_BIN': 'system_bin',
-            'CLAUDE_CONFIG_DIR': 'config_dir',
-            'CLAUDE_DATA_DIR': 'data_dir',
-            'CLAUDE_CACHE_DIR': 'cache_dir',
-            'CLAUDE_STATE_DIR': 'state_dir',
-            'CLAUDE_LOG_DIR': 'log_dir',
-            'CLAUDE_AGENTS_DIR': 'agents_dir',
-            'CLAUDE_SCRIPTS_DIR': 'scripts_dir',
-            'CLAUDE_TOOLS_DIR': 'tools_dir',
-            'CLAUDE_DATABASE_DIR': 'database_dir',
-            'CLAUDE_DOCS_DIR': 'docs_dir',
-            'CLAUDE_HOOKS_DIR': 'hooks_dir',
-            'CLAUDE_PYTHON_DIR': 'python_dir',
-            'CLAUDE_PYTHON_CONFIG': 'python_config',
-            'CLAUDE_DOCKER_DIR': 'docker_dir',
-            'CLAUDE_LEARNING_DIR': 'learning_dir',
-            'OPENVINO_ROOT': 'openvino_root',
+            "CLAUDE_USER_HOME": "user_home",
+            "CLAUDE_PROJECT_ROOT": "project_root",
+            "CLAUDE_USER_BIN": "user_bin",
+            "CLAUDE_SYSTEM_BIN": "system_bin",
+            "CLAUDE_CONFIG_DIR": "config_dir",
+            "CLAUDE_DATA_DIR": "data_dir",
+            "CLAUDE_CACHE_DIR": "cache_dir",
+            "CLAUDE_STATE_DIR": "state_dir",
+            "CLAUDE_LOG_DIR": "log_dir",
+            "CLAUDE_AGENTS_DIR": "agents_dir",
+            "CLAUDE_SCRIPTS_DIR": "scripts_dir",
+            "CLAUDE_TOOLS_DIR": "tools_dir",
+            "CLAUDE_DATABASE_DIR": "database_dir",
+            "CLAUDE_DOCS_DIR": "docs_dir",
+            "CLAUDE_HOOKS_DIR": "hooks_dir",
+            "CLAUDE_PYTHON_DIR": "python_dir",
+            "CLAUDE_PYTHON_CONFIG": "python_config",
+            "CLAUDE_DOCKER_DIR": "docker_dir",
+            "CLAUDE_LEARNING_DIR": "learning_dir",
+            "OPENVINO_ROOT": "openvino_root",
         }
 
         for env_var, path_key in path_mapping.items():
@@ -268,18 +281,18 @@ class ClaudePathResolver:
         ]
 
         important_paths = [
-            ('User Home', 'user_home'),
-            ('Project Root', 'project_root'),
-            ('User Bin', 'user_bin'),
-            ('System Bin', 'system_bin'),
-            ('Config Dir', 'config_dir'),
-            ('Data Dir', 'data_dir'),
-            ('Cache Dir', 'cache_dir'),
-            ('Log Dir', 'log_dir'),
-            ('Agents Dir', 'agents_dir'),
-            ('Python Dir', 'python_dir'),
-            ('Docker Dir', 'docker_dir'),
-            ('OpenVINO Root', 'openvino_root'),
+            ("User Home", "user_home"),
+            ("Project Root", "project_root"),
+            ("User Bin", "user_bin"),
+            ("System Bin", "system_bin"),
+            ("Config Dir", "config_dir"),
+            ("Data Dir", "data_dir"),
+            ("Cache Dir", "cache_dir"),
+            ("Log Dir", "log_dir"),
+            ("Agents Dir", "agents_dir"),
+            ("Python Dir", "python_dir"),
+            ("Docker Dir", "docker_dir"),
+            ("OpenVINO Root", "openvino_root"),
         ]
 
         for label, key in important_paths:
@@ -296,6 +309,7 @@ class ClaudePathResolver:
 # Global instance for easy access
 _resolver = None
 
+
 def get_resolver() -> ClaudePathResolver:
     """Get the global path resolver instance"""
     global _resolver
@@ -303,42 +317,49 @@ def get_resolver() -> ClaudePathResolver:
         _resolver = ClaudePathResolver()
     return _resolver
 
+
 def get_path(key: str) -> Optional[Path]:
     """Convenience function to get a path"""
     return get_resolver().get_path(key)
 
+
 def apply_to_environment():
     """Convenience function to apply paths to environment"""
     get_resolver().apply_to_environment()
+
 
 def status_report() -> str:
     """Convenience function to get status report"""
     return get_resolver().status_report()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Command line interface
     import argparse
 
-    parser = argparse.ArgumentParser(description='Claude Path Resolver v1.0')
-    parser.add_argument('command', nargs='?', default='status',
-                       choices=['status', 'export', 'env', 'test'],
-                       help='Command to execute')
+    parser = argparse.ArgumentParser(description="Claude Path Resolver v1.0")
+    parser.add_argument(
+        "command",
+        nargs="?",
+        default="status",
+        choices=["status", "export", "env", "test"],
+        help="Command to execute",
+    )
 
     args = parser.parse_args()
 
     resolver = get_resolver()
 
-    if args.command == 'status':
+    if args.command == "status":
         print(resolver.status_report())
-    elif args.command == 'export':
+    elif args.command == "export":
         env_vars = resolver.export_env_vars()
         for var, value in env_vars.items():
             print(f'export {var}="{value}"')
-    elif args.command == 'env':
+    elif args.command == "env":
         resolver.apply_to_environment()
         print("Environment variables applied to current process")
-    elif args.command == 'test':
+    elif args.command == "test":
         # Test all paths
         resolver.apply_to_environment()
         print("Testing path resolution...")
@@ -346,7 +367,7 @@ if __name__ == '__main__':
 
         # Test some path access
         print("\nTesting path access:")
-        test_paths = ['project_root', 'user_home', 'config_dir', 'python_dir']
+        test_paths = ["project_root", "user_home", "config_dir", "python_dir"]
         for path_key in test_paths:
             path = resolver.get_path(path_key)
             exists = path.exists() if path else False

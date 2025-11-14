@@ -4,13 +4,12 @@ Automated Python source reorganization script
 Reorganizes the flat src/python directory into a proper package structure
 """
 
+import json
 import os
+import re
 import shutil
 from pathlib import Path
-import re
 from typing import Dict, List, Set, Tuple
-import json
-
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -18,8 +17,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available

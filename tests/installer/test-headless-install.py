@@ -4,11 +4,12 @@ Test script for headless Debian installation
 Validates PEP 668 compatibility and headless operation
 """
 
+import os
 import subprocess
 import sys
-import os
 import tempfile
 from pathlib import Path
+
 
 def test_pep668_detection():
     """Test PEP 668 externally managed environment detection"""
@@ -20,7 +21,7 @@ def test_pep668_detection():
             ["pip3", "install", "--dry-run", "setuptools"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         if "externally-managed-environment" in result.stderr:
@@ -34,6 +35,7 @@ def test_pep668_detection():
         print(f"❌ PEP 668 detection failed: {e}")
         return False
 
+
 def test_pipx_availability():
     """Test pipx installation capability"""
     print("🧪 Testing pipx availability...")
@@ -41,10 +43,7 @@ def test_pipx_availability():
     try:
         # Check if pipx is available
         pipx_path = subprocess.run(
-            ["which", "pipx"],
-            capture_output=True,
-            text=True,
-            timeout=10
+            ["which", "pipx"], capture_output=True, text=True, timeout=10
         )
 
         if pipx_path.returncode == 0:
@@ -59,7 +58,7 @@ def test_pipx_availability():
                     ["sudo", "-n", "apt", "list", "pipx"],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
                 if result.returncode == 0:
                     print("✅ pipx package available for installation")
@@ -75,6 +74,7 @@ def test_pipx_availability():
         print(f"❌ pipx availability test failed: {e}")
         return False
 
+
 def test_venv_creation():
     """Test virtual environment creation capability"""
     print("🧪 Testing virtual environment creation...")
@@ -88,7 +88,7 @@ def test_venv_creation():
                 ["python3", "-m", "venv", str(venv_path)],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0 and (venv_path / "bin" / "python").exists():
@@ -102,16 +102,14 @@ def test_venv_creation():
         print(f"❌ Virtual environment test failed: {e}")
         return False
 
+
 def test_apt_availability():
     """Test apt package manager availability"""
     print("🧪 Testing apt package manager...")
 
     try:
         result = subprocess.run(
-            ["which", "apt"],
-            capture_output=True,
-            text=True,
-            timeout=10
+            ["which", "apt"], capture_output=True, text=True, timeout=10
         )
 
         if result.returncode == 0:
@@ -120,10 +118,7 @@ def test_apt_availability():
         else:
             # Try apt-get
             result = subprocess.run(
-                ["which", "apt-get"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["which", "apt-get"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
                 print("✅ apt-get package manager available")
@@ -135,6 +130,7 @@ def test_apt_availability():
     except Exception as e:
         print(f"❌ apt availability test failed: {e}")
         return False
+
 
 def test_enhanced_installer():
     """Test the enhanced installer functionality"""
@@ -152,7 +148,7 @@ def test_enhanced_installer():
             ["python3", str(installer_path), "--detect-only"],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
 
         if result.returncode == 0:
@@ -166,6 +162,7 @@ def test_enhanced_installer():
     except Exception as e:
         print(f"❌ Enhanced installer test failed: {e}")
         return False
+
 
 def test_headless_compatibility():
     """Test headless environment compatibility"""
@@ -186,7 +183,7 @@ def test_headless_compatibility():
             ["python3", "-c", "import sys; print('Python headless test OK')"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         if result.returncode == 0:
@@ -200,6 +197,7 @@ def test_headless_compatibility():
         print(f"❌ Headless compatibility test failed: {e}")
         return False
 
+
 def main():
     """Run all headless installation tests"""
     print("🚀 Claude Enhanced Installer - Headless Debian Compatibility Test")
@@ -211,7 +209,7 @@ def main():
         ("Virtual Environment", test_venv_creation),
         ("apt Package Manager", test_apt_availability),
         ("Enhanced Installer", test_enhanced_installer),
-        ("Headless Compatibility", test_headless_compatibility)
+        ("Headless Compatibility", test_headless_compatibility),
     ]
 
     results = []
@@ -249,6 +247,7 @@ def main():
     else:
         print("❌ Multiple test failures. Manual fixes may be needed.")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

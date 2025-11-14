@@ -5,26 +5,28 @@ Enhanced Python execution environment for ULTRATHINK v4.0 malware analysis workf
 """
 
 import asyncio
+import contextlib
+import hashlib
+import json
 import logging
 import os
-import json
-import sys
-import hashlib
+import shutil
+import signal
 import subprocess
+import sys
 import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
-import contextlib
-import shutil
-import signal
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
+
 
 def find_project_root():
     """Find project root directory"""
     from pathlib import Path
+
     current = Path(__file__).resolve().parent
     while current != current.parent:
         if (current / "hooks").exists() or (current / ".git").exists():
@@ -32,8 +34,10 @@ def find_project_root():
         current = current.parent
     return Path.home() / "claude-backups"
 
+
 _PROJECT_ROOT = find_project_root()
 _CLAUDE_DIR = Path.home() / ".claude"
+
 
 class SecurityPythonExecutor:
     """
@@ -48,48 +52,61 @@ class SecurityPythonExecutor:
     """
 
     def __init__(self):
-        self.agent_id = "security_python_" + hashlib.md5(f"{datetime.now()}".encode()).hexdigest()[:8]
+        self.agent_id = (
+            "security_python_"
+            + hashlib.md5(f"{datetime.now()}".encode()).hexdigest()[:8]
+        )
         self.version = "v1.0.0"
         self.status = "operational"
 
         # Security-focused capabilities
         self.security_capabilities = [
-            'execute_ghidra_script', 'run_malware_analysis', 'ml_threat_scoring',
-            'sandbox_execution', 'extract_iocs', 'behavioral_analysis',
-            'memory_forensics', 'static_analysis_automation', 'c2_extraction'
+            "execute_ghidra_script",
+            "run_malware_analysis",
+            "ml_threat_scoring",
+            "sandbox_execution",
+            "extract_iocs",
+            "behavioral_analysis",
+            "memory_forensics",
+            "static_analysis_automation",
+            "c2_extraction",
         ]
 
         # ULTRATHINK integration points
         self.ultrathink_integration = {
-            'ghidra_scripts_dir': str(_PROJECT_ROOT / 'hooks' / 'ghidra-workspace' / 'scripts'),
-            'analysis_workspace': str(_CLAUDE_DIR / 'ghidra-workspace'),
-            'hostile_samples_dir': str(_CLAUDE_DIR / 'hostile-samples'),
-            'quarantine_dir': str(_CLAUDE_DIR / 'quarantine'),
-            'reports_dir': str(_CLAUDE_DIR / 'analysis-reports'),
-            'yara_rules_dir': str(_CLAUDE_DIR / 'yara-rules')
+            "ghidra_scripts_dir": str(
+                _PROJECT_ROOT / "hooks" / "ghidra-workspace" / "scripts"
+            ),
+            "analysis_workspace": str(_CLAUDE_DIR / "ghidra-workspace"),
+            "hostile_samples_dir": str(_CLAUDE_DIR / "hostile-samples"),
+            "quarantine_dir": str(_CLAUDE_DIR / "quarantine"),
+            "reports_dir": str(_CLAUDE_DIR / "analysis-reports"),
+            "yara_rules_dir": str(_CLAUDE_DIR / "yara-rules"),
         }
 
         # Security isolation settings
         self.isolation_config = {
-            'network_isolation': True,
-            'filesystem_isolation': True,
-            'process_timeout': 300,  # 5 minutes max execution
-            'memory_limit': '512M',
-            'cpu_limit': '1.0',
-            'temp_workspace': True
+            "network_isolation": True,
+            "filesystem_isolation": True,
+            "process_timeout": 300,  # 5 minutes max execution
+            "memory_limit": "512M",
+            "cpu_limit": "1.0",
+            "temp_workspace": True,
         }
 
         # ML frameworks for threat analysis
         self.ml_frameworks = {
-            'sklearn_available': False,
-            'tensorflow_available': False,
-            'torch_available': False,
-            'xgboost_available': False
+            "sklearn_available": False,
+            "tensorflow_available": False,
+            "torch_available": False,
+            "xgboost_available": False,
         }
 
         self._initialize_security_environment()
 
-        logger.info(f"SecurityPythonExecutor {self.version} initialized with ULTRATHINK v4.0 integration")
+        logger.info(
+            f"SecurityPythonExecutor {self.version} initialized with ULTRATHINK v4.0 integration"
+        )
 
     def _initialize_security_environment(self):
         """Initialize the secure Python execution environment"""
@@ -110,10 +127,10 @@ class SecurityPythonExecutor:
     def _check_ml_frameworks(self):
         """Check availability of ML frameworks for threat analysis"""
         frameworks = {
-            'sklearn': 'sklearn_available',
-            'tensorflow': 'tensorflow_available',
-            'torch': 'torch_available',
-            'xgboost': 'xgboost_available'
+            "sklearn": "sklearn_available",
+            "tensorflow": "tensorflow_available",
+            "torch": "torch_available",
+            "xgboost": "xgboost_available",
         }
 
         for module, flag in frameworks.items():
@@ -128,25 +145,41 @@ class SecurityPythonExecutor:
         """Setup security policies for malware analysis execution"""
         # Create isolated Python environment configuration
         self.security_config = {
-            'restricted_imports': [
-                'os.system', 'subprocess.call', 'eval', 'exec',
-                'compile', '__import__', 'open'  # Will be wrapped
+            "restricted_imports": [
+                "os.system",
+                "subprocess.call",
+                "eval",
+                "exec",
+                "compile",
+                "__import__",
+                "open",  # Will be wrapped
             ],
-            'allowed_modules': [
-                'json', 'hashlib', 'base64', 'struct', 'binascii',
-                'collections', 'itertools', 'functools', 'operator',
-                'math', 'statistics', 'datetime', 'uuid', 'pathlib'
+            "allowed_modules": [
+                "json",
+                "hashlib",
+                "base64",
+                "struct",
+                "binascii",
+                "collections",
+                "itertools",
+                "functools",
+                "operator",
+                "math",
+                "statistics",
+                "datetime",
+                "uuid",
+                "pathlib",
             ],
-            'sandbox_modules': [
-                'ghidra', 'numpy', 'pandas', 'sklearn', 'yara'
-            ]
+            "sandbox_modules": ["ghidra", "numpy", "pandas", "sklearn", "yara"],
         }
 
     # ========================================
     # GHIDRA PYTHON INTEGRATION
     # ========================================
 
-    async def execute_ghidra_script(self, script_content: str, sample_path: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def execute_ghidra_script(
+        self, script_content: str, sample_path: str, context: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """Execute Ghidra Python script with ULTRATHINK integration"""
         try:
             if context is None:
@@ -154,46 +187,54 @@ class SecurityPythonExecutor:
 
             # Create isolated workspace for this analysis
             workspace_id = f"ghidra_analysis_{uuid.uuid4().hex[:8]}"
-            workspace_path = Path(self.ultrathink_integration['analysis_workspace']) / workspace_id
+            workspace_path = (
+                Path(self.ultrathink_integration["analysis_workspace"]) / workspace_id
+            )
             workspace_path.mkdir(parents=True, exist_ok=True)
 
             # Setup Ghidra environment
             ghidra_env = await self._setup_ghidra_environment(workspace_path)
 
             # Enhance script with ULTRATHINK capabilities
-            enhanced_script = self._enhance_ghidra_script(script_content, sample_path, context)
+            enhanced_script = self._enhance_ghidra_script(
+                script_content, sample_path, context
+            )
 
             # Write enhanced script to workspace
             script_path = workspace_path / "analysis_script.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(enhanced_script)
 
             # Execute Ghidra script with timeout and isolation
-            result = await self._execute_isolated_ghidra(script_path, sample_path, ghidra_env, workspace_path)
+            result = await self._execute_isolated_ghidra(
+                script_path, sample_path, ghidra_env, workspace_path
+            )
 
             # Parse and enhance results
             enhanced_result = await self._process_ghidra_results(result, workspace_path)
 
             return {
-                'status': 'success',
-                'execution_type': 'ghidra_python_analysis',
-                'workspace_id': workspace_id,
-                'sample_analyzed': os.path.basename(sample_path),
-                'analysis_results': enhanced_result,
-                'ghidra_integration': True,
-                'ultrathink_enhanced': True,
-                'timestamp': datetime.now(timezone.utc).isoformat()
+                "status": "success",
+                "execution_type": "ghidra_python_analysis",
+                "workspace_id": workspace_id,
+                "sample_analyzed": os.path.basename(sample_path),
+                "analysis_results": enhanced_result,
+                "ghidra_integration": True,
+                "ultrathink_enhanced": True,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Ghidra script execution failed: {e}")
             return {
-                'status': 'error',
-                'error': str(e),
-                'execution_type': 'ghidra_python_analysis'
+                "status": "error",
+                "error": str(e),
+                "execution_type": "ghidra_python_analysis",
             }
 
-    def _enhance_ghidra_script(self, script_content: str, sample_path: str, context: Dict[str, Any]) -> str:
+    def _enhance_ghidra_script(
+        self, script_content: str, sample_path: str, context: Dict[str, Any]
+    ) -> str:
         """Enhance Ghidra script with ULTRATHINK capabilities"""
 
         # ULTRATHINK enhanced Ghidra analysis script template
@@ -685,23 +726,31 @@ analysis.run()
         ghidra_env = os.environ.copy()
 
         # Setup Ghidra-specific environment variables
-        ghidra_env.update({
-            'RESULTS_DIR': str(workspace_path),
-            'ANALYSIS_WORKSPACE': str(workspace_path),
-            'PYTHONPATH': f"{ghidra_env.get('PYTHONPATH', '')}:{workspace_path}",
-            'ULTRATHINK_MODE': 'python_analysis'
-        })
+        ghidra_env.update(
+            {
+                "RESULTS_DIR": str(workspace_path),
+                "ANALYSIS_WORKSPACE": str(workspace_path),
+                "PYTHONPATH": f"{ghidra_env.get('PYTHONPATH', '')}:{workspace_path}",
+                "ULTRATHINK_MODE": "python_analysis",
+            }
+        )
 
         return ghidra_env
 
-    async def _execute_isolated_ghidra(self, script_path: Path, sample_path: str, env: Dict[str, str], workspace_path: Path) -> Dict[str, Any]:
+    async def _execute_isolated_ghidra(
+        self,
+        script_path: Path,
+        sample_path: str,
+        env: Dict[str, str],
+        workspace_path: Path,
+    ) -> Dict[str, Any]:
         """Execute Ghidra script in isolated environment"""
         try:
             # Check if Ghidra is available
             ghidra_cmd = self._detect_ghidra_command()
 
             if not ghidra_cmd:
-                return {'status': 'error', 'error': 'Ghidra not found'}
+                return {"status": "error", "error": "Ghidra not found"}
 
             # Create Ghidra project if needed
             project_dir = workspace_path / "ghidra_project"
@@ -710,10 +759,14 @@ analysis.run()
             # Execute Ghidra headless analysis
             cmd = [
                 ghidra_cmd,
-                str(project_dir), "ULTRATHINKProject",
-                "-import", sample_path,
-                "-postScript", str(script_path),
-                "-max-cpu", "2"
+                str(project_dir),
+                "ULTRATHINKProject",
+                "-import",
+                sample_path,
+                "-postScript",
+                str(script_path),
+                "-max-cpu",
+                "2",
             ]
 
             process = await asyncio.create_subprocess_exec(
@@ -721,43 +774,43 @@ analysis.run()
                 env=env,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=workspace_path
+                cwd=workspace_path,
             )
 
             try:
                 stdout, stderr = await asyncio.wait_for(
                     process.communicate(),
-                    timeout=self.isolation_config['process_timeout']
+                    timeout=self.isolation_config["process_timeout"],
                 )
 
                 return {
-                    'status': 'success',
-                    'returncode': process.returncode,
-                    'stdout': stdout.decode('utf-8', errors='ignore'),
-                    'stderr': stderr.decode('utf-8', errors='ignore')
+                    "status": "success",
+                    "returncode": process.returncode,
+                    "stdout": stdout.decode("utf-8", errors="ignore"),
+                    "stderr": stderr.decode("utf-8", errors="ignore"),
                 }
 
             except asyncio.TimeoutError:
                 process.kill()
                 await process.wait()
-                return {'status': 'timeout', 'error': 'Ghidra analysis timeout'}
+                return {"status": "timeout", "error": "Ghidra analysis timeout"}
 
         except Exception as e:
-            return {'status': 'error', 'error': str(e)}
+            return {"status": "error", "error": str(e)}
 
     def _detect_ghidra_command(self) -> Optional[str]:
         """Detect available Ghidra command"""
         # Try snap first
-        if shutil.which('snap'):
-            result = subprocess.run(['snap', 'list'], capture_output=True, text=True)
-            if 'ghidra' in result.stdout:
-                return 'snap run ghidra.analyzeHeadless'
+        if shutil.which("snap"):
+            result = subprocess.run(["snap", "list"], capture_output=True, text=True)
+            if "ghidra" in result.stdout:
+                return "snap run ghidra.analyzeHeadless"
 
         # Try common installation paths
         common_paths = [
-            '/opt/ghidra/support/analyzeHeadless',
-            '/usr/local/ghidra/support/analyzeHeadless',
-            '/usr/share/ghidra/support/analyzeHeadless'
+            "/opt/ghidra/support/analyzeHeadless",
+            "/usr/local/ghidra/support/analyzeHeadless",
+            "/usr/share/ghidra/support/analyzeHeadless",
         ]
 
         for path in common_paths:
@@ -766,72 +819,87 @@ analysis.run()
 
         return None
 
-    async def _process_ghidra_results(self, execution_result: Dict[str, Any], workspace_path: Path) -> Dict[str, Any]:
+    async def _process_ghidra_results(
+        self, execution_result: Dict[str, Any], workspace_path: Path
+    ) -> Dict[str, Any]:
         """Process and enhance Ghidra analysis results"""
-        if execution_result['status'] != 'success':
+        if execution_result["status"] != "success":
             return execution_result
 
-        results = {'ghidra_execution': execution_result}
+        results = {"ghidra_execution": execution_result}
 
         # Look for JSON results file
         results_pattern = workspace_path.glob("*_ultrathink_analysis.json")
         for result_file in results_pattern:
             try:
-                with open(result_file, 'r') as f:
+                with open(result_file, "r") as f:
                     analysis_data = json.load(f)
-                    results['analysis_data'] = analysis_data
+                    results["analysis_data"] = analysis_data
                     break
             except Exception as e:
                 logger.warning(f"Failed to parse analysis results: {e}")
 
         # Extract threat indicators
-        if 'analysis_data' in results:
-            results['threat_assessment'] = self._assess_threats(results['analysis_data'])
+        if "analysis_data" in results:
+            results["threat_assessment"] = self._assess_threats(
+                results["analysis_data"]
+            )
 
         return results
 
     def _assess_threats(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
         """Assess threat level from analysis data"""
-        threat_score = analysis_data.get('threat_score', 0)
+        threat_score = analysis_data.get("threat_score", 0)
 
         if threat_score >= 80:
-            threat_level = 'CRITICAL'
+            threat_level = "CRITICAL"
         elif threat_score >= 60:
-            threat_level = 'HIGH'
+            threat_level = "HIGH"
         elif threat_score >= 40:
-            threat_level = 'MEDIUM'
+            threat_level = "MEDIUM"
         elif threat_score >= 20:
-            threat_level = 'LOW'
+            threat_level = "LOW"
         else:
-            threat_level = 'MINIMAL'
+            threat_level = "MINIMAL"
 
         return {
-            'threat_level': threat_level,
-            'threat_score': threat_score,
-            'malware_techniques': analysis_data.get('malware_techniques', []),
-            'ioc_count': sum(len(iocs) for iocs in analysis_data.get('iocs', {}).values()),
-            'suspicious_functions': len([f for f in analysis_data.get('functions', [])
-                                       if f.get('suspicious_score', 0) > 7]),
-            'recommended_actions': self._generate_recommendations(threat_level, analysis_data)
+            "threat_level": threat_level,
+            "threat_score": threat_score,
+            "malware_techniques": analysis_data.get("malware_techniques", []),
+            "ioc_count": sum(
+                len(iocs) for iocs in analysis_data.get("iocs", {}).values()
+            ),
+            "suspicious_functions": len(
+                [
+                    f
+                    for f in analysis_data.get("functions", [])
+                    if f.get("suspicious_score", 0) > 7
+                ]
+            ),
+            "recommended_actions": self._generate_recommendations(
+                threat_level, analysis_data
+            ),
         }
 
-    def _generate_recommendations(self, threat_level: str, analysis_data: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(
+        self, threat_level: str, analysis_data: Dict[str, Any]
+    ) -> List[str]:
         """Generate security recommendations based on analysis"""
         recommendations = []
 
-        if threat_level in ['CRITICAL', 'HIGH']:
-            recommendations.append('Immediate quarantine recommended')
-            recommendations.append('Block all network communications')
-            recommendations.append('Scan all systems for similar indicators')
+        if threat_level in ["CRITICAL", "HIGH"]:
+            recommendations.append("Immediate quarantine recommended")
+            recommendations.append("Block all network communications")
+            recommendations.append("Scan all systems for similar indicators")
 
-        if analysis_data.get('iocs', {}).get('ip_addresses'):
-            recommendations.append('Block identified IP addresses in firewall')
+        if analysis_data.get("iocs", {}).get("ip_addresses"):
+            recommendations.append("Block identified IP addresses in firewall")
 
-        if analysis_data.get('iocs', {}).get('domains'):
-            recommendations.append('Block identified domains in DNS/proxy')
+        if analysis_data.get("iocs", {}).get("domains"):
+            recommendations.append("Block identified domains in DNS/proxy")
 
-        if analysis_data.get('malware_techniques'):
-            recommendations.append('Review detection rules for identified techniques')
+        if analysis_data.get("malware_techniques"):
+            recommendations.append("Review detection rules for identified techniques")
 
         return recommendations
 
@@ -839,7 +907,9 @@ analysis.run()
     # ML THREAT SCORING INTEGRATION
     # ========================================
 
-    async def run_ml_threat_scoring(self, features: Dict[str, Any], context: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def run_ml_threat_scoring(
+        self, features: Dict[str, Any], context: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """Run ML-based threat scoring analysis"""
         try:
             if context is None:
@@ -855,25 +925,28 @@ analysis.run()
             threat_score = await ml_scorer.score_threat(processed_features)
 
             # Generate detailed analysis
-            analysis_result = await self._generate_ml_analysis(threat_score, processed_features, context)
+            analysis_result = await self._generate_ml_analysis(
+                threat_score, processed_features, context
+            )
 
             return {
-                'status': 'success',
-                'execution_type': 'ml_threat_scoring',
-                'threat_score': threat_score,
-                'confidence': analysis_result.get('confidence', 0.0),
-                'feature_importance': analysis_result.get('feature_importance', {}),
-                'threat_indicators': analysis_result.get('threat_indicators', []),
-                'ml_models_used': analysis_result.get('models_used', []),
-                'timestamp': datetime.now(timezone.utc).isoformat()
+                "status": "success",
+                "execution_type": "ml_threat_scoring",
+                "threat_score": threat_score,
+                "confidence": analysis_result.get("confidence", 0.0),
+                "feature_importance": analysis_result.get("feature_importance", {}),
+                "threat_indicators": analysis_result.get("threat_indicators", []),
+                "ml_models_used": analysis_result.get("models_used", []),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"ML threat scoring failed: {e}")
             return {
-                'status': 'error',
-                'error': str(e),
-                'execution_type': 'ml_threat_scoring'
+                "status": "error",
+                "error": str(e),
+                "execution_type": "ml_threat_scoring",
             }
+
 
 # Continue in next part due to length...

@@ -4,10 +4,10 @@ Voice System Integration for Claude Agents
 Restored from deprecated/old-scripts/VOICE_INPUT_SYSTEM.py
 """
 
+import asyncio
+import json
 import os
 import sys
-import json
-import asyncio
 from pathlib import Path
 
 # Add agents directory to path
@@ -15,7 +15,8 @@ sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../03-BRIDGES')
 sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../04-SOURCE/python-modules')
 
-from claude_agent_bridge import BinaryBridgeConnection, AgentConfig
+from claude_agent_bridge import AgentConfig, BinaryBridgeConnection
+
 
 class VoiceSystem:
     """Voice input system for agent control"""

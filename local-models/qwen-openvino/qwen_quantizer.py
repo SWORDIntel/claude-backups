@@ -5,29 +5,33 @@ Quantize and optimize Qwen 2.5-32B for Intel NPU 3720 military mode (26.4 TOPS)
 Eliminates token usage through local inference
 """
 
-import os
 import json
 import logging
+import os
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-import numpy as np
 import time
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 try:
-    import openvino as ov
+    import nncf
     import torch
     import transformers
-    import nncf
-    from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
     from optimum.intel import OVModelForCausalLM
     from optimum.intel.openvino import OVWeightQuantizationConfig
+    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+
+    import openvino as ov
+
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Some dependencies not available: {e}")
     DEPENDENCIES_AVAILABLE = False
+
 
 class QwenQuantizer:
     """
@@ -35,9 +39,11 @@ class QwenQuantizer:
     Targets Intel NPU 3720 military mode (26.4 TOPS)
     """
 
-    def __init__(self,
-                 raw_model_dir: str = "/home/john/claude-backups/local-models/qwen-raw",
-                 output_dir: str = "/home/john/claude-backups/local-models/qwen-openvino"):
+    def __init__(
+        self,
+        raw_model_dir: str = "/home/john/claude-backups/local-models/qwen-raw",
+        output_dir: str = "/home/john/claude-backups/local-models/qwen-openvino",
+    ):
         self.raw_model_dir = Path(raw_model_dir)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -53,13 +59,13 @@ class QwenQuantizer:
         # Setup logging
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             handlers=[
-                logging.FileHandler(self.output_dir / 'quantization.log'),
-                logging.StreamHandler()
-            ]
+                logging.FileHandler(self.output_dir / "quantization.log"),
+                logging.StreamHandler(),
+            ],
         )
-        self.logger = logging.getLogger('QwenQuantizer')
+        self.logger = logging.getLogger("QwenQuantizer")
 
         # Hardware detection
         self.npu_available = self._detect_npu_military_mode()
@@ -72,12 +78,16 @@ class QwenQuantizer:
             "target_latency_ms": 200,
             "target_throughput_tokens_sec": 50,  # Realistic for 32B model
             "memory_limit_mb": 32768,  # 32GB for 32B model + overhead
-            "npu_cache_mb": 128 if self.npu_available else 64
+            "npu_cache_mb": 128 if self.npu_available else 64,
         }
 
         self.logger.info(f"🚀 Qwen Quantizer initialized for Intel NPU 3720")
-        self.logger.info(f"NPU Military Mode: {'ENABLED' if self.npu_available else 'DISABLED'}")
-        self.logger.info(f"Target performance: {self.performance_targets['npu_military_tops']} TOPS")
+        self.logger.info(
+            f"NPU Military Mode: {'ENABLED' if self.npu_available else 'DISABLED'}"
+        )
+        self.logger.info(
+            f"Target performance: {self.performance_targets['npu_military_tops']} TOPS"
+        )
 
     def _detect_npu_military_mode(self) -> bool:
         """Detect Intel NPU 3720 military mode capabilities"""
@@ -95,9 +105,10 @@ class QwenQuantizer:
         """Detect Intel integrated GPU"""
         try:
             import openvino as ov
+
             core = ov.Core()
             devices = core.available_devices
-            return 'GPU' in devices
+            return "GPU" in devices
         except Exception:
             return False
 
@@ -115,20 +126,19 @@ class QwenQuantizer:
                     "group_size": 128,
                     "ratio": 1.0,
                     "dataset": "wikitext2",
-                    "tokenizer": None  # Will be set during conversion
+                    "tokenizer": None,  # Will be set during conversion
                 },
                 "compilation_config": {
                     "NPU_COMPILATION_MODE_PARAMS": "npu-arch=4000 npu-platform=4000",
                     "NPU_DPU_GROUPS": "4",
-                    "PERFORMANCE_HINT": "THROUGHPUT"
+                    "PERFORMANCE_HINT": "THROUGHPUT",
                 },
                 "memory_optimization": {
                     "kv_cache_quantization": True,
                     "enable_kv_cache_compression": True,
-                    "max_sequence_length": 2048
-                }
+                    "max_sequence_length": 2048,
+                },
             },
-
             "qwen_cpu_int8": {
                 "device": "CPU",
                 "precision": "INT8",
@@ -138,19 +148,18 @@ class QwenQuantizer:
                     "sym": True,
                     "group_size": -1,  # Per-column quantization
                     "ratio": 1.0,
-                    "dataset": "wikitext2"
+                    "dataset": "wikitext2",
                 },
                 "compilation_config": {
                     "CPU_THREADS_NUM": "16",
                     "CPU_BIND_THREAD": "HYBRID_AWARE",
-                    "PERFORMANCE_HINT": "LATENCY"
+                    "PERFORMANCE_HINT": "LATENCY",
                 },
                 "memory_optimization": {
                     "kv_cache_quantization": True,
-                    "max_sequence_length": 4096
-                }
+                    "max_sequence_length": 4096,
+                },
             },
-
             "qwen_gpu_fp16": {
                 "device": "GPU",
                 "precision": "FP16",
@@ -159,18 +168,17 @@ class QwenQuantizer:
                     "bits": 16,
                     "sym": False,
                     "group_size": -1,
-                    "ratio": 1.0
+                    "ratio": 1.0,
                 },
                 "compilation_config": {
                     "GPU_ENABLE_LOOP_UNROLLING": "NO",
-                    "PERFORMANCE_HINT": "THROUGHPUT"
+                    "PERFORMANCE_HINT": "THROUGHPUT",
                 },
                 "memory_optimization": {
                     "kv_cache_quantization": False,
-                    "max_sequence_length": 8192
-                }
+                    "max_sequence_length": 8192,
+                },
             },
-
             "qwen_portable_int4": {
                 "device": "CPU",
                 "precision": "INT4",
@@ -180,33 +188,33 @@ class QwenQuantizer:
                     "sym": True,
                     "group_size": 64,  # Smaller groups for better accuracy
                     "ratio": 1.0,
-                    "dataset": "wikitext2"
+                    "dataset": "wikitext2",
                 },
                 "compilation_config": {
                     "CPU_THREADS_NUM": "4",  # Conservative for portable devices
                     "CPU_BIND_THREAD": "NUMA",
                     "PERFORMANCE_HINT": "EFFICIENCY",
-                    "INFERENCE_PRECISION_HINT": "f32"
+                    "INFERENCE_PRECISION_HINT": "f32",
                 },
                 "memory_optimization": {
                     "kv_cache_quantization": True,
                     "enable_kv_cache_compression": True,
                     "max_sequence_length": 2048,  # Reduced for memory efficiency
-                    "dynamic_batching": False
+                    "dynamic_batching": False,
                 },
                 "deployment_notes": {
                     "target_devices": ["NUC2", "Intel NUC", "Portable systems"],
                     "storage_requirement": "16GB+ USB 3.0 or NVMe",
                     "memory_requirement": "16GB+ RAM",
-                    "expected_performance": "20-30 tokens/second"
-                }
-            }
+                    "expected_performance": "20-30 tokens/second",
+                },
+            },
         }
 
         # Save configurations
         for config_name, config in configs.items():
             config_file = self.configs_dir / f"{config_name}.json"
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(config, f, indent=2)
             self.logger.info(f"📋 Created config: {config_name}")
 
@@ -217,11 +225,15 @@ class QwenQuantizer:
 
         try:
             self.logger.info(f"🔄 Starting conversion: {config_name}")
-            self.logger.info(f"Device: {config['device']}, Precision: {config['precision']}")
+            self.logger.info(
+                f"Device: {config['device']}, Precision: {config['precision']}"
+            )
 
             # Check if raw model exists
             if not self.raw_model_dir.exists():
-                self.logger.error(f"Raw model directory not found: {self.raw_model_dir}")
+                self.logger.error(
+                    f"Raw model directory not found: {self.raw_model_dir}"
+                )
                 return False
 
             # Create output directory for this configuration
@@ -237,12 +249,12 @@ class QwenQuantizer:
             tokenizer.save_pretrained(model_output_dir)
 
             # Create quantization configuration for OpenVINO
-            if config['precision'] in ['INT4', 'INT8']:
+            if config["precision"] in ["INT4", "INT8"]:
                 quantization_config = OVWeightQuantizationConfig(
-                    bits=config['quantization_config']['bits'],
-                    sym=config['quantization_config']['sym'],
-                    group_size=config['quantization_config']['group_size'],
-                    ratio=config['quantization_config']['ratio']
+                    bits=config["quantization_config"]["bits"],
+                    sym=config["quantization_config"]["sym"],
+                    group_size=config["quantization_config"]["group_size"],
+                    ratio=config["quantization_config"]["ratio"],
                 )
             else:
                 quantization_config = None
@@ -253,8 +265,8 @@ class QwenQuantizer:
                 self.raw_model_dir,
                 export=True,
                 quantization_config=quantization_config,
-                device=config['device'],
-                compile=False  # We'll compile separately for optimization
+                device=config["device"],
+                compile=False,  # We'll compile separately for optimization
             )
 
             # Save converted model
@@ -264,21 +276,27 @@ class QwenQuantizer:
             model_info = {
                 "model_name": "Qwen2.5-32B-Instruct",
                 "config_name": config_name,
-                "device": config['device'],
-                "precision": config['precision'],
-                "quantization_config": config['quantization_config'],
+                "device": config["device"],
+                "precision": config["precision"],
+                "quantization_config": config["quantization_config"],
                 "conversion_date": datetime.now().isoformat(),
-                "model_size_gb": self._estimate_model_size(model_config, config['precision']),
-                "expected_memory_gb": self._estimate_memory_requirements(model_config, config),
-                "compilation_config": config.get('compilation_config', {})
+                "model_size_gb": self._estimate_model_size(
+                    model_config, config["precision"]
+                ),
+                "expected_memory_gb": self._estimate_memory_requirements(
+                    model_config, config
+                ),
+                "compilation_config": config.get("compilation_config", {}),
             }
 
-            with open(model_output_dir / "model_info.json", 'w') as f:
+            with open(model_output_dir / "model_info.json", "w") as f:
                 json.dump(model_info, f, indent=2)
 
             self.logger.info(f"✅ Conversion complete: {config_name}")
             self.logger.info(f"   Model size: ~{model_info['model_size_gb']:.1f} GB")
-            self.logger.info(f"   Expected memory: ~{model_info['expected_memory_gb']:.1f} GB")
+            self.logger.info(
+                f"   Expected memory: ~{model_info['expected_memory_gb']:.1f} GB"
+            )
 
             return True
 
@@ -304,11 +322,15 @@ class QwenQuantizer:
 
     def _estimate_memory_requirements(self, config, quant_config: Dict) -> float:
         """Estimate total memory requirements including model + KV cache + overhead"""
-        model_size = self._estimate_model_size(config, quant_config['precision'])
+        model_size = self._estimate_model_size(config, quant_config["precision"])
 
         # KV cache size depends on sequence length and batch size
-        seq_len = quant_config.get('memory_optimization', {}).get('max_sequence_length', 2048)
-        kv_cache_gb = (seq_len * config.hidden_size * 2 * 2) / (1024**3)  # Rough estimate
+        seq_len = quant_config.get("memory_optimization", {}).get(
+            "max_sequence_length", 2048
+        )
+        kv_cache_gb = (seq_len * config.hidden_size * 2 * 2) / (
+            1024**3
+        )  # Rough estimate
 
         # Overhead (activations, buffers, etc.)
         overhead_gb = model_size * 0.3
@@ -336,13 +358,13 @@ class QwenQuantizer:
                 config = configs[config_name]
 
                 # Skip NPU if not available
-                if config['device'] == 'NPU' and not self.npu_available:
+                if config["device"] == "NPU" and not self.npu_available:
                     self.logger.warning(f"⚠️ Skipping {config_name}: NPU not available")
                     results[config_name] = False
                     continue
 
                 # Skip GPU if not available
-                if config['device'] == 'GPU' and not self.gpu_available:
+                if config["device"] == "GPU" and not self.gpu_available:
                     self.logger.warning(f"⚠️ Skipping {config_name}: GPU not available")
                     results[config_name] = False
                     continue
@@ -361,6 +383,7 @@ class QwenQuantizer:
         self.logger.info(f"📊 Quantization Summary: {successful}/{total} successful")
 
         return results
+
 
 def main():
     """Main quantization entry point"""
@@ -386,6 +409,7 @@ def main():
     else:
         print("❌ Quantization failed")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

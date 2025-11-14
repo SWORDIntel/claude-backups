@@ -3,11 +3,10 @@ import re
 from collections.abc import Callable, Iterable
 from typing import Any, Final, Generic, Self, overload
 
-from typing_extensions import TypeVar, deprecated
-
 import numpy as np
 import numpy.typing as npt
 from numpy.ctypeslib import c_intp
+from typing_extensions import TypeVar, deprecated
 
 _CastT = TypeVar("_CastT", bound=ct._CanCastTo)
 _T_co = TypeVar("_T_co", covariant=True)

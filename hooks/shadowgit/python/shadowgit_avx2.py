@@ -21,13 +21,13 @@ Performance Targets:
 
 import ctypes
 import logging
-import subprocess
 import os
+import subprocess
 import sys
-from pathlib import Path
-from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 class AccelerationMode(Enum):
     """Available acceleration modes"""
+
     AVX512 = "avx512"
     AVX2 = "avx2"
     SSE42 = "sse42"
@@ -46,6 +47,7 @@ class AccelerationMode(Enum):
 @dataclass
 class PerformanceMetrics:
     """Performance metrics for shadowgit operations"""
+
     lines_per_second: float
     files_processed: int
     total_time_ms: float
@@ -59,7 +61,11 @@ class ShadowgitAVX2:
     Provides Python wrapper for C SIMD diff engine with intelligent fallback.
     """
 
-    def __init__(self, library_path: Optional[str] = None, acceleration_mode: AccelerationMode = AccelerationMode.AUTO):
+    def __init__(
+        self,
+        library_path: Optional[str] = None,
+        acceleration_mode: AccelerationMode = AccelerationMode.AUTO,
+    ):
         """
         Initialize AVX2 acceleration engine.
 
@@ -77,7 +83,7 @@ class ShadowgitAVX2:
             files_processed=0,
             total_time_ms=0.0,
             acceleration_mode="none",
-            hardware_used="none"
+            hardware_used="none",
         )
 
         # Detect hardware capabilities
@@ -149,20 +155,20 @@ class ShadowgitAVX2:
         # Example signatures - adjust based on actual C API when implemented
         try:
             # Diff function: int shadowgit_diff(const char* file1, const char* file2, char* output)
-            if hasattr(self.lib, 'shadowgit_diff'):
+            if hasattr(self.lib, "shadowgit_diff"):
                 self.lib.shadowgit_diff.argtypes = [
                     ctypes.c_char_p,  # file1
                     ctypes.c_char_p,  # file2
-                    ctypes.c_char_p   # output buffer
+                    ctypes.c_char_p,  # output buffer
                 ]
                 self.lib.shadowgit_diff.restype = ctypes.c_int
 
             # Hash function: int shadowgit_hash(const char* data, size_t len, char* hash_out)
-            if hasattr(self.lib, 'shadowgit_hash'):
+            if hasattr(self.lib, "shadowgit_hash"):
                 self.lib.shadowgit_hash.argtypes = [
                     ctypes.c_char_p,  # data
                     ctypes.c_size_t,  # length
-                    ctypes.c_char_p   # hash output
+                    ctypes.c_char_p,  # hash output
                 ]
                 self.lib.shadowgit_hash.restype = ctypes.c_int
 
@@ -181,6 +187,7 @@ class ShadowgitAVX2:
             Dict with diff results and performance metrics
         """
         import time
+
         start_time = time.time()
 
         if self.initialized and self.lib:
@@ -206,16 +213,14 @@ class ShadowgitAVX2:
 
             # Call C function
             result_code = self.lib.shadowgit_diff(
-                file1.encode('utf-8'),
-                file2.encode('utf-8'),
-                output_buffer
+                file1.encode("utf-8"), file2.encode("utf-8"), output_buffer
             )
 
             if result_code == 0:
                 return {
                     "method": "C_AVX2",
                     "status": "success",
-                    "diff": output_buffer.value.decode('utf-8'),
+                    "diff": output_buffer.value.decode("utf-8"),
                     "lines_per_sec_estimate": 930_000_000,
                 }
             else:
@@ -231,27 +236,25 @@ class ShadowgitAVX2:
         import difflib
 
         try:
-            with open(file1, 'r', encoding='utf-8', errors='ignore') as f1:
+            with open(file1, "r", encoding="utf-8", errors="ignore") as f1:
                 lines1 = f1.readlines()
 
-            with open(file2, 'r', encoding='utf-8', errors='ignore') as f2:
+            with open(file2, "r", encoding="utf-8", errors="ignore") as f2:
                 lines2 = f2.readlines()
 
-            diff = list(difflib.unified_diff(lines1, lines2, fromfile=file1, tofile=file2))
+            diff = list(
+                difflib.unified_diff(lines1, lines2, fromfile=file1, tofile=file2)
+            )
 
             return {
                 "method": "Python_fallback",
                 "status": "success",
                 "diff_lines": len(diff),
-                "diff": ''.join(diff) if len(diff) < 1000 else f"<{len(diff)} lines>",
+                "diff": "".join(diff) if len(diff) < 1000 else f"<{len(diff)} lines>",
                 "source_lines": len(lines1) + len(lines2),
             }
         except Exception as e:
-            return {
-                "method": "Python_fallback",
-                "status": "error",
-                "error": str(e)
-            }
+            return {"method": "Python_fallback", "status": "error", "error": str(e)}
 
     def hash_data(self, data: bytes) -> str:
         """
@@ -263,7 +266,7 @@ class ShadowgitAVX2:
         Returns:
             Hex-encoded hash string
         """
-        if self.initialized and self.lib and hasattr(self.lib, 'shadowgit_hash'):
+        if self.initialized and self.lib and hasattr(self.lib, "shadowgit_hash"):
             return self._hash_data_c(data)
         else:
             return self._hash_data_python(data)
@@ -271,16 +274,14 @@ class ShadowgitAVX2:
     def _hash_data_c(self, data: bytes) -> str:
         """C library hash implementation"""
         try:
-            hash_buffer = ctypes.create_string_buffer(64)  # SHA256 = 32 bytes hex = 64 chars
+            hash_buffer = ctypes.create_string_buffer(
+                64
+            )  # SHA256 = 32 bytes hex = 64 chars
 
-            result_code = self.lib.shadowgit_hash(
-                data,
-                len(data),
-                hash_buffer
-            )
+            result_code = self.lib.shadowgit_hash(data, len(data), hash_buffer)
 
             if result_code == 0:
-                return hash_buffer.value.decode('utf-8')
+                return hash_buffer.value.decode("utf-8")
             else:
                 return self._hash_data_python(data)
 
@@ -291,15 +292,15 @@ class ShadowgitAVX2:
     def _hash_data_python(self, data: bytes) -> str:
         """Python fallback hash implementation"""
         import hashlib
+
         return hashlib.sha256(data).hexdigest()
 
     def get_performance_metrics(self) -> PerformanceMetrics:
         """Get current performance metrics"""
         if self.metrics.files_processed > 0:
             self.metrics.lines_per_second = (
-                (self.metrics.files_processed * 1000.0) /
-                max(self.metrics.total_time_ms, 1.0)
-            )
+                self.metrics.files_processed * 1000.0
+            ) / max(self.metrics.total_time_ms, 1.0)
 
         return self.metrics
 
@@ -314,7 +315,7 @@ class ShadowgitAVX2:
                 "files_processed": self.metrics.files_processed,
                 "total_time_ms": self.metrics.total_time_ms,
                 "lines_per_sec": self.metrics.lines_per_second,
-            }
+            },
         }
 
 
@@ -377,7 +378,7 @@ def quick_diff_test(file1: str = None, file2: str = None):
         print(f"  Status: {result['status']}")
         print(f"  Time: {result.get('elapsed_ms', 0):.2f}ms")
 
-        if 'diff_lines' in result:
+        if "diff_lines" in result:
             print(f"  Diff lines: {result['diff_lines']}")
 
     print("\n" + "=" * 70)

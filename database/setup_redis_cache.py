@@ -12,15 +12,14 @@ Provides:
 """
 
 import asyncio
+import json
+import logging
+import os
 import subprocess
 import sys
-import os
-import json
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional
-import logging
-
+from typing import Any, Dict, Optional
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -28,8 +27,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available

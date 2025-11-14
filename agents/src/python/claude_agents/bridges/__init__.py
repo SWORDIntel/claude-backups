@@ -1,2 +1,1 @@
 """Bridges Module"""
-

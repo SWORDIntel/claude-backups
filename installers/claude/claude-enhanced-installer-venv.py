@@ -5,20 +5,21 @@ Handles PEP 668 externally-managed environments with proper venv setup
 Integrates with PYTHON-INTERNAL, DIRECTOR, and PROJECTORCHESTRATOR agents
 """
 
-import os
-import sys
+import argparse
 import json
-import subprocess
-import shutil
+import os
 import platform
+import re
+import shutil
+import subprocess
+import sys
 import tempfile
 import time
-import re
-import argparse
 import venv
-from pathlib import Path
-from typing import Optional, Dict, List, Tuple, Union, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 
 # Color codes for terminal output
 class Colors:

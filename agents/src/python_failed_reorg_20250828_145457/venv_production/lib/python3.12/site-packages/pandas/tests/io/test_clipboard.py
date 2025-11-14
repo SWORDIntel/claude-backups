@@ -1,14 +1,9 @@
 from textwrap import dedent
 
 import numpy as np
-import pytest
-
-from pandas.errors import (
-    PyperclipException,
-    PyperclipWindowsException,
-)
-
 import pandas as pd
+import pandas._testing as tm
+import pytest
 from pandas import (
     NA,
     DataFrame,
@@ -16,8 +11,10 @@ from pandas import (
     get_option,
     read_clipboard,
 )
-import pandas._testing as tm
-
+from pandas.errors import (
+    PyperclipException,
+    PyperclipWindowsException,
+)
 from pandas.io.clipboard import (
     CheckedCall,
     _stringifyText,

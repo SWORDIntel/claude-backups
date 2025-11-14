@@ -12,18 +12,19 @@ Features:
 6. Validates installation with comprehensive testing
 """
 
-import os
-import sys
-import subprocess
-import json
 import asyncio
+import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import os
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class NPUAccelerationInstaller:
     """Installer for NPU acceleration system"""
@@ -93,7 +94,7 @@ class NPUAccelerationInstaller:
 
         try:
             # Check for Intel Meteor Lake NPU
-            result = subprocess.run(['lspci'], capture_output=True, text=True)
+            result = subprocess.run(["lspci"], capture_output=True, text=True)
             lspci_output = result.stdout
 
             if "Meteor Lake NPU" in lspci_output:
@@ -118,12 +119,14 @@ class NPUAccelerationInstaller:
 
             else:
                 logger.warning(f"⚠ NPU device not found at {npu_device_path}")
-                self._log_step(f"NPU device not found at {npu_device_path}", success=False)
+                self._log_step(
+                    f"NPU device not found at {npu_device_path}", success=False
+                )
 
             # Check for intel_vpu driver
             try:
-                result = subprocess.run(['lsmod'], capture_output=True, text=True)
-                if 'intel_vpu' in result.stdout:
+                result = subprocess.run(["lsmod"], capture_output=True, text=True)
+                if "intel_vpu" in result.stdout:
                     self.npu_driver_loaded = True
                     logger.info("✓ intel_vpu driver loaded")
                     self._log_step("intel_vpu driver loaded")
@@ -134,11 +137,13 @@ class NPUAccelerationInstaller:
                 logger.warning(f"Could not check driver status: {e}")
 
             # Summary
-            hardware_score = sum([
-                self.npu_hardware_available,
-                self.npu_device_accessible,
-                self.npu_driver_loaded
-            ])
+            hardware_score = sum(
+                [
+                    self.npu_hardware_available,
+                    self.npu_device_accessible,
+                    self.npu_driver_loaded,
+                ]
+            )
 
             logger.info(f"Hardware validation score: {hardware_score}/3")
 
@@ -163,7 +168,7 @@ class NPUAccelerationInstaller:
                 self.config_dir,
                 self.logs_dir,
                 self.project_root / "cache" / "npu",
-                self.project_root / "data" / "npu_models"
+                self.project_root / "data" / "npu_models",
             ]
 
             for directory in directories:
@@ -172,7 +177,7 @@ class NPUAccelerationInstaller:
                 self._log_step(f"Created directory: {directory}")
 
             # Check Python dependencies
-            required_packages = ['numpy', 'asyncio']
+            required_packages = ["numpy", "asyncio"]
             missing_packages = []
 
             for package in required_packages:
@@ -186,7 +191,9 @@ class NPUAccelerationInstaller:
             if missing_packages:
                 logger.info(f"Installing missing packages: {missing_packages}")
                 try:
-                    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing_packages)
+                    subprocess.check_call(
+                        [sys.executable, "-m", "pip", "install"] + missing_packages
+                    )
                     logger.info("✓ Packages installed successfully")
                     self._log_step("Installed missing packages")
                 except Exception as e:
@@ -197,10 +204,12 @@ class NPUAccelerationInstaller:
             if self.npu_device_accessible:
                 try:
                     # Add current user to render group for NPU access
-                    current_user = os.getenv('USER')
+                    current_user = os.getenv("USER")
                     if current_user:
-                        subprocess.run(['sudo', 'usermod', '-a', '-G', 'render', current_user],
-                                     check=False)  # Don't fail if sudo not available
+                        subprocess.run(
+                            ["sudo", "usermod", "-a", "-G", "render", current_user],
+                            check=False,
+                        )  # Don't fail if sudo not available
                         logger.info(f"✓ Added {current_user} to render group")
                         self._log_step(f"Added {current_user} to render group")
                 except Exception as e:
@@ -221,7 +230,7 @@ class NPUAccelerationInstaller:
             orchestrator_files = [
                 self.python_dir / "production_orchestrator.py",
                 self.python_dir / "npu_accelerated_orchestrator.py",
-                self.python_dir / "npu_orchestrator_bridge.py"
+                self.python_dir / "npu_orchestrator_bridge.py",
             ]
 
             missing_files = []
@@ -250,11 +259,11 @@ class NPUAccelerationInstaller:
                 "npu_mode": "adaptive",
                 "auto_start": False,
                 "restart_on_failure": True,
-                "log_level": "INFO"
+                "log_level": "INFO",
             }
 
             service_config_path = self.config_dir / "npu_service.json"
-            with open(service_config_path, 'w') as f:
+            with open(service_config_path, "w") as f:
                 json.dump(service_config, f, indent=2)
 
             logger.info(f"✓ Created service configuration: {service_config_path}")
@@ -327,7 +336,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 '''
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(launcher_content)
 
         # Make executable
@@ -348,12 +357,12 @@ if __name__ == "__main__":
                     "throughput_ops_per_sec": 20000,
                     "agent_selection_time_ms": 1.0,
                     "message_routing_time_ms": 0.5,
-                    "npu_utilization_target": 0.75
+                    "npu_utilization_target": 0.75,
                 },
                 "fallback_settings": {
                     "enable_cpu_fallback": True,
                     "fallback_error_threshold": 0.1,
-                    "fallback_timeout_ms": 100
+                    "fallback_timeout_ms": 100,
                 },
                 "optimization": {
                     "enable_adaptive_mode": True,
@@ -361,18 +370,18 @@ if __name__ == "__main__":
                     "cache_predictions": True,
                     "batch_operations": True,
                     "batch_size": 32,
-                    "batch_timeout_ms": 10
+                    "batch_timeout_ms": 10,
                 },
                 "hardware": {
                     "meteor_lake_optimization": True,
                     "use_p_cores_for_critical": True,
                     "use_e_cores_for_background": True,
-                    "thermal_throttling_enabled": True
-                }
+                    "thermal_throttling_enabled": True,
+                },
             }
 
             npu_config_path = self.config_dir / "npu_config.json"
-            with open(npu_config_path, 'w') as f:
+            with open(npu_config_path, "w") as f:
                 json.dump(npu_config, f, indent=2)
 
             logger.info(f"✓ Created NPU configuration: {npu_config_path}")
@@ -386,26 +395,28 @@ if __name__ == "__main__":
                 "performance_monitoring": {
                     "enabled": True,
                     "log_interval_seconds": 60,
-                    "metrics_retention_hours": 24
+                    "metrics_retention_hours": 24,
                 },
                 "agent_selection": {
                     "use_npu_intelligence": True,
                     "fallback_to_rules": True,
                     "cache_selections": True,
-                    "cache_ttl_seconds": 30
+                    "cache_ttl_seconds": 30,
                 },
                 "message_routing": {
                     "use_npu_classification": True,
                     "enable_batching": True,
-                    "priority_queues": True
-                }
+                    "priority_queues": True,
+                },
             }
 
             integration_config_path = self.config_dir / "orchestrator_integration.json"
-            with open(integration_config_path, 'w') as f:
+            with open(integration_config_path, "w") as f:
                 json.dump(integration_config, f, indent=2)
 
-            logger.info(f"✓ Created integration configuration: {integration_config_path}")
+            logger.info(
+                f"✓ Created integration configuration: {integration_config_path}"
+            )
             self._log_step("Created integration configuration")
 
             # Environment configuration
@@ -419,7 +430,7 @@ export NPU_ENABLE_PERFORMANCE_MONITORING="true"
 """
 
             env_config_path = self.config_dir / "npu_environment.sh"
-            with open(env_config_path, 'w') as f:
+            with open(env_config_path, "w") as f:
                 f.write(env_config)
 
             logger.info(f"✓ Created environment configuration: {env_config_path}")
@@ -441,13 +452,18 @@ export NPU_ENABLE_PERFORMANCE_MONITORING="true"
 
             try:
                 # Test basic imports
-                from npu_accelerated_orchestrator import NPUAcceleratedOrchestrator, NPUMode
+                from npu_accelerated_orchestrator import (
+                    NPUAcceleratedOrchestrator,
+                    NPUMode,
+                )
                 from npu_orchestrator_bridge import NPUOrchestratorBridge
+
                 logger.info("✓ Successfully imported NPU modules")
                 self._log_step("NPU modules imported successfully")
 
                 # Test NPU device initialization
                 from npu_accelerated_orchestrator import NPUDevice
+
                 npu_device = NPUDevice()
                 device_init_success = npu_device.initialize()
 
@@ -456,7 +472,9 @@ export NPU_ENABLE_PERFORMANCE_MONITORING="true"
                     self._log_step("NPU device initialized")
                     npu_device.cleanup()
                 else:
-                    logger.warning("⚠ NPU device initialization failed (NPU may not be available)")
+                    logger.warning(
+                        "⚠ NPU device initialization failed (NPU may not be available)"
+                    )
                     self._log_step("NPU device initialization failed", success=False)
 
                 # Test bridge initialization
@@ -482,13 +500,16 @@ export NPU_ENABLE_PERFORMANCE_MONITORING="true"
                 # Run basic test if available
                 try:
                     from test_npu_acceleration import NPUAccelerationTestSuite
+
                     test_suite = NPUAccelerationTestSuite()
 
                     # Run only basic tests
                     logger.info("Running basic validation tests...")
-                    basic_test_result = await test_suite.test_npu_device_initialization()
+                    basic_test_result = (
+                        await test_suite.test_npu_device_initialization()
+                    )
 
-                    if basic_test_result.get('status') == 'passed':
+                    if basic_test_result.get("status") == "passed":
                         logger.info("✓ Basic validation tests passed")
                         self._log_step("Basic validation tests passed")
                     else:
@@ -521,19 +542,22 @@ export NPU_ENABLE_PERFORMANCE_MONITORING="true"
             "hardware_status": {
                 "npu_hardware_available": self.npu_hardware_available,
                 "npu_driver_loaded": self.npu_driver_loaded,
-                "npu_device_accessible": self.npu_device_accessible
+                "npu_device_accessible": self.npu_device_accessible,
             },
             "installation_log": self.installation_log,
             "configuration_files": [
                 str(self.config_dir / "npu_config.json"),
                 str(self.config_dir / "orchestrator_integration.json"),
-                str(self.config_dir / "npu_environment.sh")
+                str(self.config_dir / "npu_environment.sh"),
             ],
-            "launcher_script": str(self.python_dir / "npu_orchestrator_launcher.py")
+            "launcher_script": str(self.python_dir / "npu_orchestrator_launcher.py"),
         }
 
-        summary_path = self.logs_dir / f"npu_installation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(summary_path, 'w') as f:
+        summary_path = (
+            self.logs_dir
+            / f"npu_installation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)
 
         logger.info(f"✓ Installation summary saved: {summary_path}")
@@ -543,28 +567,36 @@ export NPU_ENABLE_PERFORMANCE_MONITORING="true"
 
     def _log_step(self, message: str, success: bool = True):
         """Log installation step"""
-        self.installation_log.append({
-            "timestamp": datetime.now().isoformat(),
-            "message": message,
-            "success": success
-        })
+        self.installation_log.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "message": message,
+                "success": success,
+            }
+        )
 
     def _print_installation_summary(self):
         """Print installation summary"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("NPU ACCELERATION INSTALLATION SUMMARY")
-        print("="*60)
+        print("=" * 60)
 
-        print(f"Installation Status: {'SUCCESS' if self.installation_successful else 'FAILED'}")
-        print(f"NPU Hardware: {'Available' if self.npu_hardware_available else 'Not Detected'}")
+        print(
+            f"Installation Status: {'SUCCESS' if self.installation_successful else 'FAILED'}"
+        )
+        print(
+            f"NPU Hardware: {'Available' if self.npu_hardware_available else 'Not Detected'}"
+        )
         print(f"NPU Driver: {'Loaded' if self.npu_driver_loaded else 'Not Loaded'}")
-        print(f"NPU Device: {'Accessible' if self.npu_device_accessible else 'Not Accessible'}")
+        print(
+            f"NPU Device: {'Accessible' if self.npu_device_accessible else 'Not Accessible'}"
+        )
 
         print("\nConfiguration Files:")
         config_files = [
             self.config_dir / "npu_config.json",
             self.config_dir / "orchestrator_integration.json",
-            self.config_dir / "npu_environment.sh"
+            self.config_dir / "npu_environment.sh",
         ]
 
         for config_file in config_files:
@@ -588,11 +620,14 @@ export NPU_ENABLE_PERFORMANCE_MONITORING="true"
         print(f"  bridge = await get_npu_bridge()")
 
         if self.installation_successful:
-            print(f"\n🚀 NPU acceleration is ready for {20000} ops/sec target throughput!")
+            print(
+                f"\n🚀 NPU acceleration is ready for {20000} ops/sec target throughput!"
+            )
         else:
             print(f"\n⚠️  Installation completed with issues. Review logs for details.")
 
-        print("="*60)
+        print("=" * 60)
+
 
 async def main():
     """Main installation function"""
@@ -605,6 +640,7 @@ async def main():
     else:
         print("\nNPU Acceleration installation failed!")
         return 1
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

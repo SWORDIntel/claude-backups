@@ -4,25 +4,28 @@ NPU Bridge Release Management and Distribution System
 Automated release pipeline with version management and binary distribution
 """
 
-import os
+import hashlib
 import json
+import logging
+import os
 import subprocess
 import tempfile
-import hashlib
-import requests
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict
-import semver
 import time
-import logging
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import requests
+import semver
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ReleaseAsset:
     """Release asset metadata"""
+
     name: str
     download_url: str
     size_bytes: int
@@ -31,9 +34,11 @@ class ReleaseAsset:
     target_platform: str
     features: List[str]
 
+
 @dataclass
 class ReleaseInfo:
     """Complete release information"""
+
     version: str
     tag_name: str
     name: str
@@ -45,16 +50,19 @@ class ReleaseInfo:
     assets: List[ReleaseAsset]
     download_count: int
 
+
 class NPUReleaseManager:
     """
     NPU Bridge Release Management System
     Handles versioning, releases, and binary distribution
     """
 
-    def __init__(self,
-                 repo_owner: str = "SWORDIntel",
-                 repo_name: str = "claude-backups",
-                 github_token: Optional[str] = None):
+    def __init__(
+        self,
+        repo_owner: str = "SWORDIntel",
+        repo_name: str = "claude-backups",
+        github_token: Optional[str] = None,
+    ):
         self.repo_owner = repo_owner
         self.repo_name = repo_name
         self.github_token = github_token or os.getenv("GITHUB_TOKEN")
@@ -62,7 +70,7 @@ class NPUReleaseManager:
         self.api_base = f"https://api.github.com/repos/{repo_owner}/{repo_name}"
         self.headers = {
             "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "NPU-Bridge-Release-Manager/1.0"
+            "User-Agent": "NPU-Bridge-Release-Manager/1.0",
         }
 
         if self.github_token:
@@ -71,12 +79,16 @@ class NPUReleaseManager:
     def get_latest_release(self) -> Optional[ReleaseInfo]:
         """Get latest release information"""
         try:
-            response = requests.get(f"{self.api_base}/releases/latest", headers=self.headers)
+            response = requests.get(
+                f"{self.api_base}/releases/latest", headers=self.headers
+            )
             if response.status_code == 200:
                 data = response.json()
                 return self._parse_release_data(data)
             else:
-                logger.warning(f"Failed to fetch latest release: {response.status_code}")
+                logger.warning(
+                    f"Failed to fetch latest release: {response.status_code}"
+                )
                 return None
         except Exception as e:
             logger.error(f"Error fetching latest release: {e}")
@@ -88,7 +100,7 @@ class NPUReleaseManager:
             response = requests.get(
                 f"{self.api_base}/releases",
                 headers=self.headers,
-                params={"per_page": limit}
+                params={"per_page": limit},
             )
             if response.status_code == 200:
                 releases = []
@@ -105,10 +117,9 @@ class NPUReleaseManager:
     def get_release_by_version(self, version: str) -> Optional[ReleaseInfo]:
         """Get specific release by version tag"""
         try:
-            tag_name = version if version.startswith('v') else f'v{version}'
+            tag_name = version if version.startswith("v") else f"v{version}"
             response = requests.get(
-                f"{self.api_base}/releases/tags/{tag_name}",
-                headers=self.headers
+                f"{self.api_base}/releases/tags/{tag_name}", headers=self.headers
             )
             if response.status_code == 200:
                 data = response.json()
@@ -129,15 +140,17 @@ class NPUReleaseManager:
             target_platform = self._extract_platform_from_name(asset_name)
             features = self._extract_features_from_name(asset_name)
 
-            assets.append(ReleaseAsset(
-                name=asset_name,
-                download_url=asset_data["browser_download_url"],
-                size_bytes=asset_data["size"],
-                content_type=asset_data["content_type"],
-                checksum_sha256="",  # Will be calculated if needed
-                target_platform=target_platform,
-                features=features
-            ))
+            assets.append(
+                ReleaseAsset(
+                    name=asset_name,
+                    download_url=asset_data["browser_download_url"],
+                    size_bytes=asset_data["size"],
+                    content_type=asset_data["content_type"],
+                    checksum_sha256="",  # Will be calculated if needed
+                    target_platform=target_platform,
+                    features=features,
+                )
+            )
 
         return ReleaseInfo(
             version=data["tag_name"],
@@ -149,7 +162,9 @@ class NPUReleaseManager:
             created_at=data["created_at"],
             published_at=data["published_at"],
             assets=assets,
-            download_count=sum(asset["download_count"] for asset in data.get("assets", []))
+            download_count=sum(
+                asset["download_count"] for asset in data.get("assets", [])
+            ),
         )
 
     def _extract_platform_from_name(self, asset_name: str) -> str:
@@ -182,7 +197,9 @@ class NPUReleaseManager:
 
         return features
 
-    def find_best_asset_for_platform(self, release: ReleaseInfo, target_platform: str = None) -> Optional[ReleaseAsset]:
+    def find_best_asset_for_platform(
+        self, release: ReleaseInfo, target_platform: str = None
+    ) -> Optional[ReleaseAsset]:
         """Find best asset for target platform"""
         if target_platform is None:
             # Auto-detect platform
@@ -190,7 +207,8 @@ class NPUReleaseManager:
 
         # Filter assets by platform
         compatible_assets = [
-            asset for asset in release.assets
+            asset
+            for asset in release.assets
             if asset.target_platform == target_platform
         ]
 
@@ -212,7 +230,9 @@ class NPUReleaseManager:
             return score
 
         best_asset = max(compatible_assets, key=optimization_score)
-        logger.info(f"Selected asset: {best_asset.name} (score: {optimization_score(best_asset)})")
+        logger.info(
+            f"Selected asset: {best_asset.name} (score: {optimization_score(best_asset)})"
+        )
 
         return best_asset
 
@@ -240,22 +260,28 @@ class NPUReleaseManager:
         else:
             return "unknown"
 
-    def download_asset(self, asset: ReleaseAsset, output_path: str, verify_checksum: bool = True) -> bool:
+    def download_asset(
+        self, asset: ReleaseAsset, output_path: str, verify_checksum: bool = True
+    ) -> bool:
         """Download release asset with progress and verification"""
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Downloading {asset.name} ({asset.size_bytes / 1024 / 1024:.1f} MB)")
+        logger.info(
+            f"Downloading {asset.name} ({asset.size_bytes / 1024 / 1024:.1f} MB)"
+        )
 
         try:
-            response = requests.get(asset.download_url, stream=True, headers=self.headers)
+            response = requests.get(
+                asset.download_url, stream=True, headers=self.headers
+            )
             response.raise_for_status()
 
             downloaded = 0
             chunk_size = 8192
             start_time = time.time()
 
-            with open(output_file, 'wb') as f:
+            with open(output_file, "wb") as f:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if chunk:
                         f.write(chunk)
@@ -264,8 +290,14 @@ class NPUReleaseManager:
                         # Progress indicator
                         if downloaded % (1024 * 1024) == 0:  # Every 1MB
                             elapsed = time.time() - start_time
-                            speed = downloaded / elapsed / 1024 / 1024 if elapsed > 0 else 0
-                            progress = (downloaded / asset.size_bytes) * 100 if asset.size_bytes > 0 else 0
+                            speed = (
+                                downloaded / elapsed / 1024 / 1024 if elapsed > 0 else 0
+                            )
+                            progress = (
+                                (downloaded / asset.size_bytes) * 100
+                                if asset.size_bytes > 0
+                                else 0
+                            )
                             logger.info(f"Progress: {progress:.1f}% ({speed:.1f} MB/s)")
 
             elapsed = time.time() - start_time
@@ -275,7 +307,9 @@ class NPUReleaseManager:
             # Verify file size
             actual_size = output_file.stat().st_size
             if actual_size != asset.size_bytes:
-                logger.error(f"Size mismatch: expected {asset.size_bytes}, got {actual_size}")
+                logger.error(
+                    f"Size mismatch: expected {asset.size_bytes}, got {actual_size}"
+                )
                 return False
 
             # Verify checksum if provided
@@ -293,7 +327,7 @@ class NPUReleaseManager:
     def _verify_checksum(self, file_path: Path, expected_sha256: str) -> bool:
         """Verify file checksum"""
         hasher = hashlib.sha256()
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hasher.update(chunk)
 
@@ -310,16 +344,18 @@ class NPUReleaseManager:
             "latest_version": releases[0].version if releases else None,
             "platforms": {},
             "features": {},
-            "release_timeline": []
+            "release_timeline": [],
         }
 
         for release in releases:
-            stats["release_timeline"].append({
-                "version": release.version,
-                "published_at": release.published_at,
-                "download_count": release.download_count,
-                "asset_count": len(release.assets)
-            })
+            stats["release_timeline"].append(
+                {
+                    "version": release.version,
+                    "published_at": release.published_at,
+                    "download_count": release.download_count,
+                    "asset_count": len(release.assets),
+                }
+            )
 
             for asset in release.assets:
                 # Platform stats
@@ -339,14 +375,19 @@ class NPUReleaseManager:
 
     def create_install_script(self, output_path: str) -> None:
         """Create universal installation script"""
-        script_content = '''#!/bin/bash
+        script_content = (
+            '''#!/bin/bash
 set -euo pipefail
 
 # NPU Bridge Universal Installer
 # Generated by NPU Release Manager
 
-REPO_OWNER="''' + self.repo_owner + '''"
-REPO_NAME="''' + self.repo_name + '''"
+REPO_OWNER="'''
+            + self.repo_owner
+            + '''"
+REPO_NAME="'''
+            + self.repo_name
+            + """"
 VERSION="${NPU_BRIDGE_VERSION:-latest}"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
@@ -519,9 +560,10 @@ main() {
 }
 
 main "$@"
-'''
+"""
+        )
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(script_content)
 
         os.chmod(output_path, 0o755)
@@ -536,27 +578,27 @@ main "$@"
                     "target": "x86_64-unknown-linux-gnu",
                     "features": "intel-npu,avx512,meteor-lake",
                     "cpu_features": "-C target-cpu=skylake-avx512 -C target-feature=+avx512f,+avx512dq",
-                    "description": "Optimized for Intel Core Ultra (Meteor Lake) with NPU"
+                    "description": "Optimized for Intel Core Ultra (Meteor Lake) with NPU",
                 },
                 {
                     "name": "Intel Haswell+ (AVX2/FMA)",
                     "target": "x86_64-unknown-linux-gnu",
                     "features": "intel-npu,avx2,fma",
                     "cpu_features": "-C target-cpu=haswell -C target-feature=+avx2,+fma",
-                    "description": "Optimized for Intel Haswell+ processors with AVX2"
+                    "description": "Optimized for Intel Haswell+ processors with AVX2",
                 },
                 {
                     "name": "Portable Linux (Static)",
                     "target": "x86_64-unknown-linux-musl",
                     "features": "intel-npu,static",
                     "cpu_features": "-C target-cpu=x86-64-v2",
-                    "description": "Portable static build for broad Linux compatibility"
-                }
+                    "description": "Portable static build for broad Linux compatibility",
+                },
             ],
             "rust_version": "stable",
             "optimization_level": "3",
             "lto": "fat",
-            "codegen_units": "1"
+            "codegen_units": "1",
         }
 
         return matrix
@@ -570,58 +612,41 @@ def main():
         description="NPU Bridge Release Management and Distribution"
     )
     parser.add_argument(
-        "--list-releases",
-        action="store_true",
-        help="List all releases"
+        "--list-releases", action="store_true", help="List all releases"
     )
     parser.add_argument(
-        "--latest",
-        action="store_true",
-        help="Show latest release info"
+        "--latest", action="store_true", help="Show latest release info"
     )
-    parser.add_argument(
-        "--version",
-        help="Get specific version info"
-    )
+    parser.add_argument("--version", help="Get specific version info")
     parser.add_argument(
         "--download",
         metavar="OUTPUT_PATH",
-        help="Download best asset for current platform"
+        help="Download best asset for current platform",
     )
     parser.add_argument(
-        "--platform",
-        help="Target platform for download (auto-detect if not specified)"
+        "--platform", help="Target platform for download (auto-detect if not specified)"
     )
-    parser.add_argument(
-        "--stats",
-        action="store_true",
-        help="Show download statistics"
-    )
+    parser.add_argument("--stats", action="store_true", help="Show download statistics")
     parser.add_argument(
         "--create-installer",
         metavar="OUTPUT_PATH",
-        help="Create universal installation script"
+        help="Create universal installation script",
     )
     parser.add_argument(
-        "--build-matrix",
-        action="store_true",
-        help="Generate CI/CD build matrix"
+        "--build-matrix", action="store_true", help="Generate CI/CD build matrix"
     )
     parser.add_argument(
         "--repo",
         default="SWORDIntel/claude-backups",
-        help="GitHub repository (owner/name)"
+        help="GitHub repository (owner/name)",
     )
-    parser.add_argument(
-        "--token",
-        help="GitHub token for API access"
-    )
+    parser.add_argument("--token", help="GitHub token for API access")
 
     args = parser.parse_args()
 
     # Parse repository
-    if '/' in args.repo:
-        repo_owner, repo_name = args.repo.split('/', 1)
+    if "/" in args.repo:
+        repo_owner, repo_name = args.repo.split("/", 1)
     else:
         repo_owner, repo_name = "SWORDIntel", args.repo
 
@@ -633,7 +658,9 @@ def main():
         for release in releases:
             status = "📋 Draft" if release.draft else "🚀 Published"
             prerelease = " (Pre-release)" if release.prerelease else ""
-            print(f"   {status} {release.version}{prerelease} - {release.download_count} downloads")
+            print(
+                f"   {status} {release.version}{prerelease} - {release.download_count} downloads"
+            )
 
     elif args.latest:
         release = manager.get_latest_release()
@@ -665,7 +692,11 @@ def main():
             print(f"❌ Release {args.version} not found")
 
     elif args.download:
-        release = manager.get_latest_release() if not args.version else manager.get_release_by_version(args.version)
+        release = (
+            manager.get_latest_release()
+            if not args.version
+            else manager.get_release_by_version(args.version)
+        )
         if release:
             asset = manager.find_best_asset_for_platform(release, args.platform)
             if asset:
@@ -687,7 +718,9 @@ def main():
         print(f"   Latest Version: {stats['latest_version']}")
         print(f"   Platforms:")
         for platform, data in stats["platforms"].items():
-            print(f"     - {platform}: {data['count']} assets, {data['total_size'] / 1024 / 1024:.1f} MB total")
+            print(
+                f"     - {platform}: {data['count']} assets, {data['total_size'] / 1024 / 1024:.1f} MB total"
+            )
         print(f"   Features:")
         for feature, count in stats["features"].items():
             print(f"     - {feature}: {count} assets")

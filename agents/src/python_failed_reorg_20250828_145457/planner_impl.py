@@ -6,17 +6,18 @@ Enhanced with binary layer integration and advanced orchestration
 """
 
 import asyncio
+import hashlib
+import json
 import logging
 import os
-import json
-import hashlib
 import time
-import aiofiles
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-from enum import Enum
 from collections import deque
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import aiofiles
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -489,10 +490,10 @@ class PLANNERPythonExecutor:
     async def _create_enhanced_planner_files(self, action: str, result: Dict[str, Any], context: Dict[str, Any]):
         """Create enhanced planner files with comprehensive documentation"""
         try:
+            import json
             import os
             from pathlib import Path
-            import json
-            
+
             # Create directories
             plans_dir = Path("project_plans")
             schedules_dir = Path("project_schedules")

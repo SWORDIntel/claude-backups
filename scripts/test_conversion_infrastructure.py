@@ -4,12 +4,13 @@ Test script for local inference conversion infrastructure
 Tests quantizer and server components with a small test model
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add local models to path
 sys.path.append(str(Path(__file__).parent / "local-models" / "qwen-openvino"))
+
 
 def test_dependencies():
     """Test that all required dependencies are available"""
@@ -19,6 +20,7 @@ def test_dependencies():
 
     try:
         import openvino as ov
+
         core = ov.Core()
         devices = core.available_devices
         tests.append(("OpenVINO", True, f"Devices: {devices}"))
@@ -28,12 +30,14 @@ def test_dependencies():
     try:
         from optimum.intel import OVModelForCausalLM
         from optimum.intel.openvino import OVWeightQuantizationConfig
+
         tests.append(("Optimum Intel", True, "All classes available"))
     except Exception as e:
         tests.append(("Optimum Intel", False, str(e)))
 
     try:
-        from transformers import AutoTokenizer, AutoConfig
+        from transformers import AutoConfig, AutoTokenizer
+
         tests.append(("Transformers", True, "Core classes available"))
     except Exception as e:
         tests.append(("Transformers", False, str(e)))
@@ -41,6 +45,7 @@ def test_dependencies():
     try:
         import fastapi
         import uvicorn
+
         tests.append(("FastAPI", True, "Server framework ready"))
     except Exception as e:
         tests.append(("FastAPI", False, str(e)))
@@ -55,6 +60,7 @@ def test_dependencies():
 
     return all_passed
 
+
 def test_quantizer_class():
     """Test that the quantizer class can be imported and initialized"""
     print("\n🧪 Testing quantizer class...")
@@ -64,8 +70,7 @@ def test_quantizer_class():
 
         # Test initialization with non-existent paths (should not crash)
         quantizer = QwenQuantizer(
-            raw_model_dir="/tmp/nonexistent",
-            output_dir="/tmp/test_output"
+            raw_model_dir="/tmp/nonexistent", output_dir="/tmp/test_output"
         )
 
         print("  ✓ QwenQuantizer class loads successfully")
@@ -77,8 +82,8 @@ def test_quantizer_class():
         print(f"  ✓ Created {len(configs)} quantization configs")
 
         for name, config in configs.items():
-            device = config.get('device', 'unknown')
-            precision = config.get('precision', 'unknown')
+            device = config.get("device", "unknown")
+            precision = config.get("precision", "unknown")
             print(f"    - {name}: {device} {precision}")
 
         return True
@@ -86,6 +91,7 @@ def test_quantizer_class():
     except Exception as e:
         print(f"  ✗ Quantizer test failed: {e}")
         return False
+
 
 def test_inference_server_class():
     """Test that the inference server class can be imported and initialized"""
@@ -115,30 +121,32 @@ def test_inference_server_class():
         print(f"  ✗ Inference server test failed: {e}")
         return False
 
+
 def test_hardware_detection():
     """Test hardware detection capabilities"""
     print("\n🧪 Testing hardware detection...")
 
     try:
         import openvino as ov
+
         core = ov.Core()
         devices = core.available_devices
 
         print(f"  ✓ Available devices: {devices}")
 
         # Test NPU detection
-        npu_available = 'NPU' in devices and Path("/dev/accel/accel0").exists()
+        npu_available = "NPU" in devices and Path("/dev/accel/accel0").exists()
         print(f"  ✓ NPU available: {npu_available}")
 
         if npu_available:
             print("    - NPU device found at /dev/accel/accel0")
 
         # Test GPU detection
-        gpu_available = 'GPU' in devices
+        gpu_available = "GPU" in devices
         print(f"  ✓ GPU available: {gpu_available}")
 
         # Test CPU (should always be available)
-        cpu_available = 'CPU' in devices
+        cpu_available = "CPU" in devices
         print(f"  ✓ CPU available: {cpu_available}")
 
         return True
@@ -146,6 +154,7 @@ def test_hardware_detection():
     except Exception as e:
         print(f"  ✗ Hardware detection failed: {e}")
         return False
+
 
 def main():
     """Run all tests"""
@@ -156,7 +165,7 @@ def main():
         ("Dependencies", test_dependencies),
         ("Quantizer Class", test_quantizer_class),
         ("Inference Server Class", test_inference_server_class),
-        ("Hardware Detection", test_hardware_detection)
+        ("Hardware Detection", test_hardware_detection),
     ]
 
     results = []
@@ -191,6 +200,7 @@ def main():
     else:
         print("⚠️ Some tests failed. Check the output above for details.")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

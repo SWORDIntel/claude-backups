@@ -21,23 +21,25 @@ Purpose: Universal Claude Code enhancement for intelligent thinking
 License: MIT
 """
 
+import asyncio
+import hashlib
+import json
+import logging
 import os
+import re
 import sys
 import time
-import json
-import asyncio
-import logging
-import re
-import hashlib
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple, Any, Union
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
 # NPU integration for complexity analysis
 try:
     import openvino.runtime as ov
+
     NPU_AVAILABLE = True
 except ImportError:
     NPU_AVAILABLE = False
@@ -45,28 +47,35 @@ except ImportError:
 # Claude Code integration
 try:
     from pathlib import Path
+
     CLAUDE_CODE_INTEGRATION = True
 except ImportError:
     CLAUDE_CODE_INTEGRATION = False
 
+
 class ThinkModeDecision(Enum):
     """Think mode decision enumeration"""
-    NO_THINKING = "no_thinking"           # Simple tasks, direct response
-    INTERLEAVED = "interleaved"           # Complex tasks, interleaved thinking
-    AUTO = "auto"                         # Let Claude decide
-    FORCED_THINKING = "forced_thinking"   # Override - always think
+
+    NO_THINKING = "no_thinking"  # Simple tasks, direct response
+    INTERLEAVED = "interleaved"  # Complex tasks, interleaved thinking
+    AUTO = "auto"  # Let Claude decide
+    FORCED_THINKING = "forced_thinking"  # Override - always think
+
 
 class TaskComplexity(Enum):
     """Task complexity levels"""
-    TRIVIAL = 1      # Single operation, obvious answer
-    SIMPLE = 2       # Basic multi-step, straightforward
-    MODERATE = 3     # Multiple considerations, some analysis
-    COMPLEX = 4      # Multi-faceted problem, requires planning
-    ULTRACOMPLEX = 5 # Multi-agent coordination, extensive reasoning
+
+    TRIVIAL = 1  # Single operation, obvious answer
+    SIMPLE = 2  # Basic multi-step, straightforward
+    MODERATE = 3  # Multiple considerations, some analysis
+    COMPLEX = 4  # Multi-faceted problem, requires planning
+    ULTRACOMPLEX = 5  # Multi-agent coordination, extensive reasoning
+
 
 @dataclass
 class ComplexityFeatures:
     """Task complexity feature extraction"""
+
     word_count: int = 0
     question_count: int = 0
     technical_terms: int = 0
@@ -78,9 +87,11 @@ class ComplexityFeatures:
     performance_requirements: bool = False
     documentation_needed: bool = False
 
+
 @dataclass
 class ThinkModeAnalysis:
     """Think mode analysis result"""
+
     decision: ThinkModeDecision
     complexity_score: float
     confidence: float
@@ -88,6 +99,7 @@ class ThinkModeAnalysis:
     processing_time_ms: float
     npu_accelerated: bool = False
     agent_recommendations: List[str] = field(default_factory=list)
+
 
 class NpuComplexityAnalyzer:
     """NPU-accelerated task complexity analysis"""
@@ -102,7 +114,7 @@ class NpuComplexityAnalyzer:
             self.core = ov.Core()
             available_devices = self.core.available_devices
 
-            if 'NPU' in available_devices:
+            if "NPU" in available_devices:
                 logging.info("[NPU] Intel NPU detected for complexity analysis")
                 return True
             else:
@@ -123,7 +135,9 @@ class NpuComplexityAnalyzer:
                 complexity_score = self._npu_analyze(task_text)
                 processing_time = (time.time() - start_time) * 1000
 
-                logging.debug(f"[NPU] Complexity analysis: {complexity_score:.3f} in {processing_time:.1f}ms")
+                logging.debug(
+                    f"[NPU] Complexity analysis: {complexity_score:.3f} in {processing_time:.1f}ms"
+                )
                 return complexity_score, True
 
             except Exception as e:
@@ -133,7 +147,9 @@ class NpuComplexityAnalyzer:
         complexity_score = self.fallback_analyzer.analyze_complexity(task_text)
         processing_time = (time.time() - start_time) * 1000
 
-        logging.debug(f"[CPU] Complexity analysis: {complexity_score:.3f} in {processing_time:.1f}ms")
+        logging.debug(
+            f"[CPU] Complexity analysis: {complexity_score:.3f} in {processing_time:.1f}ms"
+        )
         return complexity_score, False
 
     def _npu_analyze(self, task_text: str) -> float:
@@ -156,14 +172,14 @@ class NpuComplexityAnalyzer:
 
         # Basic metrics
         features.word_count = len(text.split())
-        features.question_count = text.count('?')
+        features.question_count = text.count("?")
 
         # Technical complexity indicators
         technical_patterns = [
-            r'\b(algorithm|implementation|architecture|system|framework)\b',
-            r'\b(integration|coordination|optimization|performance)\b',
-            r'\b(security|compliance|validation|testing)\b',
-            r'\b(database|API|protocol|interface|driver)\b'
+            r"\b(algorithm|implementation|architecture|system|framework)\b",
+            r"\b(integration|coordination|optimization|performance)\b",
+            r"\b(security|compliance|validation|testing)\b",
+            r"\b(database|API|protocol|interface|driver)\b",
         ]
 
         for pattern in technical_patterns:
@@ -171,41 +187,67 @@ class NpuComplexityAnalyzer:
 
         # Multi-step indicators
         multi_step_patterns = [
-            r'\b(first|then|next|after|finally)\b',
-            r'\b(step \d+|phase \d+|part \d+)\b',
-            r'\b(multiple|several|various|different)\b'
+            r"\b(first|then|next|after|finally)\b",
+            r"\b(step \d+|phase \d+|part \d+)\b",
+            r"\b(multiple|several|various|different)\b",
         ]
 
         for pattern in multi_step_patterns:
-            features.multi_step_indicators += len(re.findall(pattern, text, re.IGNORECASE))
+            features.multi_step_indicators += len(
+                re.findall(pattern, text, re.IGNORECASE)
+            )
 
         # Agent coordination indicators
-        agent_keywords = ['agent', 'coordinate', 'orchestrate', 'collaborate']
-        features.agent_coordination_needed = any(keyword in text.lower() for keyword in agent_keywords)
+        agent_keywords = ["agent", "coordinate", "orchestrate", "collaborate"]
+        features.agent_coordination_needed = any(
+            keyword in text.lower() for keyword in agent_keywords
+        )
 
         # Other complexity indicators
-        features.code_analysis_required = bool(re.search(r'\b(code|programming|development|debug)\b', text, re.IGNORECASE))
-        features.system_integration = bool(re.search(r'\b(integrate|connect|interface|protocol)\b', text, re.IGNORECASE))
-        features.security_implications = bool(re.search(r'\b(security|encryption|authentication|compliance)\b', text, re.IGNORECASE))
-        features.performance_requirements = bool(re.search(r'\b(performance|optimization|speed|latency)\b', text, re.IGNORECASE))
-        features.documentation_needed = bool(re.search(r'\b(document|guide|manual|specification)\b', text, re.IGNORECASE))
+        features.code_analysis_required = bool(
+            re.search(r"\b(code|programming|development|debug)\b", text, re.IGNORECASE)
+        )
+        features.system_integration = bool(
+            re.search(
+                r"\b(integrate|connect|interface|protocol)\b", text, re.IGNORECASE
+            )
+        )
+        features.security_implications = bool(
+            re.search(
+                r"\b(security|encryption|authentication|compliance)\b",
+                text,
+                re.IGNORECASE,
+            )
+        )
+        features.performance_requirements = bool(
+            re.search(
+                r"\b(performance|optimization|speed|latency)\b", text, re.IGNORECASE
+            )
+        )
+        features.documentation_needed = bool(
+            re.search(r"\b(document|guide|manual|specification)\b", text, re.IGNORECASE)
+        )
 
         return features
 
     def _features_to_vector(self, features: ComplexityFeatures) -> np.ndarray:
         """Convert features to NPU-compatible vector"""
-        vector = np.array([
-            features.word_count / 100.0,                    # Normalized word count
-            features.question_count / 5.0,                  # Normalized question count
-            features.technical_terms / 10.0,                # Normalized technical terms
-            features.multi_step_indicators / 5.0,           # Normalized multi-step indicators
-            float(features.agent_coordination_needed),       # Boolean features
-            float(features.code_analysis_required),
-            float(features.system_integration),
-            float(features.security_implications),
-            float(features.performance_requirements),
-            float(features.documentation_needed)
-        ], dtype=np.float32)
+        vector = np.array(
+            [
+                features.word_count / 100.0,  # Normalized word count
+                features.question_count / 5.0,  # Normalized question count
+                features.technical_terms / 10.0,  # Normalized technical terms
+                features.multi_step_indicators
+                / 5.0,  # Normalized multi-step indicators
+                float(features.agent_coordination_needed),  # Boolean features
+                float(features.code_analysis_required),
+                float(features.system_integration),
+                float(features.security_implications),
+                float(features.performance_requirements),
+                float(features.documentation_needed),
+            ],
+            dtype=np.float32,
+        )
 
         return np.clip(vector, 0.0, 1.0)  # Ensure valid range for NPU
 
@@ -234,7 +276,7 @@ class NpuComplexityAnalyzer:
             features.system_integration,
             features.security_implications,
             features.performance_requirements,
-            features.documentation_needed
+            features.documentation_needed,
         ]
 
         score += sum(boolean_features) * 0.1
@@ -246,6 +288,7 @@ class NpuComplexityAnalyzer:
             score += 0.1
 
         return score
+
 
 class CpuComplexityAnalyzer:
     """CPU fallback complexity analysis"""
@@ -267,6 +310,7 @@ class CpuComplexityAnalyzer:
         else:
             return 0.1
 
+
 class DynamicThinkModeSelector:
     """Main dynamic think mode selection system"""
 
@@ -275,12 +319,12 @@ class DynamicThinkModeSelector:
         self.npu_analyzer = NpuComplexityAnalyzer()
         self.decision_cache = {}
         self.performance_metrics = {
-            'total_analyses': 0,
-            'npu_analyses': 0,
-            'cpu_fallbacks': 0,
-            'avg_processing_time': 0.0,
-            'think_mode_enabled': 0,
-            'think_mode_disabled': 0
+            "total_analyses": 0,
+            "npu_analyses": 0,
+            "cpu_fallbacks": 0,
+            "avg_processing_time": 0.0,
+            "think_mode_enabled": 0,
+            "think_mode_disabled": 0,
         }
 
         # Load configuration
@@ -294,7 +338,7 @@ class DynamicThinkModeSelector:
         # Create handler for think mode decisions
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)-8s | THINK-MODE | %(message)s'
+            "%(asctime)s | %(levelname)-8s | THINK-MODE | %(message)s"
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -304,22 +348,27 @@ class DynamicThinkModeSelector:
     def _load_configuration(self) -> Dict[str, Any]:
         """Load configuration for think mode selection"""
         default_config = {
-            'complexity_threshold': 0.5,        # Threshold for enabling thinking
-            'npu_timeout_ms': 200,              # NPU analysis timeout
-            'cpu_timeout_ms': 100,              # CPU analysis timeout
-            'cache_enabled': True,               # Enable decision caching
-            'cache_ttl_seconds': 300,           # Cache time-to-live
-            'min_word_count_for_thinking': 30,  # Minimum words to consider thinking
-            'agent_coordination_triggers': [    # Patterns that suggest multi-agent needs
-                'coordinate', 'orchestrate', 'multiple agents', 'agent collaboration'
-            ]
+            "complexity_threshold": 0.5,  # Threshold for enabling thinking
+            "npu_timeout_ms": 200,  # NPU analysis timeout
+            "cpu_timeout_ms": 100,  # CPU analysis timeout
+            "cache_enabled": True,  # Enable decision caching
+            "cache_ttl_seconds": 300,  # Cache time-to-live
+            "min_word_count_for_thinking": 30,  # Minimum words to consider thinking
+            "agent_coordination_triggers": [  # Patterns that suggest multi-agent needs
+                "coordinate",
+                "orchestrate",
+                "multiple agents",
+                "agent collaboration",
+            ],
         }
 
         # Try to load from config file
-        config_path = os.path.join(os.environ.get('CLAUDE_AGENTS_ROOT', '.'), 'config', '$1')
+        config_path = os.path.join(
+            os.environ.get("CLAUDE_AGENTS_ROOT", "."), "config", "$1"
+        )
         if os.path.exists(config_path):
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     user_config = json.load(f)
                 default_config.update(user_config)
                 self.logger.info(f"Loaded configuration from {config_path}")
@@ -328,20 +377,25 @@ class DynamicThinkModeSelector:
 
         return default_config
 
-    def analyze_task_complexity(self, task_text: str, context: Dict[str, Any] = None) -> ThinkModeAnalysis:
+    def analyze_task_complexity(
+        self, task_text: str, context: Dict[str, Any] = None
+    ) -> ThinkModeAnalysis:
         """Analyze task complexity and determine think mode requirement"""
         start_time = time.time()
 
         self.logger.info(f"Analyzing task complexity for {len(task_text)} characters")
 
         # Check cache first
-        if self.config['cache_enabled']:
+        if self.config["cache_enabled"]:
             cache_key = hashlib.md5(task_text.encode()).hexdigest()
             if cache_key in self.decision_cache:
                 cached_result = self.decision_cache[cache_key]
-                if time.time() - cached_result['timestamp'] < self.config['cache_ttl_seconds']:
+                if (
+                    time.time() - cached_result["timestamp"]
+                    < self.config["cache_ttl_seconds"]
+                ):
                     self.logger.debug("Using cached complexity analysis")
-                    return cached_result['analysis']
+                    return cached_result["analysis"]
 
         # Initialize analysis
         analysis = ThinkModeAnalysis(
@@ -349,11 +403,11 @@ class DynamicThinkModeSelector:
             complexity_score=0.0,
             confidence=0.0,
             reasoning="",
-            processing_time_ms=0.0
+            processing_time_ms=0.0,
         )
 
         # Quick bypass for very short tasks
-        if len(task_text.split()) < self.config['min_word_count_for_thinking']:
+        if len(task_text.split()) < self.config["min_word_count_for_thinking"]:
             analysis.decision = ThinkModeDecision.NO_THINKING
             analysis.complexity_score = 0.1
             analysis.confidence = 0.9
@@ -368,14 +422,18 @@ class DynamicThinkModeSelector:
         analysis.npu_accelerated = npu_used
 
         # Determine think mode decision
-        if complexity_score >= self.config['complexity_threshold']:
+        if complexity_score >= self.config["complexity_threshold"]:
             analysis.decision = ThinkModeDecision.INTERLEAVED
             analysis.confidence = min(complexity_score * 1.2, 1.0)
-            analysis.reasoning = f"High complexity ({complexity_score:.3f}) requires thinking mode"
+            analysis.reasoning = (
+                f"High complexity ({complexity_score:.3f}) requires thinking mode"
+            )
         else:
             analysis.decision = ThinkModeDecision.NO_THINKING
             analysis.confidence = 1.0 - complexity_score
-            analysis.reasoning = f"Low complexity ({complexity_score:.3f}) - direct response sufficient"
+            analysis.reasoning = (
+                f"Low complexity ({complexity_score:.3f}) - direct response sufficient"
+            )
 
         # Agent coordination analysis
         agent_recommendations = self._analyze_agent_coordination_needs(task_text)
@@ -392,16 +450,18 @@ class DynamicThinkModeSelector:
         self._update_metrics(analysis)
 
         # Cache result
-        if self.config['cache_enabled']:
+        if self.config["cache_enabled"]:
             self.decision_cache[cache_key] = {
-                'timestamp': time.time(),
-                'analysis': analysis
+                "timestamp": time.time(),
+                "analysis": analysis,
             }
 
-        self.logger.info(f"Think mode decision: {analysis.decision.value} "
-                        f"(complexity: {analysis.complexity_score:.3f}, "
-                        f"confidence: {analysis.confidence:.3f}, "
-                        f"time: {analysis.processing_time_ms:.1f}ms)")
+        self.logger.info(
+            f"Think mode decision: {analysis.decision.value} "
+            f"(complexity: {analysis.complexity_score:.3f}, "
+            f"confidence: {analysis.confidence:.3f}, "
+            f"time: {analysis.processing_time_ms:.1f}ms)"
+        )
 
         return analysis
 
@@ -411,12 +471,30 @@ class DynamicThinkModeSelector:
 
         # Agent coordination patterns (from COORDINATOR agent analysis)
         coordination_patterns = {
-            'security': ['security', 'vulnerability', 'audit', 'compliance', 'encryption'],
-            'architecture': ['design', 'architecture', 'system', 'framework', 'structure'],
-            'performance': ['optimize', 'performance', 'speed', 'latency', 'throughput'],
-            'documentation': ['document', 'guide', 'manual', 'specification', 'help'],
-            'testing': ['test', 'validate', 'verify', 'quality', 'coverage'],
-            'deployment': ['deploy', 'install', 'configure', 'setup', 'production'],
+            "security": [
+                "security",
+                "vulnerability",
+                "audit",
+                "compliance",
+                "encryption",
+            ],
+            "architecture": [
+                "design",
+                "architecture",
+                "system",
+                "framework",
+                "structure",
+            ],
+            "performance": [
+                "optimize",
+                "performance",
+                "speed",
+                "latency",
+                "throughput",
+            ],
+            "documentation": ["document", "guide", "manual", "specification", "help"],
+            "testing": ["test", "validate", "verify", "quality", "coverage"],
+            "deployment": ["deploy", "install", "configure", "setup", "production"],
         }
 
         for agent_type, keywords in coordination_patterns.items():
@@ -424,33 +502,44 @@ class DynamicThinkModeSelector:
                 recommended_agents.append(agent_type)
 
         # Multi-step task detection (from PROJECTORCHESTRATOR agent analysis)
-        multi_step_indicators = ['first', 'then', 'next', 'after', 'finally', 'step', 'phase']
+        multi_step_indicators = [
+            "first",
+            "then",
+            "next",
+            "after",
+            "finally",
+            "step",
+            "phase",
+        ]
         if any(indicator in task_text.lower() for indicator in multi_step_indicators):
-            if 'director' not in recommended_agents:
-                recommended_agents.append('director')
+            if "director" not in recommended_agents:
+                recommended_agents.append("director")
 
         return recommended_agents[:5]  # Limit to top 5 agent recommendations
 
     def _update_metrics(self, analysis: ThinkModeAnalysis):
         """Update performance metrics"""
-        self.performance_metrics['total_analyses'] += 1
+        self.performance_metrics["total_analyses"] += 1
 
         if analysis.npu_accelerated:
-            self.performance_metrics['npu_analyses'] += 1
+            self.performance_metrics["npu_analyses"] += 1
         else:
-            self.performance_metrics['cpu_fallbacks'] += 1
+            self.performance_metrics["cpu_fallbacks"] += 1
 
-        if analysis.decision in [ThinkModeDecision.INTERLEAVED, ThinkModeDecision.FORCED_THINKING]:
-            self.performance_metrics['think_mode_enabled'] += 1
+        if analysis.decision in [
+            ThinkModeDecision.INTERLEAVED,
+            ThinkModeDecision.FORCED_THINKING,
+        ]:
+            self.performance_metrics["think_mode_enabled"] += 1
         else:
-            self.performance_metrics['think_mode_disabled'] += 1
+            self.performance_metrics["think_mode_disabled"] += 1
 
         # Update average processing time
-        current_avg = self.performance_metrics['avg_processing_time']
-        total_count = self.performance_metrics['total_analyses']
-        self.performance_metrics['avg_processing_time'] = (
-            (current_avg * (total_count - 1) + analysis.processing_time_ms) / total_count
-        )
+        current_avg = self.performance_metrics["avg_processing_time"]
+        total_count = self.performance_metrics["total_analyses"]
+        self.performance_metrics["avg_processing_time"] = (
+            current_avg * (total_count - 1) + analysis.processing_time_ms
+        ) / total_count
 
     def create_claude_code_hook(self, task_text: str) -> Dict[str, Any]:
         """Create Claude Code integration hook for think mode selection"""
@@ -458,14 +547,14 @@ class DynamicThinkModeSelector:
 
         # Claude Code hook format
         hook_data = {
-            'think_mode': analysis.decision.value,
-            'complexity_score': analysis.complexity_score,
-            'confidence': analysis.confidence,
-            'reasoning': analysis.reasoning,
-            'processing_time_ms': analysis.processing_time_ms,
-            'npu_accelerated': analysis.npu_accelerated,
-            'recommended_agents': analysis.agent_recommendations,
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            "think_mode": analysis.decision.value,
+            "complexity_score": analysis.complexity_score,
+            "confidence": analysis.confidence,
+            "reasoning": analysis.reasoning,
+            "processing_time_ms": analysis.processing_time_ms,
+            "npu_accelerated": analysis.npu_accelerated,
+            "recommended_agents": analysis.agent_recommendations,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         return hook_data
@@ -473,13 +562,14 @@ class DynamicThinkModeSelector:
     def get_performance_report(self) -> Dict[str, Any]:
         """Generate performance report for system monitoring"""
         return {
-            'system_status': 'operational',
-            'npu_available': self.npu_analyzer.npu_available,
-            'metrics': self.performance_metrics.copy(),
-            'config': self.config.copy(),
-            'cache_size': len(self.decision_cache),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            "system_status": "operational",
+            "npu_available": self.npu_analyzer.npu_available,
+            "metrics": self.performance_metrics.copy(),
+            "config": self.config.copy(),
+            "cache_size": len(self.decision_cache),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
 
 class ClaudeCodeIntegration:
     """Integration layer for Claude Code think mode enhancement"""
@@ -497,10 +587,12 @@ class ClaudeCodeIntegration:
             hook_script = self._create_hook_script()
 
             # Install hook (would integrate with actual Claude Code in production)
-            hook_path = os.path.expanduser('~/.claude-code/hooks/think-mode-selector.py')
+            hook_path = os.path.expanduser(
+                "~/.claude-code/hooks/think-mode-selector.py"
+            )
             os.makedirs(os.path.dirname(hook_path), exist_ok=True)
 
-            with open(hook_path, 'w') as f:
+            with open(hook_path, "w") as f:
                 f.write(hook_script)
 
             os.chmod(hook_path, 0o755)
@@ -542,32 +634,38 @@ if __name__ == "__main__":
     main()
 '''
 
-def process_claude_task(self, task_text: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+
+def process_claude_task(
+    self, task_text: str, context: Dict[str, Any] = None
+) -> Dict[str, Any]:
     """Process Claude task and provide think mode recommendation"""
     analysis = self.think_selector.analyze_task_complexity(task_text, context)
 
     return {
-        'original_task': task_text,
-        'think_mode_recommendation': analysis.decision.value,
-        'complexity_analysis': {
-            'score': analysis.complexity_score,
-            'confidence': analysis.confidence,
-            'reasoning': analysis.reasoning,
-            'npu_accelerated': analysis.npu_accelerated
+        "original_task": task_text,
+        "think_mode_recommendation": analysis.decision.value,
+        "complexity_analysis": {
+            "score": analysis.complexity_score,
+            "confidence": analysis.confidence,
+            "reasoning": analysis.reasoning,
+            "npu_accelerated": analysis.npu_accelerated,
         },
-        'agent_recommendations': analysis.agent_recommendations,
-        'performance': {
-            'processing_time_ms': analysis.processing_time_ms,
-            'decision_latency': 'acceptable' if analysis.processing_time_ms < 500 else 'high'
-        }
+        "agent_recommendations": analysis.agent_recommendations,
+        "performance": {
+            "processing_time_ms": analysis.processing_time_ms,
+            "decision_latency": (
+                "acceptable" if analysis.processing_time_ms < 500 else "high"
+            ),
+        },
     }
+
 
 def main():
     """Main execution for testing and demonstration"""
-    print("="*80)
+    print("=" * 80)
     print("Dynamic Think Mode Selection System")
     print("Claude Code Integration - Intelligent Thinking Decision Engine")
-    print("="*80)
+    print("=" * 80)
 
     # Initialize system
     selector = DynamicThinkModeSelector()
@@ -579,7 +677,7 @@ def main():
         "Help me debug this Python function that's not working correctly.",
         "Design a microservices architecture for a banking system with security, performance, and compliance requirements.",
         "Coordinate multiple agents to implement a complex distributed system with real-time monitoring, security hardening, and cross-platform deployment.",
-        "Create documentation for the new API."
+        "Create documentation for the new API.",
     ]
 
     print("\n📊 Testing Dynamic Think Mode Selection:")
@@ -601,7 +699,7 @@ def main():
     # Performance report
     print(f"\n📈 Performance Report:")
     report = selector.get_performance_report()
-    metrics = report['metrics']
+    metrics = report["metrics"]
 
     print(f"   Total Analyses: {metrics['total_analyses']}")
     print(f"   NPU Accelerated: {metrics['npu_analyses']}")
@@ -625,6 +723,7 @@ def main():
 
     print(f"\n✅ Dynamic Think Mode Selection System operational")
     print(f"🚀 Ready for Claude Code integration")
+
 
 if __name__ == "__main__":
     main()

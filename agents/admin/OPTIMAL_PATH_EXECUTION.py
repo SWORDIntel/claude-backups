@@ -11,14 +11,15 @@ import asyncio
 import json
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
-from typing import Dict, Any, List
-import sys
+from typing import Any, Dict, List
 
 sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
-from 03-BRIDGES.claude_agent_bridge import task_agent_invoke, bridge
+from 03-BRIDGES.claude_agent_bridge import bridge, task_agent_invoke
 from 08-ADMIN-TOOLS.DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster
+
 
 class OptimalPathExecutor:
     """Executes the optimal path forward for complete system integration"""

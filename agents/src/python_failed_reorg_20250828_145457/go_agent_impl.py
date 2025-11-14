@@ -18,21 +18,22 @@ This agent provides comprehensive Go development capabilities including:
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
+import re
 import subprocess
 import tempfile
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Any, Tuple
-import hashlib
-import re
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class GoProjectType(Enum):
     BINARY = "binary"
@@ -43,6 +44,7 @@ class GoProjectType(Enum):
     GRPC_SERVICE = "grpc-service"
     LAMBDA_FUNCTION = "lambda-function"
 
+
 class DatabaseType(Enum):
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
@@ -50,6 +52,7 @@ class DatabaseType(Enum):
     REDIS = "redis"
     SQLITE = "sqlite"
     CASSANDRA = "cassandra"
+
 
 class DeploymentTarget(Enum):
     DOCKER = "docker"
@@ -59,12 +62,14 @@ class DeploymentTarget(Enum):
     AZURE_FUNCTIONS = "azure-functions"
     HEROKU = "heroku"
 
+
 class PerformanceProfile(Enum):
     DEVELOPMENT = "development"
     PRODUCTION = "production"
     HIGH_THROUGHPUT = "high-throughput"
     LOW_LATENCY = "low-latency"
     MEMORY_OPTIMIZED = "memory-optimized"
+
 
 @dataclass
 class GoProject:
@@ -79,6 +84,7 @@ class GoProject:
     target_os: List[str] = field(default_factory=lambda: ["linux"])
     target_arch: List[str] = field(default_factory=lambda: ["amd64"])
 
+
 @dataclass
 class ServiceConfig:
     port: int = 8080
@@ -89,6 +95,7 @@ class ServiceConfig:
     enable_tracing: bool = True
     enable_logging: bool = True
     middleware: List[str] = field(default_factory=list)
+
 
 @dataclass
 class PerformanceMetrics:
@@ -101,6 +108,7 @@ class PerformanceMetrics:
     goroutines_count: int
     gc_pause_ms: float
 
+
 @dataclass
 class BenchmarkResult:
     test_name: str
@@ -109,9 +117,10 @@ class BenchmarkResult:
     bytes_per_operation: int
     allocations_per_operation: int
 
+
 class GoAgent:
     """Elite Go backend development specialist"""
-    
+
     def __init__(self):
         self.agent_id = "go-internal-agent-v7"
         self.capabilities = {
@@ -124,59 +133,67 @@ class GoAgent:
             "performance_optimization": True,
             "concurrent_programming": True,
             "cloud_native": True,
-            "testing_benchmarking": True
+            "testing_benchmarking": True,
         }
         self.active_projects = {}
         self.service_metrics = {}
         self.deployment_configs = {}
-        
-    async def create_project(self, config: GoProject, service_config: Optional[ServiceConfig] = None) -> Dict[str, Any]:
+
+    async def create_project(
+        self, config: GoProject, service_config: Optional[ServiceConfig] = None
+    ) -> Dict[str, Any]:
         """Create new Go project with advanced configuration"""
         try:
             logger.info(f"Creating Go project: {config.name}")
-            
+
             # Set default module path
             if not config.module_path:
                 config.module_path = f"github.com/example/{config.name}"
-            
+
             # Create project directory
             config.path.mkdir(parents=True, exist_ok=True)
-            
+
             # Initialize Go module
             await self._init_go_module(config)
-            
+
             # Create project structure based on type
             if config.project_type == GoProjectType.WEB_SERVICE:
-                await self._create_web_service(config, service_config or ServiceConfig())
+                await self._create_web_service(
+                    config, service_config or ServiceConfig()
+                )
             elif config.project_type == GoProjectType.MICROSERVICE:
-                await self._create_microservice(config, service_config or ServiceConfig())
+                await self._create_microservice(
+                    config, service_config or ServiceConfig()
+                )
             elif config.project_type == GoProjectType.GRPC_SERVICE:
-                await self._create_grpc_service(config, service_config or ServiceConfig())
+                await self._create_grpc_service(
+                    config, service_config or ServiceConfig()
+                )
             elif config.project_type == GoProjectType.CLI_TOOL:
                 await self._create_cli_tool(config)
             else:
                 await self._create_basic_project(config)
-            
+
             # Setup development tools
             await self._setup_development_tools(config)
             await self._create_dockerfile(config)
             await self._create_kubernetes_manifests(config)
-            
+
             self.active_projects[config.name] = config
-            
+
             return {
                 "status": "success",
                 "project": config.name,
                 "path": str(config.path),
                 "type": config.project_type.value,
                 "module_path": config.module_path,
-                "go_version": config.go_version
+                "go_version": config.go_version,
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to create project {config.name}: {e}")
             return {"status": "error", "error": str(e)}
-    
+
     async def _init_go_module(self, config: GoProject) -> None:
         """Initialize Go module with go.mod"""
         go_mod_content = f"""module {config.module_path}
@@ -185,26 +202,38 @@ go {config.go_version}
 
 require (
 """
-        
+
         for dep, version in config.dependencies.items():
             go_mod_content += f"    {dep} {version}\n"
-            
+
         go_mod_content += ")\n"
-        
+
         (config.path / "go.mod").write_text(go_mod_content)
-        
+
         # Create go.sum placeholder
         (config.path / "go.sum").write_text("")
-    
-    async def _create_web_service(self, config: GoProject, service_config: ServiceConfig) -> None:
+
+    async def _create_web_service(
+        self, config: GoProject, service_config: ServiceConfig
+    ) -> None:
         """Create high-performance web service structure"""
         # Create directory structure
-        dirs = ["cmd", "internal/handler", "internal/service", "internal/repository", 
-                "internal/model", "internal/middleware", "pkg", "api", "configs", "migrations"]
-        
+        dirs = [
+            "cmd",
+            "internal/handler",
+            "internal/service",
+            "internal/repository",
+            "internal/model",
+            "internal/middleware",
+            "pkg",
+            "api",
+            "configs",
+            "migrations",
+        ]
+
         for dir_name in dirs:
             (config.path / dir_name).mkdir(parents=True, exist_ok=True)
-        
+
         # Main application entry point
         main_go = f"""package main
 
@@ -286,9 +315,9 @@ func main() {{
     log.Println("Server exited")
 }}
 """
-        
+
         (config.path / "cmd" / "main.go").write_text(main_go)
-        
+
         # Handler layer
         handler_go = f"""package handler
 
@@ -321,26 +350,32 @@ func (h *Handler) GetStatus(c *gin.Context) {{
     c.JSON(http.StatusOK, status)
 }}
 """
-        
+
         (config.path / "internal/handler/handler.go").write_text(handler_go)
-        
+
         # Add dependencies
-        config.dependencies.update({
-            "github.com/gin-gonic/gin": "v1.9.1",
-            "github.com/prometheus/client_golang": "v1.16.0"
-        })
-    
-    async def _create_microservice(self, config: GoProject, service_config: ServiceConfig) -> None:
+        config.dependencies.update(
+            {
+                "github.com/gin-gonic/gin": "v1.9.1",
+                "github.com/prometheus/client_golang": "v1.16.0",
+            }
+        )
+
+    async def _create_microservice(
+        self, config: GoProject, service_config: ServiceConfig
+    ) -> None:
         """Create microservice with full observability"""
         await self._create_web_service(config, service_config)
-        
+
         # Add microservice-specific dependencies
-        config.dependencies.update({
-            "github.com/opentracing/opentracing-go": "v1.2.0",
-            "github.com/uber/jaeger-client-go": "v2.30.0+incompatible",
-            "go.uber.org/zap": "v1.24.0"
-        })
-        
+        config.dependencies.update(
+            {
+                "github.com/opentracing/opentracing-go": "v1.2.0",
+                "github.com/uber/jaeger-client-go": "v2.30.0+incompatible",
+                "go.uber.org/zap": "v1.24.0",
+            }
+        )
+
         # Create observability setup
         observability_go = f"""package observability
 
@@ -383,17 +418,21 @@ func InitLogger() (*zap.Logger, error) {{
     return logger, nil
 }}
 """
-        
-        (config.path / "internal/observability/observability.go").write_text(observability_go)
-    
-    async def _create_grpc_service(self, config: GoProject, service_config: ServiceConfig) -> None:
+
+        (config.path / "internal/observability/observability.go").write_text(
+            observability_go
+        )
+
+    async def _create_grpc_service(
+        self, config: GoProject, service_config: ServiceConfig
+    ) -> None:
         """Create gRPC service with Protocol Buffers"""
         # Create directory structure
         dirs = ["cmd", "internal/server", "internal/service", "proto", "pkg/pb"]
-        
+
         for dir_name in dirs:
             (config.path / dir_name).mkdir(parents=True, exist_ok=True)
-        
+
         # Proto file
         proto_content = f"""syntax = "proto3";
 
@@ -421,9 +460,9 @@ message HealthResponse {{
     string status = 1;
 }}
 """
-        
+
         (config.path / "proto" / f"{config.name}.proto").write_text(proto_content)
-        
+
         # gRPC server implementation
         server_go = f"""package server
 
@@ -456,9 +495,9 @@ func (s *Server) HealthCheck(ctx context.Context, req *pb.HealthRequest) (*pb.He
     }}, nil
 }}
 """
-        
+
         (config.path / "internal/server/server.go").write_text(server_go)
-        
+
         # Main gRPC server
         grpc_main = f"""package main
 
@@ -492,23 +531,25 @@ func main() {{
     }}
 }}
 """
-        
+
         (config.path / "cmd/main.go").write_text(grpc_main)
-        
+
         # Add gRPC dependencies
-        config.dependencies.update({
-            "google.golang.org/grpc": "v1.57.0",
-            "google.golang.org/protobuf": "v1.31.0"
-        })
-    
+        config.dependencies.update(
+            {
+                "google.golang.org/grpc": "v1.57.0",
+                "google.golang.org/protobuf": "v1.31.0",
+            }
+        )
+
     async def _create_cli_tool(self, config: GoProject) -> None:
         """Create CLI tool with cobra framework"""
         # Create CLI structure
         dirs = ["cmd", "internal/cli"]
-        
+
         for dir_name in dirs:
             (config.path / dir_name).mkdir(parents=True, exist_ok=True)
-        
+
         # Main CLI entry point
         cli_main = f"""package main
 
@@ -523,9 +564,9 @@ func main() {{
     }}
 }}
 """
-        
+
         (config.path / "cmd/main.go").write_text(cli_main)
-        
+
         # CLI commands
         cli_root = f"""package cli
 
@@ -561,14 +602,12 @@ var versionCmd = &cobra.Command{{
     }},
 }}
 """
-        
+
         (config.path / "internal/cli/root.go").write_text(cli_root)
-        
+
         # Add CLI dependencies
-        config.dependencies.update({
-            "github.com/spf13/cobra": "v1.7.0"
-        })
-    
+        config.dependencies.update({"github.com/spf13/cobra": "v1.7.0"})
+
     async def _create_basic_project(self, config: GoProject) -> None:
         """Create basic Go project structure"""
         # Create basic main.go
@@ -580,9 +619,9 @@ func main() {{
     fmt.Println("Hello from {config.name}!")
 }}
 """
-        
+
         (config.path / "main.go").write_text(main_go)
-    
+
     async def _setup_development_tools(self, config: GoProject) -> None:
         """Setup development tools and configuration"""
         # Makefile
@@ -632,9 +671,9 @@ docker:
 bench:
 	go test -bench=. -benchmem ./...
 """
-        
+
         (config.path / "Makefile").write_text(makefile_content)
-        
+
         # .gitignore
         gitignore_content = """# Binaries
 bin/
@@ -670,9 +709,9 @@ go.work
 ehthumbs.db
 Thumbs.db
 """
-        
+
         (config.path / ".gitignore").write_text(gitignore_content)
-        
+
         # golangci-lint configuration
         lint_config = """run:
   deadline: 5m
@@ -725,9 +764,9 @@ issues:
         - gomnd
         - funlen
 """
-        
+
         (config.path / ".golangci.yml").write_text(lint_config)
-    
+
     async def _create_dockerfile(self, config: GoProject) -> None:
         """Create optimized multi-stage Dockerfile"""
         dockerfile_content = f"""# Build stage
@@ -763,14 +802,14 @@ EXPOSE 8080
 # Run the binary
 CMD ["./{config.name}"]
 """
-        
+
         (config.path / "Dockerfile").write_text(dockerfile_content)
-    
+
     async def _create_kubernetes_manifests(self, config: GoProject) -> None:
         """Create Kubernetes deployment manifests"""
         k8s_dir = config.path / "k8s"
         k8s_dir.mkdir(exist_ok=True)
-        
+
         # Deployment manifest
         deployment_yaml = f"""apiVersion: apps/v1
 kind: Deployment
@@ -829,59 +868,63 @@ spec:
       targetPort: 8080
   type: LoadBalancer
 """
-        
+
         (k8s_dir / "deployment.yaml").write_text(deployment_yaml)
-    
-    async def optimize_performance(self, project_name: str, 
-                                 profile: PerformanceProfile) -> PerformanceMetrics:
+
+    async def optimize_performance(
+        self, project_name: str, profile: PerformanceProfile
+    ) -> PerformanceMetrics:
         """Optimize Go application performance"""
         try:
             logger.info(f"Optimizing {project_name} for {profile.value}")
-            
+
             project = self.active_projects.get(project_name)
             if not project:
                 raise ValueError(f"Project {project_name} not found")
-            
+
             # Apply performance optimizations
             await self._apply_performance_optimizations(project, profile)
-            
+
             # Run performance benchmarks
             metrics = await self._run_performance_benchmarks(project)
-            
+
             return metrics
-            
+
         except Exception as e:
             logger.error(f"Performance optimization failed: {e}")
             return PerformanceMetrics(0, 0, 0, 0, 0, 0, 0, 0)
-    
-    async def _apply_performance_optimizations(self, project: GoProject, 
-                                             profile: PerformanceProfile) -> None:
+
+    async def _apply_performance_optimizations(
+        self, project: GoProject, profile: PerformanceProfile
+    ) -> None:
         """Apply performance optimization based on profile"""
         optimizations = {
             PerformanceProfile.HIGH_THROUGHPUT: {
                 "GOMAXPROCS": "0",  # Use all available CPUs
-                "GOGC": "100",      # Standard GC
-                "GOMEMLIMIT": "4GiB"
+                "GOGC": "100",  # Standard GC
+                "GOMEMLIMIT": "4GiB",
             },
             PerformanceProfile.LOW_LATENCY: {
                 "GOMAXPROCS": "4",
-                "GOGC": "50",       # More aggressive GC
-                "GOMEMLIMIT": "2GiB"
+                "GOGC": "50",  # More aggressive GC
+                "GOMEMLIMIT": "2GiB",
             },
             PerformanceProfile.MEMORY_OPTIMIZED: {
                 "GOMAXPROCS": "2",
-                "GOGC": "200",      # Less frequent GC
-                "GOMEMLIMIT": "1GiB"
-            }
+                "GOGC": "200",  # Less frequent GC
+                "GOMEMLIMIT": "1GiB",
+            },
         }
-        
+
         # Simulate applying optimizations
         await asyncio.sleep(1.0)
-    
-    async def _run_performance_benchmarks(self, project: GoProject) -> PerformanceMetrics:
+
+    async def _run_performance_benchmarks(
+        self, project: GoProject
+    ) -> PerformanceMetrics:
         """Run comprehensive performance benchmarks"""
         await asyncio.sleep(2.0)  # Simulate benchmark execution
-        
+
         # Simulate realistic performance metrics
         return PerformanceMetrics(
             requests_per_second=15000.0,
@@ -891,98 +934,101 @@ spec:
             memory_usage_mb=245.6,
             cpu_usage_percent=35.2,
             goroutines_count=150,
-            gc_pause_ms=0.8
+            gc_pause_ms=0.8,
         )
-    
+
     async def run_benchmarks(self, project_name: str) -> List[BenchmarkResult]:
         """Run Go benchmarks and return detailed results"""
         try:
             logger.info(f"Running benchmarks for {project_name}")
-            
+
             project = self.active_projects.get(project_name)
             if not project:
                 raise ValueError(f"Project {project_name} not found")
-            
+
             # Simulate running Go benchmarks
             await asyncio.sleep(3.0)
-            
+
             # Generate realistic benchmark results
             benchmarks = [
                 BenchmarkResult("BenchmarkStringConcat", 1000000, 1200, 32, 2),
                 BenchmarkResult("BenchmarkJSONMarshal", 500000, 2400, 128, 5),
                 BenchmarkResult("BenchmarkHTTPRequest", 100000, 15000, 512, 8),
                 BenchmarkResult("BenchmarkDatabaseQuery", 10000, 125000, 1024, 15),
-                BenchmarkResult("BenchmarkConcurrentMap", 2000000, 800, 0, 0)
+                BenchmarkResult("BenchmarkConcurrentMap", 2000000, 800, 0, 0),
             ]
-            
+
             return benchmarks
-            
+
         except Exception as e:
             logger.error(f"Benchmark execution failed: {e}")
             return []
-    
-    async def deploy_to_kubernetes(self, project_name: str, 
-                                 namespace: str = "default") -> Dict[str, Any]:
+
+    async def deploy_to_kubernetes(
+        self, project_name: str, namespace: str = "default"
+    ) -> Dict[str, Any]:
         """Deploy application to Kubernetes cluster"""
         try:
-            logger.info(f"Deploying {project_name} to Kubernetes namespace: {namespace}")
-            
+            logger.info(
+                f"Deploying {project_name} to Kubernetes namespace: {namespace}"
+            )
+
             project = self.active_projects.get(project_name)
             if not project:
                 raise ValueError(f"Project {project_name} not found")
-            
+
             # Build Docker image
             build_result = await self._build_docker_image(project)
             if not build_result:
                 return {"status": "error", "error": "Docker build failed"}
-            
+
             # Apply Kubernetes manifests
             deploy_result = await self._apply_k8s_manifests(project, namespace)
-            
+
             # Wait for deployment to be ready
             ready = await self._wait_for_deployment(project, namespace)
-            
+
             return {
                 "status": "success" if ready else "pending",
                 "namespace": namespace,
                 "image": f"{project.name}:latest",
                 "replicas": 3,
-                "service_url": f"http://{project.name}-service.{namespace}.svc.cluster.local"
+                "service_url": f"http://{project.name}-service.{namespace}.svc.cluster.local",
             }
-            
+
         except Exception as e:
             logger.error(f"Kubernetes deployment failed: {e}")
             return {"status": "error", "error": str(e)}
-    
+
     async def _build_docker_image(self, project: GoProject) -> bool:
         """Build Docker image for the project"""
         await asyncio.sleep(5.0)  # Simulate Docker build
         logger.info(f"Built Docker image: {project.name}:latest")
         return True
-    
+
     async def _apply_k8s_manifests(self, project: GoProject, namespace: str) -> bool:
         """Apply Kubernetes manifests"""
         await asyncio.sleep(2.0)  # Simulate kubectl apply
         logger.info(f"Applied Kubernetes manifests to namespace: {namespace}")
         return True
-    
+
     async def _wait_for_deployment(self, project: GoProject, namespace: str) -> bool:
         """Wait for deployment to be ready"""
         await asyncio.sleep(10.0)  # Simulate deployment rollout
         logger.info(f"Deployment {project.name} is ready")
         return True
-    
-    async def setup_database_integration(self, project_name: str, 
-                                       db_type: DatabaseType,
-                                       connection_string: str) -> Dict[str, Any]:
+
+    async def setup_database_integration(
+        self, project_name: str, db_type: DatabaseType, connection_string: str
+    ) -> Dict[str, Any]:
         """Setup database integration for Go project"""
         try:
             logger.info(f"Setting up {db_type.value} integration for {project_name}")
-            
+
             project = self.active_projects.get(project_name)
             if not project:
                 raise ValueError(f"Project {project_name} not found")
-            
+
             # Add database-specific dependencies
             if db_type == DatabaseType.POSTGRESQL:
                 project.dependencies["github.com/lib/pq"] = "v1.10.9"
@@ -991,26 +1037,29 @@ spec:
                 project.dependencies["go.mongodb.org/mongo-driver"] = "v1.12.1"
             elif db_type == DatabaseType.REDIS:
                 project.dependencies["github.com/go-redis/redis/v8"] = "v8.11.5"
-            
+
             # Generate database connection code
-            db_code = await self._generate_database_code(project, db_type, connection_string)
-            
+            db_code = await self._generate_database_code(
+                project, db_type, connection_string
+            )
+
             # Create repository layer
             await self._create_repository_layer(project, db_type)
-            
+
             return {
                 "status": "success",
                 "database_type": db_type.value,
                 "connection_code_generated": True,
-                "repository_layer_created": True
+                "repository_layer_created": True,
             }
-            
+
         except Exception as e:
             logger.error(f"Database integration failed: {e}")
             return {"status": "error", "error": str(e)}
-    
-    async def _generate_database_code(self, project: GoProject, 
-                                    db_type: DatabaseType, connection_string: str) -> str:
+
+    async def _generate_database_code(
+        self, project: GoProject, db_type: DatabaseType, connection_string: str
+    ) -> str:
         """Generate database connection and management code"""
         if db_type == DatabaseType.POSTGRESQL:
             db_code = f"""package database
@@ -1044,14 +1093,16 @@ func (db *DB) Close() error {{
 """
         else:
             db_code = f"// Database code for {db_type.value}"
-        
+
         db_dir = project.path / "internal/database"
         db_dir.mkdir(parents=True, exist_ok=True)
         (db_dir / "database.go").write_text(db_code)
-        
+
         return db_code
-    
-    async def _create_repository_layer(self, project: GoProject, db_type: DatabaseType) -> None:
+
+    async def _create_repository_layer(
+        self, project: GoProject, db_type: DatabaseType
+    ) -> None:
         """Create repository layer for database operations"""
         repo_code = f"""package repository
 
@@ -1089,16 +1140,17 @@ func (r *Repository) Delete(id int) error {{
     return nil
 }}
 """
-        
+
         (project.path / "internal/repository/repository.go").write_text(repo_code)
+
 
 async def main():
     """Test the Go agent implementation"""
     agent = GoAgent()
-    
+
     print("🐹 GO-INTERNAL-AGENT v7.0.0 Test Suite")
     print("=" * 50)
-    
+
     # Test 1: Create web service project
     print("\n🚀 Creating Go web service...")
     web_config = GoProject(
@@ -1108,115 +1160,125 @@ async def main():
         module_path="github.com/example/user-api",
         dependencies={
             "github.com/gin-gonic/gin": "v1.9.1",
-            "github.com/prometheus/client_golang": "v1.16.0"
-        }
+            "github.com/prometheus/client_golang": "v1.16.0",
+        },
     )
-    
+
     service_config = ServiceConfig(
         port=8080,
         database=DatabaseType.POSTGRESQL,
         enable_metrics=True,
-        enable_tracing=True
+        enable_tracing=True,
     )
-    
+
     result = await agent.create_project(web_config, service_config)
     print(f"Web service creation: {result['status']}")
-    if result['status'] == 'success':
+    if result["status"] == "success":
         print(f"  Path: {result['path']}")
         print(f"  Module: {result['module_path']}")
-    
+
     # Test 2: Performance optimization
     print("\n⚡ Optimizing for high throughput...")
-    perf_metrics = await agent.optimize_performance("user-api", PerformanceProfile.HIGH_THROUGHPUT)
+    perf_metrics = await agent.optimize_performance(
+        "user-api", PerformanceProfile.HIGH_THROUGHPUT
+    )
     print(f"Requests/sec: {perf_metrics.requests_per_second:,}")
     print(f"Avg response time: {perf_metrics.average_response_time_ms}ms")
     print(f"P99 response time: {perf_metrics.p99_response_time_ms}ms")
     print(f"Memory usage: {perf_metrics.memory_usage_mb}MB")
     print(f"Goroutines: {perf_metrics.goroutines_count}")
-    
+
     # Test 3: Run benchmarks
     print("\n📊 Running performance benchmarks...")
     benchmarks = await agent.run_benchmarks("user-api")
     print("Benchmark results:")
     for bench in benchmarks:
-        print(f"  {bench.test_name}: {bench.nanoseconds_per_operation}ns/op, {bench.bytes_per_operation}B/op")
-    
+        print(
+            f"  {bench.test_name}: {bench.nanoseconds_per_operation}ns/op, {bench.bytes_per_operation}B/op"
+        )
+
     # Test 4: Database integration
     print("\n🗄️ Setting up PostgreSQL integration...")
     db_result = await agent.setup_database_integration(
-        "user-api", 
-        DatabaseType.POSTGRESQL, 
-        "postgres://user:password@localhost/userdb?sslmode=disable"
+        "user-api",
+        DatabaseType.POSTGRESQL,
+        "postgres://user:password@localhost/userdb?sslmode=disable",
     )
-    if db_result['status'] == 'success':
+    if db_result["status"] == "success":
         print(f"Database integration: ✓")
         print(f"  Type: {db_result['database_type']}")
-        print(f"  Repository layer: {'✓' if db_result['repository_layer_created'] else '✗'}")
-    
+        print(
+            f"  Repository layer: {'✓' if db_result['repository_layer_created'] else '✗'}"
+        )
+
     # Test 5: Create gRPC service
     print("\n⚡ Creating gRPC service...")
     grpc_config = GoProject(
         name="notification-service",
         path=Path("/tmp/go-projects/notification-service"),
         project_type=GoProjectType.GRPC_SERVICE,
-        module_path="github.com/example/notification-service"
+        module_path="github.com/example/notification-service",
     )
-    
+
     grpc_result = await agent.create_project(grpc_config, ServiceConfig(port=9090))
-    if grpc_result['status'] == 'success':
+    if grpc_result["status"] == "success":
         print(f"gRPC service created: ✓")
         print(f"  Path: {grpc_result['path']}")
-    
+
     # Test 6: Create CLI tool
     print("\n🖥️ Creating CLI tool...")
     cli_config = GoProject(
         name="data-processor",
         path=Path("/tmp/go-projects/data-processor"),
         project_type=GoProjectType.CLI_TOOL,
-        module_path="github.com/example/data-processor"
+        module_path="github.com/example/data-processor",
     )
-    
+
     cli_result = await agent.create_project(cli_config)
-    if cli_result['status'] == 'success':
+    if cli_result["status"] == "success":
         print(f"CLI tool created: ✓")
         print(f"  Type: {cli_result['type']}")
-    
+
     # Test 7: Kubernetes deployment
     print("\n☸️ Deploying to Kubernetes...")
     k8s_result = await agent.deploy_to_kubernetes("user-api", "production")
-    if k8s_result['status'] in ['success', 'pending']:
+    if k8s_result["status"] in ["success", "pending"]:
         print(f"Kubernetes deployment: {k8s_result['status']}")
         print(f"  Namespace: {k8s_result['namespace']}")
         print(f"  Replicas: {k8s_result['replicas']}")
         print(f"  Service URL: {k8s_result['service_url']}")
-    
+
     # Test 8: Create microservice with observability
     print("\n🔍 Creating microservice with full observability...")
     micro_config = GoProject(
         name="payment-service",
         path=Path("/tmp/go-projects/payment-service"),
         project_type=GoProjectType.MICROSERVICE,
-        module_path="github.com/example/payment-service"
+        module_path="github.com/example/payment-service",
     )
-    
-    micro_result = await agent.create_project(micro_config, ServiceConfig(
-        port=8081,
-        database=DatabaseType.POSTGRESQL,
-        enable_metrics=True,
-        enable_tracing=True,
-        enable_logging=True
-    ))
-    
-    if micro_result['status'] == 'success':
+
+    micro_result = await agent.create_project(
+        micro_config,
+        ServiceConfig(
+            port=8081,
+            database=DatabaseType.POSTGRESQL,
+            enable_metrics=True,
+            enable_tracing=True,
+            enable_logging=True,
+        ),
+    )
+
+    if micro_result["status"] == "success":
         print(f"Microservice created: ✓")
         print(f"  Full observability stack enabled")
         print(f"  Distributed tracing: ✓")
         print(f"  Structured logging: ✓")
         print(f"  Prometheus metrics: ✓")
-    
+
     print("\n✅ GO-INTERNAL-AGENT test suite completed!")
     print(f"Agent capabilities: {len(agent.capabilities)} features")
     print(f"Active projects: {len(agent.active_projects)}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

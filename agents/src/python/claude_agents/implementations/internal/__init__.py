@@ -16,5 +16,5 @@ All agents in this module provide:
 from .json_internal_impl import JSONInternalPythonExecutor
 
 __all__ = [
-    'JSONInternalPythonExecutor',
+    "JSONInternalPythonExecutor",
 ]

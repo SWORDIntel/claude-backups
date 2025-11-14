@@ -12,21 +12,23 @@ Layer 5: User Intelligence Dashboard (complete journey tracking)
 """
 
 import asyncio
+import concurrent.futures
+import json
+import os
+import queue
+import sys
+import threading
+import time
+import traceback
+import uuid
+from contextlib import contextmanager
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
 import psycopg2
 import psycopg2.extras
-import time
-import json
-import uuid
-import os
-import sys
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
-import traceback
-import threading
-import queue
-import concurrent.futures
-from contextlib import contextmanager
+
 
 @dataclass
 class AgentExecution:
@@ -43,6 +45,7 @@ class AgentExecution:
     user_id: Optional[str] = None
     repository_path: Optional[str] = None
 
+
 @dataclass
 class WorkflowPattern:
     workflow_id: str
@@ -57,6 +60,7 @@ class WorkflowPattern:
     parallel_execution: bool = False
     dependency_count: int = 0
 
+
 @dataclass
 class PerformanceMetric:
     metric_category: str
@@ -69,7 +73,8 @@ class PerformanceMetric:
     severity_level: int = 1
     correlation_id: Optional[str] = None
     tags: Optional[Dict] = None
-    environment: str = 'production'
+    environment: str = "production"
+
 
 class EnterpriseDatabase:
     """Enterprise-grade PostgreSQL connection manager with connection pooling"""
@@ -82,11 +87,11 @@ class EnterpriseDatabase:
     def _initialize_pool(self):
         """Initialize connection pool with enterprise connections"""
         db_config = {
-            'host': 'localhost',
-            'port': 5433,
-            'database': 'claude_agents_auth',
-            'user': 'claude_agent',
-            'password': 'claude_secure_2024'
+            "host": "localhost",
+            "port": 5433,
+            "database": "claude_agents_auth",
+            "user": "claude_agent",
+            "password": "claude_secure_2024",
         }
 
         for _ in range(self.max_connections):
@@ -106,8 +111,9 @@ class EnterpriseDatabase:
         except queue.Empty:
             raise Exception("No database connections available")
         finally:
-            if 'conn' in locals():
+            if "conn" in locals():
                 self.connection_pool.put(conn)
+
 
 class EnterpriseLearningOrchestrator:
     """Enterprise Learning System with 5-layer architecture"""
@@ -119,10 +125,10 @@ class EnterpriseLearningOrchestrator:
         self.performance_queue = queue.Queue(maxsize=50000)
         self.active = True
         self.stats = {
-            'agent_executions': 0,
-            'workflow_patterns': 0,
-            'performance_metrics': 0,
-            'errors': 0
+            "agent_executions": 0,
+            "workflow_patterns": 0,
+            "performance_metrics": 0,
+            "errors": 0,
         }
 
         # Start background processing threads
@@ -143,7 +149,7 @@ class EnterpriseLearningOrchestrator:
             self.metrics_queue.put_nowait(execution)
             return True
         except queue.Full:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     def _process_agent_executions(self):
@@ -163,12 +169,12 @@ class EnterpriseLearningOrchestrator:
 
                 if batch:
                     self._insert_agent_executions_batch(batch)
-                    self.stats['agent_executions'] += len(batch)
+                    self.stats["agent_executions"] += len(batch)
                     batch.clear()
 
             except Exception as e:
                 print(f"Error processing agent executions: {e}")
-                self.stats['errors'] += 1
+                self.stats["errors"] += 1
                 time.sleep(1)
 
     def _insert_agent_executions_batch(self, executions: List[AgentExecution]):
@@ -185,9 +191,20 @@ class EnterpriseLearningOrchestrator:
             """
 
             batch_data = [
-                (e.agent_name, e.task_type, e.execution_time_ms, e.memory_usage_mb,
-                 e.cpu_usage_percent, e.success, e.error_message, e.input_size_bytes,
-                 e.output_size_bytes, e.session_id, e.user_id, e.repository_path)
+                (
+                    e.agent_name,
+                    e.task_type,
+                    e.execution_time_ms,
+                    e.memory_usage_mb,
+                    e.cpu_usage_percent,
+                    e.success,
+                    e.error_message,
+                    e.input_size_bytes,
+                    e.output_size_bytes,
+                    e.session_id,
+                    e.user_id,
+                    e.repository_path,
+                )
                 for e in executions
             ]
 
@@ -200,7 +217,7 @@ class EnterpriseLearningOrchestrator:
             self.workflow_queue.put_nowait(pattern)
             return True
         except queue.Full:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     def _process_workflow_patterns(self):
@@ -209,13 +226,13 @@ class EnterpriseLearningOrchestrator:
             try:
                 pattern = self.workflow_queue.get(timeout=5)
                 self._insert_workflow_pattern(pattern)
-                self.stats['workflow_patterns'] += 1
+                self.stats["workflow_patterns"] += 1
 
             except queue.Empty:
                 continue
             except Exception as e:
                 print(f"Error processing workflow pattern: {e}")
-                self.stats['errors'] += 1
+                self.stats["errors"] += 1
 
     def _insert_workflow_pattern(self, pattern: WorkflowPattern):
         """Insert workflow pattern with intelligence"""
@@ -230,12 +247,22 @@ class EnterpriseLearningOrchestrator:
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
 
-            cur.execute(insert_query, (
-                pattern.workflow_id, pattern.pattern_type, pattern.agent_sequence,
-                pattern.total_duration_ms, pattern.success_rate, pattern.complexity_score,
-                pattern.user_satisfaction, pattern.repository_context, pattern.task_category,
-                pattern.parallel_execution, pattern.dependency_count
-            ))
+            cur.execute(
+                insert_query,
+                (
+                    pattern.workflow_id,
+                    pattern.pattern_type,
+                    pattern.agent_sequence,
+                    pattern.total_duration_ms,
+                    pattern.success_rate,
+                    pattern.complexity_score,
+                    pattern.user_satisfaction,
+                    pattern.repository_context,
+                    pattern.task_category,
+                    pattern.parallel_execution,
+                    pattern.dependency_count,
+                ),
+            )
 
     # LAYER 4: Performance Intelligence Engine
     def record_performance_metric(self, metric: PerformanceMetric):
@@ -244,7 +271,7 @@ class EnterpriseLearningOrchestrator:
             self.performance_queue.put_nowait(metric)
             return True
         except queue.Full:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     def _process_performance_metrics(self):
@@ -263,12 +290,12 @@ class EnterpriseLearningOrchestrator:
 
                 if batch:
                     self._insert_performance_metrics_batch(batch)
-                    self.stats['performance_metrics'] += len(batch)
+                    self.stats["performance_metrics"] += len(batch)
                     batch.clear()
 
             except Exception as e:
                 print(f"Error processing performance metrics: {e}")
-                self.stats['errors'] += 1
+                self.stats["errors"] += 1
                 time.sleep(1)
 
     def _insert_performance_metrics_batch(self, metrics: List[PerformanceMetric]):
@@ -284,10 +311,19 @@ class EnterpriseLearningOrchestrator:
             """
 
             batch_data = [
-                (m.metric_category, m.metric_name, m.metric_value, m.unit, m.agent_name,
-                 json.dumps(m.system_context) if m.system_context else None,
-                 m.threshold_breached, m.severity_level, m.correlation_id,
-                 json.dumps(m.tags) if m.tags else None, m.environment)
+                (
+                    m.metric_category,
+                    m.metric_name,
+                    m.metric_value,
+                    m.unit,
+                    m.agent_name,
+                    json.dumps(m.system_context) if m.system_context else None,
+                    m.threshold_breached,
+                    m.severity_level,
+                    m.correlation_id,
+                    json.dumps(m.tags) if m.tags else None,
+                    m.environment,
+                )
                 for m in metrics
             ]
 
@@ -304,7 +340,8 @@ class EnterpriseLearningOrchestrator:
                     cur = conn.cursor()
 
                     # Get current statistics
-                    cur.execute("""
+                    cur.execute(
+                        """
                         SELECT
                             COUNT(*) as total_executions,
                             AVG(execution_time_ms) as avg_execution_time,
@@ -312,7 +349,8 @@ class EnterpriseLearningOrchestrator:
                             SUM(CASE WHEN success THEN 1 ELSE 0 END)::FLOAT / COUNT(*) * 100 as success_rate
                         FROM enterprise_learning.agent_executions
                         WHERE timestamp > NOW() - INTERVAL '1 hour'
-                    """)
+                    """
+                    )
 
                     stats = cur.fetchone()
                     if stats:
@@ -335,7 +373,8 @@ class EnterpriseLearningOrchestrator:
             dashboard = {}
 
             # Agent execution statistics
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     COUNT(*) as total_executions,
                     AVG(execution_time_ms) as avg_execution_time,
@@ -348,29 +387,32 @@ class EnterpriseLearningOrchestrator:
                     END as records_per_day
                 FROM enterprise_learning.agent_executions
                 WHERE timestamp > NOW() - INTERVAL '24 hours'
-            """)
+            """
+            )
 
             agent_stats = cur.fetchone()
-            dashboard['agent_performance'] = dict(agent_stats) if agent_stats else {}
+            dashboard["agent_performance"] = dict(agent_stats) if agent_stats else {}
 
             # Top performing agents
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT agent_name, COUNT(*) as executions, AVG(execution_time_ms) as avg_time
                 FROM enterprise_learning.agent_executions
                 WHERE timestamp > NOW() - INTERVAL '24 hours'
                 GROUP BY agent_name
                 ORDER BY executions DESC
                 LIMIT 10
-            """)
+            """
+            )
 
-            dashboard['top_agents'] = [dict(row) for row in cur.fetchall()]
+            dashboard["top_agents"] = [dict(row) for row in cur.fetchall()]
 
             # Current queue status
-            dashboard['queue_status'] = {
-                'agent_executions_queued': self.metrics_queue.qsize(),
-                'workflow_patterns_queued': self.workflow_queue.qsize(),
-                'performance_metrics_queued': self.performance_queue.qsize(),
-                'processing_stats': self.stats
+            dashboard["queue_status"] = {
+                "agent_executions_queued": self.metrics_queue.qsize(),
+                "workflow_patterns_queued": self.workflow_queue.qsize(),
+                "performance_metrics_queued": self.performance_queue.qsize(),
+                "processing_stats": self.stats,
             }
 
             return dashboard
@@ -381,9 +423,11 @@ class EnterpriseLearningOrchestrator:
         self.active = False
         self.executor.shutdown(wait=True)
 
+
 # Enterprise Learning System Instrumentation Decorators
 def enterprise_instrument(agent_name: str, task_type: str):
     """Decorator for automatic enterprise agent instrumentation"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             start_time = time.time()
@@ -399,10 +443,10 @@ def enterprise_instrument(agent_name: str, task_type: str):
                     task_type=task_type,
                     execution_time_ms=execution_time,
                     success=True,
-                    session_id=session_id
+                    session_id=session_id,
                 )
 
-                if hasattr(orchestrator, 'record_agent_execution'):
+                if hasattr(orchestrator, "record_agent_execution"):
                     orchestrator.record_agent_execution(execution)
 
                 return result
@@ -417,18 +461,22 @@ def enterprise_instrument(agent_name: str, task_type: str):
                     execution_time_ms=execution_time,
                     success=False,
                     error_message=str(e),
-                    session_id=session_id
+                    session_id=session_id,
                 )
 
-                if hasattr(orchestrator, 'record_agent_execution'):
+                if hasattr(orchestrator, "record_agent_execution"):
                     orchestrator.record_agent_execution(execution)
 
                 raise
+
         return wrapper
+
     return decorator
+
 
 # Global enterprise orchestrator instance
 orchestrator = None
+
 
 def initialize_enterprise_learning():
     """Initialize enterprise learning system"""
@@ -442,6 +490,7 @@ def initialize_enterprise_learning():
     except Exception as e:
         print(f"❌ Failed to initialize enterprise learning: {e}")
         return None
+
 
 if __name__ == "__main__":
     # Enterprise Learning System Demonstration
@@ -459,7 +508,7 @@ if __name__ == "__main__":
                 memory_usage_mb=100 + (i % 50),
                 cpu_usage_percent=10.5 + (i % 20),
                 success=True,
-                session_id=str(uuid.uuid4())
+                session_id=str(uuid.uuid4()),
             )
             orchestrator.record_agent_execution(execution)
 
@@ -472,7 +521,7 @@ if __name__ == "__main__":
                 total_duration_ms=1000 + (i * 100),
                 success_rate=0.95 + (i % 5) * 0.01,
                 complexity_score=5 + (i % 5),
-                parallel_execution=i % 2 == 0
+                parallel_execution=i % 2 == 0,
             )
             orchestrator.record_workflow_pattern(pattern)
 
@@ -484,7 +533,7 @@ if __name__ == "__main__":
                 metric_value=100.0 + (i % 50),
                 unit="ms",
                 agent_name=f"AGENT_{i % 15}",
-                severity_level=1 + (i % 3)
+                severity_level=1 + (i % 3),
             )
             orchestrator.record_performance_metric(metric)
 
@@ -494,7 +543,9 @@ if __name__ == "__main__":
         # Show enterprise dashboard
         dashboard = orchestrator.get_enterprise_dashboard()
         print(f"\n📊 ENTERPRISE DASHBOARD:")
-        print(f"   🎯 Records Generated: {dashboard['queue_status']['processing_stats']}")
+        print(
+            f"   🎯 Records Generated: {dashboard['queue_status']['processing_stats']}"
+        )
 
         try:
             while True:

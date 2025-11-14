@@ -32,31 +32,33 @@ Author: AI-Enhanced Document Analysis System
 Version: 2.0.0-NPU
 """
 
-import tkinter as tk
-from tkinter import ttk, messagebox, filedialog, scrolledtext
-import os
-import sys
-import subprocess
-import platform
-from pathlib import Path
-import re
-import json
-import threading
-import queue
-import time
-import hashlib
 import argparse
-import tempfile
+import hashlib
+import json
+import os
+import platform
+import queue
+import re
 import shutil
-from typing import Dict, List, Optional, Tuple, Set, Any
-from dataclasses import dataclass, asdict
-from collections import defaultdict
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import tkinter as tk
 import warnings
-warnings.filterwarnings('ignore')
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from tkinter import filedialog, messagebox, scrolledtext, ttk
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+warnings.filterwarnings("ignore")
 
 # ============================================================================
 # HARDWARE DETECTION & OpenVINO INTEGRATION
 # ============================================================================
+
 
 class HardwareDetector:
     """Detect available AI acceleration hardware (NPU, GPU, CPU)"""
@@ -66,15 +68,15 @@ class HardwareDetector:
         """Detect Intel NPU/GNA support"""
         try:
             # Check CPU model for Meteor Lake or later (has NPU)
-            with open('/proc/cpuinfo', 'r') as f:
+            with open("/proc/cpuinfo", "r") as f:
                 cpuinfo = f.read()
 
             # Intel Core Ultra series has NPU
-            if 'Intel(R) Core(TM) Ultra' in cpuinfo:
+            if "Intel(R) Core(TM) Ultra" in cpuinfo:
                 return True
 
             # Check for GNA device
-            if os.path.exists('/dev/intel_gna'):
+            if os.path.exists("/dev/intel_gna"):
                 return True
 
             return False
@@ -85,11 +87,13 @@ class HardwareDetector:
     def detect_intel_gpu() -> bool:
         """Detect Intel Arc Graphics or integrated GPU"""
         try:
-            result = subprocess.run(['lspci'], capture_output=True, text=True)
+            result = subprocess.run(["lspci"], capture_output=True, text=True)
             lspci_output = result.stdout
 
             # Check for Intel graphics
-            if 'Intel' in lspci_output and ('VGA' in lspci_output or 'Graphics' in lspci_output):
+            if "Intel" in lspci_output and (
+                "VGA" in lspci_output or "Graphics" in lspci_output
+            ):
                 return True
 
             return False
@@ -116,62 +120,64 @@ class HardwareDetector:
         devices = HardwareDetector.get_openvino_devices()
 
         # Priority: NPU > GPU > CPU
-        if 'NPU' in devices:
-            return 'NPU'
-        elif 'GPU' in devices or 'GPU.0' in devices:
-            return 'GPU'
+        if "NPU" in devices:
+            return "NPU"
+        elif "GPU" in devices or "GPU.0" in devices:
+            return "GPU"
         else:
-            return 'CPU'
+            return "CPU"
 
     @staticmethod
     def get_hardware_info() -> Dict[str, Any]:
         """Get comprehensive hardware information"""
         info = {
-            'cpu_model': 'Unknown',
-            'cpu_cores': os.cpu_count() or 1,
-            'has_npu': False,
-            'has_intel_gpu': False,
-            'openvino_devices': [],
-            'optimal_device': 'CPU',
-            'platform': platform.system(),
-            'python_version': platform.python_version()
+            "cpu_model": "Unknown",
+            "cpu_cores": os.cpu_count() or 1,
+            "has_npu": False,
+            "has_intel_gpu": False,
+            "openvino_devices": [],
+            "optimal_device": "CPU",
+            "platform": platform.system(),
+            "python_version": platform.python_version(),
         }
 
         try:
             # Get CPU model
-            if platform.system() == 'Linux':
-                with open('/proc/cpuinfo', 'r') as f:
+            if platform.system() == "Linux":
+                with open("/proc/cpuinfo", "r") as f:
                     for line in f:
-                        if 'model name' in line:
-                            info['cpu_model'] = line.split(':')[1].strip()
+                        if "model name" in line:
+                            info["cpu_model"] = line.split(":")[1].strip()
                             break
 
-            info['has_npu'] = HardwareDetector.detect_intel_npu()
-            info['has_intel_gpu'] = HardwareDetector.detect_intel_gpu()
-            info['openvino_devices'] = HardwareDetector.get_openvino_devices()
-            info['optimal_device'] = HardwareDetector.get_optimal_device()
+            info["has_npu"] = HardwareDetector.detect_intel_npu()
+            info["has_intel_gpu"] = HardwareDetector.detect_intel_gpu()
+            info["openvino_devices"] = HardwareDetector.get_openvino_devices()
+            info["optimal_device"] = HardwareDetector.get_optimal_device()
 
         except Exception as e:
             print(f"Warning: Could not detect all hardware features: {e}")
 
         return info
 
+
 # ============================================================================
 # AUTO-INSTALLATION SYSTEM
 # ============================================================================
+
 
 class DependencyManager:
     """Automatic dependency installation and management"""
 
     CORE_DEPS = [
-        ('pdfplumber', 'pdfplumber'),
-        ('Pillow', 'PIL'),
-        ('markdown', 'markdown'),
+        ("pdfplumber", "pdfplumber"),
+        ("Pillow", "PIL"),
+        ("markdown", "markdown"),
     ]
 
     AI_DEPS = [
-        ('numpy', 'numpy'),
-        ('scikit-learn', 'sklearn'),
+        ("numpy", "numpy"),
+        ("scikit-learn", "sklearn"),
         # Note: Large packages below are optional - browser works without them
         # They enable semantic search but aren't required for core functionality
         # ('openvino', 'openvino'),  # Already installed globally
@@ -182,13 +188,15 @@ class DependencyManager:
     ]
 
     OPTIONAL_DEPS = [
-        ('pytesseract', 'pytesseract'),  # OCR
-        ('python-docx', 'docx'),  # DOCX support
-        ('PyMuPDF', 'fitz'),  # Advanced PDF
+        ("pytesseract", "pytesseract"),  # OCR
+        ("python-docx", "docx"),  # DOCX support
+        ("PyMuPDF", "fitz"),  # Advanced PDF
     ]
 
     @staticmethod
-    def check_and_install(package_name: str, import_name: str = None, required: bool = True) -> bool:
+    def check_and_install(
+        package_name: str, import_name: str = None, required: bool = True
+    ) -> bool:
         """Check if package installed, install if not"""
         if import_name is None:
             import_name = package_name
@@ -203,27 +211,43 @@ class DependencyManager:
             # Try regular pip first (silent)
             try:
                 subprocess.check_call(
-                    [sys.executable, '-m', 'pip', 'install', package_name, '--quiet'],
+                    [sys.executable, "-m", "pip", "install", package_name, "--quiet"],
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
                 )
                 return True
             except subprocess.CalledProcessError:
                 # Try with --break-system-packages
                 try:
                     subprocess.check_call(
-                        [sys.executable, '-m', 'pip', 'install', package_name, '--break-system-packages', '--quiet'],
+                        [
+                            sys.executable,
+                            "-m",
+                            "pip",
+                            "install",
+                            package_name,
+                            "--break-system-packages",
+                            "--quiet",
+                        ],
                         stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
+                        stderr=subprocess.DEVNULL,
                     )
                     return True
                 except subprocess.CalledProcessError:
                     # Last resort: try with user install
                     try:
                         subprocess.check_call(
-                            [sys.executable, '-m', 'pip', 'install', '--user', package_name, '--quiet'],
+                            [
+                                sys.executable,
+                                "-m",
+                                "pip",
+                                "install",
+                                "--user",
+                                package_name,
+                                "--quiet",
+                            ],
                             stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL
+                            stderr=subprocess.DEVNULL,
                         )
                         return True
                     except subprocess.CalledProcessError:
@@ -236,13 +260,17 @@ class DependencyManager:
 
         print("🚀 Setting up document browser environment...")
 
-        total_deps = len(cls.CORE_DEPS) + (len(cls.AI_DEPS) if enable_ai else 0) + len(cls.OPTIONAL_DEPS)
+        total_deps = (
+            len(cls.CORE_DEPS)
+            + (len(cls.AI_DEPS) if enable_ai else 0)
+            + len(cls.OPTIONAL_DEPS)
+        )
         current = 0
 
         # Install core dependencies
         for pkg, imp in cls.CORE_DEPS:
             current += 1
-            print(f"   [{current}/{total_deps}] Checking {pkg}...", end=' ', flush=True)
+            print(f"   [{current}/{total_deps}] Checking {pkg}...", end=" ", flush=True)
             result = cls.check_and_install(pkg, imp, required=True)
             status[pkg] = result
             print("✅" if result else "⏭️")
@@ -252,7 +280,11 @@ class DependencyManager:
             print("\n🧠 Setting up AI acceleration...")
             for pkg, imp in cls.AI_DEPS:
                 current += 1
-                print(f"   [{current}/{total_deps}] Checking {pkg}...", end=' ', flush=True)
+                print(
+                    f"   [{current}/{total_deps}] Checking {pkg}...",
+                    end=" ",
+                    flush=True,
+                )
                 result = cls.check_and_install(pkg, imp, required=False)
                 status[pkg] = result
                 print("✅" if result else "⏭️")
@@ -263,21 +295,25 @@ class DependencyManager:
             result = cls.check_and_install(pkg, imp, required=False)
             status[pkg] = result
 
-        print(f"\n✅ Environment ready ({sum(1 for v in status.values() if v)}/{len(status)} packages available)\n")
+        print(
+            f"\n✅ Environment ready ({sum(1 for v in status.values() if v)}/{len(status)} packages available)\n"
+        )
         return status
+
 
 # ============================================================================
 # AI MODEL MANAGER (OpenVINO Optimized)
 # ============================================================================
 
+
 class AIModelManager:
     """Manage AI models with OpenVINO optimization for NPU/GPU"""
 
     def __init__(self, cache_dir: Path = None):
-        self.cache_dir = cache_dir or Path.home() / '.cache' / 'doc_browser_ai'
+        self.cache_dir = cache_dir or Path.home() / ".cache" / "doc_browser_ai"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.models = {}
-        self.device = 'CPU'
+        self.device = "CPU"
         self.ov_core = None
 
         # Initialize OpenVINO if available
@@ -294,19 +330,19 @@ class AIModelManager:
 
     def get_model_cache_path(self, model_name: str) -> Path:
         """Get cache path for model"""
-        safe_name = re.sub(r'[^\w\-.]', '_', model_name)
+        safe_name = re.sub(r"[^\w\-.]", "_", model_name)
         return self.cache_dir / safe_name
 
-    def load_embedding_model(self, model_name: str = 'all-MiniLM-L6-v2'):
+    def load_embedding_model(self, model_name: str = "all-MiniLM-L6-v2"):
         """Load sentence embedding model optimized for NPU/GPU with OpenVINO"""
-        cache_key = f'embeddings_{model_name}'
+        cache_key = f"embeddings_{model_name}"
 
         if cache_key in self.models:
             return self.models[cache_key]
 
         try:
             # Try OpenVINO-optimized model first (for NPU/GPU)
-            if self.ov_core and self.device in ['NPU', 'GPU']:
+            if self.ov_core and self.device in ["NPU", "GPU"]:
                 ov_model = self._load_openvino_embedding_model(model_name)
                 if ov_model:
                     self.models[cache_key] = ov_model
@@ -332,19 +368,18 @@ class AIModelManager:
             from transformers import AutoTokenizer
 
             model_id = f"sentence-transformers/{model_name}"
-            ov_model_path = self.get_model_cache_path(f'{model_name}_ov_{self.device}')
+            ov_model_path = self.get_model_cache_path(f"{model_name}_ov_{self.device}")
 
             # Check if already converted
             if ov_model_path.exists():
                 print(f"📥 Loading cached OpenVINO model from {ov_model_path}...")
                 try:
                     model = OVModelForFeatureExtraction.from_pretrained(
-                        ov_model_path,
-                        device=self.device
+                        ov_model_path, device=self.device
                     )
                     tokenizer = AutoTokenizer.from_pretrained(ov_model_path)
                     print(f"✅ Loaded optimized model on {self.device}")
-                    return {'model': model, 'tokenizer': tokenizer, 'type': 'openvino'}
+                    return {"model": model, "tokenizer": tokenizer, "type": "openvino"}
                 except Exception as e:
                     print(f"⚠️  Cache invalid, reconverting: {e}")
 
@@ -353,9 +388,7 @@ class AIModelManager:
             print(f"   This may take 1-2 minutes on first run...")
 
             model = OVModelForFeatureExtraction.from_pretrained(
-                model_id,
-                export=True,
-                device=self.device
+                model_id, export=True, device=self.device
             )
             tokenizer = AutoTokenizer.from_pretrained(model_id)
 
@@ -366,7 +399,7 @@ class AIModelManager:
             print(f"✅ Model optimized and cached for {self.device}")
             print(f"   Future runs will load instantly from cache")
 
-            return {'model': model, 'tokenizer': tokenizer, 'type': 'openvino'}
+            return {"model": model, "tokenizer": tokenizer, "type": "openvino"}
 
         except Exception as e:
             print(f"ℹ️  OpenVINO optimization failed: {e}")
@@ -381,26 +414,35 @@ class AIModelManager:
 
         try:
             # Check if OpenVINO model (dict) or standard model (object)
-            if isinstance(model, dict) and model.get('type') == 'openvino':
+            if isinstance(model, dict) and model.get("type") == "openvino":
                 # OpenVINO model - use tokenizer + model inference
                 import numpy as np
                 import torch  # Needed for tensor operations
 
-                tokenizer = model['tokenizer']
-                ov_model = model['model']
+                tokenizer = model["tokenizer"]
+                ov_model = model["model"]
 
                 # Tokenize texts
-                inputs = tokenizer(texts, padding=True, truncation=True,
-                                 return_tensors='pt', max_length=512)
+                inputs = tokenizer(
+                    texts,
+                    padding=True,
+                    truncation=True,
+                    return_tensors="pt",
+                    max_length=512,
+                )
 
                 # Run inference on NPU/GPU
                 outputs = ov_model(**inputs)
 
                 # Mean pooling
-                attention_mask = inputs['attention_mask']
+                attention_mask = inputs["attention_mask"]
                 token_embeddings = outputs[0]
-                input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-                embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+                input_mask_expanded = (
+                    attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+                )
+                embeddings = torch.sum(
+                    token_embeddings * input_mask_expanded, 1
+                ) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
                 return embeddings.detach().cpu().numpy()
 
@@ -413,13 +455,15 @@ class AIModelManager:
             print(f"Error encoding texts: {e}")
             # Fallback: try standard encoding
             try:
-                if hasattr(model, 'encode'):
+                if hasattr(model, "encode"):
                     return model.encode(texts, show_progress_bar=False)
             except:
                 pass
             return None
 
-    def semantic_search(self, query: str, documents: List[str], top_k: int = 5) -> List[Tuple[int, float]]:
+    def semantic_search(
+        self, query: str, documents: List[str], top_k: int = 5
+    ) -> List[Tuple[int, float]]:
         """Perform semantic search using embeddings"""
         model = self.load_embedding_model()
         if model is None:
@@ -431,23 +475,29 @@ class AIModelManager:
             doc_embeddings = model.encode(documents, show_progress_bar=False)
 
             # Compute cosine similarity
-            from sklearn.metrics.pairwise import cosine_similarity
             import numpy as np
+            from sklearn.metrics.pairwise import cosine_similarity
 
             similarities = cosine_similarity(query_embedding, doc_embeddings)[0]
 
             # Get top-k results
             top_indices = np.argsort(similarities)[::-1][:top_k]
-            results = [(idx, float(similarities[idx])) for idx in top_indices if similarities[idx] > 0.3]
+            results = [
+                (idx, float(similarities[idx]))
+                for idx in top_indices
+                if similarities[idx] > 0.3
+            ]
 
             return results
         except Exception as e:
             print(f"Error in semantic search: {e}")
             return []
 
+
 # ============================================================================
 # DOCKER GENERATOR
 # ============================================================================
+
 
 class DockerGenerator:
     """Generate Docker configuration for the document browser"""
@@ -594,25 +644,25 @@ build/
 
             # Generate Dockerfile
             dockerfile_content = DockerGenerator.generate_dockerfile(
-                has_npu=hardware_info.get('has_npu', False),
-                has_gpu=hardware_info.get('has_intel_gpu', False)
+                has_npu=hardware_info.get("has_npu", False),
+                has_gpu=hardware_info.get("has_intel_gpu", False),
             )
-            with open(output_dir / 'Dockerfile', 'w') as f:
+            with open(output_dir / "Dockerfile", "w") as f:
                 f.write(dockerfile_content)
             print("✅ Created Dockerfile")
 
             # Generate docker-compose.yml
             compose_content = DockerGenerator.generate_docker_compose(
-                has_npu=hardware_info.get('has_npu', False),
-                has_gpu=hardware_info.get('has_intel_gpu', False)
+                has_npu=hardware_info.get("has_npu", False),
+                has_gpu=hardware_info.get("has_intel_gpu", False),
             )
-            with open(output_dir / 'docker-compose.yml', 'w') as f:
+            with open(output_dir / "docker-compose.yml", "w") as f:
                 f.write(compose_content)
             print("✅ Created docker-compose.yml")
 
             # Generate .dockerignore
             dockerignore_content = DockerGenerator.generate_dockerignore()
-            with open(output_dir / '.dockerignore', 'w') as f:
+            with open(output_dir / ".dockerignore", "w") as f:
                 f.write(dockerignore_content)
             print("✅ Created .dockerignore")
 
@@ -661,7 +711,7 @@ docker run -it --rm \\
 - First run will download required AI models (~500MB)
 - GUI requires X11 forwarding (configured automatically)
 """
-            with open(output_dir / 'README_DOCKER.md', 'w') as f:
+            with open(output_dir / "README_DOCKER.md", "w") as f:
                 f.write(readme_content)
             print("✅ Created README_DOCKER.md")
 
@@ -678,9 +728,11 @@ docker run -it --rm \\
             print(f"❌ Failed to generate Docker files: {e}")
             return False
 
+
 # ============================================================================
 # ENHANCED PDF PROCESSOR
 # ============================================================================
+
 
 class PDFProcessor:
     """Enhanced PDF processing with OCR and image extraction"""
@@ -702,13 +754,16 @@ class PDFProcessor:
                         try:
                             import pytesseract
                             from PIL import Image
+
                             img = page.to_image()
                             ocr_text = pytesseract.image_to_string(img.original)
-                            text_parts.append(f"\n{'='*60}\nPage {i} (OCR)\n{'='*60}\n{ocr_text}")
+                            text_parts.append(
+                                f"\n{'='*60}\nPage {i} (OCR)\n{'='*60}\n{ocr_text}"
+                            )
                         except:
                             text_parts.append(f"\nPage {i}: [OCR not available]")
 
-            return '\n'.join(text_parts)
+            return "\n".join(text_parts)
         except Exception as e:
             return f"Error extracting PDF: {e}"
 
@@ -721,19 +776,21 @@ class PDFProcessor:
             with pdfplumber.open(pdf_path) as pdf:
                 metadata = pdf.metadata or {}
                 return {
-                    'pages': str(len(pdf.pages)),
-                    'title': metadata.get('Title', 'Unknown'),
-                    'author': metadata.get('Author', 'Unknown'),
-                    'subject': metadata.get('Subject', 'Unknown'),
-                    'creator': metadata.get('Creator', 'Unknown'),
-                    'producer': metadata.get('Producer', 'Unknown'),
+                    "pages": str(len(pdf.pages)),
+                    "title": metadata.get("Title", "Unknown"),
+                    "author": metadata.get("Author", "Unknown"),
+                    "subject": metadata.get("Subject", "Unknown"),
+                    "creator": metadata.get("Creator", "Unknown"),
+                    "producer": metadata.get("Producer", "Unknown"),
                 }
         except:
-            return {'error': 'Could not read PDF metadata'}
+            return {"error": "Could not read PDF metadata"}
+
 
 # ============================================================================
 # SEMANTIC SEARCH ENGINE
 # ============================================================================
+
 
 class SemanticSearchEngine:
     """AI-powered semantic search using embeddings"""
@@ -763,7 +820,9 @@ class SemanticSearchEngine:
 
             if embeddings is not None:
                 self.embeddings = embeddings
-                self.document_index = {str(path): idx for idx, path in enumerate(doc_paths)}
+                self.document_index = {
+                    str(path): idx for idx, path in enumerate(doc_paths)
+                }
                 print(f"✅ Indexed {len(documents)} documents")
                 return True
 
@@ -785,8 +844,8 @@ class SemanticSearchEngine:
                 return []
 
             # Compute similarities
-            from sklearn.metrics.pairwise import cosine_similarity
             import numpy as np
+            from sklearn.metrics.pairwise import cosine_similarity
 
             similarities = cosine_similarity(query_emb, self.embeddings)[0]
 
@@ -806,9 +865,11 @@ class SemanticSearchEngine:
             print(f"Error in semantic search: {e}")
             return []
 
+
 # ============================================================================
 # ENHANCED DOCUMENT BROWSER UI
 # ============================================================================
+
 
 class EnhancedDocumentBrowser:
     """AI-Enhanced document browser with NPU/GPU acceleration"""
@@ -827,7 +888,7 @@ class EnhancedDocumentBrowser:
 
         # Document cache
         self.doc_cache = {}
-        self.search_mode = 'keyword'  # or 'semantic'
+        self.search_mode = "keyword"  # or 'semantic'
 
         # Setup UI
         self.setup_ui()
@@ -844,7 +905,7 @@ class EnhancedDocumentBrowser:
 
         # Main container
         main = ttk.Frame(self.root, padding=10)
-        main.grid(row=0, column=0, sticky='nsew')
+        main.grid(row=0, column=0, sticky="nsew")
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main.columnconfigure(1, weight=1)
@@ -861,178 +922,233 @@ class EnhancedDocumentBrowser:
         """Configure dark mode theme for the application"""
         # Dark theme colors
         self.colors = {
-            'bg': '#1e1e1e',           # Dark background
-            'fg': '#d4d4d4',           # Light text
-            'select_bg': '#264f78',    # Selection background
-            'select_fg': '#ffffff',    # Selection text
-            'border': '#3e3e3e',       # Borders
-            'button_bg': '#2d2d2d',    # Button background
-            'button_fg': '#cccccc',    # Button text
-            'highlight': '#007acc',    # Highlight color
-            'success': '#4ec9b0',      # Success/NPU color
-            'warning': '#ce9178',      # Warning color
-            'error': '#f48771',        # Error color
-            'code_bg': '#252526',      # Code background
-            'comment': '#6a9955',      # Comments
+            "bg": "#1e1e1e",  # Dark background
+            "fg": "#d4d4d4",  # Light text
+            "select_bg": "#264f78",  # Selection background
+            "select_fg": "#ffffff",  # Selection text
+            "border": "#3e3e3e",  # Borders
+            "button_bg": "#2d2d2d",  # Button background
+            "button_fg": "#cccccc",  # Button text
+            "highlight": "#007acc",  # Highlight color
+            "success": "#4ec9b0",  # Success/NPU color
+            "warning": "#ce9178",  # Warning color
+            "error": "#f48771",  # Error color
+            "code_bg": "#252526",  # Code background
+            "comment": "#6a9955",  # Comments
         }
 
         # Configure ttk styles
         style = ttk.Style()
-        style.theme_use('clam')
+        style.theme_use("clam")
 
         # Configure all ttk widgets for dark mode
-        style.configure('.',
-                       background=self.colors['bg'],
-                       foreground=self.colors['fg'],
-                       bordercolor=self.colors['border'],
-                       darkcolor=self.colors['bg'],
-                       lightcolor=self.colors['border'],
-                       troughcolor=self.colors['bg'],
-                       fieldbackground=self.colors['code_bg'],
-                       selectbackground=self.colors['select_bg'],
-                       selectforeground=self.colors['select_fg'])
+        style.configure(
+            ".",
+            background=self.colors["bg"],
+            foreground=self.colors["fg"],
+            bordercolor=self.colors["border"],
+            darkcolor=self.colors["bg"],
+            lightcolor=self.colors["border"],
+            troughcolor=self.colors["bg"],
+            fieldbackground=self.colors["code_bg"],
+            selectbackground=self.colors["select_bg"],
+            selectforeground=self.colors["select_fg"],
+        )
 
-        style.configure('TFrame', background=self.colors['bg'])
-        style.configure('TLabel', background=self.colors['bg'], foreground=self.colors['fg'])
-        style.configure('TLabelframe', background=self.colors['bg'], foreground=self.colors['fg'],
-                       bordercolor=self.colors['border'])
-        style.configure('TLabelframe.Label', background=self.colors['bg'], foreground=self.colors['highlight'])
+        style.configure("TFrame", background=self.colors["bg"])
+        style.configure(
+            "TLabel", background=self.colors["bg"], foreground=self.colors["fg"]
+        )
+        style.configure(
+            "TLabelframe",
+            background=self.colors["bg"],
+            foreground=self.colors["fg"],
+            bordercolor=self.colors["border"],
+        )
+        style.configure(
+            "TLabelframe.Label",
+            background=self.colors["bg"],
+            foreground=self.colors["highlight"],
+        )
 
-        style.configure('TButton',
-                       background=self.colors['button_bg'],
-                       foreground=self.colors['button_fg'],
-                       bordercolor=self.colors['border'],
-                       focuscolor=self.colors['highlight'])
+        style.configure(
+            "TButton",
+            background=self.colors["button_bg"],
+            foreground=self.colors["button_fg"],
+            bordercolor=self.colors["border"],
+            focuscolor=self.colors["highlight"],
+        )
 
-        style.map('TButton',
-                 background=[('active', self.colors['select_bg']),
-                            ('pressed', self.colors['highlight'])])
+        style.map(
+            "TButton",
+            background=[
+                ("active", self.colors["select_bg"]),
+                ("pressed", self.colors["highlight"]),
+            ],
+        )
 
-        style.configure('Treeview',
-                       background=self.colors['code_bg'],
-                       foreground=self.colors['fg'],
-                       fieldbackground=self.colors['code_bg'],
-                       bordercolor=self.colors['border'])
+        style.configure(
+            "Treeview",
+            background=self.colors["code_bg"],
+            foreground=self.colors["fg"],
+            fieldbackground=self.colors["code_bg"],
+            bordercolor=self.colors["border"],
+        )
 
-        style.map('Treeview',
-                 background=[('selected', self.colors['select_bg'])],
-                 foreground=[('selected', self.colors['select_fg'])])
+        style.map(
+            "Treeview",
+            background=[("selected", self.colors["select_bg"])],
+            foreground=[("selected", self.colors["select_fg"])],
+        )
 
-        style.configure('TEntry',
-                       fieldbackground=self.colors['code_bg'],
-                       foreground=self.colors['fg'],
-                       insertcolor=self.colors['fg'])
+        style.configure(
+            "TEntry",
+            fieldbackground=self.colors["code_bg"],
+            foreground=self.colors["fg"],
+            insertcolor=self.colors["fg"],
+        )
 
         # Configure root window
-        self.root.configure(bg=self.colors['bg'])
+        self.root.configure(bg=self.colors["bg"])
 
     def create_toolbar(self, parent):
         """Create toolbar with hardware info"""
         toolbar = ttk.Frame(parent)
-        toolbar.grid(row=0, column=0, columnspan=3, sticky='ew', pady=(0,5))
+        toolbar.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 5))
 
         # Hardware status
         hw_frame = ttk.LabelFrame(toolbar, text="Hardware Acceleration", padding=5)
-        hw_frame.pack(side=tk.LEFT, padx=(0,10))
+        hw_frame.pack(side=tk.LEFT, padx=(0, 10))
 
-        device = self.hardware_info.get('optimal_device', 'CPU')
-        device_color = {'NPU': 'green', 'GPU': 'blue', 'CPU': 'orange'}.get(device, 'gray')
+        device = self.hardware_info.get("optimal_device", "CPU")
+        device_color = {"NPU": "green", "GPU": "blue", "CPU": "orange"}.get(
+            device, "gray"
+        )
 
-        ttk.Label(hw_frame, text=f"Using: {device}", foreground=device_color,
-                 font=('Arial', 9, 'bold')).pack(side=tk.LEFT, padx=5)
+        ttk.Label(
+            hw_frame,
+            text=f"Using: {device}",
+            foreground=device_color,
+            font=("Arial", 9, "bold"),
+        ).pack(side=tk.LEFT, padx=5)
 
-        if self.hardware_info.get('has_npu'):
-            ttk.Label(hw_frame, text="🚀 NPU", foreground='green').pack(side=tk.LEFT)
-        if self.hardware_info.get('has_intel_gpu'):
-            ttk.Label(hw_frame, text="🎮 GPU", foreground='blue').pack(side=tk.LEFT)
+        if self.hardware_info.get("has_npu"):
+            ttk.Label(hw_frame, text="🚀 NPU", foreground="green").pack(side=tk.LEFT)
+        if self.hardware_info.get("has_intel_gpu"):
+            ttk.Label(hw_frame, text="🎮 GPU", foreground="blue").pack(side=tk.LEFT)
 
         # Search mode toggle
         search_frame = ttk.LabelFrame(toolbar, text="Search Mode", padding=5)
-        search_frame.pack(side=tk.LEFT, padx=(0,10))
+        search_frame.pack(side=tk.LEFT, padx=(0, 10))
 
-        self.search_mode_var = tk.StringVar(value='keyword')
-        ttk.Radiobutton(search_frame, text="Keyword", variable=self.search_mode_var,
-                       value='keyword', command=self.on_search_mode_change).pack(side=tk.LEFT)
-        ttk.Radiobutton(search_frame, text="🧠 Semantic (AI)", variable=self.search_mode_var,
-                       value='semantic', command=self.on_search_mode_change).pack(side=tk.LEFT)
+        self.search_mode_var = tk.StringVar(value="keyword")
+        ttk.Radiobutton(
+            search_frame,
+            text="Keyword",
+            variable=self.search_mode_var,
+            value="keyword",
+            command=self.on_search_mode_change,
+        ).pack(side=tk.LEFT)
+        ttk.Radiobutton(
+            search_frame,
+            text="🧠 Semantic (AI)",
+            variable=self.search_mode_var,
+            value="semantic",
+            command=self.on_search_mode_change,
+        ).pack(side=tk.LEFT)
 
         # Search box
         search_box = ttk.Frame(toolbar)
-        search_box.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,10))
+        search_box.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
 
         self.search_var = tk.StringVar()
-        ttk.Entry(search_box, textvariable=self.search_var, font=('Arial', 10)).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,5))
-        ttk.Button(search_box, text="Search", command=self.perform_search).pack(side=tk.LEFT)
+        ttk.Entry(search_box, textvariable=self.search_var, font=("Arial", 10)).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5)
+        )
+        ttk.Button(search_box, text="Search", command=self.perform_search).pack(
+            side=tk.LEFT
+        )
 
         # Actions
-        ttk.Button(toolbar, text="📊 Hardware Info", command=self.show_hardware_info).pack(side=tk.RIGHT, padx=2)
-        ttk.Button(toolbar, text="🐳 Docker Init", command=self.init_docker).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(
+            toolbar, text="📊 Hardware Info", command=self.show_hardware_info
+        ).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(toolbar, text="🐳 Docker Init", command=self.init_docker).pack(
+            side=tk.RIGHT, padx=2
+        )
 
     def create_sidebar(self, parent):
         """Create document navigation sidebar"""
         sidebar = ttk.LabelFrame(parent, text="Documents", padding=5)
-        sidebar.grid(row=1, column=0, sticky='nsew', padx=(0,5))
+        sidebar.grid(row=1, column=0, sticky="nsew", padx=(0, 5))
         sidebar.rowconfigure(0, weight=1)
         sidebar.columnconfigure(0, weight=1)
 
         # Tree view for files
         tree_frame = ttk.Frame(sidebar)
-        tree_frame.grid(row=0, column=0, sticky='nsew')
+        tree_frame.grid(row=0, column=0, sticky="nsew")
         tree_frame.rowconfigure(0, weight=1)
         tree_frame.columnconfigure(0, weight=1)
 
-        self.file_tree = ttk.Treeview(tree_frame, selectmode='browse')
-        self.file_tree.grid(row=0, column=0, sticky='nsew')
+        self.file_tree = ttk.Treeview(tree_frame, selectmode="browse")
+        self.file_tree.grid(row=0, column=0, sticky="nsew")
 
-        scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.file_tree.yview)
-        scrollbar.grid(row=0, column=1, sticky='ns')
+        scrollbar = ttk.Scrollbar(
+            tree_frame, orient=tk.VERTICAL, command=self.file_tree.yview
+        )
+        scrollbar.grid(row=0, column=1, sticky="ns")
         self.file_tree.configure(yscrollcommand=scrollbar.set)
 
-        self.file_tree.bind('<<TreeviewSelect>>', self.on_file_select)
+        self.file_tree.bind("<<TreeviewSelect>>", self.on_file_select)
 
     def create_content_area(self, parent):
         """Create main content viewing area"""
         content = ttk.LabelFrame(parent, text="Content", padding=5)
-        content.grid(row=1, column=1, sticky='nsew', padx=(0,5))
+        content.grid(row=1, column=1, sticky="nsew", padx=(0, 5))
         content.rowconfigure(0, weight=1)
         content.columnconfigure(0, weight=1)
 
         # Text widget with scrollbars
         text_frame = ttk.Frame(content)
-        text_frame.grid(row=0, column=0, sticky='nsew')
+        text_frame.grid(row=0, column=0, sticky="nsew")
         text_frame.rowconfigure(0, weight=1)
         text_frame.columnconfigure(0, weight=1)
 
         self.content_text = scrolledtext.ScrolledText(
             text_frame,
             wrap=tk.WORD,
-            font=('Consolas', 10),
-            bg=self.colors['code_bg'],
-            fg=self.colors['fg'],
-            insertbackground=self.colors['fg'],
-            selectbackground=self.colors['select_bg'],
-            selectforeground=self.colors['select_fg']
+            font=("Consolas", 10),
+            bg=self.colors["code_bg"],
+            fg=self.colors["fg"],
+            insertbackground=self.colors["fg"],
+            selectbackground=self.colors["select_bg"],
+            selectforeground=self.colors["select_fg"],
         )
-        self.content_text.grid(row=0, column=0, sticky='nsew')
+        self.content_text.grid(row=0, column=0, sticky="nsew")
 
         # Configure text tags for markdown syntax highlighting
         self.setup_markdown_highlighting()
 
         # Content toolbar
         content_toolbar = ttk.Frame(content)
-        content_toolbar.grid(row=1, column=0, sticky='ew', pady=(5,0))
+        content_toolbar.grid(row=1, column=0, sticky="ew", pady=(5, 0))
 
-        ttk.Button(content_toolbar, text="📝 Summarize (AI)",
-                  command=self.summarize_document).pack(side=tk.LEFT, padx=2)
-        ttk.Button(content_toolbar, text="🔍 Extract Data",
-                  command=self.extract_structured_data).pack(side=tk.LEFT, padx=2)
-        ttk.Button(content_toolbar, text="📂 Open External",
-                  command=self.open_external).pack(side=tk.LEFT, padx=2)
+        ttk.Button(
+            content_toolbar, text="📝 Summarize (AI)", command=self.summarize_document
+        ).pack(side=tk.LEFT, padx=2)
+        ttk.Button(
+            content_toolbar,
+            text="🔍 Extract Data",
+            command=self.extract_structured_data,
+        ).pack(side=tk.LEFT, padx=2)
+        ttk.Button(
+            content_toolbar, text="📂 Open External", command=self.open_external
+        ).pack(side=tk.LEFT, padx=2)
 
     def create_ai_panel(self, parent):
         """Create AI interaction panel"""
         ai_panel = ttk.LabelFrame(parent, text="AI Assistant", padding=5)
-        ai_panel.grid(row=1, column=2, sticky='nsew')
+        ai_panel.grid(row=1, column=2, sticky="nsew")
         ai_panel.rowconfigure(0, weight=1)
         ai_panel.columnconfigure(0, weight=1)
 
@@ -1040,37 +1156,47 @@ class EnhancedDocumentBrowser:
         self.ai_text = scrolledtext.ScrolledText(
             ai_panel,
             wrap=tk.WORD,
-            font=('Arial', 10),
+            font=("Arial", 10),
             width=40,
-            bg=self.colors['code_bg'],
-            fg=self.colors['fg'],
-            insertbackground=self.colors['fg'],
-            selectbackground=self.colors['select_bg'],
-            selectforeground=self.colors['select_fg']
+            bg=self.colors["code_bg"],
+            fg=self.colors["fg"],
+            insertbackground=self.colors["fg"],
+            selectbackground=self.colors["select_bg"],
+            selectforeground=self.colors["select_fg"],
         )
-        self.ai_text.grid(row=0, column=0, sticky='nsew')
-        self.ai_text.insert('1.0', "💡 AI Assistant Ready\n\n")
-        self.ai_text.insert('end', f"Device: {self.hardware_info.get('optimal_device', 'CPU')}\n")
-        self.ai_text.insert('end', f"CPU: {self.hardware_info.get('cpu_cores', 0)} cores\n")
-        if self.hardware_info.get('has_npu'):
-            self.ai_text.insert('end', "🚀 NPU: Available\n")
-        self.ai_text.insert('end', "\nSelect a document to analyze.")
+        self.ai_text.grid(row=0, column=0, sticky="nsew")
+        self.ai_text.insert("1.0", "💡 AI Assistant Ready\n\n")
+        self.ai_text.insert(
+            "end", f"Device: {self.hardware_info.get('optimal_device', 'CPU')}\n"
+        )
+        self.ai_text.insert(
+            "end", f"CPU: {self.hardware_info.get('cpu_cores', 0)} cores\n"
+        )
+        if self.hardware_info.get("has_npu"):
+            self.ai_text.insert("end", "🚀 NPU: Available\n")
+        self.ai_text.insert("end", "\nSelect a document to analyze.")
         self.ai_text.config(state=tk.DISABLED)
 
         # Question input
         q_frame = ttk.Frame(ai_panel)
-        q_frame.grid(row=1, column=0, sticky='ew', pady=(5,0))
+        q_frame.grid(row=1, column=0, sticky="ew", pady=(5, 0))
         q_frame.columnconfigure(0, weight=1)
 
         self.question_var = tk.StringVar()
-        ttk.Entry(q_frame, textvariable=self.question_var, font=('Arial', 10)).grid(row=0, column=0, sticky='ew', padx=(0,5))
-        ttk.Button(q_frame, text="Ask AI", command=self.ask_ai_question).grid(row=0, column=1)
+        ttk.Entry(q_frame, textvariable=self.question_var, font=("Arial", 10)).grid(
+            row=0, column=0, sticky="ew", padx=(0, 5)
+        )
+        ttk.Button(q_frame, text="Ask AI", command=self.ask_ai_question).grid(
+            row=0, column=1
+        )
 
     def create_status_bar(self, parent):
         """Create status bar"""
         self.status_var = tk.StringVar(value="Ready")
-        status = ttk.Label(parent, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
-        status.grid(row=2, column=0, columnspan=3, sticky='ew', pady=(5,0))
+        status = ttk.Label(
+            parent, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W
+        )
+        status.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(5, 0))
 
     def load_documents(self):
         """Load all documents in directory with intelligent categorization"""
@@ -1080,12 +1206,21 @@ class EnhancedDocumentBrowser:
                 self.file_tree.delete(item)
 
             # Find all documents
-            extensions = {'.md', '.txt', '.pdf', '.sql', '.csv', '.json', '.html', '.rst'}
+            extensions = {
+                ".md",
+                ".txt",
+                ".pdf",
+                ".sql",
+                ".csv",
+                ".json",
+                ".html",
+                ".rst",
+            }
             all_documents = []
 
             for ext in extensions:
-                for file_path in self.docs_path.glob(f'*{ext}'):
-                    if not file_path.name.startswith('.'):
+                for file_path in self.docs_path.glob(f"*{ext}"):
+                    if not file_path.name.startswith("."):
                         all_documents.append(file_path)
 
             # Intelligently categorize documents
@@ -1093,46 +1228,62 @@ class EnhancedDocumentBrowser:
 
             # Insert categories and files
             for category_name, files in sorted(categories.items()):
-                if category_name == 'Uncategorized':
+                if category_name == "Uncategorized":
                     # Add uncategorized files directly to root
                     for file_path in sorted(files, key=lambda f: f.name.lower()):
                         size_str = self.format_size(file_path.stat().st_size)
                         file_type = self._get_file_type_icon(file_path)
-                        self.file_tree.insert('', 'end',
-                                            text=f"{file_type} {file_path.name}",
-                                            values=(size_str,),
-                                            tags=('file',))
+                        self.file_tree.insert(
+                            "",
+                            "end",
+                            text=f"{file_type} {file_path.name}",
+                            values=(size_str,),
+                            tags=("file",),
+                        )
                 else:
                     # Create category folder
-                    category_id = self.file_tree.insert('', 'end',
-                                                       text=f"📁 {category_name} ({len(files)})",
-                                                       values=('',),
-                                                       tags=('category',))
+                    category_id = self.file_tree.insert(
+                        "",
+                        "end",
+                        text=f"📁 {category_name} ({len(files)})",
+                        values=("",),
+                        tags=("category",),
+                    )
 
                     # Add files in this category
                     for file_path in sorted(files, key=lambda f: f.name.lower()):
                         size_str = self.format_size(file_path.stat().st_size)
                         file_type = self._get_file_type_icon(file_path)
-                        self.file_tree.insert(category_id, 'end',
-                                            text=f"{file_type} {file_path.name}",
-                                            values=(size_str,),
-                                            tags=('file',))
+                        self.file_tree.insert(
+                            category_id,
+                            "end",
+                            text=f"{file_type} {file_path.name}",
+                            values=(size_str,),
+                            tags=("file",),
+                        )
 
             # Configure tags for dark mode
-            self.file_tree.tag_configure('category',
-                                        background=self.colors['select_bg'],
-                                        foreground=self.colors['select_fg'],
-                                        font=('Arial', 10, 'bold'))
-            self.file_tree.tag_configure('file',
-                                        background=self.colors['code_bg'],
-                                        foreground=self.colors['fg'])
+            self.file_tree.tag_configure(
+                "category",
+                background=self.colors["select_bg"],
+                foreground=self.colors["select_fg"],
+                font=("Arial", 10, "bold"),
+            )
+            self.file_tree.tag_configure(
+                "file", background=self.colors["code_bg"], foreground=self.colors["fg"]
+            )
 
-            self.status_var.set(f"Loaded {len(all_documents)} documents in {len(categories)} categories")
+            self.status_var.set(
+                f"Loaded {len(all_documents)} documents in {len(categories)} categories"
+            )
 
             # Index for semantic search (background)
             if len(all_documents) > 0:
-                threading.Thread(target=self.index_documents_background,
-                               args=(all_documents,), daemon=True).start()
+                threading.Thread(
+                    target=self.index_documents_background,
+                    args=(all_documents,),
+                    daemon=True,
+                ).start()
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load documents: {e}")
@@ -1143,32 +1294,37 @@ class EnhancedDocumentBrowser:
 
         # Define category patterns (order matters - first match wins)
         patterns = [
-            ('🔐 Security & Credentials', [
-                r'security|credential|password|access|auth|threat|attack|vulnerability',
-                r'ssh|root|admin|takeover|breach|hack'
-            ]),
-            ('📊 Analysis & Reports', [
-                r'analysis|report|assessment|audit|review',
-                r'crack.*time|realistic|actual'
-            ]),
-            ('🌐 Network & URLs', [
-                r'network|url|website|domain|email|ip',
-                r'escalation.*server|pathway'
-            ]),
-            ('📚 Documentation', [
-                r'documentation|readme|guide|manual',
-                r'database.*doc|action.*plan'
-            ]),
-            ('🐳 Docker & Deployment', [
-                r'docker|dockerfile|compose|deployment'
-            ]),
-            ('💾 Database Files', [
-                r'\.sql$|database.*content'
-            ]),
-            ('📄 Quick Reference', [
-                r'quick|summary|reference|checklist',
-                r'urls.*quick|credentials.*quick'
-            ]),
+            (
+                "🔐 Security & Credentials",
+                [
+                    r"security|credential|password|access|auth|threat|attack|vulnerability",
+                    r"ssh|root|admin|takeover|breach|hack",
+                ],
+            ),
+            (
+                "📊 Analysis & Reports",
+                [
+                    r"analysis|report|assessment|audit|review",
+                    r"crack.*time|realistic|actual",
+                ],
+            ),
+            (
+                "🌐 Network & URLs",
+                [r"network|url|website|domain|email|ip", r"escalation.*server|pathway"],
+            ),
+            (
+                "📚 Documentation",
+                [r"documentation|readme|guide|manual", r"database.*doc|action.*plan"],
+            ),
+            ("🐳 Docker & Deployment", [r"docker|dockerfile|compose|deployment"]),
+            ("💾 Database Files", [r"\.sql$|database.*content"]),
+            (
+                "📄 Quick Reference",
+                [
+                    r"quick|summary|reference|checklist",
+                    r"urls.*quick|credentials.*quick",
+                ],
+            ),
         ]
 
         for doc_path in documents:
@@ -1187,7 +1343,7 @@ class EnhancedDocumentBrowser:
 
             # If no match, add to uncategorized
             if not categorized:
-                categories['Uncategorized'].append(doc_path)
+                categories["Uncategorized"].append(doc_path)
 
         return dict(categories)
 
@@ -1195,16 +1351,16 @@ class EnhancedDocumentBrowser:
         """Get emoji icon for file type"""
         ext = file_path.suffix.lower()
         icons = {
-            '.md': '📝',
-            '.pdf': '📄',
-            '.sql': '🗄️',
-            '.txt': '📃',
-            '.csv': '📊',
-            '.json': '🔧',
-            '.html': '🌐',
-            '.rst': '📰',
+            ".md": "📝",
+            ".pdf": "📄",
+            ".sql": "🗄️",
+            ".txt": "📃",
+            ".csv": "📊",
+            ".json": "🔧",
+            ".html": "🌐",
+            ".rst": "📰",
         }
-        return icons.get(ext, '📄')
+        return icons.get(ext, "📄")
 
     def index_documents_background(self, documents: List[Path]):
         """Index documents in background for semantic search"""
@@ -1212,10 +1368,12 @@ class EnhancedDocumentBrowser:
             doc_contents = []
             for doc_path in documents[:50]:  # Limit to first 50 for performance
                 try:
-                    if doc_path.suffix == '.pdf':
+                    if doc_path.suffix == ".pdf":
                         content = PDFProcessor.extract_text(doc_path)
                     else:
-                        with open(doc_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        with open(
+                            doc_path, "r", encoding="utf-8", errors="ignore"
+                        ) as f:
                             content = f.read()
                     doc_contents.append((doc_path, content[:1000]))  # First 1000 chars
                 except:
@@ -1233,14 +1391,14 @@ class EnhancedDocumentBrowser:
             return
 
         item = self.file_tree.item(selection[0])
-        item_text = item['text']
+        item_text = item["text"]
 
         # Skip if it's a category folder
-        if item_text.startswith('📁'):
+        if item_text.startswith("📁"):
             return
 
         # Remove file type icon from filename
-        filename = re.sub(r'^[📝📄🗄️📃📊🔧🌐📰]\s+', '', item_text)
+        filename = re.sub(r"^[📝📄🗄️📃📊🔧🌐📰]\s+", "", item_text)
 
         # Try to find the file
         file_path = self.docs_path / filename
@@ -1253,20 +1411,20 @@ class EnhancedDocumentBrowser:
         try:
             self.current_file = file_path
             self.content_text.config(state=tk.NORMAL)
-            self.content_text.delete('1.0', tk.END)
+            self.content_text.delete("1.0", tk.END)
 
-            if file_path.suffix == '.pdf':
+            if file_path.suffix == ".pdf":
                 content = PDFProcessor.extract_text(file_path)
-                self.content_text.insert('1.0', content)
+                self.content_text.insert("1.0", content)
             else:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
 
                 # Apply markdown highlighting if .md file
-                if file_path.suffix.lower() == '.md':
+                if file_path.suffix.lower() == ".md":
                     self.render_markdown_with_highlighting(content)
                 else:
-                    self.content_text.insert('1.0', content)
+                    self.content_text.insert("1.0", content)
 
             self.content_text.config(state=tk.DISABLED)
 
@@ -1284,22 +1442,22 @@ class EnhancedDocumentBrowser:
     def update_ai_panel(self, file_path: Path, content: str):
         """Update AI panel with document analysis"""
         self.ai_text.config(state=tk.NORMAL)
-        self.ai_text.delete('1.0', tk.END)
+        self.ai_text.delete("1.0", tk.END)
 
-        self.ai_text.insert('1.0', f"📄 {file_path.name}\n\n")
-        self.ai_text.insert('end', f"Size: {self.format_size(len(content))} chars\n")
-        self.ai_text.insert('end', f"Lines: {len(content.splitlines())}\n\n")
+        self.ai_text.insert("1.0", f"📄 {file_path.name}\n\n")
+        self.ai_text.insert("end", f"Size: {self.format_size(len(content))} chars\n")
+        self.ai_text.insert("end", f"Lines: {len(content.splitlines())}\n\n")
 
         # Quick stats
-        if 'password' in content.lower():
-            self.ai_text.insert('end', "⚠️  Contains: PASSWORD references\n", 'warning')
-        if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', content):
-            self.ai_text.insert('end', "🌐 Contains: IP addresses\n", 'info')
-        if '@' in content:
-            emails = len(re.findall(r'[\w\.-]+@[\w\.-]+', content))
-            self.ai_text.insert('end', f"📧 Found: {emails} email addresses\n", 'info')
+        if "password" in content.lower():
+            self.ai_text.insert("end", "⚠️  Contains: PASSWORD references\n", "warning")
+        if re.search(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", content):
+            self.ai_text.insert("end", "🌐 Contains: IP addresses\n", "info")
+        if "@" in content:
+            emails = len(re.findall(r"[\w\.-]+@[\w\.-]+", content))
+            self.ai_text.insert("end", f"📧 Found: {emails} email addresses\n", "info")
 
-        self.ai_text.insert('end', "\n💬 Ask me anything about this document...")
+        self.ai_text.insert("end", "\n💬 Ask me anything about this document...")
         self.ai_text.config(state=tk.DISABLED)
 
     def perform_search(self):
@@ -1308,7 +1466,10 @@ class EnhancedDocumentBrowser:
         if not query:
             return
 
-        if self.search_mode_var.get() == 'semantic' and self.semantic_engine.embeddings is not None:
+        if (
+            self.search_mode_var.get() == "semantic"
+            and self.semantic_engine.embeddings is not None
+        ):
             self.semantic_search(query)
         else:
             self.keyword_search(query)
@@ -1318,29 +1479,29 @@ class EnhancedDocumentBrowser:
         results = []
 
         for item in self.file_tree.get_children():
-            filename = self.file_tree.item(item)['text']
+            filename = self.file_tree.item(item)["text"]
             file_path = self.docs_path / filename
 
             try:
-                if file_path.suffix == '.pdf':
+                if file_path.suffix == ".pdf":
                     content = PDFProcessor.extract_text(file_path)
                 else:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         content = f.read()
 
                 if query.lower() in content.lower():
                     # Find context
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     for i, line in enumerate(lines):
                         if query.lower() in line.lower():
                             context = line.strip()[:100]
-                            results.append((filename, i+1, context))
+                            results.append((filename, i + 1, context))
                             if len([r for r in results if r[0] == filename]) >= 3:
                                 break
             except:
                 continue
 
-        self.show_search_results(query, results, 'keyword')
+        self.show_search_results(query, results, "keyword")
 
     def semantic_search(self, query: str):
         """AI-powered semantic search"""
@@ -1354,7 +1515,7 @@ class EnhancedDocumentBrowser:
             filename = Path(doc_path).name
             formatted_results.append((filename, f"Similarity: {score:.2%}", doc_path))
 
-        self.show_search_results(query, formatted_results, 'semantic')
+        self.show_search_results(query, formatted_results, "semantic")
 
     def show_search_results(self, query: str, results: List, search_type: str):
         """Display search results"""
@@ -1370,19 +1531,24 @@ class EnhancedDocumentBrowser:
         frame = ttk.Frame(results_win, padding=10)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(frame, text=f"Found {len(results)} results for: {query}",
-                 font=('Arial', 12, 'bold')).pack(anchor=tk.W, pady=(0,10))
+        ttk.Label(
+            frame,
+            text=f"Found {len(results)} results for: {query}",
+            font=("Arial", 12, "bold"),
+        ).pack(anchor=tk.W, pady=(0, 10))
 
         # Results list
-        results_tree = ttk.Treeview(frame, columns=('file', 'info'), show='headings')
-        results_tree.heading('file', text='File')
-        results_tree.heading('info', text='Information')
-        results_tree.column('file', width=400)
-        results_tree.column('info', width=450)
-        results_tree.pack(fill=tk.BOTH, expand=True, pady=(0,10))
+        results_tree = ttk.Treeview(frame, columns=("file", "info"), show="headings")
+        results_tree.heading("file", text="File")
+        results_tree.heading("info", text="Information")
+        results_tree.column("file", width=400)
+        results_tree.column("info", width=450)
+        results_tree.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
         for result in results:
-            results_tree.insert('', 'end', values=(result[0], result[1] if len(result) > 1 else ''))
+            results_tree.insert(
+                "", "end", values=(result[0], result[1] if len(result) > 1 else "")
+            )
 
         ttk.Button(frame, text="Close", command=results_win.destroy).pack()
 
@@ -1392,7 +1558,7 @@ class EnhancedDocumentBrowser:
             messagebox.showwarning("Summarize", "No document selected")
             return
 
-        content = self.doc_cache.get(str(self.current_file), '')
+        content = self.doc_cache.get(str(self.current_file), "")
         if not content:
             messagebox.showwarning("Summarize", "Document not loaded")
             return
@@ -1405,16 +1571,27 @@ class EnhancedDocumentBrowser:
                 summary = self._generate_ai_summary(content)
 
                 # Show summary in popup
-                self.root.after(0, lambda: messagebox.showinfo(
-                    "AI Summary",
-                    f"Document: {self.current_file.name}\n"
-                    f"Size: {len(content)} chars, {len(content.splitlines())} lines\n\n"
-                    f"Summary:\n{summary}"
-                ))
-                self.root.after(0, lambda: self.status_var.set(f"Summary generated for {self.current_file.name}"))
+                self.root.after(
+                    0,
+                    lambda: messagebox.showinfo(
+                        "AI Summary",
+                        f"Document: {self.current_file.name}\n"
+                        f"Size: {len(content)} chars, {len(content.splitlines())} lines\n\n"
+                        f"Summary:\n{summary}",
+                    ),
+                )
+                self.root.after(
+                    0,
+                    lambda: self.status_var.set(
+                        f"Summary generated for {self.current_file.name}"
+                    ),
+                )
 
             except Exception as e:
-                self.root.after(0, lambda: messagebox.showerror("Error", f"Summarization failed: {e}"))
+                self.root.after(
+                    0,
+                    lambda: messagebox.showerror("Error", f"Summarization failed: {e}"),
+                )
                 self.root.after(0, lambda: self.status_var.set("Summarization failed"))
 
         threading.Thread(target=summarize_thread, daemon=True).start()
@@ -1423,11 +1600,13 @@ class EnhancedDocumentBrowser:
         """Generate AI-powered summary using semantic analysis"""
         try:
             # Split into sentences
-            sentences = re.split(r'[.!?]\s+', content)
-            sentences = [s.strip() for s in sentences if len(s.strip()) > 20][:100]  # First 100 sentences
+            sentences = re.split(r"[.!?]\s+", content)
+            sentences = [s.strip() for s in sentences if len(s.strip()) > 20][
+                :100
+            ]  # First 100 sentences
 
             if len(sentences) <= max_sentences:
-                return ' '.join(sentences)
+                return " ".join(sentences)
 
             # Use embeddings for extractive summarization
             embeddings = self.model_manager.encode_texts(sentences)
@@ -1450,18 +1629,33 @@ class EnhancedDocumentBrowser:
                 top_indices = sorted(top_indices)  # Maintain order
 
                 summary_sentences = [sentences[i] for i in top_indices]
-                return '. '.join(summary_sentences) + '.'
+                return ". ".join(summary_sentences) + "."
 
             else:
                 # Fallback: keyword-based extraction
                 summary_lines = []
                 for sent in sentences[:50]:
-                    if any(kw in sent.lower() for kw in ['critical', 'important', 'summary', 'key', 'main', 'must', 'require']):
+                    if any(
+                        kw in sent.lower()
+                        for kw in [
+                            "critical",
+                            "important",
+                            "summary",
+                            "key",
+                            "main",
+                            "must",
+                            "require",
+                        ]
+                    ):
                         summary_lines.append(sent)
                         if len(summary_lines) >= max_sentences:
                             break
 
-                return '. '.join(summary_lines) + '.' if summary_lines else "Could not generate summary."
+                return (
+                    ". ".join(summary_lines) + "."
+                    if summary_lines
+                    else "Could not generate summary."
+                )
 
         except Exception as e:
             print(f"Summary generation error: {e}")
@@ -1472,16 +1666,18 @@ class EnhancedDocumentBrowser:
         if not self.current_file:
             return
 
-        content = self.doc_cache.get(str(self.current_file), '')
+        content = self.doc_cache.get(str(self.current_file), "")
         if not content:
             return
 
         # Extract various data types
         data = {
-            'IPs': re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', content),
-            'Emails': re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', content),
-            'URLs': re.findall(r'https?://[^\s<>"]+', content),
-            'Passwords': re.findall(r'password[:\s]*[\'"]?(\w+)[\'"]?', content, re.IGNORECASE)[:5],
+            "IPs": re.findall(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", content),
+            "Emails": re.findall(r"[\w\.-]+@[\w\.-]+\.\w+", content),
+            "URLs": re.findall(r'https?://[^\s<>"]+', content),
+            "Passwords": re.findall(
+                r'password[:\s]*[\'"]?(\w+)[\'"]?', content, re.IGNORECASE
+            )[:5],
         }
 
         # Show results
@@ -1501,15 +1697,15 @@ class EnhancedDocumentBrowser:
         if not question or not self.current_file:
             return
 
-        content = self.doc_cache.get(str(self.current_file), '')
+        content = self.doc_cache.get(str(self.current_file), "")
         if not content:
             return
 
         self.ai_text.config(state=tk.NORMAL)
-        self.ai_text.insert('end', f"\n\n❓ Q: {question}\n")
-        self.ai_text.insert('end', "🔍 Searching document...\n")
+        self.ai_text.insert("end", f"\n\n❓ Q: {question}\n")
+        self.ai_text.insert("end", "🔍 Searching document...\n")
         self.ai_text.config(state=tk.DISABLED)
-        self.question_var.set('')
+        self.question_var.set("")
 
         # Process in background thread
         def qa_thread():
@@ -1527,13 +1723,17 @@ class EnhancedDocumentBrowser:
         """Answer question using Retrieval-Augmented Generation"""
         try:
             # Split content into chunks
-            paragraphs = [p.strip() for p in content.split('\n\n') if len(p.strip()) > 50]
+            paragraphs = [
+                p.strip() for p in content.split("\n\n") if len(p.strip()) > 50
+            ]
 
             if not paragraphs:
                 return "Document too short to analyze."
 
             # Use semantic search to find relevant chunks
-            embeddings = self.model_manager.encode_texts(paragraphs[:200])  # Limit to first 200 paragraphs
+            embeddings = self.model_manager.encode_texts(
+                paragraphs[:200]
+            )  # Limit to first 200 paragraphs
 
             if embeddings is not None:
                 import numpy as np
@@ -1548,7 +1748,9 @@ class EnhancedDocumentBrowser:
                     top_indices = np.argsort(similarities)[::-1][:3]  # Top 3 paragraphs
 
                     # Combine relevant paragraphs
-                    relevant_text = '\n\n'.join([paragraphs[i] for i in top_indices if similarities[i] > 0.2])
+                    relevant_text = "\n\n".join(
+                        [paragraphs[i] for i in top_indices if similarities[i] > 0.2]
+                    )
 
                     if relevant_text:
                         # Extract best answer (first 400 chars of most relevant)
@@ -1586,57 +1788,83 @@ class EnhancedDocumentBrowser:
     def _display_answer(self, answer: str):
         """Display answer in AI panel"""
         self.ai_text.config(state=tk.NORMAL)
-        self.ai_text.delete('end-2l', 'end')  # Remove "searching..." line
-        self.ai_text.insert('end', f"💡 A: {answer}\n")
+        self.ai_text.delete("end-2l", "end")  # Remove "searching..." line
+        self.ai_text.insert("end", f"💡 A: {answer}\n")
         self.ai_text.config(state=tk.DISABLED)
         self.ai_text.see(tk.END)
 
     def setup_markdown_highlighting(self):
         """Configure text tags for markdown syntax highlighting"""
         # Headers
-        self.content_text.tag_configure('h1', foreground='#569cd6', font=('Consolas', 16, 'bold'))
-        self.content_text.tag_configure('h2', foreground='#4ec9b0', font=('Consolas', 14, 'bold'))
-        self.content_text.tag_configure('h3', foreground='#4fc1ff', font=('Consolas', 12, 'bold'))
+        self.content_text.tag_configure(
+            "h1", foreground="#569cd6", font=("Consolas", 16, "bold")
+        )
+        self.content_text.tag_configure(
+            "h2", foreground="#4ec9b0", font=("Consolas", 14, "bold")
+        )
+        self.content_text.tag_configure(
+            "h3", foreground="#4fc1ff", font=("Consolas", 12, "bold")
+        )
 
         # Code blocks
-        self.content_text.tag_configure('code_block',
-                                       background='#1a1a1a',
-                                       foreground='#ce9178',
-                                       font=('Consolas', 9))
+        self.content_text.tag_configure(
+            "code_block",
+            background="#1a1a1a",
+            foreground="#ce9178",
+            font=("Consolas", 9),
+        )
 
         # Inline code
-        self.content_text.tag_configure('inline_code',
-                                       background='#2d2d2d',
-                                       foreground='#ce9178',
-                                       font=('Consolas', 10))
+        self.content_text.tag_configure(
+            "inline_code",
+            background="#2d2d2d",
+            foreground="#ce9178",
+            font=("Consolas", 10),
+        )
 
         # Lists
-        self.content_text.tag_configure('list_item', foreground='#dcdcaa')
+        self.content_text.tag_configure("list_item", foreground="#dcdcaa")
 
         # Bold
-        self.content_text.tag_configure('bold', font=('Consolas', 10, 'bold'), foreground='#ffffff')
+        self.content_text.tag_configure(
+            "bold", font=("Consolas", 10, "bold"), foreground="#ffffff"
+        )
 
         # Italic
-        self.content_text.tag_configure('italic', font=('Consolas', 10, 'italic'), foreground='#c586c0')
+        self.content_text.tag_configure(
+            "italic", font=("Consolas", 10, "italic"), foreground="#c586c0"
+        )
 
         # Links
-        self.content_text.tag_configure('link', foreground='#3794ff', underline=True)
+        self.content_text.tag_configure("link", foreground="#3794ff", underline=True)
 
         # Blockquotes
-        self.content_text.tag_configure('blockquote', foreground='#6a9955', font=('Consolas', 10, 'italic'))
+        self.content_text.tag_configure(
+            "blockquote", foreground="#6a9955", font=("Consolas", 10, "italic")
+        )
 
         # Tables
-        self.content_text.tag_configure('table', background='#2d2d2d', foreground='#dcdcaa')
+        self.content_text.tag_configure(
+            "table", background="#2d2d2d", foreground="#dcdcaa"
+        )
 
         # Warnings/alerts
-        self.content_text.tag_configure('warning', foreground='#ce9178', background='#3d2817')
-        self.content_text.tag_configure('info', foreground='#4fc1ff', background='#17344a')
-        self.content_text.tag_configure('success', foreground='#4ec9b0', background='#1a3a2e')
-        self.content_text.tag_configure('error', foreground='#f48771', background='#3d1f1f')
+        self.content_text.tag_configure(
+            "warning", foreground="#ce9178", background="#3d2817"
+        )
+        self.content_text.tag_configure(
+            "info", foreground="#4fc1ff", background="#17344a"
+        )
+        self.content_text.tag_configure(
+            "success", foreground="#4ec9b0", background="#1a3a2e"
+        )
+        self.content_text.tag_configure(
+            "error", foreground="#f48771", background="#3d1f1f"
+        )
 
     def render_markdown_with_highlighting(self, content: str):
         """Render markdown with intelligent syntax highlighting"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         in_code_block = False
         code_block_start = None
 
@@ -1644,43 +1872,43 @@ class EnhancedDocumentBrowser:
             line_start = self.content_text.index(tk.END)
 
             # Code blocks
-            if line.strip().startswith('```'):
+            if line.strip().startswith("```"):
                 if not in_code_block:
                     in_code_block = True
                     code_block_start = line_start
-                    self.content_text.insert(tk.END, line + '\n', 'code_block')
+                    self.content_text.insert(tk.END, line + "\n", "code_block")
                 else:
                     in_code_block = False
-                    self.content_text.insert(tk.END, line + '\n', 'code_block')
+                    self.content_text.insert(tk.END, line + "\n", "code_block")
                 continue
 
             if in_code_block:
-                self.content_text.insert(tk.END, line + '\n', 'code_block')
+                self.content_text.insert(tk.END, line + "\n", "code_block")
                 continue
 
             # Headers
-            if line.startswith('# '):
-                self.content_text.insert(tk.END, line + '\n', 'h1')
-            elif line.startswith('## '):
-                self.content_text.insert(tk.END, line + '\n', 'h2')
-            elif line.startswith('### '):
-                self.content_text.insert(tk.END, line + '\n', 'h3')
+            if line.startswith("# "):
+                self.content_text.insert(tk.END, line + "\n", "h1")
+            elif line.startswith("## "):
+                self.content_text.insert(tk.END, line + "\n", "h2")
+            elif line.startswith("### "):
+                self.content_text.insert(tk.END, line + "\n", "h3")
 
             # Lists
-            elif re.match(r'^[\s]*[-*+]\s', line) or re.match(r'^[\s]*\d+\.\s', line):
-                self.content_text.insert(tk.END, line + '\n', 'list_item')
+            elif re.match(r"^[\s]*[-*+]\s", line) or re.match(r"^[\s]*\d+\.\s", line):
+                self.content_text.insert(tk.END, line + "\n", "list_item")
 
             # Blockquotes
-            elif line.startswith('>'):
-                self.content_text.insert(tk.END, line + '\n', 'blockquote')
+            elif line.startswith(">"):
+                self.content_text.insert(tk.END, line + "\n", "blockquote")
 
             # Table rows
-            elif '|' in line and line.count('|') >= 2:
-                self.content_text.insert(tk.END, line + '\n', 'table')
+            elif "|" in line and line.count("|") >= 2:
+                self.content_text.insert(tk.END, line + "\n", "table")
 
             # Regular text with inline formatting
             else:
-                self._insert_line_with_inline_formatting(line + '\n')
+                self._insert_line_with_inline_formatting(line + "\n")
 
     def _insert_line_with_inline_formatting(self, line: str):
         """Insert line with inline markdown formatting (bold, italic, code, links)"""
@@ -1689,11 +1917,11 @@ class EnhancedDocumentBrowser:
 
         # Parse inline formatting
         # Inline code: `code`
-        inline_code_pattern = r'`([^`]+)`'
+        inline_code_pattern = r"`([^`]+)`"
         # Bold: **text** or __text__
-        bold_pattern = r'\*\*([^\*]+)\*\*|__([^_]+)__'
+        bold_pattern = r"\*\*([^\*]+)\*\*|__([^_]+)__"
         # Italic: *text* or _text_
-        italic_pattern = r'\*([^\*]+)\*|_([^_]+)_'
+        italic_pattern = r"\*([^\*]+)\*|_([^_]+)_"
         # Links: [text](url) or just URLs
         link_pattern = r'\[([^\]]+)\]\(([^\)]+)\)|https?://[^\s<>"]+'
 
@@ -1701,18 +1929,18 @@ class EnhancedDocumentBrowser:
         matches = []
 
         for match in re.finditer(inline_code_pattern, line):
-            matches.append(('inline_code', match.start(), match.end(), match.group(1)))
+            matches.append(("inline_code", match.start(), match.end(), match.group(1)))
 
         for match in re.finditer(bold_pattern, line):
             text = match.group(1) or match.group(2)
-            matches.append(('bold', match.start(), match.end(), text))
+            matches.append(("bold", match.start(), match.end(), text))
 
         for match in re.finditer(link_pattern, line):
-            if match.group(0).startswith('['):
+            if match.group(0).startswith("["):
                 text = match.group(1)
             else:
                 text = match.group(0)
-            matches.append(('link', match.start(), match.end(), text))
+            matches.append(("link", match.start(), match.end(), text))
 
         # Sort by position
         matches.sort(key=lambda x: x[1])
@@ -1741,7 +1969,7 @@ class EnhancedDocumentBrowser:
         mode = self.search_mode_var.get()
         self.search_mode = mode
 
-        if mode == 'semantic' and self.semantic_engine.embeddings is None:
+        if mode == "semantic" and self.semantic_engine.embeddings is None:
             self.status_var.set("Indexing documents for semantic search...")
             # Trigger indexing if not done
 
@@ -1756,12 +1984,16 @@ class EnhancedDocumentBrowser:
         info_text += f"Python: {info.get('python_version', 'Unknown')}\n\n"
 
         info_text += "AI Acceleration:\n"
-        info_text += f"  NPU: {'✅ Available' if info.get('has_npu') else '❌ Not detected'}\n"
+        info_text += (
+            f"  NPU: {'✅ Available' if info.get('has_npu') else '❌ Not detected'}\n"
+        )
         info_text += f"  Intel GPU: {'✅ Available' if info.get('has_intel_gpu') else '❌ Not detected'}\n"
-        info_text += f"  OpenVINO Devices: {', '.join(info.get('openvino_devices', ['None']))}\n"
+        info_text += (
+            f"  OpenVINO Devices: {', '.join(info.get('openvino_devices', ['None']))}\n"
+        )
         info_text += f"  Optimal Device: {info.get('optimal_device', 'CPU')}\n\n"
 
-        if info.get('has_npu'):
+        if info.get("has_npu"):
             info_text += "🚀 NPU Acceleration Active\n"
             info_text += "   - Inference: ~40 TOPS on Intel Ultra 7 165H\n"
             info_text += "   - Models: INT8 quantized for efficiency\n"
@@ -1770,18 +2002,21 @@ class EnhancedDocumentBrowser:
 
     def init_docker(self):
         """Initialize Docker configuration"""
-        if messagebox.askyesno("Docker Init",
-                              "Generate Docker configuration files?\n\n"
-                              "This will create:\n"
-                              "- Dockerfile\n"
-                              "- docker-compose.yml\n"
-                              "- .dockerignore\n"
-                              "- README_DOCKER.md"):
+        if messagebox.askyesno(
+            "Docker Init",
+            "Generate Docker configuration files?\n\n"
+            "This will create:\n"
+            "- Dockerfile\n"
+            "- docker-compose.yml\n"
+            "- .dockerignore\n"
+            "- README_DOCKER.md",
+        ):
             try:
                 DockerGenerator.initialize_docker(self.docs_path, self.hardware_info)
-                messagebox.showinfo("Docker Init",
-                                  "✅ Docker files created!\n\n"
-                                  "Run: docker-compose up --build")
+                messagebox.showinfo(
+                    "Docker Init",
+                    "✅ Docker files created!\n\n" "Run: docker-compose up --build",
+                )
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to create Docker files: {e}")
 
@@ -1791,11 +2026,11 @@ class EnhancedDocumentBrowser:
             return
 
         try:
-            if sys.platform == 'linux':
-                subprocess.run(['xdg-open', str(self.current_file)])
-            elif sys.platform == 'darwin':
-                subprocess.run(['open', str(self.current_file)])
-            elif sys.platform == 'win32':
+            if sys.platform == "linux":
+                subprocess.run(["xdg-open", str(self.current_file)])
+            elif sys.platform == "darwin":
+                subprocess.run(["open", str(self.current_file)])
+            elif sys.platform == "win32":
                 os.startfile(str(self.current_file))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to open: {e}")
@@ -1803,21 +2038,23 @@ class EnhancedDocumentBrowser:
     @staticmethod
     def format_size(size: int) -> str:
         """Format file size"""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
 
+
 # ============================================================================
 # MAIN APPLICATION
 # ============================================================================
 
+
 def check_hardware():
     """Check and display hardware capabilities"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🖥️  HARDWARE DETECTION")
-    print("="*70)
+    print("=" * 70)
 
     hardware = HardwareDetector.get_hardware_info()
 
@@ -1827,35 +2064,51 @@ def check_hardware():
     print(f"Python: {hardware.get('python_version', 'Unknown')}")
 
     print("\nAI Acceleration:")
-    print(f"  NPU/GNA: {'✅ AVAILABLE' if hardware.get('has_npu') else '❌ Not detected'}")
-    print(f"  Intel GPU: {'✅ AVAILABLE' if hardware.get('has_intel_gpu') else '❌ Not detected'}")
-    print(f"  OpenVINO Devices: {', '.join(hardware.get('openvino_devices', ['None']))}")
+    print(
+        f"  NPU/GNA: {'✅ AVAILABLE' if hardware.get('has_npu') else '❌ Not detected'}"
+    )
+    print(
+        f"  Intel GPU: {'✅ AVAILABLE' if hardware.get('has_intel_gpu') else '❌ Not detected'}"
+    )
+    print(
+        f"  OpenVINO Devices: {', '.join(hardware.get('openvino_devices', ['None']))}"
+    )
     print(f"  Optimal Device: {hardware.get('optimal_device', 'CPU')}")
 
-    if hardware.get('has_npu'):
+    if hardware.get("has_npu"):
         print("\n🚀 NPU Acceleration:")
         print("   - Performance: ~40 TOPS (Intel Core Ultra 7 165H)")
         print("   - Use Case: AI inference, embeddings, summarization")
         print("   - Power: Efficient (low power consumption)")
 
-    if hardware.get('has_intel_gpu'):
+    if hardware.get("has_intel_gpu"):
         print("\n🎮 GPU Acceleration:")
         print("   - Type: Intel Arc Graphics (Meteor Lake)")
         print("   - Use Case: Image processing, OCR, parallel tasks")
 
-    print("\n" + "="*70 + "\n")
+    print("\n" + "=" * 70 + "\n")
+
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description='AI-Powered Document Browser')
-    parser.add_argument('directory', nargs='?', default=None,
-                       help='Documentation directory (default: current directory)')
-    parser.add_argument('--docker-init', action='store_true',
-                       help='Generate Docker configuration files')
-    parser.add_argument('--check-hardware', action='store_true',
-                       help='Check available AI acceleration hardware')
-    parser.add_argument('--no-ai', action='store_true',
-                       help='Disable AI features (faster startup)')
+    parser = argparse.ArgumentParser(description="AI-Powered Document Browser")
+    parser.add_argument(
+        "directory",
+        nargs="?",
+        default=None,
+        help="Documentation directory (default: current directory)",
+    )
+    parser.add_argument(
+        "--docker-init", action="store_true", help="Generate Docker configuration files"
+    )
+    parser.add_argument(
+        "--check-hardware",
+        action="store_true",
+        help="Check available AI acceleration hardware",
+    )
+    parser.add_argument(
+        "--no-ai", action="store_true", help="Disable AI features (faster startup)"
+    )
 
     args = parser.parse_args()
 
@@ -1890,18 +2143,18 @@ def main():
         dep_status = DependencyManager.setup_environment(enable_ai=True)
 
         # Check if core AI deps installed
-        if not dep_status.get('openvino', False):
+        if not dep_status.get("openvino", False):
             print("⚠️  OpenVINO not available - AI features limited")
             enable_ai = False
 
     # Show hardware info
     if enable_ai:
         hardware = HardwareDetector.get_hardware_info()
-        device = hardware.get('optimal_device', 'CPU')
-        print(f"🖥️  Using: {device}", end='')
-        if hardware.get('has_npu'):
+        device = hardware.get("optimal_device", "CPU")
+        print(f"🖥️  Using: {device}", end="")
+        if hardware.get("has_npu"):
             print(" (NPU acceleration available)")
-        elif hardware.get('has_intel_gpu'):
+        elif hardware.get("has_intel_gpu"):
             print(" (GPU acceleration available)")
         else:
             print()
@@ -1912,7 +2165,7 @@ def main():
     except ImportError as e:
         print(f"❌ Tkinter not available: {e}")
         print("\nInstall tkinter:")
-        if platform.system() == 'Linux':
+        if platform.system() == "Linux":
             print("  Ubuntu/Debian: sudo apt-get install python3-tk")
             print("  Fedora: sudo dnf install python3-tkinter")
         print("\nOr run in Docker mode:")
@@ -1933,13 +2186,15 @@ def main():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
         # Show error in messagebox if GUI available
         try:
-            messagebox.showerror("Fatal Error",
-                               f"Application error:\n{e}\n\n"
-                               f"Check console for details.")
+            messagebox.showerror(
+                "Fatal Error",
+                f"Application error:\n{e}\n\n" f"Check console for details.",
+            )
         except:
             pass
 
@@ -1949,6 +2204,7 @@ def main():
             root.destroy()
         except:
             pass
+
 
 if __name__ == "__main__":
     sys.exit(main())

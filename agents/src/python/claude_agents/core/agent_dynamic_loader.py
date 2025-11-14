@@ -1,8 +1,10 @@
 """Dynamic Agent Class Loader - Handles naming inconsistencies"""
+
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
+
 
 def get_agent_executor_class(agent_name: str):
     """Get the correct PythonExecutor class name for an agent"""
@@ -50,19 +52,22 @@ def get_agent_executor_class(agent_name: str):
     }
     return class_mapping.get(agent_name)
 
-async def invoke_agent_dynamically(agent_name: str, action: str, context: Dict[str, Any]) -> Dict[str, Any]:
+
+async def invoke_agent_dynamically(
+    agent_name: str, action: str, context: Dict[str, Any]
+) -> Dict[str, Any]:
     """Dynamically invoke an agent with correct class name"""
     class_name = get_agent_executor_class(agent_name)
     if not class_name:
         return {
-            'status': 'error',
-            'message': f'Unknown agent: {agent_name}',
-            'agent': agent_name
+            "status": "error",
+            "message": f"Unknown agent: {agent_name}",
+            "agent": agent_name,
         }
 
     try:
         # Dynamic import and instantiation
-        module_name = f'{agent_name}_impl'
+        module_name = f"{agent_name}_impl"
         module = __import__(module_name, fromlist=[class_name])
         executor_class = getattr(module, class_name)
         executor = executor_class()
@@ -73,20 +78,20 @@ async def invoke_agent_dynamically(agent_name: str, action: str, context: Dict[s
 
     except ImportError as e:
         # Agent implementation file doesn't exist - provide helpful feedback
-        logger.warning(f'Agent {agent_name} implementation not found: {e}')
+        logger.warning(f"Agent {agent_name} implementation not found: {e}")
         return {
-            'status': 'error',
-            'message': f'Agent {agent_name} implementation not available',
-            'agent': agent_name,
-            'action': action,
-            'type': 'missing_implementation',
-            'suggestion': f'Create {agent_name}_impl.py to enable this agent'
+            "status": "error",
+            "message": f"Agent {agent_name} implementation not available",
+            "agent": agent_name,
+            "action": action,
+            "type": "missing_implementation",
+            "suggestion": f"Create {agent_name}_impl.py to enable this agent",
         }
     except Exception as e:
-        logger.error(f'Error invoking {agent_name}: {e}')
+        logger.error(f"Error invoking {agent_name}: {e}")
         return {
-            'status': 'error',
-            'message': str(e),
-            'agent': agent_name,
-            'action': action
+            "status": "error",
+            "message": str(e),
+            "agent": agent_name,
+            "action": action,
         }

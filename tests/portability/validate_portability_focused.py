@@ -4,16 +4,17 @@ TESTBED Agent - Focused Portability Validation
 Tests critical components for path-agnostic operation without copying large directories
 """
 
-import os
-import sys
-import subprocess
-import tempfile
-import shutil
 import json
+import os
 import re
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+import shutil
+import subprocess
+import sys
+import tempfile
 import time
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
 
 class FocusedPortabilityValidator:
     def __init__(self):
@@ -24,11 +25,9 @@ class FocusedPortabilityValidator:
         """Log validation messages"""
         timestamp = time.strftime("%H:%M:%S")
         print(f"[{timestamp}] [{level}] {message}")
-        self.results.append({
-            "timestamp": timestamp,
-            "level": level,
-            "message": message
-        })
+        self.results.append(
+            {"timestamp": timestamp, "level": level, "message": message}
+        )
 
     def test_wrapper_hardcoded_paths(self) -> bool:
         """Test wrapper for hardcoded paths"""
@@ -40,16 +39,16 @@ class FocusedPortabilityValidator:
             return False
 
         try:
-            with open(wrapper_path, 'r') as f:
+            with open(wrapper_path, "r") as f:
                 content = f.read()
 
             # Check for hardcoded paths
             hardcoded_patterns = [
-                r'/home/john',
-                r'/home/ubuntu',
-                r'HOME=/home/\w+',
-                r'USER=\w+',
-                r'/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+/claude-backups'
+                r"/home/john",
+                r"/home/ubuntu",
+                r"HOME=/home/\w+",
+                r"USER=\w+",
+                r"/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+/claude-backups",
             ]
 
             issues = []
@@ -76,7 +75,7 @@ class FocusedPortabilityValidator:
         installers = [
             "claude-installer.sh",
             "claude-enhanced-installer.py",
-            "claude-quick-launch-agents.sh"
+            "claude-quick-launch-agents.sh",
         ]
 
         results = []
@@ -87,17 +86,17 @@ class FocusedPortabilityValidator:
                 continue
 
             try:
-                with open(installer_path, 'r') as f:
+                with open(installer_path, "r") as f:
                     content = f.read()
 
                 # Check for hardcoded paths
                 hardcoded_patterns = [
-                    r'/home/john(?!/\$)',  # Not followed by /$
-                    r'/home/ubuntu(?!/\$)',
+                    r"/home/john(?!/\$)",  # Not followed by /$
+                    r"/home/ubuntu(?!/\$)",
                     r'HOME="/home/\w+"',
                     r"HOME='/home/\w+'",
                     r'USER="\w+"',
-                    r"USER='\w+'"
+                    r"USER='\w+'",
                 ]
 
                 issues = []
@@ -107,7 +106,9 @@ class FocusedPortabilityValidator:
                         issues.extend(matches)
 
                 if issues:
-                    self.log(f"❌ Found hardcoded paths in {installer}: {issues}", "ERROR")
+                    self.log(
+                        f"❌ Found hardcoded paths in {installer}: {issues}", "ERROR"
+                    )
                     results.append(False)
                 else:
                     self.log(f"✅ {installer} appears path-agnostic")
@@ -128,7 +129,7 @@ class FocusedPortabilityValidator:
             "learning_config_manager.py",
             "agents/src/python/production_orchestrator.py",
             "agents/src/python/agent_registry.py",
-            "agents/src/python/postgresql_learning_system.py"
+            "agents/src/python/postgresql_learning_system.py",
         ]
 
         results = []
@@ -139,7 +140,7 @@ class FocusedPortabilityValidator:
                 continue
 
             try:
-                with open(py_path, 'r') as f:
+                with open(py_path, "r") as f:
                     content = f.read()
 
                 # Check for hardcoded paths
@@ -148,7 +149,7 @@ class FocusedPortabilityValidator:
                     r'["\']\/home\/ubuntu[^"\']*["\']',
                     r'HOME\s*=\s*["\'][^"\']*john[^"\']*["\']',
                     r'USER\s*=\s*["\']john["\']',
-                    r'USER\s*=\s*["\']ubuntu["\']'
+                    r'USER\s*=\s*["\']ubuntu["\']',
                 ]
 
                 issues = []
@@ -158,7 +159,9 @@ class FocusedPortabilityValidator:
                         issues.extend(matches)
 
                 if issues:
-                    self.log(f"❌ Found hardcoded paths in {py_file}: {issues}", "ERROR")
+                    self.log(
+                        f"❌ Found hardcoded paths in {py_file}: {issues}", "ERROR"
+                    )
                     results.append(False)
                 else:
                     self.log(f"✅ {py_file} appears path-agnostic")
@@ -174,11 +177,7 @@ class FocusedPortabilityValidator:
         """Test documentation for hardcoded path examples"""
         self.log("Testing documentation for portable examples")
 
-        doc_files = [
-            "README.md",
-            "CLAUDE.md",
-            "INSTALL.md"
-        ]
+        doc_files = ["README.md", "CLAUDE.md", "INSTALL.md"]
 
         results = []
         for doc_file in doc_files:
@@ -187,15 +186,15 @@ class FocusedPortabilityValidator:
                 continue
 
             try:
-                with open(doc_path, 'r') as f:
+                with open(doc_path, "r") as f:
                     content = f.read()
 
                 # Look for hardcoded user paths in command examples
                 # But allow /home/john in documentation context
                 problem_patterns = [
-                    r'cd\s+/home/(?:john|ubuntu)/[^\s]*claude-backups',
-                    r'export\s+[A-Z_]+=/home/(?:john|ubuntu)/',
-                    r'PATH=/home/(?:john|ubuntu)/',
+                    r"cd\s+/home/(?:john|ubuntu)/[^\s]*claude-backups",
+                    r"export\s+[A-Z_]+=/home/(?:john|ubuntu)/",
+                    r"PATH=/home/(?:john|ubuntu)/",
                 ]
 
                 issues = []
@@ -205,7 +204,10 @@ class FocusedPortabilityValidator:
                         issues.extend(matches)
 
                 if issues:
-                    self.log(f"⚠️  Found hardcoded command examples in {doc_file}: {len(issues)} instances", "WARNING")
+                    self.log(
+                        f"⚠️  Found hardcoded command examples in {doc_file}: {len(issues)} instances",
+                        "WARNING",
+                    )
                     # Don't fail on documentation issues, just warn
                     results.append(True)
                 else:
@@ -229,9 +231,13 @@ class FocusedPortabilityValidator:
 
         try:
             # Test help command (should work regardless of path)
-            result = subprocess.run([
-                "bash", str(wrapper_path), "--help"
-            ], capture_output=True, text=True, timeout=30, cwd=self.current_dir)
+            result = subprocess.run(
+                ["bash", str(wrapper_path), "--help"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=self.current_dir,
+            )
 
             if result.returncode == 0:
                 self.log("✅ Wrapper help command works")
@@ -275,7 +281,7 @@ class FocusedPortabilityValidator:
             agent_path = agents_dir / agent_name
             if agent_path.exists():
                 try:
-                    with open(agent_path, 'r') as f:
+                    with open(agent_path, "r") as f:
                         content = f.read()
 
                     # Check for hardcoded paths
@@ -302,7 +308,7 @@ class FocusedPortabilityValidator:
             "claude-enhanced-installer.py",
             "bring-online",
             "switch",
-            "status"
+            "status",
         ]
 
         results = []
@@ -313,15 +319,15 @@ class FocusedPortabilityValidator:
                 continue
 
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     content = f.read()
 
                 # Check for hardcoded paths
                 hardcoded_patterns = [
-                    r'/home/john(?!/\$|\$)',
-                    r'/home/ubuntu(?!/\$|\$)',
+                    r"/home/john(?!/\$|\$)",
+                    r"/home/ubuntu(?!/\$|\$)",
                     r'HOME="/home/(?:john|ubuntu)"',
-                    r"HOME='/home/(?:john|ubuntu)'"
+                    r"HOME='/home/(?:john|ubuntu)'",
                 ]
 
                 issues = []
@@ -331,7 +337,9 @@ class FocusedPortabilityValidator:
                         issues.extend(matches)
 
                 if issues:
-                    self.log(f"❌ Found hardcoded paths in {file_name}: {issues}", "ERROR")
+                    self.log(
+                        f"❌ Found hardcoded paths in {file_name}: {issues}", "ERROR"
+                    )
                     results.append(False)
                 else:
                     self.log(f"✅ {file_name} appears path-agnostic")
@@ -355,7 +363,7 @@ class FocusedPortabilityValidator:
             "documentation_examples": self.test_documentation_examples,
             "wrapper_functionality": self.test_wrapper_functionality_simulation,
             "agent_file_portability": self.test_agent_file_portability,
-            "critical_file_portability": self.test_critical_file_portability
+            "critical_file_portability": self.test_critical_file_portability,
         }
 
         results = {}
@@ -411,13 +419,21 @@ class FocusedPortabilityValidator:
         # Generate specific recommendations
         recommendations = []
         if not results.get("wrapper_hardcoded_paths", True):
-            recommendations.append("Remove hardcoded paths from claude-wrapper-ultimate.sh")
+            recommendations.append(
+                "Remove hardcoded paths from claude-wrapper-ultimate.sh"
+            )
         if not results.get("installer_hardcoded_paths", True):
-            recommendations.append("Update installer scripts to use dynamic path resolution")
+            recommendations.append(
+                "Update installer scripts to use dynamic path resolution"
+            )
         if not results.get("python_hardcoded_paths", True):
-            recommendations.append("Replace hardcoded paths in Python scripts with __file__ and pathlib")
+            recommendations.append(
+                "Replace hardcoded paths in Python scripts with __file__ and pathlib"
+            )
         if not results.get("critical_file_portability", True):
-            recommendations.append("Update critical system files to use relative or dynamic paths")
+            recommendations.append(
+                "Update critical system files to use relative or dynamic paths"
+            )
 
         if recommendations:
             self.log("\n🔧 RECOMMENDATIONS:")
@@ -434,8 +450,9 @@ class FocusedPortabilityValidator:
             "detailed_results": results,
             "recommendations": recommendations,
             "total_tests": total,
-            "total_passed": passed
+            "total_passed": passed,
         }
+
 
 def main():
     """Main validation entry point"""
@@ -449,7 +466,7 @@ def main():
 
         # Save results
         results_file = "/tmp/focused_portability_results.json"
-        with open(results_file, 'w') as f:
+        with open(results_file, "w") as f:
             json.dump(results, f, indent=2)
 
         print(f"\n📄 Detailed results saved to: {results_file}")
@@ -468,6 +485,7 @@ def main():
     except Exception as e:
         print(f"\n💥 Validation failed with exception: {e}")
         sys.exit(3)
+
 
 if __name__ == "__main__":
     main()

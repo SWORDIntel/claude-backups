@@ -9,16 +9,18 @@ Provides comprehensive performance tracking for 10x speedup validation
 """
 
 import asyncio
-import time
 import json
 import logging
+import queue
+import threading
+import time
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
 import psycopg2
 import psycopg2.extras
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from collections import defaultdict, deque
-import threading
-import queue
+
 
 @dataclass
 class PerformanceMetric:

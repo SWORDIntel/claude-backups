@@ -5,11 +5,11 @@ Validates installation and virtual environment functionality
 """
 
 import os
+import shutil
 import subprocess
 import sys
-from pathlib import Path
 import tempfile
-import shutil
+from pathlib import Path
 
 
 class Colors:

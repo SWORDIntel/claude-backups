@@ -4,10 +4,12 @@ Test Local Inference Server
 Validate Qwen 2.5-32B with Military NPU
 """
 
-import requests
 import json
-import time
 import sys
+import time
+
+import requests
+
 
 def test_health_endpoint():
     """Test if server is healthy"""
@@ -26,16 +28,20 @@ def test_health_endpoint():
         print(f"❌ Cannot connect to server: {e}")
         return False
 
+
 def test_chat_completion():
     """Test chat completion endpoint"""
     try:
         payload = {
             "model": "qwen-32b",
             "messages": [
-                {"role": "user", "content": "Hello! Can you tell me about your capabilities?"}
+                {
+                    "role": "user",
+                    "content": "Hello! Can you tell me about your capabilities?",
+                }
             ],
             "max_tokens": 100,
-            "temperature": 0.7
+            "temperature": 0.7,
         }
 
         print("🧪 Testing chat completion...")
@@ -43,24 +49,22 @@ def test_chat_completion():
 
         start_time = time.time()
         response = requests.post(
-            "http://localhost:8000/v1/chat/completions",
-            json=payload,
-            timeout=30
+            "http://localhost:8000/v1/chat/completions", json=payload, timeout=30
         )
         end_time = time.time()
 
         if response.status_code == 200:
             result = response.json()
-            content = result['choices'][0]['message']['content']
-            usage = result.get('usage', {})
+            content = result["choices"][0]["message"]["content"]
+            usage = result.get("usage", {})
 
             print("✅ Inference successful!")
             print(f"📥 Response: {content[:200]}...")
             print(f"⏱️ Time: {end_time - start_time:.2f} seconds")
             print(f"🔢 Tokens: {usage.get('completion_tokens', 0)} generated")
 
-            if usage.get('completion_tokens', 0) > 0 and end_time - start_time > 0:
-                tokens_per_sec = usage['completion_tokens'] / (end_time - start_time)
+            if usage.get("completion_tokens", 0) > 0 and end_time - start_time > 0:
+                tokens_per_sec = usage["completion_tokens"] / (end_time - start_time)
                 print(f"🚀 Speed: {tokens_per_sec:.1f} tokens/second")
 
             return True
@@ -73,13 +77,14 @@ def test_chat_completion():
         print(f"❌ Test failed: {e}")
         return False
 
+
 def test_performance_benchmark():
     """Run a quick performance benchmark"""
     try:
         test_prompts = [
             "Explain quantum computing in simple terms.",
             "Write a Python function to calculate fibonacci numbers.",
-            "What are the advantages of local AI inference?"
+            "What are the advantages of local AI inference?",
         ]
 
         total_tokens = 0
@@ -95,7 +100,7 @@ def test_performance_benchmark():
                 "model": "qwen-32b",
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": 150,
-                "temperature": 0.5
+                "temperature": 0.5,
             }
 
             try:
@@ -103,21 +108,23 @@ def test_performance_benchmark():
                 response = requests.post(
                     "http://localhost:8000/v1/chat/completions",
                     json=payload,
-                    timeout=45
+                    timeout=45,
                 )
                 end_time = time.time()
 
                 if response.status_code == 200:
                     result = response.json()
-                    usage = result.get('usage', {})
-                    tokens = usage.get('completion_tokens', 0)
+                    usage = result.get("usage", {})
+                    tokens = usage.get("completion_tokens", 0)
                     duration = end_time - start_time
 
                     total_tokens += tokens
                     total_time += duration
                     successful_tests += 1
 
-                    print(f"   ✅ {tokens} tokens in {duration:.2f}s ({tokens/duration:.1f} tok/s)")
+                    print(
+                        f"   ✅ {tokens} tokens in {duration:.2f}s ({tokens/duration:.1f} tok/s)"
+                    )
                 else:
                     print(f"   ❌ Failed: {response.status_code}")
 
@@ -152,6 +159,7 @@ def test_performance_benchmark():
         print(f"❌ Benchmark failed: {e}")
         return False
 
+
 def main():
     """Main test function"""
     print("🧪 Local AI Inference Testing")
@@ -166,7 +174,7 @@ def main():
     tests = [
         ("Health Check", test_health_endpoint),
         ("Chat Completion", test_chat_completion),
-        ("Performance Benchmark", test_performance_benchmark)
+        ("Performance Benchmark", test_performance_benchmark),
     ]
 
     results = []
@@ -201,6 +209,7 @@ def main():
     else:
         print("⚠️ Some tests failed. Check server logs for details.")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

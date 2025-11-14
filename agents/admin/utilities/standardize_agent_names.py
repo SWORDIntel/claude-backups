@@ -6,15 +6,16 @@ Updates both file names and internal YAML name fields for consistency
 
 import os
 import re
-import yaml
 import shutil
 from pathlib import Path
+
+import yaml
 
 # Mapping of current names to standardized CAPITAL names
 AGENT_NAME_MAPPING = {
     # Current filename -> Standard CAPITAL name
     "APIDesigner.md": "APIDESIGNER.md",
-    "Architect.md": "ARCHITECT.md", 
+    "Architect.md": "ARCHITECT.md",
     "Bastion.md": "BASTION.md",
     "CSO.md": "CSO.md",  # Already caps
     "Constructor.md": "CONSTRUCTOR.md",
@@ -57,7 +58,7 @@ AGENT_NAME_MAPPING = {
 YAML_NAME_MAPPING = {
     "apidesigner": "apidesigner",
     "architect": "architect",
-    "bastion": "bastion", 
+    "bastion": "bastion",
     "cso": "cso",
     "constructor": "constructor",
     "cryptoexpert": "cryptoexpert",
@@ -95,131 +96,163 @@ YAML_NAME_MAPPING = {
     "python-internal": "python-internal",
 }
 
+
 def standardize_agent_name_in_file(filepath, new_filepath):
     """Update YAML name field to match standardized format"""
-    
+
     # Read current file
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
-    
+
     # Check if file has YAML frontmatter
-    if not content.startswith('---'):
+    if not content.startswith("---"):
         print(f"⚠️  {os.path.basename(filepath)} - No YAML frontmatter found")
         return False
-    
+
     # Split content into frontmatter and body
-    parts = content.split('---', 2)
+    parts = content.split("---", 2)
     if len(parts) < 3:
         print(f"❌ {os.path.basename(filepath)} - Invalid YAML frontmatter structure")
         return False
-    
+
     yaml_content = parts[1].strip()
     body_content = parts[2]
-    
+
     # Parse existing YAML
     try:
         yaml_data = yaml.safe_load(yaml_content)
     except yaml.YAMLError as e:
         print(f"❌ {os.path.basename(filepath)} - YAML parsing error: {e}")
         return False
-    
+
     # Get original name for lookup
-    old_name = yaml_data.get('name', '')
-    
+    old_name = yaml_data.get("name", "")
+
     # Find standardized name (keep YAML names lowercase for Task tool compatibility)
     if old_name in YAML_NAME_MAPPING:
         new_name = YAML_NAME_MAPPING[old_name]
     else:
         # Convert filename to lowercase name
-        base_name = os.path.basename(new_filepath).replace('.md', '').lower()
+        base_name = os.path.basename(new_filepath).replace(".md", "").lower()
         new_name = base_name
-    
+
     # Update YAML data
-    yaml_data['name'] = new_name
-    
+    yaml_data["name"] = new_name
+
     # Regenerate YAML with proper order
     ordered_yaml = f"""name: {yaml_data['name']}
 description: {yaml_data['description']}
 color: {yaml_data.get('color', '#000000')}
 tools:"""
-    
-    for tool in yaml_data.get('tools', []):
+
+    for tool in yaml_data.get("tools", []):
         ordered_yaml += f"\n  - {tool}"
-    
+
     # Reconstruct file content
     new_content = f"---\n{ordered_yaml}\n---{body_content}"
-    
+
     # Write to new file path
-    with open(new_filepath, 'w', encoding='utf-8') as f:
+    with open(new_filepath, "w", encoding="utf-8") as f:
         f.write(new_content)
-    
-    print(f"✅ {os.path.basename(filepath)} → {os.path.basename(new_filepath)} (name: {new_name})")
+
+    print(
+        f"✅ {os.path.basename(filepath)} → {os.path.basename(new_filepath)} (name: {new_name})"
+    )
     return True
+
 
 def main():
     """Standardize all agent file names and internal names"""
-    
+
     print("🔤 Standardizing Claude Agent Framework v7.0 agent names to CAPITALS")
     print("=" * 70)
     print()
-    
+
     # Find all agent .md files
     agent_files = []
-    for filename in os.listdir('.'):
-        if filename.endswith('.md') and filename in AGENT_NAME_MAPPING:
+    for filename in os.listdir("."):
+        if filename.endswith(".md") and filename in AGENT_NAME_MAPPING:
             agent_files.append(filename)
-    
+
     agent_files.sort()
-    
+
     print(f"Found {len(agent_files)} agent files to standardize")
     print()
-    
+
     renamed_count = 0
     updated_count = 0
-    
+
     # Process each agent file
     for old_filename in agent_files:
         new_filename = AGENT_NAME_MAPPING[old_filename]
-        
+
         # Skip if already correct name
         if old_filename == new_filename:
             # Still need to check/update YAML content
             if standardize_agent_name_in_file(old_filename, old_filename):
                 updated_count += 1
             continue
-        
+
         # Check if target file already exists
         if os.path.exists(new_filename):
             print(f"⚠️  {new_filename} already exists, skipping {old_filename}")
             continue
-        
+
         # Update content and rename file
         if standardize_agent_name_in_file(old_filename, new_filename):
             # Remove old file after successful creation
             os.remove(old_filename)
             renamed_count += 1
             updated_count += 1
-    
+
     print()
     print(f"✅ Successfully renamed {renamed_count} files")
     print(f"✅ Successfully updated {updated_count} agent configurations")
     print()
-    
+
     # Show standardization summary
     print("🔤 Standardization Summary:")
     print("=" * 40)
     print()
-    
+
     categories = {
         "Command & Control": ["DIRECTOR", "PROJECTORCHESTRATOR"],
-        "Security": ["SECURITY", "BASTION", "SECURITYCHAOSAGENT", "OVERSIGHT", "CSO", "CRYPTOEXPERT", "SECURITYAUDITOR"],
-        "Development": ["ARCHITECT", "CONSTRUCTOR", "PATCHER", "DEBUGGER", "TESTBED", "LINTER", "OPTIMIZER", "LEADENGINEER", "QADIRECTOR"],
+        "Security": [
+            "SECURITY",
+            "BASTION",
+            "SECURITYCHAOSAGENT",
+            "OVERSIGHT",
+            "CSO",
+            "CRYPTOEXPERT",
+            "SECURITYAUDITOR",
+        ],
+        "Development": [
+            "ARCHITECT",
+            "CONSTRUCTOR",
+            "PATCHER",
+            "DEBUGGER",
+            "TESTBED",
+            "LINTER",
+            "OPTIMIZER",
+            "LEADENGINEER",
+            "QADIRECTOR",
+        ],
         "Infrastructure": ["INFRASTRUCTURE", "DEPLOYER", "MONITOR", "PACKAGER", "GNU"],
-        "Specialists": ["APIDESIGNER", "DATABASE", "WEB", "MOBILE", "PYGUI", "TUI", "DATASCIENCE", "MLOPS", "NPU"],
+        "Specialists": [
+            "APIDESIGNER",
+            "DATABASE",
+            "WEB",
+            "MOBILE",
+            "PYGUI",
+            "TUI",
+            "DATASCIENCE",
+            "MLOPS",
+            "NPU",
+        ],
         "Internal Systems": ["C-INTERNAL", "PYTHON-INTERNAL"],
         "Support": ["RESEARCHER", "DOCGEN", "PLANNER", "STATUSLINE_INTEGRATION"],
     }
-    
+
     for category, agents in categories.items():
         print(f"\n{category}:")
         for agent in agents:
@@ -228,13 +261,14 @@ def main():
                 print(f"  ✅ {agent}")
             else:
                 print(f"  ❌ {agent} (missing)")
-    
+
     print()
     print("All agent names now follow CAPITAL LETTER standard for:")
     print("  📁 Consistent file naming")
     print("  🔍 Easy identification")
     print("  📊 Professional appearance")
     print("  🔧 Tool integration compatibility")
+
 
 if __name__ == "__main__":
     main()

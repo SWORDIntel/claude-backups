@@ -23,27 +23,30 @@ Purpose: Universal Claude Code think mode enhancement
 License: MIT
 """
 
-import os
-import sys
 import json
-import time
 import logging
+import os
 import subprocess
+import sys
 import threading
-from typing import Dict, List, Optional, Any
+import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Import our dynamic think mode selector
 try:
     from dynamic_think_mode_selector import DynamicThinkModeSelector, ThinkModeDecision
+
     THINK_SELECTOR_AVAILABLE = True
 except ImportError:
     THINK_SELECTOR_AVAILABLE = False
 
+
 @dataclass
 class ClaudeCodeContext:
     """Claude Code execution context"""
+
     task_text: str
     user_id: str = "default"
     session_id: str = "default"
@@ -51,23 +54,28 @@ class ClaudeCodeContext:
     think_mode_override: Optional[str] = None
     performance_requirements: Dict[str, Any] = None
 
+
 class ClaudeCodeThinkHooks:
     """Claude Code integration hooks for dynamic think mode"""
 
     def __init__(self):
         self.logger = self._setup_logging()
-        self.think_selector = DynamicThinkModeSelector() if THINK_SELECTOR_AVAILABLE else None
-        self.hooks_directory = Path.home() / '.claude-code' / 'hooks'
-        self.performance_log = Path.home() / '.claude-code' / 'performance' / 'think_mode_decisions.log'
+        self.think_selector = (
+            DynamicThinkModeSelector() if THINK_SELECTOR_AVAILABLE else None
+        )
+        self.hooks_directory = Path.home() / ".claude-code" / "hooks"
+        self.performance_log = (
+            Path.home() / ".claude-code" / "performance" / "think_mode_decisions.log"
+        )
 
         # Statistics tracking
         self.session_stats = {
-            'tasks_processed': 0,
-            'think_mode_enabled': 0,
-            'think_mode_disabled': 0,
-            'npu_accelerated': 0,
-            'cpu_fallback': 0,
-            'avg_decision_time': 0.0
+            "tasks_processed": 0,
+            "think_mode_enabled": 0,
+            "think_mode_disabled": 0,
+            "npu_accelerated": 0,
+            "cpu_fallback": 0,
+            "avg_decision_time": 0.0,
         }
 
     def _setup_logging(self) -> logging.Logger:
@@ -88,7 +96,7 @@ class ClaudeCodeThinkHooks:
 
         # Formatter for detailed logging
         formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)-8s | CLAUDE-HOOKS | %(message)s'
+            "%(asctime)s | %(levelname)-8s | CLAUDE-HOOKS | %(message)s"
         )
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
@@ -161,8 +169,8 @@ except Exception as e:
     print(json.dumps({{"think_mode": "auto", "error": str(e)}}))
 '''
 
-        hook_path = self.hooks_directory / 'pre_processing_think_mode.py'
-        with open(hook_path, 'w') as f:
+        hook_path = self.hooks_directory / "pre_processing_think_mode.py"
+        with open(hook_path, "w") as f:
             f.write(hook_script)
         os.chmod(hook_path, 0o755)
 
@@ -205,8 +213,8 @@ if __name__ == "__main__":
     main()
 '''
 
-        hook_path = self.hooks_directory / 'post_processing_performance.py'
-        with open(hook_path, 'w') as f:
+        hook_path = self.hooks_directory / "post_processing_performance.py"
+        with open(hook_path, "w") as f:
             f.write(hook_script)
         os.chmod(hook_path, 0o755)
 
@@ -250,8 +258,8 @@ if __name__ == "__main__":
     print(json.dumps(config.get_config(), indent=2))
 '''
 
-        hook_path = self.hooks_directory / 'think_mode_config.py'
-        with open(hook_path, 'w') as f:
+        hook_path = self.hooks_directory / "think_mode_config.py"
+        with open(hook_path, "w") as f:
             f.write(config_script)
         os.chmod(hook_path, 0o755)
 
@@ -265,32 +273,34 @@ if __name__ == "__main__":
                     "pre_processing": {
                         "script": "pre_processing_think_mode.py",
                         "purpose": "Analyze task complexity and determine think mode",
-                        "timeout_ms": 500
+                        "timeout_ms": 500,
                     },
                     "post_processing": {
                         "script": "post_processing_performance.py",
                         "purpose": "Track performance and decision accuracy",
-                        "timeout_ms": 100
+                        "timeout_ms": 100,
                     },
                     "configuration": {
                         "script": "think_mode_config.py",
                         "purpose": "Manage think mode configuration",
-                        "timeout_ms": 50
-                    }
+                        "timeout_ms": 50,
+                    },
                 },
                 "performance": {
                     "target_latency_ms": 500,
                     "npu_acceleration": True,
-                    "fallback_available": True
-                }
+                    "fallback_available": True,
+                },
             }
         }
 
-        registry_path = self.hooks_directory / 'registry.json'
-        with open(registry_path, 'w') as f:
+        registry_path = self.hooks_directory / "registry.json"
+        with open(registry_path, "w") as f:
             json.dump(registry, f, indent=2)
 
-    def process_task_for_think_mode(self, task_text: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def process_task_for_think_mode(
+        self, task_text: str, context: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """Process task and determine think mode requirement"""
         if not self.think_selector:
             return {"think_mode": "auto", "error": "Think selector not available"}
@@ -300,23 +310,23 @@ if __name__ == "__main__":
             analysis = self.think_selector.analyze_task_complexity(task_text, context)
 
             # Update statistics
-            self.session_stats['tasks_processed'] += 1
+            self.session_stats["tasks_processed"] += 1
             if analysis.decision == ThinkModeDecision.INTERLEAVED:
-                self.session_stats['think_mode_enabled'] += 1
+                self.session_stats["think_mode_enabled"] += 1
             else:
-                self.session_stats['think_mode_disabled'] += 1
+                self.session_stats["think_mode_disabled"] += 1
 
             if analysis.npu_accelerated:
-                self.session_stats['npu_accelerated'] += 1
+                self.session_stats["npu_accelerated"] += 1
             else:
-                self.session_stats['cpu_fallback'] += 1
+                self.session_stats["cpu_fallback"] += 1
 
             # Update average decision time
-            current_avg = self.session_stats['avg_decision_time']
-            total_tasks = self.session_stats['tasks_processed']
-            self.session_stats['avg_decision_time'] = (
-                (current_avg * (total_tasks - 1) + analysis.processing_time_ms) / total_tasks
-            )
+            current_avg = self.session_stats["avg_decision_time"]
+            total_tasks = self.session_stats["tasks_processed"]
+            self.session_stats["avg_decision_time"] = (
+                current_avg * (total_tasks - 1) + analysis.processing_time_ms
+            ) / total_tasks
 
             # Create Claude Code response
             result = {
@@ -327,11 +337,13 @@ if __name__ == "__main__":
                 "processing_time_ms": analysis.processing_time_ms,
                 "npu_accelerated": analysis.npu_accelerated,
                 "agent_recommendations": analysis.agent_recommendations,
-                "session_stats": self.session_stats.copy()
+                "session_stats": self.session_stats.copy(),
             }
 
-            self.logger.info(f"Think mode decision: {analysis.decision.value} "
-                           f"(complexity: {analysis.complexity_score:.3f})")
+            self.logger.info(
+                f"Think mode decision: {analysis.decision.value} "
+                f"(complexity: {analysis.complexity_score:.3f})"
+            )
 
             return result
 
@@ -341,7 +353,7 @@ if __name__ == "__main__":
 
     def create_claude_wrapper_integration(self) -> str:
         """Create Claude wrapper script with think mode integration"""
-        wrapper_script = f'''#!/bin/bash
+        wrapper_script = f"""#!/bin/bash
 #
 # Claude Code Wrapper with Dynamic Think Mode Selection
 # Automatically determines optimal thinking mode for tasks
@@ -383,7 +395,7 @@ exec "$CLAUDE_BINARY" "$@"
 
 # Note: Post-processing happens via Claude Code hooks, not here
 # since exec replaces this process
-'''
+"""
 
         return wrapper_script
 
@@ -391,13 +403,13 @@ exec "$CLAUDE_BINARY" "$@"
         """Install Claude wrapper with think mode integration"""
         try:
             wrapper_script = self.create_claude_wrapper_integration()
-            wrapper_path = Path.home() / '.local' / 'bin' / 'claude-think'
+            wrapper_path = Path.home() / ".local" / "bin" / "claude-think"
 
             # Create directory if it doesn't exist
             wrapper_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Write wrapper script
-            with open(wrapper_path, 'w') as f:
+            with open(wrapper_path, "w") as f:
                 f.write(wrapper_script)
 
             # Make executable
@@ -417,7 +429,7 @@ exec "$CLAUDE_BINARY" "$@"
         test_cases = [
             "What is the capital of France?",
             "Debug this complex Python function with multiple issues.",
-            "Design a distributed microservices architecture with security, performance monitoring, and multi-agent coordination."
+            "Design a distributed microservices architecture with security, performance monitoring, and multi-agent coordination.",
         ]
 
         success_count = 0
@@ -429,12 +441,14 @@ exec "$CLAUDE_BINARY" "$@"
                 # Process task
                 result = self.process_task_for_think_mode(test_case)
 
-                if 'think_mode' in result:
-                    decision = result['think_mode']
-                    complexity = result.get('complexity_score', 0.0)
-                    time_ms = result.get('processing_time_ms', 0.0)
+                if "think_mode" in result:
+                    decision = result["think_mode"]
+                    complexity = result.get("complexity_score", 0.0)
+                    time_ms = result.get("processing_time_ms", 0.0)
 
-                    self.logger.info(f"  ✅ Decision: {decision} (complexity: {complexity:.3f}, time: {time_ms:.1f}ms)")
+                    self.logger.info(
+                        f"  ✅ Decision: {decision} (complexity: {complexity:.3f}, time: {time_ms:.1f}ms)"
+                    )
                     success_count += 1
                 else:
                     self.logger.warning(f"  ❌ No think mode decision returned")
@@ -443,31 +457,40 @@ exec "$CLAUDE_BINARY" "$@"
                 self.logger.error(f"  ❌ Test {i} failed: {e}")
 
         success_rate = success_count / len(test_cases)
-        self.logger.info(f"Integration test results: {success_count}/{len(test_cases)} ({success_rate:.1%}) passed")
+        self.logger.info(
+            f"Integration test results: {success_count}/{len(test_cases)} ({success_rate:.1%}) passed"
+        )
 
         return success_rate >= 0.8
 
     def get_integration_status(self) -> Dict[str, Any]:
         """Get current integration status and performance"""
-        hooks_installed = all([
-            (self.hooks_directory / 'pre_processing_think_mode.py').exists(),
-            (self.hooks_directory / 'post_processing_performance.py').exists(),
-            (self.hooks_directory / 'think_mode_config.py').exists(),
-            (self.hooks_directory / 'registry.json').exists()
-        ])
+        hooks_installed = all(
+            [
+                (self.hooks_directory / "pre_processing_think_mode.py").exists(),
+                (self.hooks_directory / "post_processing_performance.py").exists(),
+                (self.hooks_directory / "think_mode_config.py").exists(),
+                (self.hooks_directory / "registry.json").exists(),
+            ]
+        )
 
-        wrapper_installed = (Path.home() / '.local' / 'bin' / 'claude-think').exists()
+        wrapper_installed = (Path.home() / ".local" / "bin" / "claude-think").exists()
 
         return {
-            'hooks_installed': hooks_installed,
-            'wrapper_installed': wrapper_installed,
-            'think_selector_available': THINK_SELECTOR_AVAILABLE,
-            'npu_available': self.think_selector.npu_analyzer.npu_available if self.think_selector else False,
-            'session_stats': self.session_stats.copy(),
-            'hooks_directory': str(self.hooks_directory),
-            'performance_log': str(self.performance_log),
-            'timestamp': time.time()
+            "hooks_installed": hooks_installed,
+            "wrapper_installed": wrapper_installed,
+            "think_selector_available": THINK_SELECTOR_AVAILABLE,
+            "npu_available": (
+                self.think_selector.npu_analyzer.npu_available
+                if self.think_selector
+                else False
+            ),
+            "session_stats": self.session_stats.copy(),
+            "hooks_directory": str(self.hooks_directory),
+            "performance_log": str(self.performance_log),
+            "timestamp": time.time(),
         }
+
 
 class UltrathinkSystemIntegration:
     """Integration with existing claude-backups ultrathink systems"""
@@ -475,9 +498,9 @@ class UltrathinkSystemIntegration:
     def __init__(self):
         self.logger = logging.getLogger("UltrathinkIntegration")
         self.integration_points = [
-            'agents/src/python/production_orchestrator.py',
-            'agents/src/python/npu_orchestrator_real.py',
-            'agents/src/python/intelligent_context_chopper.py'
+            "agents/src/python/production_orchestrator.py",
+            "agents/src/python/npu_orchestrator_real.py",
+            "agents/src/python/intelligent_context_chopper.py",
         ]
 
     def integrate_with_existing_systems(self) -> bool:
@@ -496,7 +519,9 @@ class UltrathinkSystemIntegration:
         integration_success.append(self._integrate_agent_orchestration())
 
         success_rate = sum(integration_success) / len(integration_success)
-        self.logger.info(f"System integration: {sum(integration_success)}/{len(integration_success)} ({success_rate:.1%}) successful")
+        self.logger.info(
+            f"System integration: {sum(integration_success)}/{len(integration_success)} ({success_rate:.1%}) successful"
+        )
 
         return success_rate >= 0.8
 
@@ -525,8 +550,8 @@ class NpuThinkModeIntegration:
 '''
 
             # Write integration module
-            integration_path = Path('agents/src/python/npu_think_integration.py')
-            with open(integration_path, 'w') as f:
+            integration_path = Path("agents/src/python/npu_think_integration.py")
+            with open(integration_path, "w") as f:
                 f.write(npu_integration_code)
 
             self.logger.info("✅ NPU orchestrator integration complete")
@@ -556,12 +581,13 @@ class NpuThinkModeIntegration:
             self.logger.error(f"❌ Agent orchestration integration failed: {e}")
             return False
 
+
 def main():
     """Main execution for think mode hooks installation and testing"""
-    print("="*80)
+    print("=" * 80)
     print("Claude Code Think Mode Integration Hooks")
     print("Dynamic Think Mode Selection - Universal Enhancement")
-    print("="*80)
+    print("=" * 80)
 
     # Initialize hooks system
     hooks = ClaudeCodeThinkHooks()
@@ -600,7 +626,7 @@ def main():
     print("\\n📊 Integration Status:")
     status = hooks.get_integration_status()
     for key, value in status.items():
-        if key != 'session_stats':
+        if key != "session_stats":
             print(f"   {key}: {value}")
 
     print(f"\\n🚀 Claude Code Think Mode Integration: READY")
@@ -608,6 +634,7 @@ def main():
     print(f"Result: Automatic think mode selection based on complexity")
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

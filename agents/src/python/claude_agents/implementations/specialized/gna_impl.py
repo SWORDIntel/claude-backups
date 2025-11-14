@@ -6,20 +6,21 @@ Intel GNA hardware acceleration for continuous AI workloads
 """
 
 import asyncio
-import logging
-import time
-import os
-import json
 import hashlib
-import numpy as np
+import json
+import logging
+import os
 import subprocess
 import threading
-from typing import Dict, Any, List, Optional, Tuple, Set, Union
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
-from pathlib import Path
+import time
 from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

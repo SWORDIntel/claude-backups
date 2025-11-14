@@ -5,8 +5,8 @@ Launches NPU-accelerated orchestrator with proper configuration
 """
 
 import asyncio
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add project path
@@ -14,8 +14,8 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from agents.src.python.npu_orchestrator_bridge import NPUOrchestratorBridge
     from agents.src.python.npu_accelerated_orchestrator import NPUMode
+    from agents.src.python.npu_orchestrator_bridge import NPUOrchestratorBridge
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure NPU orchestrator files are properly installed")
@@ -23,6 +23,7 @@ except ImportError as e:
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 async def main():
     """Main launcher function"""
@@ -52,6 +53,7 @@ async def main():
         return False
 
     return True
+
 
 if __name__ == "__main__":
     asyncio.run(main())

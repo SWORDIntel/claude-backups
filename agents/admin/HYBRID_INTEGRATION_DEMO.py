@@ -10,10 +10,12 @@ seamlessly upgrade to binary system performance.
 import asyncio
 import sys
 import time
+
 sys.path.append('${CLAUDE_PROJECT_ROOT:-$(dirname "$0")/../../}agents')
 
-from 03-BRIDGES.claude_agent_bridge import task_agent_invoke, bridge
+from 03-BRIDGES.claude_agent_bridge import bridge, task_agent_invoke
 from 08-ADMIN-TOOLS.DEVELOPMENT_CLUSTER_DIRECT import DevelopmentCluster
+
 
 class HybridAgentDemo:
     """Demonstrates the hybrid approach in action"""

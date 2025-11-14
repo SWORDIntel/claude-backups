@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Tuple, Union
 @dataclass
 class ShellProfile:
     """Represents a shell configuration profile"""
+
     shell_type: str
     config_file: Path
     syntax_type: str  # posix, csh, fish
@@ -30,56 +31,56 @@ class ShellIntegrationManager:
     """Manages shell integration for Claude installation"""
 
     SHELL_PROFILES = {
-        'bash': ShellProfile(
-            shell_type='bash',
-            config_file=Path.home() / '.bashrc',
-            syntax_type='posix',
+        "bash": ShellProfile(
+            shell_type="bash",
+            config_file=Path.home() / ".bashrc",
+            syntax_type="posix",
             supports_functions=True,
             supports_aliases=True,
             supports_completion=True,
-            path_variable='PATH',
-            export_syntax='export'
+            path_variable="PATH",
+            export_syntax="export",
         ),
-        'zsh': ShellProfile(
-            shell_type='zsh',
-            config_file=Path.home() / '.zshrc',
-            syntax_type='posix',
+        "zsh": ShellProfile(
+            shell_type="zsh",
+            config_file=Path.home() / ".zshrc",
+            syntax_type="posix",
             supports_functions=True,
             supports_aliases=True,
             supports_completion=True,
-            path_variable='PATH',
-            export_syntax='export'
+            path_variable="PATH",
+            export_syntax="export",
         ),
-        'fish': ShellProfile(
-            shell_type='fish',
-            config_file=Path.home() / '.config' / 'fish' / 'config.fish',
-            syntax_type='fish',
+        "fish": ShellProfile(
+            shell_type="fish",
+            config_file=Path.home() / ".config" / "fish" / "config.fish",
+            syntax_type="fish",
             supports_functions=True,
             supports_aliases=False,  # Fish uses functions instead
             supports_completion=True,
-            path_variable='PATH',
-            export_syntax='set -gx'
+            path_variable="PATH",
+            export_syntax="set -gx",
         ),
-        'csh': ShellProfile(
-            shell_type='csh',
-            config_file=Path.home() / '.cshrc',
-            syntax_type='csh',
+        "csh": ShellProfile(
+            shell_type="csh",
+            config_file=Path.home() / ".cshrc",
+            syntax_type="csh",
             supports_functions=False,
             supports_aliases=True,
             supports_completion=False,
-            path_variable='PATH',
-            export_syntax='setenv'
+            path_variable="PATH",
+            export_syntax="setenv",
         ),
-        'tcsh': ShellProfile(
-            shell_type='tcsh',
-            config_file=Path.home() / '.tcshrc',
-            syntax_type='csh',
+        "tcsh": ShellProfile(
+            shell_type="tcsh",
+            config_file=Path.home() / ".tcshrc",
+            syntax_type="csh",
             supports_functions=False,
             supports_aliases=True,
             supports_completion=True,
-            path_variable='PATH',
-            export_syntax='setenv'
-        )
+            path_variable="PATH",
+            export_syntax="setenv",
+        ),
     }
 
     def __init__(self, verbose: bool = False):
@@ -93,11 +94,11 @@ class ShellIntegrationManager:
 
         # Check common shell locations
         shell_locations = {
-            'bash': ['/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash'],
-            'zsh': ['/bin/zsh', '/usr/bin/zsh', '/usr/local/bin/zsh'],
-            'fish': ['/bin/fish', '/usr/bin/fish', '/usr/local/bin/fish'],
-            'csh': ['/bin/csh', '/usr/bin/csh'],
-            'tcsh': ['/bin/tcsh', '/usr/bin/tcsh']
+            "bash": ["/bin/bash", "/usr/bin/bash", "/usr/local/bin/bash"],
+            "zsh": ["/bin/zsh", "/usr/bin/zsh", "/usr/local/bin/zsh"],
+            "fish": ["/bin/fish", "/usr/bin/fish", "/usr/local/bin/fish"],
+            "csh": ["/bin/csh", "/usr/bin/csh"],
+            "tcsh": ["/bin/tcsh", "/usr/bin/tcsh"],
         }
 
         for shell_name, locations in shell_locations.items():
@@ -111,7 +112,7 @@ class ShellIntegrationManager:
     def _detect_primary_shell(self) -> Optional[str]:
         """Detect the primary shell being used"""
         # Check SHELL environment variable
-        shell_path = os.environ.get('SHELL', '')
+        shell_path = os.environ.get("SHELL", "")
         if shell_path:
             shell_name = Path(shell_path).name
             if shell_name in self.SHELL_PROFILES:
@@ -119,17 +120,21 @@ class ShellIntegrationManager:
 
         # Check current process
         try:
-            result = subprocess.run(['ps', '-p', str(os.getpid()), '-o', 'comm='],
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["ps", "-p", str(os.getpid()), "-o", "comm="],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
             if result.returncode == 0:
-                process_name = result.stdout.strip().lstrip('-')
+                process_name = result.stdout.strip().lstrip("-")
                 if process_name in self.SHELL_PROFILES:
                     return process_name
         except:
             pass
 
         # Default to bash if available
-        return 'bash' if 'bash' in self.detected_shells else None
+        return "bash" if "bash" in self.detected_shells else None
 
     def create_universal_wrapper(self, claude_binary: Path, wrapper_path: Path) -> bool:
         """Create a universal wrapper that works across all shells"""
@@ -157,7 +162,7 @@ class ShellIntegrationManager:
 
     def _generate_universal_wrapper_content(self, claude_binary: Path) -> str:
         """Generate universal wrapper content that works across shells"""
-        return f'''#!/bin/sh
+        return f"""#!/bin/sh
 # Claude Universal Wrapper
 # Generated by Claude Enhanced Installer v2.0
 # Compatible with bash, zsh, dash, and other POSIX shells
@@ -210,7 +215,7 @@ case "$CLAUDE_BINARY" in
         fi
         ;;
 esac
-'''
+"""
 
     def _test_wrapper_functionality(self, wrapper_path: Path) -> bool:
         """Test wrapper functionality across multiple shells"""
@@ -218,9 +223,9 @@ esac
             return False
 
         # Test with available shells
-        test_shells = ['bash', 'sh']  # Start with most common
-        if 'zsh' in self.detected_shells:
-            test_shells.append('zsh')
+        test_shells = ["bash", "sh"]  # Start with most common
+        if "zsh" in self.detected_shells:
+            test_shells.append("zsh")
 
         for shell in test_shells:
             shell_path = shutil.which(shell)
@@ -228,10 +233,10 @@ esac
                 try:
                     # Test basic execution
                     result = subprocess.run(
-                        [shell_path, str(wrapper_path), '--help'],
+                        [shell_path, str(wrapper_path), "--help"],
                         capture_output=True,
                         text=True,
-                        timeout=10
+                        timeout=10,
                     )
                     if result.returncode != 0:
                         if self.verbose:
@@ -248,7 +253,9 @@ esac
 
         return True
 
-    def configure_shell_integration(self, local_bin_path: Path) -> Tuple[bool, List[str]]:
+    def configure_shell_integration(
+        self, local_bin_path: Path
+    ) -> Tuple[bool, List[str]]:
         """Configure shell integration for all detected shells"""
         results = []
         overall_success = True
@@ -296,7 +303,7 @@ esac
             config_block = self._generate_shell_config_block(profile, local_bin_path)
 
             # Append configuration
-            with profile.config_file.open('a') as f:
+            with profile.config_file.open("a") as f:
                 f.write(config_block)
 
             if self.verbose:
@@ -310,25 +317,25 @@ esac
 
     def _is_already_configured(self, content: str) -> bool:
         """Check if shell is already configured for Claude"""
-        markers = [
-            "Claude Enhanced Installer",
-            "/.local/bin",
-            "CLAUDE_WRAPPER_ACTIVE"
-        ]
+        markers = ["Claude Enhanced Installer", "/.local/bin", "CLAUDE_WRAPPER_ACTIVE"]
         return any(marker in content for marker in markers)
 
-    def _generate_shell_config_block(self, profile: ShellProfile, local_bin_path: Path) -> str:
+    def _generate_shell_config_block(
+        self, profile: ShellProfile, local_bin_path: Path
+    ) -> str:
         """Generate shell-specific configuration block"""
-        if profile.syntax_type == 'fish':
+        if profile.syntax_type == "fish":
             return self._generate_fish_config(profile, local_bin_path)
-        elif profile.syntax_type == 'csh':
+        elif profile.syntax_type == "csh":
             return self._generate_csh_config(profile, local_bin_path)
         else:  # POSIX (bash, zsh)
             return self._generate_posix_config(profile, local_bin_path)
 
-    def _generate_posix_config(self, profile: ShellProfile, local_bin_path: Path) -> str:
+    def _generate_posix_config(
+        self, profile: ShellProfile, local_bin_path: Path
+    ) -> str:
         """Generate POSIX shell configuration (bash, zsh)"""
-        config = f'''
+        config = f"""
 
 # ═══════════════════════════════════════════════════════════════════
 # Claude Enhanced Installer Configuration
@@ -346,24 +353,24 @@ if command -v claude >/dev/null 2>&1; then
     # Note: Completion scripts would be sourced here if available
     true
 fi
-'''
+"""
 
         # Add shell-specific enhancements
-        if profile.shell_type == 'zsh':
-            config += '''
+        if profile.shell_type == "zsh":
+            config += """
 # ZSH-specific Claude enhancements
 if [[ -n "$ZSH_VERSION" ]]; then
     # Enable ZSH completion system if not already enabled
     autoload -Uz compinit
     compinit -C  # Skip security check for performance
 fi
-'''
+"""
 
         return config
 
     def _generate_fish_config(self, profile: ShellProfile, local_bin_path: Path) -> str:
         """Generate Fish shell configuration"""
-        return f'''
+        return f"""
 
 # ═══════════════════════════════════════════════════════════════════
 # Claude Enhanced Installer Configuration
@@ -380,11 +387,11 @@ if command -v claude >/dev/null 2>&1
     # Note: Fish completion files would be installed separately
     true
 end
-'''
+"""
 
     def _generate_csh_config(self, profile: ShellProfile, local_bin_path: Path) -> str:
         """Generate C shell configuration"""
-        return f'''
+        return f"""
 
 # ═══════════════════════════════════════════════════════════════════
 # Claude Enhanced Installer Configuration
@@ -395,9 +402,11 @@ set path = ({local_bin_path} $path)
 
 # Claude alias (since csh doesn't support functions well)
 alias claude-help "claude --help"
-'''
+"""
 
-    def create_shell_specific_wrappers(self, claude_binary: Path, wrapper_dir: Path) -> Dict[str, bool]:
+    def create_shell_specific_wrappers(
+        self, claude_binary: Path, wrapper_dir: Path
+    ) -> Dict[str, bool]:
         """Create shell-specific wrapper scripts"""
         results = {}
 
@@ -411,14 +420,16 @@ alias claude-help "claude --help"
 
         return results
 
-    def _create_shell_specific_wrapper(self, shell_name: str, claude_binary: Path, wrapper_path: Path) -> bool:
+    def _create_shell_specific_wrapper(
+        self, shell_name: str, claude_binary: Path, wrapper_path: Path
+    ) -> bool:
         """Create a wrapper optimized for a specific shell"""
         try:
             profile = self.SHELL_PROFILES[shell_name]
 
-            if profile.syntax_type == 'fish':
+            if profile.syntax_type == "fish":
                 content = self._generate_fish_wrapper(claude_binary)
-            elif profile.syntax_type == 'csh':
+            elif profile.syntax_type == "csh":
                 content = self._generate_csh_wrapper(claude_binary)
             else:  # POSIX
                 content = self._generate_posix_wrapper(claude_binary, shell_name)
@@ -437,7 +448,7 @@ alias claude-help "claude --help"
         """Generate POSIX shell wrapper (bash/zsh specific optimizations)"""
         shebang = f"#!/bin/{shell_name}"
 
-        wrapper = f'''{shebang}
+        wrapper = f"""{shebang}
 # Claude {shell_name.upper()} Wrapper
 # Optimized for {shell_name} with enhanced error handling
 
@@ -455,16 +466,16 @@ cleanup() {{
 }}
 
 # Register cleanup
-trap cleanup EXIT INT TERM'''
+trap cleanup EXIT INT TERM"""
 
-        if shell_name == 'zsh':
-            wrapper += '''
+        if shell_name == "zsh":
+            wrapper += """
 
 # ZSH specific optimizations
 setopt NO_UNSET  # Prevent undefined variable errors
-setopt ERR_EXIT  # Exit on command failure'''
+setopt ERR_EXIT  # Exit on command failure"""
 
-        wrapper += f'''
+        wrapper += f"""
 
 # Claude binary path
 CLAUDE_BINARY="{claude_binary}"
@@ -500,12 +511,12 @@ case "$CLAUDE_BINARY" in
         fi
         ;;
 esac
-'''
+"""
         return wrapper
 
     def _generate_fish_wrapper(self, claude_binary: Path) -> str:
         """Generate Fish shell wrapper"""
-        return f'''#!/usr/bin/env fish
+        return f"""#!/usr/bin/env fish
 # Claude Fish Wrapper
 # Fish-specific implementation with proper error handling
 
@@ -548,11 +559,11 @@ switch "$CLAUDE_BINARY"
             exit 1
         end
 end
-'''
+"""
 
     def _generate_csh_wrapper(self, claude_binary: Path) -> str:
         """Generate C shell wrapper"""
-        return f'''#!/bin/csh
+        return f"""#!/bin/csh
 # Claude C Shell Wrapper
 # Basic implementation for csh/tcsh compatibility
 
@@ -589,18 +600,20 @@ else
         exit 1
     endif
 endif
-'''
+"""
 
     def get_shell_info(self) -> Dict[str, any]:
         """Get comprehensive shell information"""
         return {
-            "detected_shells": {name: str(path) for name, path in self.detected_shells.items()},
+            "detected_shells": {
+                name: str(path) for name, path in self.detected_shells.items()
+            },
             "primary_shell": self.primary_shell,
             "shell_configs": {
                 name: {
                     "config_file": str(profile.config_file),
                     "exists": profile.config_file.exists(),
-                    "writable": os.access(profile.config_file.parent, os.W_OK)
+                    "writable": os.access(profile.config_file.parent, os.W_OK),
                 }
                 for name, profile in self.SHELL_PROFILES.items()
                 if name in self.detected_shells
@@ -608,19 +621,21 @@ endif
             "environment": {
                 "SHELL": os.environ.get("SHELL", ""),
                 "PATH": os.environ.get("PATH", "").split(":"),
-                "current_process": self._get_current_process_info()
-            }
+                "current_process": self._get_current_process_info(),
+            },
         }
 
     def _get_current_process_info(self) -> Dict[str, str]:
         """Get current process information"""
         try:
             result = subprocess.run(
-                ['ps', '-p', str(os.getpid()), '-o', 'pid,ppid,comm,args'],
-                capture_output=True, text=True, timeout=5
+                ["ps", "-p", str(os.getpid()), "-o", "pid,ppid,comm,args"],
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\\n')
+                lines = result.stdout.strip().split("\\n")
                 if len(lines) > 1:
                     return {"ps_output": lines[1]}
         except:
@@ -635,6 +650,7 @@ if __name__ == "__main__":
 
     print("Shell Information:")
     import pprint
+
     pprint.pprint(manager.get_shell_info())
 
     print(f"\\nPrimary shell: {manager.primary_shell}")

@@ -6,10 +6,15 @@ This demonstrates the auto-integration capability for future agents
 
 import asyncio
 import sys
+
 sys.path.append('${CLAUDE_AGENTS_ROOT:-$(dirname "$0")}/../src/python')
 
 # Import the auto-integration module
-from 03-BRIDGES.auto_integrate import integrate_with_claude_agent_system, auto_integration
+from 03-BRIDGES.auto_integrate import (
+    auto_integration,
+    integrate_with_claude_agent_system,
+)
+
 
 async def main():
     """
@@ -42,7 +47,7 @@ async def main():
     # STEP 3: Send a test message
     print("3. Testing communication...")
     from ENHANCED_AGENT_INTEGRATION import AgentMessage, Priority
-    
+
     # Create a message to the Director agent
     test_message = AgentMessage(
         source_agent="example_agent",

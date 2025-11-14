@@ -9,14 +9,14 @@ DEBUGGER agents, along with comprehensive GUI testing.
 Usage: python3 test_artifact_downloader_gui.py [--headless] [--verbose]
 """
 
-import sys
-import os
-import time
 import json
+import os
+import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 from unittest.mock import Mock, patch
-import threading
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -26,14 +26,15 @@ sys.path.insert(0, str(project_root / "agents" / "src" / "python"))
 # Import GUI components
 try:
     from tools.claude_artifact_downloader_gui import (
-        ClaudeArtifactDownloaderGUI,
-        DownloadManager,
-        DownloadJob,
-        BatchOperation,
-        FileValidator,
         AgentIntegration,
-        LogHandler
+        BatchOperation,
+        ClaudeArtifactDownloaderGUI,
+        DownloadJob,
+        DownloadManager,
+        FileValidator,
+        LogHandler,
     )
+
     GUI_AVAILABLE = True
 except ImportError as e:
     print(f"GUI import failed: {e}")
@@ -41,7 +42,8 @@ except ImportError as e:
 
 try:
     import tkinter as tk
-    from tkinter import ttk, scrolledtext
+    from tkinter import scrolledtext, ttk
+
     TKINTER_AVAILABLE = True
 except ImportError:
     print("tkinter not available - running in headless mode")
@@ -67,8 +69,11 @@ class MockTask:
                     "python_version": "3.11.5",
                     "packages_available": ["requests", "tkinter", "pathlib"],
                     "environment_status": "healthy",
-                    "recommendations": ["Consider updating pip", "Install optional packages"]
-                }
+                    "recommendations": [
+                        "Consider updating pip",
+                        "Install optional packages",
+                    ],
+                },
             }
         elif self.subagent_type.lower() == "debugger":
             return {
@@ -80,16 +85,16 @@ class MockTask:
                     "performance_metrics": {
                         "cpu_usage": "12%",
                         "memory_usage": "256MB",
-                        "response_time": "45ms"
+                        "response_time": "45ms",
                     },
-                    "recommendations": ["System operating normally"]
-                }
+                    "recommendations": ["System operating normally"],
+                },
             }
         else:
             return {
                 "status": "success",
                 "agent": self.subagent_type.upper(),
-                "result": f"Mock response for {self.subagent_type}"
+                "result": f"Mock response for {self.subagent_type}",
             }
 
 
@@ -119,12 +124,12 @@ class GUITestSuite:
         test_files = {
             "test.txt": "This is a test file for validation",
             "test.json": '{"test": "data", "version": "1.0"}',
-            "test.py": "#!/usr/bin/env python3\nprint('Hello from test script')\n"
+            "test.py": "#!/usr/bin/env python3\nprint('Hello from test script')\n",
         }
 
         for filename, content in test_files.items():
             file_path = Path(self.temp_dir) / filename
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
 
         self.log(f"Created {len(test_files)} test files")
@@ -133,6 +138,7 @@ class GUITestSuite:
         """Clean up test environment"""
         if self.temp_dir:
             import shutil
+
             shutil.rmtree(self.temp_dir, ignore_errors=True)
             self.log("Test environment cleaned up")
 
@@ -146,7 +152,7 @@ class GUITestSuite:
                 url="https://example.com/test.zip",
                 output_path=str(Path(self.temp_dir) / "test_download.zip"),
                 name="Test Download Job",
-                description="Test job for validation"
+                description="Test job for validation",
             )
 
             assert job.id == "test_job_1"
@@ -196,9 +202,7 @@ class GUITestSuite:
 
         try:
             batch = BatchOperation(
-                id="test_batch_1",
-                name="Test Batch",
-                jobs=["job1", "job2", "job3"]
+                id="test_batch_1", name="Test Batch", jobs=["job1", "job2", "job3"]
             )
 
             assert batch.id == "test_batch_1"
@@ -273,7 +277,7 @@ class GUITestSuite:
                 id="test_download",
                 url="https://httpbin.org/json",  # Safe test URL
                 output_path=str(Path(self.temp_dir) / "test_api_response.json"),
-                name="Test API Download"
+                name="Test API Download",
             )
 
             # Add job to manager
@@ -294,7 +298,9 @@ class GUITestSuite:
     def test_gui_initialization(self):
         """Test GUI initialization in headless mode"""
         if self.headless or not TKINTER_AVAILABLE or not GUI_AVAILABLE:
-            self.log("Skipping GUI initialization test (headless mode or GUI not available)")
+            self.log(
+                "Skipping GUI initialization test (headless mode or GUI not available)"
+            )
             return
 
         self.log("Testing GUI initialization...")
@@ -304,11 +310,11 @@ class GUITestSuite:
             app = ClaudeArtifactDownloaderGUI()
 
             # Verify key components exist
-            assert hasattr(app, 'root')
-            assert hasattr(app, 'notebook')
-            assert hasattr(app, 'download_manager')
-            assert hasattr(app, 'logger')
-            assert hasattr(app, 'agent_integration')
+            assert hasattr(app, "root")
+            assert hasattr(app, "notebook")
+            assert hasattr(app, "download_manager")
+            assert hasattr(app, "logger")
+            assert hasattr(app, "agent_integration")
 
             # Test some basic functionality
             assert app.auto_validate.get() in [True, False]
@@ -349,9 +355,9 @@ class GUITestSuite:
 
     def report_results(self):
         """Report test results"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("CLAUDE ARTIFACT DOWNLOADER GUI TEST RESULTS")
-        print("="*60)
+        print("=" * 60)
 
         passed = 0
         failed = 0
@@ -367,12 +373,16 @@ class GUITestSuite:
             else:
                 failed += 1
 
-        print("-"*60)
+        print("-" * 60)
         print(f"Total Tests: {len(self.test_results)}")
         print(f"Passed: {passed}")
         print(f"Failed: {failed}")
-        print(f"Success Rate: {(passed/len(self.test_results)*100):.1f}%" if self.test_results else "0%")
-        print("="*60)
+        print(
+            f"Success Rate: {(passed/len(self.test_results)*100):.1f}%"
+            if self.test_results
+            else "0%"
+        )
+        print("=" * 60)
 
         success = failed == 0
 
@@ -386,9 +396,9 @@ class GUITestSuite:
 
 def demonstrate_integration_points():
     """Demonstrate integration points with agents"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("INTEGRATION POINTS DEMONSTRATION")
-    print("="*60)
+    print("=" * 60)
 
     print("\n1. PYTHON-INTERNAL Agent Integration:")
     print("   - Environment validation")
@@ -430,7 +440,9 @@ def main():
     parser = argparse.ArgumentParser(description="Test Claude Artifact Downloader GUI")
     parser.add_argument("--headless", action="store_true", help="Run in headless mode")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
-    parser.add_argument("--demo-only", action="store_true", help="Only show integration demo")
+    parser.add_argument(
+        "--demo-only", action="store_true", help="Only show integration demo"
+    )
 
     args = parser.parse_args()
 

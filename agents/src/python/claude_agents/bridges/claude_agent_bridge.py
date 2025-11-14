@@ -5,18 +5,18 @@ Coordinates between Task Tool, Tandem Orchestrator, and C-System
 For Claude-Code Agent Interface
 """
 
+import asyncio
+import json
 import os
 import socket
-import json
 import struct
-import asyncio
-import threading
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
-from enum import Enum, auto
-from dataclasses import dataclass, field
 import subprocess
+import threading
 import time
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # ============================================================================
 # EXECUTION MODES - Core coordination between layers

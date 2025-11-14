@@ -10,23 +10,23 @@ This script:
 4. Creates Claude Code compatible agents
 """
 
+import glob
 import os
 import re
-import glob
 from pathlib import Path
 
 # Standard tools for all agents
 STANDARD_TOOLS = [
     "Task",
-    "Read", 
+    "Read",
     "Write",
     "Edit",
     "Bash",
     "Grep",
-    "Glob", 
+    "Glob",
     "LS",
     "WebFetch",
-    "TodoWrite"
+    "TodoWrite",
 ]
 
 # Agent-specific tool additions
@@ -37,7 +37,7 @@ SPECIALIZED_TOOLS = {
     "apidesigner": ["WebSearch"],
     "datascience": ["WebSearch"],
     "mlops": ["WebSearch"],
-    "researcher": ["WebSearch"]
+    "researcher": ["WebSearch"],
 }
 
 # Agent descriptions based on our framework
@@ -72,8 +72,9 @@ AGENT_DESCRIPTIONS = {
     "npu": "Neural Processing Unit specialist for Intel Meteor Lake NPU acceleration. Manages AI workload optimization and hardware acceleration (when NPU drivers are functional).",
     "docgen": "Documentation engineering specialist. Creates comprehensive technical documentation, API documentation, user guides, and maintains documentation systems.",
     "c-internal": "Elite C/C++ systems programming specialist. Handles low-level system programming, performance optimization, and hardware-specific implementations.",
-    "python-internal": "Python execution environment specialist. Manages Python environments, package management, virtual environments, and Python-specific optimizations."
+    "python-internal": "Python execution environment specialist. Manages Python environments, package management, virtual environments, and Python-specific optimizations.",
 }
+
 
 def get_agent_name_from_filename(filename):
     """Extract agent name from filename"""
@@ -82,51 +83,57 @@ def get_agent_name_from_filename(filename):
     if name == "projectorchestrator":
         return "projectorchestrator"
     elif name == "c-internal":
-        return "c-internal"  
+        return "c-internal"
     elif name == "python-internal":
         return "python-internal"
     return name
 
+
 def create_claude_code_frontmatter(agent_name, filename):
     """Create proper Claude Code YAML frontmatter"""
-    description = AGENT_DESCRIPTIONS.get(agent_name, f"{agent_name.title()} agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.")
-    
+    description = AGENT_DESCRIPTIONS.get(
+        agent_name,
+        f"{agent_name.title()} agent for the Claude Agent Framework v7.0. Hardware-aware Intel Meteor Lake optimized with comprehensive system integration capabilities.",
+    )
+
     # Get tools for this agent
     tools = STANDARD_TOOLS.copy()
     if agent_name in SPECIALIZED_TOOLS:
         tools.extend(SPECIALIZED_TOOLS[agent_name])
-    
+
     frontmatter = f"""---
 name: {agent_name}
 description: {description}
 tools:"""
-    
+
     for tool in tools:
         frontmatter += f"\n  - {tool}"
-    
+
     frontmatter += "\n---"
     return frontmatter
+
 
 def extract_content_after_frontmatter(content):
     """Extract content after the existing frontmatter"""
     # Find the end of YAML frontmatter
-    lines = content.split('\n')
+    lines = content.split("\n")
     in_frontmatter = False
     frontmatter_end = 0
-    
+
     for i, line in enumerate(lines):
-        if line.strip() == '---':
+        if line.strip() == "---":
             if not in_frontmatter:
                 in_frontmatter = True
             else:
                 frontmatter_end = i + 1
                 break
-    
+
     # Return content after frontmatter
     if frontmatter_end > 0:
-        return '\n'.join(lines[frontmatter_end:])
+        return "\n".join(lines[frontmatter_end:])
     else:
         return content
+
 
 def create_agent_content(agent_name):
     """Create comprehensive agent content based on Template.md"""
@@ -282,31 +289,32 @@ Task(subagent_type="{agent_name}", prompt="Optimize for current thermal/performa
 
 This agent ensures full Claude Code Task tool compatibility while maintaining comprehensive Intel Meteor Lake hardware optimization and seamless integration with the 30+ agent ecosystem."""
 
+
 def update_agent_file(filepath):
     """Update a single agent file with proper Claude Code format"""
     filename = os.path.basename(filepath)
     agent_name = get_agent_name_from_filename(filename)
-    
+
     print(f"Updating {filename} -> {agent_name}")
-    
+
     # Read current content
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
         print(f"  ❌ Error reading {filename}: {e}")
         return False
-    
+
     # Create new Claude Code compatible content
     new_frontmatter = create_claude_code_frontmatter(agent_name, filename)
     agent_content = create_agent_content(agent_name)
-    
+
     # Combine frontmatter + content
     new_content = new_frontmatter + "\n" + agent_content
-    
+
     # Write updated content
     try:
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(new_content)
         print(f"  ✅ Updated {filename}")
         return True
@@ -314,29 +322,30 @@ def update_agent_file(filepath):
         print(f"  ❌ Error writing {filename}: {e}")
         return False
 
+
 def main():
     """Update all agent files"""
     print("=" * 70)
     print("Claude Code Agent Update - Framework v7.0")
     print("=" * 70)
     print()
-    
+
     # Find all .md agent files (exclude special files)
     agent_files = []
     for filepath in glob.glob("*.md"):
         if filepath not in ["Template.md", "README.md", "ORGANIZATION.md"]:
             agent_files.append(filepath)
-    
+
     agent_files.sort()
     print(f"Found {len(agent_files)} agent files to update")
     print()
-    
+
     # Update each agent file
     updated_count = 0
     for filepath in agent_files:
         if update_agent_file(filepath):
             updated_count += 1
-    
+
     print()
     print(f"✅ Successfully updated {updated_count}/{len(agent_files)} agent files")
     print()
@@ -348,6 +357,7 @@ def main():
     print("  - Multi-agent coordination capabilities")
     print()
     print("Test with: Task(subagent_type='director', prompt='Test coordination')")
+
 
 if __name__ == "__main__":
     main()

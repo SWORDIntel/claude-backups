@@ -7,8 +7,9 @@ Real-time tracking of model download and conversion
 import os
 import sys
 import time
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 
 def check_download_progress():
     """Check Qwen model download progress"""
@@ -19,7 +20,7 @@ def check_download_progress():
 
     # Count total files and size
     try:
-        total_size = sum(f.stat().st_size for f in raw_dir.rglob('*') if f.is_file())
+        total_size = sum(f.stat().st_size for f in raw_dir.rglob("*") if f.is_file())
         safetensors_files = list(raw_dir.glob("*.safetensors"))
         config_files = ["config.json", "tokenizer.json", "tokenizer_config.json"]
 
@@ -40,6 +41,7 @@ def check_download_progress():
     except Exception as e:
         return f"Error: {e}", 0, 0
 
+
 def check_conversion_readiness():
     """Check if conversion infrastructure is ready"""
     checks = {
@@ -47,14 +49,15 @@ def check_conversion_readiness():
         "Optimum Intel": False,
         "NPU Detection": False,
         "Quantizer": False,
-        "Inference Server": False
+        "Inference Server": False,
     }
 
     try:
         # Test OpenVINO
         import openvino as ov
+
         core = ov.Core()
-        if 'NPU' in core.available_devices:
+        if "NPU" in core.available_devices:
             checks["OpenVINO"] = True
             checks["NPU Detection"] = True
     except:
@@ -63,6 +66,7 @@ def check_conversion_readiness():
     try:
         # Test Optimum Intel
         from optimum.intel import OVModelForCausalLM
+
         checks["Optimum Intel"] = True
     except:
         pass
@@ -71,6 +75,7 @@ def check_conversion_readiness():
         # Test Quantizer
         sys.path.append("/home/john/claude-backups/local-models/qwen-openvino")
         from qwen_quantizer import QwenQuantizer
+
         checks["Quantizer"] = True
     except:
         pass
@@ -78,11 +83,13 @@ def check_conversion_readiness():
     try:
         # Test Inference Server
         from qwen_inference_server import QwenModelEngine
+
         checks["Inference Server"] = True
     except:
         pass
 
     return checks
+
 
 def estimate_completion_time(progress_pct, start_time=None):
     """Estimate completion time based on progress"""
@@ -107,13 +114,14 @@ def estimate_completion_time(progress_pct, start_time=None):
         hours = remaining_time / 60
         return f"{hours:.1f} hours"
 
+
 def main():
     """Main monitoring function"""
     print("🚀 Local Inference Implementation Monitor")
     print("=" * 50)
 
     while True:
-        os.system('clear' if os.name == 'posix' else 'cls')
+        os.system("clear" if os.name == "posix" else "cls")
 
         print("🚀 Local Inference Implementation Monitor")
         print("=" * 50)
@@ -169,6 +177,7 @@ def main():
         except KeyboardInterrupt:
             print("\n👋 Monitor stopped")
             break
+
 
 if __name__ == "__main__":
     main()

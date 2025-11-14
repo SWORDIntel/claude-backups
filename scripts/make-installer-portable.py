@@ -17,31 +17,35 @@ class InstallerPortabilityEnhancer:
 
     def __init__(self, installer_path: Path):
         self.installer_path = installer_path
-        self.backup_path = installer_path.with_suffix('.py.backup')
+        self.backup_path = installer_path.with_suffix(".py.backup")
         self.changes_made = []
 
     def create_backup(self):
         """Create backup of original installer"""
         if not self.backup_path.exists():
-            with open(self.installer_path, 'r') as src, open(self.backup_path, 'w') as dst:
+            with open(self.installer_path, "r") as src, open(
+                self.backup_path, "w"
+            ) as dst:
                 dst.write(src.read())
             print(f"Created backup: {self.backup_path}")
 
     def read_installer(self) -> str:
         """Read the installer content"""
-        with open(self.installer_path, 'r') as f:
+        with open(self.installer_path, "r") as f:
             return f.read()
 
     def write_installer(self, content: str):
         """Write the updated installer content"""
-        with open(self.installer_path, 'w') as f:
+        with open(self.installer_path, "w") as f:
             f.write(content)
 
     def enhance_project_detection(self, content: str) -> str:
         """Enhance project root detection to be more portable"""
 
         # Find the _detect_project_root method
-        detect_method_pattern = r'(def _detect_project_root\(self\) -> Path:.*?)(return current)'
+        detect_method_pattern = (
+            r"(def _detect_project_root\(self\) -> Path:.*?)(return current)"
+        )
 
         new_detection_logic = '''def _detect_project_root(self) -> Path:
         """Detect the Claude project root directory using dynamic resolution"""
@@ -119,8 +123,15 @@ class InstallerPortabilityEnhancer:
         # Default to current directory if nothing found'''
 
         if re.search(detect_method_pattern, content, re.DOTALL):
-            content = re.sub(detect_method_pattern, new_detection_logic + r'\n        return current', content, flags=re.DOTALL)
-            self.changes_made.append("Enhanced _detect_project_root method for better portability")
+            content = re.sub(
+                detect_method_pattern,
+                new_detection_logic + r"\n        return current",
+                content,
+                flags=re.DOTALL,
+            )
+            self.changes_made.append(
+                "Enhanced _detect_project_root method for better portability"
+            )
 
         return content
 
@@ -131,22 +142,26 @@ class InstallerPortabilityEnhancer:
         patterns_to_replace = [
             (r'"claude-backups"', '"${project_name}"'),
             (r"'claude-backups'", "'${project_name}'"),
-            (r'/claude-backups/', '/${project_name}/'),
-            (r'claude-backups/', '${project_name}/'),
+            (r"/claude-backups/", "/${project_name}/"),
+            (r"claude-backups/", "${project_name}/"),
         ]
 
         # Add dynamic project name detection
         if '"*/claude-backups"' in content:
             content = content.replace('"*/claude-backups"', '"*/claude-*"')
-            content = content.replace('"*/Downloads/claude-backups"', '"*/Downloads/claude-*"')
+            content = content.replace(
+                '"*/Downloads/claude-backups"', '"*/Downloads/claude-*"'
+            )
             content = content.replace('"claude-backups"', '"claude-*"')
-            self.changes_made.append("Replaced hardcoded 'claude-backups' with dynamic patterns")
+            self.changes_made.append(
+                "Replaced hardcoded 'claude-backups' with dynamic patterns"
+            )
 
         # Replace hardcoded paths in search patterns
         hardcoded_search_replacements = [
-            ('$HOME/claude-backups', '${project_root}'),
-            ('$HOME/Downloads/claude-backups', '${project_root}'),
-            ('$HOME/Documents/claude-backups', '${project_root}'),
+            ("$HOME/claude-backups", "${project_root}"),
+            ("$HOME/Downloads/claude-backups", "${project_root}"),
+            ("$HOME/Documents/claude-backups", "${project_root}"),
         ]
 
         for old, new in hardcoded_search_replacements:
@@ -175,10 +190,12 @@ class InstallerPortabilityEnhancer:
         self.log_dir = self.data_dir / "logs"'''
 
         # Find the existing path configuration section
-        path_config_pattern = r'(# Installation paths.*?self\.log_dir = .*?logs.*?)'
+        path_config_pattern = r"(# Installation paths.*?self\.log_dir = .*?logs.*?)"
 
         if re.search(path_config_pattern, content, re.DOTALL):
-            content = re.sub(path_config_pattern, xdg_enhancement, content, flags=re.DOTALL)
+            content = re.sub(
+                path_config_pattern, xdg_enhancement, content, flags=re.DOTALL
+            )
             self.changes_made.append("Enhanced path configuration with XDG compliance")
 
         return content
@@ -187,13 +204,13 @@ class InstallerPortabilityEnhancer:
         """Add path resolver integration to the installer"""
 
         # Check if path resolver integration already exists
-        if 'claude_path_resolver' in content:
+        if "claude_path_resolver" in content:
             return content
 
         # Add import for path resolver at the top
-        imports_pattern = r'(from typing import.*?\n)'
+        imports_pattern = r"(from typing import.*?\n)"
 
-        path_resolver_import = '''from typing import Dict, List, Optional, Tuple, Union
+        path_resolver_import = """from typing import Dict, List, Optional, Tuple, Union
 
 # Claude Path Resolver Integration
 try:
@@ -202,15 +219,17 @@ try:
 except ImportError:
     PATH_RESOLVER_AVAILABLE = False
 
-'''
+"""
 
-        content = re.sub(imports_pattern, path_resolver_import, content, flags=re.DOTALL)
+        content = re.sub(
+            imports_pattern, path_resolver_import, content, flags=re.DOTALL
+        )
 
         # Add path resolver initialization to __init__
-        init_pattern = r'(def __init__\(self.*?\n)(.*?)(self\.project_root = self\._detect_project_root\(\))'
+        init_pattern = r"(def __init__\(self.*?\n)(.*?)(self\.project_root = self\._detect_project_root\(\))"
 
         if re.search(init_pattern, content, re.DOTALL):
-            path_resolver_init = r'\1\2# Apply path resolver if available\n        if PATH_RESOLVER_AVAILABLE:\n            apply_to_environment()\n        \n        \3'
+            path_resolver_init = r"\1\2# Apply path resolver if available\n        if PATH_RESOLVER_AVAILABLE:\n            apply_to_environment()\n        \n        \3"
             content = re.sub(init_pattern, path_resolver_init, content, flags=re.DOTALL)
             self.changes_made.append("Added path resolver integration to __init__")
 
@@ -221,16 +240,20 @@ except ImportError:
 
         # Find binary detection patterns and make them more portable
         binary_patterns = [
-            (r'/usr/local/bin', '${system_bin_dir}'),
-            (r'/usr/bin', '${fallback_bin_dir}'),
+            (r"/usr/local/bin", "${system_bin_dir}"),
+            (r"/usr/bin", "${fallback_bin_dir}"),
         ]
 
         for old_pattern, new_pattern in binary_patterns:
-            content = content.replace(f'"{old_pattern}"', f'"${{CLAUDE_SYSTEM_BIN:-{old_pattern}}}"')
-            content = content.replace(f"'{old_pattern}'", f'"${{CLAUDE_SYSTEM_BIN:-{old_pattern}}}"')
+            content = content.replace(
+                f'"{old_pattern}"', f'"${{CLAUDE_SYSTEM_BIN:-{old_pattern}}}"'
+            )
+            content = content.replace(
+                f"'{old_pattern}'", f'"${{CLAUDE_SYSTEM_BIN:-{old_pattern}}}"'
+            )
 
         # Add dynamic system path detection method
-        if '_detect_system_paths' not in content:
+        if "_detect_system_paths" not in content:
             system_path_method = '''
     def _detect_system_paths(self) -> Tuple[Path, Optional[Path]]:
         """Detect appropriate system installation paths"""
@@ -268,9 +291,11 @@ except ImportError:
         return user_bin, system_bin
 '''
             # Insert the method before the main class ends
-            class_end_pattern = r'(\n\nclass .*?:|\n\n\nclass .*?:|\n\ndef )'
+            class_end_pattern = r"(\n\nclass .*?:|\n\n\nclass .*?:|\n\ndef )"
             if re.search(class_end_pattern, content):
-                content = re.sub(class_end_pattern, system_path_method + r'\1', content, count=1)
+                content = re.sub(
+                    class_end_pattern, system_path_method + r"\1", content, count=1
+                )
                 self.changes_made.append("Added _detect_system_paths method")
 
         return content
@@ -317,7 +342,7 @@ def main():
         installer_candidates = [
             script_dir.parent / "claude-enhanced-installer.py",
             script_dir / "claude-enhanced-installer.py",
-            Path("claude-enhanced-installer.py")
+            Path("claude-enhanced-installer.py"),
         ]
 
         installer_path = None
@@ -347,6 +372,7 @@ def main():
         print("3. Update documentation as needed")
     else:
         print("\n✅ Installer was already portable")
+
 
 if __name__ == "__main__":
     main()

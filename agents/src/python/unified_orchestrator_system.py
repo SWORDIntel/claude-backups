@@ -14,38 +14,53 @@ Compatible with all systems: NPU-enabled workstations to constrained environment
 """
 
 import asyncio
-import logging
 import json
-import time
+import logging
 import sys
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 # Import our orchestrator systems
 try:
-    from cpu_orchestrator_fallback import CPUOrchestrator, TaskRequest, OrchestrationResult
-    from hardware_detection_unified import HardwareDetector, HardwareCapabilities, OrchestrationConfig
+    from cpu_orchestrator_fallback import (
+        CPUOrchestrator,
+        OrchestrationResult,
+        TaskRequest,
+    )
+    from hardware_detection_unified import (
+        HardwareCapabilities,
+        HardwareDetector,
+        OrchestrationConfig,
+    )
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("Please ensure cpu_orchestrator_fallback.py and hardware_detection_unified.py are in the same directory")
+    print(
+        "Please ensure cpu_orchestrator_fallback.py and hardware_detection_unified.py are in the same directory"
+    )
     sys.exit(1)
 
 # Try to import NPU orchestrator (may not be available on all systems)
 try:
     from npu_optimized_final import NPUOrchestrator
+
     NPU_AVAILABLE = True
 except ImportError:
     NPU_AVAILABLE = False
     print("ℹ️  NPU orchestrator not available, using CPU-only mode")
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class UnifiedConfig:
     """Unified orchestrator configuration"""
+
     selected_mode: str  # 'npu', 'cpu_optimized', 'cpu_basic', 'memory_constrained'
     primary_orchestrator: str  # 'NPUOrchestrator', 'CPUOrchestrator'
     fallback_enabled: bool
@@ -54,9 +69,11 @@ class UnifiedConfig:
     memory_limit_mb: int
     max_concurrent_tasks: int
 
+
 @dataclass
 class SystemStatus:
     """Real-time system status"""
+
     orchestrator_mode: str
     hardware_detected: bool
     npu_available: bool
@@ -66,6 +83,7 @@ class SystemStatus:
     active_tasks: int
     success_rate: float
     uptime_seconds: float
+
 
 class UnifiedOrchestrator:
     """
@@ -95,17 +113,21 @@ class UnifiedOrchestrator:
 
         # Performance tracking
         self.stats = {
-            'total_tasks': 0,
-            'successful_tasks': 0,
-            'failed_tasks': 0,
-            'total_execution_time': 0.0,
-            'npu_tasks': 0,
-            'cpu_tasks': 0,
-            'fallback_events': 0
+            "total_tasks": 0,
+            "successful_tasks": 0,
+            "failed_tasks": 0,
+            "total_execution_time": 0.0,
+            "npu_tasks": 0,
+            "cpu_tasks": 0,
+            "fallback_events": 0,
         }
 
-        logger.info(f"🚀 Unified Orchestrator initialized: {self.config.selected_mode} mode")
-        logger.info(f"Hardware: {self.capabilities.performance_tier} tier, {self.capabilities.cpu_cores} cores, {self.capabilities.total_memory_gb:.1f}GB")
+        logger.info(
+            f"🚀 Unified Orchestrator initialized: {self.config.selected_mode} mode"
+        )
+        logger.info(
+            f"Hardware: {self.capabilities.performance_tier} tier, {self.capabilities.cpu_cores} cores, {self.capabilities.total_memory_gb:.1f}GB"
+        )
 
     def _determine_configuration(self) -> UnifiedConfig:
         """Determine optimal configuration based on hardware capabilities"""
@@ -119,19 +141,19 @@ class UnifiedOrchestrator:
             selected_mode = self.capabilities.orchestrator_mode
 
         # Determine primary orchestrator
-        if selected_mode == 'npu' and NPU_AVAILABLE and self.capabilities.has_npu:
-            primary_orchestrator = 'NPUOrchestrator'
+        if selected_mode == "npu" and NPU_AVAILABLE and self.capabilities.has_npu:
+            primary_orchestrator = "NPUOrchestrator"
             performance_target = 25000.0  # 25K ops/sec for NPU
         else:
-            primary_orchestrator = 'CPUOrchestrator'
+            primary_orchestrator = "CPUOrchestrator"
             # Adjust performance target based on hardware tier
-            if self.capabilities.performance_tier == 'ultra':
+            if self.capabilities.performance_tier == "ultra":
                 performance_target = 5000.0
-            elif self.capabilities.performance_tier == 'high':
+            elif self.capabilities.performance_tier == "high":
                 performance_target = 2500.0
-            elif self.capabilities.performance_tier == 'medium':
+            elif self.capabilities.performance_tier == "medium":
                 performance_target = 1000.0
-            elif self.capabilities.performance_tier == 'low':
+            elif self.capabilities.performance_tier == "low":
                 performance_target = 500.0
             else:  # constrained
                 performance_target = 100.0
@@ -143,14 +165,14 @@ class UnifiedOrchestrator:
             hardware_tier=self.capabilities.performance_tier,
             performance_target=performance_target,
             memory_limit_mb=orchestrator_config.memory_limit_mb,
-            max_concurrent_tasks=orchestrator_config.max_concurrent_tasks
+            max_concurrent_tasks=orchestrator_config.max_concurrent_tasks,
         )
 
     def _initialize_orchestrators(self):
         """Initialize primary and fallback orchestrators"""
         try:
             # Initialize primary orchestrator
-            if self.config.primary_orchestrator == 'NPUOrchestrator' and NPU_AVAILABLE:
+            if self.config.primary_orchestrator == "NPUOrchestrator" and NPU_AVAILABLE:
                 self.primary_orchestrator = NPUOrchestrator()
                 logger.info("✅ NPU Orchestrator initialized as primary")
             else:
@@ -158,7 +180,9 @@ class UnifiedOrchestrator:
                 logger.info("✅ CPU Orchestrator initialized as primary")
 
             # Always initialize CPU orchestrator as fallback
-            if self.config.fallback_enabled and not isinstance(self.primary_orchestrator, CPUOrchestrator):
+            if self.config.fallback_enabled and not isinstance(
+                self.primary_orchestrator, CPUOrchestrator
+            ):
                 self.fallback_orchestrator = CPUOrchestrator()
                 logger.info("✅ CPU Orchestrator initialized as fallback")
 
@@ -166,95 +190,109 @@ class UnifiedOrchestrator:
             logger.error(f"❌ Primary orchestrator initialization failed: {e}")
             # Fallback to CPU orchestrator
             self.primary_orchestrator = CPUOrchestrator()
-            self.config.selected_mode = 'cpu_fallback'
-            self.stats['fallback_events'] += 1
+            self.config.selected_mode = "cpu_fallback"
+            self.stats["fallback_events"] += 1
             logger.warning("⚠️  Falling back to CPU orchestrator")
 
     async def execute_task(self, task: TaskRequest) -> OrchestrationResult:
         """Execute a single task with automatic fallback"""
         start_time = time.time()
-        self.stats['total_tasks'] += 1
+        self.stats["total_tasks"] += 1
 
         try:
             # Try primary orchestrator first
-            result = await self._execute_with_orchestrator(self.primary_orchestrator, task)
+            result = await self._execute_with_orchestrator(
+                self.primary_orchestrator, task
+            )
 
             # Track which orchestrator was used
             if isinstance(self.primary_orchestrator, CPUOrchestrator):
-                self.stats['cpu_tasks'] += 1
+                self.stats["cpu_tasks"] += 1
             else:
-                self.stats['npu_tasks'] += 1
+                self.stats["npu_tasks"] += 1
 
             if result.success:
-                self.stats['successful_tasks'] += 1
+                self.stats["successful_tasks"] += 1
             else:
-                self.stats['failed_tasks'] += 1
+                self.stats["failed_tasks"] += 1
 
             execution_time = time.time() - start_time
-            self.stats['total_execution_time'] += execution_time
+            self.stats["total_execution_time"] += execution_time
 
             return result
 
         except Exception as e:
-            logger.warning(f"⚠️  Primary orchestrator failed for task {task.task_id}: {e}")
+            logger.warning(
+                f"⚠️  Primary orchestrator failed for task {task.task_id}: {e}"
+            )
 
             # Try fallback if available
             if self.fallback_orchestrator:
                 logger.info(f"🔄 Attempting fallback for task {task.task_id}")
-                self.stats['fallback_events'] += 1
+                self.stats["fallback_events"] += 1
 
                 try:
-                    result = await self._execute_with_orchestrator(self.fallback_orchestrator, task)
-                    self.stats['cpu_tasks'] += 1
+                    result = await self._execute_with_orchestrator(
+                        self.fallback_orchestrator, task
+                    )
+                    self.stats["cpu_tasks"] += 1
 
                     if result.success:
-                        self.stats['successful_tasks'] += 1
+                        self.stats["successful_tasks"] += 1
                     else:
-                        self.stats['failed_tasks'] += 1
+                        self.stats["failed_tasks"] += 1
 
                     execution_time = time.time() - start_time
-                    self.stats['total_execution_time'] += execution_time
+                    self.stats["total_execution_time"] += execution_time
 
                     # Mark as fallback execution
                     result.agent_used += " (fallback)"
                     return result
 
                 except Exception as fallback_error:
-                    logger.error(f"❌ Fallback orchestrator also failed: {fallback_error}")
+                    logger.error(
+                        f"❌ Fallback orchestrator also failed: {fallback_error}"
+                    )
 
             # If all else fails, return error result
-            self.stats['failed_tasks'] += 1
+            self.stats["failed_tasks"] += 1
             execution_time = time.time() - start_time
-            self.stats['total_execution_time'] += execution_time
+            self.stats["total_execution_time"] += execution_time
 
             return OrchestrationResult(
                 task_id=task.task_id,
-                agent_used='error',
+                agent_used="error",
                 execution_time_ms=execution_time * 1000,
                 success=False,
                 performance_score=0.0,
                 memory_peak_mb=0,
-                cpu_utilization=0.0
+                cpu_utilization=0.0,
             )
 
-    async def _execute_with_orchestrator(self, orchestrator, task: TaskRequest) -> OrchestrationResult:
+    async def _execute_with_orchestrator(
+        self, orchestrator, task: TaskRequest
+    ) -> OrchestrationResult:
         """Execute task with specific orchestrator"""
-        if hasattr(orchestrator, 'execute_task'):
+        if hasattr(orchestrator, "execute_task"):
             return await orchestrator.execute_task(task)
-        elif hasattr(orchestrator, 'process_task'):
+        elif hasattr(orchestrator, "process_task"):
             return await orchestrator.process_task(task)
         else:
             # Fallback for orchestrators with different interfaces
-            raise Exception(f"Orchestrator {type(orchestrator)} has unsupported interface")
+            raise Exception(
+                f"Orchestrator {type(orchestrator)} has unsupported interface"
+            )
 
-    async def process_workflow(self, tasks: List[TaskRequest]) -> List[OrchestrationResult]:
+    async def process_workflow(
+        self, tasks: List[TaskRequest]
+    ) -> List[OrchestrationResult]:
         """Process multiple tasks with intelligent scheduling and fallback"""
         logger.info(f"🚀 Processing workflow with {len(tasks)} tasks")
         start_time = time.time()
 
         # Use primary orchestrator's workflow processing if available
         try:
-            if hasattr(self.primary_orchestrator, 'process_workflow'):
+            if hasattr(self.primary_orchestrator, "process_workflow"):
                 results = await self.primary_orchestrator.process_workflow(tasks)
             else:
                 # Process tasks individually
@@ -266,7 +304,9 @@ class UnifiedOrchestrator:
             workflow_time = time.time() - start_time
             success_count = sum(1 for r in results if r.success)
 
-            logger.info(f"✅ Workflow completed: {success_count}/{len(tasks)} successful in {workflow_time:.2f}s")
+            logger.info(
+                f"✅ Workflow completed: {success_count}/{len(tasks)} successful in {workflow_time:.2f}s"
+            )
             return results
 
         except Exception as e:
@@ -275,25 +315,31 @@ class UnifiedOrchestrator:
             # Fallback to individual task processing
             if self.fallback_orchestrator:
                 logger.info("🔄 Attempting workflow fallback")
-                self.stats['fallback_events'] += 1
+                self.stats["fallback_events"] += 1
 
                 results = []
                 for task in tasks:
                     try:
-                        result = await self._execute_with_orchestrator(self.fallback_orchestrator, task)
+                        result = await self._execute_with_orchestrator(
+                            self.fallback_orchestrator, task
+                        )
                         result.agent_used += " (workflow_fallback)"
                         results.append(result)
                     except Exception as task_error:
-                        logger.error(f"❌ Fallback task {task.task_id} failed: {task_error}")
-                        results.append(OrchestrationResult(
-                            task_id=task.task_id,
-                            agent_used='error',
-                            execution_time_ms=0,
-                            success=False,
-                            performance_score=0.0,
-                            memory_peak_mb=0,
-                            cpu_utilization=0.0
-                        ))
+                        logger.error(
+                            f"❌ Fallback task {task.task_id} failed: {task_error}"
+                        )
+                        results.append(
+                            OrchestrationResult(
+                                task_id=task.task_id,
+                                agent_used="error",
+                                execution_time_ms=0,
+                                success=False,
+                                performance_score=0.0,
+                                memory_peak_mb=0,
+                                cpu_utilization=0.0,
+                            )
+                        )
 
                 return results
 
@@ -302,17 +348,20 @@ class UnifiedOrchestrator:
     def get_system_status(self) -> SystemStatus:
         """Get real-time system status"""
         uptime = time.time() - self.start_time
-        success_rate = (self.stats['successful_tasks'] / max(self.stats['total_tasks'], 1)) * 100
+        success_rate = (
+            self.stats["successful_tasks"] / max(self.stats["total_tasks"], 1)
+        ) * 100
 
         # Calculate performance ops/sec
-        if self.stats['total_execution_time'] > 0:
-            ops_per_sec = self.stats['total_tasks'] / self.stats['total_execution_time']
+        if self.stats["total_execution_time"] > 0:
+            ops_per_sec = self.stats["total_tasks"] / self.stats["total_execution_time"]
         else:
             ops_per_sec = 0.0
 
         # Get current resource usage
         try:
             import psutil
+
             memory_usage = psutil.Process().memory_info().rss / (1024 * 1024)
             cpu_utilization = psutil.cpu_percent(interval=0.1)
         except:
@@ -328,7 +377,7 @@ class UnifiedOrchestrator:
             cpu_utilization=cpu_utilization,
             active_tasks=0,  # Would need to track active tasks
             success_rate=success_rate,
-            uptime_seconds=uptime
+            uptime_seconds=uptime,
         )
 
     def get_performance_report(self) -> Dict[str, Any]:
@@ -336,32 +385,42 @@ class UnifiedOrchestrator:
         status = self.get_system_status()
 
         return {
-            'unified_config': asdict(self.config),
-            'hardware_capabilities': asdict(self.capabilities),
-            'system_status': asdict(status),
-            'performance_stats': {
-                'total_tasks': self.stats['total_tasks'],
-                'successful_tasks': self.stats['successful_tasks'],
-                'failed_tasks': self.stats['failed_tasks'],
-                'success_rate_percent': status.success_rate,
-                'average_ops_per_sec': status.performance_ops_sec,
-                'npu_task_percentage': (self.stats['npu_tasks'] / max(self.stats['total_tasks'], 1)) * 100,
-                'cpu_task_percentage': (self.stats['cpu_tasks'] / max(self.stats['total_tasks'], 1)) * 100,
-                'fallback_events': self.stats['fallback_events'],
-                'total_execution_time': self.stats['total_execution_time'],
-                'uptime_seconds': status.uptime_seconds
+            "unified_config": asdict(self.config),
+            "hardware_capabilities": asdict(self.capabilities),
+            "system_status": asdict(status),
+            "performance_stats": {
+                "total_tasks": self.stats["total_tasks"],
+                "successful_tasks": self.stats["successful_tasks"],
+                "failed_tasks": self.stats["failed_tasks"],
+                "success_rate_percent": status.success_rate,
+                "average_ops_per_sec": status.performance_ops_sec,
+                "npu_task_percentage": (
+                    self.stats["npu_tasks"] / max(self.stats["total_tasks"], 1)
+                )
+                * 100,
+                "cpu_task_percentage": (
+                    self.stats["cpu_tasks"] / max(self.stats["total_tasks"], 1)
+                )
+                * 100,
+                "fallback_events": self.stats["fallback_events"],
+                "total_execution_time": self.stats["total_execution_time"],
+                "uptime_seconds": status.uptime_seconds,
             },
-            'orchestrator_info': {
-                'primary_type': type(self.primary_orchestrator).__name__,
-                'fallback_available': self.fallback_orchestrator is not None,
-                'fallback_type': type(self.fallback_orchestrator).__name__ if self.fallback_orchestrator else None
-            }
+            "orchestrator_info": {
+                "primary_type": type(self.primary_orchestrator).__name__,
+                "fallback_available": self.fallback_orchestrator is not None,
+                "fallback_type": (
+                    type(self.fallback_orchestrator).__name__
+                    if self.fallback_orchestrator
+                    else None
+                ),
+            },
         }
 
     def save_performance_report(self, filepath: str):
         """Save performance report to file"""
         report = self.get_performance_report()
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(report, f, indent=2)
         logger.info(f"📊 Performance report saved to {filepath}")
 
@@ -372,7 +431,7 @@ async def main():
     print("=" * 60)
 
     # Test different modes
-    test_modes = [None, 'npu', 'cpu_optimized', 'cpu_basic']
+    test_modes = [None, "npu", "cpu_optimized", "cpu_basic"]
 
     for test_mode in test_modes:
         print(f"\n🧪 Testing mode: {test_mode or 'AUTO-DETECT'}")
@@ -390,7 +449,7 @@ async def main():
                 priority=1,
                 complexity_score=0.7,
                 estimated_duration=2.0,
-                memory_requirement=100
+                memory_requirement=100,
             ),
             TaskRequest(
                 task_id=f"task_{test_mode or 'auto'}_002",
@@ -399,7 +458,7 @@ async def main():
                 priority=2,
                 complexity_score=0.9,
                 estimated_duration=3.0,
-                memory_requirement=150
+                memory_requirement=150,
             ),
             TaskRequest(
                 task_id=f"task_{test_mode or 'auto'}_003",
@@ -408,8 +467,8 @@ async def main():
                 priority=1,
                 complexity_score=0.6,
                 estimated_duration=1.5,
-                memory_requirement=80
-            )
+                memory_requirement=80,
+            ),
         ]
 
         # Process workflow
@@ -421,8 +480,10 @@ async def main():
         print(f"📊 Results ({total_time:.2f}s total):")
         for result in results:
             status = "✅" if result.success else "❌"
-            print(f"{status} {result.task_id}: {result.agent_used} "
-                  f"({result.execution_time_ms:.1f}ms, {result.memory_peak_mb:.1f}MB)")
+            print(
+                f"{status} {result.task_id}: {result.agent_used} "
+                f"({result.execution_time_ms:.1f}ms, {result.memory_peak_mb:.1f}MB)"
+            )
 
         # System status
         status = orchestrator.get_system_status()
@@ -441,6 +502,7 @@ async def main():
         print()
 
     print("🎉 All mode tests completed successfully!")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

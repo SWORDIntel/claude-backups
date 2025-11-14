@@ -5,22 +5,24 @@ Advanced hardware detection for Intel Meteor Lake NPU with 34 TOPS capability
 Integrates with Rust NPU coordination bridge for optimal performance
 """
 
-import os
-import re
 import json
-import subprocess
-import platform
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, asdict
 import logging
+import os
+import platform
+import re
+import subprocess
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class NPUCapabilities:
     """Intel NPU hardware capabilities"""
+
     model_name: str
     max_tops: float
     memory_mb: int
@@ -41,9 +43,11 @@ class NPUCapabilities:
     architecture: str
     features: List[str]
 
+
 @dataclass
 class SystemOptimization:
     """System optimization recommendations"""
+
     cpu_governor: str
     cpu_frequency_scaling: str
     turbo_boost_enabled: bool
@@ -54,6 +58,7 @@ class SystemOptimization:
     compiler_flags: List[str]
     rust_target_features: List[str]
     recommended_memory_allocation: int
+
 
 class IntelNPUDetector:
     """
@@ -142,7 +147,9 @@ class IntelNPUDetector:
             # Use lspci with verbose mode for detailed validation
             result = subprocess.run(
                 ["lspci", "-vvnn", "-d", f"{self.INTEL_VENDOR_ID}:"],
-                capture_output=True, text=True, timeout=15
+                capture_output=True,
+                text=True,
+                timeout=15,
             )
 
             if result.returncode != 0:
@@ -154,13 +161,19 @@ class IntelNPUDetector:
             for device in pci_devices:
                 # Strict device ID validation
                 if device.get("device_id") in self.INTEL_NPU_DEVICE_IDS:
-                    logger.info(f"Verified Intel NPU found: {device['device_id']} at {device['pci_address']}")
+                    logger.info(
+                        f"Verified Intel NPU found: {device['device_id']} at {device['pci_address']}"
+                    )
                     return self._create_npu_capabilities_from_validated_pci(device)
 
             logger.info("No verified Intel NPU devices found via PCI")
             return None
 
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
+        except (
+            subprocess.CalledProcessError,
+            subprocess.TimeoutExpired,
+            FileNotFoundError,
+        ) as e:
             logger.warning(f"PCI detection failed: {e}")
             return None
 
@@ -169,7 +182,7 @@ class IntelNPUDetector:
         devices = []
         current_device = {}
 
-        for line in pci_output.split('\n'):
+        for line in pci_output.split("\n"):
             line = line.strip()
             if not line:
                 if current_device:
@@ -178,7 +191,10 @@ class IntelNPUDetector:
                 continue
 
             # Parse PCI address and device info
-            pci_match = re.match(r'^([0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F])\s+.*\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]', line)
+            pci_match = re.match(
+                r"^([0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F])\s+.*\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]",
+                line,
+            )
             if pci_match:
                 pci_address, vendor_id, device_id = pci_match.groups()
 
@@ -189,12 +205,14 @@ class IntelNPUDetector:
                         "vendor_id": vendor_id,
                         "device_id": f"0x{device_id}",
                         "raw_line": line,
-                        "validated": True
+                        "validated": True,
                     }
 
             # Extract additional device information
             elif current_device and line.startswith("Subsystem:"):
-                subsystem_match = re.search(r'\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]', line)
+                subsystem_match = re.search(
+                    r"\[([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\]", line
+                )
                 if subsystem_match:
                     current_device["subsystem_vendor"] = subsystem_match.group(1)
                     current_device["subsystem_device"] = subsystem_match.group(2)
@@ -205,10 +223,14 @@ class IntelNPUDetector:
 
         return devices
 
-    def _create_npu_capabilities_from_validated_pci(self, device: Dict[str, str]) -> NPUCapabilities:
+    def _create_npu_capabilities_from_validated_pci(
+        self, device: Dict[str, str]
+    ) -> NPUCapabilities:
         """Create NPU capabilities from validated PCI device"""
         device_id = device["device_id"]
-        model_name = self.INTEL_NPU_DEVICE_IDS.get(device_id, f"Intel NPU ({device_id})")
+        model_name = self.INTEL_NPU_DEVICE_IDS.get(
+            device_id, f"Intel NPU ({device_id})"
+        )
 
         # Get additional device information from sysfs
         sysfs_info = self._get_sysfs_device_info(device["pci_address"])
@@ -232,7 +254,7 @@ class IntelNPUDetector:
             base_frequency_mhz=1000,
             boost_frequency_mhz=1400,
             architecture=self._get_npu_architecture_for_device(device_id),
-            features=["inference", "validated_pci", "hardware_verified"]
+            features=["inference", "validated_pci", "hardware_verified"],
         )
 
     def _get_sysfs_device_info(self, pci_address: str) -> Dict[str, str]:
@@ -242,15 +264,15 @@ class IntelNPUDetector:
 
         try:
             if (sysfs_path / "vendor").exists():
-                with open(sysfs_path / "vendor", 'r') as f:
+                with open(sysfs_path / "vendor", "r") as f:
                     info["vendor"] = f.read().strip()
 
             if (sysfs_path / "device").exists():
-                with open(sysfs_path / "device", 'r') as f:
+                with open(sysfs_path / "device", "r") as f:
                     info["device"] = f.read().strip()
 
             if (sysfs_path / "class").exists():
-                with open(sysfs_path / "class", 'r') as f:
+                with open(sysfs_path / "class", "r") as f:
                     info["class"] = f.read().strip()
 
         except (OSError, IOError):
@@ -261,30 +283,30 @@ class IntelNPUDetector:
     def _get_npu_tops_for_device(self, device_id: str) -> float:
         """Get TOPS rating for specific NPU device"""
         tops_map = {
-            "0x7d1d": 11.0,   # Meteor Lake NPU (updated from Intel specs)
-            "0x643e": 45.0,   # Lunar Lake NPU
-            "0x4f80": 13.0,   # Arrow Lake NPU
-            "0x4f81": 13.0,   # Arrow Lake-H NPU
+            "0x7d1d": 11.0,  # Meteor Lake NPU (updated from Intel specs)
+            "0x643e": 45.0,  # Lunar Lake NPU
+            "0x4f80": 13.0,  # Arrow Lake NPU
+            "0x4f81": 13.0,  # Arrow Lake-H NPU
         }
         return tops_map.get(device_id, 11.0)
 
     def _get_npu_memory_for_device(self, device_id: str) -> int:
         """Get memory allocation for specific NPU device"""
         memory_map = {
-            "0x7d1d": 256,    # Meteor Lake
-            "0x643e": 512,    # Lunar Lake
-            "0x4f80": 256,    # Arrow Lake
-            "0x4f81": 256,    # Arrow Lake-H
+            "0x7d1d": 256,  # Meteor Lake
+            "0x643e": 512,  # Lunar Lake
+            "0x4f80": 256,  # Arrow Lake
+            "0x4f81": 256,  # Arrow Lake-H
         }
         return memory_map.get(device_id, 256)
 
     def _get_npu_tdp_for_device(self, device_id: str) -> float:
         """Get TDP for specific NPU device"""
         tdp_map = {
-            "0x7d1d": 4.5,    # Meteor Lake NPU
-            "0x643e": 6.0,    # Lunar Lake NPU
-            "0x4f80": 4.8,    # Arrow Lake NPU
-            "0x4f81": 5.5,    # Arrow Lake-H NPU
+            "0x7d1d": 4.5,  # Meteor Lake NPU
+            "0x643e": 6.0,  # Lunar Lake NPU
+            "0x4f80": 4.8,  # Arrow Lake NPU
+            "0x4f81": 5.5,  # Arrow Lake-H NPU
         }
         return tdp_map.get(device_id, 4.5)
 
@@ -329,7 +351,11 @@ class IntelNPUDetector:
                     logger.info(f"Found Intel NPU module: {module}")
                     return self._create_npu_capabilities_from_driver(module)
 
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+        except (
+            subprocess.CalledProcessError,
+            subprocess.TimeoutExpired,
+            FileNotFoundError,
+        ):
             logger.debug("Driver detection failed")
 
         return None
@@ -354,7 +380,7 @@ class IntelNPUDetector:
 
         for sysfs_path in sysfs_paths:
             try:
-                with open(sysfs_path, 'r') as f:
+                with open(sysfs_path, "r") as f:
                     vendor_id = f.read().strip()
                     if vendor_id == f"0x{self.INTEL_VENDOR_ID}":
                         return True
@@ -363,12 +389,14 @@ class IntelNPUDetector:
 
         return False
 
-    def _create_npu_capabilities_from_pci(self, pci_line: str, device_id: str) -> NPUCapabilities:
+    def _create_npu_capabilities_from_pci(
+        self, pci_line: str, device_id: str
+    ) -> NPUCapabilities:
         """Create NPU capabilities from PCI detection"""
         model_name = self.INTEL_NPU_DEVICE_IDS.get(device_id, "Intel NPU (Unknown)")
 
         # Extract PCI address
-        pci_match = re.match(r'^([0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F])', pci_line)
+        pci_match = re.match(r"^([0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F])", pci_line)
         pci_id = pci_match.group(1) if pci_match else "unknown"
 
         return NPUCapabilities(
@@ -390,7 +418,7 @@ class IntelNPUDetector:
             base_frequency_mhz=1000,
             boost_frequency_mhz=1400,
             architecture="Meteor Lake",
-            features=["inference", "training", "quantization", "batching"]
+            features=["inference", "training", "quantization", "batching"],
         )
 
     def _create_npu_capabilities_from_device(self, device_path: str) -> NPUCapabilities:
@@ -414,7 +442,7 @@ class IntelNPUDetector:
             base_frequency_mhz=1000,
             boost_frequency_mhz=1400,
             architecture="Intel NPU",
-            features=["inference", "batching"]
+            features=["inference", "batching"],
         )
 
     def _create_npu_capabilities_from_driver(self, module_name: str) -> NPUCapabilities:
@@ -438,7 +466,7 @@ class IntelNPUDetector:
             base_frequency_mhz=1000,
             boost_frequency_mhz=1400,
             architecture="Intel NPU",
-            features=["inference", "driver_managed"]
+            features=["inference", "driver_managed"],
         )
 
     def _create_inferred_npu_capabilities(self, cpu_pattern: str) -> NPUCapabilities:
@@ -462,7 +490,7 @@ class IntelNPUDetector:
             base_frequency_mhz=1000,
             boost_frequency_mhz=1400,
             architecture="Meteor Lake",
-            features=["inference", "inferred"]
+            features=["inference", "inferred"],
         )
 
     def _get_driver_version(self) -> str:
@@ -475,7 +503,7 @@ class IntelNPUDetector:
 
         for path in version_paths:
             try:
-                with open(path, 'r') as f:
+                with open(path, "r") as f:
                     return f.read().strip()
             except FileNotFoundError:
                 continue
@@ -504,7 +532,9 @@ class IntelNPUDetector:
         rust_target_features = ["+crt-static"]
 
         if supports_avx512:
-            compiler_flags.extend(["-mavx512f", "-mavx512dq", "-mavx512cd", "-mavx512bw", "-mavx512vl"])
+            compiler_flags.extend(
+                ["-mavx512f", "-mavx512dq", "-mavx512cd", "-mavx512bw", "-mavx512vl"]
+            )
             rust_target_features.extend(["+avx512f", "+avx512dq"])
             cpu_optimization = "skylake-avx512"
         elif supports_avx2:
@@ -534,7 +564,7 @@ class IntelNPUDetector:
             kernel_parameters=kernel_params,
             compiler_flags=compiler_flags,
             rust_target_features=rust_target_features,
-            recommended_memory_allocation=npu_memory
+            recommended_memory_allocation=npu_memory,
         )
 
     def generate_rust_build_config(self) -> Dict[str, Any]:
@@ -548,7 +578,9 @@ class IntelNPUDetector:
         if supports_avx512:
             target_cpu = "skylake-avx512"
             target_features = "+avx512f,+avx512dq,+fma"
-            rustflags = "-C target-cpu=skylake-avx512 -C target-feature=+avx512f,+avx512dq,+fma"
+            rustflags = (
+                "-C target-cpu=skylake-avx512 -C target-feature=+avx512f,+avx512dq,+fma"
+            )
         elif supports_avx2:
             target_cpu = "haswell"
             target_features = "+avx2,+fma"
@@ -570,7 +602,7 @@ class IntelNPUDetector:
                 "CXX": "g++",
                 "CFLAGS": " ".join(optimization.compiler_flags),
                 "CXXFLAGS": " ".join(optimization.compiler_flags),
-            }
+            },
         }
 
     def _get_cargo_features(self) -> List[str]:
@@ -602,13 +634,17 @@ class IntelNPUDetector:
         """Export detection results to JSON file"""
         results = {
             "system_info": self.system_info,
-            "npu_capabilities": asdict(self.detected_npu) if self.detected_npu else None,
-            "optimization_recommendations": asdict(self.get_system_optimization_recommendations()),
+            "npu_capabilities": (
+                asdict(self.detected_npu) if self.detected_npu else None
+            ),
+            "optimization_recommendations": asdict(
+                self.get_system_optimization_recommendations()
+            ),
             "rust_build_config": self.generate_rust_build_config(),
             "detection_timestamp": __import__("time").time(),
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(results, f, indent=2)
 
         logger.info(f"Detection results exported to: {output_path}")
@@ -621,10 +657,7 @@ class IntelNPUDetector:
         build_config = self.generate_rust_build_config()
         target = build_config["target_triple"]
 
-        installer = NPUBinaryInstaller(
-            install_dir=install_dir,
-            force_target=target
-        )
+        installer = NPUBinaryInstaller(install_dir=install_dir, force_target=target)
 
         return installer.install()
 
@@ -637,35 +670,19 @@ def main():
         description="Intel NPU Hardware Detection and Optimization"
     )
     parser.add_argument(
-        "--detect",
-        action="store_true",
-        help="Detect Intel NPU hardware"
+        "--detect", action="store_true", help="Detect Intel NPU hardware"
     )
     parser.add_argument(
-        "--optimize",
-        action="store_true",
-        help="Generate optimization recommendations"
+        "--optimize", action="store_true", help="Generate optimization recommendations"
     )
     parser.add_argument(
-        "--rust-config",
-        action="store_true",
-        help="Generate Rust build configuration"
+        "--rust-config", action="store_true", help="Generate Rust build configuration"
     )
+    parser.add_argument("--export", metavar="FILE", help="Export results to JSON file")
     parser.add_argument(
-        "--export",
-        metavar="FILE",
-        help="Export results to JSON file"
+        "--install-binary", metavar="DIR", help="Install optimized binary to directory"
     )
-    parser.add_argument(
-        "--install-binary",
-        metavar="DIR",
-        help="Install optimized binary to directory"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -674,7 +691,9 @@ def main():
 
     detector = IntelNPUDetector()
 
-    if args.detect or not any([args.optimize, args.rust_config, args.export, args.install_binary]):
+    if args.detect or not any(
+        [args.optimize, args.rust_config, args.export, args.install_binary]
+    ):
         npu = detector.detect_intel_npu()
         if npu:
             print(f"✅ Intel NPU detected: {npu.model_name}")

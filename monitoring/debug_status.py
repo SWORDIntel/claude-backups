@@ -6,9 +6,11 @@ Prints status to console to verify tracking is working
 
 import json
 import subprocess
-import psutil
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import psutil
+
 
 def check_agent_status():
     """Check status of all agents and modules"""
@@ -20,12 +22,13 @@ def check_agent_status():
         try:
             with open(registry_path) as f:
                 registry = json.load(f)
-                if 'agents' in registry:
-                    agents_online = len(registry['agents'])
+                if "agents" in registry:
+                    agents_online = len(registry["agents"])
         except Exception as e:
             print(f"Error reading agent registry: {e}")
 
     return agents_online
+
 
 def check_modules():
     """Check all modules"""
@@ -33,38 +36,44 @@ def check_modules():
 
     # PostgreSQL
     try:
-        result = subprocess.run(['pg_isready', '-p', '5433'], capture_output=True, timeout=2)
-        modules['PostgreSQL'] = result.returncode == 0
+        result = subprocess.run(
+            ["pg_isready", "-p", "5433"], capture_output=True, timeout=2
+        )
+        modules["PostgreSQL"] = result.returncode == 0
     except:
-        modules['PostgreSQL'] = False
+        modules["PostgreSQL"] = False
 
     # OpenVINO
     try:
         import openvino
-        modules['OpenVINO'] = True
+
+        modules["OpenVINO"] = True
     except ImportError:
-        modules['OpenVINO'] = False
+        modules["OpenVINO"] = False
 
     # Shadowgit
-    shadowgit_path = Path('/home/john/claude-backups/hooks/shadowgit')
-    modules['Shadowgit'] = shadowgit_path.exists() and (shadowgit_path / 'python').exists()
+    shadowgit_path = Path("/home/john/claude-backups/hooks/shadowgit")
+    modules["Shadowgit"] = (
+        shadowgit_path.exists() and (shadowgit_path / "python").exists()
+    )
 
     # Agent Systems
-    modules['Agent Systems'] = (Path.home() / ".local/share/claude/agents").exists()
+    modules["Agent Systems"] = (Path.home() / ".local/share/claude/agents").exists()
 
     # Orchestration
-    modules['Orchestration'] = Path("/home/john/claude-backups/orchestration").exists()
+    modules["Orchestration"] = Path("/home/john/claude-backups/orchestration").exists()
 
     # Integration
-    modules['Integration'] = Path("/home/john/claude-backups/integration").exists()
+    modules["Integration"] = Path("/home/john/claude-backups/integration").exists()
 
     # C Agent Engine
-    modules['C Agent Engine'] = Path("/home/john/claude-backups/agents/src/c").exists()
+    modules["C Agent Engine"] = Path("/home/john/claude-backups/agents/src/c").exists()
 
     # NPU
-    modules['NPU'] = Path('/dev/accel/accel0').exists()
+    modules["NPU"] = Path("/dev/accel/accel0").exists()
 
     return modules
+
 
 def check_hardware():
     """Check hardware status"""
@@ -72,8 +81,8 @@ def check_hardware():
         # CPU temperature
         temps = psutil.sensors_temperatures()
         cpu_temp = 0
-        if 'coretemp' in temps:
-            cpu_temp = max([t.current for t in temps['coretemp']])
+        if "coretemp" in temps:
+            cpu_temp = max([t.current for t in temps["coretemp"]])
         elif temps:
             first_sensor = list(temps.values())[0]
             cpu_temp = max([t.current for t in first_sensor])
@@ -85,6 +94,7 @@ def check_hardware():
         return cpu_temp, memory_percent
     except:
         return 0, 0
+
 
 if __name__ == "__main__":
     print("=== Claude Agent Framework Status Debug ===")

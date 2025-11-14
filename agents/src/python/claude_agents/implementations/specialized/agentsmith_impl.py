@@ -15,21 +15,22 @@ Capabilities:
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
+
 import yaml
-import re
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from path_utilities import get_project_root, get_agents_dir, get_python_src_dir
+    from path_utilities import get_agents_dir, get_project_root, get_python_src_dir
 except ImportError:
     # Fallback if path_utilities not available
     def get_project_root():

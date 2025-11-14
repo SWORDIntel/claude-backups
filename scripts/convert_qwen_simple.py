@@ -5,9 +5,10 @@ Direct approach without complex dependencies
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
 
 def simple_gguf_conversion():
     """Use the most direct conversion method available"""
@@ -27,7 +28,7 @@ def simple_gguf_conversion():
     possible_locations = [
         "/usr/local/bin/convert.py",
         "/opt/llama.cpp/convert.py",
-        "~/.local/bin/convert.py"
+        "~/.local/bin/convert.py",
     ]
 
     for loc in possible_locations:
@@ -42,7 +43,9 @@ def simple_gguf_conversion():
         try:
             # Load and re-save model in a cleaner format
             cmd = [
-                sys.executable, "-c", f'''
+                sys.executable,
+                "-c",
+                f"""
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -88,7 +91,7 @@ print("🎯 Expected GGUF sizes:")
 for fmt, size in gguf_sizes.items():
     npu_compat = "NPU compatible" if size < 20 else "CPU only"
     print(f"  {{fmt}}: {{size:.1f}}GB ({{npu_compat}})")
-'''
+""",
             ]
 
             print("⏳ Starting conversion (this may take 15-30 minutes)...")
@@ -109,6 +112,7 @@ for fmt, size in gguf_sizes.items():
             return False
 
     return False
+
 
 if __name__ == "__main__":
     success = simple_gguf_conversion()

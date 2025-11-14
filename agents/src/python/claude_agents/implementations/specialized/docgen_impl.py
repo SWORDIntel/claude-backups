@@ -6,24 +6,24 @@ Full compatibility with Claude Code Task tool and agent coordination
 """
 
 import asyncio
+import concurrent.futures
+import hashlib
 import json
+import logging
 import os
 import re
-import time
-import hashlib
-import logging
+import shutil
 import subprocess
 import tempfile
-import threading
 import textwrap
-import shutil
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Set, Union
-from dataclasses import dataclass, field, asdict
+import threading
+import time
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from collections import deque, defaultdict
-import concurrent.futures
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +43,7 @@ except ImportError:
     HAS_MARKDOWN = False
 
 try:
-    from jinja2 import Template, Environment, FileSystemLoader
+    from jinja2 import Environment, FileSystemLoader, Template
     HAS_JINJA = True
 except ImportError:
     HAS_JINJA = False

@@ -13,15 +13,16 @@ import subprocess
 import sys
 import tempfile
 import time
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from enum import Enum
-from dataclasses import dataclass
 
 
 class UpgradeModule(Enum):
     """Available modules for upgrade"""
+
     CLAUDE_CODE = "claude-code"
     PYTHON_INSTALLER = "python-installer"
     WRAPPER_SYSTEM = "wrapper-system"
@@ -35,6 +36,7 @@ class UpgradeModule(Enum):
 @dataclass
 class ComponentInfo:
     """Information about an installed component"""
+
     name: str
     current_version: Optional[str]
     latest_version: Optional[str]
@@ -71,7 +73,7 @@ class ClaudeUpgradeSystem:
         common_locations = [
             Path.home() / "Documents" / "Claude",
             Path.home() / "claude-backups",
-            Path.home() / "Downloads" / "claude-backups"
+            Path.home() / "Downloads" / "claude-backups",
         ]
 
         for location in common_locations:
@@ -91,7 +93,9 @@ class ClaudeUpgradeSystem:
         if self.verbose:
             print(log_entry)
 
-    def _run_command(self, cmd: List[str], capture_output: bool = True, timeout: int = 300) -> Tuple[bool, str, str]:
+    def _run_command(
+        self, cmd: List[str], capture_output: bool = True, timeout: int = 300
+    ) -> Tuple[bool, str, str]:
         """Run command with error handling"""
         try:
             self._log_action(f"Running: {' '.join(cmd)}")
@@ -105,7 +109,7 @@ class ClaudeUpgradeSystem:
                 capture_output=capture_output,
                 text=True,
                 timeout=timeout,
-                cwd=self.project_root
+                cwd=self.project_root,
             )
 
             success = result.returncode == 0
@@ -141,7 +145,7 @@ class ClaudeUpgradeSystem:
             version = None
             if success and "Claude Code" in stdout:
                 # Extract version from output
-                version_match = re.search(r'v?(\d+\.\d+\.\d+)', stdout)
+                version_match = re.search(r"v?(\d+\.\d+\.\d+)", stdout)
                 if version_match:
                     version = version_match.group(1)
 
@@ -152,7 +156,7 @@ class ClaudeUpgradeSystem:
                 path=Path(claude_path) if claude_path else None,
                 is_installed=bool(claude_path),
                 needs_upgrade=False,  # Will be determined later
-                upgrade_method="npm"
+                upgrade_method="npm",
             )
 
         # Python Installer
@@ -164,7 +168,7 @@ class ClaudeUpgradeSystem:
             path=python_installer if python_installer.exists() else None,
             is_installed=python_installer.exists(),
             needs_upgrade=False,
-            upgrade_method="git"
+            upgrade_method="git",
         )
 
         # Wrapper System
@@ -187,7 +191,7 @@ class ClaudeUpgradeSystem:
             path=wrapper_path if wrapper_path.exists() else None,
             is_installed=wrapper_path.exists(),
             needs_upgrade=wrapper_version != "2.0",
-            upgrade_method="python-installer"
+            upgrade_method="python-installer",
         )
 
         # Agent Definitions
@@ -203,7 +207,7 @@ class ClaudeUpgradeSystem:
             path=agents_dir if agents_dir.exists() else None,
             is_installed=agents_dir.exists(),
             needs_upgrade=agent_count < 89,
-            upgrade_method="git"
+            upgrade_method="git",
         )
 
         # Learning System
@@ -215,7 +219,7 @@ class ClaudeUpgradeSystem:
             path=learning_system if learning_system.exists() else None,
             is_installed=learning_system.exists(),
             needs_upgrade=False,
-            upgrade_method="git"
+            upgrade_method="git",
         )
 
         # OpenVINO Runtime
@@ -227,7 +231,7 @@ class ClaudeUpgradeSystem:
                 setupvars = openvino_path / "setupvars.sh"
                 if setupvars.exists():
                     content = setupvars.read_text()
-                    version_match = re.search(r'2025\.(\d+\.\d+)', content)
+                    version_match = re.search(r"2025\.(\d+\.\d+)", content)
                     if version_match:
                         openvino_version = f"2025.{version_match.group(1)}"
             except:
@@ -240,7 +244,7 @@ class ClaudeUpgradeSystem:
             path=openvino_path if openvino_path.exists() else None,
             is_installed=openvino_path.exists(),
             needs_upgrade=openvino_version != "2025.4.0",
-            upgrade_method="manual"
+            upgrade_method="manual",
         )
 
         # Database Schema
@@ -252,7 +256,7 @@ class ClaudeUpgradeSystem:
             path=db_schema if db_schema.exists() else None,
             is_installed=db_schema.exists(),
             needs_upgrade=False,
-            upgrade_method="git"
+            upgrade_method="git",
         )
 
         self.current_versions = components
@@ -270,7 +274,7 @@ class ClaudeUpgradeSystem:
             # Backup wrapper scripts
             wrapper_paths = [
                 Path.home() / ".local" / "bin" / "claude",
-                Path.home() / ".local" / "bin" / "claude-enhanced"
+                Path.home() / ".local" / "bin" / "claude-enhanced",
             ]
 
             for wrapper_path in wrapper_paths:
@@ -280,10 +284,7 @@ class ClaudeUpgradeSystem:
                     self._log_action(f"Backed up {wrapper_path}")
 
             # Backup config files
-            config_dirs = [
-                Path.home() / ".config" / "claude",
-                Path.home() / ".claude"
-            ]
+            config_dirs = [Path.home() / ".config" / "claude", Path.home() / ".claude"]
 
             for config_dir in config_dirs:
                 if config_dir.exists():
@@ -301,15 +302,19 @@ class ClaudeUpgradeSystem:
 
             # Save component versions
             versions_file = backup_path / "component_versions.json"
-            with open(versions_file, 'w') as f:
-                json.dump({
-                    name: {
-                        "current_version": comp.current_version,
-                        "path": str(comp.path) if comp.path else None,
-                        "is_installed": comp.is_installed
-                    }
-                    for name, comp in self.current_versions.items()
-                }, f, indent=2)
+            with open(versions_file, "w") as f:
+                json.dump(
+                    {
+                        name: {
+                            "current_version": comp.current_version,
+                            "path": str(comp.path) if comp.path else None,
+                            "is_installed": comp.is_installed,
+                        }
+                        for name, comp in self.current_versions.items()
+                    },
+                    f,
+                    indent=2,
+                )
 
             self._log_action("Backup completed successfully", "SUCCESS")
             return True
@@ -326,7 +331,7 @@ class ClaudeUpgradeSystem:
         upgrade_methods = [
             ["npm", "update", "-g", "@anthropic-ai/claude-code"],
             ["npm", "install", "-g", "@anthropic-ai/claude-code@latest"],
-            ["pip", "install", "--upgrade", "claude-code"]
+            ["pip", "install", "--upgrade", "claude-code"],
         ]
 
         for method in upgrade_methods:
@@ -348,7 +353,9 @@ class ClaudeUpgradeSystem:
 
         try:
             # Pull latest changes
-            success, stdout, stderr = self._run_command(["git", "pull", "origin", "main"])
+            success, stdout, stderr = self._run_command(
+                ["git", "pull", "origin", "main"]
+            )
 
             if not success:
                 self._log_action(f"Git pull failed: {stderr}", "ERROR")
@@ -359,7 +366,7 @@ class ClaudeUpgradeSystem:
                 "claude-enhanced-installer.py",
                 "claude-python-installer.sh",
                 "claude_installer_config.py",
-                "claude_shell_integration.py"
+                "claude_shell_integration.py",
             ]
 
             missing_files = []
@@ -389,7 +396,13 @@ class ClaudeUpgradeSystem:
                 return False
 
             # Run installer in wrapper-only mode
-            cmd = [sys.executable, str(python_installer), "--mode", "wrapper-only", "--auto"]
+            cmd = [
+                sys.executable,
+                str(python_installer),
+                "--mode",
+                "wrapper-only",
+                "--auto",
+            ]
             if self.verbose:
                 cmd.append("--verbose")
 
@@ -412,7 +425,9 @@ class ClaudeUpgradeSystem:
 
         try:
             # Pull latest agent definitions
-            success, stdout, stderr = self._run_command(["git", "pull", "origin", "main"])
+            success, stdout, stderr = self._run_command(
+                ["git", "pull", "origin", "main"]
+            )
 
             if not success:
                 self._log_action(f"Git pull failed: {stderr}", "ERROR")
@@ -421,8 +436,13 @@ class ClaudeUpgradeSystem:
             # Count agents after upgrade
             agents_dir = self.project_root / "agents"
             if agents_dir.exists():
-                agent_count = len(list(agents_dir.glob("*.md"))) - 1  # Exclude Template.md
-                self._log_action(f"Agent definitions updated: {agent_count} agents available", "SUCCESS")
+                agent_count = (
+                    len(list(agents_dir.glob("*.md"))) - 1
+                )  # Exclude Template.md
+                self._log_action(
+                    f"Agent definitions updated: {agent_count} agents available",
+                    "SUCCESS",
+                )
             else:
                 self._log_action("Agents directory not found", "ERROR")
                 return False
@@ -439,7 +459,9 @@ class ClaudeUpgradeSystem:
 
         try:
             # Pull latest learning system
-            success, stdout, stderr = self._run_command(["git", "pull", "origin", "main"])
+            success, stdout, stderr = self._run_command(
+                ["git", "pull", "origin", "main"]
+            )
 
             if not success:
                 self._log_action(f"Git pull failed: {stderr}", "ERROR")
@@ -454,7 +476,9 @@ class ClaudeUpgradeSystem:
                 if success:
                     self._log_action("Learning system upgraded successfully", "SUCCESS")
                 else:
-                    self._log_action(f"Learning system setup failed: {stderr}", "WARNING")
+                    self._log_action(
+                        f"Learning system setup failed: {stderr}", "WARNING"
+                    )
 
             return True
 
@@ -478,7 +502,9 @@ class ClaudeUpgradeSystem:
 
         try:
             # Pull latest schema
-            success, stdout, stderr = self._run_command(["git", "pull", "origin", "main"])
+            success, stdout, stderr = self._run_command(
+                ["git", "pull", "origin", "main"]
+            )
 
             if not success:
                 self._log_action(f"Git pull failed: {stderr}", "ERROR")
@@ -493,9 +519,13 @@ class ClaudeUpgradeSystem:
                     success, stdout, stderr = self._run_command(cmd, timeout=300)
 
                     if success:
-                        self._log_action("Database schema migrated successfully", "SUCCESS")
+                        self._log_action(
+                            "Database schema migrated successfully", "SUCCESS"
+                        )
                     else:
-                        self._log_action(f"Schema migration failed: {stderr}", "WARNING")
+                        self._log_action(
+                            f"Schema migration failed: {stderr}", "WARNING"
+                        )
 
             return True
 
@@ -512,7 +542,7 @@ class ClaudeUpgradeSystem:
             "agent-definitions": self.upgrade_agent_definitions,
             "learning-system": self.upgrade_learning_system,
             "openvino-runtime": self.upgrade_openvino_runtime,
-            "database-schema": self.upgrade_database_schema
+            "database-schema": self.upgrade_database_schema,
         }
 
         if component_name not in upgrade_methods:
@@ -521,7 +551,9 @@ class ClaudeUpgradeSystem:
 
         return upgrade_methods[component_name]()
 
-    def run_full_upgrade(self, modules: List[str] = None, skip_backup: bool = False) -> bool:
+    def run_full_upgrade(
+        self, modules: List[str] = None, skip_backup: bool = False
+    ) -> bool:
         """Run complete upgrade process"""
         self._print_info("Claude Enhanced Upgrade System v1.0")
         self._print_info("=" * 50)
@@ -544,8 +576,11 @@ class ClaudeUpgradeSystem:
 
         # Determine which modules to upgrade
         if modules is None or "all" in modules:
-            modules_to_upgrade = [name for name, comp in components.items()
-                                 if comp.is_installed and comp.needs_upgrade]
+            modules_to_upgrade = [
+                name
+                for name, comp in components.items()
+                if comp.is_installed and comp.needs_upgrade
+            ]
             if not modules_to_upgrade:
                 modules_to_upgrade = list(components.keys())
         else:
@@ -563,7 +598,7 @@ class ClaudeUpgradeSystem:
             if not self.create_backup():
                 if not self.dry_run:
                     response = input("Backup failed. Continue anyway? [y/N]: ")
-                    if response.lower() != 'y':
+                    if response.lower() != "y":
                         return False
 
         # Step 3: Upgrade components
@@ -584,7 +619,9 @@ class ClaudeUpgradeSystem:
 
         # Test Claude command
         try:
-            success, stdout, stderr = self._run_command(["claude", "--version"], timeout=10)
+            success, stdout, stderr = self._run_command(
+                ["claude", "--version"], timeout=10
+            )
             verification_results["claude_command"] = success
             if success:
                 self._print_success(f"Claude command working: {stdout.strip()[:50]}...")
@@ -609,9 +646,12 @@ class ClaudeUpgradeSystem:
         print(f"\nUpgrade log saved with {len(self.upgrade_log)} entries")
 
         # Save upgrade log
-        log_file = self.backup_dir / f"upgrade_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        with open(log_file, 'w') as f:
-            f.write('\n'.join(self.upgrade_log))
+        log_file = (
+            self.backup_dir
+            / f"upgrade_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        )
+        with open(log_file, "w") as f:
+            f.write("\n".join(self.upgrade_log))
         print(f"Detailed log: {log_file}")
 
         print("\nRecommended next steps:")
@@ -627,19 +667,27 @@ class ClaudeUpgradeSystem:
 
         # Convert to legacy format for compatibility
         analysis = {
-            "shell_installer_found": (self.project_root / "claude-installer.sh").exists(),
-            "python_installer_found": (self.project_root / "claude-enhanced-installer.py").exists(),
-            "claude_binary_found": components.get("claude-code", {}).is_installed if "claude-code" in components else False,
+            "shell_installer_found": (
+                self.project_root / "claude-installer.sh"
+            ).exists(),
+            "python_installer_found": (
+                self.project_root / "claude-enhanced-installer.py"
+            ).exists(),
+            "claude_binary_found": (
+                components.get("claude-code", {}).is_installed
+                if "claude-code" in components
+                else False
+            ),
             "wrapper_scripts": [],
             "config_files": [],
-            "shell_configs_modified": []
+            "shell_configs_modified": [],
         }
 
         # Check for wrapper scripts
         wrapper_locations = [
             Path.home() / ".local" / "bin" / "claude",
             Path.home() / ".local" / "bin" / "claude-enhanced",
-            Path("/usr/local/bin/claude")
+            Path("/usr/local/bin/claude"),
         ]
 
         for wrapper in wrapper_locations:
@@ -649,7 +697,7 @@ class ClaudeUpgradeSystem:
         # Check for config files
         config_locations = [
             Path.home() / ".config" / "claude",
-            Path.home() / ".claude-home"
+            Path.home() / ".claude-home",
         ]
 
         for config in config_locations:
@@ -660,7 +708,7 @@ class ClaudeUpgradeSystem:
         shell_configs = [
             Path.home() / ".bashrc",
             Path.home() / ".zshrc",
-            Path.home() / ".profile"
+            Path.home() / ".profile",
         ]
 
         for config in shell_configs:
@@ -681,7 +729,9 @@ class InstallerUpgrader(ClaudeUpgradeSystem):
 
     def run_upgrade(self, mode: str = "full", auto: bool = False) -> bool:
         """Legacy upgrade method - redirects to new system"""
-        return self.run_full_upgrade(modules=["python-installer", "wrapper-system"], skip_backup=False)
+        return self.run_full_upgrade(
+            modules=["python-installer", "wrapper-system"], skip_backup=False
+        )
 
 
 def main():
@@ -707,7 +757,7 @@ Examples:
   %(prog)s --upgrade wrapper-system --dry-run  # Test wrapper upgrade
   %(prog)s --analyze-only                   # Show current versions
   %(prog)s --legacy --mode full             # Use legacy upgrade method
-        """
+        """,
     )
 
     # Main upgrade options
@@ -716,42 +766,43 @@ Examples:
         "--upgrade",
         metavar="MODULE",
         nargs="+",
-        choices=["claude-code", "python-installer", "wrapper-system",
-                "agent-definitions", "learning-system", "openvino-runtime",
-                "database-schema", "all"],
-        help="Upgrade specific modules"
+        choices=[
+            "claude-code",
+            "python-installer",
+            "wrapper-system",
+            "agent-definitions",
+            "learning-system",
+            "openvino-runtime",
+            "database-schema",
+            "all",
+        ],
+        help="Upgrade specific modules",
     )
     upgrade_group.add_argument(
-        "--upgrade-all",
-        action="store_true",
-        help="Upgrade all modules"
+        "--upgrade-all", action="store_true", help="Upgrade all modules"
     )
     upgrade_group.add_argument(
         "--analyze-only",
         action="store_true",
-        help="Only analyze current installation, don't upgrade"
+        help="Only analyze current installation, don't upgrade",
     )
     upgrade_group.add_argument(
         "--legacy",
         action="store_true",
-        help="Use legacy upgrade method (Python installer migration)"
+        help="Use legacy upgrade method (Python installer migration)",
     )
 
     # Options
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be done without executing"
+        help="Show what would be done without executing",
     )
     parser.add_argument(
-        "--skip-backup",
-        action="store_true",
-        help="Skip backup creation"
+        "--skip-backup", action="store_true", help="Skip backup creation"
     )
     parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose output"
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
 
     # Legacy options
@@ -759,12 +810,10 @@ Examples:
         "--mode",
         choices=["quick", "full", "custom"],
         default="full",
-        help="Installation mode for legacy Python installer"
+        help="Installation mode for legacy Python installer",
     )
     parser.add_argument(
-        "--auto",
-        action="store_true",
-        help="Run in automatic mode (legacy)"
+        "--auto", action="store_true", help="Run in automatic mode (legacy)"
     )
 
     args = parser.parse_args()
@@ -801,9 +850,13 @@ Examples:
         elif args.legacy:
             success = upgrader.run_upgrade(args.mode, args.auto)
         elif args.upgrade_all:
-            success = upgrader.run_full_upgrade(modules=["all"], skip_backup=args.skip_backup)
+            success = upgrader.run_full_upgrade(
+                modules=["all"], skip_backup=args.skip_backup
+            )
         else:
-            success = upgrader.run_full_upgrade(modules=args.upgrade, skip_backup=args.skip_backup)
+            success = upgrader.run_full_upgrade(
+                modules=args.upgrade, skip_backup=args.skip_backup
+            )
 
         sys.exit(0 if success else 1)
 
@@ -814,6 +867,7 @@ Examples:
         print(f"Upgrade failed: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 

@@ -4,14 +4,13 @@ Step 1: Backup and Prepare
 Creates a complete backup before reorganization
 """
 
-import os
-import sys
-import shutil
-import tarfile
-from pathlib import Path
-from datetime import datetime
 import json
-
+import os
+import shutil
+import sys
+import tarfile
+from datetime import datetime
+from pathlib import Path
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent.parent
@@ -19,8 +18,12 @@ sys.path.insert(0, str(project_root))
 
 try:
     from path_utilities import (
-        get_project_root, get_agents_dir, get_database_dir,
-        get_python_src_dir, get_shadowgit_paths, get_database_config
+        get_agents_dir,
+        get_database_config,
+        get_database_dir,
+        get_project_root,
+        get_python_src_dir,
+        get_shadowgit_paths,
     )
 except ImportError:
     # Fallback if path_utilities not available
